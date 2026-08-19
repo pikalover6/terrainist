@@ -67,9 +67,14 @@ import {
   RETAIN_MAX,
   RETAIN_RAIL,
   MIN_RETAIN_RUN,
+  SEAM_TIER_MAX,
   WALL_DEMAND_RANGE,
   bankRun,
   benchedRun,
+  seamDressing,
+  tierCountOf,
+  tieredRun,
+  tiersOf,
   treatmentForEdge,
   treatmentForSeam,
   type EdgeChoice,
@@ -77,6 +82,8 @@ import {
   type EdgeUse,
   type GroundLevels,
   type LevelSeam,
+  type SeamDressing,
+  type SeamTier,
   type SeamTreatment,
 } from "../layout/levels.js";
 import type { PlannedEdge } from "../layout/forms/types.js";
@@ -176,6 +183,18 @@ export interface RetainingDistrict {
   readonly plannedEdges?: readonly PlannedEdge[];
   /** Columns of masonry this quarter may spend (§5.2 rule 7). Unlimited if absent. */
   readonly wallBudget?: number;
+  /**
+   * Whether this quarter's seams may be served by a **tier stack**
+   * (`docs/GROUND-UNIFICATION-v0.md` §4.1 S2), and whether its edge context may
+   * choose the treatment at all.
+   *
+   * Defaults to {@link SEAM_TIERS}, the compile-time flag 11F flips on Kai's
+   * walk verdict. The field exists for the reason `PlatformInput.tiered` exists
+   * in `layout/platforms.ts`: a test must be able to build the flag-on world for
+   * one quarter without flipping a constant the whole compiler reads, and the
+   * pipeline never sets it.
+   */
+  readonly tiered?: boolean;
 }
 
 /** Everything {@link buildRetainingWalls} reads. */
@@ -226,6 +245,22 @@ export interface RetainingPassResult {
   readonly kerbs: number;
   /** Seams too tall for a wall, graded into a bank. */
   readonly banks: number;
+  /**
+   * Seams served by a **tier stack** — S2's answer to a drop past
+   * {@link RETAIN_MAX}: `ceil(drop / RETAIN_MAX)` faces, none of them past the
+   * ceiling, with a tread between them.
+   *
+   * Zero on every world until {@link SEAM_TIERS} flips at 11F.
+   */
+  readonly stacks: number;
+  /** …of them, by the dressing S5 chose (`pressedShare` against `EDGE_PRESSED_SHARE`). */
+  readonly stacksByDressing: Readonly<Record<SeamDressing, number>>;
+  /** Faces built across every stack — `Σ tiers`, never `Σ 1`. */
+  readonly stackTiers: number;
+  /** Columns of stack face, the {@link wallColumns} of a stack. */
+  readonly stackColumns: number;
+  /** Columns of tread levelled and declared as the tier's own ground (S4). */
+  readonly treadColumns: number;
   /** Seams a building already stood on. */
   readonly built: number;
   /**
@@ -448,12 +483,20 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
   let banked = 0;
   let benchedBanks = 0;
   let compositeBanks = 0;
+  let stacks = 0;
+  let stackTiers = 0;
+  let stackColumns = 0;
+  let treadColumns = 0;
+  /** Set for any quarter whose seams the tier stack was allowed to serve. */
+  let tieredAnywhere = false;
+  const stacksByDressing: Record<SeamDressing, number> = { revetted: 0, terraced: 0 };
   const facesByDrop = new Array<number>(RETAIN_MAX + 1).fill(0);
   const treated: Record<SeamTreatment, number> = {
     kerb: 0,
     retaining: 0,
     bank: 0,
     built: 0,
+    tiered: 0,
     rock: 0,
   };
   const treatedCut: Record<SeamTreatment, number> = {
@@ -461,6 +504,7 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
     retaining: 0,
     bank: 0,
     built: 0,
+    tiered: 0,
     rock: 0,
   };
   const declaredWalls: RetainingDeclaration["walls"][number][] = [];
@@ -486,6 +530,11 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
       railColumns,
       kerbs,
       banks,
+      stacks,
+      stacksByDressing,
+      stackTiers,
+      stackColumns,
+      treadColumns,
       built,
       banked,
       treated,
@@ -520,8 +569,14 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
     // the report could not even say so — `docs/GROUND-UNIFICATION-v0.md`
     // §4.0a M2. Measuring is honest; building is what the flag holds.
     const planned = district.plannedEdges !== undefined;
+    /**
+     * The served seam, for this quarter (§4.1 S1–S5). The compile-time flag,
+     * unless a caller — only ever a test — asked for the flag-on world here.
+     */
+    const tiered = district.tiered ?? SEAM_TIERS;
+    if (tiered) tieredAnywhere = true;
     /** Whether context *chooses* here — the flag's whole job at 11A. */
-    const chooses = planned || SEAM_TIERS;
+    const chooses = planned || tiered;
     // §5.2 rule 7's ration, spent in the order the edges are seen.
     let budget = district.wallBudget ?? Number.POSITIVE_INFINITY;
     // The cut edges, as declared. Nothing is built on them — see
@@ -570,7 +625,7 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
       //
       // The context is measured on **every** quarter (11A); `chooses` decides
       // whether the measurement is allowed to answer.
-      const context = edgeContextOf(region, plan, levels, record, street, occupied, budget);
+      const context = { ...edgeContextOf(region, plan, levels, record, street, occupied, budget), tiered };
       const wanted = chooses ? treatmentForEdge(context) : record.treatment;
       // **The composite, measured before it is built** — see {@link facesOf}.
       // Every rule above reads the seam's one `drop`, and on a skirt that number
@@ -586,7 +641,19 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
       const faces = wanted === "retaining" ? facesOf(region, plan, levels, record) : [];
       const composite = wanted === "retaining" ? overCeilingRun(region, record, faces) : 0;
       const overCeiling = composite >= MIN_RETAIN_RUN;
-      const answer: EdgeChoice = overCeiling ? "replan" : wanted;
+      // **The drop the answer has to get down**, which for a composite is *not*
+      // `record.drop`: benching a seven-block face in six blocks' worth of
+      // benches leaves the last block as a step the bench never reaches, and a
+      // stack sized for the summary would leave the same one. See `facesOf`.
+      const measuredDrop = overCeiling ? Math.max(record.drop, ...faces) : record.drop;
+      // **The composite, under S2** (§4.2's last paragraph). Today a composite
+      // past the ceiling converts a wall to a benched bank; under the tier stack
+      // it converts a wall to a *stack sized for the measured face* — the same
+      // measurement spent on a better construction. Past `SEAM_TIER_MAX` tiers
+      // even the stack has no answer and the bank stands, benched.
+      const stacked =
+        tiered && overCeiling && wanted === "retaining" && tierCountOf(measuredDrop) <= SEAM_TIER_MAX;
+      const answer: EdgeChoice = stacked ? "tiered" : overCeiling ? "replan" : wanted;
       const treatment: SeamTreatment = answer === "replan" ? "bank" : answer;
       // A face past the tallest wall we build is banked in **benches** rather
       // than ramped 1:1 — §5.2 rule 5's honest downstream answer, and the reason
@@ -598,11 +665,7 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
       // flag — until {@link SEAM_TIERS} flips, a `grown` or `stepped` quarter
       // keeps the 1:1 ramp it shipped with, and the world is byte-identical.
       const bench = (chooses && record.drop > RETAIN_MAX) || overCeiling;
-      // The drop the benches have to get down, which for a composite is **not**
-      // `record.drop`: benching a seven-block face in six blocks' worth of
-      // benches leaves the last block as a step the bench never reaches.
-      const benchDrop = overCeiling ? Math.max(record.drop, ...faces) : record.drop;
-      if (overCeiling) compositeBanks++;
+      if (overCeiling && !stacked) compositeBanks++;
       // Accounting, and unconditional since 11A: `treated` says what every
       // seam *became*, on every quarter, which is what makes the
       // `transitions by context (§5)` note below fire outside a site plan.
@@ -639,7 +702,7 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
           states,
           ringTargets,
           bench,
-          benchDrop,
+          measuredDrop,
         );
         if (ringTargets.length > 0) {
           declaredBanks.push({
@@ -662,15 +725,74 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
               : bench
                 ? `a seam in "${district.nodePath}" drops ${record.drop} blocks over ${record.cells.length} column(s)` +
                   (overCeiling
-                    ? ` — a drop a wall is built for, but the face it would have presented falls up to ${benchDrop} block(s) over a run of ${composite} column(s), which is`
+                    ? ` — a drop a wall is built for, but the face it would have presented falls up to ${measuredDrop} block(s) over a run of ${composite} column(s), which is`
                     : `,`) +
-                  ` past the ${RETAIN_MAX_TEXT} a retaining wall is built for, so it was cut back as a benched bank — ${Math.ceil(benchDrop / BENCH_FACE)} face(s) of ${BENCH_FACE} block(s) with ${BENCH_TREAD} column(s) of soil between, over ${benchedRun(benchDrop)} column(s) of run`
+                  ` past the ${RETAIN_MAX_TEXT} a retaining wall is built for, so it was cut back as a benched bank — ${Math.ceil(measuredDrop / BENCH_FACE)} face(s) of ${BENCH_FACE} block(s) with ${BENCH_TREAD} column(s) of soil between, over ${benchedRun(measuredDrop)} column(s) of run`
                 : `a seam in "${district.nodePath}" drops ${record.drop} blocks over ${record.cells.length} column(s), past the ${RETAIN_MAX_TEXT} a retaining wall is built for, so the two platforms were graded into each other as a bank`,
             "Raise the quarter's density so the blocks are smaller and each one steps less, or leave it: a bank is a bank, not an unbuilt cliff.",
           ),
         );
         continue;
       }
+      if (treatment === "tiered") {
+        // **S2, S4 and S5, in one call.** The arithmetic is `tiersOf`'s and the
+        // dressing is `seamDressing`'s; everything below the call is accounting.
+        // Nothing here can run until {@link SEAM_TIERS} flips (or a test asks
+        // for one quarter's flag-on world), which is what makes wave 11B
+        // byte-identical.
+        const dressing = seamDressing(
+          context.pressedShare,
+          context.availableRun,
+          tierCountOf(measuredDrop),
+        );
+        const laid = buildTieredSeam({
+          region,
+          plan,
+          driver,
+          source: `${district.nodePath}#tiers@${jobIndex}`,
+          nodePath: district.nodePath,
+          measured,
+          levels,
+          record,
+          drop: measuredDrop,
+          dressing,
+          street,
+          occupied,
+          states,
+          palette,
+          stack,
+          blocks,
+          seam,
+          diagnostics,
+          declaredWalls,
+        });
+        stacks++;
+        stacksByDressing[dressing]++;
+        stackTiers += laid.tiers.length;
+        stackColumns += laid.faceColumns;
+        treadColumns += laid.treadColumns;
+        railColumns += laid.railColumns;
+        // §13.8's histogram, kept by construction: every face of a stack is at
+        // most `RETAIN_MAX` because `tiersOf` cannot produce a taller one.
+        for (const face of laid.faces) {
+          const bucket = face < 1 ? 1 : face > RETAIN_MAX ? RETAIN_MAX : face;
+          facesByDrop[bucket] = (facesByDrop[bucket] as number) + 1;
+        }
+        // S1's one honest refusal: the treatment was chosen and could not be
+        // *placed*, because a street, a footprint or water owns the ground.
+        if (laid.unplaced > 0) {
+          diagnostics.push(
+            warning(
+              "SEAM_UNSERVED",
+              district.nodePath,
+              `a seam in "${district.nodePath}" drops ${measuredDrop} blocks over ${record.cells.length} column(s) and was served by a ${dressing} stack of ${laid.tiers.length} tier(s) (faces ${laid.tiers.map((t) => t.face).join("+")}), but ${laid.unplaced} of those tier(s) found no ground to stand on — a street, a footprint or water owns every column the tier would have used`,
+              "Nothing in the document names the columns directly: widen the block so the stack has room to step down, or lower the quarter's density so the two platforms are closer together.",
+            ),
+          );
+        }
+        continue;
+      }
+
       // §5.2 rule 9 was reached, so this edge spends from the quarter's masonry
       // ration. Charged on the seam's own length before the face is walked,
       // because the ration has to be decided in the same order the edges are
@@ -1002,6 +1124,32 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
     );
   }
 
+  // **S1, reported: what every seam became.** One note, naming the
+  // constructions rather than the refusals — the reversal §4.1 S1 asks for, and
+  // the answer to a report of fifty-six warnings that all say "we did the other
+  // thing". Emitted only where the tier stack is switched on, because until it
+  // is, this note and `LOAM-W411` would be two accounts of one seam and the
+  // second of them would only move report bytes; `LOAM-W411`'s retirement rides
+  // with the flag at 11F (§4.1 S1, §7).
+  if (tieredAnywhere && walls + kerbs + banks + built + stacks > 0) {
+    const dressed = (Object.keys(stacksByDressing) as SeamDressing[])
+      .sort()
+      .filter((d) => stacksByDressing[d] > 0)
+      .map((d) => `${stacksByDressing[d]} ${d}`)
+      .join(", ");
+    diagnostics.push(
+      note(
+        "SEAM_SERVED",
+        relevant[0]?.nodePath ?? "world",
+        `seams served (S1): ${walls} wall(s), ${stacks} tier stack(s)` +
+          (dressed === "" ? "" : ` (${dressed})`) +
+          ` over ${stackTiers} face(s) and ${stackColumns} column(s), ${banks} bank(s), ${kerbs} kerb seam(s), and ${built} seam(s) a building already stood on` +
+          (treadColumns === 0 ? "" : `; ${treadColumns} column(s) of tread declared as the tier's own ground`),
+        "No action needed.",
+      ),
+    );
+  }
+
   const unfacedTotal = UNFACED_REASONS.reduce((sum, r) => sum + unfaced[r], 0);
   if (walls + kerbs + banks + built > 0) {
     const breakdown = UNFACED_REASONS.filter((r) => unfaced[r] > 0)
@@ -1081,6 +1229,11 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
     railColumns,
     kerbs,
     banks,
+    stacks,
+    stacksByDressing,
+    stackTiers,
+    stackColumns,
+    treadColumns,
     built,
     banked,
     treated,
@@ -2316,6 +2469,369 @@ function gradeBank(
   return raised;
 }
 
+/* -------------------------------------------------------------------------- */
+/* the tier stack — `docs/GROUND-UNIFICATION-v0.md` §4.1 S2–S5, §4.2           */
+/* -------------------------------------------------------------------------- */
+
+/** Everything {@link buildTieredSeam} reads, and the sinks it writes into. */
+export interface TieredSeamInput {
+  readonly region: Region;
+  readonly plan: ColumnPlan;
+  readonly driver: GroundDriver;
+  /** `<nodePath>#tiers@<job>` — every claim and every sweep is `<source>/<tier>`. */
+  readonly source: string;
+  readonly nodePath: string;
+  /** A skirt is *measured* from the finished ground; a seam is declared. */
+  readonly measured: boolean;
+  readonly levels: GroundLevels;
+  readonly record: LevelSeam;
+  /**
+   * The fall the stack has to get down, which for a **composite** face is not
+   * `record.drop` — see {@link facesOf}. The stack is built for the face it
+   * actually presents.
+   */
+  readonly drop: number;
+  readonly dressing: SeamDressing;
+  readonly street: Uint8Array;
+  readonly occupied: Uint8Array;
+  readonly states: RetainingStates;
+  readonly palette: Palette;
+  readonly stack: PrismarineStack;
+  /** Sinks, all appended to. */
+  readonly blocks: StructureBlock[];
+  readonly seam: Uint8Array;
+  readonly diagnostics: LoamDiagnostic[];
+  readonly declaredWalls: RetainingDeclaration["walls"][number][];
+}
+
+/** What one stack came to. */
+export interface TieredSeamResult {
+  /** The arithmetic {@link tiersOf} answered with, bottom tier first. */
+  readonly tiers: readonly SeamTier[];
+  readonly dressing: SeamDressing;
+  /** The finished face of every course column built, for §13.8's histogram. */
+  readonly faces: readonly number[];
+  /** Columns of masonry face, over every tier. */
+  readonly faceColumns: number;
+  readonly railColumns: number;
+  /** Columns of tread levelled and declared as the tier's own ground (S4). */
+  readonly treadColumns: number;
+  /**
+   * Tiers whose course found no ground to stand on — the only honest refusal
+   * S1 leaves, and what `LOAM-W413 SEAM_UNSERVED` reports.
+   */
+  readonly unplaced: number;
+}
+
+/**
+ * Build a seam as a **stack of faces** — S2's answer to a drop past
+ * {@link RETAIN_MAX}, and §4.2's "one function and one loop; nothing about the
+ * sweep changes".
+ *
+ * ## The geometry, as a section
+ *
+ * The stack steps **outward** from the seam, into the ground below it, one band
+ * per tier. Distance is measured from the seam's own cells — the lower
+ * platform's columns that touch the upper one — and never crosses into the
+ * platform the stack holds:
+ *
+ * ```
+ *  upper platform, at `top`
+ *  ####                       <- tier n−1's course: the seam's own cells, at `top`
+ *      \  face n−1
+ *       ====####              <- tier n−2's tread, then its course, at `top − face n−1`
+ *              \  face n−2
+ *               ====####      <- and so on, tallest face at the BOTTOM
+ *                      \  face 0
+ *                       ----  the lower platform, at `floor`
+ * ```
+ *
+ * A band is `tread` columns wide and its outermost column is the tier's masonry
+ * course, so a `revetted` stack ({@link SEAM_SETBACK} = 1) is `n` columns of
+ * masonry and reads as one battered wall with setbacks, while a `terraced` one
+ * ({@link SEAM_TREAD} = 3) is a course with two columns of the theme's bank
+ * earth behind it, which is a tread the flora pass can plant. **One arithmetic,
+ * two dressings** — S5, and the only branch on `dressing` in the whole function
+ * is the finish at the end.
+ *
+ * The low-side run this spends is `1 + tread · (n − 1)` columns, which is at
+ * most {@link tieredRun}'s `n · (1 + tread)`: the topmost tread is the upper
+ * platform the stack holds, and the stack does not have to buy it.
+ *
+ * ## What it reuses, and what it does not add
+ *
+ * §4.2 step 2, verbatim: `thickenCourse` → `chainsOf` → `orient` → `sweep`
+ * (`RETAINING_PROFILE`) → {@link deepen} → the coping structure block. Every one
+ * of those is what the single-wall path above calls and not one of them changes.
+ * Two things are per-tier rather than per-seam and both are deliberate:
+ *
+ * - {@link deepen} is given the **tier's own face**, not the seam's drop, so a
+ *   tier is as deep as it is tall and no deeper;
+ * - {@link railRun} is called on the **top tier only**. A balustrade on every
+ *   tier is a battlement, which is the reading `RETAINING_PROFILE`'s own comment
+ *   warns about.
+ *
+ * S4's other half is the level claim: each band is committed as a `face` plus a
+ * `preserve` at the tier's own level, at `retaining.seam`/`retaining.skirt`, so
+ * a later pass may not pull the ground out from under a tread — the
+ * `unsupported.chain` finding that survived four rounds.
+ *
+ * Pure and order-independent: the distance field is a row-major BFS, every band
+ * is enumerated in region order, and every tie breaks on region index.
+ */
+export function buildTieredSeam(input: TieredSeamInput): TieredSeamResult {
+  const { region, plan, driver, levels, record, street, occupied, states, dressing } = input;
+  const cells = region.width * region.depth;
+  const top = levels.levelY[record.above] as number;
+  const drop = input.drop;
+  const floor = top - drop;
+  const tiers = tiersOf(drop, dressing);
+  if (tiers === "replan" || tiers.length === 0) {
+    return {
+      tiers: [],
+      dressing,
+      faces: [],
+      faceColumns: 0,
+      railColumns: 0,
+      treadColumns: 0,
+      unplaced: 0,
+    };
+  }
+  const n = tiers.length;
+  const tread = (tiers[0] as SeamTier).tread;
+  const maxDist = tread * (n - 1);
+  const sourceClass = input.measured ? ("retaining.skirt" as const) : ("retaining.seam" as const);
+
+  /** Ground a stack may stand on: not the street's, not a building's, not water. */
+  const open = (k: number): boolean =>
+    street[k] !== 1 && occupied[k] !== 1 && plan.fluidKind[k] === FluidKind.NONE;
+
+  // --- the distance field, outward from the seam's own cells ----------------
+  // 4-connected and row-major, so the bands are a pure function of the field.
+  // Never into the platform the stack holds: that ground is already there, and
+  // it is the thing being retained.
+  const dist = new Int32Array(cells).fill(-1);
+  let frontier: number[] = [];
+  for (const point of record.cells) {
+    if (!inside(region, point.x, point.z)) continue;
+    const k = index(region, point.x, point.z);
+    if ((dist[k] as number) >= 0) continue;
+    dist[k] = 0;
+    frontier.push(k);
+  }
+  frontier.sort((a, b) => a - b);
+  for (let d = 1; d <= maxDist && frontier.length > 0; d++) {
+    const next: number[] = [];
+    for (const k of frontier) {
+      const x = region.x0 + (k % region.width);
+      const z = region.z0 + Math.floor(k / region.width);
+      for (const [dx, dz] of NEIGHBOURS) {
+        if (!inside(region, x + dx, z + dz)) continue;
+        const m = index(region, x + dx, z + dz);
+        if ((dist[m] as number) >= 0) continue;
+        // Never into the platform the stack holds, and never onto a *third*
+        // platform: that ground is somebody else's level, and a tier raising it
+        // would bury the terrace next door — `edgeContextOf`'s own rule about
+        // what `availableRun` may count, one construction over.
+        const platform = levels.at(x + dx, z + dz);
+        if (platform === record.above) continue;
+        if (platform !== NO_PLATFORM && platform !== record.below) continue;
+        dist[m] = d;
+        next.push(m);
+      }
+    }
+    next.sort((a, b) => a - b);
+    frontier = next;
+  }
+
+  /** The tier a column at outward distance `d` belongs to; bottom tier is 0. */
+  const tierAt = (d: number): number => (d <= 0 ? n - 1 : n - 1 - Math.ceil(d / tread));
+  /** The distance at which a tier's masonry course stands: its band's outer edge. */
+  const courseDist = (k: number): number => (n - 1 - k) * tread;
+  /** Walking level of each tier, a running sum from the floor; the last is `top`. */
+  const levelOf: number[] = [];
+  {
+    let running = floor;
+    for (const tier of tiers) {
+      running += tier.face;
+      levelOf.push(running);
+    }
+  }
+
+  const faces: number[] = [];
+  let faceColumns = 0;
+  let railColumns = 0;
+  let treadColumns = 0;
+  let unplaced = 0;
+
+  // --- one loop, bottom up (§4.2) -------------------------------------------
+  // Bottom up because that is the order the ground is built in: a tier's face
+  // stands on the tread of the tier below it, and the sweep reads its datum from
+  // the ground as it stands.
+  for (let k = 0; k < n; k++) {
+    const tier = tiers[k] as SeamTier;
+    const y = levelOf[k] as number;
+    const band: number[] = [];
+    const course = new Uint8Array(cells);
+    let courseColumns = 0;
+    for (let c = 0; c < cells; c++) {
+      const d = dist[c] as number;
+      if (d < 0 || tierAt(d) !== k) continue;
+      if (!open(c)) continue;
+      band.push(c);
+      if (d === courseDist(k)) {
+        course[c] = 1;
+        courseColumns++;
+      }
+    }
+    if (courseColumns === 0) {
+      // S1's one honest refusal: the treatment was chosen and could not be
+      // placed, because somebody else owns every column it would have used.
+      unplaced++;
+      continue;
+    }
+    treadColumns += band.length - courseColumns;
+
+    // **S4 — the tread is the tier's own ground, and it is declared as such.**
+    // One commit per tier, before its course is swept, so the sweep's datum is
+    // the tier's own level rather than the ground the hill happened to have.
+    const tierSource = `${input.source}/${k}`;
+    const claims: GroundClaim[] = band.map((c) => ({ idx: c, y }));
+    driver.commit([
+      { source: tierSource, sourceClass, kind: "face", columns: claims, transition: "wall" },
+      { source: tierSource, sourceClass, kind: "preserve", columns: claims, transition: "none" },
+    ]);
+
+    // A one-column course on a diagonal is a sawtooth, for the fifth time in
+    // this compiler. Thickened inside the tier's own band and nowhere else.
+    thickenCourse(
+      region,
+      course,
+      (idx) => (dist[idx] as number) >= 0 && tierAt(dist[idx] as number) === k && open(idx),
+      (idx) => cells - idx,
+    );
+    const columns: number[] = [];
+    for (let c = 0; c < cells; c++) if (course[c] === 1) columns.push(c);
+    // The sweep owns this tier's **course** and nothing else. Not the whole
+    // band: the profile's `verge` lane would pave a tread with sidewalk, and a
+    // terraced tread is earth you plant, not a pavement.
+    const avoid = new Uint8Array(cells).fill(1);
+    for (const c of columns) avoid[c] = 0;
+
+    let chainIndex = -1;
+    for (const chain of chainsOf(region, columns)) {
+      chainIndex++;
+      // The verge belongs on the tier's own ground: the platform above for the
+      // top tier — which is what the single-wall path means by it — and the
+      // tier's own tread for every tier below.
+      const path =
+        k === n - 1
+          ? orient(region, chain, levels, record.above, street, occupied)
+          : orient(region, chain, levels, record.above, street, occupied, (x, z) => {
+              const c = index(region, x, z);
+              return (dist[c] as number) >= 0 && tierAt(dist[c] as number) === k && course[c] !== 1;
+            });
+      const source = `${tierSource}/${chainIndex}`;
+      const result = sweep({
+        profile: states.profile,
+        path,
+        plan,
+        palette: input.palette,
+        stack: input.stack,
+        nodePath: input.nodePath,
+        avoid: { region, mask: avoid, byTag: new Map<string, Uint8Array>() },
+        declare: {
+          sourceClass,
+          kind: "face",
+          source,
+          transition: "wall",
+          commit: (intent) => {
+            const wall: GroundIntent[] = [intent];
+            if ([...intent.columns].length > 0) {
+              wall.push({
+                source,
+                sourceClass,
+                kind: "preserve",
+                columns: intent.columns,
+                transition: "none",
+              });
+            }
+            driver.commit(wall);
+          },
+        },
+      });
+      input.blocks.push(...result.blocks);
+      for (const d of result.diagnostics) {
+        if (d.code === TERRAIN_DIAGNOSTICS.SWEEP_FEATURES_PLACED) continue;
+        if (d.code === TERRAIN_DIAGNOSTICS.SWEEP_COLUMNS_SKIPPED) continue;
+        input.diagnostics.push(d);
+      }
+      for (let c = 0; c < cells; c++) if (result.claimed[c] === 1) input.seam[c] = 1;
+      const declared = [...((result.intent?.columns ?? []) as Iterable<GroundClaim>)];
+      if (declared.length > 0) {
+        input.declaredWalls.push({ source, measured: input.measured, columns: declared });
+      }
+      // A tier is as deep as it is tall, and no deeper.
+      for (const cell of path) {
+        const c = index(region, cell.x, cell.z);
+        if (result.claimed[c] !== 1) continue;
+        deepen(plan, c, tier.face);
+      }
+      for (const cell of path) {
+        const c = index(region, cell.x, cell.z);
+        if (result.claimed[c] !== 1) continue;
+        input.blocks.push({
+          x: cell.x,
+          y: plan.ground[c] as number,
+          z: cell.z,
+          stateId: states.coping,
+        });
+        faces.push(tier.face);
+        faceColumns++;
+      }
+      // The parapet, on the **top tier only**: a balustrade on every tier is a
+      // battlement (§4.2 step 4).
+      if (k === n - 1) {
+        railColumns += railRun(
+          region,
+          plan,
+          path,
+          result.claimed,
+          levels,
+          record.above,
+          tier.face,
+          street,
+          states,
+          input.blocks,
+        );
+      }
+      for (const feature of result.features) {
+        if (feature.id !== "weep") continue;
+        const wy = feature.at.y - 2;
+        if (!inside(region, feature.at.x, feature.at.z)) continue;
+        const c = index(region, feature.at.x, feature.at.z);
+        if (result.claimed[c] !== 1) continue;
+        if (wy <= (plan.ground[c] as number) - tier.face) continue;
+        input.blocks.push({ x: feature.at.x, y: wy, z: feature.at.z, stateId: states.weep });
+      }
+    }
+
+    // **S5's dressing, and the only branch on it.** A terraced tread is the
+    // theme's bank earth to the depth of the face below it — `gradeBank`'s own
+    // finish, one construction over — and its *surface* is untouched, which is
+    // what makes it ground you plant rather than a build.
+    if (dressing === "terraced") {
+      for (const c of band) {
+        if (course[c] === 1) continue;
+        plan.subsurface[c] = states.bank;
+        plan.soil[c] = Math.min(255, Math.max(plan.soil[c] as number, tier.face));
+      }
+    }
+  }
+
+  return { tiers, dressing, faces, faceColumns, railColumns, treadColumns, unplaced };
+}
+
 /**
  * Order a set of columns into 4-connected chains a sweep can follow.
  *
@@ -2403,6 +2919,17 @@ function orient(
   above: number,
   street: Uint8Array,
   occupied: Uint8Array,
+  /**
+   * What counts as "the ground this course holds", when it is not the upper
+   * platform.
+   *
+   * A tier of a stack ({@link buildTieredSeam}) holds its own tread rather than
+   * the platform at the top of the seam, so the side the verge belongs on is a
+   * different set of columns. Omitted — which is every call the single-wall path
+   * makes — the test is the one it always was, character for character, so the
+   * shipped world does not move.
+   */
+  holds?: (x: number, z: number) => boolean,
 ): Vec2[] {
   const path = [...chain];
   if (path.length < 2) return path;
@@ -2415,7 +2942,9 @@ function orient(
     // the setback both lanes can be on it, and the verge belongs on the side
     // that is walkable rather than on the side the carriageway owns.
     const free = street[k] !== 1 && occupied[k] !== 1;
-    if (levels.at(column.x, column.z) === above && free) onPlatform++;
+    const own =
+      holds === undefined ? levels.at(column.x, column.z) === above : holds(column.x, column.z);
+    if (own && free) onPlatform++;
     else off++;
   }
   return off > onPlatform ? [...path].reverse() : path;

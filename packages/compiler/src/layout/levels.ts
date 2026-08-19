@@ -29,6 +29,7 @@
 
 import type { Point2, Rect } from "./frames.js";
 import type { FormBench } from "./forms/types.js";
+import { SEAM_TIERS } from "./types.js";
 
 /** No platform covers this column. */
 export const NO_PLATFORM = -1;
@@ -49,13 +50,19 @@ export interface GroundLevels {
 /**
  * How the ground gets from one platform down to the next.
  *
+ * `"tiered"` is `docs/GROUND-UNIFICATION-v0.md` §4.1 S2's: a drop past
+ * {@link RETAIN_MAX} is not a face a wall refuses, it is `ceil(drop / RETAIN_MAX)`
+ * faces stacked with a tread between them ({@link tiersOf}). It is what rule 5
+ * returns instead of `"replan"` once {@link SEAM_TIERS} is on, and
+ * `structures/retaining.ts`'s `buildTieredSeam` is what builds it.
+ *
  * `"rock"` is `docs/SITE-PLAN-v0.md` §5.4's: an **uphill cut** nothing is
  * pressing against is exposed rock, made of `ground.stone` — the terrain pass's
  * own deep-subsurface symbol, so a cut face and the natural cliff beside it are
  * made of the same thing. Nothing is built there and no level moves; the finish
  * (`structures/retaining.ts`'s `finishCutFaces`) states what it is made of.
  */
-export type SeamTreatment = "kerb" | "retaining" | "bank" | "built" | "rock";
+export type SeamTreatment = "kerb" | "retaining" | "bank" | "built" | "tiered" | "rock";
 
 /** Where two platforms touch, and how the ground gets between them. */
 export interface LevelSeam {
@@ -467,6 +474,17 @@ export interface EdgeContext {
    * much of the edge* it presses on, and rule 3 reads both.
    */
   readonly pressedShare: number;
+  /**
+   * Whether rule 5 may answer a tall fill face with a **tier stack** (S2) rather
+   * than with `"replan"`.
+   *
+   * Defaults to {@link SEAM_TIERS}, the compile-time flag 11F flips on Kai's
+   * walk verdict. The field exists for the reason `PlatformInput.tiered` exists
+   * one file over: a test must be able to exercise the flag-on answer without
+   * flipping a constant the whole compiler reads, and a caller that wants the
+   * shipped answer says nothing.
+   */
+  readonly tiered?: boolean;
 }
 
 /** §5.2 rule 2's threshold — `structures/retaining.ts`'s `RETAIN_BUILT_SHARE`. */
@@ -484,6 +502,181 @@ export const BUILT_SHARE = 0.5;
  * being *used* rather than crossed.
  */
 export const EDGE_PRESSED_SHARE = 0.25;
+
+/* -------------------------------------------------------------------------- */
+/* the tier stack — `docs/GROUND-UNIFICATION-v0.md` §4.1 S2–S5, §4.2           */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The tallest **face** one tier of a stack presents — {@link RETAIN_MAX}, under
+ * the name S2 gives it.
+ *
+ * > **`RETAIN_MAX` is a ceiling on a face, not on a drop.** (S2)
+ *
+ * The number is unchanged and means exactly what `RETAIN_MAX`'s own comment
+ * always said it meant: the tallest masonry face that reads as *built* rather
+ * than as a cliff with a coping on it. What changes is the question it answers.
+ * It used to answer *"is this drop buildable"*, and a drop past it fell through
+ * to a 45° ramp of raw earth (§4.0a M3); it now answers *"how tall may one face
+ * of the stack be"*, and the drop is served by as many faces as it takes.
+ */
+export const SEAM_TIER_FACE = RETAIN_MAX;
+
+/**
+ * How many faces a stack may have (§4.1 S3).
+ *
+ * > **A seam whose drop needs more than three faces is not served by a taller
+ * > stack; it is fed back to the level election, which gives one of the two
+ * > platforms its level back.**
+ *
+ * Three, so the stack serves eighteen blocks — "a three-storey retained face,
+ * and the most a town builds without becoming a dam". Every one of Troy's
+ * tallDrop seams is a drop of 8 or 9 (§4.0), which is two tiers, so three is the
+ * measured answer with room to spare.
+ *
+ * **Pinned, not measured: §10.6's recommendation, and Kai's on the 11F walk** —
+ * three tiers (18 blocks) or two (12); two dissolves more levels and ships
+ * flatter quarters. It is one constant and one recompile.
+ *
+ * `layout/platforms.ts` carries a module-local copy of this number
+ * (`DISSOLVE_DROP_MAX = SEAM_TIER_MAX · RETAIN_MAX`) written by wave 11C before
+ * this export existed, with a comment saying to replace it with the import the
+ * moment it does. It does, and the two agree by test.
+ */
+export const SEAM_TIER_MAX = 3;
+
+/**
+ * Columns of **tread** between two faces of a `terraced` stack (§4.1 S4).
+ *
+ * Three, not {@link BENCH_TREAD}'s two: "two columns of soil between two faces
+ * of earth is a bank profile, and a tread you are meant to stand on with a
+ * two-column balustraded ledge is a parapet walk nobody asked for. Three is the
+ * width the flora pass can plant and a body can turn on."
+ *
+ * **Pinned, not measured: §10.7's recommendation** — 3 with {@link SEAM_SETBACK}
+ * 1, and the pair is the whole of the hill-town-vs-citadel look. Both are Kai's
+ * on the 11F walk.
+ */
+export const SEAM_TREAD = 3;
+
+/**
+ * Columns of **setback** between two faces of a `revetted` stack (§4.1 S5).
+ *
+ * One: "one column of setback per tier is what makes a battered wall read as one
+ * wall rather than as a staircase" (§10.7). It is also what makes the revetted
+ * dressing the structural fallback S5 needs — a stack of `n` tiers costs
+ * `n · (1 + SEAM_SETBACK)` columns of run against the terraced stack's
+ * `n · (1 + SEAM_TREAD)`, so the geometry never fails for want of ground, it
+ * only changes what it is made of.
+ */
+export const SEAM_SETBACK = 1;
+
+/**
+ * How a stack is dressed (§4.1 S5) — **one arithmetic, two dressings**.
+ *
+ * - `"revetted"` — {@link SEAM_SETBACK}-column setbacks, and the stack reads as
+ *   one battered wall. What a citadel face pressed on both sides by construction
+ *   gets, which is what a great wall with setbacks is.
+ * - `"terraced"` — {@link SEAM_TREAD} columns of the theme's `ground.bank` earth
+ *   per tread, plantable, and the stack reads as a hill town's terraces. What a
+ *   mid-town face with open hillside beyond it gets.
+ */
+export type SeamDressing = "revetted" | "terraced";
+
+/** One face of a stack, and the ground behind it. */
+export interface SeamTier {
+  /** Blocks of fall this tier's face presents. Never past {@link SEAM_TIER_FACE}. */
+  readonly face: number;
+  /** Columns of the tier's own ground behind the face — the dressing's tread. */
+  readonly tread: number;
+}
+
+/**
+ * Faces a drop of `drop` needs — S2's `ceil(drop / RETAIN_MAX)`, and the only
+ * quantity {@link SEAM_TIER_MAX} is ever compared against. Dressing-independent:
+ * how tall the faces are is arithmetic, what they are made of is S5.
+ */
+export function tierCountOf(drop: number): number {
+  return drop <= 0 ? 0 : Math.ceil(drop / SEAM_TIER_FACE);
+}
+
+/** Columns of tread a dressing spends per tier. */
+export function treadOf(dressing: SeamDressing): number {
+  return dressing === "revetted" ? SEAM_SETBACK : SEAM_TREAD;
+}
+
+/**
+ * Columns of run a stack of `tiers` tiers reserves, as S5 prices it:
+ * `tiers · (1 + tread)` — one column of face plus the tread behind it, per tier.
+ *
+ * The construction spends at most this (its topmost tread is the upper platform
+ * the stack holds, which the stack does not have to buy), so a stack that fits
+ * this budget always fits.
+ */
+export function tieredRun(tiers: number, dressing: SeamDressing): number {
+  return tiers * (1 + treadOf(dressing));
+}
+
+/**
+ * A drop, as the stack that serves it — §4.2's arithmetic, verbatim.
+ *
+ * ```
+ * n     = ceil(drop / RETAIN_MAX)              // S2
+ * if n > SEAM_TIER_MAX -> "replan"             // S3
+ * faces = drop split as evenly as possible, tallest at the BOTTOM
+ * tread = revetted ? SEAM_SETBACK : SEAM_TREAD // S5
+ * ```
+ *
+ * **Tallest at the bottom** because that is how a retained hillside is actually
+ * built and how it reads: the load is at the base. A drop of 8 comes back as
+ * faces of 4 and 4; a drop of 11 as 6 and 5; a drop of 14 as 5, 5, 4.
+ *
+ * Index 0 is the **bottom** tier, so the tier levels are a running sum from the
+ * lower platform's floor and the last one lands exactly on the upper platform.
+ *
+ * `"replan"` past {@link SEAM_TIER_MAX} tiers is S3: the answer is not a taller
+ * stack, it is that the *election* was wrong, and `layout/platforms.ts`'s
+ * dissolve rule is the caller that can act on it.
+ */
+export function tiersOf(drop: number, dressing: SeamDressing): readonly SeamTier[] | "replan" {
+  if (drop <= 0) return [];
+  const n = tierCountOf(drop);
+  if (n > SEAM_TIER_MAX) return "replan";
+  const tread = treadOf(dressing);
+  const base = Math.floor(drop / n);
+  // The remainder, spent one block at a time from the bottom up: that is what
+  // "as evenly as possible, tallest at the bottom" means as arithmetic, and it
+  // keeps every face within one block of every other.
+  const tall = drop % n;
+  const out: SeamTier[] = [];
+  for (let k = 0; k < n; k++) out.push({ face: k < tall ? base + 1 : base, tread });
+  return out;
+}
+
+/**
+ * Which dressing a stack gets — S5's choice, and the *only* thing that differs
+ * between a citadel's great wall and a hill town's terraces.
+ *
+ * Two clauses, in order:
+ *
+ * 1. **Pressure.** At or above {@link EDGE_PRESSED_SHARE} the ground beyond the
+ *    face is being used rather than crossed, so the stack is `revetted`. This is
+ *    the same threshold and the same argument rule 3 already makes about walls
+ *    against banks, one construction over.
+ * 2. **Room.** Below it the stack wants to be `terraced`, and a terraced stack
+ *    needs {@link tieredRun}'s columns of hillside to step down. Where
+ *    `availableRun` cannot pay, the stack is `revetted` instead — S5's
+ *    structural fallback, which is why the geometry never fails for want of
+ *    ground.
+ */
+export function seamDressing(
+  pressedShare: number,
+  availableRun: number,
+  tiers: number,
+): SeamDressing {
+  if (pressedShare >= EDGE_PRESSED_SHARE) return "revetted";
+  return availableRun >= tieredRun(tiers, "terraced") ? "terraced" : "revetted";
+}
 
 /** A treatment, or the planner's instruction to go back and claim less ground. */
 export type EdgeChoice = SeamTreatment | "replan";
@@ -543,10 +736,17 @@ export function treatmentForEdge(ctx: EdgeContext): EdgeChoice {
   // 4. A wall shorter than the tallest wall we build is a buttress nobody asked
   //    for — `MIN_RETAIN_RUN`'s own argument, unchanged.
   if (ctx.run < MIN_RETAIN_RUN) return soft;
-  // 5. Taller than any wall we build. A fill face this tall is a terrace that
-  //    claimed ground it should not have and the planner can still act on it; a
-  //    cut face this tall is a cliff, which is what a hillside is made of.
-  if (ctx.drop > RETAIN_MAX) return ctx.side === "fill" ? "replan" : soft;
+  // 5. Taller than any wall we build — **one face**. A fill face this tall is
+  //    served by a stack of them (S2): `ceil(drop / RETAIN_MAX)` faces, none
+  //    past the ceiling, with a tread between. Only past `SEAM_TIER_MAX` tiers
+  //    is the answer that the *election* was wrong, which is what `"replan"`
+  //    has always meant and now finally has a caller for (S3). A cut face this
+  //    tall is a cliff, which is what a hillside is made of, and is unchanged.
+  if (ctx.drop > RETAIN_MAX) {
+    if (ctx.side !== "fill") return soft;
+    if ((ctx.tiered ?? SEAM_TIERS) && tierCountOf(ctx.drop) <= SEAM_TIER_MAX) return "tiered";
+    return "replan";
+  }
   // 6. No terrace left once the transition has taken its run.
   if (ctx.depthAfter < MIN_EDGE_DEPTH) return "replan";
   // 7. The district has spent its masonry.

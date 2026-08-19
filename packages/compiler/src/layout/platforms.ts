@@ -35,21 +35,9 @@ import type { HeightField } from "@terrainist/stdlib";
 import { FLOOR_HEIGHT } from "./district.js";
 import type { Rect } from "./frames.js";
 import type { FormBench } from "./forms/types.js";
-import { RETAIN_MAX } from "./levels.js";
+import { RETAIN_MAX, SEAM_TIER_MAX } from "./levels.js";
 import { maskRuns } from "./masks.js";
 import { SEAM_TIERS } from "./types.js";
-
-/**
- * The tallest seam the tier stack can serve, in faces
- * (`docs/GROUND-UNIFICATION-v0.md` §4.1 S3).
- *
- * Module-local rather than imported while `layout/levels.ts` belongs to the
- * tier-stack wave: the number is the design's `SEAM_TIER_MAX = 3` and this
- * declaration is to be replaced by the import the moment `levels.ts` exports
- * it. Nothing outside this file reads it, so the two cannot disagree in a way
- * that compiles.
- */
-const SEAM_TIER_MAX = 3;
 
 /**
  * S6 rule 3's threshold: a platform pair whose seam would need more faces than

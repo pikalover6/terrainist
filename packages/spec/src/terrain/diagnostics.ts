@@ -423,6 +423,25 @@ export const TERRAIN_DIAGNOSTICS = {
    */
   ROAD_BERM_CLAMPED: "LOAM-T239",
   /**
+   * A block was deeper than two rows of frontage reach across, and an alley was
+   * cut through it.
+   *
+   * `subdivide` cuts **rim** frontage — one lot depth against each side that has
+   * a street behind it — so a block whose short axis is past
+   * `2 · LOT_DEPTH + MIN_COURT_SIDE` keeps a core that is not a courtyard but a
+   * field: land inside the fabric that no lot can ever be cut from. The forms
+   * that split a domain (`grown`) bound a leaf's *long* axis and say nothing
+   * about this, so the compiler adds the street the fabric did not: a `lane`
+   * through the block's middle, connected at both ends, carrying a real segment
+   * id so the lots it creates front something.
+   *
+   * A note: the repair is the intended one and it changes nothing the author
+   * wrote. It is reported because an alley the document did not ask for *is* a
+   * street in the finished world, and because the count is the measurement that
+   * says a quarter's `blockSize` and its form are pulling against each other.
+   */
+  DISTRICT_BLOCK_ALLEY: "LOAM-T240",
+  /**
    * A rolled lot's decay was **refused whole** (RUINS-PLAN §5.7): an open
    * interior cell was still unreachable from the door after the rubble that
    * sealed it had been withdrawn, so the **intact** shell was built instead.
@@ -643,6 +662,48 @@ export const TERRAIN_DIAGNOSTICS = {
    * the two answers the ground got.
    */
   RETAINING_REFUSED: "LOAM-W411",
+  /**
+   * **The served seam** (`docs/GROUND-UNIFICATION-v0.md` §4.1 S1) — once per
+   * quarter, what every seam *became*: walls, tier stacks (revetted or
+   * terraced), banks, kerbs, and the seams a building already stood on.
+   *
+   * The reversal `LOAM-W411` needed. Fifty-six warnings saying "we did the other
+   * thing" is a report nobody can act on; one note saying "12 walls, 6 stacks,
+   * 3 banks, 41 absorbed" is. It is a note and enters no feedback set for the
+   * `BIOME_CLAMPED` reason: it fires on every stepped quarter, and a code that
+   * fires on every world costs money in the authoring loop and buys an invented
+   * change (§13.6).
+   *
+   * Silent until the tier stack is switched on: while `SEAM_TIERS` is false the
+   * seam accounting is the same accounting `LOAM-W411` reports, so saying it
+   * twice would only move report bytes. `LOAM-W411` is retired when the flag
+   * flips, not before — the warning and the note never both describe one seam.
+   */
+  SEAM_SERVED: "LOAM-I412",
+  /**
+   * A seam whose chosen treatment could not be **placed** — a street, a
+   * footprint or water owns every column it would have used
+   * (`docs/GROUND-UNIFICATION-v0.md` §4.1 S1).
+   *
+   * The only honest refusal left once every drop has an answer. A warning rather
+   * than a note precisely because it is rare: under S1 a seam leaves the pass
+   * with a built treatment, so a seam that did not is news.
+   */
+  SEAM_UNSERVED: "LOAM-W413",
+  /**
+   * **S11's measurement, and it moves nothing.** A fortification course or an
+   * `infra.entry` ring whose fill stands as a face across a platform boundary:
+   * `structures/walls.ts` sweeps its own 1-Lipschitz datum and fills each column
+   * down to ground, so where a circuit crosses a level change the wall material
+   * *is* the face — the eight sheer faces of drop 14 the Troy audit attributed
+   * to walls (§4.1 S11).
+   *
+   * Names how many crossings and the deepest one. Promoting a circuit's crossing
+   * to a tier stack is a real feature and is deliberately **not** built on this
+   * measurement's evidence: §10.8 decides it on the walk with the number in
+   * hand, exactly as WP-10C does for viaduct promotion. Measured, not moved.
+   */
+  WALL_COURSE_CROSSES_SEAM: "LOAM-I415",
 
   // --- the SweptProfile engine (Phase 0 contract 3) ------------------------
   /** A swept run was refused whole: unclimbable, or past the fill cap. */
@@ -852,6 +913,30 @@ export const TERRAIN_DIAGNOSTICS = {
    * written before the settlement and sized to it.
    */
   SETTLEMENT_LAND_SHORT: "LOAM-W526",
+  /**
+   * A **walled** quarter whose blocks are mostly empty ground.
+   *
+   * The sibling of {@link SETTLEMENT_LAND_SHORT}, one scale in: that code
+   * catches an envelope seated on water, this one catches an envelope that is
+   * dry, subdivided, walled — and still not a town. The walked defect (Kai,
+   * `trojan_horse_in_troy`, twice): a `grown` × `medium` quarter whose leaf
+   * blocks came out up to 1.8 · `blockSize` across, so `subdivide` cut rim
+   * frontage strips one `LOT_DEPTH` deep and left a core half the block wide
+   * that was never even a lot. Built ground came to 0.34 of the block land
+   * against 0.61 in a walked-good grid quarter — the wall enclosed a field.
+   *
+   * Measured only where the measurement means something: a quarter that
+   * declared `params.walls`, or whose intent named
+   * `character.fortification: "walled"`. A wall is a claim that what is inside
+   * it is dense; an unwalled hamlet at the same coverage is a hamlet.
+   *
+   * **Report-only** and never fatal — gate leniency is permanent
+   * (LOAM-SPEC §15.2), and a deliberate citadel around a parade ground is a
+   * legal world. It earns a code because "the walls are up and there is nothing
+   * behind them" is invisible in every other statistic the report carries and
+   * cost two walks to find.
+   */
+  WALLED_QUARTER_SPARSE: "LOAM-W527",
   /**
    * A wall run crossed ground low enough that its footing became the structure.
    *
