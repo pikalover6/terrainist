@@ -35,6 +35,8 @@ const T111 = diag("LOAM-T111", "FLOATING_VEGETATION", "error");
 const E405 = diag("LOAM-E405", "NODE_DROPPED");
 const W407 = diag("LOAM-W407", "CONSTRAINT_NOT_IMPLEMENTED");
 const BAD = diag("LOAM-T104", "PARAM_OUT_OF_RANGE", "error");
+/** A warning the author *must* act on: the city seated on open water. */
+const W526 = diag("LOAM-W526", "SETTLEMENT_LAND_SHORT");
 /** A note the author *can* act on: the cove that missed the coast. */
 const T113 = diag("LOAM-T113", "CARVE_DRY", "note");
 
@@ -96,6 +98,15 @@ describe("feedbackDiagnostics", () => {
     // is precisely what a revision round exists to repair.
     expect(feedbackDiagnostics([T113]).map((d) => d.code)).toEqual(["LOAM-T113"]);
     expect(renderCompileFeedback(report([T113])) ?? "").toContain("CARVE_DRY");
+  });
+
+  it("sends the land budget back — the whole reason that code exists", () => {
+    // LOAM-W526 is never fatal (leniency is permanent) and changes no block, so
+    // outside this set it would accomplish nothing at all: the walked failure is
+    // a metropolis authored over open ocean, and only the *document* can raise
+    // the land. If this assertion ever goes red the diagnostic is decorative.
+    expect(feedbackDiagnostics([W526]).map((d) => d.code)).toEqual(["LOAM-W526"]);
+    expect(renderCompileFeedback(report([W526])) ?? "").toContain("SETTLEMENT_LAND_SHORT");
   });
 
   it("never sends a physics-lint failure back to the model", () => {

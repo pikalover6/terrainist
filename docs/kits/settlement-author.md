@@ -217,6 +217,33 @@ Rules:
 - `basin` with `"water": true` is how you make an **inland lake**; it only fills
   when the rim closes completely, otherwise you get a warning and a dry pit.
 
+### The land comes first, and it is sized to the settlement
+
+A city cannot stand on water. Write the landmass **before** the settlement and
+make it big enough for the envelope you are about to ask for: a `city` with a
+`340 × 240` envelope needs roughly that much dry, walkable ground under it, and
+a `plateau` of `radius: 150` on a seabed does not supply it. The failure is
+quiet and total — the compiler places the node anyway, the district fabric fits
+what buildings it can onto the scraps that are above water, and the world ships
+as open ocean with three houses in it.
+
+The two settings that sink a world are `baseHeight` and `continentalness`. A
+`baseHeight` **below** `seaLevel` means the region is ocean by default and only
+the noise peaks and your own `raise` edits come up for air; add
+`continentalness` on top of that and most of the map is sea. If the prompt says
+*coastal*, *harbour*, *bay* or *island*, keep `baseHeight` **above** `seaLevel`
+(say `seaLevel + 6..14`) and carve the water in with a `valley`/`basin` edit or
+a modest `seaFraction` — do not start underwater and try to raise the city back
+out. Words like *deep water*, *open ocean* and *the abyss* describe a region
+with very little land in it, so if the same prompt also asks for a metropolis,
+the metropolis is what the terrain has to be built for.
+
+If you get `LOAM-W526 SETTLEMENT_LAND_SHORT` back, this is what happened: the
+message names how many columns the envelope covers and how many of them were
+buildable. Fix it in the terrain first — raise `baseHeight` above `seaLevel`,
+widen the `island`/`plateau` under the settlement, or drop the `seaFraction` —
+and only shrink `envelope.size` if a small settlement was what you meant.
+
 ---
 
 ## 5. `terrain.climate@0` — temperature and humidity

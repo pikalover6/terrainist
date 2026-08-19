@@ -828,6 +828,31 @@ export const TERRAIN_DIAGNOSTICS = {
    */
   CONSTRAINT_TARGET_UNRESOLVED: "LOAM-W523",
   /**
+   * A settlement envelope was seated on ground that is mostly **not land**.
+   *
+   * The walked defect (Kai, `modern_hellenist_invasion`): the document asked
+   * for "a grand coastal metropolis with a wide harbour", authored a full
+   * `city` node with a 340 × 240 envelope — and authored a heightfield that
+   * left 7% of the region above sea level. The world ships as open ocean with
+   * two islets and three buildings on them.
+   *
+   * Nothing in the compile said so, and the reason is precise:
+   * `groundFeasible` reads a ground-scale footprint's **median**, so an
+   * envelope that is nine-tenths sea is feasible as long as its middle column
+   * is dry. No candidate is vetoed, no rung of the ladder is climbed, `E406`
+   * never fires, and the city is "placed" over water. The measurement this
+   * code carries — buildable columns inside the envelope, against the columns
+   * the envelope asked for — is the only one that can tell that world from a
+   * city on a plain.
+   *
+   * **Never fatal**, and it changes no block: gate leniency is permanent
+   * (LOAM-SPEC §15.2) and a deliberate hamlet on a rock is a legal world. It
+   * is in the authoring feedback set instead, because the repair is one the
+   * *document* can make and the model will not guess it: the landmass is
+   * written before the settlement and sized to it.
+   */
+  SETTLEMENT_LAND_SHORT: "LOAM-W526",
+  /**
    * A wall run crossed ground low enough that its footing became the structure.
    *
    * A curtain column extrudes its footing straight down to the ground, up to

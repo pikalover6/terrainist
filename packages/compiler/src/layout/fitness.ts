@@ -171,6 +171,61 @@ export function footprintStats(
   };
 }
 
+/** How much of a rectangle is ground a settlement could actually stand on. */
+export interface BuildableCount {
+  /** Columns in the rectangle, including any that fall outside the region. */
+  readonly columns: number;
+  /** Of those, the ones that are dry, unhazarded, and not a cliff. */
+  readonly buildable: number;
+  /** Of those, the ones above the water floor, whatever their slope. */
+  readonly dry: number;
+}
+
+/**
+ * Count the columns of `rect` a settlement could build on.
+ *
+ * Deliberately the **same four tests** {@link terrainFeasible} applies to a
+ * footprint — off-map, hazard, water floor, slope — applied one column at a
+ * time instead of to the extrema of a whole box. There is no second notion of
+ * "buildable" here and there must never be one: the point of this count is to
+ * say, in the solver's own terms, how much of the ground the solver would
+ * accept actually exists.
+ *
+ * The reason it is a *column* count rather than a candidate count is the walked
+ * failure it exists for. `groundFeasible` reads a district's **median**, so a
+ * city envelope that is nine-tenths open ocean is perfectly "feasible" as long
+ * as the middle column is dry — the candidate scan has nothing to report, and
+ * the world ships as a bay with three buildings in it. Counting columns is the
+ * only measurement that can tell that world from a city on a plain.
+ */
+export function buildableColumns(
+  field: HeightField,
+  classification: Classification,
+  rect: Rect,
+  hazardMask: Uint8Array | undefined,
+  minGroundY: number,
+  maxSlopeLimit: number,
+): BuildableCount {
+  const region = field.region;
+  const columns = Math.max(0, rect.x1 - rect.x0 + 1) * Math.max(0, rect.z1 - rect.z0 + 1);
+  let buildable = 0;
+  let dry = 0;
+  for (let z = rect.z0; z <= rect.z1; z++) {
+    for (let x = rect.x0; x <= rect.x1; x++) {
+      const i = x - region.x0;
+      const j = z - region.z0;
+      if (i < 0 || j < 0 || i >= region.width || j >= region.depth) continue;
+      const idx = j * region.width + i;
+      if (hazardMask !== undefined && hazardMask[idx] === 1) continue;
+      if ((field.values[idx] as number) < minGroundY) continue;
+      dry++;
+      if ((classification.slopes[idx] as number) > maxSlopeLimit) continue;
+      buildable++;
+    }
+  }
+  return { columns, buildable, dry };
+}
+
 /**
  * The soft terrain cost of a footprint, in `[0, 1]`.
  *

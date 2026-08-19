@@ -8,7 +8,8 @@
  *    describe but not deliver: a basin whose rim never closes (`LOAM-T105`), a
  *    river with no sea to reach (`LOAM-T112`), a cove aimed away from the coast
  *    the seed produced (`LOAM-T113`), a building the road network
- *    cannot get to (`LOAM-T209`), and every rung of the solver's relaxation
+ *    cannot get to (`LOAM-T209`), a city envelope that turned out to be mostly
+ *    open water (`LOAM-W526`), and every rung of the solver's relaxation
  *    ladder — a demoted constraint, a dropped node, an unsatisfiable set. Each
  *    of these has a fix hint written for exactly this purpose. These go back.
  * 2. **Informational.** `LOAM-T208` says the road network is routed after
@@ -42,6 +43,13 @@ export const FEEDBACK_CODES: readonly string[] = [
   // document fix, and the one an authoring model gets wrong by improvising the
   // syntax, so it is worth the revision round.
   "LOAM-W519", // LANDMARK_CONSTRAINT_IGNORED
+  // A settlement envelope seated on ground that is mostly not land. The whole
+  // reason this code exists is this list: it is never fatal (leniency is
+  // permanent — a hamlet on a rock is a legal world), it changes no block, and
+  // the only thing it can accomplish is telling the author to write the
+  // landmass before the city and size it to the city. Outside the feedback set
+  // it accomplishes nothing at all.
+  "LOAM-W526", // SETTLEMENT_LAND_SHORT
 ];
 
 /** Codes that mean the compiler misbehaved, not the document. */

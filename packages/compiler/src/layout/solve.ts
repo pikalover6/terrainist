@@ -64,6 +64,7 @@ import {
 } from "./cost.js";
 import { STEP_RELIEF, reliefOf } from "./district.js";
 import {
+  buildableColumns,
   footprintStats,
   groundFeasible,
   terrainCost,
@@ -292,6 +293,11 @@ export function solveLayout(request: LayoutRequest): LayoutResult {
     });
     if (abandoned !== undefined) diagnostics.push(abandoned);
   }
+
+  // --- the land budget (LOAM-W526) -----------------------------------------
+  // Also after the improvement rounds, and for the same reason: the envelope
+  // measured has to be the one the world ships with.
+  diagnostics.push(...landBudgetDiagnostics(nodes, placed, request, frame));
 
   // --- constraints that bound to nothing at all (LOAM-W523) ----------------
   // Said once per (node, constraint), here rather than in `evaluateConstraint`:
@@ -883,6 +889,129 @@ function unsatisfiableDiagnostic(
     `no candidate satisfies this node's hard constraints even after demotion; it was placed at the least-violating position${ground}`,
     "loosen the constraints that fight each other — the solver report lists each one's final cost, and the largest is usually the one to soften",
   );
+}
+
+/* -------------------------------------------------------------------------- */
+/* the land budget (LOAM-W526)                                                 */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Fraction of a settlement envelope that must be buildable ground before the
+ * compile stops arguing about it.
+ *
+ * Derived from the walked deck rather than chosen: measured over the archived
+ * candidates, a settlement whose envelope is at least this much land is one Kai
+ * walked and accepted (Troy's citadel 0.99, the padfix decks 0.72–0.95, every
+ * `examples/` world 1.00), and the ones below it are the two he rejected — the
+ * Hellenist metropolis at 0.20 and the pirate/unicorn islands at 0.44/0.51.
+ * There is real daylight either side of 0.6, which is the only reason a single
+ * number is honest here.
+ *
+ * The rule it encodes: **half your envelope must be somewhere to stand.** A
+ * quarter with a bay in the corner and a crag along one edge is a good town;
+ * a quarter that is mostly bay is a bay.
+ */
+const LAND_BUDGET_FLOOR = 0.6;
+
+/**
+ * The fraction below which the shortfall is called *severe* in the message.
+ *
+ * Nothing branches on it but the wording — there is one code, one severity,
+ * and one fix hint — but "a fifth of the envelope is land" and "half of it is"
+ * are different worlds and the author is told which one they wrote.
+ */
+const LAND_BUDGET_SEVERE = 0.35;
+
+/**
+ * `LOAM-W526`: what the settlement asked for against what the ground gave it.
+ *
+ * The supply side is {@link buildableColumns}, i.e. the solver's own four
+ * ground tests one column at a time — see that function for why a column count
+ * and not a candidate count. Two rectangles are measured: the envelope the node
+ * actually got, and the whole solve frame. The second is not a threshold, it is
+ * the *fix*: a world with plenty of land elsewhere wants the settlement moved,
+ * and a world with no land anywhere wants the landmass rewritten, and those are
+ * opposite repairs that look identical from inside the envelope.
+ */
+function landBudgetDiagnostics(
+  nodes: readonly LayoutNodeInput[],
+  placed: ReadonlyMap<string, Placement>,
+  request: LayoutRequest,
+  frame: Frame,
+): readonly LoamDiagnostic[] {
+  const out: LoamDiagnostic[] = [];
+  // One scan of the frame per slope limit in play, not one per node: the answer
+  // does not depend on the node, and a district envelope is a quarter of a
+  // square kilometre.
+  const reachCache = new Map<number, ReturnType<typeof buildableColumns>>();
+  const floorY = request.seaLevel + MIN_FREEBOARD;
+
+  for (const node of nodes) {
+    // Settlement-bearing nodes only. A `generator` node is a building: it
+    // stands on the land it found, and the vetoes already answer for it.
+    if (node.kind !== "city" && node.kind !== "district") continue;
+    const placement = placed.get(node.id);
+    if (placement === undefined) continue;
+
+    const slopeLimit = explicitMaxSlopeOf(node) ?? CITY_MAX_SLOPE;
+    const here = buildableColumns(
+      request.field,
+      request.classification,
+      placement.footprint,
+      request.hazardMask,
+      floorY,
+      slopeLimit,
+    );
+    if (here.columns === 0) continue;
+    const share = here.buildable / here.columns;
+    if (share >= LAND_BUDGET_FLOOR) continue;
+
+    let reach = reachCache.get(slopeLimit);
+    if (reach === undefined) {
+      reach = buildableColumns(
+        request.field,
+        request.classification,
+        frameRect(frame),
+        request.hazardMask,
+        floorY,
+        slopeLimit,
+      );
+      reachCache.set(slopeLimit, reach);
+    }
+
+    const kind = node.kind === "city" ? "city" : "quarter";
+    const [w, , d] = placement.size;
+    const pct = (n: number, of: number) => Math.round((100 * n) / Math.max(of, 1));
+    // Water first when water is the story, slope first when slope is: the two
+    // repairs are different edits and the sentence should open with the one the
+    // author has to make.
+    const wet = here.columns - here.dry;
+    const steep = here.dry - here.buildable;
+    const because =
+      wet >= steep
+        ? `${pct(wet, here.columns)}% of it is under water (sea level ${request.seaLevel})`
+        : `${pct(steep, here.columns)}% of it is too steep to build on (past ${Math.round(slopeLimit)}°)`;
+    const elsewhere =
+      reach.buildable >= here.columns
+        ? `the region does hold ${reach.buildable} buildable columns in all (${pct(reach.buildable, reach.columns)}% of the map), so there is ground for it somewhere`
+        : `the whole region holds only ${reach.buildable} buildable columns (${pct(reach.buildable, reach.columns)}% of the map) — less than this one envelope asked for, so there is nowhere to move it to`;
+
+    out.push(
+      warning(
+        "SETTLEMENT_LAND_SHORT",
+        node.nodePath,
+        `this ${kind}'s ${w} × ${d} envelope covers ${here.columns} columns and only ${here.buildable} of them are buildable ground` +
+          ` (${Math.round(share * 100)}%${share < LAND_BUDGET_SEVERE ? ", nowhere near enough to seat a settlement" : ""}): ${because}. ` +
+          `The node was placed and its buildings were fitted into whatever land was left; ${elsewhere}`,
+        `a settlement needs land, and the land is written first: size the terrain to the settlement, not the other way round. ` +
+          `Raise the ground under it — a wider island/plateau/shelf edit, a higher "amount", a larger "radius" — until the envelope sits on real ground; ` +
+          `or move the ${kind} onto the land the region already has with an "at"/"zone" constraint; ` +
+          `or shrink "envelope.size" to the ground that is actually there. ` +
+          `"Deep water", "open ocean" and "a wide bay" are requests for a region with little land in it, and a ${kind} cannot stand on one`,
+      ),
+    );
+  }
+  return out;
 }
 
 /** `LOAM-W520`: a landmark seated on its coarse target, slope and all. */
