@@ -714,16 +714,25 @@ function settle(
 /**
  * Parcel edges the drop/run table answered with masonry (§5.3).
  *
- * `retaining` and `built` are the two masonry answers `treatmentForSeam` gives;
- * `kerb` and `bank` are the step and the slope a field edge is allowed to have,
- * and `rock` is the ground refusing to be a wall at all. A non-zero count on a
- * walked world is a bug in the gentle-ground scan, not in the resolver.
+ * `retaining`, `built` and `tiered` are the three masonry answers
+ * `treatmentForSeam` gives; `kerb` and `bank` are the step and the slope a field
+ * edge is allowed to have, and `rock` is the ground refusing to be a wall at
+ * all. A non-zero count on a walked world is a bug in the gentle-ground scan,
+ * not in the resolver.
+ *
+ * `"tiered"` joined the table at `SEAM_TIERS`
+ * (`docs/GROUND-UNIFICATION-v0.md` §4.1 S2) and it is masonry by every reading
+ * that matters here — a stack of retained faces is more wall on a field edge,
+ * not less. Left out, a tiered parcel edge would slip past the audit precisely
+ * when the flag that produced it was on; the treatment cannot be spelled at all
+ * with the flag off, so counting it is free until then.
  */
 function countWalls(transitions: readonly GroundTransition[], nodePath: string): number {
   const prefix = `${nodePath}#parcel_`;
   let walls = 0;
   for (const t of transitions) {
-    if (t.treatment !== "retaining" && t.treatment !== "built") continue;
+    if (t.treatment !== "retaining" && t.treatment !== "built" && t.treatment !== "tiered")
+      continue;
     if (t.aboveSource.startsWith(prefix) || t.belowSource.startsWith(prefix)) walls++;
   }
   return walls;

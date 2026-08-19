@@ -106,7 +106,9 @@ import { DISSOLVE_DROP_MAX, derivePlatforms, dissolveTallPairs } from "./platfor
 import { biasedMix } from "./mix-intent.js";
 import { LAYOUT_ROWS } from "./streets-intent.js";
 import type { Point2, Rect } from "./frames.js";
+import { walkLine } from "./forms/radial.js";
 import {
+  densify4,
   MAX_PRINCIPAL_STREETS,
   MIN_PRINCIPAL_STREETS,
   STREET_WIDTH,
@@ -4086,4 +4088,221 @@ export function medianGround(field: HeightField, rect: Rect): number {
   if (heights.length === 0) return 0;
   heights.sort((a, b) => a - b);
   return Math.round(heights[heights.length >> 1] as number);
+}
+
+/* -------------------------------------------------------------------------- */
+/* S9 — a served seam publishes its landings, and the stair belongs to the seam */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * One **landing** of a served seam — `docs/GROUND-UNIFICATION-v0.md` §4.1 S9.
+ *
+ * A tier stack's treads, and a wall's own top and foot, are the ground a body
+ * can stand on and walk off inside a seam. They are published rather than
+ * re-derived because the two consumers below cannot compute them: the stair
+ * derivation would have to re-run the stack's distance field, and the doorstep
+ * foot gate would have to guess a tread apart from a bank face by its height,
+ * which is exactly the guess S10 exists to remove.
+ *
+ * World columns, not region indices: the producer works in the plan region, the
+ * stair derivation works in the quarter's own bounds, and the foot gate works in
+ * the region again. One coordinate system all three already speak.
+ */
+export interface SeamLanding {
+  /**
+   * The landing's level, in the plan's own convention — the same number a
+   * `GroundClaim` carries and the same number the ground view reports, so a
+   * consumer compares it against `view.ground` without a conversion.
+   */
+  readonly y: number;
+  /** The landing's columns, ascending row-major over the plan region. */
+  readonly columns: readonly Point2[];
+}
+
+/**
+ * Every landing one served seam published, **bottom landing first**.
+ *
+ * A tier stack's is its foot, then one entry per tread, then the platform it
+ * holds; a single wall's is its foot and its top, which is the same list with
+ * nothing between. So `landings[0]` is always the low side and
+ * `landings[landings.length - 1]` always the high one, and a flight is derived
+ * from the two ends without knowing which construction served the seam.
+ */
+export interface SeamLandingStack {
+  /** `<nodePath>#tiers@<job>` — the producer's own claim source. */
+  readonly source: string;
+  readonly nodePath: string;
+  readonly landings: readonly SeamLanding[];
+}
+
+/** What a served seam publishes: `RetainingPassResult.landings` (S9). */
+export type SeamLandings = readonly SeamLandingStack[];
+
+/**
+ * Flights derived per quarter, at most — `docs/COURTYARDS-AND-LEVELS-v0.md`
+ * §3.5 step 2's cap, which has never had an implementation to bound.
+ *
+ * Twelve because `intersectionsOf` is O(n²) in segments and a quarter's graph is
+ * already tens of them; and because a quarter that needs more than twelve
+ * derived flights has a level election problem, not a stair problem, and S6's
+ * dissolve is the answer to that one.
+ */
+export const MAX_DERIVED_STAIRS = 12;
+
+/**
+ * How far from a landing a street column may stand and still be the thing the
+ * flight lands on.
+ *
+ * Six, `DOORSTEP_REACH`'s number for the same reason: past six columns the
+ * flight is not arriving at the street, it is a second street drawn beside it.
+ * Where a street is in reach the flight's path is carried onto it, so the tread
+ * law gets a **pin** at that end and the flight lands at the street's own level
+ * rather than at whatever the ground under its last tread happened to be.
+ */
+export const SEAM_STAIR_JOIN = 6;
+
+/** Everything {@link deriveSeamStairs} reads. */
+export interface SeamStairInput {
+  readonly nodePath: string;
+  /** {@link SeamLandings} — what the retaining pass published for this quarter. */
+  readonly landings: SeamLandings;
+  /** True on a column the quarter's street network already owns. */
+  readonly onStreet: (x: number, z: number) => boolean;
+  /**
+   * Per-district flag, defaulting to the compile-time {@link SEAM_TIERS}.
+   *
+   * The field exists for the reason `PlatformInput.tiered` exists: a test asks
+   * one quarter for the flag-on world without flipping the world's flag, which
+   * 11F does on a walk verdict and nothing else.
+   */
+  readonly tiered?: boolean;
+}
+
+/** What {@link deriveSeamStairs} cut. */
+export interface SeamStairResult {
+  /**
+   * The derived flights, as ordinary `role: "steps"` segments — appended to the
+   * quarter's graph **before surfacing**, which is the whole of S9's mechanism.
+   */
+  readonly segments: readonly StreetSegment[];
+  /** Flights cut. */
+  readonly cut: number;
+  /** Stacks the {@link MAX_DERIVED_STAIRS} cap refused a flight. */
+  readonly refused: number;
+  readonly diagnostics: readonly LoamDiagnostic[];
+}
+
+/**
+ * The landing column a flight starts or ends on: **the one nearest a street
+ * column**, and the street column it is nearest to.
+ *
+ * Row-major over the landing's own columns and ties broken on the first, which
+ * is the determinism rule every other seam walk in the compiler uses. The
+ * street search is a diamond of radius {@link SEAM_STAIR_JOIN} rather than a
+ * BFS because the answer only has to be *a* nearest street column, and Manhattan
+ * distance over a diamond is the same order as the reach it is capped at.
+ */
+function landingAnchor(
+  landing: SeamLanding,
+  onStreet: (x: number, z: number) => boolean,
+): { readonly at: Point2; readonly street: Point2 | null } | null {
+  let best: { at: Point2; street: Point2 | null } | null = null;
+  let bestDistance = Number.POSITIVE_INFINITY;
+  for (const column of landing.columns) {
+    for (let d = 0; d <= SEAM_STAIR_JOIN && d < bestDistance; d++) {
+      let found: Point2 | null = null;
+      for (let dz = -d; dz <= d && found === null; dz++) {
+        const dx = d - Math.abs(dz);
+        for (const sx of dx === 0 ? [0] : [-dx, dx]) {
+          const p = { x: column.x + sx, z: column.z + dz };
+          if (onStreet(p.x, p.z)) {
+            found = p;
+            break;
+          }
+        }
+      }
+      if (found === null) continue;
+      best = { at: column, street: found };
+      bestDistance = d;
+      break;
+    }
+    if (best === null) best = { at: column, street: null };
+  }
+  return best;
+}
+
+/**
+ * **S9** — one flight per served seam, registered as a street segment.
+ *
+ * The flight runs from the bottom landing to the top one, at the tread column
+ * nearest a street column on each side, carried onto those street columns where
+ * they are within {@link SEAM_STAIR_JOIN}. That is the whole derivation, and it
+ * deliberately adds **no stair code at all**: what comes back is an ordinary
+ * `role: "steps"` segment, so `structures/street-stairs.ts` lays it under its
+ * existing tread law (`need[k] = max(g[k] + 1, need[k+1] − 1)`) and refuses it
+ * whole where it cannot be made climbable. Half a staircase ending in a
+ * two-block hop is worse than no staircase, and that judgement already has one
+ * implementation.
+ *
+ * Pure and order-independent: the stacks arrive in the retaining pass's own
+ * row-major seam order, every anchor is the first column at the minimum
+ * distance, and the cap takes a prefix of that order. Empty — and allocating
+ * nothing — for every quarter whose seams published no landings, which is every
+ * quarter until {@link SEAM_TIERS} flips.
+ */
+export function deriveSeamStairs(input: SeamStairInput): SeamStairResult {
+  const empty = { segments: [], cut: 0, refused: 0, diagnostics: [] };
+  if (!(input.tiered ?? SEAM_TIERS)) return empty;
+  if (input.landings.length === 0) return empty;
+
+  const segments: StreetSegment[] = [];
+  let refused = 0;
+  for (const [n, stack] of input.landings.entries()) {
+    // A seam with one landing is a kerb or a face nothing stands on: there is
+    // nothing to climb between, and a one-landing "flight" is a paved patch.
+    if (stack.landings.length < 2) continue;
+    const first = stack.landings[0] as SeamLanding;
+    const last = stack.landings[stack.landings.length - 1] as SeamLanding;
+    if (first.columns.length === 0 || last.columns.length === 0) continue;
+    if (segments.length >= MAX_DERIVED_STAIRS) {
+      refused++;
+      continue;
+    }
+    const foot = landingAnchor(first, input.onStreet);
+    const head = landingAnchor(last, input.onStreet);
+    if (foot === null || head === null) continue;
+    if (foot.at.x === head.at.x && foot.at.z === head.at.z) continue;
+    const raw: Point2[] = [
+      ...(foot.street === null ? [] : walkLine(foot.street, foot.at)),
+      ...walkLine(foot.at, head.at),
+      ...(head.street === null ? [] : walkLine(head.at, head.street)),
+    ];
+    const path = densify4(raw);
+    if (path.length < 2) continue;
+    segments.push({
+      id: `sst${n}`,
+      kind: "lane",
+      width: STREET_WIDTH.lane,
+      path,
+      role: "steps",
+    });
+  }
+
+  const diagnostics: LoamDiagnostic[] = [];
+  if (segments.length + refused > 0) {
+    diagnostics.push(
+      note(
+        "SEAM_STAIR_CUT",
+        input.nodePath,
+        `${segments.length} flight(s) cut through the served seams of "${input.nodePath}" and registered as "steps" segments before surfacing` +
+          (refused === 0
+            ? ""
+            : `; ${refused} more stack(s) got none — the ${MAX_DERIVED_STAIRS}-flight cap`),
+        refused === 0
+          ? "No action needed."
+          : `No action needed, unless a platform came out unreachable on a walk: a quarter needing more than ${MAX_DERIVED_STAIRS} derived flights is stepping more times than its ground can carry, and "params.blockSize" is the knob that changes that.`,
+      ),
+    );
+  }
+  return { segments, cut: segments.length, refused, diagnostics };
 }

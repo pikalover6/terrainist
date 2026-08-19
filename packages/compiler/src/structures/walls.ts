@@ -104,6 +104,18 @@ export const WALL_FOOTING_MEAN_NOTE = 6;
 /** @see WALL_FOOTING_MEAN_NOTE */
 export const WALL_FOOTING_MAX_NOTE = 8;
 
+/**
+ * The step across a platform boundary at which the wall's own fill **is** the
+ * face — S11's bar (`docs/GROUND-UNIFICATION-v0.md` §4.1).
+ *
+ * Two, and it is the same two `STREET_STAIR_RAIL_DROP` uses: one block is a
+ * kerb, which every course crosses everywhere and which nobody would call a
+ * face. Two is the first drop a player can fall down, and the first at which a
+ * crossing reads as masonry standing in for a retaining wall that was never
+ * built there.
+ */
+export const WALL_SEAM_CROSS_DROP = 2;
+
 /** Columns a tower is across, and how far it stands proud of the wall-walk. */
 export const WALL_TOWER_SIDE = 5;
 export const WALL_TOWER_RISE = 4;
@@ -315,6 +327,24 @@ export interface WallPassInput {
   readonly existing?: readonly StructureBlock[];
   /** True on a carriageway column. Both the gate finder and an absolute veto. */
   readonly onRoad?: (x: number, z: number) => boolean;
+  /**
+   * **S11's one new input, and it moves nothing**
+   * (`docs/GROUND-UNIFICATION-v0.md` §4.1): the quarter's platform field, as the
+   * platform id under a column — `NO_PLATFORM` (`-1`) where the ground is nobody
+   * level's.
+   *
+   * The circuit is swept on its own 1-Lipschitz datum and each column is filled
+   * down to ground ({@link WALL_MAX_FILL}), so where it crosses a level change
+   * the wall material *is* the face. That is the eight sheer faces of drop 14
+   * the Troy audit attributed to walls, and `LOAM-I524 WALL_FOOTING_DEEP`
+   * already half-reported it on the same world. This measures it properly and
+   * says so, as `LOAM-I415`; **promoting a crossing to a tier stack is
+   * deliberately a later round** (§5 non-goal 12), decided on this number.
+   *
+   * Optional: absent, not one byte and not one report line changes, which is how
+   * every caller behaves that has no platform field to give.
+   */
+  readonly platformAt?: (x: number, z: number) => number;
 }
 
 /** One wall, as built. */
@@ -528,6 +558,21 @@ export function buildWalls(input: WallPassInput): WallPassResult {
     });
     if (footing !== undefined) diagnostics.push(footing);
 
+    // S11 — measured, not moved. Skipped whole when the caller handed over no
+    // platform field, which is every caller that has none: no allocation, no
+    // walk of the course, no report line.
+    if (input.platformAt !== undefined) {
+      const crossing = wallSeamCrossingNote({
+        nodePath: job.nodePath,
+        style: job.style,
+        courseColumns: course.path.length,
+        crossings: wallSeamCrossings(course.path, input.platformAt, (x, z) =>
+          inside(region, x, z) ? world.standY(x, z) : undefined,
+        ),
+      });
+      if (crossing !== undefined) diagnostics.push(crossing);
+    }
+
     walls.push({
       nodePath: job.nodePath,
       style: job.style,
@@ -690,6 +735,99 @@ export function roadMaskPredicate(
 ): (x: number, z: number) => boolean {
   return (x: number, z: number): boolean =>
     inside(region, x, z) && mask[index(region, x, z)] === 1;
+}
+
+/** What a course did where it crossed a platform boundary — S11's numbers. */
+export interface WallSeamCrossings {
+  /** Course columns whose next column is across a boundary and a face down. */
+  readonly crossings: number;
+  /** The tallest of those faces, in blocks. */
+  readonly deepest: number;
+  /** The longest unbroken run of crossing columns, in columns. */
+  readonly longest: number;
+}
+
+/**
+ * **S11's measurement** — where a fortification course's fill stands as a face
+ * across a platform boundary (`docs/GROUND-UNIFICATION-v0.md` §4.1).
+ *
+ * Two facts have to hold at a column for it to count, and they are deliberately
+ * different in kind. The first is a **boundary**: the column and the next one
+ * belong to different platforms, so the ground there is a seam and not a hill —
+ * *"a `retaining.seam` requires a seam"*, which is the note §3.1's forensics
+ * flagged for the `infra.entry` case. The second is a **face**: the two columns
+ * stand at least {@link WALL_SEAM_CROSS_DROP} apart, so the wall's own fill is
+ * spanning something a retaining wall would otherwise have held.
+ *
+ * Pure, closed over the course exactly as the sweep walks it, and it changes
+ * nothing: the wall is the wall it was. `undefined` from `standAt` — a column
+ * off the region, or one with no ground — is not a crossing, because a crossing
+ * needs two grounds to compare.
+ */
+export function wallSeamCrossings(
+  path: readonly CoursePoint[],
+  platformAt: (x: number, z: number) => number,
+  standAt: (x: number, z: number) => number | undefined,
+): WallSeamCrossings {
+  let crossings = 0;
+  let deepest = 0;
+  let longest = 0;
+  let run = 0;
+  for (let i = 0; i + 1 < path.length; i++) {
+    const a = path[i] as CoursePoint;
+    const b = path[i + 1] as CoursePoint;
+    const pa = platformAt(a.x, a.z);
+    const pb = platformAt(b.x, b.z);
+    if (pa === pb) {
+      run = 0;
+      continue;
+    }
+    const ya = standAt(a.x, a.z);
+    const yb = standAt(b.x, b.z);
+    if (ya === undefined || yb === undefined) {
+      run = 0;
+      continue;
+    }
+    const drop = Math.abs(ya - yb);
+    if (drop < WALL_SEAM_CROSS_DROP) {
+      run = 0;
+      continue;
+    }
+    crossings++;
+    if (drop > deepest) deepest = drop;
+    run++;
+    if (run > longest) longest = run;
+  }
+  return { crossings, deepest, longest };
+}
+
+/**
+ * S11's note (`LOAM-I415`), and it is a **measurement, not a move**.
+ *
+ * The promotion this number decides — a circuit's crossing built as a tier stack
+ * rather than as a pier of curtain — is explicitly not in this work package
+ * (§5 non-goal 12); it is decided on a walk with the count in hand, exactly as
+ * §3.1's viaduct note does for WP-10C. `undefined` when the course kept to one
+ * platform, which is every wall on flat ground and every wall on a quarter that
+ * elected no levels at all.
+ */
+export function wallSeamCrossingNote(run: {
+  readonly nodePath: string;
+  readonly style: string;
+  readonly courseColumns: number;
+  readonly crossings: WallSeamCrossings;
+}): LoamDiagnostic | undefined {
+  const { crossings, deepest, longest } = run.crossings;
+  if (crossings === 0) return undefined;
+  return note(
+    "WALL_COURSE_CROSSES_SEAM",
+    run.nodePath,
+    `wall run "${run.style}" (${run.courseColumns} course columns) crosses a platform boundary at ` +
+      `${crossings} column(s) where the ground steps at least ${WALL_SEAM_CROSS_DROP} block(s) — ` +
+      `the deepest crossing is ${deepest} block(s) and the longest unbroken stretch is ${longest} column(s), ` +
+      `and along it the wall's own fill is the face rather than a wall standing on one`,
+    `no action needed — the circuit is not moved on this number. It is the measurement that decides whether a crossing is worth building as a tier stack instead, which is a later round`,
+  );
 }
 
 /**

@@ -26,6 +26,7 @@
  * pass uses: the ground is terrain, the stairs are not.
  */
 
+import type { SeamLandings } from "../layout/district.js";
 import type { ResolvedPort } from "../layout/types.js";
 import type { ColumnPlan } from "../terrain/columns.js";
 import type { GroundClaim } from "../layout/ground-contract.js";
@@ -69,6 +70,35 @@ export interface DoorstepInput {
   readonly ground?: GroundDriver;
   readonly palette: Palette;
   readonly stack: PrismarineStack;
+  /**
+   * **S10's first source of truth** (`docs/GROUND-UNIFICATION-v0.md` §4.1):
+   * `RetainingPassResult.landings`, the treads of every tier stack and the top
+   * and foot of every wall.
+   *
+   * A landing is a place a flight is *allowed* to arrive at, and it is the one
+   * arrival {@link DOORSTEP_FOOT_STEP}'s two-column test cannot recognise on its
+   * own: the far side of a tread is the next tier's face, so a foot on a
+   * perfectly good terrace reads as the brink of a fall. S9 is what makes a
+   * legal foot exist; this is how the gate knows one when it lands on it.
+   *
+   * Optional and absent on every world until `SEAM_TIERS` flips — with it
+   * absent the gate is character-for-character the one the foot-gate wave
+   * shipped.
+   */
+  readonly landings?: SeamLandings;
+  /**
+   * **S10's second source of truth**: `RetainingPassResult.bank`, 1 on every
+   * column of graded bank, row-major over the plan region.
+   *
+   * S8 — *a bank is a landform, and a landform carries nothing*. A flight may
+   * never terminate on one, whatever the heights say, and the heights do say it
+   * is fine: a bank graded at `APRON_RUN_PER_BLOCK` steps half a block per
+   * column, which passes both of {@link DOORSTEP_FOOT_STEP}'s tests all the way
+   * up. That is the "stairs to nowhere" finding exactly — 46 flights up a bank
+   * face on one deck — and it is why the mask is consulted rather than the
+   * ground.
+   */
+  readonly bank?: Uint8Array;
 }
 
 /** What the doorstep pass produced. */
@@ -148,6 +178,27 @@ export function buildDoorsteps(input: DoorstepInput): DoorstepResult {
       waterlogged: "false",
     }) ?? stepState;
 
+  /**
+   * S10's landings, flattened to `column → the level it stands at`.
+   *
+   * Built once rather than searched per door: a quarter publishes one entry per
+   * tread column and a door asks about two columns. Where two stacks published
+   * one column — a tread that is also the platform its neighbour holds — the
+   * **first** publication wins, which is the retaining pass's own row-major seam
+   * order and therefore a fact about the ground rather than about the walk.
+   */
+  const landingY = new Map<number, number>();
+  for (const stack of input.landings ?? []) {
+    for (const landing of stack.landings) {
+      for (const column of landing.columns) {
+        if (!inside(region, column.x, column.z)) continue;
+        const k = index(region, column.x, column.z);
+        if (!landingY.has(k)) landingY.set(k, landing.y);
+      }
+    }
+  }
+  const bankMask = input.bank;
+
   const byPath = new Map(input.buildings.map((b) => [b.nodePath, b] as const));
   // Every building's footprint, so a flight never climbs into a neighbour.
   const claimed = (x: number, z: number): boolean =>
@@ -174,6 +225,14 @@ export function buildDoorsteps(input: DoorstepInput): DoorstepResult {
    * rather than a way off it, which reads as a landing until you look past it.
    * Declared paving, a lot plane and genuinely flat ground all pass both:
    * all three are level where they meet the foot and level again beyond it.
+   *
+   * **S10 extends this and never rewrites it**
+   * (`docs/GROUND-UNIFICATION-v0.md` §4.1). {@link DOORSTEP_FOOT_STEP} is still
+   * the whole of the measurement; what the two masks add is the two answers the
+   * measurement cannot reach on its own — a {@link DoorstepInput.bank} column is
+   * never an arrival however gently it steps, and a
+   * {@link DoorstepInput.landings} column always is, because a tread's far side
+   * is the next face down by construction. Both absent is today's gate exactly.
    */
   const footLands = (
     foot: { readonly x: number; readonly z: number; readonly y: number } | null,
@@ -189,9 +248,23 @@ export function buildDoorsteps(input: DoorstepInput): DoorstepResult {
     if (!inside(region, nx, nz) || claimed(nx, nz)) return true;
     const n = index(region, nx, nz);
     if (plan.fluidKind[n] !== FluidKind.NONE) return true;
+    // **S8 and S10, and it comes before the heights on purpose.** A bank is a
+    // landform and a landform carries nothing. A bank graded at 1:2 steps half a
+    // block per column, so both of the tests below pass on it all the way up the
+    // face — which is precisely how 46 flights came to be built up one, and why
+    // the mask is the answer here rather than an argument about ground.
+    if (bankMask !== undefined && bankMask[n] === 1) return false;
     const gn = view.ground[n] as number;
     // Step one: off the bottom stair onto the ground ahead of it.
     if (Math.abs(gn - foot.y) > DOORSTEP_FOOT_STEP) return false;
+    // **S9 and S10: a landing is an arrival, and step two is not asked of it.**
+    // The far side of a tread is the next tier's face by construction, so a foot
+    // on a perfectly good terrace fails the brink test below — the one case
+    // where "the last block before a fall" is a place a town put there for you
+    // to stand on. A wall's top and foot are landings for the same reason.
+    if (landingY.has(n) && Math.abs((landingY.get(n) as number) - foot.y) <= DOORSTEP_FOOT_STEP) {
+      return true;
+    }
     // Step two: that ground has to lead on rather than be the last block before
     // a fall — the brink of a terrace face reads exactly like a landing until
     // you look one column further.
@@ -200,6 +273,7 @@ export function buildDoorsteps(input: DoorstepInput): DoorstepResult {
     if (!inside(region, mx, mz) || claimed(mx, mz)) return true;
     const m = index(region, mx, mz);
     if (plan.fluidKind[m] !== FluidKind.NONE) return true;
+    if (bankMask !== undefined && bankMask[m] === 1) return false;
     return Math.abs((view.ground[m] as number) - gn) <= DOORSTEP_FOOT_STEP;
   };
 

@@ -691,6 +691,21 @@ export const TERRAIN_DIAGNOSTICS = {
    */
   SEAM_UNSERVED: "LOAM-W413",
   /**
+   * **S9's derived flights** (`docs/GROUND-UNIFICATION-v0.md` §4.1 S9): how many
+   * stairs were cut through a quarter's served seams, and how many stacks the
+   * `MAX_DERIVED_STAIRS` cap refused one.
+   *
+   * `docs/COURTYARDS-AND-LEVELS-v0.md` §3.5 step 2, built at last — the step
+   * that has never existed, which is why nothing has ever guaranteed that a
+   * platform is reachable and why a walkthrough found 46 doorstep flights
+   * climbing a bank to doors the bank made unreachable (§4.0a M7).
+   *
+   * A note and in no feedback set: a flight refused by the cap is a level
+   * election that stepped more times than its ground can carry, and S6's
+   * dissolve is the mechanism that answers that — not a re-authoring.
+   */
+  SEAM_STAIR_CUT: "LOAM-I414",
+  /**
    * **S11's measurement, and it moves nothing.** A fortification course or an
    * `infra.entry` ring whose fill stands as a face across a platform boundary:
    * `structures/walls.ts` sweeps its own 1-Lipschitz datum and fills each column
