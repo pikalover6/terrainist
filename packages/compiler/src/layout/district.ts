@@ -109,6 +109,7 @@ import type { Point2, Rect } from "./frames.js";
 import {
   MAX_PRINCIPAL_STREETS,
   MIN_PRINCIPAL_STREETS,
+  STREET_WIDTH,
   dilateMask,
   drawFabric,
   installUrbanForms,
@@ -135,6 +136,7 @@ import {
   SIDEWALK_BY_DENSITY,
   carriagewayCells,
   type StreetGraph,
+  type StreetSegment,
 } from "./streets.js";
 import { gradeStreetDatum, type StreetDatum } from "./street-datum.js";
 import {
@@ -220,6 +222,97 @@ export const MAX_LANDMARK_RUN = 4;
 
 /** How far past the sidewalk a block looks for the street it fronts. */
 export const STREET_PROBE_SLACK = 10;
+
+/* -------------------------------------------------------------------------- */
+/* the deep block, and the alley that cures it                                 */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Widest a **leaf** block may be across its short axis before an alley is cut
+ * through it — and the number is **measured**, not derived from taste.
+ *
+ * `subdivide` cuts *rim* frontage: a strip {@link LOT_DEPTH} deep against each
+ * side that has a street behind it, and whatever is left in the middle is the
+ * block's core, which is F2's ground treatment and never a lot. On a block much
+ * wider than two lot depths that core is land inside the fabric no house can
+ * ever stand on, and the repair is a street through the middle of it.
+ *
+ * **The obvious cap is wrong, and the measurement says so.** "Rim-only by
+ * construction" argues for `2 · LOT_DEPTH + MIN_COURT_SIDE` — 41 at `medium`,
+ * the widest block whose core is still a *court*. Built at that gate and
+ * compiled against `trojan_horse_in_troy` (`grown` × `medium` × 220 × 200,
+ * `battery/candidates/p3-tie2`), it cuts two blocks and the quarter gets
+ * **worse**: 42 buildings over 7 604 footprint columns become 42 buildings over
+ * 6 594 — built ground per envelope column falls 0.173 → 0.150 — while the
+ * dwelling count rises 46 → 52. The alley is not free and the arithmetic says
+ * why. Cutting a 63-wide block costs 7 columns to the lane and its two verges,
+ * and it drops every lot on both halves from 16 deep to 13, because
+ * `subdivide`'s depth is `min(LOT_DEPTH, ⌊(shortest − 2) / 2⌋)` and the halves
+ * are 28 across. Against that, the core it recovers on a 63 × 64 block is only
+ * 31 × 32 — a quarter of the block, not the half the shape suggests, because
+ * the north and south strips already run the block's **full width**.
+ *
+ * So the cap is the width at which the alley cannot shallow a lot: each half
+ * must still hold two full-depth strips and the two columns between them
+ * (`2 · LOT_DEPTH + 2`), plus the lane and its verges. At `medium` with a
+ * two-column sidewalk that is `2 · 34 + 7 = 75`. Past it the alley is pure
+ * gain — a 76-wide block's rim leaves a 44-wide core, and cutting it gives two
+ * 34-wide blocks that are 94 % frontage. Under it the block keeps its core,
+ * which is an honest answer: the core of a 63-wide block is not what is wrong
+ * with a sparse quarter, and `LOAM-W527` is what says what is.
+ *
+ * A grid fabric's blocks are its centre-line spacing less a carriageway and two
+ * sidewalks — 33 at the default `medium` spacing of 42 — so no pitch-laid
+ * quarter can reach even the rejected gate, let alone this one. The forms that
+ * reach it are the ones that split a *domain*: `grown` terminates a region once
+ * its long axis is under `1.8 · blockSize`, a legal leaf 76 columns across at
+ * `blockSize` 42.
+ */
+export function leafBlockCap(density: DistrictDensity, sidewalkWidth: number): number {
+  return 2 * (2 * LOT_DEPTH[density] + 2) + STREET_WIDTH.lane + 2 * sidewalkWidth;
+}
+
+/**
+ * Rounds of alley cutting.
+ *
+ * One round halves a block's short axis, so from the widest leaf any form can
+ * produce — under `2 · blockSize`, and `blockSize` is bounded by the profile —
+ * two rounds already reach the cap. Three is slack; it is a termination bound
+ * rather than a shape decision, and the pass stops on its own as soon as a
+ * round finds nothing to cut.
+ */
+export const MAX_ALLEY_ROUNDS = 3;
+
+/**
+ * Built ground per column of block land, under which a **walled** quarter is
+ * reported (`LOAM-W527`).
+ *
+ * Half, and it is a floor rather than a target. The two ends of the measured
+ * range: the walked-good `medium` grid quarter builds 0.61 of its block land,
+ * and `trojan_horse_in_troy` — the quarter Kai walked twice and called empty —
+ * built 0.34. Half sits between them with room either side, so an ordinary
+ * quarter with a plaza, a market and a few open lots does not trip it and a
+ * quarter whose blocks are mostly field does.
+ *
+ * Only walled quarters are measured, and that restriction is the whole of why
+ * this can be a warning at all: a wall is a claim about what is inside it.
+ * A village at 0.34 is a village.
+ */
+export const WALLED_COVERAGE_FLOOR = 0.5;
+
+/**
+ * Did this quarter ask to be walled?
+ *
+ * Both spellings, because the document has two and they mean the same thing:
+ * `params.walls` on the node, and `intent.character.fortification: "walled"`
+ * on any intent that reaches it (`structures/walls-intent.ts`). Troy uses the
+ * second, which is exactly why reading only the first would have left the guard
+ * silent on the world it was written for.
+ */
+function walledQuarter(params: DistrictParams, intent: ResolvedIntent): boolean {
+  if (params.walls !== undefined) return true;
+  return intent.intent.character?.fortification === "walled";
+}
 
 /* -------------------------------------------------------------------------- */
 /* the street wall                                                             */
@@ -933,7 +1026,10 @@ export function layDistrict(
   diagnostics.push(...drawn.outcome.diagnostics);
   if (replanned.note !== null) diagnostics.push(note("SITE_COMPOSITION", nodePath, ...replanned.note));
   const plan = drawn.outcome.plan;
-  const graph = plan.graph;
+  // `let`, for one reason and no other: the leaf cap below may append its own
+  // alleys, and the graph the product carries has to be the graph the quarter
+  // was actually lotted against. It is reassigned exactly once, there.
+  let graph = plan.graph;
 
   // --- the street datum (F2) ------------------------------------------------
   // Right after the graph is drawn, because F2 is exactly that: "a carriageway's
@@ -944,7 +1040,12 @@ export function layDistrict(
   // Built **only** while {@link FRONTAGE_TIE} is on. Grading a datum nobody
   // reads is a per-district raster and a full sweep of every segment, and 8B's
   // contract is byte-identical *and* free with the flag off.
-  const datum: StreetDatum | null = FRONTAGE_TIE
+  //
+  // A closure rather than an expression because the leaf cap below may append
+  // alleys to the graph, and a lot that fronts an alley has to tie to a datum
+  // that graded it. Regraded exactly once, and only for a quarter that was cut.
+  const gradeDatum = (against: StreetGraph): StreetDatum | null =>
+    FRONTAGE_TIE
     ? gradeStreetDatum({
         region: {
           x0: bounds.x0,
@@ -952,7 +1053,7 @@ export function layDistrict(
           width: bounds.x1 - bounds.x0 + 1,
           depth: bounds.z1 - bounds.z0 + 1,
         },
-        graph,
+        graph: against,
         field: input.field,
         seaLevel: input.seaLevel ?? 63,
         // 8E, the city cell, as corrected at 8F: a quarter that was handed one
@@ -971,6 +1072,7 @@ export function layDistrict(
         ...(cell?.foundationY === undefined ? {} : { planeY: cell.foundationY }),
       })
     : null;
+  let datum: StreetDatum | null = gradeDatum(graph);
   const tieReach = frontageReach(sidewalkWidth);
   // F6/T238's counters. Both stay 0 while the flag is off.
   let tiedLots = 0;
@@ -983,7 +1085,10 @@ export function layDistrict(
     const k = grid.index(cell.x, cell.z);
     if (k >= 0) carriageway[k] = 1;
   }
-  const sidewalk = dilate(grid, carriageway, sidewalkWidth);
+  // `let` for the same one reason `graph` is: the leaf cap re-dilates the verge
+  // once it has added its alleys, so that the product's masks describe the
+  // quarter that was built rather than the one before the alleys.
+  let sidewalk = dilate(grid, carriageway, sidewalkWidth);
 
   // --- blocks --------------------------------------------------------------
   const blocked = new Uint8Array(grid.cells);
@@ -1107,7 +1212,45 @@ export function layDistrict(
   // no ground a lot may take. The gate is `plan.strips`, which only `hillside`
   // sets, so no other form moves.
   const planned = plan.strips;
-  const blocks = planned === undefined ? blocksOf(grid, blocked, declared.length > 0) : [];
+
+  // --- the leaf cap ---------------------------------------------------------
+  // Every block that is too deep for `subdivide` to reach the middle of gets an
+  // alley through it, recursively, until none is (see {@link leafBlockCap}).
+  // Skipped whole on the planned path, where the planner cut the frontage
+  // itself and there are no blocks; and a no-op — not one column moved, not one
+  // segment added — for every quarter already under the cap, which is every
+  // pitch-laid fabric in the repository.
+  const multiRect = BLOCK_MULTI_RECT || declared.length > 0;
+  const alleys =
+    planned === undefined
+      ? cutDeepBlocks({
+          grid,
+          carriageway,
+          blocked,
+          split: multiRect,
+          density,
+          sidewalkWidth,
+          bounds,
+        })
+      : { lanes: [], rounds: 0, sidewalk: null };
+  if (alleys.sidewalk !== null) sidewalk = alleys.sidewalk;
+  if (alleys.lanes.length > 0) {
+    graph = { ...graph, segments: [...graph.segments, ...alleys.lanes] };
+    // The datum is the frontage authority and an alley is frontage; a lot that
+    // fronts an ungraded segment is an untied lot (`LOAM-T238`) seated on its
+    // own median, which is exactly the drift F2 exists to prevent.
+    datum = gradeDatum(graph);
+    diagnostics.push(
+      note(
+        "DISTRICT_BLOCK_ALLEY",
+        nodePath,
+        `${alleys.lanes.length} block(s) in "${nodePath}" were wider than the ${leafBlockCap(density, sidewalkWidth)} columns past which an alley pays for itself at "${density}", and were cut by one so their cores became frontage`,
+        `Nothing to change in the document — an alley through an over-deep block is the intended repair. Lower "params.blockSize" if you would rather the fabric drew the streets itself.`,
+      ),
+    );
+  }
+
+  const blocks = planned === undefined ? blocksOf(grid, blocked, multiRect) : [];
 
   // --- the reserved square -------------------------------------------------
   // `plaza: true` keeps one block open. The block nearest the district's centre
@@ -1554,6 +1697,31 @@ export function layDistrict(
     );
   }
 
+  // --- the walled coverage floor (`LOAM-W527`) ------------------------------
+  // The guard that should have caught the deep-block defect before two walks.
+  // Measured at the end of the pass, from what was actually built against the
+  // land the blocks actually held — the one ratio that can tell "a walled town"
+  // from "a wall round a field", and the one nothing else in the report says.
+  if (walledQuarter(p, intent) && planned === undefined && blocks.length > 0) {
+    let blockLand = 0;
+    for (const block of blocks) blockLand += block.columns;
+    let builtColumns = 0;
+    for (const item of built) {
+      builtColumns += (item.rect.x1 - item.rect.x0 + 1) * (item.rect.z1 - item.rect.z0 + 1);
+    }
+    const coverage = blockLand === 0 ? 0 : builtColumns / blockLand;
+    if (coverage < WALLED_COVERAGE_FLOOR) {
+      diagnostics.push(
+        warning(
+          "WALLED_QUARTER_SPARSE",
+          nodePath,
+          `"${nodePath}" is walled and built ${builtColumns} of its ${blockLand} block column(s) — ${Math.round(coverage * 100)} %, under the ${Math.round(WALLED_COVERAGE_FLOOR * 100)} % a walled quarter needs before the circuit reads as a town wall rather than as a fence round open ground`,
+          `Raise "density", lower "params.blockSize" so the fabric draws more streets and shallower blocks, or shrink "envelope.size" so the wall encloses the fabric that was actually built.`,
+        ),
+      );
+    }
+  }
+
   let carriagewayColumns = 0;
   let sidewalkColumns = 0;
   for (let k = 0; k < grid.cells; k++) {
@@ -1948,13 +2116,13 @@ function dilate(grid: Grid, mask: Uint8Array, rings: number): Uint8Array {
 /* -------------------------------------------------------------------------- */
 
 /** One face of the street graph: the ground between the streets. */
-interface Block {
+export interface Block {
   readonly rect: Rect;
   readonly columns: number;
 }
 
 /** Connected components of the unclaimed ground, in row-major discovery order. */
-function blocksOf(grid: Grid, blocked: Uint8Array, split: boolean): Block[] {
+export function blocksOf(grid: Grid, blocked: Uint8Array, split: boolean): Block[] {
   const seen = new Uint8Array(grid.cells);
   const out: Block[] = [];
   const stack: number[] = [];
@@ -1997,11 +2165,20 @@ function blocksOf(grid: Grid, blocked: Uint8Array, split: boolean): Block[] {
         stack.push(n);
       }
     }
-    // One rectangle per block, unless the form cut its own benches — see
-    // `rectsOf`, which is where the whole of that "unless" is argued.
+    // One rectangle per block, unless the block is cut into several — see
+    // `rectsOf` and {@link BLOCK_MULTI_RECT}, which is where the whole of that
+    // "unless" is argued.
     if (!split) {
       const rect = largestFreeRect(grid, member, { x0, z0, x1, z1 });
       if (rect === null) continue;
+      // **A component too thin for one whole building is not a block.** The
+      // same rule `rectsOf` applies inside its loop, applied here to the one
+      // rectangle the ordinary path takes — see the note there for the
+      // measurement. A rectangle under `MIN_INFILL_SIDE` on its short axis
+      // cannot hold a lot the grammar will build on however it is subdivided
+      // (`CELL_MIN_BUILDING` is the same number), so what it produced was a
+      // block with no lots: land that counted as fabric and could never be it.
+      if (Math.min(rect.x1 - rect.x0 + 1, rect.z1 - rect.z0 + 1) < MIN_INFILL_SIDE) continue;
       out.push({ rect, columns });
       continue;
     }
@@ -2011,6 +2188,191 @@ function blocksOf(grid: Grid, blocked: Uint8Array, split: boolean): Block[] {
   }
   return out;
 }
+
+/* -------------------------------------------------------------------------- */
+/* the leaf cap                                                                */
+/* -------------------------------------------------------------------------- */
+
+/** What the alley pass added, and what it had to work with. */
+export interface AlleyPass {
+  /** The lanes cut, in the order they were cut. Empty is the ordinary case. */
+  readonly lanes: readonly StreetSegment[];
+  /** Rounds that found something to cut. 0 for every quarter under the cap. */
+  readonly rounds: number;
+}
+
+/**
+ * Cut an alley through every block too deep to be rim frontage — {@link leafBlockCap}.
+ *
+ * **The block is the leaf, so the leaf is what has to be capped.** The forms
+ * that split a domain rather than lay a pitch (`grown`, and any future form
+ * that recurses) terminate on their own floor, which bounds the block's *long*
+ * axis at some multiple of `blockSize` and says nothing at all about whether
+ * `subdivide` can reach the middle of it. This is the missing half of that
+ * contract, and it is enforced here — after the fabric, the platform seams and
+ * every mask are in `blocked` — rather than inside a form, because it is a
+ * property of the finished block and every form has to hold it.
+ *
+ * The alley is a **real street**, not a gap:
+ *
+ * - it is a `lane` {@link StreetSegment} appended to the quarter's own graph, so
+ *   `segmentOwners` maps its carriageway, `streetBehind` finds it behind the two
+ *   new blocks' facing sides, and every lot it creates carries its id in
+ *   `Lot.street` — which is what the frontage tie, the doorstep and the
+ *   carriageway surfacer all dispatch on. A lane with no identity would give
+ *   `street: ""`, and a lot that fronts nothing is a lot seated on its own
+ *   median with its door onto whatever the next pass puts there;
+ * - it **reaches the street it came off**. Each end walks outward from the
+ *   block's rectangle until it meets paved ground and stops one column inside
+ *   it, so the alley is connected to the fabric by construction rather than by
+ *   an overrun constant that would plough through the next block when the
+ *   bounding street is close.
+ *
+ * Deterministic: blocks arrive in row-major discovery order, the cut is the
+ * block's own middle column, and the pass stops when a round finds nothing.
+ *
+ * Byte-identical for every quarter whose blocks are already under the cap —
+ * which is every `grid`, `radial` and `linear` quarter in the repository, since
+ * a pitch-laid block is its spacing less a carriageway and two sidewalks.
+ */
+export function cutDeepBlocks(args: {
+  readonly grid: Grid;
+  /** Mutated: the alley's carriageway is added. */
+  readonly carriageway: Uint8Array;
+  /** Mutated in place, and the caller's `sidewalk` is replaced from it. */
+  readonly blocked: Uint8Array;
+  readonly split: boolean;
+  readonly density: DistrictDensity;
+  readonly sidewalkWidth: number;
+  readonly bounds: Rect;
+}): AlleyPass & { readonly sidewalk: Uint8Array | null } {
+  const { grid, carriageway, blocked, split, density, sidewalkWidth, bounds } = args;
+  const cap = leafBlockCap(density, sidewalkWidth);
+  const lanes: StreetSegment[] = [];
+  let sidewalk: Uint8Array | null = null;
+  let rounds = 0;
+
+  for (let round = 0; round < MAX_ALLEY_ROUNDS; round++) {
+    const cuts: StreetSegment[] = [];
+    for (const [k, block] of blocksOf(grid, blocked, split).entries()) {
+      const width = block.rect.x1 - block.rect.x0 + 1;
+      const depth = block.rect.z1 - block.rect.z0 + 1;
+      if (Math.min(width, depth) <= cap) continue;
+      const path = alleyThrough(block.rect, grid, carriageway, sidewalkWidth);
+      if (path === null) continue;
+      cuts.push({
+        id: `alley${round}_${k}`,
+        kind: "lane",
+        width: STREET_WIDTH.lane,
+        path,
+      });
+    }
+    if (cuts.length === 0) break;
+    rounds++;
+    lanes.push(...cuts);
+    for (const cell of carriagewayCells({ segments: cuts, intersections: [], sidewalk: sidewalkWidth }, bounds)) {
+      const k = grid.index(cell.x, cell.z);
+      if (k >= 0) carriageway[k] = 1;
+    }
+    // Recomputed over the *whole* carriageway rather than dilated off the new
+    // lanes alone, so the verge stays the one construction `layDistrict` made:
+    // a band around the paved mask that excludes the paved mask itself.
+    sidewalk = dilate(grid, carriageway, sidewalkWidth);
+    for (let k = 0; k < grid.cells; k++) {
+      if (carriageway[k] === 1 || sidewalk[k] === 1) blocked[k] = 1;
+    }
+  }
+
+  return { lanes, rounds, sidewalk };
+}
+
+/**
+ * The alley's centre line through one block rectangle, or `null`.
+ *
+ * Parallel to the block's **long** axis at the middle of its short one, which
+ * is the cut that halves the axis the cap is about. Each end is walked outward
+ * until it meets paved ground and stopped one column inside it; an end that
+ * reaches neither paved ground nor the district edge inside
+ * `sidewalkWidth + STREET_PROBE_SLACK` — the same reach `streetBehind` probes —
+ * stops there, which is the honest answer for a block whose own rectangle sits
+ * well inside a curved component.
+ */
+function alleyThrough(
+  rect: Rect,
+  grid: Grid,
+  paved: Uint8Array,
+  sidewalkWidth: number,
+): Point2[] | null {
+  const width = rect.x1 - rect.x0 + 1;
+  const depth = rect.z1 - rect.z0 + 1;
+  // Ties (a square block) cut along z, which is the row-major reading order.
+  const shortIsX = width <= depth;
+  const at = shortIsX
+    ? Math.floor((rect.x0 + rect.x1) / 2)
+    : Math.floor((rect.z0 + rect.z1) / 2);
+  const limit = sidewalkWidth + STREET_PROBE_SLACK;
+
+  /** How far this end may run: one column into the first paved ground it meets. */
+  const reach = (from: number, step: -1 | 1): number => {
+    let last = from;
+    for (let n = 1; n <= limit; n++) {
+      const along = from + step * n;
+      const k = shortIsX ? grid.index(at, along) : grid.index(along, at);
+      if (k < 0) return last;
+      last = along;
+      if (paved[k] === 1) return along;
+    }
+    return last;
+  };
+
+  const lo = reach(shortIsX ? rect.z0 : rect.x0, -1);
+  const hi = reach(shortIsX ? rect.z1 : rect.x1, 1);
+  if (hi - lo + 1 < MIN_INFILL_SIDE) return null;
+
+  const path: Point2[] = [];
+  for (let along = lo; along <= hi; along++) {
+    path.push(shortIsX ? { x: at, z: along } : { x: along, z: at });
+  }
+  return path;
+}
+
+/**
+ * Cut **every** block into as many rectangles as it holds, not just a benched
+ * one — the measured cure for the deep-block deficit.
+ *
+ * This is the one that moved the number. `blocksOf` hands `subdivide` one
+ * inscribed rectangle per component, and for a pitch-laid grid that *is* the
+ * block, column for column. For a fabric whose streets curve or whose platform
+ * seams cut across it, it is a chord: the rest of the component is ground
+ * inside the town that no lot is ever cut from, and it is invisible in every
+ * statistic the report carries. {@link rectsOf} has taken the *rest* of that
+ * component since the terraces landed; it was gated on `terraced` only so that
+ * no world would move.
+ *
+ * Measured, `trojan_horse_in_troy` (`grown` × `medium` × `stepped`,
+ * 220 × 200, `battery/candidates/p3-tie2`), against the same seed and document:
+ *
+ * | | blocks | lots | dwellings | building columns | built / envelope |
+ * |---|---|---|---|---|---|
+ * | one rectangle | 20 | 68 | 46 | 7 604 | 0.173 |
+ * | every rectangle | 33 | 85 | 60 | 9 754 | **0.222** |
+ *
+ * The two ends of the walked range are 0.173 (Kai: "near-empty") and the grid
+ * quarter he called good. This closes most of the distance and it does it by
+ * building on ground the quarter already had.
+ *
+ * **A grid quarter cannot move**, and the reason is structural rather than
+ * empirical: a pitch-laid component fills its own bounding box, so the first
+ * rectangle is the whole component and the second pass has nothing left to
+ * find. Verified byte-for-byte on `examples/showcase-bayline` and
+ * `examples/site-plan-hillside`; `examples/c1-harbourtown`, whose cells are not
+ * pitch-laid, gains 21 buildings.
+ *
+ * A named constant rather than a silent edit because it is the kind of change
+ * that wants one line to undo — the same shape `FRONTAGE_TIE` and `SEAM_TIERS`
+ * have. `false` restores the `terraced`-only gate exactly.
+ */
+export const BLOCK_MULTI_RECT = true;
 
 /**
  * Most rectangles a curved block is cut into. `subdivide` is cheap and
@@ -2039,11 +2401,12 @@ const MAX_BLOCK_RECTS = 8;
  * disjoint by construction, so the interpenetration failure `largestFreeRect`
  * documents — two components lotting the same ground — stays unrepresentable.
  *
- * **Only for a form that cut its own benches**, which today is `terraced` and
- * nothing else. Not because it would be wrong elsewhere but because it would
- * move every organic and grown world in the repository, and a quarter that did
- * not ask to move should not move. The gate is `plan.benches`, the same flag
- * everything else about a benched quarter hangs off.
+ * **Now for every fabric** — see {@link BLOCK_MULTI_RECT}, which carries the
+ * measurement and the argument. It used to be gated on `plan.benches`, i.e. on
+ * `terraced` alone, "not because it would be wrong elsewhere but because it
+ * would move every organic and grown world in the repository". That gate is
+ * lifted: the world it was protecting is the one Kai walked twice and called
+ * empty, and the ground it was declining to lot is the deficit.
  *
  * Deterministic: `largestFreeRect` breaks every tie on the earlier row and the
  * earlier column, so the sequence of rectangles is a function of the block.
@@ -2071,14 +2434,23 @@ export function rectsOf(grid: Grid, member: Uint8Array, bounds: Rect): Rect[] {
       }
     }
   }
-  // A block too small or too thin for even one whole-building rectangle still
-  // gets today's answer: the largest rectangle in it, whatever its size. It is
-  // where the infill slivers come from and dropping it here would be a second,
-  // unrelated change.
-  if (out.length === 0) {
-    const rect = largestFreeRect(grid, member, bounds);
-    if (rect !== null) out.push(rect);
-  }
+  // **A component too thin for one whole building is not a block.**
+  //
+  // It used to get the largest rectangle in it whatever its size — a 4 × 9
+  // ribbon between two contour streets, emitted as a `Block`, subdivided into
+  // nothing, and counted. Measured on `trojan_horse_in_troy`: 121 such
+  // rectangles under 100 columns each, every one of them a block with no lots,
+  // which is the statistic that made a walled quarter's block land look
+  // healthy while a third of it could never hold a house.
+  //
+  // Dropping it is not a loss of ground: the columns stay exactly where they
+  // are and become the quarter's open ground — the platform, the verge, the
+  // green the F2 treatment lays — rather than a parcel nobody can build on. It
+  // is a loss of a *lie* in the count.
+  //
+  // `MIN_INFILL_SIDE` is the gate above and the gate here for one reason: it is
+  // the smallest side the grammar will accept, so a rectangle under it cannot
+  // hold a single lot however the subdivision is asked.
   return out;
 }
 
