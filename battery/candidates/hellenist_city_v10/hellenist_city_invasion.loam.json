@@ -1,0 +1,590 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "hellenist_city_invasion",
+    "worldSeed": "305",
+    "prompt": "A modern Hellenist city being invaded by sea monsters.",
+    "spawn": {
+      "zone": "north"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:smooth_stone",
+      "road.shoulder": "minecraft:stone_bricks",
+      "plaza.path": "minecraft:smooth_quartz",
+      "plaza.border": "minecraft:quartz_pillar"
+    }
+  },
+  "intent": {
+    "era": "modern",
+    "wealth": 0.8,
+    "decline": 0.25,
+    "formality": 0.75,
+    "event": {
+      "kind": "siege",
+      "severity": 0.8,
+      "recency": 0
+    },
+    "climate": {
+      "temperature": 0.6,
+      "humidity": 0.2,
+      "snow": "never"
+    },
+    "character": {
+      "label": "modern hellenist coastal metropolis under attack",
+      "materialTheme": "modern_city",
+      "formPacks": [
+        "classical_mediterranean"
+      ],
+      "archetypes": {
+        "prefer": [
+          "stoa",
+          "peripteral_temple",
+          "propylaea",
+          "bouleuterion",
+          "nymphaeum",
+          "palaestra"
+        ]
+      },
+      "motifs": {
+        "roofType": "flat",
+        "massing": "blocky",
+        "ornamentDensity": 0.6
+      },
+      "urbanForm": "grid",
+      "programs": [
+        {
+          "id": "behemoth_leviathan",
+          "mode": "landmark",
+          "brief": "A gargantuan tentacled sea leviathan breaching the bay waters, with towering serpentine appendages striking harbor walls and glowing bioluminescent eyes.",
+          "envelope": [
+            56,
+            44,
+            56
+          ]
+        },
+        {
+          "id": "amphibious_beast",
+          "mode": "plugin",
+          "brief": "A fierce predatory multi-limbed sea monster surging up onto the waterfront quays, with jagged scales, dorsal spines, and hooked claws.",
+          "envelope": [
+            16,
+            12,
+            16
+          ],
+          "count": 12
+        }
+      ]
+    },
+    "tokens": {
+      "event_direction": "giant sea monsters emerging from the harbor waters and attacking the city waterfront",
+      "infra": "barricade_line along the coastal avenue and port quays; emergency cordon fencing securing the inner boulevards",
+      "terrain": "a grand neoclassical coastal metropolis fronting deep open water with harbors and broad avenues",
+      "icons": "colonnaded modern boulevards, monumental marble-faced civic stoas and temples, breached waterfront seawalls, colossal sea beasts rising in the bay"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Neopolis under siege by oceanic leviathans",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "coastal plain rising to an inland acropolis hill overlooking the northern bay",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 72,
+          "amplitude": 30,
+          "octaves": 5,
+          "frequency": 0.0032,
+          "gain": 0.48,
+          "erosionPasses": 2,
+          "cliffThreshold": 55,
+          "soilDepth": 3,
+          "beachWidth": 5,
+          "snowLineFraction": 0.95
+        },
+        "children": [
+          {
+            "id": "grand_bay",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the deep oceanic bay in the north where the monsters emerge",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.5,
+                  0.42
+                ],
+                [
+                  0.5,
+                  0.22
+                ],
+                "coast"
+              ],
+              "width": 140,
+              "depth": 26,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "city_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the levelled coastal plateau supporting the metropolis grid",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.62
+              ],
+              "radius": 150,
+              "height": 6,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "acropolis_spur",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the high inland peak for the modern acropolis district",
+            "params": {
+              "verb": "peak",
+              "at": [
+                0.26,
+                0.72
+              ],
+              "radius": 64,
+              "height": 34,
+              "profile": "sharp"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0012,
+          "latitudeGradient": -0.2
+        }
+      },
+      {
+        "id": "inland_groves",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "mediterranean cypresses and stone pines along the southern hills",
+        "params": {
+          "area": {
+            "zone": "south"
+          },
+          "density": 0.12,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 32,
+          "elevation": [
+            2,
+            100
+          ],
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct",
+            "city",
+            "district"
+          ],
+          "undergrowth": {
+            "grass": 0.35,
+            "flowers": 0.08,
+            "deadwood": 0.01
+          },
+          "species": [
+            {
+              "id": "stone_pine",
+              "weight": 3,
+              "shape": "spruce_tall"
+            },
+            {
+              "id": "columnar_cypress",
+              "weight": 2,
+              "shape": "larch_columnar"
+            },
+            {
+              "id": "mediterranean_oak",
+              "weight": 1,
+              "shape": "oak_spreading"
+            }
+          ]
+        }
+      },
+      {
+        "id": "wilderness_scatter",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse vegetative cover across open ground",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.02,
+          "spacing": 6,
+          "clumping": 0.4,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct",
+            "city",
+            "district"
+          ],
+          "species": [
+            {
+              "id": "scrub_pine",
+              "weight": 1,
+              "shape": "spruce_squat"
+            }
+          ]
+        }
+      },
+      {
+        "id": "metropolis",
+        "kind": "city",
+        "label": "the modern Hellenist metropolis fronting the northern bay",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            360,
+            260
+          ]
+        },
+        "params": {
+          "size": "large",
+          "coastal": true,
+          "diagonals": 1,
+          "ring": true,
+          "blockSize": 46,
+          "mix": [
+            "stoa",
+            "peripteral_temple",
+            "propylaea",
+            "bouleuterion",
+            "nymphaeum",
+            "palaestra",
+            "office",
+            "apartment_block",
+            "museum",
+            "bank",
+            "shop_row",
+            "department_store"
+          ],
+          "characters": {
+            "core": [
+              "skyscraper",
+              "office",
+              "bank",
+              "department_store"
+            ],
+            "civic": [
+              "peripteral_temple",
+              "bouleuterion",
+              "nymphaeum",
+              "propylaea",
+              "stoa",
+              "museum",
+              "university_hall"
+            ],
+            "waterfront": [
+              "stoa",
+              "propylaea",
+              "shop_row",
+              "warehouse",
+              "barracks"
+            ],
+            "industrial": [
+              "warehouse",
+              "customs_house",
+              "foundry",
+              "machine_shop"
+            ],
+            "rowhouse": [
+              "apartment_block",
+              "townhouse",
+              "terraced_row"
+            ]
+          },
+          "forms": {
+            "core": "grid",
+            "civic": "radial",
+            "waterfront": "grid"
+          },
+          "setPieces": {
+            "max": 4,
+            "kinds": [
+              "landmark",
+              "promenade",
+              "square",
+              "bridge"
+            ]
+          }
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          }
+        ],
+        "tags": [
+          "city",
+          "urban",
+          "hellenist"
+        ],
+        "children": [
+          {
+            "id": "acropolis_tower",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the monumental neoclassical skyscraper dominating the central vista",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                21,
+                68,
+                21
+              ]
+            },
+            "params": {
+              "archetype": "skyscraper",
+              "floors": 16,
+              "vista": "spine"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "skyscraper"
+            ]
+          },
+          {
+            "id": "grand_bouleuterion",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the great modern senate hall terminating the civic boulevard",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                15,
+                16,
+                17
+              ]
+            },
+            "params": {
+              "archetype": "university_hall",
+              "floors": 2,
+              "vista": "boulevard"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "civic"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "naval_port",
+        "kind": "generator",
+        "generator": "precinct.harbour@0",
+        "label": "the deepwater commercial and naval port quays",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            96,
+            16,
+            64
+          ]
+        },
+        "params": {
+          "piers": 3,
+          "ships": "fill"
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "distance": "metropolis",
+            "min": 12,
+            "max": 60
+          }
+        ],
+        "tags": [
+          "precinct",
+          "harbour"
+        ]
+      },
+      {
+        "id": "great_leviathan",
+        "kind": "generator",
+        "generator": "authored:behemoth_leviathan",
+        "label": "the colossal sea beast rising directly from the bay",
+        "params": {
+          "seat": "wade",
+          "face": {
+            "toward": "metropolis"
+          }
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "on": "@terrain:coastline",
+            "band": 256
+          }
+        ],
+        "tags": [
+          "landmark",
+          "monster"
+        ]
+      },
+      {
+        "id": "invading_beasts",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "pack of amphibious monsters storming the shore",
+        "params": {
+          "program": "amphibious_beast",
+          "count": 12,
+          "area": {
+            "zone": "north"
+          },
+          "spacing": 26,
+          "seat": "wade",
+          "face": {
+            "toward": "metropolis"
+          }
+        }
+      },
+      {
+        "id": "waterfront_barricade",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "emergency barricades thrown up across the waterfront avenue",
+        "params": {
+          "entry": "barricade_line",
+          "route": {
+            "across": "metropolis"
+          }
+        }
+      },
+      {
+        "id": "city_cordon",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "quarantine barrier and defensive perimeter encircling the core districts",
+        "params": {
+          "entry": "quarantine_fence",
+          "route": {
+            "ring": "metropolis",
+            "margin": 14
+          }
+        }
+      },
+      {
+        "id": "monument_plinth",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a grand neoclassical statue plinth overlooking the bay",
+        "params": {
+          "prop": "statue_plinth",
+          "zone": "north",
+          "jitter": 0.1
+        }
+      },
+      {
+        "id": "warning_buoy",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "harbor warning buoy tossed in the churning water",
+        "params": {
+          "prop": "buoy",
+          "zone": "north",
+          "jitter": 0.25
+        }
+      },
+      {
+        "id": "main_arterials",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "boulevards connecting the city center to the defensive port",
+        "params": {
+          "anchors": [
+            "metropolis",
+            "naval_port"
+          ],
+          "pattern": "grid",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 14
+        }
+      }
+    ]
+  },
+  "programs": {
+    "behemoth_leviathan": {
+      "mode": "landmark",
+      "envelope": [
+        56,
+        44,
+        56
+      ],
+      "sourceHash": "b3:5d2d0a981991cb14179abf0a6f43b5d908a64637b0a3efd3d19d918c86c4f2d3",
+      "outputHash": "b3:d0bd7f5284abd99b8a041baad0cf1200213ef392dfb2ab59aedc46c00fcf8264",
+      "conforms": false,
+      "conformHash": "b3:63b212ca6cb8d7916add2fb408dd05460510b7fab9f859178ab325d996b2de8d",
+      "source": "export const envelope = [56, 44, 56];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const grid = new Array(W * H * D);\n\n  // --- Palette Definitions ---\n  const DARK_PRIS = \"minecraft:dark_prismarine\";\n  const PRIS_BRICK = \"minecraft:prismarine_bricks\";\n  const PRIS = \"minecraft:prismarine\";\n  const SEA_LANTERN = \"minecraft:sea_lantern\";\n  const CRYING_OBS = \"minecraft:crying_obsidian\";\n  const FROG_VERDANT = \"minecraft:verdant_froglight\";\n  const FROG_OCHRE = \"minecraft:ochre_froglight\";\n  const BONE_Y = \"minecraft:bone_block[axis=y]\";\n  const BONE_Z = \"minecraft:bone_block[axis=z]\";\n  const MAGMA = \"minecraft:magma_block\";\n  const SCULK = \"minecraft:sculk\";\n\n  // World Theme: Hellenist Harbor Waterfront\n  const stonePri = api.theme.stone.primary || \"minecraft:quartz_block\";\n  const stoneAcc = api.theme.stone.accent || \"minecraft:smooth_stone\";\n  const stoneStairs = api.theme.stone.stairs || \"minecraft:quartz_stairs\";\n  const stoneSlab = api.theme.stone.slab || \"minecraft:quartz_slab\";\n  const stoneWall = api.theme.stone.wall || \"minecraft:diorite_wall\";\n  const groundPave = api.theme.ground.pavement || \"minecraft:smooth_stone\";\n  const woodLog = api.theme.wood.log || \"minecraft:dark_oak_log\";\n  const woodPlank = api.theme.wood.planks || \"minecraft:dark_oak_planks\";\n  const woodFence = api.theme.wood.fence || \"minecraft:dark_oak_fence\";\n\n  // --- Grid Voxel Helpers ---\n  function setV(x, y, z, block) {\n    x = Math.round(x);\n    y = Math.round(y);\n    z = Math.round(z);\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      grid[(x * H + y) * D + z] = block;\n    }\n  }\n\n  function getV(x, y, z) {\n    x = Math.round(x);\n    y = Math.round(y);\n    z = Math.round(z);\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      return grid[(x * H + y) * D + z];\n    }\n    return undefined;\n  }\n\n  // --- Geometric Drawing Primitives ---\n  function drawSphere(cx, cy, cz, r, matFn) {\n    const rCeil = Math.ceil(r);\n    const r2 = r * r;\n    const minX = Math.max(0, Math.floor(cx - rCeil));\n    const maxX = Math.min(W - 1, Math.ceil(cx + rCeil));\n    const minY = Math.max(0, Math.floor(cy - rCeil));\n    const maxY = Math.min(H - 1, Math.ceil(cy + rCeil));\n    const minZ = Math.max(0, Math.floor(cz - rCeil));\n    const maxZ = Math.min(D - 1, Math.ceil(cz + rCeil));\n\n    for (let x = minX; x <= maxX; x++) {\n      const dx = x - cx;\n      const dx2 = dx * dx;\n      for (let y = minY; y <= maxY; y++) {\n        const dy = y - cy;\n        const dy2 = dy * dy;\n        for (let z = minZ; z <= maxZ; z++) {\n          const dz = z - cz;\n          const d2 = dx2 + dy2 + dz * dz;\n          if (d2 <= r2) {\n            const block = matFn(x, y, z, dx, dy, dz, Math.sqrt(d2) / r);\n            if (block) {\n              grid[(x * H + y) * D + z] = block;\n            }\n          }\n        }\n      }\n    }\n  }\n\n  function getBezierPoint(pts, t) {\n    let current = pts;\n    while (current.length > 1) {\n      const next = [];\n      for (let i = 0; i < current.length - 1; i++) {\n        next.push([\n          current[i][0] + (current[i + 1][0] - current[i][0]) * t,\n          current[i][1] + (current[i + 1][1] - current[i][1]) * t,\n          current[i][2] + (current[i + 1][2] - current[i][2]) * t,\n        ]);\n      }\n      current = next;\n    }\n    return current[0];\n  }\n\n  function drawSpline(pts, rStart, rEnd, matGen, numSteps = 70) {\n    for (let i = 0; i <= numSteps; i++) {\n      const t = i / numSteps;\n      const pt = getBezierPoint(pts, t);\n      const r = rStart + (rEnd - rStart) * t;\n      const matFn = matGen(t, pt);\n      drawSphere(pt[0], pt[1], pt[2], r, matFn);\n    }\n  }\n\n  // --- Material Generators for Leviathan Anatomy ---\n  function bodyMatGen(t, centerPt) {\n    return function (x, y, z, dx, dy, dz, normDist) {\n      // Lateral glowing stripes\n      const isLateral = Math.abs(dx) > 3.0 && Math.abs(dy) < 2.5 && (Math.floor(z + t * 8) % 3 === 0);\n      if (isLateral && normDist > 0.6) return SEA_LANTERN;\n\n      // Dorsal carapace\n      if (dy > 0.4) {\n        if (normDist > 0.8 && (x + y + z) % 6 === 0) return CRYING_OBS;\n        if (normDist > 0.85 && (x * z) % 7 === 0) return SCULK;\n        return DARK_PRIS;\n      }\n      // Ventral underbelly\n      if (dy < -0.4) {\n        return (x + z) % 2 === 0 ? PRIS_BRICK : PRIS;\n      }\n      // Lateral flanks\n      if (normDist > 0.75 && (y + z) % 4 === 0) return SEA_LANTERN;\n      return PRIS;\n    };\n  }\n\n  function tentacleMatGen(t, centerPt, normalDir) {\n    const len = Math.hypot(normalDir[0], normalDir[1], normalDir[2]) || 1;\n    const nx = normalDir[0] / len;\n    const ny = normalDir[1] / len;\n    const nz = normalDir[2] / len;\n\n    return function (x, y, z, dx, dy, dz, normDist) {\n      const dot = dx * nx + dy * ny + dz * nz;\n      // Inward ventral sucker row\n      if (dot > 0.35 && normDist > 0.65) {\n        if (dot > 0.75) {\n          return Math.floor(t * 32) % 2 === 0 ? FROG_OCHRE : BONE_Y;\n        }\n        return DARK_PRIS;\n      }\n      // Bioluminescent lateral bead\n      if (Math.abs(dot) < 0.25 && normDist > 0.75 && Math.floor(t * 22) % 3 === 0) {\n        return SEA_LANTERN;\n      }\n      // Dorsal tentacle skin\n      if (dot < -0.3) {\n        return DARK_PRIS;\n      }\n      return PRIS_BRICK;\n    };\n  }\n\n  // ==========================================\n  // 1. LEVIATHAN MAIN BODY & HEAD\n  // ==========================================\n\n  // Massive breaching torso curving upward and forward\n  const bodySpine = [\n    [28, 0, 42],\n    [28, 8, 34],\n    [28, 17, 26],\n    [28, 25, 18],\n  ];\n  drawSpline(bodySpine, 9.2, 7.0, bodyMatGen, 50);\n\n  // Upper Cranium & Snout\n  const upperJawSpine = [\n    [28, 25, 18],\n    [28, 30, 14],\n    [28, 29, 8],\n    [28, 27, 4],\n  ];\n  drawSpline(\n    upperJawSpine,\n    6.2,\n    2.6,\n    (t) => (x, y, z, dx, dy, dz, normDist) => {\n      if (dy > 0.3) return normDist > 0.75 ? DARK_PRIS : PRIS;\n      if (normDist > 0.8) return CRYING_OBS;\n      return PRIS_BRICK;\n    },\n    40\n  );\n\n  // Lower Jaw\n  const lowerJawSpine = [\n    [28, 20, 18],\n    [28, 16, 14],\n    [28, 15, 9],\n    [28, 17, 6],\n  ];\n  drawSpline(\n    lowerJawSpine,\n    4.5,\n    2.2,\n    (t) => (x, y, z, dx, dy, dz, normDist) => {\n      if (dy < -0.2) return PRIS_BRICK;\n      return PRIS;\n    },\n    30\n  );\n\n  // Deep Maw Void & Molten Gullet\n  for (let x = 25; x <= 31; x++) {\n    for (let y = 19; y <= 26; y++) {\n      for (let z = 14; z <= 18; z++) {\n        const dx = (x - 28) / 3;\n        const dy = (y - 22.5) / 3.5;\n        const dz = (z - 16) / 2;\n        if (dx * dx + dy * dy + dz * dz <= 1.0) {\n          setV(x, y, z, z >= 16 ? MAGMA : FROG_VERDANT);\n        }\n      }\n    }\n  }\n\n  // Upper Teeth / Fangs (pointing downward)\n  for (let z = 6; z <= 14; z++) {\n    for (let x = 24; x <= 32; x++) {\n      const isRim = Math.abs(x - 28) >= 2.5 || z <= 7;\n      if (isRim && getV(x, 27, z) && !getV(x, 26, z)) {\n        setV(x, 26, z, BONE_Y);\n        if (z <= 9 && !getV(x, 25, z)) setV(x, 25, z, BONE_Y);\n      }\n    }\n  }\n\n  // Lower Teeth / Fangs (pointing upward)\n  for (let z = 7; z <= 14; z++) {\n    for (let x = 24; x <= 32; x++) {\n      const isRim = Math.abs(x - 28) >= 2.2 || z <= 8;\n      if (isRim && getV(x, 17, z) && !getV(x, 18, z)) {\n        setV(x, 18, z, BONE_Y);\n        if (z <= 10 && !getV(x, 19, z)) setV(x, 19, z, BONE_Y);\n      }\n    }\n  }\n\n  // Bioluminescent Predatory Compound Eyes\n  const eyes = [\n    { cx: 22, cy: 28, cz: 11 },\n    { cx: 34, cy: 28, cz: 11 },\n  ];\n  for (const eye of eyes) {\n    setV(eye.cx, eye.cy, eye.cz, FROG_VERDANT);\n    setV(eye.cx, eye.cy, eye.cz - 1, SEA_LANTERN);\n    setV(eye.cx, eye.cy + 1, eye.cz, CRYING_OBS);\n    setV(eye.cx, eye.cy - 1, eye.cz, CRYING_OBS);\n    setV(eye.cx + (eye.cx < 28 ? -1 : 1), eye.cy, eye.cz, DARK_PRIS);\n    setV(eye.cx, eye.cy, eye.cz + 1, CRYING_OBS);\n    // Heavy brow ridge\n    setV(eye.cx, eye.cy + 2, eye.cz, DARK_PRIS);\n    setV(eye.cx, eye.cy + 2, eye.cz - 1, DARK_PRIS);\n  }\n\n  // Dorsal Spines & Crest Sails along the back\n  const dorsalCrests = [\n    { zMin: 13, zMax: 20, zPeak: 16, hMax: 8 },\n    { zMin: 22, zMax: 30, zPeak: 26, hMax: 7 },\n    { zMin: 32, zMax: 40, zPeak: 36, hMax: 6 },\n  ];\n  for (const crest of dorsalCrests) {\n    for (let z = crest.zMin; z <= crest.zMax; z++) {\n      const t = 1 - Math.abs(z - crest.zPeak) / (crest.zMax - crest.zMin);\n      const finHeight = Math.round(crest.hMax * Math.max(0, t));\n      let topY = 0;\n      for (let y = H - 1; y >= 0; y--) {\n        if (getV(28, y, z)) {\n          topY = y;\n          break;\n        }\n      }\n      if (topY > 0) {\n        for (let dy = 1; dy <= finHeight; dy++) {\n          const y = topY + dy;\n          if (y < H) {\n            if (dy === finHeight) setV(28, y, z, SEA_LANTERN);\n            else if (dy >= finHeight - 1) setV(28, y, z, CRYING_OBS);\n            else setV(28, y, z, DARK_PRIS);\n          }\n        }\n      }\n    }\n  }\n\n  // Cranial Horns sweeping backward\n  const leftHorn = [\n    [24, 31, 14],\n    [19, 37, 20],\n    [15, 41, 26],\n  ];\n  drawSpline(leftHorn, 2.0, 0.7, () => () => DARK_PRIS, 25);\n  const rightHorn = [\n    [32, 31, 14],\n    [37, 37, 20],\n    [41, 41, 26],\n  ];\n  drawSpline(rightHorn, 2.0, 0.7, () => () => DARK_PRIS, 25);\n\n  // Pectoral Fin Scythes\n  const leftPectoral = [\n    [19, 14, 24],\n    [11, 16, 28],\n    [5, 18, 34],\n    [2, 14, 39],\n  ];\n  drawSpline(leftPectoral, 2.5, 0.8, () => () => DARK_PRIS, 30);\n  const rightPectoral = [\n    [37, 14, 24],\n    [45, 16, 28],\n    [51, 18, 34],\n    [54, 14, 39],\n  ];\n  drawSpline(rightPectoral, 2.5, 0.8, () => () => DARK_PRIS, 30);\n\n  // ==========================================\n  // 2. EIGHT GARTH-SPANNING TENTACLES\n  // ==========================================\n\n  // Tentacle 1: Front-Left Harbor Crusher (smashes into pier)\n  const t1Pts = [\n    [22, 6, 22],\n    [14, 18, 16],\n    [9, 32, 10],\n    [12, 22, 4],\n    [15, 6, 3],\n    [17, 4, 2],\n  ];\n  drawSpline(t1Pts, 4.0, 1.8, (t) => tentacleMatGen(t, null, [1, -0.5, 0.5]), 55);\n\n  // Tentacle 2: Front-Right Colonnade Smasher (wraps column)\n  const t2Pts = [\n    [34, 6, 22],\n    [42, 18, 16],\n    [47, 32, 10],\n    [44, 22, 4],\n    [40, 6, 3],\n    [39, 4, 2],\n  ];\n  drawSpline(t2Pts, 4.0, 1.8, (t) => tentacleMatGen(t, null, [-1, -0.5, 0.5]), 55);\n\n  // Tentacle 3: Left High Sky Whip\n  const t3Pts = [\n    [20, 4, 30],\n    [10, 15, 28],\n    [4, 28, 20],\n    [6, 40, 14],\n    [12, 38, 10],\n  ];\n  drawSpline(t3Pts, 3.8, 1.4, (t) => tentacleMatGen(t, null, [0.8, -0.5, -0.3]), 50);\n\n  // Tentacle 4: Right High Sky Whip\n  const t4Pts = [\n    [36, 4, 30],\n    [46, 15, 28],\n    [52, 28, 20],\n    [50, 40, 14],\n    [44, 38, 10],\n  ];\n  drawSpline(t4Pts, 3.8, 1.4, (t) => tentacleMatGen(t, null, [-0.8, -0.5, -0.3]), 50);\n\n  // Tentacle 5: Left Flank Sweeper\n  const t5Pts = [\n    [21, 3, 38],\n    [10, 12, 42],\n    [4, 23, 38],\n    [6, 31, 30],\n    [12, 30, 25],\n  ];\n  drawSpline(t5Pts, 3.5, 1.3, (t) => tentacleMatGen(t, null, [0.7, -0.2, -0.7]), 45);\n\n  // Tentacle 6: Right Flank Sweeper\n  const t6Pts = [\n    [35, 3, 38],\n    [46, 12, 42],\n    [52, 23, 38],\n    [50, 31, 30],\n    [44, 30, 25],\n  ];\n  drawSpline(t6Pts, 3.5, 1.3, (t) => tentacleMatGen(t, null, [-0.7, -0.2, -0.7]), 45);\n\n  // Tentacle 7: Rear High Left Thrash\n  const t7Pts = [\n    [24, 2, 44],\n    [18, 14, 49],\n    [17, 28, 50],\n    [21, 37, 45],\n    [25, 34, 39],\n  ];\n  drawSpline(t7Pts, 3.6, 1.4, (t) => tentacleMatGen(t, null, [0.5, -0.5, -0.7]), 45);\n\n  // Tentacle 8: Rear High Right Thrash\n  const t8Pts = [\n    [32, 2, 44],\n    [38, 14, 49],\n    [39, 28, 50],\n    [35, 37, 45],\n    [31, 34, 39],\n  ];\n  drawSpline(t8Pts, 3.6, 1.4, (t) => tentacleMatGen(t, null, [-0.5, -0.5, -0.7]), 45);\n\n  // ==========================================\n  // 3. HELLENIST HARBOR QUAY WATERFRONT (Z=0..8)\n  // ==========================================\n\n  // Left Quayside Promenade (X = 4..20, Z = 1..7)\n  for (let x = 4; x <= 20; x++) {\n    for (let z = 1; z <= 7; z++) {\n      // Solid plinth foundation\n      for (let y = 1; y <= 5; y++) {\n        setV(x, y, z, stonePri);\n      }\n      // Promenade paved surface\n      const isBorder = x === 4 || z === 1 || z === 7;\n      setV(x, 6, z, isBorder ? stoneAcc : groundPave);\n    }\n  }\n\n  // Right Quayside Promenade (X = 36..52, Z = 1..7)\n  for (let x = 36; x <= 52; x++) {\n    for (let z = 1; z <= 7; z++) {\n      for (let y = 1; y <= 5; y++) {\n        setV(x, y, z, stonePri);\n      }\n      const isBorder = x === 52 || z === 1 || z === 7;\n      setV(x, 6, z, isBorder ? stoneAcc : groundPave);\n    }\n  }\n\n  // Central Shattered Quay Zone (X = 21..35, Z = 1..8)\n  for (let x = 21; x <= 35; x++) {\n    const distCenter = Math.abs(x - 28);\n    const breachY = Math.max(1, Math.min(5, Math.floor(distCenter * 0.8)));\n    for (let z = 1; z <= 6; z++) {\n      for (let y = 1; y <= breachY; y++) {\n        if (!getV(x, y, z)) {\n          setV(x, y, z, stonePri);\n        }\n      }\n      // Shattered masonry debris\n      if (breachY >= 2 && (x + z) % 3 === 0 && !getV(x, breachY + 1, z)) {\n        setV(x, breachY + 1, z, (x + z) % 2 === 0 ? stoneStairs : stoneSlab);\n      }\n    }\n  }\n\n  // Classical Balustrades along Quayside\n  for (let x = 4; x <= 12; x++) {\n    setV(x, 7, 7, stoneWall);\n    setV(x, 8, 7, stoneSlab);\n  }\n  for (let x = 44; x <= 52; x++) {\n    setV(x, 7, 7, stoneWall);\n    setV(x, 8, 7, stoneSlab);\n  }\n\n  // Classical Monumental Columns on the Promenade\n  // Column 1: Intact Left Beacon Colonnade (X=8..9, Z=3..4)\n  for (let cx = 8; cx <= 9; cx++) {\n    for (let cz = 3; cz <= 4; cz++) {\n      for (let y = 6; y <= 12; y++) {\n        setV(cx, y, cz, stonePri);\n      }\n      setV(cx, 13, cz, stoneStairs);\n    }\n  }\n  // Harbor beacon on top\n  setV(8, 14, 3, stoneWall);\n  setV(8, 15, 3, SEA_LANTERN);\n\n  // Column 2: Shattered by Tentacle 1 (X=15..16, Z=3..4)\n  for (let cx = 15; cx <= 16; cx++) {\n    for (let cz = 3; cz <= 4; cz++) {\n      setV(cx, 6, cz, stonePri);\n      setV(cx, 7, cz, stonePri);\n      setV(cx, 8, cz, stonePri);\n    }\n  }\n  // Toppled column chunks on quay\n  setV(17, 6, 2, stonePri);\n  setV(18, 6, 3, stonePri);\n  setV(18, 7, 3, stoneStairs);\n  setV(19, 6, 4, stoneSlab);\n\n  // Column 3: Gripped & Wrapped by Tentacle 2 (X=41..42, Z=3..4)\n  for (let cx = 41; cx <= 42; cx++) {\n    for (let cz = 3; cz <= 4; cz++) {\n      for (let y = 6; y <= 13; y++) {\n        if (!getV(cx, y, cz)) {\n          setV(cx, y, cz, stonePri);\n        }\n      }\n      setV(cx, 14, cz, stoneStairs);\n    }\n  }\n\n  // Column 4: Intact Right Colonnade (X=47..48, Z=3..4)\n  for (let cx = 47; cx <= 48; cx++) {\n    for (let cz = 3; cz <= 4; cz++) {\n      for (let y = 6; y <= 12; y++) {\n        setV(cx, y, cz, stonePri);\n      }\n      setV(cx, 13, cz, stoneStairs);\n    }\n  }\n  setV(47, 14, 3, stoneWall);\n  setV(47, 15, 3, SEA_LANTERN);\n\n  // Harbor Water Steps (descending into the bay)\n  for (let step = 0; step <= 4; step++) {\n    const sy = 5 - step;\n    const sz = 7 + Math.floor(step / 2);\n    for (let sx = 4; sx <= 7; sx++) {\n      setV(sx, sy, sz, stonePri);\n    }\n    for (let sx = 49; sx <= 52; sx++) {\n      setV(sx, sy, sz, stonePri);\n    }\n  }\n\n  // Wooden Harbor Pilings & Wharves\n  const pilings = [\n    [4, 8],\n    [12, 8],\n    [44, 8],\n    [52, 8],\n  ];\n  for (const [px, pz] of pilings) {\n    for (let y = 1; y <= 6; y++) {\n      setV(px, y, pz, woodLog);\n    }\n    setV(px, 7, pz, woodFence);\n  }\n\n  // ==========================================\n  // 4. TERRAIN CONFORMANCE (Rule 5 & 6)\n  // ==========================================\n  // Find lowest occupied voxel for each (x, z) column\n  const minYPerCol = new Int32Array(W * D).fill(999);\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      for (let y = 0; y < H; y++) {\n        if (getV(x, y, z)) {\n          minYPerCol[x * D + z] = y;\n          break;\n        }\n      }\n    }\n  }\n\n  // Extend foundations downward to meet actual terrain / seabed\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const lowY = minYPerCol[x * D + z];\n      if (lowY < 999 && lowY <= 8) {\n        const groundH = api.heightAt(x, z);\n        const targetH = Math.max(0, Math.min(H - 1, groundH));\n\n        if (targetH < lowY) {\n          const isQuay = z <= 8;\n          const foundationMat = isQuay ? stonePri : DARK_PRIS;\n          for (let y = lowY - 1; y >= targetH; y--) {\n            setV(x, y, z, foundationMat);\n          }\n        }\n      }\n    }\n  }\n\n  // ==========================================\n  // 5. EMIT ALL VOXELS DETERMINISTICALLY\n  // ==========================================\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const block = grid[(x * H + y) * D + z];\n        if (block) {\n          api.set(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"behemoth_leviathan\",\n    seatY: 0,\n    anchors: {\n      front: [28, 6, 0],\n      maw: [28, 24, 6],\n      crest: [28, 41, 18],\n      quay_left: [8, 6, 3],\n      quay_right: [48, 6, 3],\n    },\n  };\n}"
+    },
+    "amphibious_beast": {
+      "mode": "plugin",
+      "envelope": [
+        18,
+        16,
+        18
+      ],
+      "sourceHash": "b3:59a8c5e72b1c5a0e511d4efca7fe6ff5107c1760dd8bfc687f8149fc72f085a2",
+      "outputHash": "b3:a782d69d6d82d1f5c5a516289c1ef0d0087ccfbe98e5e20b82e15db8dcd93ce6",
+      "conforms": false,
+      "conformHash": "b3:32f7fe8428393ae1a1e4cf1f6df9ee959f446dc7c577cf43a212ee8e5e525a3e",
+      "source": "export const envelope = [18, 16, 18];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const seatY = 4;\n  const rng = () => api.random();\n\n  // 3D Voxel Grid Buffer\n  const grid = Array.from({ length: W }, () =>\n    Array.from({ length: H }, () =>\n      Array(D).fill(null)\n    )\n  );\n\n  function setBlock(x, y, z, block, overwrite = true) {\n    const ix = Math.floor(x);\n    const iy = Math.floor(y);\n    const iz = Math.floor(z);\n    if (ix < 0 || ix >= W || iy < 0 || iy >= H || iz < 0 || iz >= D) return;\n    if (!overwrite && grid[ix][iy][iz] !== null) return;\n    grid[ix][iy][iz] = block;\n  }\n\n  function getBlock(x, y, z) {\n    const ix = Math.floor(x);\n    const iy = Math.floor(y);\n    const iz = Math.floor(z);\n    if (ix < 0 || ix >= W || iy < 0 || iy >= H || iz < 0 || iz >= D) return null;\n    return grid[ix][iy][iz];\n  }\n\n  // Math helpers\n  function lerp(a, b, t) {\n    return a + (b - a) * t;\n  }\n\n  function lerp3(p1, p2, t) {\n    return [\n      lerp(p1[0], p2[0], t),\n      lerp(p1[1], p2[1], t),\n      lerp(p1[2], p2[2], t)\n    ];\n  }\n\n  function bezier2(p0, p1, p2, t) {\n    const u = 1 - t;\n    const tt = t * t;\n    const uu = u * u;\n    const ut2 = 2 * u * t;\n    return [\n      uu * p0[0] + ut2 * p1[0] + tt * p2[0],\n      uu * p0[1] + ut2 * p1[1] + tt * p2[1],\n      uu * p0[2] + ut2 * p1[2] + tt * p2[2]\n    ];\n  }\n\n  // 3D Geometry primitives\n  function drawEllipsoid(cx, cy, cz, rx, ry, rz, blockResolver) {\n    const minX = Math.max(0, Math.floor(cx - rx));\n    const maxX = Math.min(W - 1, Math.ceil(cx + rx));\n    const minY = Math.max(0, Math.floor(cy - ry));\n    const maxY = Math.min(H - 1, Math.ceil(cy + ry));\n    const minZ = Math.max(0, Math.floor(cz - rz));\n    const maxZ = Math.min(D - 1, Math.ceil(cz + rz));\n\n    for (let x = minX; x <= maxX; x++) {\n      const qx = (x - cx) / rx;\n      const qx2 = qx * qx;\n      if (qx2 > 1.0) continue;\n      for (let y = minY; y <= maxY; y++) {\n        const qy = (y - cy) / ry;\n        const qy2 = qy * qy;\n        if (qx2 + qy2 > 1.0) continue;\n        for (let z = minZ; z <= maxZ; z++) {\n          const qz = (z - cz) / rz;\n          const d = qx2 + qy2 + qz * qz;\n          if (d <= 1.0) {\n            const blk = typeof blockResolver === 'function' ? blockResolver(x, y, z, d, qx, qy, qz) : blockResolver;\n            if (blk) setBlock(x, y, z, blk);\n          }\n        }\n      }\n    }\n  }\n\n  function drawBezierTube(p0, p1, p2, r0, r2, blockResolver, numSteps = 24) {\n    for (let i = 0; i <= numSteps; i++) {\n      const t = i / numSteps;\n      const pos = bezier2(p0, p1, p2, t);\n      const r = lerp(r0, r2, t);\n      const rCeil = Math.ceil(r);\n      const minX = Math.max(0, Math.floor(pos[0] - rCeil));\n      const maxX = Math.min(W - 1, Math.ceil(pos[0] + rCeil));\n      const minY = Math.max(0, Math.floor(pos[1] - rCeil));\n      const maxY = Math.min(H - 1, Math.ceil(pos[1] + rCeil));\n      const minZ = Math.max(0, Math.floor(pos[2] - rCeil));\n      const maxZ = Math.min(D - 1, Math.ceil(pos[2] + rCeil));\n      const rSq = r * r;\n\n      for (let x = minX; x <= maxX; x++) {\n        const dx = x - pos[0];\n        const dx2 = dx * dx;\n        if (dx2 > rSq) continue;\n        for (let y = minY; y <= maxY; y++) {\n          const dy = y - pos[1];\n          const dy2 = dy * dy;\n          if (dx2 + dy2 > rSq) continue;\n          for (let z = minZ; z <= maxZ; z++) {\n            const dz = z - pos[2];\n            const dSq = dx2 + dy2 + dz * dz;\n            if (dSq <= rSq) {\n              const blk = typeof blockResolver === 'function' ? blockResolver(x, y, z, Math.sqrt(dSq) / r, t) : blockResolver;\n              if (blk) setBlock(x, y, z, blk);\n            }\n          }\n        }\n      }\n    }\n  }\n\n  function drawCylinder(p0, p1, r0, r1, blockResolver, steps = 16) {\n    for (let i = 0; i <= steps; i++) {\n      const t = i / steps;\n      const pos = lerp3(p0, p1, t);\n      const r = lerp(r0, r1, t);\n      const rCeil = Math.ceil(r);\n      const minX = Math.max(0, Math.floor(pos[0] - rCeil));\n      const maxX = Math.min(W - 1, Math.ceil(pos[0] + rCeil));\n      const minY = Math.max(0, Math.floor(pos[1] - rCeil));\n      const maxY = Math.min(H - 1, Math.ceil(pos[1] + rCeil));\n      const minZ = Math.max(0, Math.floor(pos[2] - rCeil));\n      const maxZ = Math.min(D - 1, Math.ceil(pos[2] + rCeil));\n      const rSq = r * r;\n\n      for (let x = minX; x <= maxX; x++) {\n        const dx = x - pos[0];\n        const dx2 = dx * dx;\n        if (dx2 > rSq) continue;\n        for (let y = minY; y <= maxY; y++) {\n          const dy = y - pos[1];\n          const dy2 = dy * dy;\n          if (dx2 + dy2 > rSq) continue;\n          for (let z = minZ; z <= maxZ; z++) {\n            const dz = z - pos[2];\n            if (dx2 + dy2 + dz * dz <= rSq) {\n              const blk = typeof blockResolver === 'function' ? blockResolver(x, y, z, t) : blockResolver;\n              if (blk) setBlock(x, y, z, blk);\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // Instance Variations (N = 12 different sea monsters)\n  const instIdx = api.instance.index;\n  const paletteType = (instIdx + Math.floor(rng() * 2)) % 4;\n  const poseType = (instIdx * 3 + Math.floor(rng() * 2)) % 4;\n  const headFeature = (instIdx * 2 + Math.floor(rng() * 2)) % 4;\n  const limbMode = (instIdx + Math.floor(rng() * 3)) % 4;\n  const tailType = (instIdx * 2 + 1) % 3;\n\n  // Sea Monster Biome Palettes\n  const palettes = [\n    { // Abyssal Sculk & Dark Prismarine\n      primary: \"minecraft:dark_prismarine\",\n      secondary: \"minecraft:sculk\",\n      belly: \"minecraft:prismarine_bricks\",\n      glow: \"minecraft:sea_lantern\",\n      bone: \"minecraft:bone_block\",\n      spineWall: \"minecraft:prismarine_wall\",\n      claw: \"minecraft:polished_blackstone\",\n      clawStair: \"minecraft:polished_blackstone_brick_stairs[facing=north,half=bottom]\"\n    },\n    { // Verdant Trench Fiend\n      primary: \"minecraft:prismarine_bricks\",\n      secondary: \"minecraft:dark_prismarine\",\n      belly: \"minecraft:prismarine\",\n      glow: \"minecraft:verdant_froglight\",\n      bone: \"minecraft:dripstone_block\",\n      spineWall: \"minecraft:prismarine_wall\",\n      claw: \"minecraft:deepslate_tiles\",\n      clawStair: \"minecraft:deepslate_tile_stairs[facing=north,half=bottom]\"\n    },\n    { // Volcanic Deep Lurker\n      primary: \"minecraft:dark_prismarine\",\n      secondary: \"minecraft:crying_obsidian\",\n      belly: \"minecraft:warped_hyphae\",\n      glow: \"minecraft:ochre_froglight\",\n      bone: \"minecraft:bone_block\",\n      spineWall: \"minecraft:prismarine_wall\",\n      claw: \"minecraft:polished_blackstone\",\n      clawStair: \"minecraft:polished_blackstone_brick_stairs[facing=north,half=bottom]\"\n    },\n    { // Phosphor Leviathan\n      primary: \"minecraft:prismarine\",\n      secondary: \"minecraft:prismarine_bricks\",\n      belly: \"minecraft:warped_planks\",\n      glow: \"minecraft:pearlescent_froglight\",\n      bone: \"minecraft:bone_block\",\n      spineWall: \"minecraft:prismarine_wall\",\n      claw: \"minecraft:dark_prismarine\",\n      clawStair: \"minecraft:dark_prismarine_stairs[facing=north,half=bottom]\"\n    }\n  ];\n\n  const pal = palettes[paletteType];\n\n  // Base Morphological Spine\n  const midX = 8.5 + (rng() - 0.5) * 1.2;\n\n  let headPos, neckPos, chestPos, abdPos, pelvisPos;\n\n  if (poseType === 0) {\n    // High Rearing Striker\n    headPos = [midX, 11.5 + rng() * 0.8, 2.6];\n    neckPos = [midX, 9.8, 4.6];\n    chestPos = [midX, 7.8, 7.4];\n    abdPos = [midX, 6.8, 10.6];\n    pelvisPos = [midX, 6.2, 13.4];\n  } else if (poseType === 1) {\n    // Low Predatory Stalker\n    headPos = [midX, 6.8 + rng() * 0.6, 2.0];\n    neckPos = [midX, 6.6, 4.2];\n    chestPos = [midX, 6.5, 7.2];\n    abdPos = [midX, 6.2, 10.5];\n    pelvisPos = [midX, 5.8, 13.5];\n  } else if (poseType === 2) {\n    // Serpentine S-Curve Strike\n    const sCurv = (rng() > 0.5 ? 1 : -1) * 1.8;\n    headPos = [midX - sCurv, 9.5 + rng() * 0.8, 2.2];\n    neckPos = [midX - sCurv * 0.5, 8.5, 4.5];\n    chestPos = [midX + sCurv * 0.6, 7.5, 7.5];\n    abdPos = [midX - sCurv * 0.4, 6.8, 10.8];\n    pelvisPos = [midX + sCurv * 0.8, 6.0, 13.5];\n  } else {\n    // Bulky Heavy Behemoth\n    headPos = [midX, 8.5 + rng() * 0.8, 2.4];\n    neckPos = [midX, 8.0, 4.6];\n    chestPos = [midX, 7.6, 7.5];\n    abdPos = [midX, 7.0, 10.5];\n    pelvisPos = [midX, 6.4, 13.2];\n  }\n\n  // Torso Shader\n  function bodyBlockResolver(x, y, z, d, qx, qy, qz) {\n    if (qy > 0.25) {\n      if (Math.abs(x - midX) <= 0.8) {\n        return pal.secondary;\n      }\n      return pal.primary;\n    }\n    if (Math.abs(qy) <= 0.25 && Math.abs(qx) > 0.55) {\n      if ((Math.floor(x) + Math.floor(z)) % 3 === 0) {\n        return pal.glow;\n      }\n      return pal.belly;\n    }\n    return pal.belly;\n  }\n\n  // 1. Build Main Body Segments\n  drawEllipsoid(chestPos[0], chestPos[1], chestPos[2], 3.4, 2.5, 3.0, bodyBlockResolver);\n  drawEllipsoid(abdPos[0], abdPos[1], abdPos[2], 2.9, 2.3, 2.7, bodyBlockResolver);\n  drawEllipsoid(pelvisPos[0], pelvisPos[1], pelvisPos[2], 2.6, 2.0, 2.5, bodyBlockResolver);\n\n  // Connect body segments smoothly\n  drawBezierTube(chestPos, abdPos, pelvisPos, 2.8, 2.2, bodyBlockResolver, 16);\n  drawBezierTube(chestPos, neckPos, headPos, 2.4, 1.6, bodyBlockResolver, 16);\n\n  // 2. Head & Jaws (Facing North -Z)\n  const hx = headPos[0];\n  const hy = headPos[1];\n  const hz = headPos[2];\n\n  // Upper Cranium & Snout\n  drawEllipsoid(hx, hy + 0.4, hz - 0.2, 2.0, 1.3, 1.8, (x, y, z, d, qx, qy) => {\n    return qy > 0.1 ? pal.primary : pal.belly;\n  });\n  drawEllipsoid(hx, hy + 0.2, hz - 1.5, 1.4, 0.9, 1.2, (x, y, z, d, qx, qy) => {\n    return qy > 0.1 ? pal.primary : pal.belly;\n  });\n\n  // Glowing Eyes\n  setBlock(hx - 1.6, hy + 0.6, hz - 0.6, pal.glow);\n  setBlock(hx + 1.6, hy + 0.6, hz - 0.6, pal.glow);\n  // Brow Ridges\n  setBlock(hx - 1.6, hy + 1.2, hz - 0.6, pal.secondary);\n  setBlock(hx + 1.6, hy + 1.2, hz - 0.6, pal.secondary);\n\n  // Upper Fangs / Teeth\n  setBlock(hx - 0.9, hy - 0.4, hz - 1.3, pal.bone);\n  setBlock(hx + 0.9, hy - 0.4, hz - 1.3, pal.bone);\n  setBlock(hx - 0.5, hy - 0.4, hz - 2.0, pal.bone);\n  setBlock(hx + 0.5, hy - 0.4, hz - 2.0, pal.bone);\n\n  // Gaping Roaring Lower Jaw\n  const jawGape = 1.4 + rng() * 1.0;\n  const jawHinge = [hx, hy - 0.5, hz + 0.2];\n  const jawTip = [hx, hy - jawGape, hz - 1.8];\n  drawCylinder(jawHinge, jawTip, 1.2, 0.8, pal.primary, 10);\n\n  // Lower Jaw Teeth\n  setBlock(hx - 0.8, hy - jawGape + 0.8, hz - 1.4, pal.bone);\n  setBlock(hx + 0.8, hy - jawGape + 0.8, hz - 1.4, pal.bone);\n  setBlock(hx, hy - jawGape + 0.7, hz - 1.7, pal.bone);\n\n  // Glowing Abyssal Throat Interior\n  setBlock(hx, hy - 0.3, hz - 0.1, pal.glow);\n\n  // Head Features\n  if (headFeature === 0) {\n    // Bioluminescent Angler Lure\n    const lureP0 = [hx, hy + 1.4, hz - 0.5];\n    const lureP1 = [hx, hy + 3.4, hz - 1.6];\n    const lureP2 = [hx, hy + 2.0, hz - 2.8];\n    drawBezierTube(lureP0, lureP1, lureP2, 0.6, 0.4, pal.spineWall, 12);\n    setBlock(lureP2[0], lureP2[1], lureP2[2], pal.glow);\n    setBlock(lureP2[0], lureP2[1] + 1, lureP2[2], pal.primary);\n  } else if (headFeature === 1) {\n    // Twin Sweeping Abyssal Horns\n    const leftH0 = [hx - 1.2, hy + 1.1, hz];\n    const leftH1 = [hx - 2.8, hy + 2.8, hz + 1.2];\n    const leftH2 = [hx - 3.2, hy + 2.0, hz + 2.8];\n    drawBezierTube(leftH0, leftH1, leftH2, 0.8, 0.3, pal.bone, 12);\n\n    const rightH0 = [hx + 1.2, hy + 1.1, hz];\n    const rightH1 = [hx + 2.8, hy + 2.8, hz + 1.2];\n    const rightH2 = [hx + 3.2, hy + 2.0, hz + 2.8];\n    drawBezierTube(rightH0, rightH1, rightH2, 0.8, 0.3, pal.bone, 12);\n  } else if (headFeature === 2) {\n    // Spined Dragon Frill / Crest\n    for (let angle = -70; angle <= 70; angle += 25) {\n      const rad = (angle * Math.PI) / 180;\n      const frX = hx + Math.sin(rad) * 2.8;\n      const frY = hy + 1.2 + Math.cos(rad) * 2.2;\n      drawCylinder([hx, hy + 0.8, hz + 0.5], [frX, frY, hz + 0.8], 0.6, 0.3, pal.primary, 6);\n      setBlock(frX, frY, hz + 0.8, pal.spineWall);\n    }\n  } else {\n    // Saber Tusks and Triple Crown\n    setBlock(hx - 1.2, hy - jawGape + 1.2, hz - 2.0, pal.bone);\n    setBlock(hx - 1.2, hy - jawGape + 1.8, hz - 2.2, pal.bone);\n    setBlock(hx + 1.2, hy - jawGape + 1.2, hz - 2.0, pal.bone);\n    setBlock(hx + 1.2, hy - jawGape + 1.8, hz - 2.2, pal.bone);\n\n    setBlock(hx - 0.8, hy + 1.5, hz, pal.spineWall);\n    setBlock(hx, hy + 1.8, hz, pal.spineWall);\n    setBlock(hx + 0.8, hy + 1.5, hz, pal.spineWall);\n  }\n\n  // 3. Multi-Limbed Locomotion & Terrain Adaptation\n  function buildLimb(shX, shY, shZ, targetX, targetZ, legThickness = 1.3, isFrontScythe = false) {\n    const fx = Math.round(Math.max(1, Math.min(W - 2, targetX)));\n    const fz = Math.round(Math.max(1, Math.min(D - 2, targetZ)));\n\n    // Ground Height Sampling (Rule 6)\n    const gh = api.heightAt(fx, fz);\n    const footY = Math.max(0, Math.min(H - 2, seatY + gh));\n\n    const shoulder = [shX, shY, shZ];\n    const foot = [fx, footY, fz];\n\n    // Knee joint reaches high and outward for predatory stance\n    const outSign = fx >= midX ? 1 : -1;\n    const kneeX = (shX + fx) / 2 + outSign * (1.2 + rng() * 0.8);\n    const kneeZ = (shZ + fz) / 2 - (isFrontScythe ? 1.0 : 0.0);\n    const kneeY = Math.min(H - 2, Math.max(shY, footY) + 1.6 + rng() * 0.8);\n    const knee = [kneeX, kneeY, kneeZ];\n\n    // Draw Upper & Lower Leg Tubes\n    drawBezierTube(shoulder, knee, foot, legThickness, legThickness * 0.75, (x, y, z, d, t) => {\n      return t < 0.3 ? pal.primary : pal.secondary;\n    }, 14);\n\n    // Foot Base\n    drawEllipsoid(fx, footY + 0.3, fz, 1.4, 0.6, 1.4, pal.claw);\n\n    // Hooked Raptor Claws (3 spreading talons)\n    const forwardZ = isFrontScythe ? -1 : (fz < 9 ? -1 : 1);\n    setBlock(fx, footY, fz + forwardZ * 1.5, pal.clawStair);\n    setBlock(fx - outSign * 1.2, footY, fz + forwardZ * 1.0, pal.clawStair);\n    setBlock(fx + outSign * 1.2, footY, fz + forwardZ * 1.0, pal.clawStair);\n\n    // Foundation Skirt to Seafloor/Ground (Rule 6)\n    for (let dx = -2; dx <= 2; dx++) {\n      for (let dz = -2; dz <= 2; dz++) {\n        const cx = fx + dx;\n        const cz = fz + dz;\n        if (cx < 0 || cx >= W || cz < 0 || cz >= D) continue;\n\n        let topSolidY = -1;\n        for (let y = Math.min(H - 1, footY + 2); y >= 0; y--) {\n          if (grid[cx][y][cz] !== null) {\n            topSolidY = y;\n            break;\n          }\n        }\n        if (topSolidY >= 0) {\n          const colGroundY = Math.max(0, Math.min(H - 1, seatY + api.heightAt(cx, cz)));\n          for (let y = topSolidY - 1; y >= colGroundY; y--) {\n            if (grid[cx][y][cz] === null) {\n              grid[cx][y][cz] = pal.primary;\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // Generate Limbs based on Limb Configuration\n  if (limbMode === 0) {\n    // 6 Sprawling Amphibious Limbs (3 Pairs)\n    // Front pair\n    buildLimb(chestPos[0] - 2.8, chestPos[1] - 0.2, chestPos[2] - 0.8, midX - 5.5, 3.5, 1.4);\n    buildLimb(chestPos[0] + 2.8, chestPos[1] - 0.2, chestPos[2] - 0.8, midX + 5.5, 3.5, 1.4);\n    // Mid pair\n    buildLimb(abdPos[0] - 2.6, abdPos[1] - 0.4, abdPos[2], midX - 6.0, 8.5, 1.3);\n    buildLimb(abdPos[0] + 2.6, abdPos[1] - 0.4, abdPos[2], midX + 6.0, 8.5, 1.3);\n    // Rear pair\n    buildLimb(pelvisPos[0] - 2.4, pelvisPos[1] - 0.2, pelvisPos[2] + 0.6, midX - 5.0, 14.5, 1.4);\n    buildLimb(pelvisPos[0] + 2.4, pelvisPos[1] - 0.2, pelvisPos[2] + 0.6, midX + 5.0, 14.5, 1.4);\n  } else if (limbMode === 1) {\n    // 4 Massive Pillar Legs (Bulky Quadruped)\n    // Heavy Front pair\n    buildLimb(chestPos[0] - 3.2, chestPos[1], chestPos[2] - 0.4, midX - 4.8, 4.5, 1.7);\n    buildLimb(chestPos[0] + 3.2, chestPos[1], chestPos[2] - 0.4, midX + 4.8, 4.5, 1.7);\n    // Heavy Rear pair\n    buildLimb(pelvisPos[0] - 3.0, pelvisPos[1], pelvisPos[2] + 0.4, midX - 4.8, 13.8, 1.7);\n    buildLimb(pelvisPos[0] + 3.0, pelvisPos[1], pelvisPos[2] + 0.4, midX + 4.8, 13.8, 1.7);\n  } else if (limbMode === 2) {\n    // 4 Crawling Rear Legs + 2 Forward Mantis Scythe Arms\n    // Forward Crusher Scythes\n    buildLimb(chestPos[0] - 3.0, chestPos[1] + 0.5, chestPos[2] - 1.2, midX - 4.0, 1.8, 1.5, true);\n    buildLimb(chestPos[0] + 3.0, chestPos[1] + 0.5, chestPos[2] - 1.2, midX + 4.0, 1.8, 1.5, true);\n    // Mid support legs\n    buildLimb(abdPos[0] - 2.6, abdPos[1] - 0.4, abdPos[2], midX - 5.8, 7.8, 1.3);\n    buildLimb(abdPos[0] + 2.6, abdPos[1] - 0.4, abdPos[2], midX + 5.8, 7.8, 1.3);\n    // Rear pushing legs\n    buildLimb(pelvisPos[0] - 2.5, pelvisPos[1] - 0.2, pelvisPos[2] + 0.6, midX - 5.2, 14.2, 1.4);\n    buildLimb(pelvisPos[0] + 2.5, pelvisPos[1] - 0.2, pelvisPos[2] + 0.6, midX + 5.2, 14.2, 1.4);\n  } else {\n    // 8 Abyssal Hydra Limbs (4 Pairs)\n    for (let p = 0; p < 4; p++) {\n      const t = p / 3;\n      const shPos = lerp3(chestPos, pelvisPos, t);\n      const targetZ = 3.5 + p * 3.6 + (rng() - 0.5) * 0.8;\n      const spreadX = 5.2 + Math.sin(t * Math.PI) * 1.2;\n      buildLimb(shPos[0] - 2.4, shPos[1] - 0.4, shPos[2], midX - spreadX, targetZ, 1.15);\n      buildLimb(shPos[0] + 2.4, shPos[1] - 0.4, shPos[2], midX + spreadX, targetZ, 1.15);\n    }\n  }\n\n  // 4. Dorsal Fin & Spines\n  for (let z = 4; z <= 15; z++) {\n    const x = Math.round(midX);\n    let topY = -1;\n    for (let y = H - 1; y >= 0; y--) {\n      if (grid[x][y][z] !== null) {\n        topY = y;\n        break;\n      }\n    }\n    if (topY >= 0 && topY < H - 2) {\n      const spineHt = (z >= 6 && z <= 10) ? (2 + Math.floor(rng() * 2)) : 1;\n      for (let s = 1; s <= spineHt; s++) {\n        setBlock(x, topY + s, z, pal.spineWall);\n      }\n      if (z % 3 === 0 && topY + spineHt + 1 < H) {\n        setBlock(x, topY + spineHt, z, pal.glow);\n      }\n    }\n  }\n\n  // 5. Tail Appendages\n  const tailBase = [pelvisPos[0], pelvisPos[1], pelvisPos[2]];\n  if (tailType === 0) {\n    // Massive Sinuous Fluke Tail\n    const tailSwing = (rng() - 0.5) * 3.5;\n    const t1 = [pelvisPos[0] + tailSwing * 0.5, pelvisPos[1] + 0.2, 15.0];\n    const t2 = [pelvisPos[0] + tailSwing, pelvisPos[1] + 0.6, 16.8];\n    drawBezierTube(tailBase, t1, t2, 2.0, 0.8, pal.primary, 14);\n\n    // Vertical fin blade on tail\n    for (let tz = 14; tz <= 16; tz++) {\n      const tx = Math.round(lerp(tailBase[0], t2[0], (tz - 13) / 3.8));\n      const ty = Math.round(lerp(tailBase[1], t2[1], (tz - 13) / 3.8));\n      setBlock(tx, ty + 1, tz, pal.spineWall);\n      setBlock(tx, ty + 2, tz, pal.spineWall);\n    }\n  } else if (tailType === 1) {\n    // Bifurcated Twin Whip Tails\n    const leftT1 = [pelvisPos[0] - 2.0, pelvisPos[1] + 0.2, 15.0];\n    const leftT2 = [pelvisPos[0] - 3.8, pelvisPos[1] + 0.8, 16.8];\n    drawBezierTube(tailBase, leftT1, leftT2, 1.6, 0.5, pal.primary, 12);\n    setBlock(leftT2[0], leftT2[1], leftT2[2], pal.bone);\n\n    const rightT1 = [pelvisPos[0] + 2.0, pelvisPos[1] + 0.2, 15.0];\n    const rightT2 = [pelvisPos[0] + 3.8, pelvisPos[1] + 0.8, 16.8];\n    drawBezierTube(tailBase, rightT1, rightT2, 1.6, 0.5, pal.primary, 12);\n    setBlock(rightT2[0], rightT2[1], rightT2[2], pal.bone);\n  } else {\n    // Spiked Club / Thagomizer\n    const tEnd = [pelvisPos[0], pelvisPos[1] + 0.2, 15.5];\n    drawCylinder(tailBase, tEnd, 1.8, 1.2, pal.primary, 8);\n    drawEllipsoid(tEnd[0], tEnd[1], tEnd[2], 1.6, 1.4, 1.6, pal.claw);\n\n    // Radiating Bone Spikes\n    setBlock(tEnd[0] - 1.8, tEnd[1], tEnd[2], pal.bone);\n    setBlock(tEnd[0] + 1.8, tEnd[1], tEnd[2], pal.bone);\n    setBlock(tEnd[0], tEnd[1] + 1.8, tEnd[2], pal.bone);\n    setBlock(tEnd[0], tEnd[1], tEnd[2] + 1.8, pal.bone);\n  }\n\n  // 6. Underbelly Ground Conformance Pass (Rule 6)\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const groundY = Math.max(0, Math.min(H - 1, seatY + api.heightAt(x, z)));\n      let lowestY = -1;\n      for (let y = 0; y < H; y++) {\n        if (grid[x][y][z] !== null) {\n          lowestY = y;\n          break;\n        }\n      }\n      // If a body or tail voxel is hovering within 2 blocks above ground, extend down\n      if (lowestY >= 0 && lowestY > groundY && lowestY - groundY <= 2) {\n        for (let y = lowestY - 1; y >= groundY; y--) {\n          if (grid[x][y][z] === null) {\n            grid[x][y][z] = pal.belly;\n          }\n        }\n      }\n    }\n  }\n\n  // 7. Single Connected Component Verification & Pruning (Rule 9)\n  const visited = Array.from({ length: W }, () =>\n    Array.from({ length: H }, () =>\n      Array(D).fill(false)\n    )\n  );\n\n  const components = [];\n\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        if (grid[x][y][z] !== null && !visited[x][y][z]) {\n          const comp = [];\n          const queue = [[x, y, z]];\n          visited[x][y][z] = true;\n\n          while (queue.length > 0) {\n            const [cx, cy, cz] = queue.pop();\n            comp.push([cx, cy, cz]);\n\n            const neighbors = [\n              [cx + 1, cy, cz], [cx - 1, cy, cz],\n              [cx, cy + 1, cz], [cx, cy - 1, cz],\n              [cx, cy, cz + 1], [cx, cy, cz - 1]\n            ];\n\n            for (let n = 0; n < 6; n++) {\n              const [nx, ny, nz] = neighbors[n];\n              if (nx >= 0 && nx < W && ny >= 0 && ny < H && nz >= 0 && nz < D) {\n                if (grid[nx][ny][nz] !== null && !visited[nx][ny][nz]) {\n                  visited[nx][ny][nz] = true;\n                  queue.push([nx, ny, nz]);\n                }\n              }\n            }\n          }\n          components.push(comp);\n        }\n      }\n    }\n  }\n\n  // Keep largest component, prune disconnected strays\n  if (components.length > 1) {\n    components.sort((a, b) => b.length - a.length);\n    for (let c = 1; c < components.length; c++) {\n      const comp = components[c];\n      for (let v = 0; v < comp.length; v++) {\n        const [vx, vy, vz] = comp[v];\n        grid[vx][vy][vz] = null;\n      }\n    }\n  }\n\n  // 8. Commit Buffer to Minecraft World\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const blk = grid[x][y][z];\n        if (blk !== null) {\n          api.set(x, y, z, blk);\n        }\n      }\n    }\n  }\n\n  // Result with North-Facing Front Anchor (Rule 12)\n  return {\n    name: \"amphibious_beast\",\n    seatY: seatY,\n    anchors: {\n      front: [\n        Math.round(headPos[0]),\n        Math.max(0, Math.min(H - 1, Math.round(headPos[1]))),\n        0\n      ]\n    }\n  };\n}"
+    }
+  }
+}

@@ -1,0 +1,138 @@
+prompt     A modern Hellenist city being invaded by sea monsters.
+seed       305
+size       512x512
+model      google/gemini-3.7-flash
+effort     high
+kit        settlement
+
+intent     {"era":"modern","wealth":0.8,"decline":0.25,"formality":0.75,"event":{"kind":"siege","severity":0.8,"recency":0},"climate":{"temperature":0.6,"humidity":0.2,"snow":"never"},"character":{"label":"modern hellenist coastal metropolis under attack","materialTheme":"modern_city","formPacks":["classical_mediterranean"],"archetypes":{"prefer":["stoa","peripteral_temple","propylaea","bouleuterion","nymphaeum","palaestra"]},"motifs":{"roofType":"flat","massing":"blocky","ornamentDensity":0.6},"urbanForm":"grid"},"tokens":{"event_direction":"giant sea monsters emerging from the harbor waters and attacking the city waterfront","infra":"barricade_line along the coastal avenue and port quays; emergency cordon fencing securing the inner boulevards","terrain":"a grand neoclassical coastal metropolis fronting deep open water with harbors and broad avenues","icons":"colonnaded modern boulevards, monumental marble-faced civic stoas and temples, breached waterfront seawalls, colossal sea beasts rising in the bay"}}
+           1 attempt(s), 8130 tokens
+
+authored with google/gemini-3.7-flash in 1 attempt(s)
+  attempt 1   valid
+  tokens     80591 in + 10885 out = 91476  ($0.0506)
+programs   2 of 2 kept (budget 3 landmark / 3 plugin)
+  ok     behemoth_leviathan [landmark]  1 attempt(s), 28240 tokens  ($0.0479), 26 warning(s)
+  ok     amphibious_beast [plugin]  1 attempt(s), 31087 tokens  ($0.0533), 9 warning(s)
+  tokens     6704 in + 52623 out = 59327  (35539 of the out reasoning)  ($0.1012)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/v14-battery/hellenist/hellenist_city_invasion.loam.json
+
+
+compile feedback, round 1 of 4:
+
+The compiler reported 2 problem(s) with the compiled world:
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.great_leviathan: hard "on" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E170 CANNOT_FIT at world.metropolis.grand_bouleuterion: no lot or block in "world.metropolis.cell_6" is big enough for this landmark's 19 × 23 footprint
+  fix: shrink "envelope.size", raise the district's "params.blockSize" so its blocks are bigger, or move this building out of the district and let the solver place it
+
+Layout solver report:
+
+  world.great_leviathan: placed after constraint_demoted (97 candidates considered)
+    unsatisfied on constraint [1] (declared hard, now soft, weight 1, cost 0.11)
+
+  revision 1 authored in 1 attempt(s)
+  tokens     101128 in + 21163 out = 122291  ($0.0776)
+
+
+compile feedback, round 2 of 4:
+
+The compiler reported 1 problem(s) with the compiled world:
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.great_leviathan: hard "on" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+
+Layout solver report:
+
+  world.great_leviathan: placed after constraint_demoted (97 candidates considered)
+    unsatisfied on constraint [1] (declared hard, now soft, weight 1, cost 0.11)
+
+  revision 2 authored in 1 attempt(s)
+  tokens     101071 in + 21449 out = 122520  ($0.0781)
+
+
+compile feedback, round 3 of 4:
+
+The compiler reported 1 problem(s) with the compiled world:
+
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.great_leviathan: hard "on" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+
+Layout solver report:
+
+  world.great_leviathan: placed after constraint_demoted (97 candidates considered)
+    unsatisfied on constraint [1] (declared hard, now soft, weight 1, cost 0.11)
+
+  revision 3 authored in 1 attempt(s)
+  tokens     101072 in + 21831 out = 122903  ($0.0788)
+
+compiled "hellenist_city_invasion" — 1.21.11 (DataVersion 4671)
+  world      /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/v14-battery/hellenist/hellenist_city_invasion
+  seed       305
+  region     512x512 at (-256, -256)
+  heights    43.2..104.5  sea 63  snow line 102.4
+  land       86.6% of columns above sea level
+  biomes     plains 60.5%, forest 36.0%, ocean 2.7%, windswept_hills 0.6%, beach 0.2%
+  trees      1007 (inland_groves=119, wilderness_scatter=998)
+  chunks     1024
+  blocks     35763183 (45918 vegetation)
+  markers    85
+  spawn      [0, 66, -143]
+  timings    validate 2ms  field 285ms  layout 1724ms  climate 39ms  columns 25ms  caves 0ms  structures 633ms  programs 1422ms  scatter 619ms  biomes 27ms  validators 3ms  emit 1391ms  total 6190ms
+  programs   world.great_leviathan=behemoth_leviathan×1 (21972 blocks), world.invading_beasts=amphibious_beast×7 (4297 blocks)
+  zip        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/v14-battery/hellenist/hellenist_city_invasion.zip
+  doc        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/v14-battery/hellenist/hellenist_city_invasion.loam.json
+  report     /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/v14-battery/hellenist/hellenist_city_invasion.report.json
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.main_arterials: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+warning LOAM-W521 LANDMARK_COARSE_ABANDONED at world.great_leviathan: this landmark asked to stand at (-1, -171) and was placed at (79, 227), 406 blocks away: a site inside the target was feasible but cost more, and "at"/"zone" is a soft cost the ground can outbid
+  fix: nothing to change if anywhere sensible will do. If the landmark belongs at that spot — its own island, its own faction's shore — tighten the target with a "radius"/"tolerance", or bind it to something local ("distance" to a node there, "on": "@terrain:coastline"), so the ground cannot outbid the intent
+
+note LOAM-W522 PROGRAM_FACE_REMEASURED at world.great_leviathan: this landmark was placed at (79, 227), not where its facing was first measured from, so the facing was taken again from the real site: 180° becomes 0°
+  fix: nothing to change — the front points where the document asked it to. To pin the site as well, tighten the coarse target with a "radius"/"tolerance" or a hard "zone"
+
+warning LOAM-T217 VISTA_UNCLAIMED at world.metropolis.acropolis_tower: no "spine" in this city has an end with room for this landmark's 21 × 21 footprint, so it is placed on an ordinary frontage instead
+  fix: write "vista": true to take whichever axis the plan rates highest, or shrink "envelope.size"
+
+warning LOAM-T217 VISTA_UNCLAIMED at world.metropolis.grand_bouleuterion: no "boulevard" in this city has an end with room for this landmark's 15 × 17 footprint, so it is placed on an ordinary frontage instead
+  fix: write "vista": true to take whichever axis the plan rates highest, or shrink "envelope.size"
+
+note LOAM-I512 DISTRICT_RUINS at world.metropolis.cell_1: decline 0.25 gives a ruin share of 0.00: 0 of 4 infill lots roll into ruined shells (light 0, heavy 0, total 0)
+  fix: decline is below the ruin onset of 0.35 — below it decline is wear, not ruin; raise it to ruin buildings
+
+note LOAM-I512 DISTRICT_RUINS at world.metropolis.cell_2: decline 0.25 gives a ruin share of 0.00: 0 of 13 infill lots roll into ruined shells (light 0, heavy 0, total 0)
+  fix: decline is below the ruin onset of 0.35 — below it decline is wear, not ruin; raise it to ruin buildings
+
+note LOAM-I512 DISTRICT_RUINS at world.metropolis.cell_3: decline 0.25 gives a ruin share of 0.00: 0 of 2 infill lots roll into ruined shells (light 0, heavy 0, total 0)
+  fix: decline is below the ruin onset of 0.35 — below it decline is wear, not ruin; raise it to ruin buildings
+
+note LOAM-I512 DISTRICT_RUINS at world.metropolis.cell_5: decline 0.25 gives a ruin share of 0.00: 0 of 1 infill lots roll into ruined shells (light 0, heavy 0, total 0)
+  fix: decline is below the ruin onset of 0.35 — below it decline is wear, not ruin; raise it to ruin buildings
+
+note LOAM-I512 DISTRICT_RUINS at world.metropolis.cell_6: decline 0.25 gives a ruin share of 0.00: 0 of 2 infill lots roll into ruined shells (light 0, heavy 0, total 0)
+  fix: decline is below the ruin onset of 0.35 — below it decline is wear, not ruin; raise it to ruin buildings
+
+note LOAM-I512 DISTRICT_RUINS at world.metropolis.cell_7: decline 0.25 gives a ruin share of 0.00: 0 of 16 infill lots roll into ruined shells (light 0, heavy 0, total 0)
+  fix: decline is below the ruin onset of 0.35 — below it decline is wear, not ruin; raise it to ruin buildings
+
+warning LOAM-W517 INTENT_FORM_PACK_ERA at world: intent.era resolves to "modern", which is outside the affinity of the form pack "classical_mediterranean" (ancient) — the pack is used as written
+  fix: affinity is advice, never a gate: an ancient form vocabulary in a modern city is a legal and deliberate combination. Change the era or the pack only if the pairing was not what you meant
+
+warning LOAM-T228 PROP_RESEATED at world.warning_buoy: no water within 48 blocks of the buoy's coarse target, so it sought the waterline and seated at [-122, 174]
+  fix: nothing to fix if the prop is where you want it; to hold it to one part of the world, give the node an explicit "at": {"x", "z"} on the water and it will fail in place instead of moving
+
+warning LOAM-W337 PROGRAM_DROPPED at world.invading_beasts: "amphibious_beast" asked for 12 instances and only 7 sites would take one
+  fix: the area cannot hold that many at this spacing: widen "area", lower "spacing" below 25, relax "maxSlope"/"avoidTags", or ask for fewer
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 100223 footprint columns (plus 25224 feathered over 40 columns) to minecraft:plains, from the ambient majority (minecraft:plains, 84% of 15777 ring columns); snow policy never resolved to "never" on a 0/100223 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+
+warning LOAM-T107 SPAWN_UNRESOLVED at world.meta.spawn: the requested spawn at (0, -171) is under water or too close to sea level; moved to (0, -143)
+  fix: move "meta.spawn" onto land — pick a zone or "at" fraction over terrain at least two blocks above sea level
+  authoring  4 model run(s), 3 compile-feedback round(s), 383862 in + 75328 out = 459190 tokens (11332 of the out reasoning) ($0.2852)
+
+next: terrainist install /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/v14-battery/hellenist/hellenist_city_invasion
