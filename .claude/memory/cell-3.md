@@ -82,3 +82,21 @@ end). Everything landed, all pushed:
   records, archived docs stay pad) + WP-10 berm clamps (cone
   propagation makes the water floor an embankment; ROAD_BERM_MAX=2
   pinned from hazard geometry — no walked berm exists).
+
+## Ground unification ships, tie2 walks (2026-08-18/19) — compressed from cell 4
+
+WP-8/9/10 all landed flag-gated then FLIPPED (8F 9cc82ef: cell plane
+= pin not floor — floor inverted harbourtown's lip 25/90): datum
+kernel, frontage record, apronBySide, surfacer-as-consumer
+(STREET_CUT_MAX=2), clients, conform suite+seat+teaching (five
+grounds; W340/T341/T342), berm clamps (T239), bed skirt (span set —
+apron may not tunnel under a viaduct; devworld deck regression
+caught at the gate). Verdict stamp gap found (97fe40d gate.freeze)
+then conform-hash site-leak (200209b CONFORM_RUN pins loam.verify —
+RNG programs E334'd; $1.5 roll burned, kept docs recompiled free).
+TIE2 deck: 11 programs judged, ONE conform (warding_crystal_pylon —
+first ever). Kai's tie2 walk: "somewhat overreacted" on regression;
+iterate MAINLINE; gem-plus branch (9b4dd50 + packs + teaching +
+facing only) = completed CONTROL, gem2 deck archived there.
+Hellenist = 90% OCEAN (rendered): W526 land budget born. Naming:
+slug_vN across the saves (troy_v13, pirates_v16), install --series.

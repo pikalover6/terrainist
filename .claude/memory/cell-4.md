@@ -10,44 +10,6 @@ plinth + dry cone pits (also in Troy); quarry-garble grass pillars
 (E494 preserve/tie). p7 ok except stray terracotta (FIXED 0893687:
 ungated graffiti murals — modernOk gate). p5: backwards sea monster.
 
-**KAI'S RATIFICATIONS (popup):** (1) FRONTAGE TIE — road network =
-ground authority, buildings seat AT their street's level, lots grade
-from road. (2) BESPOKE CONFORM (his own idea): feed the program
-author real site terrain, build naturally on it — heightAt exists at
-execution; make conform the default, retire auto-pad to opt-in.
-Design seat (opus-5-high) writing docs/GROUND-UNIFICATION-v0.md.
-
-**REPAIR WAVES ALL COMMITTED:** graffiti gate 0893687; diagnostics
-c15c664 (W523 unresolved-target + I524 wall footing + I525 cliff
-palette + kit laws); hub-shaft + water-veto 618d738 (lake 607→810);
-facing 1bfec03 (pre-solve estimate never re-measured → post-solve
-remeasureLandmarkFacings, W522; LOAM-SPEC §15.1 amended — QUEUED FOR
-KAI'S RATIFICATION; taste note: face aims at CENTROID,
-nearest-footprint-point would read better). Terrarium doors 069592e:
-NOT 618d738 — my gatehouses built one-course arches on wallTop-4
-storeys (arch now needs headroom≥4). NUL byte stripped 3781d6f.
-FULL SUITE 0 FAILURES at 069592e.
-
-**WP TRAIN: MACHINERY COMPLETE, ALL COMMITTED.** 8A 2f9de73 datum
-kernel; 8B 676feac frontage record+flag; 8C 6a2f387 apronBySide; 8D
-f709bbe surfacer-as-consumer (STREET_CUT_MAX=2, T237 drift); 8E
-4953052 props+programs+city-cell clients (+seatExplicit); 9A 65780fe
-conform suite; 9B f70a966 conform seat (T341/T342); 9E 8d5791e
-teaching (rule 6 five grounds, kit conform row, exhibit sloped
-cell); 10A 54ac4a9 berm clamps (T239, deck branch exempt); 10B
-bf94f06+612f134 bed skirt (span set: an apron does not tunnel under
-a viaduct — devworld deck regression caught by the gate and fixed).
-**8F FLIPPED (9cc82ef)** — tie ON; cell plane became a PIN not floor
-(the floor inverted harbourtown's lip, 25/90 lots under their own
-carriageway — caught at the gate); ground-equivalence 86/86
-unmoved (shim compares within one compile); walkability re-pins
-argued per row (plinth runs < PLINTH_MIN_RUN, "sunken" lamps =
-carriageway rose); lip zero BY CONSTRUCTION on examples. Then TWO
-post-flip bugs caught+fixed: verdict never STAMPED at freeze
-(97fe40d: gate.freeze() one-pass) and conform hash took caller
-nodePath — RNG programs E334'd every round, $1.5 roll burned; fix
-200209b pins CONFORM_RUN=loam.verify (kept docs recompiled FREE).
-
 **KAI'S TIE2 VERDICTS (wave 3, 2026-08-19):** "I may have somewhat
 overreacted — the fixes at least partially worked"; RULING: iterate
 on MAINLINE (gem-plus branch = completed control experiment, gem2
@@ -64,26 +26,43 @@ horse still on 1-block pad (referenceY round-up, now verdict-backed
 trade Kai now condemns); NAMING SYSTEM requested (sequential
 versions, retroactive, standardized slugs).
 
-**WAVE 3 IN FLIGHT (4 agents):** land-budget feedback diagnostic
-(medium — settlement-needs-land measured, feedback-visible so the
-model repairs terrain; kit terrain paragraph); floating tied paths
-(medium — verge feather on datum segments; + stairs-to-nowhere
-recon); naming/versioning (low — tools/worlds/rename-worlds.mjs,
-slug_vN, retroactive rename of Kai's saves w/ dry-run + ledger,
-install --series); Troy modern-house leak (low — era-gating the
-default pool, deliberate combos stay legal). QUEUED NEXT: density
-(lot-fill vs envelope), referenceY rounding, unicorn prominence.
+**WAVE 3 LANDED (all committed):** naming 6bf0a64 (slug_vN series,
+59/60 renamed, RENAME-LEDGER.md, install --series; glowcap tie2
+pending — was OPEN in Minecraft, lsof guard); modern houses bc0ff2d
+(pool was CLEAN — leak was era-blind "regular" window grid on
+archetypes w/o facade defaults; RHYTHM_BY_ERA hole-filler, ancient/
+medieval sparse, modern byte-identical); floating paths e8a10db
+(NEVER the datum — blendShoulders fill stopped 1 short of the
+carriageway on EVERY road; VERGE_FILL_FEATHER=1; glowcap 78→20
+proud); land budget f5a0a53 (W526 SETTLEMENT_LAND_SHORT, per-COLUMN
+— E406 judges by median so drowned-with-dry-middle was "feasible";
+threshold 0.6 from measured bimodal gap 0.16|0.92; in
+FEEDBACK_CODES; W337-to-feedback declined, flagged for Kai);
+doorstep foot gate 1203919 (footLands two-columns-out; Troy 4
+refused — other 42 land on real ground, the stairs impression is
+the seam banks); density diagnosis (NO fix shipped — constants
+innocent: grown-fabric DEAD BLOCK CORES, lots are rim strips only,
+one 2109-col block = 0 buildings; + 121 stepped-split slivers; fix
+= deep-block subdivision + sliver suppression + walled coverage
+floor, QUEUED); kit taught grown-blockSize + flat-roof-box 2079e50,
+horse courteous-min 453f48f.
 
-**TROY: FIXED + COMMITTED (7019b5a).** Root cause was NOT routing —
-the doc had era ancient + classical_mediterranean. Killers: `density:
-"high"` (TERRACE_COVERAGE high=1 → continuous 3-8 storey party-walled
-street wall reads modern regardless of ids; the walked-good p3-c5 was
-grown/medium/0.72) and NO archetypes.prefer (7 modern mix words
-outdrew the pack's 14 on every lot; precedence forbid > prefer > pack
-> ctx.today). Teach now binds named-ancient places to era+pack+5-8
-named prefer forms with anachronisms forbidden; "density is a PERIOD
-CLAIM — antiquity caps at medium"; taught ids runtime-checked to be
-kind=building (props in prefer are skipped by the lot draw).
+**WP-11 THE SERVED SEAM (design 516dd96, Part IV):** headline —
+benching/context was gated on plannedEdges, a field ONLY
+forms/hillside produces: grown/stepped districts NEVER benched
+(Troy's mess). Laws: seam SERVED never refused (W411 retired, I412);
+RETAIN_MAX caps a FACE — ceil(D/6) stacked tiers, one arithmetic
+two dressings by pressedShare (revetted great wall vs planted
+terraces); election pays (bucket levels, sliver merge, W410 finally
+emitted); short runs absorbed; banks 1:2 carrying nothing; seam
+stairs ride street-stairs law. SEAM_TIERS=false until 11F flip
+(Kai's walk). Defaults adopted: tiers≤3, tread3/setback1, fort
+measured, W410 not feedback. **IN FLIGHT: 11A honest refusal (low;
+retaining.ts+types.ts) ∥ 11C election pays (low;
+platforms+district).** THEN: 11B tier stack (med), 11D absorb+bank,
+11E seam stair+door, density core fix, referenceY rounding, datum
+fill cap (Troy street 9-11 proud), sidewalk lamps. Then deck
+troy_v14 / hellenist_city_v10 / pirates_v_unicorns_v17 (--series).
 
 **GO-HAM: packs 7+8 SHIPPED.** desert_caravanserai (365eded, 13+2,
 serai_court anchor, crvn_* rows, members 235→250) and
