@@ -13,11 +13,12 @@
  *    first caller `LOAM-W410 LEVEL_DISSOLVED` has ever had (§4.0a M7).
  *
  * Everything here is off the global flag: `derivePlatforms` takes a `tiered`
- * parameter so the flag-on election can be exercised without flipping
- * `SEAM_TIERS`, which stays `false` until 11F's walk verdict. The first test
- * below is the standing rule in code — **prove the harness can see a difference
- * before trusting that it saw none**: flag-on and flag-off disagree on the same
- * field, so the byte-identity claim is a measurement rather than a hope.
+ * parameter, so both elections are exercised explicitly and neither depends on
+ * what `SEAM_TIERS` happens to be. **Wave 11F flipped `SEAM_TIERS` to `true`**
+ * on Kai's walk verdict; the first block below is unchanged in what it
+ * measures — flag-on and flag-off still disagree on the same field, which is
+ * the standing rule in code (*prove the harness can see a difference before
+ * trusting that it saw none*) — only the recorded value of the flag moved.
  */
 
 import { describe, expect, it } from "vitest";
@@ -86,9 +87,13 @@ function levelField(benches: readonly FormBench[]): Int32Array {
 
 /* -------------------------------------------------------------------------- */
 
-describe("the flag is off, and the harness can see that it matters", () => {
-  it("ships with SEAM_TIERS false — 11F flips it, on a walk verdict and nothing else", () => {
-    expect(SEAM_TIERS).toBe(false);
+describe("the flag is on, and the harness can see that it matters", () => {
+  it("ships with SEAM_TIERS true — wave 11F flipped it on Kai's walk verdict", () => {
+    // Re-pinned at 11F. Before the flip this read `toBe(false)` and pinned the
+    // shipped world; the served seam is now the default answer, so the same
+    // line pins the new default. The next test is untouched and still proves
+    // the two elections differ.
+    expect(SEAM_TIERS).toBe(true);
   });
 
   it("elects a different set of platforms with the rules on than with them off", () => {

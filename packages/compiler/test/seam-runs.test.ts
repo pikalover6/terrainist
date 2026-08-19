@@ -129,18 +129,35 @@ describe("treatmentForSeam", () => {
     expect(MIN_RETAIN_RUN).toBe(RETAIN_MAX);
   });
 
-  it("leaves a kerb and a bank alone, however long the run", () => {
+  it("leaves a kerb alone however long the run, and still grades a past-ceiling stub", () => {
     // A kerb is one course of material on the ground; two columns of it is a
-    // doorstep, not a stub, so length has no say.
+    // doorstep, not a stub, so length has no say. A drop past the ceiling on a
+    // run too short to build is still the soft answer, because rule 4 —
+    // `MIN_RETAIN_RUN`'s own argument — is asked before the stack is.
     expect(treatmentForSeam(1, 1)).toBe("kerb");
     expect(treatmentForSeam(1, 400)).toBe("kerb");
     expect(treatmentForSeam(RETAIN_MAX + 1, 1)).toBe("bank");
-    expect(treatmentForSeam(RETAIN_MAX + 1, 400)).toBe("bank");
   });
 
-  it("agrees with treatmentForDrop on any run long enough to build", () => {
+  it("serves a past-ceiling run with a stack now that 11F flipped SEAM_TIERS", () => {
+    // Re-pinned at 11F, attributed to §4.1 S2: *a drop of D is served by
+    // `ceil(D / RETAIN_MAX)` faces, each at most `RETAIN_MAX` tall*. Before the
+    // flip this line read `.toBe("bank")` and pinned the 45° ramp of §4.0a M3.
+    // The flag-off table is still reachable, and still says what it always did.
+    expect(treatmentForSeam(RETAIN_MAX + 1, 400)).toBe("tiered");
+    expect(treatmentForSeam(RETAIN_MAX + 1, 400, { tiered: false })).toBe("bank");
+  });
+
+  it("agrees with treatmentForDrop, the untiered table, on any run long enough to build", () => {
+    // `treatmentForDrop` is the pre-Part-IV drop-only table and stays that way
+    // (§4.1 S2 changed what a *stack* does with the drop, not what one face
+    // can). §10's "one table, proven to be one table" is therefore stated
+    // against the flag-off reduction, and the flag-on answer is pinned beside
+    // it: identical below the ceiling, `"tiered"` where the stack takes over.
     for (let drop = 0; drop <= RETAIN_MAX + 3; drop++) {
-      expect(treatmentForSeam(drop, 64)).toBe(treatmentForDrop(drop));
+      expect(treatmentForSeam(drop, 64, { tiered: false })).toBe(treatmentForDrop(drop));
+      const on = treatmentForSeam(drop, 64);
+      expect(on).toBe(drop > RETAIN_MAX ? "tiered" : treatmentForDrop(drop));
     }
   });
 });

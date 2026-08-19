@@ -19,9 +19,10 @@
  * nothing; the doorstep without the landings is refused on the very fixture the
  * landings let through.
  *
- * **The global flag is never flipped**: `SEAM_TIERS` ships `false` and 11F
- * flips it on Kai's walk verdict and nothing else. Every assertion below rides
- * the per-district `tiered: true` that `seam-tiers.test.ts` already uses.
+ * **Wave 11F flipped `SEAM_TIERS` to `true`** on Kai's walk verdict. Every
+ * assertion below still rides the per-district `tiered: true` /
+ * `tiered: false` that `seam-tiers.test.ts` uses, so the pair of controls is
+ * unchanged by the flip — only the global default moved.
  */
 
 import { beforeAll, describe, expect, it } from "vitest";
@@ -113,8 +114,13 @@ function quarter(over: { readonly tiered: boolean; readonly street: boolean }) {
     carriageway,
     sidewalk: new Uint8Array(SIZE * SIZE),
     levels,
-    seams: levelSeams(levels),
-    ...(over.tiered ? { tiered: true } : {}),
+    // 11F: derive the seams at the district's own `tiered` (see the same note
+    // in `seam-tiers.test.ts`), so `tiered: false` really is the untiered pass.
+    seams: levelSeams(levels, { tiered: over.tiered === true }),
+    // 11F: `tiered` must be stated in both directions now. Omitting it used to
+    // mean "the shipped, untiered world"; since the flip it means "whatever the
+    // flag says", which is the opposite.
+    tiered: over.tiered === true,
   };
 }
 
@@ -176,8 +182,11 @@ describe("11F — buildRetainingWalls → deriveSeamStairs → the tread law →
 
   /* --- the flag, and the control ----------------------------------------- */
 
-  it("publishes nothing with the flag off, which is every world that ships today", () => {
-    expect(SEAM_TIERS).toBe(false);
+  it("publishes nothing with the flag off, which is every world before 11F", () => {
+    // Re-pinned at 11F: the flag reads `true` now. The run below already asked
+    // for `tiered: false` by hand, so what it measures — an untiered quarter
+    // publishes no stack and no landing — is untouched by the flip.
+    expect(SEAM_TIERS).toBe(true);
     const off = run({ tiered: false, street: true });
     expect(off.retaining.stacks).toBe(0);
     expect(off.retaining.landings).toEqual([]);

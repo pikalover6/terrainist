@@ -18,12 +18,18 @@
  *   at 11A is a bug, not a golden update.*
  * - **building waits for the flag.** Whether the context is allowed to *choose*
  *   the treatment, and whether a tall bank is benched rather than ramped 1:1,
- *   are held behind {@link SEAM_TIERS} until 11F flips it on Kai's walk verdict.
+ *   were held behind {@link SEAM_TIERS}.
  *
- * The last two tests are the control §6 demands: **prove the harness can see a
- * difference before trusting that it saw none.** The same fixture, given
- * `plannedEdges`, benches its drop-8 seam and reports it — so "the unplanned
- * quarter did not bench" is a measurement, not a test that cannot fail.
+ * **Wave 11F flipped the flag**, and this file is where that is visible: the
+ * unplanned quarter now chooses like the planned one, its drop-8 seam is a
+ * 2-tier stack rather than a bank, and `LOAM-W411` is retired for
+ * `LOAM-I412 SEAM_SERVED` — not by deletion, but because the flip empties the
+ * only path that fired it (§4.1 S1, §7). Every one of those assertions was
+ * re-pinned here with its cause written down; the pre-flip answers were not
+ * dropped but *moved* to the two flag-off controls at the foot of the file,
+ * which are 11A's own tests run at `tiered: false`. That is the control §6
+ * demands — **prove the harness can see a difference before trusting that it
+ * saw none** — kept pointing the other way round.
  */
 
 import { beforeAll, describe, expect, it } from "vitest";
@@ -94,7 +100,7 @@ function planOf(stack: PrismarineStack, height: (x: number, z: number) => number
  * `grown` quarter has no `plannedEdges` at all; a site-planned one declares its
  * cut edges, and an empty array is a quarter that declared none.
  */
-function quarter(planned: boolean) {
+function quarter(planned: boolean, tiered: boolean = SEAM_TIERS) {
   const benches: FormBench[] = [
     { id: "upper", runs: [{ x0: 0, z0: 0, x1: SIZE - 1, z1: SEAM_Z - 1 }], level: UPPER_Y },
     { id: "lower", runs: [{ x0: 0, z0: SEAM_Z, x1: SIZE - 1, z1: SIZE - 1 }], level: LOWER_Y },
@@ -108,7 +114,11 @@ function quarter(planned: boolean) {
       carriageway: new Uint8Array(SIZE * SIZE),
       sidewalk: new Uint8Array(SIZE * SIZE),
       levels,
-      seams: levelSeams(levels),
+      // Derived at the district's own `tiered` — 11F's rule for every fixture
+      // in the seam family: a quarter that asks for the untiered world must not
+      // be handed treatments the untiered pass cannot build.
+      seams: levelSeams(levels, { tiered }),
+      tiered,
       ...(planned ? { plannedEdges: [] } : {}),
     },
     height: (x: number, z: number): number => (z < SEAM_Z ? UPPER_Y : LOWER_Y),
@@ -127,8 +137,8 @@ describe("wave 11A — the seam is measured on every quarter, and built behind t
     return palette;
   };
 
-  const run = (planned: boolean) => {
-    const fixture = quarter(planned);
+  const run = (planned: boolean, tiered: boolean = SEAM_TIERS) => {
+    const fixture = quarter(planned, tiered);
     return buildRetainingWalls({
       districts: [fixture.district],
       plan: planOf(stack, fixture.height),
@@ -144,62 +154,91 @@ describe("wave 11A — the seam is measured on every quarter, and built behind t
 
   /** The fixture is the finding's geometry, or the rest of the file is theatre. */
   it("the fixture is one drop-8 seam past the wall ceiling", () => {
-    const result = run(false);
     expect(DROP).toBeGreaterThan(RETAIN_MAX);
     expect(DROP).toBe(8);
-    expect(result.banks).toBe(1);
+    // Re-pinned at 11F, attributed to §4.1 S2: the drop that was one bank is
+    // now `ceil(8 / RETAIN_MAX)` = 2 faces of masonry. The line below read
+    // `result.banks).toBe(1)` before the flip; the historical answer is not
+    // lost, it moved to the flag-off control at the foot of this file.
+    const result = run(false);
+    expect(result.stacks).toBe(1);
+    expect(result.banks).toBe(0);
     expect(result.walls).toBe(0);
   });
 
-  it("a quarter with no plannedEdges now reports what its seams became (§4.0a M2)", () => {
+  it("a quarter with no plannedEdges reports what its seams became (§4.0a M2)", () => {
     // The note M2 proved was missing from `p3-tie2/generate.log`. It fires here
     // because the accounting behind it no longer asks whether a site planner
     // drew this quarter — measuring is honest, and the report is the
-    // measurement.
+    // measurement. **11F re-pin:** the word in the note moved from `bank` to
+    // `tiered` with the construction it names. That the note fires at all —
+    // M2's actual finding — is unchanged.
     const note = transitions(run(false));
     expect(note).toBeDefined();
     expect(note).toContain(`${SIZE} edge column(s)`);
-    expect(note).toContain("fill 48 (48 bank)");
+    expect(note).toContain("fill 48 (48 tiered)");
   });
 
-  it("and still counts the refusal in `unfaced`, which is the W411 accounting", () => {
-    // 11A moves report bytes, not world bytes, and it does not retire
-    // `LOAM-W411` either: that is S1's `LOAM-I412`, and it lands with the
-    // constructions that justify it. Until then the tallDrop column count is
-    // exactly what the battery logs carry.
+  it("and retires the W411 refusal for I412, because the seam is served (S1)", () => {
+    // Re-pinned at 11F, and this is §4.1 S1's retirement *happening*: before
+    // the flip this test asserted `unfaced.tallDrop === 48` and a
+    // `RETAINING_REFUSED` in the list, which is the accounting the battery logs
+    // carried. The flip empties the path that fired it — 11A/11B built the
+    // retirement as a flag, not as a deletion — so on a served seam the
+    // warning has no columns left to count and `SEAM_SERVED` says what the
+    // seam became instead.
     const result = run(false);
-    expect(result.unfaced.tallDrop).toBe(SIZE);
-    expect(result.diagnostics.map((d) => d.name)).toContain("RETAINING_REFUSED");
+    expect(result.unfaced.tallDrop).toBe(0);
+    expect(result.diagnostics.map((d) => d.name)).not.toContain("RETAINING_REFUSED");
+    expect(result.diagnostics.map((d) => d.name)).toContain("SEAM_SERVED");
   });
 
-  it("does NOT bench that seam while SEAM_TIERS is off — the world is what shipped", () => {
-    // §4.3's `retaining.ts:582` row is a *world* change and therefore waits for
-    // the flag. With it off the drop-8 bank is the 45° ramp of §4.0a M3, and
-    // the report says so in the same words it always did.
-    expect(SEAM_TIERS).toBe(false);
-    const result = run(false);
-    const refusal = result.diagnostics.find((d) => d.name === "RETAINING_REFUSED");
-    expect(refusal?.message).toContain("graded into each other as a bank");
-    expect(refusal?.message).not.toContain("benched bank");
-    expect(transitions(result)).not.toContain("benched rather than ramped");
+  it("answers a site-planned quarter and an unplanned one alike, which is what the flip is", () => {
+    // 11A's split — *the context may only choose where a site planner drew* —
+    // was the asymmetry `SEAM_TIERS` existed to remove (§4.1 S1). It is gone:
+    // `chooses` is now `planned || tiered` with `tiered` true everywhere, so
+    // the same seam gets the same construction and the same accounting on both
+    // quarters. Two tests at the foot of this file used to pin the two halves
+    // of the asymmetry; they are the flag-off control below now.
+    expect(run(true).unfaced.tallDrop).toBe(0);
+    expect(run(false).unfaced.tallDrop).toBe(0);
+    expect(run(true).stacks).toBe(run(false).stacks);
+    expect(transitions(run(true))).toEqual(transitions(run(false)));
   });
 
   /* ---------------------------------------------------------------------- */
   /* the control — prove the harness can see a difference (§6)               */
   /* ---------------------------------------------------------------------- */
 
-  it("the same seam on a site-planned quarter IS benched — so the test above can fail", () => {
-    const result = run(true);
+  it("ships with SEAM_TIERS true — wave 11F flipped it on Kai's walk verdict", () => {
+    expect(SEAM_TIERS).toBe(true);
+  });
+
+  it("the flag-off world is still the 45° ramp that shipped — so the tests above can fail", () => {
+    // **The historical case, kept verbatim as the control.** These are 11A's
+    // own assertions, moved rather than deleted: with the flag off, the same
+    // unplanned quarter grades its drop-8 seam into the raw bank of §4.0a M3,
+    // counts all 48 columns as an unfaced `tallDrop`, and says so in
+    // `LOAM-W411`'s original words. Every re-pin above is therefore a
+    // measurement of the flip and not a test that cannot fail.
+    const result = run(false, false);
+    expect(result.banks).toBe(1);
+    expect(result.stacks).toBe(0);
+    expect(result.unfaced.tallDrop).toBe(SIZE);
+    const refusal = result.diagnostics.find((d) => d.name === "RETAINING_REFUSED");
+    expect(refusal?.message).toContain("graded into each other as a bank");
+    expect(refusal?.message).not.toContain("benched bank");
+    expect(transitions(result)).toContain("fill 48 (48 bank)");
+    expect(transitions(result)).not.toContain("benched rather than ramped");
+  });
+
+  it("and flag-off a site-planned quarter still benches, which is 11A's own control", () => {
+    // 11A's second control, also kept: with the flag off the split is still
+    // there, so what the flip removed is visible from both sides.
+    const result = run(true, false);
     const refusal = result.diagnostics.find((d) => d.name === "RETAINING_REFUSED");
     expect(refusal?.message).toContain("benched bank");
     expect(transitions(result)).toContain("1 bank(s) benched rather than ramped");
-  });
-
-  it("and answers `unfaced` differently, because there a bank is a treatment", () => {
-    // The other half of the split: where the context chooses, a bank is what
-    // the edge *wanted*, so it is counted in `treated` and not as a wall that
-    // failed. That asymmetry is what {@link SEAM_TIERS} removes at 11F.
-    expect(run(true).unfaced.tallDrop).toBe(0);
-    expect(run(false).unfaced.tallDrop).toBe(SIZE);
+    expect(result.unfaced.tallDrop).toBe(0);
   });
 });

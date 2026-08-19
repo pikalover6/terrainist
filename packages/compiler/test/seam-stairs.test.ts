@@ -27,10 +27,12 @@
  *    face across a platform boundary. Measured, not moved: the same fixture's
  *    wall is the wall it was.
  *
- * **The global flag is never flipped.** `SEAM_TIERS` ships `false` and 11F flips
- * it on Kai's walk verdict and nothing else; every flag-on assertion below rides
- * the per-call `tiered: true` that `platforms.test.ts` and `seam-tiers.test.ts`
- * already use, or hands the consuming pass a landing list by hand.
+ * **Wave 11F flipped `SEAM_TIERS` to `true`** on Kai's walk verdict. Nothing
+ * about the derivation changed with it: every flag-on assertion below still
+ * rides the per-call `tiered: true` that `platforms.test.ts` and
+ * `seam-tiers.test.ts` use, or hands the consuming pass a landing list by hand,
+ * and the flag-off control now asks for `tiered: false` explicitly instead of
+ * leaning on the global default.
  */
 
 import { beforeAll, describe, expect, it } from "vitest";
@@ -129,9 +131,18 @@ const DROP8: SeamLandingStack = {
 const onStreet = (x: number, z: number): boolean => (z === 8 || z === 18) && x >= 4 && x <= 24;
 
 describe("S9 — a served seam publishes its landings, and the stair belongs to the seam", () => {
-  it("derives nothing at all with the flag off, which is every world today", () => {
-    expect(SEAM_TIERS).toBe(false);
-    const off = deriveSeamStairs({ nodePath: "world.quarter", landings: [DROP8], onStreet });
+  it("derives nothing at all with the flag off, which is every world before 11F", () => {
+    // Re-pinned at 11F: the flag is now `true`, so "the flag off" has to be
+    // *asked for* — the bare call took its `tiered` from `SEAM_TIERS` and is
+    // no longer the off path. The refusal itself is unchanged and still the
+    // control for every derivation below.
+    expect(SEAM_TIERS).toBe(true);
+    const off = deriveSeamStairs({
+      nodePath: "world.quarter",
+      landings: [DROP8],
+      onStreet,
+      tiered: false,
+    });
     expect(off.segments).toEqual([]);
     expect(off.cut).toBe(0);
     expect(off.diagnostics).toEqual([]);

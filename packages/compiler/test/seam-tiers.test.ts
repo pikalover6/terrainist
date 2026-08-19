@@ -245,8 +245,12 @@ describe("treatmentForEdge rule 5 — a tall fill face is a stack, behind the fl
   });
 
   it("without the flag it is `replan`, exactly as it shipped", () => {
-    expect(treatmentForEdge(tall({}))).toBe("replan");
+    // Re-pinned at 11F: the bare context now takes `tiered` from `SEAM_TIERS`,
+    // which is `true`, so the untiered answer must be asked for. What it
+    // asserts — one face past the ceiling is a terrace that claimed ground it
+    // should not have — is unchanged, and the next test is still its control.
     expect(treatmentForEdge(tall({ tiered: false }))).toBe("replan");
+    expect(treatmentForEdge(tall({}))).toBe("tiered");
   });
 
   it("with it, a drop the stack serves is `tiered`", () => {
@@ -344,7 +348,11 @@ function districtOf(
     carriageway,
     sidewalk: new Uint8Array(SIZE * SIZE),
     levels,
-    seams: levelSeams(levels),
+    // 11F: the seam list has to be derived at the same `tiered` the district
+    // declares, or a fixture that asks for the flag-off world is handed
+    // treatments the flag-off pass cannot build. Before the flip the global
+    // default happened to agree with every fixture here; it no longer does.
+    seams: levelSeams(levels, ...(over.tiered === undefined ? [] : [{ tiered: over.tiered }])),
     ...(over.tiered === undefined ? {} : { tiered: over.tiered }),
   };
 }
@@ -419,11 +427,15 @@ describe("wave 11B — the tier stack, built", () => {
 
   /* --- the flag ---------------------------------------------------------- */
 
-  it("ships with SEAM_TIERS false — 11F flips it, on a walk verdict and nothing else", () => {
-    expect(SEAM_TIERS).toBe(false);
-    // A district that says nothing is a district on the shipped answer, which is
-    // what makes every world byte-identical until the flip.
-    const quiet = run(citadel(false));
+  it("ships with SEAM_TIERS true — 11F flipped it, and silence still means the default", () => {
+    // Re-pinned at 11F (was `toBe(false)`). What the rest of the test measures
+    // is untouched and is the reason it is still here: **a district that says
+    // nothing gets whatever the flag says**, so the compiler's default and the
+    // per-district parameter are the same one answer. Before the flip that
+    // pinned byte-identity with the shipped world; after it, it pins that the
+    // served seam is genuinely the default rather than an opt-in.
+    expect(SEAM_TIERS).toBe(true);
+    const quiet = run(citadel(true));
     const dflt = run({ ...citadel(false), district: districtOf(
       [
         { id: "upper", runs: [{ x0: 0, z0: 0, x1: SIZE - 1, z1: SEAM_Z - 1 }], level: UPPER_Y },

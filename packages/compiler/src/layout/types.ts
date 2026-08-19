@@ -458,24 +458,36 @@ export const SITE_FRONTAGE_REACH = 12;
  * hill's own rock or a building's own back — rather than falling through five
  * different refusals onto one word, `"bank"`, and a 45° ramp of raw earth.
  *
- * **`false` from wave 11A; flipped at 11F on Kai's walk verdict and nothing
- * else** (§4.4). While it is false the world is byte-identical to what shipped:
- * every construction this part adds is either unbuilt or gated here, and the
- * only thing wave 11A changed unconditionally is the *report* — the seam
- * accounting behind the `transitions by context (§5)` note now runs on every
- * quarter, not only on one a site planner drew (§4.0a M2). The risk table says
- * it in one line: report bytes move at 11A, and **a world hash that moves at
- * 11A is a bug, not a golden update.**
+ * **`false` from wave 11A; flipped to `true` at 11F** on Kai's walk verdict and
+ * nothing else (§4.4). While it was false the world was byte-identical to what
+ * shipped:
+ * every construction this part adds was either unbuilt or gated here, and the
+ * only thing wave 11A changed unconditionally was the *report* — the seam
+ * accounting behind the `transitions by context (§5)` note runs on every
+ * quarter, not only on one a site planner drew (§4.0a M2). The risk table said
+ * it in one line: report bytes move at 11A, and **a world hash that moved at
+ * 11A was a bug, not a golden update.**
  *
  * What this flag gates, precisely, in `structures/retaining.ts`:
  * - whether an edge's `EdgeContext` is allowed to *choose* the
  *   treatment (`treatmentForEdge`) on a quarter with no
- *   `plannedEdges` — today only a hillside form produces that field, so today
- *   only a hillside quarter's seams are chosen from context;
+ *   `plannedEdges` — before the flip only a hillside form produced that field,
+ *   so only a hillside quarter's seams were chosen from context;
  * - whether a tall bank is **benched** rather than ramped 1:1 on such a quarter
- *   (§4.3's `retaining.ts:582` row).
+ *   (§4.3's `retaining.ts:582` row);
+ * - whether a seam past `RETAIN_MAX` is served by a **tier stack** (S2) rather
+ *   than graded, and whether a short run is **absorbed** (S7);
+ * - whether `LOAM-W411 RETAINING_REFUSED` is still emitted. It fires on the
+ *   untiered path only, so the flip retires it (§4.1 S1, §7): under the flag a
+ *   bank is S8's deliberate landform, and `LOAM-I412 SEAM_SERVED` names what
+ *   every seam became, once per quarter.
+ *
+ * The per-district / per-call `tiered` fields all default to this constant, and
+ * they are how a test asks for either world without moving the switch. A fixture
+ * that wants the untiered answer must now say so: silence means the flag, and
+ * the flag is on.
  *
  * The context itself is computed for every district either way: measuring is
  * honest, and the report is built from the measurement.
  */
-export const SEAM_TIERS = false;
+export const SEAM_TIERS = true;

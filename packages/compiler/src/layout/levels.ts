@@ -427,7 +427,13 @@ export function levelSeams(
       z: bounds.z0 + Math.floor(k / width),
     })),
     drop: c.drop,
-    treatment: treatmentForSeam(c.drop, c.cells.length),
+    // The same `tiered` the absorption above obeyed: a caller that asked for
+    // the untiered world must not be handed a `"tiered"` treatment it cannot
+    // build (11F — the flip made the default `true`, which is what exposed the
+    // un-threaded option here).
+    treatment: treatmentForSeam(c.drop, c.cells.length, {
+      ...(options?.tiered === undefined ? {} : { tiered: options.tiered }),
+    }),
   }));
   // Row-major by first cell, then by the pair, so the list is stable under any
   // change to the order the pairs happened to be discovered in.
@@ -442,7 +448,16 @@ export function levelSeams(
   return out;
 }
 
-/** §3.4's table, drop → treatment. */
+/**
+ * §3.4's table, drop → treatment, **as it read before the tier stack**.
+ *
+ * Kept as the untiered answer: a drop past {@link RETAIN_MAX} is a bank here,
+ * because that is what one face and no stack can do with it. With `SEAM_TIERS`
+ * on (wave 11F) the same drop is served by {@link tiersOf} faces and
+ * {@link treatmentForSeam} answers `"tiered"`; ask this one for the flag-off
+ * table and `treatmentForSeam(drop, run, { tiered: false })` for the same thing
+ * with a run length in it.
+ */
 export function treatmentForDrop(drop: number): SeamTreatment {
   if (drop <= 1) return "kerb";
   if (drop <= RETAIN_MAX) return "retaining";
@@ -459,7 +474,11 @@ export function treatmentForDrop(drop: number): SeamTreatment {
  * kerb keeps its length-independent answer, because a kerb is one course of
  * material on the ground and two columns of it is a doorstep, not scree.
  */
-export function treatmentForSeam(drop: number, run: number): SeamTreatment {
+export function treatmentForSeam(
+  drop: number,
+  run: number,
+  options?: { readonly tiered?: boolean },
+): SeamTreatment {
   // **One table.** This is `treatmentForEdge` asked with no context at all —
   // no land pressure, no available run, unlimited depth, unlimited budget, the
   // fill side — and the two cannot disagree because there is only one of them
@@ -467,7 +486,10 @@ export function treatmentForSeam(drop: number, run: number): SeamTreatment {
   // table"). The one thing a bare seam cannot do is `"replan"`: there is no
   // planner still running to narrow, merge or dissolve the terrace that claimed
   // the ground, so the answer collapses to the bank it always was.
-  const chosen = treatmentForEdge(seamContext(drop, run));
+  const chosen = treatmentForEdge({
+    ...seamContext(drop, run),
+    ...(options?.tiered === undefined ? {} : { tiered: options.tiered }),
+  });
   return chosen === "replan" ? "bank" : chosen;
 }
 

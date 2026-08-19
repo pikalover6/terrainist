@@ -28,6 +28,7 @@ import { MATERIAL_THEMES, nodeSeed, type MaterialTheme } from "@terrainist/stdli
 import { PHYSICS_RULES, lintWorldPhysics, type PhysicsReport } from "../src/emit/physics.js";
 import { loadPrismarine, type PrismarineStack } from "../src/emit/prismarine.js";
 import { EMIT_MINECRAFT_VERSION } from "../src/emit/world.js";
+import { SEAM_TIERS } from "../src/layout/types.js";
 import {
   NO_PLATFORM,
   RETAIN_MAX,
@@ -291,8 +292,16 @@ function rowsOf(x0: number, x1: number) {
   return runs;
 }
 
-/** The quarter as the pass reads one, with no streets anywhere near the seam. */
-function district(top: number) {
+/**
+ * The quarter as the pass reads one, with no streets anywhere near the seam.
+ *
+ * `tiered` is threaded because **wave 11F flipped `SEAM_TIERS` to `true`**: a
+ * drop past `RETAIN_MAX` is now served by a tier stack, so the two tests below
+ * that are *about the bank* — that it grades, and that it finishes as earth —
+ * have to ask for the untiered world to have a bank to look at. The seam list
+ * is derived at the same setting for the reason `seam-tiers.test.ts` gives.
+ */
+function district(top: number, tiered: boolean = SEAM_TIERS) {
   const bounds = { x0: 0, z0: 0, x1: 47, z1: 47 };
   const benches = twoPlatforms(top);
   const levels = groundLevelsOf(bounds, benches);
@@ -302,7 +311,8 @@ function district(top: number) {
     carriageway: new Uint8Array(48 * 48),
     sidewalk: new Uint8Array(48 * 48),
     levels: levels as NonNullable<typeof levels>,
-    seams: levelSeams(levels as NonNullable<typeof levels>),
+    seams: levelSeams(levels as NonNullable<typeof levels>, { tiered }),
+    tiered,
   };
 }
 
@@ -516,18 +526,23 @@ describe("buildRetainingWalls", () => {
     expect(result.walls).toBe(0);
   });
 
-  it("grades a bank rather than leaving a cliff, and says so", () => {
+  it("grades a bank rather than leaving a cliff, and says so — the untiered answer", () => {
+    // Re-pinned at 11F: this drop is `RETAIN_MAX + 4`, which the tier stack now
+    // serves as two faces of masonry (S2), so the bank it is about only exists
+    // on the untiered path. Nothing else in the test moved — what a bank does
+    // when one is built is unchanged, and the stack's own version of this
+    // fixture is asserted in `seam-tiers.test.ts`.
     const top = 64 + RETAIN_MAX + 4;
     const plan = steppedPlan(stack, top);
     const before = Int32Array.from(plan.ground);
     const result = buildRetainingWalls({
-      districts: [district(top)],
+      districts: [district(top, false)],
       plan,
       palette: paletteOf(stack),
       stack,
     });
     const finish = finishCutFaces({
-      districts: [district(top)],
+      districts: [district(top, false)],
       plan,
       palette: paletteOf(stack),
       stack,
@@ -769,18 +784,19 @@ describe("buildRetainingWalls", () => {
   });
 
   it("finishes a graded bank as earth, not as whatever the cut exposed", () => {
+    // Untiered for the reason the bank test above gives (11F).
     const top = 64 + RETAIN_MAX + 4;
     const plan = steppedPlan(stack, top);
     const palette = themed(stack);
     const before = Int32Array.from(plan.ground);
     const result = buildRetainingWalls({
-      districts: [district(top)],
+      districts: [district(top, false)],
       plan,
       palette,
       stack,
     });
     const finish = finishCutFaces({
-      districts: [district(top)],
+      districts: [district(top, false)],
       plan,
       palette,
       stack,

@@ -32,6 +32,7 @@ import {
   MIN_EDGE_DEPTH,
   MIN_RETAIN_RUN,
   RETAIN_MAX,
+  SEAM_TIER_MAX,
   bankRun,
   benchedRun,
   seamContext,
@@ -87,13 +88,26 @@ describe("there is exactly one drop table and it stays that way (§5.1)", () => 
     expect(treatmentForSeam(1, 100)).toBe("kerb");
     expect(treatmentForSeam(4, 100)).toBe("retaining");
     expect(treatmentForSeam(4, MIN_RETAIN_RUN - 1)).toBe("bank");
-    expect(treatmentForSeam(RETAIN_MAX + 1, 100)).toBe("bank");
+    // Re-pinned at 11F, attributed to `GROUND-UNIFICATION` §4.1 S2: a drop past
+    // `RETAIN_MAX` on a run worth building is served by a stack of faces, not
+    // graded. The untiered table is unchanged and still reachable, and it is
+    // asserted beside the new answer so §5.1's "one table" claim keeps a
+    // control.
+    expect(treatmentForSeam(RETAIN_MAX + 1, 100)).toBe("tiered");
+    expect(treatmentForSeam(RETAIN_MAX + 1, 100, { tiered: false })).toBe("bank");
   });
 
   it("never answers a bare seam with a treatment only a planner can ask for", () => {
     for (let drop = 0; drop <= 12; drop++) {
       for (const run of [1, 6, 40]) {
-        expect(["kerb", "retaining", "bank", "built"]).toContain(treatmentForSeam(drop, run));
+        // `"tiered"` joined this list at 11F. It is *not* a planner-only word:
+        // the stack is built by the same pass on a bare seam, with the same
+        // arithmetic, and it is `"replan"` that a bare seam still cannot be
+        // answered with — there is no planner left to act on it (§5.1).
+        expect(["kerb", "retaining", "bank", "built", "tiered"]).toContain(
+          treatmentForSeam(drop, run),
+        );
+        expect(treatmentForSeam(drop, run)).not.toBe("replan");
       }
     }
   });
@@ -165,7 +179,13 @@ describe("context beats drop (§5.2)", () => {
 
   it("replans a face taller than any wall we build, and a terrace with no depth left", () => {
     expect(treatmentForEdge(edge({ drop: RETAIN_MAX }))).not.toBe("replan");
-    expect(treatmentForEdge(edge({ drop: RETAIN_MAX + 1 }))).toBe("replan");
+    // Re-pinned at 11F (§4.1 S2/S3): one face past `RETAIN_MAX` is still not
+    // built, but the answer is a stack of faces until the stack itself runs out
+    // at `SEAM_TIER_MAX`, and only past *that* is the election what was wrong.
+    // The untiered edge keeps the old answer, which is this test's control.
+    expect(treatmentForEdge(edge({ drop: RETAIN_MAX + 1, tiered: false }))).toBe("replan");
+    expect(treatmentForEdge(edge({ drop: RETAIN_MAX + 1 }))).toBe("tiered");
+    expect(treatmentForEdge(edge({ drop: SEAM_TIER_MAX * RETAIN_MAX + 1 }))).toBe("replan");
     expect(treatmentForEdge(edge({ depthAfter: MIN_EDGE_DEPTH }))).not.toBe("replan");
     expect(treatmentForEdge(edge({ depthAfter: MIN_EDGE_DEPTH - 1 }))).toBe("replan");
   });
@@ -277,22 +297,43 @@ const STEEP_EDGES = {
    * causeways hands the seams they were covering back to §5, so there is much
    * more edge to treat and it is treated.
    */
-  fillColumns: 537, // 273 → 537 (405 bank, 132 retaining)
-  cutColumns: 415, // 269 → 415 (377 retaining, 38 rock)
+  //
+  // **Wave 11F re-measure.** `SEAM_TIERS` went true, so a fill face past
+  // `RETAIN_MAX` is a tier stack instead of a benched bank (§4.1 S2) and 11A's
+  // split is gone, so the context chooses on every quarter. Both rows below are
+  // that, and each says which way.
+  //
+  // 537 → 530 fill columns, and the composition is the whole story: it was
+  // 405 bank + 132 retaining, and it is now **234 bank, 42 retaining, 254
+  // tiered**. Two hundred and fifty-four columns of 45° raw earth became
+  // stepped masonry. The seven columns that left the fill total are seam
+  // columns S7 absorbed into their neighbours.
+  fillColumns: 530,
+  cutColumns: 415, // 269 → 415 (377 retaining, 38 rock); unmoved at the 11F flip
   // 10 → 11 (2026-08-07, the composite gate). The extra bank is the 90-column
   // skirt that reported `drop: 6` — a face rule 9 sanctions — while thirteen of
   // its columns stood over ground seven blocks down, six of them contiguous.
   // `structures/retaining.ts`' `facesOf` measures the face rather than the
   // summary and the seam is benched like any other face past `RETAIN_MAX`.
-  benchedBanks: 11, // 1 → 10 → 11
-  plannedColumns: 952,
+  //
+  // **11 → 1 at the 11F flip**, and this is S2's whole point measured on the
+  // walked fixture: ten of the eleven benched banks are stacks now. The one
+  // left is the 183-column seven-block face below, whose foot the street owns
+  // for its whole run, so no tier can step down there.
+  benchedBanks: 1,
+  plannedColumns: 945, // 952 → 945 at the flip: seven columns absorbed by S7
   /** Unmoved: the seven-block terrace face WP-3 was given, still 183 columns. */
   tallDropSeamColumns: 183,
   /**
    * 13 refusals in all, of which **8** are benched rather than stubs — 7 → 8
    * with the composite gate, which is `benchedBanks`' own +1 and the same seam.
    */
-  benchedFaceRefusals: 8,
+  // **8 → 1 at the 11F flip**, the same seven seams as `benchedBanks` above.
+  benchedFaceRefusals: 1,
+  /** Seams the stack served but could not cover to the last column (W413). */
+  unservedSeams: 7,
+  /** Bank seams in `SEAM_SERVED`'s tally — the benched one plus eight short ones. */
+  banks: 9,
 } as const;
 
 describe("the steep fixture's transitions, compiled", () => {
@@ -362,28 +403,32 @@ describe("the steep fixture's transitions, compiled", () => {
     expect(transitions).toContain(`${STEEP_EDGES.plannedColumns} edge column(s)`);
   });
 
-  it("answers the seven-block face as several short faces with soil between", () => {
-    // **Re-pinned 2026-08-07 (evening), and the re-pin is a lesson.** The
-    // original body did `sweep.find(m => m.includes("RETAINING_REFUSED"))` and
-    // asserted against the one message that existed. After the causeway landing
-    // (`b90f87a`) there are **13** refusals on this fixture — six under
-    // `MIN_RETAIN_RUN` (a stub, graded into a bank) and seven past `RETAIN_MAX`
-    // (benched) — and `find` returned an arbitrary one. The seven-block face is
-    // still there, still 183 columns; the test simply stopped looking at it.
-    // It now selects by the property it is about.
-    const benched = sweep.filter((m) => m.includes("benched bank"));
-    expect(benched.length).toBe(STEEP_EDGES.benchedFaceRefusals);
-    const seven = benched.find((m) =>
-      m.includes(`over ${STEEP_EDGES.tallDropSeamColumns} column(s)`),
-    );
-    expect(seven, "the seven-block face is no longer reported").toBeDefined();
-    expect(seven).toContain(
-      `${Math.ceil(7 / BENCH_FACE)} face(s) of ${BENCH_FACE} block(s) with ${BENCH_TREAD} column(s) of soil between`,
-    );
-    expect(seven).toContain(`over ${benchedRun(7)} column(s) of run`);
+  it("keeps the seven-block face benched, and stops warning about it (11F)", () => {
+    // **Re-pinned at 11F, and the re-pin is §4.1 S1's retirement happening.**
+    // The body this replaces read the `LOAM-W411 RETAINING_REFUSED` messages —
+    // thirteen of them on this fixture, of which eight were benched banks — and
+    // asserted that the seven-block, 183-column terrace face was among them,
+    // benched into `ceil(7 / BENCH_FACE)` faces with `BENCH_TREAD` columns of
+    // soil between. Ten of those eight are tier stacks now (`benchedBanks`
+    // above, 11 -> 1), and `LOAM-W411` is retired at the flip: a bank is S8's
+    // deliberate landform, not a wall that failed, so it is named once per
+    // quarter by `LOAM-I412 SEAM_SERVED` instead of warned about per seam.
+    //
+    // What the test is *for* survives, and it is checked here from the two
+    // notes that do still carry it: the face is still benched rather than
+    // ramped, and it is still the only one, which is the fact WP-3 was given.
+    expect(sweep.filter((m) => m.includes("RETAINING_REFUSED"))).toEqual([]);
+    const transitions = sweep.find((m) => m.includes("transitions by context")) ?? "";
+    expect(transitions).toContain(`${STEEP_EDGES.benchedFaceRefusals} bank(s) benched rather than ramped`);
+    const served = sweep.find((m) => m.includes("seams served (S1)")) ?? "";
+    expect(served).toContain(`${STEEP_EDGES.banks} bank(s)`);
+    // …and the arithmetic the old message spelled out is still the arithmetic:
+    // a seven-block fall answered with `BENCH_FACE`-block benches.
+    expect(Math.ceil(7 / BENCH_FACE)).toBe(4);
+    expect(benchedRun(7)).toBeGreaterThan(0);
   });
 
-  it("measures the finished face, not the seam's summary of it (the composite)", () => {
+  it("serves the composite with a stack rather than benching it (S2 at 11F)", () => {
     // **The defect this closes.** Every rule in §5.2 reads one `drop` per seam,
     // and a skirt's is the component's *median* — deliberately, so one column of
     // gully cannot bank a hundred-column terrace. What nothing measured was the
@@ -391,13 +436,42 @@ describe("the steep fixture's transitions, compiled", () => {
     // rule 9 sanctions, while thirteen of its columns stood over ground seven
     // blocks down and six of those were contiguous. What got built there was a
     // seven-block sheer face no rule had ever looked at.
+    //
+    // **Re-pinned at 11F**, and the re-pin is §4.2's last paragraph happening:
+    // *today a composite past the ceiling converts a wall to a benched bank;
+    // under the tier stack it converts a wall to a stack sized for the measured
+    // face — the same measurement spent on a better construction.* So the
+    // refusal message this test used to select on is gone, because there is no
+    // refusal: the measurement still runs, `facesOf` still reports the face
+    // rather than the summary, and what it buys is masonry. The 90-column skirt
+    // is one of the two `measured` stacks named in `SEAM_SERVED` below.
     const composite = sweep.filter((m) => m.includes("the face it would have presented"));
-    expect(composite.length).toBe(1);
-    expect(composite[0]).toContain("benched bank");
-    // …and it is benched for the face, not for the summary: a seven-block fall
-    // answered with six blocks' worth of benches leaves the last block as a step
-    // no bench reaches, which is the sheer face one block shorter.
-    expect(composite[0]).toContain(`${Math.ceil(7 / BENCH_FACE)} face(s) of ${BENCH_FACE} block(s)`);
+    expect(composite.length).toBe(0);
+    const served = sweep.find((m) => m.includes("seams served (S1)"));
+    expect(served, "the S1 note is missing from the report").toBeDefined();
+    expect(served).toContain("7 tier stack(s) (7 revetted) over 14 face(s)");
+    // The 90-column skirt, served as a stack of 4 + 3 rather than benched.
+    const skirt = sweep.find(
+      (m) => m.includes("SEAM_UNSERVED") && m.includes("over 90 column(s)"),
+    );
+    expect(skirt).toContain("stack of 2 tier(s) (faces 4+3)");
+  });
+
+  it("names the only refusal S1 leaves — a stack with no ground to step down onto", () => {
+    // §4.1 S1: every seam leaves the pass with a *built* treatment, and the one
+    // honest exception is a treatment that could not be **placed** because a
+    // street, a footprint or water owns the ground. `LOAM-W413` is that, and
+    // this fixture is where it first has callers: seven seams whose lower tier
+    // could not cover the run, reported per column rather than silently
+    // overhung. (Before the fix that came with this wave, the upper tier was
+    // built over those columns anyway and the sweep ran its face down to the
+    // natural ground — a nine-block single face of masonry, past the ceiling
+    // S2 calls a hard law.)
+    const unserved = sweep.filter((m) => m.includes("SEAM_UNSERVED"));
+    expect(unserved.length).toBe(STEEP_EDGES.unservedSeams);
+    for (const m of unserved) {
+      expect(m).toMatch(/seam column\(s\) were left uncovered/);
+    }
   });
 
   it("reports its built faces by finished drop, and none of them past RETAIN_MAX", () => {

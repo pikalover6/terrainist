@@ -17,10 +17,12 @@
  *    be — and it publishes the columns it took as a mask, because a landform
  *    carries nothing.
  *
- * As in `seam-tiers.test.ts` and `platforms.test.ts`, **the global flag is never
- * flipped**: every flag-on assertion here comes from a fixture that says
- * `tiered: true`, and each one is paired with the flag-off control that proves
- * the harness can see the difference (§6).
+ * As in `seam-tiers.test.ts` and `platforms.test.ts`, every assertion here names
+ * its own `tiered`: the flag-on ones come from a fixture that says
+ * `tiered: true`, and each is paired with the flag-off control that proves the
+ * harness can see the difference (§6). **Wave 11F flipped `SEAM_TIERS` to
+ * `true`**; because no fixture here leans on the global default, the flip moved
+ * one recorded value and nothing else in this file.
  */
 
 import { beforeAll, describe, expect, it } from "vitest";
@@ -184,8 +186,11 @@ describe("wave 11D — absorption (S7) and the landform bank (S8)", () => {
     return { result, plan };
   };
 
-  it("ships with SEAM_TIERS false — nothing here is on until 11F flips it", () => {
-    expect(SEAM_TIERS).toBe(false);
+  it("ships with SEAM_TIERS true — wave 11F flipped it on Kai's walk verdict", () => {
+    // Re-pinned at 11F (was `toBe(false)`). Every fixture below names its own
+    // `tiered`, so this line records the default the compiler now takes and
+    // nothing below it depends on the value.
+    expect(SEAM_TIERS).toBe(true);
   });
 
   /* --- S7: the run that is absorbed -------------------------------------- */

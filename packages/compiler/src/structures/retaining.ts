@@ -642,7 +642,7 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
     // is a storey down, and you see the wall that makes it so" (§4.6) — so it
     // is derived here, from the platform field and the finished ground, rather
     // than left as a bank of raw dirt.
-    jobs.push(...skirtSeams(region, plan, levels).map((j) => ({ ...j, measured: true })));
+    jobs.push(...skirtSeams(region, plan, levels, tiered).map((j) => ({ ...j, measured: true })));
 
     for (const [jobIndex, { seam: record, floorY, measured }] of jobs.entries()) {
       // **§5.2, and the whole of WP-3.** On a quarter no planner drew the
@@ -750,6 +750,22 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
         // "why no wall" and the answer there is "because a bank is what this
         // edge wanted".
         if (!chooses) unfaced[short ? "shortRun" : "tallDrop"] += record.cells.length;
+        // **S1's retirement, and where it actually happens** (§4.1, §7).
+        //
+        // The design says `LOAM-W411 RETAINING_REFUSED` is retired and replaced
+        // by `LOAM-I412 SEAM_SERVED`, and 11A/11B built that retirement the way
+        // every other world change in Part IV was built: as a flag, not as a
+        // deletion. So the warning survives on the **untiered** path — where a
+        // bank really is a wall that failed, and where the accounting above
+        // still counts it as unfaced — and goes dark at 11F, when `SEAM_TIERS`
+        // empties that path. Under the flip a bank is S8's deliberate landform,
+        // counted in `treated` and named once per quarter by `SEAM_SERVED`:
+        // *"fifty-six warnings that say we did the other thing is a report
+        // nobody can act on; one note that says 12 walls, 6 stacks, 3 banks, 41
+        // absorbed is."* The one refusal a served seam can still report is
+        // `LOAM-W413`, and it means something else entirely — a treatment that
+        // was chosen and could not be placed.
+        if (tiered) continue;
         diagnostics.push(
           warning(
             "RETAINING_REFUSED",
@@ -821,12 +837,12 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
         }
         // S1's one honest refusal: the treatment was chosen and could not be
         // *placed*, because a street, a footprint or water owns the ground.
-        if (laid.unplaced > 0) {
+        if (laid.unplaced > 0 || laid.unsupportedColumns > 0) {
           diagnostics.push(
             warning(
               "SEAM_UNSERVED",
               district.nodePath,
-              `a seam in "${district.nodePath}" drops ${measuredDrop} blocks over ${record.cells.length} column(s) and was served by a ${dressing} stack of ${laid.tiers.length} tier(s) (faces ${laid.tiers.map((t) => t.face).join("+")}), but ${laid.unplaced} of those tier(s) found no ground to stand on — a street, a footprint or water owns every column the tier would have used`,
+              `a seam in "${district.nodePath}" drops ${measuredDrop} blocks over ${record.cells.length} column(s) and was served by a ${dressing} stack of ${laid.tiers.length} tier(s) (faces ${laid.tiers.map((t) => t.face).join("+")}), but ${laid.unplaced} of those tier(s) found no ground to stand on and ${laid.unsupportedColumns} seam column(s) were left uncovered because the tier beneath them could not be placed — a street, a footprint or water owns the ground the stack would have stepped down onto`,
               "Nothing in the document names the columns directly: widen the block so the stack has room to step down, or lower the quarter's density so the two platforms are closer together.",
             ),
           );
@@ -2156,6 +2172,7 @@ function skirtSeams(
   region: Region,
   plan: ColumnPlan,
   levels: GroundLevels,
+  tiered: boolean,
 ): { readonly seam: LevelSeam; readonly floorY: number }[] {
   const cells = region.width * region.depth;
   const out: { seam: LevelSeam; floorY: number }[] = [];
@@ -2238,7 +2255,14 @@ function skirtSeams(
             z: region.z0 + Math.floor(k / region.width),
           })),
           drop,
-          treatment: treatmentForSeam(drop, queue.length),
+          // **The district's `tiered`, not the compile-time flag.** A skirt is
+          // the seam list this pass derives for itself, so it has to be derived
+          // at the same setting `levelSeams` used for the district's own seams;
+          // otherwise a quarter that asked for the untiered world is handed a
+          // `"tiered"` treatment and — because `chooses` is false there, so the
+          // record's own word stands — builds a stack it never asked for. Found
+          // at 11F, when flipping `SEAM_TIERS` made the two disagree.
+          treatment: treatmentForSeam(drop, queue.length, { tiered }),
         },
         floorY,
       });
@@ -2623,6 +2647,12 @@ export interface TieredSeamResult {
    */
   readonly unplaced: number;
   /**
+   * Seam columns the stack left uncovered because no tier beneath them could be
+   * placed — the per-column half of {@link unplaced}, and the number `LOAM-W413`
+   * reports (11F). Zero on a stack that stepped all the way down.
+   */
+  readonly unsupportedColumns: number;
+  /**
    * **S9's ground a body can stand on**, bottom landing first: the seam floor,
    * then one entry per tier's tread, then the platform the stack holds.
    *
@@ -2704,6 +2734,7 @@ export function buildTieredSeam(input: TieredSeamInput): TieredSeamResult {
       railColumns: 0,
       treadColumns: 0,
       unplaced: 0,
+      unsupportedColumns: 0,
       landings: [],
     };
   }
@@ -2785,6 +2816,61 @@ export function buildTieredSeam(input: TieredSeamInput): TieredSeamResult {
   const treads: { y: number; columns: number[] }[] = [];
   /** Tier 0's band, so the seam floor's landing can be found beside it. */
   let bottomBand: readonly number[] = [];
+  /**
+   * **S2 as a hard law, held per column rather than per stack** (11F).
+   *
+   * `tiersOf` guarantees no tier is *sized* past {@link RETAIN_MAX}, and until
+   * the flip nothing tested what the finished masonry did. It does not follow:
+   * a tier's face stands on the tread of the tier below it, so where that tier
+   * could not be placed — `open` is false because a street, a footprint or
+   * water owns the ground one column out — the face above it has nothing to
+   * stand on and the sweep runs it down to the natural ground instead. Measured
+   * on `site-plan-hillside-steep` at the flip: five seams whose lower tier
+   * found two open columns out of thirteen, and eleven columns of a *nine-block
+   * single face* of cobblestone standing over the street at the foot — taller
+   * than any wall this compiler is allowed to build, and reported as two faces
+   * of five and four by §13.8's histogram, which counts the tier's declared
+   * face and not the one the world got.
+   *
+   * So support is carried up the stack: the outermost band stands on the seam
+   * floor and is supported wherever it is open; every band above it is
+   * supported only where it can be reached, **inside its own band**, from a
+   * column 4-adjacent to the supported band below. A seam column left
+   * unsupported gets no course at all — it keeps the ground the rest of the
+   * pass gives it, which is what it had before Part IV — and is counted in
+   * {@link TieredSeamResult.unsupportedColumns} for `LOAM-W413` to report.
+   * Nothing here relaxes S1: the honest refusal is *named*, and it is the only
+   * thing that is ever left unbuilt.
+   */
+  const held = new Uint8Array(cells);
+  {
+    // Outermost first: a column at the far edge of the stack stands on the seam
+    // floor, so it is held wherever it is open. Every column inward is held only
+    // where the column one step *further out* is held — support crosses the
+    // stack, it does not run along it. A flood inside a band would defeat the
+    // whole check: thirteen columns of a run are 4-connected to each other, so
+    // two footed columns would vouch for eleven that stand on nothing.
+    for (let d = maxDist; d >= 0; d--) {
+      for (let c = 0; c < cells; c++) {
+        if ((dist[c] as number) !== d || !open(c)) continue;
+        if (d === maxDist) {
+          held[c] = 1;
+          continue;
+        }
+        const x = region.x0 + (c % region.width);
+        const z = region.z0 + Math.floor(c / region.width);
+        for (const [dx, dz] of NEIGHBOURS) {
+          if (!inside(region, x + dx, z + dz)) continue;
+          const m = index(region, x + dx, z + dz);
+          if ((dist[m] as number) === d + 1 && held[m] === 1) {
+            held[c] = 1;
+            break;
+          }
+        }
+      }
+    }
+  }
+  let unsupportedColumns = 0;
 
   // --- one loop, bottom up (§4.2) -------------------------------------------
   // Bottom up because that is the order the ground is built in: a tier's face
@@ -2798,8 +2884,13 @@ export function buildTieredSeam(input: TieredSeamInput): TieredSeamResult {
     let courseColumns = 0;
     for (let c = 0; c < cells; c++) {
       const d = dist[c] as number;
-      if (d < 0 || tierAt(d) !== k) continue;
-      if (!open(c)) continue;
+      if (d < 0 || tierAt(d) !== k || !open(c)) continue;
+      if (held[c] !== 1) {
+        // A column of this tier's band with nothing under it. On the top tier
+        // that is a seam column left unserved, which is what W413 reports.
+        if (k === n - 1) unsupportedColumns++;
+        continue;
+      }
       band.push(c);
       if (d === courseDist(k)) {
         course[c] = 1;
@@ -3002,6 +3093,7 @@ export function buildTieredSeam(input: TieredSeamInput): TieredSeamResult {
     railColumns,
     treadColumns,
     unplaced,
+    unsupportedColumns,
     landings,
   };
 }

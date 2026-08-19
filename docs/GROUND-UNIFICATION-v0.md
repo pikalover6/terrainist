@@ -1379,7 +1379,7 @@ Stated so that a wave that drifts into one of these is visibly wrong.
 | **`ROAD_BERM_MAX` invented rather than measured.** | every world with above-sea water near a road | 10A is *blocked* on the forensics numbers, and the wave is not committed without the measurement in the comment. |
 | **WP-11 moves a world Kai liked.** `p3-c5`'s walked-good Troy carries 105 `tallDrop` columns and 713 banked ones (§4.0), so the fix changes it too. | every world with a `"stepped"` or `terraced` quarter: Troy (p3-c5, p3-tie2), the pirate haven (p1), `unicorn_citadel` (p1-tie2), `ruined_metropolis` (p4), and the examples `site-plan-hillside`, `site-plan-hillside-steep`, `showcase-aerodale` | One flag, `SEAM_TIERS`, flipped once at 11F on a walk verdict — the WP-8 shape. Every wave before it is proved identical by `test/ground-equivalence.test.ts`, and the standing rule applies: **prove the harness can see a difference before trusting that it saw none.** The p3-c5 Troy is re-generated at the flip and walked *beside* p3-tie2, so the comparison is like for like. |
 | **11C is the biggest blast radius in the package.** Changing `derivePlatforms`' levels changes `foundationY` for every building on a derived platform (`district.ts:1472`), not just the ground between them. | every settlement that elected `"stepped"` via `STEP_RELIEF` | Behind the same flag; asserted structurally rather than by golden — no 4-adjacent platform pair more than one storey apart, no piece left at `NO_PLATFORM` inside a levelled block — so the test states the law rather than pinning a hash. |
-| **The report changes even where the world does not.** Retiring `LOAM-W411` for `LOAM-I412` and firing `transitions by context` on every stepped quarter moves report bytes at 11A. | every compile report, the battery logs | Report goldens are re-measured **with the cause written down**, never updated silently (§9a.5's rule). A world hash that moves at 11A is a bug, not a golden update. |
+| **The report changes even where the world does not.** Firing `transitions by context` on every stepped quarter moves report bytes at 11A, and retiring `LOAM-W411` for `LOAM-I412` moves more at 11F. | every compile report, the battery logs | Report goldens are re-measured **with the cause written down**, never updated silently (§9a.5's rule). A world hash that moves at 11A is a bug, not a golden update. **Amended at 11F:** the retirement is built as a flag, not as a deletion — 11A/11B left `LOAM-W411` firing on the untiered path only, and the flip empties that path, so the warning goes to zero at 11F rather than at 11A. Measured on the flip: 0 on Troy (p3-tie2) and 0 on the pirate haven, where it stood at 56 and 36. |
 | **A tier stack eats run the town wanted.** A terraced stack costs `tiers · (1 + SEAM_TREAD)` columns. | dense quarters on steep ground | S5's fallback is structural, not a tuning: where `availableRun` cannot pay, the stack is revetted at `1 + SEAM_SETBACK` per tier, which always fits where a single wall fitted. Rule 6's `depthAfter` / `MIN_EDGE_DEPTH` guard is unchanged and still returns `"replan"` — now to a caller (S3) that can act on it. |
 | **The doorstep gate is edited by two waves at once.** The in-flight foot-gate wave and 11E both touch `structures/doorsteps.ts`. | one file, one round | S10 is written as an *extension*: whichever lands second reads the other's constant (`DOORSTEP_FOOT_STEP`) and adds a source of truth (`landings`, `bank`) rather than a second rule. The orchestrator sequences them; neither reverts the other's lines. |
 
@@ -1404,8 +1404,15 @@ Stated so that a wave that drifts into one of these is visibly wrong.
 `LOAM-T237`–`T239` continue the `T23x` block that ends at `LINEWORK_BED_INTERRUPTED`;
 `LOAM-W340`–`T342` continue the program block that ends at `PROGRAM_WATER_CLAMPED`.
 `LOAM-I412`–`I415` continue the level/seam block that ends at
-`RETAINING_REFUSED`; `LOAM-W411` itself is **retired** at 11A (§4.1 S1) and its
-number is not reused. Only `W340` enters `FEEDBACK_CODES`, and §2.5 argues why it
+`RETAINING_REFUSED`; `LOAM-W411` itself is **retired at the flip, 11F**
+(§4.1 S1) and its number is not reused. *(Amended at 11F, which is when the
+retirement was measured. This row read "retired at 11A". Waves 11A and 11B
+deliberately implemented the retirement the way every other world change in
+Part IV was implemented — behind `SEAM_TIERS` — so `LOAM-W411` keeps firing on
+the untiered path, which is the only path where a bank really is a wall that
+failed, and the flip empties that path. Retirement by the path going dark, not
+by deletion: the warning is still the right report for a world compiled with the
+flag off, and there is nothing left to delete once no world compiles that way.)* Only `W340` enters `FEEDBACK_CODES`, and §2.5 argues why it
 is the exception to §13.6's precedent rather than a violation of it.
 
 ---
