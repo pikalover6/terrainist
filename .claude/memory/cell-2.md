@@ -76,3 +76,17 @@ high for ALL uses. Harness study artifact:
 https://claude.ai/code/artifact/f12c83ed-7bee-4125-bda5-9ddf16e9854e
 Ops: implementers opus-5-low (tiers price judgment); one vitest
 --maxWorkers=4; batch runner 32f2230.
+
+## The autonomous run (2026-08-17) — compressed from cell 3
+
+Armed by four rulings (look latitude, leniency PERMANENT, machinery
+tail un-deferred, GO-HAM, regen-at-end). Landed: viewer rounds 3-4
+(walk controller, landing demo, the SHADER PACK tuned live; flipY
+atlas lesson); machinery tail closed (family B faces, §13.2 rank 25,
+viaduct + WP-6 E494 ledger); SIX GO-HAM PACKS (norse, mesoam,
+dwarven, steppe, swamp, atlantean — 91 structures; pack laws banked:
+standInRow, shell campfire, pin arithmetic, negative sweep, curbed
+basins, filled-disc domes, made-up-id-reserves-a-name); final
+battery + dev_world_packs installed; tide-bell full-cube law. Later
++2 packs (caravanserai 365eded, himalayan 88bd989 — arch headroom
+law 069592e) → 265 members. Dev app (tools/dev-app) landed unseen.
