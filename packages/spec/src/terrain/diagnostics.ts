@@ -926,6 +926,16 @@ export const TERRAIN_DIAGNOSTICS = {
    * is in the authoring feedback set instead, because the repair is one the
    * *document* can make and the model will not guess it: the landmass is
    * written before the settlement and sized to it.
+   *
+   * **The repair is more land, never less water.** Told to "raise the
+   * landmass", an authoring model will happily dry the whole region — the
+   * walked overcorrection (Kai, `hellenist_city_v10`) came back "basically no
+   * water with sea monsters on land", and `pirates_v17` authored one landmass
+   * for a prompt that demands two islands at war. So the fix line names the
+   * landmass **under the settlement** and nothing else: a harbour city needs
+   * its sea beside it, not instead of it; move the city to the coast rather
+   * than drying the coast. Size the land to the settlement AND the water to
+   * the premise — they are laid out side by side, never traded.
    */
   SETTLEMENT_LAND_SHORT: "LOAM-W526",
   /**

@@ -141,6 +141,20 @@ describe("classifyPromptIntent", () => {
     expect(INTENT_CLASSIFIER_PROMPT).toContain('"region_<place>"');
   });
 
+  it("pins the prompt's terrain nouns by count and name", () => {
+    // The walked overcorrection: "raise the landmass" teaching dried the sea
+    // out of a harbour city, and a two-island war came out as one landmass.
+    // Premise nouns must reach the author as requirements, not vibes.
+    expect(INTENT_CLASSIFIER_PROMPT).toContain(
+      "PIN THE PROMPT'S TERRAIN NOUNS — COUNT THEM AND NAME THEM.",
+    );
+    expect(INTENT_CLASSIFIER_PROMPT).toContain('"two islands separated by open water"');
+    expect(INTENT_CLASSIFIER_PROMPT).toContain('"a coastal city with a harbour and open sea"');
+    expect(INTENT_CLASSIFIER_PROMPT).toContain('"a river through the town"');
+    expect(INTENT_CLASSIFIER_PROMPT).toContain("the strait IS the war");
+    expect(INTENT_CLASSIFIER_PROMPT).toContain("sea monsters need a sea to come out of");
+  });
+
   it("carries one worked example showing a two-place prompt", () => {
     expect(INTENT_CLASSIFIER_PROMPT).toContain("EXAMPLE");
     expect(INTENT_CLASSIFIER_PROMPT).toContain("Good reply:");

@@ -237,6 +237,21 @@ describe("settlement-author kit", () => {
     expect(errors).toBe("");
   });
 
+  it("counterweights the land-budget teaching: the prompt's water is load-bearing", () => {
+    // W526 fixed drowned cities and then overcorrected — a hellenist harbour
+    // city walked as "basically no water with sea monsters on land", and a
+    // two-island pirate war came out as one landmass. The land paragraph must
+    // carry the other half or the next roll dries the sea again.
+    const land = settlementSource.slice(
+      settlementSource.indexOf("### The land comes first, and it is sized to the settlement"),
+    );
+    expect(land).toContain("the prompt's water is load-bearing — more land NEVER means less water");
+    expect(land).toMatch(/sea monsters need a sea to\s+come out of/);
+    expect(land).toMatch(/the strait between them \*\*is\*\* the\s+premise/);
+    expect(land).toMatch(/size the landmass to the settlement AND the water to the premise/);
+    expect(land).toMatch(/side by side, not traded against each other/);
+  });
+
   it("tells the author when a prompt needs a holding, and what a holding costs", () => {
     // The section is the whole of FARM-PLAN §11: a model that does not know the
     // node exists writes a farm town with no fields in it, and one that does not

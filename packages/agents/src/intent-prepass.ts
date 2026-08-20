@@ -658,6 +658,21 @@ what makes every region come out looking the same. Instead, structurally:
 Only state what the prompt actually implies. Guessing every dial is worse than
 leaving one out.
 
+PIN THE PROMPT'S TERRAIN NOUNS — COUNT THEM AND NAME THEM.
+The prompt's landforms and water bodies are REQUIREMENTS, not atmosphere, and
+the document author only receives what you write down. So the "terrain" token
+must state each one the prompt names, WITH ITS COUNT, in plain words:
+  "two islands separated by open water"
+  "a coastal city with a harbour and open sea"
+  "a river through the town"
+Never soften a count or a body of water into a mood. "Two islands at war" is
+TWO islands and the water between them — one landmass deletes the war, because
+the strait IS the war. A harbour city needs its sea BESIDE it, not instead of
+it, and sea monsters need a sea to come out of; a document that dries the water
+to make room for the land has failed the prompt as surely as one that drowns
+the town. Write the land AND the water in the same sentence — they sit side by
+side, never traded — and the author sizes both.
+
 A NAMED PLACE IS A FULL IDENTITY — EXPAND IT.
 When the prompt names a real or legendary place (Troy, Venice, Babylon, New
 York, Atlantis), the name IS the brief, and a stranger walking the world must

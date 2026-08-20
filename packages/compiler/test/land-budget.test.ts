@@ -195,7 +195,22 @@ describe("LOAM-W526 SETTLEMENT_LAND_SHORT", () => {
     expect(d.message).toContain("60 × 60 envelope covers 3600 columns");
     expect(d.message).toContain("1980 of them are buildable ground (55%)");
     expect(d.message).toContain("under water");
-    expect(d.fix).toContain("a settlement needs land");
+    expect(d.fix).toContain("raise or enlarge the LANDMASS UNDER THIS SETTLEMENT");
+  });
+
+  it("asks for more land and never for less water", () => {
+    // The walked overcorrection: told to raise the landmass, the authoring
+    // model dried the sea out of a harbour city ("sea monsters on land") and
+    // authored one island for a two-island war. The fix line must not be
+    // readable as "drain the region".
+    const found = landShort([settlement("metropolis", [60, 20, 60], "city")], stripedWorld(9));
+    const fix = (found[0] as { fix: string }).fix;
+    expect(fix).toContain("The repair is more land here, never less water anywhere");
+    expect(fix).toContain("needs its sea beside it, not instead of it");
+    expect(fix).toContain("move the city to the coast rather than drying the coast");
+    expect(fix).toContain("Do NOT drain the region to pass this check");
+    expect(fix).toContain("size the land to the settlement AND the water to the premise");
+    expect(fix).not.toMatch(/remove the (sea|water)|drop the "?seaFraction/i);
   });
 
   it("stays silent when the envelope is mostly land", () => {

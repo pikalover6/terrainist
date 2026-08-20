@@ -1004,11 +1004,13 @@ function landBudgetDiagnostics(
         `this ${kind}'s ${w} × ${d} envelope covers ${here.columns} columns and only ${here.buildable} of them are buildable ground` +
           ` (${Math.round(share * 100)}%${share < LAND_BUDGET_SEVERE ? ", nowhere near enough to seat a settlement" : ""}): ${because}. ` +
           `The node was placed and its buildings were fitted into whatever land was left; ${elsewhere}`,
-        `a settlement needs land, and the land is written first: size the terrain to the settlement, not the other way round. ` +
-          `Raise the ground under it — a wider island/plateau/shelf edit, a higher "amount", a larger "radius" — until the envelope sits on real ground; ` +
-          `or move the ${kind} onto the land the region already has with an "at"/"zone" constraint; ` +
+        `raise or enlarge the LANDMASS UNDER THIS SETTLEMENT — and keep every water body the prompt asks for. ` +
+          `The repair is more land here, never less water anywhere: a harbour city needs its sea beside it, not instead of it, so move the city to the coast rather than drying the coast. ` +
+          `Do it with a wider island/plateau/shelf edit under the envelope, a higher "amount" or a larger "radius"; ` +
+          `or move the ${kind} onto land the region already has with an "at"/"zone" constraint; ` +
           `or shrink "envelope.size" to the ground that is actually there. ` +
-          `"Deep water", "open ocean" and "a wide bay" are requests for a region with little land in it, and a ${kind} cannot stand on one`,
+          `Do NOT drain the region to pass this check: if the prompt names a sea, a strait, two islands or a river, that water is part of the brief and must still be there — ` +
+          `size the land to the settlement AND the water to the premise, side by side`,
       ),
     );
   }

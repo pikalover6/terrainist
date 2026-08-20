@@ -244,6 +244,19 @@ buildable. Fix it in the terrain first — raise `baseHeight` above `seaLevel`,
 widen the `island`/`plateau` under the settlement, or drop the `seaFraction` —
 and only shrink `envelope.size` if a small settlement was what you meant.
 
+**But the prompt's water is load-bearing — more land NEVER means less water.**
+The opposite failure is just as walked: told to raise the landmass, a document
+dries the sea out of the world entirely. A hellenist harbour city came back
+"basically no water with sea monsters on land" — sea monsters need a sea to
+come out of — and a pirate prompt calling for two islands at war was authored
+as one landmass, which deletes the war: the strait between them **is** the
+premise. So size the landmass to the settlement AND the water to the premise.
+They are laid out side by side, not traded against each other: raise the ground
+*under the envelope* with an `island`/`plateau` edit and leave the rest of the
+region wet, or move the settlement onto the coast rather than drying the coast.
+Every sea, strait, bay, lake and river the prompt names must still be a body of
+water a walker can swim in when the settlement fits.
+
 ---
 
 ## 5. `terrain.climate@0` — temperature and humidity
