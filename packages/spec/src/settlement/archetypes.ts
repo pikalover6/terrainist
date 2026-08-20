@@ -220,6 +220,15 @@ export const KNOWN_BUILDING_ARCHETYPES = [
   "monk_cell_row", "scripture_library", "yak_byre", "dzong_bell_cote",
   "debate_courtyard", "hermit_retreat", "kora_gatehouse", "stilt_granary",
   "incense_kiln",
+  // --- feudal_japanese pack -----------------------------------------------
+  // The feudal_japanese pack, LAST, because `BUILDING_ARCHETYPES` spreads it
+  // last: this list mirrors that one element for element and the seam is
+  // pinned by `fabric.test.ts`. The pack's `toro_lantern`, `koi_pond` and
+  // `nobori_banner_line` are deliberately absent: all three are PROPS.
+  "yamashiro_tenshu", "machiya_shop_row", "gojunoto_pagoda", "sando_torii",
+  "dojo_hall", "onsen_bathhouse", "noh_stage", "karesansui_court",
+  "kura_storehouse", "chashitsu_teahouse", "kaji_forge", "yagura_watchtower",
+  "masugata_gate",
 ] as const;
 
 /** A building archetype name, as the authoring surface spells it. */

@@ -47,6 +47,8 @@ describe("the registry", () => {
       "desert_caravanserai",
       // --- himalayan_monastery pack ---
       "himalayan_monastery",
+      // --- feudal_japanese pack ---
+      "feudal_japanese",
     ]);
   });
 
@@ -98,7 +100,10 @@ describe("the registry", () => {
     // …plus the himalayan_monastery pack's fifteen: 250 + 15 = 265. That pack
     // shipped ALONE, so it owns its own arithmetic and this line moves with it
     // and with nothing else.
-    expect(seen.size).toBe(265);
+    // …plus the feudal_japanese pack's SIXTEEN — thirteen buildings and three
+    // ground pieces: 265 + 16 = 281. That pack shipped ALONE, so it owns its
+    // own arithmetic and this line moves with it and with nothing else.
+    expect(seen.size).toBe(281);
   });
 
   it("leaves `sphinx` out of the Nile pack — ratified out 2026-08-11", () => {

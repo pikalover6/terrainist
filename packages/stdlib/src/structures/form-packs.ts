@@ -597,6 +597,59 @@ export const FORM_PACKS: readonly FormPack[] = Object.freeze([
       "mani_stone_cairn",
     ]),
   }),
+  /* --- feudal_japanese pack --- */
+  Object.freeze({
+    id: "feudal_japanese",
+    name: "Feudal Japanese",
+    thesis:
+      "A Sengoku castle town in dark timber and white plaster: the catalog cannot say tenshu keep on a stone batter, machiya shop row, five-storey pagoda, shrine approach, dojo, onsen bathhouse, noh stage, raked gravel court, rice kura, tea room, swordsmith or corner turret, and an English market town rendered in dark oak is still an English market town.",
+    eras: Object.freeze(["medieval"]),
+    themes: Object.freeze(["temperate_timber", "white_quartz"]),
+    characters: Object.freeze(["lanes", "civic", "core"]),
+    members: Object.freeze([
+      // `tenshu_keep`, `keep` and `castle` are the EAST-ASIAN pack's and the
+      // garrison wave's, word for word, and a member belongs to one pack only -
+      // so the anchor carries the mountain castle in its id and the words stay
+      // where they were.
+      "yamashiro_tenshu",
+      // `machiya`, `shop_row` and `terraced_row` are earlier waves'.
+      "machiya_shop_row",
+      // `pagoda` bare is already claimed; the five-storey is ours.
+      "gojunoto_pagoda",
+      // `torii`, `moon_gate` and `paifang` are the east-asian pack's.
+      "sando_torii",
+      // `hall`, `town_hall` and `guildhall` are earlier waves'.
+      "dojo_hall",
+      // `bathhouse`, `stone_bath_house` and `salt_bath_terme` are earlier
+      // waves' and the Atlantean pack's.
+      "onsen_bathhouse",
+      // `theatre`, `amphitheater` and `bandstand` are the leisure and
+      // spectacle waves'.
+      "noh_stage",
+      // `zen_garden` is the east-asian pack's and `courtyard` older still.
+      "karesansui_court",
+      // `granary`, `mudbrick_granary`, `staddle_granary` and `stilt_granary`
+      // are the founding table's, the Nile, agrarian and Himalayan waves'.
+      "kura_storehouse",
+      // `tea_house`, `teahouse` and `shoji_teahouse` are the works and
+      // east-asian waves'.
+      "chashitsu_teahouse",
+      // `smithy`, `great_forge` and `norse_forge` are earlier waves'.
+      "kaji_forge",
+      // `watchtower`, `tower` and `drum_tower` are earlier waves' and the
+      // east-asian pack's.
+      "yagura_watchtower",
+      // `gate`, `gatehouse` and `arch` are the city gate's and the triumphal
+      // arch's; `caravan_gatehouse` and `kora_gatehouse` are the caravan and
+      // Himalayan packs'.
+      "masugata_gate",
+      // `stone_lantern` bare is the east-asian pack's; the toro is ours.
+      "toro_lantern",
+      "koi_pond",
+      // `flagpole` and `khan_banner_pole` are earlier waves'.
+      "nobori_banner_line",
+    ]),
+  }),
 ]);
 
 /** Every legal pack word, in registry order. */

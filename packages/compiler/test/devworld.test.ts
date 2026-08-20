@@ -101,6 +101,8 @@ import {
   ATLANTEAN_ROW_LENGTH,
   CARAVAN_EXHIBIT_ROWS,
   CARAVAN_ROW_LENGTH,
+  FEUDAL_EXHIBIT_ROWS,
+  FEUDAL_ROW_LENGTH,
   HIMALAYAN_EXHIBIT_ROWS,
   HIMALAYAN_ROW_LENGTH,
   WAVE2_EXHIBIT_ROWS,
@@ -261,6 +263,8 @@ describe("dev world grid", () => {
     const caravan = CARAVAN_EXHIBIT_ROWS.length * CARAVAN_ROW_LENGTH;
     // The himalayan_monastery pack: prefixed (`hima_dzong_hall`) likewise.
     const himalayan = HIMALAYAN_EXHIBIT_ROWS.length * HIMALAYAN_ROW_LENGTH;
+    // The feudal_japanese pack: prefixed (`feud_yamashiro_tenshu`) likewise.
+    const feudal = FEUDAL_EXHIBIT_ROWS.length * FEUDAL_ROW_LENGTH;
     // Wave 5B, commerce and civic: prefixed (`comm_embassy`) for the same reason.
     const commerce = COMMERCE_EXHIBIT_ROWS.length * COMMERCE_ROW_LENGTH;
     // Wave 5D, science and modern living: prefixed (`sci_planetarium`).
@@ -315,6 +319,7 @@ describe("dev world grid", () => {
         atlantean +
         caravan +
         himalayan +
+        feudal +
         commerce +
         garrison + science +
         arcana +

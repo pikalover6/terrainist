@@ -426,6 +426,18 @@ import {
 
 export * from "./archetypes-himalayan.js";
 
+// --- feudal_japanese pack ---------------------------------------------------
+// The feudal_japanese pack's buildings - the thirteen entries of that pack that
+// have an inside. Its `toro_lantern`, `koi_pond` and `nobori_banner_line` are
+// PROPS (`props-feudal.ts`): not one of the three roofs a room.
+import {
+  FEUDAL_BUILDING_ARCHETYPES,
+  feudalArchetypeOfTags,
+  furnishFeudal,
+} from "./archetypes-feudal.js";
+
+export * from "./archetypes-feudal.js";
+
 import {
   DEPTHS_BUILDING_ARCHETYPES,
   depthsArchetypeOfTags,
@@ -547,6 +559,11 @@ export const BUILDING_ARCHETYPES = [
   // same reason: this list's order is the seam `fabric.test.ts` pins, and a
   // pack appended at the end moves nothing that came before it.
   ...HIMALAYAN_BUILDING_ARCHETYPES,
+  // --- feudal_japanese pack ------------------------------------------------
+  // LAST, and the spec's `KNOWN_BUILDING_ARCHETYPES` repeats it last for the
+  // same reason: this list's order is the seam `fabric.test.ts` pins, and a
+  // pack appended at the end moves nothing that came before it.
+  ...FEUDAL_BUILDING_ARCHETYPES,
 ] as const;
 
 /** A building archetype. */
@@ -905,6 +922,19 @@ export function archetypeOfTags(tags: readonly string[]): BuildingArchetype {
   // table in the catalog ever had.
   const himalayan = himalayanArchetypeOfTags(tags);
   if (himalayan !== null) return himalayan;
+  // --- feudal_japanese pack -------------------------------------------------
+  // The castle-town pack, beside the other late packs and high for the reason
+  // every later wave is: the tables below are greedy. It claims not one bare
+  // word. Bare `torii`, `pagoda`, `zen_garden`, `tenshu_keep`, `moon_gate`,
+  // `paifang`, `shoji_teahouse`, `stone_lantern`, `drum_tower`, `machiya`,
+  // `tea_house`, `teahouse`, `smithy`, `bathhouse`, `keep`, `castle`,
+  // `granary`, `gate`, `gatehouse`, `arch`, `watchtower`, `tower`, `hall` and
+  // `courtyard` all still go exactly where they went. Every claim it makes is a
+  // compound of its own ids or a word - `yamashiro`, `nagaya`, `gojunoto`,
+  // `sando`, `dojo`, `kendo`, `onsen`, `noh`, `butai`, `karesansui`, `kura`,
+  // `chashitsu`, `kaji`, `yagura`, `masugata` - that no table ever had.
+  const feudal = feudalArchetypeOfTags(tags);
+  if (feudal !== null) return feudal;
   // Wave three's regional houses, immediately before the extended table and
   // after wave two: it claims nothing an earlier table claims — `barn` still
   // reaches the extended barn, `house` still falls through to a cottage, and
@@ -1382,6 +1412,8 @@ export function furnish(r: FurnishRequest): number {
   n += furnishCaravan(ctx);
   // --- himalayan_monastery pack ---
   n += furnishHimalayan(ctx);
+  // --- feudal_japanese pack ---
+  n += furnishFeudal(ctx);
   n += furnishRegional(ctx);
   n += furnishMineHead(ctx);
   n += furnishDepths(ctx);

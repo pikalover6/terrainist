@@ -162,6 +162,15 @@ import {
   himalayanPropFootprint,
   isHimalayanProp,
 } from "./props-himalayan.js";
+// --- feudal_japanese pack ---------------------------------------------------
+// The feudal_japanese pack's ground pieces - the three entries of that pack
+// which stand on the bare ground rather than roofing a room.
+import {
+  FEUDAL_PROP_GENERATORS,
+  FEUDAL_PROP_NAMES,
+  feudalPropFootprint,
+  isFeudalProp,
+} from "./props-feudal.js";
 import {
   STREET_PROP_GENERATORS,
   STREET_PROP_NAMES,
@@ -307,6 +316,8 @@ export const PROP_NAMES = [
   ...CARAVAN_PROP_NAMES,
   // --- himalayan_monastery pack ---
   ...HIMALAYAN_PROP_NAMES,
+  // --- feudal_japanese pack ---
+  ...FEUDAL_PROP_NAMES,
 ] as const;
 
 /** A prop name. */
@@ -655,6 +666,8 @@ export function propFootprint(
   if (isCaravanProp(prop)) return caravanPropFootprint(prop, params);
   // --- himalayan_monastery pack ---
   if (isHimalayanProp(prop)) return himalayanPropFootprint(prop, params);
+  // --- feudal_japanese pack ---
+  if (isFeudalProp(prop)) return feudalPropFootprint(prop, params);
   switch (prop) {
     case "rowboat":
       return { size: [5, 3, 3], minY: -1, base: "water" };
@@ -1217,6 +1230,8 @@ export const PROP_GENERATORS: Readonly<Record<string, PropGenerator>> = Object.f
   ...CARAVAN_PROP_GENERATORS,
   // --- himalayan_monastery pack ---
   ...HIMALAYAN_PROP_GENERATORS,
+  // --- feudal_japanese pack ---
+  ...FEUDAL_PROP_GENERATORS,
 });
 
 /** The four quarter turns, in order — the yaws a prop may be placed at. */

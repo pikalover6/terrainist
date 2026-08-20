@@ -349,6 +349,24 @@ export const PROP_EXHIBIT_PLAN: readonly {
       { prop: "mani_stone_cairn", params: { yaw: 180 } },
     ],
   },
+  // --- feudal_japanese pack ---
+  // The garden ground: the stone lantern, the koi pond and the banner line,
+  // each shown at two yaws so the position-hashed ground scuffing is visibly
+  // not a repeat — and so the pond's curb can be walked round from both sides.
+  // The pond is the cell that matters: its curb ring goes down whole before a
+  // drop is poured, and a yaw that broke the ring would show here first.
+  {
+    row: "feudal_garden",
+    water: false,
+    cells: [
+      { prop: "toro_lantern", params: {} },
+      { prop: "toro_lantern", params: { yaw: 90 } },
+      { prop: "koi_pond", params: {} },
+      { prop: "koi_pond", params: { yaw: 90 } },
+      { prop: "nobori_banner_line", params: {} },
+      { prop: "nobori_banner_line", params: { yaw: 90 } },
+    ],
+  },
   // --- swamp_witch pack ---
   // The fen ground: the circle, the charm rack and the shrine in its curbed
   // pool, each shown at two yaws so the position-hashed ground scuffing is

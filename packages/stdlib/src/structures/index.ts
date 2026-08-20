@@ -85,6 +85,9 @@ export * from "./archetypes-caravan.js";
 // --- himalayan_monastery pack ---
 export * from "./props-himalayan.js";
 export * from "./archetypes-himalayan.js";
+// --- feudal_japanese pack ---
+export * from "./props-feudal.js";
+export * from "./archetypes-feudal.js";
 export * from "./archetypes-depths.js";
 export * from "./archetypes-science.js";
 export * from "./archetypes-regional.js";

@@ -3223,6 +3223,14 @@ export const SETTLEMENT_PROP_NAMES = [
   // the stdlib, which `compiler/test/props.test.ts` asserts element by element.
   "prayer_flag_line",
   "mani_stone_cairn",
+  // --- feudal_japanese pack ---
+  // The castle-town pack's ground half: the three entries of that pack which
+  // stand on the bare ground rather than roofing a room. Order matches
+  // `PROP_NAMES` in the stdlib, which `compiler/test/props.test.ts` asserts
+  // element by element.
+  "toro_lantern",
+  "koi_pond",
+  "nobori_banner_line",
 ] as const;
 
 /** Params a `prop.place@0` node may carry. */

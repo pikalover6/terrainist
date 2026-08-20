@@ -243,6 +243,11 @@ export const FORM_PACK_THESES: readonly (readonly [string, string])[] = [
     "himalayan_monastery",
     "a mountain monastery/a dzong/a lamasery on a ridge/tibet/the himalaya: a battered whitewashed assembly hall banded in dark timber and gold, a gallery of prayer wheels, a chorten at the gate, a butter tea kitchen, monks' cells, a scripture library, a yak byre, a bell cote, a debating yard, a hermit's retreat, a kora gatehouse, a granary up on stone stilts, an incense kiln, prayer flag lines and mani stone cairns.",
   ],
+  // --- feudal_japanese pack ---
+  [
+    "feudal_japanese",
+    "a samurai castle town/a sengoku village/an edo street/feudal japan: a white keep on a stone batter banded in dark timber, a terrace of machiya shop-houses, a five-storey pagoda, a vermilion gate on the shrine approach, a dojo, a hot-spring bathhouse, a stage for the plays, a raked gravel court, a plastered rice store up on stilts, a four-mat tea room, a swordsmith, a corner turret with the alarm bell and a box gate, with stone lanterns, koi ponds and nobori banners.",
+  ],
 ] as const;
 
 /** One `id  <- thesis` line per pack, for the prompt. */

@@ -83,6 +83,8 @@ import { swampFacadeDefaults } from "./archetypes-swamp.js";
 import { caravanFacadeDefaults } from "./archetypes-caravan.js";
 // --- himalayan_monastery pack ---
 import { himalayanFacadeDefaults } from "./archetypes-himalayan.js";
+// --- feudal_japanese pack ---
+import { feudalFacadeDefaults } from "./archetypes-feudal.js";
 import { cardinalStep, type Cardinal, type LocalRect, type LocalVoxelOp, type Put } from "./core.js";
 import type { DecayPassReport } from "./decay.js";
 
@@ -359,6 +361,9 @@ export function archetypeFacadeDefaults(
       // the dark.
       const himalayan = himalayanFacadeDefaults(archetype);
       if (Object.keys(himalayan).length > 0) return himalayan;
+      // --- feudal_japanese pack ---------------------------------------------
+      const feudal = feudalFacadeDefaults(archetype);
+      if (Object.keys(feudal).length > 0) return feudal;
       // Wave five B, commerce and civic — appended, and the regional houses
       // stay the tail of the chain.
       const commerce = commerceFacadeDefaults(archetype);

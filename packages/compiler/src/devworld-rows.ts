@@ -98,6 +98,9 @@ export {
   HIMALAYAN_ROW_LENGTH,
   himalayanSizeFor,
 } from "./exhibits/himalayan.js";
+
+/** The feudal_japanese rows, for tests that assert on the gradient. */
+export { FEUDAL_EXHIBIT_ROWS, FEUDAL_ROW_LENGTH, feudalSizeFor } from "./exhibits/feudal.js";
 import { NORSE_EXHIBIT_ROWS } from "./exhibits/norse.js";
 import { MESOAMERICAN_EXHIBIT_ROWS } from "./exhibits/mesoam.js";
 import { DWARVEN_EXHIBIT_ROWS } from "./exhibits/dwarven.js";
@@ -106,6 +109,7 @@ import { SWAMP_EXHIBIT_ROWS } from "./exhibits/swamp.js";
 import { ATLANTEAN_EXHIBIT_ROWS } from "./exhibits/atlantean.js";
 import { CARAVAN_EXHIBIT_ROWS } from "./exhibits/caravan.js";
 import { HIMALAYAN_EXHIBIT_ROWS } from "./exhibits/himalayan.js";
+import { FEUDAL_EXHIBIT_ROWS } from "./exhibits/feudal.js";
 import { WAVE2_EXHIBIT_ROWS } from "./exhibits/wave2.js";
 import { WORKS_EXHIBIT_ROWS } from "./exhibits/works.js";
 import { INDUSTRY_EXHIBIT_ROWS } from "./exhibits/industry.js";
@@ -210,6 +214,8 @@ export const EXTRA_EXHIBIT_ROWS: readonly DevExhibitRow[] = Object.freeze([
   ...CARAVAN_EXHIBIT_ROWS,
   // The himalayan_monastery pack: the dzong hall, the chorten and the cells.
   ...HIMALAYAN_EXHIBIT_ROWS,
+  // The feudal_japanese pack: the keep, the pagoda and the shop row.
+  ...FEUDAL_EXHIBIT_ROWS,
   ...HIGHRISE_EXHIBIT_ROWS,
   ...TOWN_EXHIBIT_ROWS,
   ...FOOTPRINT_EXHIBIT_ROWS,

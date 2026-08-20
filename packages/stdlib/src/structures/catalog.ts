@@ -3251,6 +3251,91 @@ export const STRUCTURE_CATALOG: readonly StructureEntry[] = Object.freeze([
     note: "prop.place@0: the carved stones a pilgrim adds one to - a FILLED base at y=1 with the carved faces and the whitewash set into it by position, a filled plus for the shoulder written only over base cells, and the cap stone on the middle of it. Built the way a dome is built and for the same reason: a ring per course leaves its outermost stones with air below and beside them. Three courses at its tallest. Bare `cairn` stays where it was.",
   }),
 
+  /* --- feudal_japanese pack ---------------------------------------------------
+   * The castle-town noun set. "A samurai castle town", "a Sengoku village",
+   * "an Edo street" all route to the medieval era and arrive as a European
+   * market town in oak and cobble: the palette was never the problem, the nouns
+   * were. Sixteen entries - thirteen buildings and three ground pieces.
+   *
+   * The sweep that named this pack found most of its best words already gone -
+   * the east_asian pack got there first with `torii`, `pagoda`, `zen_garden`,
+   * `tenshu_keep`, `moon_gate`, `paifang`, `shoji_teahouse`, `stone_lantern`,
+   * `drum_tower`, `spirit_wall`, `castle_base_wall` and `bell_pavilion`, and
+   * `machiya`, `tea_house`, `smithy`, `bathhouse`, `keep`, `castle`, `granary`,
+   * `gatehouse` and `watchtower` are older tables', word for word - so the
+   * anchor ships as `yamashiro_tenshu` and every id here is a compound of a
+   * word - `yamashiro`, `gojunoto`, `sando`, `dojo`, `onsen`, `noh`,
+   * `karesansui`, `kura`, `chashitsu`, `kaji`, `yagura`, `masugata`, `toro`,
+   * `koi`, `nobori` - that no table ever had. Every drop of water in the pack
+   * is CURBED BEFORE IT IS POURED. The turret bell HANGS DIRECTLY UNDER A SOLID
+   * CAP, never under a chain; every arch owes FOUR COURSES of headroom or it is
+   * not built; and the pagoda's tiers are FILLED DISCS stepping in, never rings.
+   */
+  civ("yamashiro_tenshu", "Yamashiro tenshu", "implemented", {
+    tags: ["feudal_japanese", "size_l"],
+    note: "The anchor: the keep with its walls read bottom to top - the ring re-clad from the ground to the plate, dark deepslate batter at the foot, smooth quartz plaster above it, the dark timber band under the eave and ONE tiled course on top, and not a course touched above the plate so nothing the shell hung is stranded. Inside, the dark oak pillar rows, the paper screens over head height, the andon lamps and the lord's dais. Tags: yamashiro_tenshu/yamashiro/yamashiro_keep; bare `tenshu_keep`, `keep` and `castle` stay the east-asian pack's and the garrison wave's.",
+  }),
+  com("machiya_shop_row", "Machiya shop row", "implemented", {
+    tags: ["feudal_japanese", "size_m"],
+    note: "The street the town is: counters of timber and slab down the shopfront wall in bays with a gap to be served at, the noren cloth strung over head height above each bay, the stores up on the back plinth and the strongbox at the back. Bare `machiya`, `shop_row`, `terraced_row` and `tudor_row` stay the east-asian and vernacular waves'.",
+  }),
+  rel("gojunoto_pagoda", "Gojunoto pagoda", "implemented", {
+    tags: ["feudal_japanese", "size_m"],
+    note: "The pack's one roof rebuild: the TIERS built as FILLED SQUARE DISCS stepping in, each standing on the disc below it, with a flared bottom-slab eave every other course and the sorin mast standing unbroken on the crown - a tier as a ring per course is `floating.isolated` and a hollow one is a sealed pocket. Inside, the relic plinth and the ring of seats. Bare `pagoda` stays where it was.",
+  }),
+  rel("sando_torii", "Sando torii", "implemented", {
+    tags: ["feudal_japanese", "size_m"],
+    note: "The gate the shrine approach begins at: ONE vermilion arch bay with FOUR COURSES of headroom under the lintel or no arch at all - a lintel a body cannot walk under is a wall across the room and everything past it is a `traversal.unreachable` pocket - and the sando flagging down one wall with the guardian stones set into it. Bare `torii`, `moon_gate`, `paifang` and `shrine` stay the east-asian pack's and the faith wave's.",
+  }),
+  civ("dojo_hall", "Dojo hall", "implemented", {
+    tags: ["feudal_japanese", "size_m"],
+    note: "The training hall: the mat bays and the kneeling seats down both walls, the weapon racks of iron bars at the TOP of the storey where a body walks under them rather than into them, and the master's seat across the head. The middle of the floor is left clear, because the middle of a dojo is what a dojo is for. Bare `hall`, `town_hall`, `dance_hall` and `guildhall` stay where they were.",
+  }),
+  lei("onsen_bathhouse", "Onsen bathhouse", "implemented", {
+    tags: ["feudal_japanese", "size_m"],
+    note: "The hot spring, and the pack's loudest water claim: the bath is a CURBED SUNKEN BASIN in the floor plane, inset a cell from the interior on every side, its cells CLAIMED THROUGH `take` BEFORE A DROP IS POURED so a bath that would strand part of the room is refused outright rather than drowned. Round it the wash benches and the buckets, and nothing in the room is lit. Bare `bathhouse`, `stone_bath_house`, `salt_bath_terme` and `temazcal_bath` stay where they were.",
+  }),
+  lei("noh_stage", "Noh stage", "implemented", {
+    tags: ["feudal_japanese", "size_m"],
+    note: "The one room in the pack built round a sight line: the boards across the head a performer stands on, the kagami-ita pine panel over them at head height, and the seat rows down both walls with their backs to the wall so the room sits looking at the boards. The middle of the floor is the floor the audience sits on. Bare `theatre`, `amphitheater` and `bandstand` stay the leisure and spectacle waves'.",
+  }),
+  civ("karesansui_court", "Karesansui court", "implemented", {
+    tags: ["feudal_japanese", "size_m"],
+    note: "The dry garden, raked: the bands are written INTO THE FLOOR PLANE and nowhere else, a pure function of z, so the floor stays a floor and every cell of it stays standable - and that is why there is no gravel in the room, because gravel is a falling block and a garden that fell through its own floor is a hole. The standing stones are set against one wall and the engawa runs down the other. Bare `zen_garden`, `courtyard` and `memorial_garden` stay where they were.",
+  }),
+  rur("kura_storehouse", "Kura storehouse", "implemented", {
+    tags: ["feudal_japanese", "size_s"],
+    note: "The rice, up off the damp and behind thick plaster: a plinth of bottom slabs down both walls with the short deepslate stilts standing on it and the bales on the stilts, so nothing touches the floor plane except what carries it. Every course stands on the course below and the second is written only where the storey has room for it. Bare `granary`, `mudbrick_granary`, `staddle_granary` and `stilt_granary` stay where they were.",
+  }),
+  ver("chashitsu_teahouse", "Chashitsu tea room", "implemented", {
+    tags: ["feudal_japanese", "size_xs"],
+    note: "Four mats and a kettle, and deliberately nothing else: a bench down one wall, a shelf down the other, the cold hearth alcove at the head - a cauldron, never a fire, because the shell's own hearth is the room's fire - one andon lamp and the empty floor that is the whole point. Bare `tea_house`, `teahouse` and `shoji_teahouse` stay the works and east-asian waves'.",
+  }),
+  ind("kaji_forge", "Kaji forge", "implemented", {
+    tags: ["feudal_japanese", "size_s"],
+    note: "The swordsmith at the castle wall: the furnace at the head written COLD (`lit: false`, never a campfire), the andon lamp bedded beside it, the quench trough by the door, the stock ranked on plinths down both walls and the finishing rods of iron bars at the TOP of the storey. Bare `smithy`, `great_forge`, `norse_forge` and `workshop` stay the founding table's and the dwarven and Norse packs'.",
+  }),
+  mil("yagura_watchtower", "Yagura turret", "implemented", {
+    tags: ["feudal_japanese", "size_s"],
+    note: "The tide-bell lesson written down a third time: the cap course goes down FIRST, the alarm bell hangs DIRECTLY UNDER IT (`attachment: ceiling` demands a full cube at y+1, and `iron_chain` is not one), and the pull rope of two chain links under its own cap goes in the column BESIDE it. On a storey too short to hang in, the bell stands on its frame instead. Bare `watchtower`, `tower`, `palisade_watchtower` and `drum_tower` stay where they were.",
+  }),
+  mil("masugata_gate", "Masugata box gate", "implemented", {
+    tags: ["feudal_japanese", "size_m"],
+    note: "The box gate of a castle wall: ONE arch bay of deepslate piers with a dark timber lintel across the course the piers actually reached, and FOUR COURSES of headroom under it or no arch at all. One bay and no more is a walkability decision, because a second cuts the room into segments with a column at each end. The guard's counter runs across the head. Bare `gate`, `gatehouse`, `arch`, `city_gate`, `caravan_gatehouse` and `kora_gatehouse` stay where they were.",
+  }),
+  nom("toro_lantern", "Toro stone lantern", "implemented", {
+    tags: ["feudal_japanese", "size_xs"],
+    note: "prop.place@0: the stone lantern of a garden path - six courses, EVERY ONE STANDING ON THE ONE BELOW IT: plinth, shaft, firebox with the glow in it, and the cap over that. The glow is `glowstone` and never a block whose name ends `lantern`, which is the lint's lantern rule satisfied rather than dodged. Bare `stone_lantern` stays the east-asian pack's, word for word.",
+  }),
+  nom("koi_pond", "Koi pond", "implemented", {
+    tags: ["feudal_japanese", "size_s"],
+    note: "prop.place@0: the garden pond, and THE CURB GOES DOWN FIRST, WHOLE. The complete ring of full blocks is written before a single water cell is, so every water cell has water or a full block on all four sides and the ground under it - a pond poured first and curbed afterwards is a fluid whose closure depends on the order two loops happened to run in. The island stone stands out of the middle. Bare `duck_pond`, `millpond` and `sacred_lake` stay where they were.",
+  }),
+  nom("nobori_banner_line", "Nobori banner line", "implemented", {
+    tags: ["feudal_japanese", "size_s"],
+    note: "prop.place@0: the war banners planted at a gate, and the pack's anti-floating argument. The picture in everybody's head is cloth hanging in air off a crossbar, and every cell of that hang is `floating.isolated` - so the cloth here is a COLUMN OF FULL-CUBE WOOL RUN UP THE SIDE OF THE POLE, every block of it touching the pole, on poles that are unbroken columns to the base plane. No banner block, no attachable, no crossbar. Bare `flagpole` and `khan_banner_pole` stay where they were.",
+  }),
+
 ]);
 
 /* -------------------------------------------------------------------------- */
