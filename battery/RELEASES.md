@@ -86,3 +86,4 @@ own names and take no release number.
 Every world of a deck takes the same `--release`. The number is assigned by the
 deck, so the install **errors** if `<slug>_r<N>` already exists rather than
 bumping to `-2`: an auto-incrementing counter is what this file replaced.
+| r22 | 2026-08-19 | 25e5e68 | matrix-verdict fixes | troy, hellenist_city, pirates_v_unicorns | all first/second-roll clean (~$0.41, troy one-shot); the five convictions served: damsWater, land/sea teaching, empty-block law, datum cut-cap (8G), cohort naming |
