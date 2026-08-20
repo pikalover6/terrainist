@@ -442,6 +442,38 @@ export const TERRAIN_DIAGNOSTICS = {
    */
   DISTRICT_BLOCK_ALLEY: "LOAM-T240",
   /**
+   * A stepped quarter where one or more blocks found **no graded carriageway**
+   * within `frontageReach` of any of their perimeter columns, and so kept the
+   * quarter's own floor (`docs/GROUND-UNIFICATION-v0.md` §11.1, G3).
+   *
+   * F6's law seen from the platform side, and `LOAM-T238 FRONTAGE_UNTIED`'s
+   * mirror: the interior of a very large quarter, a block against the district
+   * boundary, a block behind a plaza — all legally keep `min(free ground)`,
+   * because inventing a street for a block that has none is how a courtyard ends
+   * up on a road's plane.
+   *
+   * A note, never a warning, and in no feedback set: the world is correct either
+   * way. It earns a code because a quarter where *every* block is untied is the
+   * fabric and the grader disagreeing about where the streets are.
+   */
+  GROUND_PLANE_UNTIED: "LOAM-T241",
+  /**
+   * A platform column **within reach of a carriageway** whose elected level is
+   * neither the datum's own level nor a whole storey from it — the ground plane
+   * and the street plane are off the same lattice (§11.1, G1).
+   *
+   * **This should be `0`**, and it is the alarm that says the anchor did not
+   * hold: `LOAM-T237 FRONTAGE_TIE_DRIFT`'s mirror for the platform election.
+   * The finding this whole part answers is that today it is not zero but a
+   * constant — 4,180 citadel columns at exactly `+1` above the datum that claims
+   * those very columns, one bar and not a distribution (§11.0).
+   *
+   * A note and in no feedback set: a document cannot move its own storey
+   * lattice, so there is nothing for an author to do about it. Names the count
+   * and the worst residual, which is the per-quarter histogram 12C publishes.
+   */
+  GROUND_PLANE_DRIFT: "LOAM-T242",
+  /**
    * A rolled lot's decay was **refused whole** (RUINS-PLAN §5.7): an open
    * interior cell was still unreachable from the door after the rubble that
    * sealed it had been withdrawn, so the **intact** shell was built instead.
@@ -719,6 +751,36 @@ export const TERRAIN_DIAGNOSTICS = {
    * hand, exactly as WP-10C does for viaduct promotion. Measured, not moved.
    */
   WALL_COURSE_CROSSES_SEAM: "LOAM-I415",
+  /**
+   * **R1's receipt, once per non-district claimed plane**: what a plane's own
+   * edges became — `absorbed`, `revetted`, `rock`, or nothing to serve
+   * (`docs/GROUND-UNIFICATION-v0.md` §11.2, R4).
+   *
+   * A claimed plane owes its own edges. A `precinct.*` quay or a platform pad
+   * flattens ground that no district drew, so no district's retaining pass ever
+   * measured its perimeter — which is how the two western coastal walls of the
+   * pirate haven came to be 4–6 block raw grass faces at the quay's back edge
+   * (§11.0). The seam is measured, never declared (R2); the fill side is the
+   * existing skirt (R3); the cut side is a face and never a ramp (R4).
+   *
+   * A note and in no feedback set: `LOAM-I412 SEAM_SERVED`'s counterpart for the
+   * plane, naming what was built rather than asking for anything.
+   */
+  PLANE_EDGE_SERVED: "LOAM-I416",
+  /**
+   * A cut face past `RETAIN_MAX` finished in **rock**, because the mirror
+   * (cut-side terraced) stack is not built (§11.2, R4).
+   *
+   * The measurement that decides whether it is worth building — the same
+   * discipline as `LOAM-T239 ROAD_BERM_CLAMPED` for viaduct promotion and
+   * `LOAM-I415 WALL_COURSE_CROSSES_SEAM` for wall crossings: the feature lands
+   * on the number, not on the anecdote. Names how many faces deferred and the
+   * deepest one.
+   *
+   * A note and in no feedback set. Rock is an honest answer — a hillside that
+   * outruns a revetment is a hillside — and measured, not moved.
+   */
+  PLANE_EDGE_DEFERRED: "LOAM-I417",
 
   // --- the SweptProfile engine (Phase 0 contract 3) ------------------------
   /** A swept run was refused whole: unclimbable, or past the fill cap. */

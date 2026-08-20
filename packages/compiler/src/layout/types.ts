@@ -491,3 +491,62 @@ export const SITE_FRONTAGE_REACH = 12;
  * honest, and the report is built from the measurement.
  */
 export const SEAM_TIERS = true;
+
+/* -------------------------------------------------------------------------- */
+/* the ground-plane tie — `docs/GROUND-UNIFICATION-v0.md` Part V               */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The master switch for the ground-plane tie (G1): a town block's platform is
+ * elected on **the plane of the street that fronts it** — the datum
+ * {@link FRONTAGE_TIE} already grades — rather than on `min(free ground)` under
+ * its own columns, so a carriageway and the ground beside it are one storey
+ * lattice instead of two computations that disagree.
+ *
+ * **`false` from wave 12A; flipped at 12F** on Kai's walk verdict and nothing
+ * else (§11.4). While it is false every construction behind it is either unbuilt
+ * or dead, and every world compiles byte-identically — a world hash that moves
+ * before 12F is a bug, not a golden update.
+ *
+ * What it gates, precisely:
+ * - **12B, the block-anchored lattice** (`layout/platforms.ts`,
+ *   `layout/district.ts`): whether `derivePlatforms` reads a
+ *   `PlatformInput.datum` and anchors each block's base on the nearest banded
+ *   carriageway column within `tieReach` (G2), congruent to the datum modulo
+ *   `FLOOR_HEIGHT`; whether a block whose perimeter datum spans more than
+ *   {@link GROUND_TIE_SPAN} is **split** rather than averaged (G4). A block with
+ *   no banded column in reach is untied and keeps exactly today's number (G3).
+ * - **12D, the plane-edge service** (`structures/retaining.ts`): whether a
+ *   claimed non-district plane — a `precinct.*` quay, a platform pad — measures
+ *   and serves **its own** edges (R1, R2), the fill side as the existing skirt
+ *   (R3) and the cut side as a revetted face, never a ramp (R4).
+ *
+ * The per-call fields (`PlatformInput.datum`, `RetainingPassInput.planes`)
+ * default to this constant and are how a test asks for either world without
+ * moving the switch — the same shape `PlatformInput.tiered` and
+ * `RetainingDistrict.tiered` already have.
+ *
+ * **Acceptance is a measurement, not a claim of zero.** 12F re-runs
+ * `tools/worlds/street-probe.mjs` on the r23 pirates world and publishes the +1
+ * road-to-terrain count **against 178**. The attribution behind the flip is
+ * 95.5 % (§11.0); the residual is `NO_PLATFORM` slivers and off-lattice columns,
+ * and anything left after S6's merge is a new finding with a new measurement.
+ */
+export const GROUND_PLANE_TIE = false;
+
+/**
+ * How far the datum may span along one block's perimeter before that block is
+ * **split** rather than elected as one platform — G4.
+ *
+ * Derived, not tuned: a block that straddles more than one storey of street
+ * cannot be a single platform without one of its streets being wrong about it,
+ * and one storey is the unit `layout/platforms.ts` is quantised in (§11.9.6
+ * weighed `2` and chose the derivation). It is the value of
+ * `FLOOR_HEIGHT` (`layout/district.ts`), written here as a literal only because
+ * `district.ts` imports this module and the reverse edge would be a cycle; a
+ * test pins the two together.
+ *
+ * Dead while {@link GROUND_PLANE_TIE} is off: no block reads a perimeter datum,
+ * so `if (hi - lo <= FLOOR_HEIGHT)` never gains its second clause.
+ */
+export const GROUND_TIE_SPAN = 4;
