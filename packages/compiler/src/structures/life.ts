@@ -84,6 +84,7 @@ import { note, type LoamDiagnostic } from "@terrainist/spec";
 
 import type { PrismarineStack } from "../emit/prismarine.js";
 import type { Rect } from "../layout/frames.js";
+import type { BlockDressing, DressedBlock } from "../layout/district.js";
 import type { StreetGraph } from "../layout/streets.js";
 import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
 import { detailSeed, hash2, hashInt, hashPick } from "../terrain/detail.js";
@@ -382,6 +383,14 @@ export interface LifeStreets {
   readonly bounds: Rect;
   readonly graph: StreetGraph;
   readonly masks: StreetMasks;
+  /**
+   * Blocks the fabric elected and then built nothing on, each with the purpose
+   * the layout gave it (`layout/district.ts` § the empty-block law).
+   *
+   * Absent for every quarter that is not walled, which is what keeps a loose
+   * village's meadows exactly as they were.
+   */
+  readonly dressed?: readonly DressedBlock[];
 }
 
 /** Everything {@link dressLife} reads. */
@@ -1436,6 +1445,16 @@ export function dressLife(input: LifePassInput): LifeResult {
     dressKerbside(district, input, world, planter);
   }
 
+  // --- 2a. the elected blocks ----------------------------------------------
+  // Before the open-ground draw, and that order is the point: a block the
+  // layout gave a purpose has first refusal on its own ground, and what the
+  // open-ground pass then finds is the gaps the orchard rows left, which it
+  // dresses exactly as it dresses any other square. A block with no purpose is
+  // untouched here and reaches step 2 as it always did.
+  for (const district of input.districts ?? []) {
+    for (const block of district.dressed ?? []) dressElectedBlock(block, input, world, planter);
+  }
+
   // --- 2. open ground -------------------------------------------------------
   const open = openPatches(input, world, sidewalkOrRoad);
   for (const patch of open) dressOpenGround(patch, input, world, planter);
@@ -2134,6 +2153,365 @@ interface OpenPatch {
    * pallets there is clutter with no author.
    */
   readonly buildings: number;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 2a — the elected block                                                      */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Columns left between the dressing and the block's own edge.
+ *
+ * One. The block rectangle stops at the sidewalk already, and a second column
+ * of margin all round reads as a setback nobody asked for — but a fence rail or
+ * a tree trunk *on* the last column touches the kerb, so one is the difference
+ * between "an orchard behind a low wall" and "a tree growing out of the road".
+ */
+export const DRESSING_INSET = 1;
+
+/** Columns between trees in an orchard row. */
+export const ORCHARD_PITCH = 5;
+
+/** Share of an orchard's lattice points that are deliberately empty. */
+export const ORCHARD_GAP = 0.12;
+
+/** Columns between the rows of a market ground's stalls. */
+export const MARKET_ROW_PITCH = 6;
+
+/** The bed-and-path module of a garden, in columns: a 3-wide bed, a 2-wide path. */
+export const GARDEN_MODULE = 5;
+/** How much of that module is bed. */
+export const GARDEN_BED = 3;
+
+/** Share of a garden bed's columns that carry a plant. */
+export const GARDEN_PLANTING = 0.45;
+
+/**
+ * What grows in a bed. Era-neutral by construction — a poppy is a poppy in
+ * every century, which is half of why the dressing needs no era gate of its own.
+ */
+const BED_PLANTS: readonly string[] = [
+  "poppy",
+  "dandelion",
+  "cornflower",
+  "azure_bluet",
+  "oxeye_daisy",
+  "short_grass",
+];
+
+/** Ground a plant will actually stand on. */
+const PLANTABLE = /(grass_block|dirt|podzol|farmland|rooted_dirt|moss_block|mud)$/;
+
+/**
+ * Dress one block the fabric elected and never built on
+ * (`layout/district.ts` § the empty-block law).
+ *
+ * **This pass adds no vocabulary.** Every object here is one the life pass
+ * already plants somewhere else — the street tree, the market stall, the seat
+ * cluster, the catalog props — and every one goes through {@link Planter}, so
+ * the block's dressing obeys the same support, clearance and walk-lane rules as
+ * a bench on a pavement. What is new is the *reason*: these objects are laid
+ * over a whole block because the layout decided that block has a purpose, not
+ * because a column happened to be free.
+ *
+ * Determinism is the usual property: every draw is keyed on a world column and
+ * the block's own corner, never on an index or an iteration order, so a block
+ * dressed in a quarter with one more building in it is dressed identically.
+ */
+function dressElectedBlock(
+  block: DressedBlock,
+  input: LifePassInput,
+  world: LifeWorld,
+  planter: Planter,
+): void {
+  const rect: Rect = {
+    x0: block.rect.x0 + DRESSING_INSET,
+    z0: block.rect.z0 + DRESSING_INSET,
+    x1: block.rect.x1 - DRESSING_INSET,
+    z1: block.rect.z1 - DRESSING_INSET,
+  };
+  // A block one dressing-inset wide is a strip of verge, and a strip of verge
+  // is not an orchard. The fabric already refuses to call anything under
+  // `MIN_INFILL_SIDE` a block, so this only ever catches the degenerate case.
+  if (rect.x1 - rect.x0 < 4 || rect.z1 - rect.z0 < 4) return;
+  const seed = detailSeed(input.seed, `life.block.${block.kind}`);
+  switch (block.kind) {
+    case "orchard":
+      plantOrchard(rect, seed, input, world, planter);
+      return;
+    case "market":
+      layMarketGround(rect, seed, input, world, planter);
+      return;
+    case "garden":
+      layGarden(rect, seed, input, world, planter);
+      return;
+    default:
+      railPaddock(rect, seed, input, world, planter);
+      return;
+  }
+}
+
+/** Repaint one column's surface, and say whether it took. */
+function repaint(
+  input: LifePassInput,
+  world: LifeWorld,
+  x: number,
+  z: number,
+  block: string,
+): boolean {
+  const region = input.plan.region;
+  if (!inside(region, x, z)) return false;
+  const idx = index(region, x, z);
+  if (input.plan.fluidKind[idx] !== FluidKind.NONE) return false;
+  if (world.taken(x, z)) return false;
+  const state = input.stack.blockByName(block)?.stateId;
+  if (state === undefined) return false;
+  input.plan.surface[idx] = state;
+  input.plan.snow[idx] = 0;
+  if (input.plan.soil[idx] === 0) input.plan.soil[idx] = 1;
+  return true;
+}
+
+/** True when a plant put on this column would be standing on soil. */
+function plantable(input: LifePassInput, x: number, z: number): boolean {
+  const region = input.plan.region;
+  if (!inside(region, x, z)) return false;
+  const idx = index(region, x, z);
+  const name = input.stack.blockNameByStateId(input.plan.surface[idx] as number);
+  return name !== undefined && PLANTABLE.test(name);
+}
+
+/**
+ * An orchard: one species, in rows, with the gaps a real one has.
+ *
+ * Monoculture on purpose. A block of five different woods reads as a park that
+ * grew by itself; a block of one reads as something somebody planted, which is
+ * the whole claim the dressing is making about this ground.
+ */
+function plantOrchard(
+  rect: Rect,
+  seed: number,
+  input: LifePassInput,
+  world: LifeWorld,
+  planter: Planter,
+): void {
+  const species = hashPick(seed, rect.x0, rect.z0, 1, TREE_WOODS);
+  for (let z = rect.z0 + 1; z <= rect.z1 - 1; z += ORCHARD_PITCH) {
+    for (let x = rect.x0 + 1; x <= rect.x1 - 1; x += ORCHARD_PITCH) {
+      if (hash2(seed, x, z, 2) < ORCHARD_GAP) continue;
+      const px = x + hashInt(seed, x, z, 3, 0, 1);
+      const pz = z + hashInt(seed, x, z, 4, 0, 1);
+      const y = world.standY(px, pz);
+      if (y === undefined) continue;
+      if (world.wet(px, pz)) continue;
+      planter.place("orchardTree", treeOps(species.log, species.leaves), px, y, pz);
+    }
+  }
+  // The thing that says the trees are worked rather than wild. One per block,
+  // at a column the rows left free.
+  const cx = ((rect.x0 + rect.x1) >> 1) + 2;
+  const cz = ((rect.z0 + rect.z1) >> 1) + 2;
+  const y = world.standY(cx, cz);
+  if (y === undefined) return;
+  placeCatalog(hash2(seed, cx, cz, 5) < 0.5 ? "well_head" : "log_pile", input, planter, cx, y, cz);
+}
+
+/**
+ * A market ground: trodden earth, stalls in rows, and the clutter round them.
+ *
+ * The surface is repainted before anything is planted, because the ground is
+ * most of what a market *is*: five stalls on grass is a picnic.
+ */
+function layMarketGround(
+  rect: Rect,
+  seed: number,
+  input: LifePassInput,
+  world: LifeWorld,
+  planter: Planter,
+): void {
+  for (let z = rect.z0; z <= rect.z1; z++) {
+    for (let x = rect.x0; x <= rect.x1; x++) {
+      repaint(input, world, x, z, hash2(seed, x, z, 1) < 0.25 ? "gravel" : "dirt_path");
+    }
+  }
+  const alongX = rect.x1 - rect.x0 >= rect.z1 - rect.z0;
+  const wood = hashPick(seed, rect.x0, rect.z0, 2, AWNING_WOODS);
+  // Rows across the short axis, stalls along the long one. The stall recipe is
+  // three columns long and two across, so the pitch leaves a column between
+  // stalls and the row pitch leaves an aisle a player walks down.
+  const rowFrom = alongX ? rect.z0 + 1 : rect.x0 + 1;
+  const rowTo = alongX ? rect.z1 - 2 : rect.x1 - 2;
+  const runFrom = alongX ? rect.x0 + 1 : rect.z0 + 1;
+  const runTo = alongX ? rect.x1 - 3 : rect.z1 - 3;
+  for (let row = rowFrom; row <= rowTo; row += MARKET_ROW_PITCH) {
+    for (let run = runFrom; run <= runTo; run += STALL_PITCH) {
+      const x = alongX ? run : row;
+      const z = alongX ? row : run;
+      const y = world.standY(x, z);
+      if (y === undefined) continue;
+      if (hash2(seed, x, z, 3) < 0.1) continue;
+      const colour = hashPick(seed, x, z, 4, SIGN_COLOURS);
+      if (planter.place("marketStall", stallOps(wood, colour, alongX), x, y, z)) continue;
+      // A stall that would straddle a step is not built; a barrow fits where a
+      // stall does not, and an empty aisle is the defect this whole pass exists
+      // to remove.
+      placeCatalog("market_barrow", input, planter, x, y, z);
+    }
+  }
+  // Goods stacked at the edges of the ground, out of the aisles.
+  for (let z = rect.z0; z <= rect.z1; z += 4) {
+    for (let x = rect.x0; x <= rect.x1; x += 4) {
+      const edge = x <= rect.x0 + 1 || x >= rect.x1 - 1 || z <= rect.z0 + 1 || z >= rect.z1 - 1;
+      if (!edge) continue;
+      if (hash2(seed, x, z, 5) >= 0.35) continue;
+      const y = world.standY(x, z);
+      if (y === undefined) continue;
+      if (planter.crowded(x, z, 3)) continue;
+      if (hash2(seed, x, z, 6) < 0.5) {
+        planter.place("crates", crateOps(hashInt(seed, x, z, 7, 1, 2)), x, y, z, PAVEMENT_RULE);
+      } else placeCatalog("bench", input, planter, x, y, z);
+    }
+  }
+}
+
+/**
+ * A garden: beds on a module, paths between them, a tree and somewhere to sit.
+ *
+ * The module is what makes it read as designed ground rather than as scatter —
+ * a three-column bed and a two-column path, repeated, which is the plan of
+ * every walled garden ever laid out.
+ */
+function layGarden(
+  rect: Rect,
+  seed: number,
+  input: LifePassInput,
+  world: LifeWorld,
+  planter: Planter,
+): void {
+  for (let z = rect.z0; z <= rect.z1; z++) {
+    for (let x = rect.x0; x <= rect.x1; x++) {
+      const bed = (x - rect.x0) % GARDEN_MODULE < GARDEN_BED && (z - rect.z0) % GARDEN_MODULE < GARDEN_BED;
+      if (!bed) {
+        repaint(input, world, x, z, "dirt_path");
+        continue;
+      }
+      if (hash2(seed, x, z, 1) >= GARDEN_PLANTING) continue;
+      if (!plantable(input, x, z)) continue;
+      const y = world.standY(x, z);
+      if (y === undefined) continue;
+      planter.place(
+        "gardenBed",
+        [op(0, 0, 0, hashPick(seed, x, z, 2, BED_PLANTS))],
+        x,
+        y,
+        z,
+        GROUND_RULE,
+        false,
+      );
+    }
+  }
+  // A tree at every fourth bed corner, and a seat under one of them.
+  const wood = hashPick(seed, rect.x0, rect.z0, 3, AWNING_WOODS);
+  for (let z = rect.z0 + 1; z <= rect.z1 - 1; z += GARDEN_MODULE * 2) {
+    for (let x = rect.x0 + 1; x <= rect.x1 - 1; x += GARDEN_MODULE * 2) {
+      const y = world.standY(x, z);
+      if (y === undefined) continue;
+      if (planter.crowded(x, z, 4)) continue;
+      const roll = hash2(seed, x, z, 4);
+      if (roll < 0.5) {
+        const kind = hashPick(seed, x, z, 5, TREE_WOODS);
+        planter.place("gardenTree", treeOps(kind.log, kind.leaves), x, y, z);
+      } else if (roll < 0.75) {
+        planter.place("seatCluster", seatClusterOps(wood), x, y, z);
+      } else placeCatalog("planter", input, planter, x, y, z);
+    }
+  }
+}
+
+/**
+ * A paddock: a railed enclosure with one gate, a trough, and grazed ground.
+ *
+ * The rail is placed **one column at a time** rather than as one long recipe,
+ * and that is the whole of how it crosses graded ground: a post whose column
+ * steps is simply not placed, so the run has a gap in it exactly where a real
+ * fence would need a step, instead of the whole enclosure refusing to exist.
+ */
+function railPaddock(
+  rect: Rect,
+  seed: number,
+  input: LifePassInput,
+  world: LifeWorld,
+  planter: Planter,
+): void {
+  const wood = hashPick(seed, rect.x0, rect.z0, 1, AWNING_WOODS);
+  // One gate, on one side, wide enough to drive stock through.
+  const gateSide = hashInt(seed, rect.x0, rect.z0, 2, 0, 3);
+  const gateAlongX = gateSide < 2;
+  const gateAt = gateAlongX
+    ? rect.x0 + 2 + hashInt(seed, rect.x0, rect.z0, 3, 0, Math.max(0, rect.x1 - rect.x0 - 5))
+    : rect.z0 + 2 + hashInt(seed, rect.x0, rect.z0, 3, 0, Math.max(0, rect.z1 - rect.z0 - 5));
+  const gated = (x: number, z: number): boolean => {
+    if (gateAlongX) {
+      const side = gateSide === 0 ? rect.z0 : rect.z1;
+      return z === side && x >= gateAt && x <= gateAt + 2;
+    }
+    const side = gateSide === 2 ? rect.x0 : rect.x1;
+    return x === side && z >= gateAt && z <= gateAt + 2;
+  };
+  const rail = (x: number, z: number): void => {
+    if (gated(x, z)) return;
+    const y = world.standY(x, z);
+    if (y === undefined) return;
+    planter.place(
+      "paddockRail",
+      [op(0, 0, 0, `${wood}_fence`, { waterlogged: "false" })],
+      x,
+      y,
+      z,
+      GROUND_RULE,
+      false,
+    );
+  };
+  for (let x = rect.x0; x <= rect.x1; x++) {
+    rail(x, rect.z0);
+    rail(x, rect.z1);
+  }
+  for (let z = rect.z0 + 1; z <= rect.z1 - 1; z++) {
+    rail(rect.x0, z);
+    rail(rect.x1, z);
+  }
+  // Grazed ground: scuffed patches where the stock stands, not a repaint of the
+  // whole enclosure — a paddock is grass with the grass worn off it in places.
+  for (let z = rect.z0 + 1; z <= rect.z1 - 1; z++) {
+    for (let x = rect.x0 + 1; x <= rect.x1 - 1; x++) {
+      if (hash2(seed, x, z, 4) >= 0.18) continue;
+      repaint(input, world, x, z, hash2(seed, x, z, 5) < 0.5 ? "coarse_dirt" : "dirt");
+    }
+  }
+  // The trough and the post: what says "livestock" without an animal in it.
+  const inner = { x: rect.x0 + 2, z: rect.z0 + 2 };
+  const ty = world.standY(inner.x, inner.z);
+  if (ty !== undefined) placeCatalog("horse_trough", input, planter, inner.x, ty, inner.z);
+  const px = rect.x1 - 2;
+  const pz = rect.z1 - 2;
+  const py = world.standY(px, pz);
+  if (py !== undefined) {
+    placeCatalog(
+      hash2(seed, px, pz, 6) < 0.5 ? "hitching_post" : "scarecrow",
+      input,
+      planter,
+      px,
+      py,
+      pz,
+    );
+  }
+  // One shade tree, inside the rails.
+  const sx = ((rect.x0 + rect.x1) >> 1) + 1;
+  const sz = ((rect.z0 + rect.z1) >> 1) + 1;
+  const sy = world.standY(sx, sz);
+  if (sy === undefined) return;
+  const species = hashPick(seed, sx, sz, 7, TREE_WOODS);
+  planter.place("paddockTree", treeOps(species.log, species.leaves), sx, sy, sz);
 }
 
 /**

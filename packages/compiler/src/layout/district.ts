@@ -67,7 +67,9 @@ import {
   type DistrictFabric,
   type DistrictGroundPolicy,
   type DistrictNode,
+  DEFAULT_ERA_CLASS,
   type DistrictParams,
+  type EraClass,
   type HorizontalFace,
   type LoamDiagnostic,
   type PortDeclaration,
@@ -102,7 +104,7 @@ import {
   type LevelSeam,
 } from "./levels.js";
 import { largestRect } from "./masks.js";
-import { DISSOLVE_DROP_MAX, derivePlatforms, dissolveTallPairs } from "./platforms.js";
+import { DISSOLVE_DROP_MAX, damsWater, derivePlatforms, dissolveTallPairs } from "./platforms.js";
 import { biasedMix } from "./mix-intent.js";
 import { LAYOUT_ROWS } from "./streets-intent.js";
 import type { Point2, Rect } from "./frames.js";
@@ -302,6 +304,109 @@ export const MAX_ALLEY_ROUNDS = 3;
  */
 export const WALLED_COVERAGE_FLOOR = 0.5;
 
+/* -------------------------------------------------------------------------- */
+/* the empty-block law                                                         */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * What a bare block inside a walled quarter becomes.
+ *
+ * Four purposes, and every one of them is a thing a real walled town puts on
+ * the ground it has not built on: an **orchard** (fruit trees in rows), a
+ * **market** (stall rows on trodden ground), a **garden** (beds, planters and a
+ * bench under a tree), a **paddock** (a railed enclosure with a trough). None
+ * of them is a new block id or a new archetype — each is drawn by the life pass
+ * out of the vocabulary it already carries (`structures/life.ts` §2a).
+ */
+export type BlockDressing = "orchard" | "market" | "garden" | "paddock";
+
+/**
+ * Shortest side a dressed remainder may have, in columns.
+ *
+ * Nine. Under it the ground is a verge rather than a place: an orchard needs
+ * two rows to read as rows, a market needs an aisle and the stalls either side
+ * of it, and a paddock needs an inside. `MIN_INFILL_SIDE` is 7 and is the width
+ * at which a *building* stops fitting, which is the wrong question — the
+ * remainder tier exists precisely where no building fits.
+ */
+export const DRESSING_MIN_SIDE = 9;
+
+/**
+ * Least area a dressed remainder may have, in columns.
+ *
+ * A 9 × 14 strip or better. Under about this the dressing is one tree and two
+ * crates, which reads as clutter dropped on a verge rather than as a decision;
+ * over it there is room for the module — rows, aisles, beds — that makes the
+ * ground look laid out.
+ */
+export const DRESSING_MIN_AREA = 130;
+
+/**
+ * One block that ended the pass with no building on it, and what it became.
+ *
+ * The layout decides *what*; the life pass decides where inside it each object
+ * stands. So this carries a rectangle and a purpose and nothing about objects.
+ */
+export interface DressedBlock {
+  /** Index into the quarter's own block list. */
+  readonly block: number;
+  /** The block's rectangle — the whole of it; the dressing insets itself. */
+  readonly rect: Rect;
+  readonly kind: BlockDressing;
+}
+
+/**
+ * The menu a pre-industrial quarter draws from.
+ *
+ * The order is fixed, because the draw is an index into it: reordering these
+ * would be a different world for the same seed.
+ */
+export const DRESSINGS_EARLY: readonly BlockDressing[] = Object.freeze([
+  "orchard",
+  "market",
+  "garden",
+  "paddock",
+]);
+
+/**
+ * The menu an industrial-or-later quarter draws from.
+ *
+ * The paddock is the one purpose the era takes away: a railed livestock
+ * enclosure between two streets is a pre-industrial town, and a modern one puts
+ * a garden there. Everything else is era-neutral, which is why the two menus
+ * share a prefix rather than being two unrelated lists.
+ */
+export const DRESSINGS_LATE: readonly BlockDressing[] = Object.freeze([
+  "orchard",
+  "market",
+  "garden",
+]);
+
+/** Which menu an era class reads from. */
+export function dressingsFor(era: EraClass): readonly BlockDressing[] {
+  return era === "industrial" || era === "modern" || era === "far_future"
+    ? DRESSINGS_LATE
+    : DRESSINGS_EARLY;
+}
+
+/**
+ * Which block a built rectangle stands on, or `-1`.
+ *
+ * Keyed on the rectangle's **centre**, because a seated building is grown out
+ * of a lot and then rotated: its rect can overhang the block's inscribed
+ * rectangle at the eaves, and a containment test would then call a built block
+ * bare. The centre of a building on a block is on that block.
+ */
+export function blockOf(blocks: readonly Block[], rect: Rect): number {
+  const cx = Math.floor((rect.x0 + rect.x1) / 2);
+  const cz = Math.floor((rect.z0 + rect.z1) / 2);
+  for (const [i, block] of blocks.entries()) {
+    const r = block.rect;
+    if (cx >= r.x0 && cx <= r.x1 && cz >= r.z0 && cz <= r.z1) return i;
+  }
+  return -1;
+}
+
 /**
  * Did this quarter ask to be walled?
  *
@@ -419,6 +524,20 @@ export interface DistrictStats {
   /** Blocks that closed around a courtyard. Absent when none did. */
   readonly courtyards?: number;
   /**
+   * § the empty-block law, measured rather than assumed, and the three numbers
+   * are one sentence: `bareBlocks` ended the infill pass with no building on
+   * them, `blocksRedrawn` of those built on the relaxed re-draw, and
+   * `blocksDressed` of them became an orchard, a market, a garden or a paddock.
+   * `bareBlocks === blocksRedrawn + blocksDressed` is the law. A `blocksDressed`
+   * that is not zero is not a defect; it is the second tier working.
+   *
+   * Absent on every quarter the law does not reach — anything unwalled — so a
+   * village's stats are the object they were.
+   */
+  readonly bareBlocks?: number;
+  readonly blocksRedrawn?: number;
+  readonly blocksDressed?: number;
+  /**
    * §6.1's composition, and how many rungs of §6.3's ladder it took to get it.
    *
    * Absent for every quarter but a site-planned one: the numbers are measured
@@ -491,6 +610,13 @@ export interface DistrictProduct {
    * walkable, which is the only property that matters.
    */
   readonly courtyards?: readonly CourtyardBlock[];
+  /**
+   * Blocks that elected no building and were given a purpose instead
+   * (§ the empty-block law). Absent — not empty — for every quarter that is not
+   * walled and for every walled quarter that built on all of its blocks, which
+   * is what keeps an unwalled village byte-identical.
+   */
+  readonly dressed?: readonly DressedBlock[];
   /**
    * This quarter's ground as a set of level platforms, when it has more than
    * one (`docs/COURTYARDS-AND-LEVELS-v0.md` §3.1).
@@ -1133,6 +1259,21 @@ export function layDistrict(
   // second branch. `derivePlatforms` returns an empty list when the ground is
   // flat enough that every block quantises to one storey — one platform is no
   // platform — so a `"stepped"` quarter on the level is exactly a `"pad"` one.
+  // The water the election may not fill (`PlatformInput.water`). The floor may
+  // *reclaim* — a fringe of shallow bay levelled to the waterline is a quay, and
+  // Troy's citadel depends on it — but it may not **dam**: raise the bed of a
+  // river running through the quarter and every reach above it stops being
+  // water at all, because the flood-fill floods only what the map edge reaches.
+  // So the water is handed to the election exactly when this quarter would cut
+  // some of it off, and the election is otherwise the one WP-11F-fix shipped.
+  // Computed only where it can be read — both consumers are gated on
+  // `"stepped"` — so a quarter with no derived platforms pays for no floods.
+  const protectedWater =
+    groundPolicy !== "stepped" ||
+    input.water === undefined ||
+    !damsWater({ mask: input.water, region: input.field.region }, bounds)
+      ? undefined
+      : { mask: input.water, region: input.field.region };
   const declared = plan.benches ?? [];
   const derived =
     groundPolicy === "stepped" && declared.length === 0
@@ -1146,6 +1287,10 @@ export function layDistrict(
           // merely sit low, it becomes ocean, and the fabric is laid on the
           // lake it made. See `PlatformInput.waterFloor`.
           ...(input.seaLevel === undefined ? {} : { waterFloor: input.seaLevel }),
+          // …and the water that is already there, so the floor never fills it:
+          // a channel through the quarter is not ground to be lifted to the
+          // waterline, it is the river (`PlatformInput.water`).
+          ...(protectedWater === undefined ? {} : { water: protectedWater }),
         })
       : [];
   const elected = declared.length > 0 ? declared : derived;
@@ -1156,7 +1301,12 @@ export function layDistrict(
   // a level nothing can serve. This is the first caller `LOAM-W410` has ever had.
   const election =
     SEAM_TIERS && groundPolicy === "stepped" && elected.length > 1
-      ? dissolveTallPairs(bounds, elected, input.seaLevel)
+      ? dissolveTallPairs(
+          bounds,
+          elected,
+          input.seaLevel,
+          protectedWater,
+        )
       : { benches: elected, dissolved: [] };
   for (const gone of election.dissolved) {
     diagnostics.push(
@@ -1453,21 +1603,31 @@ export function layDistrict(
   let ruined = 0;
   const bandCounts = new Map<DecayBand, number>();
   let infilled = 0;
-  for (const lot of lots) {
-    if (claimed.has(lot.id)) continue;
+  /**
+   * Build one lot, or say why not.
+   *
+   * Lifted verbatim out of the loop below so the empty-block law's re-draw
+   * (§ the empty-block law) runs *the same* draw on a lot the coverage roll
+   * left open rather than a second implementation of it. `relaxed` skips the
+   * coverage roll and nothing else: the size floor, the prominence field, the
+   * decay roll and the seat are the ordinary path, character for character.
+   */
+  const tryInfill = (lot: Lot, relaxed: boolean): boolean => {
+    if (claimed.has(lot.id)) return false;
     // The coverage draw comes first and is *not* a drop: a lot the density left
     // open is open ground, which is a decision, not a failure to build.
     // …unless the lot is in a courtyard perimeter, where coverage is 1 (§4.3).
     if (
+      !relaxed &&
       !lot.courtyard &&
       positionFloat(infillStream, lot.rect.x0, 0, lot.rect.z0) >= (LOT_COVERAGE[p.density] as number)
     ) {
-      continue;
+      return false;
     }
     const filled = infillLot(lot, p, infillStream, prominence, cell?.minBuilding ?? MIN_INFILL_SIDE);
     if (filled === null) {
-      dropped++;
-      continue;
+      if (!relaxed) dropped++;
+      return false;
     }
     infilled++;
     rolled++;
@@ -1499,6 +1659,128 @@ export function layDistrict(
       frontPort: undefined,
       ...frontageOf(lot.rect, lot.face, [lot]),
     });
+    // The lot is spoken for. Nothing downstream read `claimed` after this point
+    // before the law existed; the re-draw does, and a lot built twice is two
+    // buildings standing through each other.
+    claimed.add(lot.id);
+    return true;
+  };
+  for (const lot of lots) tryInfill(lot, false);
+
+  // --- the empty-block law --------------------------------------------------
+  // **Inside a walled quarter, an elected block is never bare.** Troy was
+  // walked twice and called empty, and the measurement said why: coverage rose
+  // 34 % → 58 % and the rest of the quarter was still *whole blocks* that
+  // elected nothing — scrubby grass squares framed by streets. `LOAM-W527`
+  // measures the ratio; this is the repair, and it has two tiers in this order:
+  //
+  // 1. **Re-draw the block.** A block with no building is not a block the
+  //    density decided to leave open — the density decides per *lot*, and a
+  //    whole block of open lots is the coverage roll landing the same way six
+  //    times over. So every unclaimed lot on a bare block is offered the same
+  //    infill draw with the coverage roll skipped. This is the answer whenever
+  //    the block had a lot at all, and it moves `LOAM-W527`, because it builds.
+  // 2. **Dress what is left.** A block that still built nothing has no lot the
+  //    grammar can stand a building on — too thin, too cut about, or no street
+  //    behind any face. That block becomes a deliberate *something* instead: an
+  //    orchard, a market ground, a garden or a paddock, drawn from the
+  //    vocabulary the life pass already carries and built by it (§2a there).
+  //
+  // Outside a walled quarter neither tier runs, and that is the design: a loose
+  // village wants meadows between its houses, and the wall is what makes
+  // emptiness a defect — the same predicate `LOAM-W527` measures on.
+  const dressedBlocks: DressedBlock[] = [];
+  /** Blocks that ended the infill pass with no building on them. */
+  let bareBlocks = 0;
+  /** …of those, the ones the relaxed re-draw built on. */
+  let redrawnBlocks = 0;
+  if (walledQuarter(p, intent) && planned === undefined && blocks.length > 0) {
+    const menu = dressingsFor(intent.eraDeclared ? intent.eraClass : DEFAULT_ERA_CLASS);
+    const dressStream = streamSeed(seed, "dress");
+    const occupied = new Uint8Array(blocks.length);
+    for (const item of built) {
+      const i = blockOf(blocks, item.rect);
+      if (i >= 0) occupied[i] = 1;
+    }
+    // The free mask, built once over the whole quarter: 1 where a column is
+    // inside some block and no building (plus its apron) stands on it. This is
+    // the same `member` mask `blocksOf` hands `largestFreeRect`, one pass later
+    // in the story — which is why the remainder tier needs no geometry of its
+    // own.
+    const free = new Uint8Array(grid.cells);
+    for (const block of blocks) {
+      for (let z = block.rect.z0; z <= block.rect.z1; z++) {
+        for (let x = block.rect.x0; x <= block.rect.x1; x++) {
+          const k = grid.index(x, z);
+          if (k >= 0 && blocked[k] !== 1) free[k] = 1;
+        }
+      }
+    }
+    // Masked incrementally: the re-draw below adds buildings while this loop is
+    // running, and re-walking the whole list per block would be quadratic in a
+    // quarter's building count for no gain.
+    let masked = 0;
+    const maskBuilt = (): void => {
+      for (; masked < built.length; masked++) {
+        const item = built[masked] as BuiltLot;
+        for (let z = item.rect.z0 - BUILDING_APRON; z <= item.rect.z1 + BUILDING_APRON; z++) {
+          for (let x = item.rect.x0 - BUILDING_APRON; x <= item.rect.x1 + BUILDING_APRON; x++) {
+            const k = grid.index(x, z);
+            if (k >= 0) free[k] = 0;
+          }
+        }
+      }
+    };
+    maskBuilt();
+    for (const [i, block] of blocks.entries()) {
+      // The reserved square is *meant* to be empty ground — that is what a
+      // plaza is, and the plaza pass furnishes it — and a courtyard block's
+      // middle is already somebody's job (§4.5).
+      if (i === plazaBlock || courtyardPlans.has(i)) continue;
+      if (occupied[i] !== 1) {
+        bareBlocks++;
+        // Tier 1, and only for a block with *no* building: a block that built
+        // its rim and left a core is not a block the coverage roll emptied.
+        let gained = false;
+        for (const lot of lots) {
+          if (lot.block !== i) continue;
+          if (tryInfill(lot, true)) gained = true;
+        }
+        if (gained) {
+          redrawnBlocks++;
+          occupied[i] = 1;
+          // The mask has to hear about what the re-draw built, or the ground it
+          // just took is still free ground to the remainder tier below.
+          maskBuilt();
+        }
+      }
+      // Tier 2, over the block's **remainder**: the largest rectangle of it
+      // that no building stands on. On a bare block that is the block; on a
+      // block that built its street rim it is the core, which is the other half
+      // of what Kai walked — a town whose blocks are built round the edge and
+      // scrubby in the middle reads exactly as empty as one that built nothing.
+      const remainder = largestFreeRect(grid, free, block.rect);
+      if (remainder === null) continue;
+      const w = remainder.x1 - remainder.x0 + 1;
+      const d = remainder.z1 - remainder.z0 + 1;
+      // Two floors, because the two cases are two different claims. A block
+      // that built **nothing** is a hole in the town and the law is absolute:
+      // anything the fabric was willing to call a block (`MIN_INFILL_SIDE` on
+      // its short axis) is dressed, however small. A block that built its rim
+      // and left a core is already a town block, and its remainder has to be
+      // big enough to be a *place* before the dressing claims it — under that,
+      // the back of a house is allowed to be the back of a house.
+      const bare = occupied[i] !== 1;
+      const minSide = bare ? MIN_INFILL_SIDE : DRESSING_MIN_SIDE;
+      const minArea = bare ? MIN_INFILL_SIDE * MIN_INFILL_SIDE : DRESSING_MIN_AREA;
+      if (Math.min(w, d) < minSide || w * d < minArea) continue;
+      // Positional, on the remainder's own min corner — never on `i` — so one
+      // more building somewhere else in the quarter cannot turn an orchard into
+      // a market.
+      const draw = positionFloat(dressStream, remainder.x0, 0, remainder.z0);
+      const kind = menu[Math.min(menu.length - 1, Math.floor(draw * menu.length))] as BlockDressing;
+      dressedBlocks.push({ block: i, rect: remainder, kind });
+    }
   }
 
   // --- the ruins record (RUINS-PLAN §9, `LOAM-I512`) ------------------------
@@ -1762,6 +2044,7 @@ export function layDistrict(
       carriageway,
       sidewalk,
       ...(courtyardBlocks.length === 0 ? {} : { courtyards: courtyardBlocks }),
+      ...(dressedBlocks.length === 0 ? {} : { dressed: dressedBlocks }),
       // The platforms and their seams, for the retaining pass — the one
       // consumer that runs on the column plan rather than on the layout, and so
       // the one that cannot re-derive them. Both are omitted unless this
@@ -1796,6 +2079,9 @@ export function layDistrict(
         carriagewayColumns,
         sidewalkColumns,
         ...(courtyardBlocks.length === 0 ? {} : { courtyards: courtyardBlocks.length }),
+        ...(bareBlocks === 0 && dressedBlocks.length === 0
+          ? {}
+          : { bareBlocks, blocksRedrawn: redrawnBlocks, blocksDressed: dressedBlocks.length }),
         // §6.1, measured from the plan the ladder settled on.
         ...(replanned.composition === null
           ? {}

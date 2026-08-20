@@ -1221,6 +1221,10 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
         bounds: district.bounds,
         graph: district.streets,
         masks: dressed.masks,
+        // § the empty-block law: the blocks this quarter elected and built
+        // nothing on. Absent for every quarter that is not walled, so the life
+        // pass sees exactly the input it saw before for a village.
+        ...(district.dressed === undefined ? {} : { dressed: district.dressed }),
       });
     }
   }
