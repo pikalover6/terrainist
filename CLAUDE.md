@@ -55,6 +55,18 @@ implementer subagent must not spawn subagents of its own — say so in every
 brief — and the orchestrator counts any nested agent against the same
 budget. Four concurrent means four agents running, full stop.
 
+**Delegation economics (Kai, 2026-08-19): spawn a subagent only when doing
+the work yourself would be less efficient.** Weigh both sides honestly: the
+orchestrator is a Fable 5 model consuming ~2× the usage of Opus per token
+(more still at xhigh reasoning vs opus-5-low) — but a subagent pays a fixed
+overhead of its own: a fresh context, file exploration, verification runs,
+and a report. A small, well-understood, few-edit task (a teaching paragraph,
+a constant, a kit sentence, a doc amendment) is cheaper done directly even
+at Fable rates; delegation wins when the task needs real exploration, bulk
+implementation, or verification long enough that pulling it into the
+orchestrator's context would bloat it. Judgment call, but the default for
+small edits is: do it yourself.
+
 **Shared-tree git discipline:** an agent working in the shared checkout must
 NEVER run tree-wide git state operations — `git checkout -- .`,
 `git restore .`, `git stash` / `stash pop`, `git clean` — nor revert files
