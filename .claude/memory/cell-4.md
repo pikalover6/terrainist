@@ -61,17 +61,29 @@ harmonisation KEPT 61f1cef (470→414 map-wide, tests free);
 experiment 3 cut-side verge feather DEAD (1 edge map-wide) —
 implemented, measured, REVERTED. Remaining 178 = the town-ground
 passes; fix = GROUND-PLANE TIE.
-**IN FLIGHT: WP-12 design seat (high)** — Part V: ground-plane tie
-(town-ground passes take street level at the seam) + route-face
-service (coastal 4-5 block raw hill walls → WP-11 seam machinery;
-subsumes causeway/trench question, default recommended,
-walk-gated). **+ pack 9 feudal_japanese (low, go-ham).**
-DELEGATION ECONOMICS in force (CLAUDE.md): small edits are mine —
-experiments 2+3 done directly. PLAN: design → capped impl waves →
-probe-verify on archived pirates doc (178 → ~0 target) → full gate
-→ r23 deck (screened WITH REROLL, --series --release 23) → funnel →
-handoff. Kai has "more feedback" queued on other worlds — expect a
-verdict wave.
+**WP-12 GROUND-PLANE TIE: machinery COMMITTED, 12F FLIP IN FLIGHT.**
+Design b393bc6 — THE SURPRISE: the storey lattice anchored on
+min(FREE ground), streets EXCLUDED, so the street level was NOT ON
+THE RULER (citadel streets 90, lattice 87/91 ≡3 mod 4; 4,180
+columns +1, single-bar histogram; the "town-ground passes" all
+PAINTERS — one PadEdit writes height). Waves: 12A flag+codes
+b0ba4b4 (T241/T242/I416/I417); 12D plane-edge seam ed2373a (planes
+served via Part IV verbatim, no ramp branch); 12B anchored lattice
+8367fdd (per-block lower-median of datum.levelNear; per-piece
+re-anchor REMOVED — measured worse; REHEARSAL: unicorn +1 178→11,
+94% collapse, citadel T242=0; counterweight: ground below embanked
+streets rose — WALK NOTE); 12C+12E bed0d5d (tie stats on
+DistrictStats; every precinct declaration IS a plane — quay 79
+revetted 0 rock, coastal cluster 2 GONE, map +1 414→35 rehearsal).
+**12F (medium) flying**: flip, triage, publish probe numbers vs
+178/414/107, three-doc physics gate, §11 acceptance paragraph.
++ pack 9 feudal_japanese SHIPPED a684aff (members 281, nine
+cultures). THEN: full gate → r23 deck (screened WITH REROLL,
+--series --release 23) → RELEASES.md → funnel → log → handoff.
+WALK NOTES ACCUMULATING for Kai: embanked-street counterweight;
+causeway default (R5, walk-gated); tier dressings; BLOCK_MULTI_RECT;
+G4 tolerance line (G1-strict + G4-strict can't both be zero on a
+falling network); §15.1 ratification.
 
 **AWAITING KAI:** padfix deck walk (*_padfix ×4) + caravan band;
 viewer look verdict + landing skin; WP-6 ledger (preserve/tie E494,
