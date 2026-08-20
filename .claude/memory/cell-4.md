@@ -75,15 +75,26 @@ re-anchor REMOVED — measured worse; REHEARSAL: unicorn +1 178→11,
 streets rose — WALK NOTE); 12C+12E bed0d5d (tie stats on
 DistrictStats; every precinct declaration IS a plane — quay 79
 revetted 0 rock, coastal cluster 2 GONE, map +1 414→35 rehearsal).
-**12F (medium) flying**: flip, triage, publish probe numbers vs
-178/414/107, three-doc physics gate, §11 acceptance paragraph.
-+ pack 9 feudal_japanese SHIPPED a684aff (members 281, nine
-cultures). THEN: full gate → r23 deck (screened WITH REROLL,
---series --release 23) → RELEASES.md → funnel → log → handoff.
-WALK NOTES ACCUMULATING for Kai: embanked-street counterweight;
-causeway default (R5, walk-gated); tier dressings; BLOCK_MULTI_RECT;
-G4 tolerance line (G1-strict + G4-strict can't both be zero on a
-falling network); §15.1 ratification.
+**12F FLIPPED c84febe — WP-12 COMPLETE.** Zero source bugs at the
+gate; §11.11 acceptance PUBLISHED: unicorn +1 178→11, map 414→35,
+tail 107→44, citadel T242=0 (residuals {0:10,635, -4:19}), quay
+79/79 revetted; pirates RETIRED W527+W511; Troy's 13,305 T242
+argued a READING (climbing streets; seam report barely moved);
+empty-block free-rect escape pre-existing, improved by one,
+handed off. Full suite 310 files 5,340/0.
+**r23 BLOCKED: OPENROUTER CREDITS EXHAUSTED (402 — can afford 6k of
+64k tokens). Kai must top up at openrouter.ai/settings/credits.
+Three partial authoring runs burned at the wall.** CLOSED the run
+with the free alternative: r22 docs recompiled on the tie compiler,
+installed *_r22tie (the controlled comparison the matrix taught —
+same authoring, only the ground changed; probe on the installed
+artifact: 396 flush / 11 at +1). RELEASES.md notes it as a config.
+WALK NOTES FOR KAI (his next round): (1) walk *_r22tie vs *_r22 —
+the tie verdict on identical docs; (2) embanked-street counterweight
+(ground below streets rose); (3) G4 tolerance (falling networks
+report T242 by construction); (4) causeway default R5; (5) tier
+dressings SEAM_TREAD/SETBACK; (6) BLOCK_MULTI_RECT; (7) §15.1
+ratification; (8) fresh r23 deck once credits exist.
 
 **AWAITING KAI:** padfix deck walk (*_padfix ×4) + caravan band;
 viewer look verdict + landing skin; WP-6 ledger (preserve/tie E494,

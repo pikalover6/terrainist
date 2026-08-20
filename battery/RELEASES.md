@@ -87,3 +87,4 @@ Every world of a deck takes the same `--release`. The number is assigned by the
 deck, so the install **errors** if `<slug>_r<N>` already exists rather than
 bumping to `-2`: an auto-incrementing counter is what this file replaced.
 | r22 | 2026-08-19 | 25e5e68 | matrix-verdict fixes | troy, hellenist_city, pirates_v_unicorns | all first/second-roll clean (~$0.41, troy one-shot); the five convictions served: damsWater, land/sea teaching, empty-block law, datum cut-cap (8G), cohort naming |
+| — | 2026-08-20 | c84febe | r22tie (config, not a release) | troy, hellenist_city, pirates_v_unicorns | the r22 DOCS recompiled on the WP-12 ground-plane-tie compiler — same authoring Kai last walked, only the ground changed (unicorn +1 edges 178→11, quay revetted 79/79, citadel drift 0); installed *_r22tie. r23 proper BLOCKED: OpenRouter credits exhausted (402) — three partial authoring runs burned at the wall |
