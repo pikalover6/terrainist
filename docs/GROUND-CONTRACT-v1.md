@@ -915,6 +915,32 @@ side`) has nothing left to arbitrate.
 `PAD_APRON_MISMATCHES` cannot grow because it cannot exist: there is no
 smoothstep in the baseline for a declaration to disagree with.
 
+**Ratified (Kai, 2026-08-20), with one refinement — the natural-blend policy.**
+Kai's counter-proposal — make the *terrain generator* emit pre-blended pads so
+no apron is needed — was examined and declined for the structural reason this
+document exists: a blend computed before the street, seam and building claims
+exist is un-arbitrated by construction, i.e. the apron with a nicer name. The
+honest form of "the terrain comes out naturally smoothed at the root" is
+resolver-side, where every final level is known, and v1 already owns the hook:
+the `bank` treatment *is* ground that comes out smoothed. The ratified
+refinement is a treatment policy, not a mechanism:
+
+- **Unpressed boundaries prefer the bank.** Where a footprint or plane edge is
+  not pressed (S5's `pressedShare` below `EDGE_PRESSED_SHARE`) and
+  `availableRun` affords it, the transition is a bank with run scaled to the
+  drop (never steeper than 1:2 / `APRON_RUN_PER_BLOCK`; it may widen), with a
+  deterministic **eased profile** — the quantised easing curve, not a straight
+  ramp — so an open-ground lot reads as hillside rather than engineering.
+- **Pressed boundaries keep their faces.** Dense fabric gets the same
+  revetments the terraces use (S5 unchanged); a 6-drop bank wants 12 columns
+  and dense fabric does not have them — which is also what a real hill town
+  does.
+
+The policy lives in `deriveTransitions`' treatment selection and geometry, is
+taste (§5's regime: one function, walked at G7, `GROUND_V1_PRISTINE` off is the
+fallback), and adds no second transition source — the coverage invariant of
+§3.2 is unchanged.
+
 ## 7.3 Performance — the budget
 
 v0 §9a argued that "twelve resolves on a city region is twelve walks of a few
