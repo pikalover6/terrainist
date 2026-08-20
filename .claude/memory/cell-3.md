@@ -100,3 +100,30 @@ iterate MAINLINE; gem-plus branch (9b4dd50 + packs + teaching +
 facing only) = completed CONTROL, gem2 deck archived there.
 Hellenist = 90% OCEAN (rendered): W526 land budget born. Naming:
 slug_vN across the saves (troy_v13, pirates_v16), install --series.
+
+## Waves 3-4: the verdict loop learns its own name (2026-08-19) — compressed from cell 4
+
+Wave 3 (tie2 verdicts): naming slug_vN (superseded by cohorts);
+modern houses = era-blind "regular" window grid on facade-less
+archetypes (RHYTHM_BY_ERA hole-filler bc0ff2d); floating paths =
+blendShoulders fill stopping 1 short of EVERY carriageway
+(VERGE_FILL_FEATHER e8a10db); land budget W526 f5a0a53 (per-COLUMN;
+E406 judges by median); doorstep foot gate 1203919; density diagnosed
+= grown-fabric dead block cores. WP-11 served seam (design 516dd96,
+waves 600df49/e3ce5fb/09379fe/e96bfc8/e1c797c/5d6bb6a, flip f082504
++3 bugs incl. tier-overhang; waterline floor 0a1575a). Density
+BLOCK_MULTI_RECT 047dee2 (rectsOf was one-rect for non-grid; Troy
+0.173→0.222); pad floor e29b0b9 (horse flush 122/122); lamp
+attribution 52ebf21. v14/r21 deck rolled first-try clean; hellenist
+render = real metropolis (vs r-old 90% ocean).
+Wave 4 (r21 verdicts, "continuing to regress"): Kai's revert
+instinct → FLAG MATRIX on archived docs (same doc × flag configs =
+attribution by his walk). VERDICT: flags acquitted, authoring rolls
+were the era-feel; convictions = dried river (MY 0a1575a dammed it;
+damsWater reclaim-not-dam 48b2177), land/sea teaching counterweight
+fbefa26, empty-blocks law 8e09cc6 (no bare block inside walls),
+hill drift (datum lacks the surfacer's floors), cohort versioning
+d0acdb2 (63 worlds _rN, RELEASES.md, r16+r5 good / r21 regressed).
+LESSON BANKED: every deck confounds compiler+roll+teaching —
+archived docs + flags separate them for free; renders catch premise
+failures before walks.

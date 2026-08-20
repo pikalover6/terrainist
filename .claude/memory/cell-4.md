@@ -26,56 +26,6 @@ horse still on 1-block pad (referenceY round-up, now verdict-backed
 trade Kai now condemns); NAMING SYSTEM requested (sequential
 versions, retroactive, standardized slugs).
 
-**WAVE 3 LANDED (all committed):** naming 6bf0a64 (slug_vN series,
-59/60 renamed, RENAME-LEDGER.md, install --series; glowcap tie2
-pending — was OPEN in Minecraft, lsof guard); modern houses bc0ff2d
-(pool was CLEAN — leak was era-blind "regular" window grid on
-archetypes w/o facade defaults; RHYTHM_BY_ERA hole-filler, ancient/
-medieval sparse, modern byte-identical); floating paths e8a10db
-(NEVER the datum — blendShoulders fill stopped 1 short of the
-carriageway on EVERY road; VERGE_FILL_FEATHER=1; glowcap 78→20
-proud); land budget f5a0a53 (W526 SETTLEMENT_LAND_SHORT, per-COLUMN
-— E406 judges by median so drowned-with-dry-middle was "feasible";
-threshold 0.6 from measured bimodal gap 0.16|0.92; in
-FEEDBACK_CODES; W337-to-feedback declined, flagged for Kai);
-doorstep foot gate 1203919 (footLands two-columns-out; Troy 4
-refused — other 42 land on real ground, the stairs impression is
-the seam banks); density diagnosis (NO fix shipped — constants
-innocent: grown-fabric DEAD BLOCK CORES, lots are rim strips only,
-one 2109-col block = 0 buildings; + 121 stepped-split slivers; fix
-= deep-block subdivision + sliver suppression + walled coverage
-floor, QUEUED); kit taught grown-blockSize + flat-roof-box 2079e50,
-horse courteous-min 453f48f.
-
-**WP-11 THE SERVED SEAM: ALL MACHINERY COMMITTED, 11F FLIP IN
-FLIGHT.** Design 516dd96 (headline: benching was gated on
-plannedEdges — hillside-form only; grown/stepped NEVER benched).
-Waves: 11A honest refusal 600df49; 11C election pays e3ce5fb (W410
-first emission); 11B tier stack 09379fe (ceil(D/6) faces, revetted
-vs terraced by pressedShare, I412/W413/I415); 11D absorption+bank
-e96bfc8 (short seams absorbed, 1:2 landform, terminatesOnBank); 11E
-seam stairs e1c797c (landings contract, sst* steps segments ride
-street-stairs law, footLands accepts landings, I414); wiring 5d6bb6a
-(landings cross the pass; I415 on Troy: 26 crossings deepest 5;
-end-to-end fixture: door refused without landings, built with; NOTE
-a stack's flight is climbable BECAUSE of street carry — 3n-2 run vs
-4n rise). ALSO COMMITTED same arc: density 047dee2
-(BLOCK_MULTI_RECT — rectsOf was one-rect for non-grid; Troy 0.173→
-0.222, coverage 34→58%; W527 guard; UNWALKED, one constant to
-revert); pad floor e29b0b9 (horse flush 122/122; every delta
-exactly -1); lamp attribution 52ebf21 (one post one lamp; goldens
-re-pinned DOWNWARD, blindStairs 0). Full suite 5,156/0 at 5d6bb6a.
-**11F FLIPPED f082504 + waterline floor 0a1575a.** Flip found+fixed
-3 bugs (tier overhang past RETAIN_MAX — held computed outward-first;
-tiered unthreaded in 2 table calls; W411 push unconditional → now 0
-everywhere). Then STOP-THE-LINE T110: the election built a platform
-UNDER THE SEA (bucket level 60 vs seaLevel 63; dissolve dragged the
-shoulder down; reclassification called 2,436 citadel columns ocean;
-fabric built a flooded town). PlatformInput.waterFloor: a platform's
-lowest level is the water surface beside it, flush legal (quay).
-Troy clean, tier stack finally standing; haven 126 refused columns
-GONE. Full suite 5,169/0.
-
 **THE v14 DECK INSTALLED (d4b692e): troy_v14 / hellenist_city_v10 /
 pirates_v_unicorns_v17** — all first-roll exit 0 (~$0.75), installed
 via --series. hellenist authored a REAL METROPOLIS (land-budget
@@ -126,15 +76,6 @@ orchestrator's own job.** Screening = render+annotate, install
 anyway (reroll-gate only on explicit autonomous runs).
 ON DRIFT LANDING: commit, full gate, r22 deck (3 prompts, screened,
 --series --release 22), handoff.
-
-**GO-HAM: packs 7+8 SHIPPED.** desert_caravanserai (365eded, 13+2,
-serai_court anchor, crvn_* rows, members 235→250) and
-himalayan_monastery (88bd989, 13+2, dzong_hall anchor, hima_* rows,
-members 250→265; prayer flags = full-cube wool runs, NO banner
-attachables; theme alpine_stone doesn't exist → boreal_pine+
-white_quartz). dev_world_hima installed carries BOTH bands
-(supersedes dev_world_caravan for the walk). Go-ham PAUSED by
-orchestrator context budget — resume packs after Kai's walk wave.
 
 **AWAITING KAI:** padfix deck walk (*_padfix ×4) + caravan band;
 viewer look verdict + landing skin; WP-6 ledger (preserve/tie E494,
