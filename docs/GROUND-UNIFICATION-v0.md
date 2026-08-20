@@ -2119,7 +2119,7 @@ Stated so that a wave that drifts into one of these is visibly wrong.
 | code | name | severity | feedback set | fires |
 | --- | --- | --- | --- | --- |
 | `LOAM-T241` | `GROUND_PLANE_UNTIED` | note | no | a stepped quarter where one or more blocks found no graded carriageway within `frontageReach` of any perimeter column and kept the quarter's own floor (G3). Mirrors `LOAM-T238` for the platform |
-| `LOAM-T242` | `GROUND_PLANE_DRIFT` | note | no | a platform column within reach of a carriageway whose elected level is neither the datum's nor a whole storey from it (G1). **This should be 0**, and it is the alarm that says the anchor did not hold. Mirrors `LOAM-T237` |
+| `LOAM-T242` | `GROUND_PLANE_DRIFT` | note | no | a platform column within reach of a carriageway whose elected level is neither the datum's nor a whole storey from it (G1). **This should be 0 on a quarter whose streets are level**, and it is the alarm that says the anchor did not hold. Mirrors `LOAM-T237`. *(Amended at 12F, which is when it was measured. This row read "This should be 0" flat. It is 0 on `world.unicorn_citadel` — the quarter §11.0 measured — and it is **not** 0 where the streets themselves climb: 1,265 columns on `world.pirate_cove_town`, 13,305 on Troy's acropolis. The cause is G4's one-lattice-per-block rule meeting a per-column metric taken against the *nearest* datum, and §11.11 argues why one lattice per block is still the right construction.)* |
 | `LOAM-I416` | `PLANE_EDGE_SERVED` | note | no | once per non-district claimed plane: what its edges became — absorbed, revetted, rock, or nothing to serve (R4) |
 | `LOAM-I417` | `PLANE_EDGE_DEFERRED` | note | no | a cut face past `RETAIN_MAX` finished in rock because the mirror stack is not built. The measurement that decides whether it is worth building — the same discipline as `LOAM-T239` for viaducts and `LOAM-I415` for wall crossings |
 
@@ -2231,3 +2231,88 @@ dependencies in full, because the row has no room for them:
   `deriveTransitions`' missing `{ tiered }`, carried into WP-6's ledger
   (§11.9.7); and **WP-13**, the contour-led election, which §5 non-goal 9
   renumbered here.
+
+## 11.11 Acceptance — the flip, measured
+
+`GROUND_PLANE_TIE` went `false → true` at 12F. §11.0 opened this part with a
+number, so the flip closes it with the same one, taken the same way: the
+`battery/candidates/pirates_r22` document recompiled either side of the constant
+and read with `tools/worlds/street-probe.mjs`. Nothing here is a claim of zero.
+
+| measurement | flag off | flag on |
+| --- | --- | --- |
+| `natural:+1` road-to-terrain edges, citadel box (`20,40,256,256`) | **178** | **11** |
+| `natural:+1` road-to-terrain edges, whole map | **414** | **35** |
+| the `≥ +4` tail, whole map (`+4` / `+5` / `+6`) | **107** (54 / 35 / 18) | **44** (41 / 3 / 0) |
+| `LOAM-T242 GROUND_PLANE_DRIFT`, `world.unicorn_citadel` | not measured | **0** |
+| `LOAM-T242`, `world.pirate_cove_town` | not measured | **1,265** of 11,708 |
+| `LOAM-I416 PLANE_EDGE_SERVED`, `world.pirate_haven_quay` | not fired | 1 cut edge, **79 columns, 79 revetted**, 0 absorbed, 0 rock |
+
+The citadel is the acceptance case and it answers cleanly: §11.0's fourth
+finding was *"all 116 shared columns are +1 above the datum that claims that very
+column"*, and its residual histogram is now `{ 0: 10,635, −4: 19 }` — one bar at
+zero, and the nineteen are a whole storey down, which is the lattice, not a lip.
+`untied` is 0 on both quarters (G3 never fired: every block found a banded
+carriageway in reach) and `spanSplit` is 0 on the citadel, 2 on the cove town.
+
+**The residual is where the streets themselves fall.** `LOAM-T242` is not zero
+map-wide and the design should not pretend it will be: it compares each platform
+column against the *nearest* banded carriageway within `tieReach`, while G4's
+split deliberately puts every piece of one block on **one** lattice — the block's
+anchor — because re-anchoring per piece moved T242 the wrong way (1,265 → 1,279)
+and broke congruence between two pieces of the same block. So a quarter whose
+streets climb reports drift by construction: 1,265 of 11,708 columns on
+`world.pirate_cove_town` (worst −5), and **13,305 of 18,427 on Troy's
+`world.troy_citadel`** (worst −30, 12 of its 14 blocks split), which is an
+acropolis whose street network gains thirty blocks across the quarter. Neither
+is a broken anchor; both are the honest reading of a metric taken per column
+against a datum that is itself sloping. **What the alarm still means, exactly:
+T242 on a quarter whose streets are level is a bug.** It is 0 there.
+
+Troy is the proof that the number is a reading and not damage. If the anchor
+really had dropped twelve split blocks by up to thirty, the seam report would
+say so; it barely moves. `LOAM-I412 SEAM_SERVED` on `world.troy_citadel` goes
+from *"19 walls, 3 tier stacks (3 revetted) over 6 faces and 36 columns, 33
+banks"* to *"20 walls, … 34 banks"*, and `LOAM-I524`'s footing average is
+unchanged at 0.7 courses (deepest 10, cap 18) over 844 → 840 course columns.
+The acropolis was already thirty blocks of climb; 12F is the first wave that
+measures it.
+
+**Physics: clean, on three documents.** `pirates_r22`, `troy_r22` and
+`hellenist_r22` each compile `exit 0` with **zero** `LOAM-T110`/`LOAM-T111`
+findings, unchanged from their flag-off compiles. The full finding diffs are the
+wave's own codes and two retirements:
+
+- **pirates** — gains `LOAM-I416` (the quay, above) and `LOAM-T242`; **loses**
+  `LOAM-W511 DECAY_MODE_FALLBACK` and `LOAM-W527 WALLED_QUARTER_SPARSE`. The
+  W527 retirement is the point of the exercise arriving on the report: the
+  quarter is no longer sparse once its blocks stand on their streets.
+- **troy** — gains `LOAM-T242` and nothing else; every other code and count is
+  identical.
+- **hellenist** — gains `LOAM-I416` (`world.metropolitan_harbour`: *"meets no
+  ground standing over it: nothing to serve on the cut side"*, R1's honest zero)
+  and `LOAM-I463`. Its three `neoclassical_metropolis` cells carry `planeTie`
+  with `blocks: 0` — a city cell gets no pad and elects no platforms, so the tie
+  measures it and has nothing to say, which is §11.1's own carve-out on the
+  report rather than in prose.
+
+All three worlds moved (region hashes differ from the flag-off compiles), which
+is the harness seeing the difference before anything else here is trusted.
+
+**One pre-existing gap surfaced at the gate and was left alone, deliberately.**
+`test/empty-block-law.test.ts` asserted `blocksRedrawn + blocksDressed >= bare`,
+which reads as the per-block law and is not one — tier 2 also dresses the
+*remainders* of blocks that did build, so the sum carried slack, and the slack
+was paying for the one escape the law really has: a bare block whose largest
+**free** rectangle (not whose block) falls under `MIN_INFILL_SIDE` is skipped.
+Measured on that fixture either side of the flip, the escape fires **10 times
+with the flag off and 9 times with it on** — pre-existing, and not the tie's
+doing. What the tie moved is the two tiers' balance: anchoring each block on its
+street flattens it onto one storey, so the relaxed re-draw finds standable lots
+where it used to find a slope (`blocksRedrawn` **12 → 16**) and the remainders
+left for tier 2 shrink with them (`blocksDressed` **44 → 34**), while `bare`
+itself barely moves (52 → 51). The sum crosses `bare` by arithmetic, not by a
+new hole. The assertion is re-pinned to the measured triple with the cause
+written down; **closing the escape — applying the floor to the block rather than
+to its remainder — is ordinary future work and belongs to whoever owns the
+empty-block law, not to the flip.**

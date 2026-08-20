@@ -503,10 +503,10 @@ export const SEAM_TIERS = true;
  * its own columns, so a carriageway and the ground beside it are one storey
  * lattice instead of two computations that disagree.
  *
- * **`false` from wave 12A; flipped at 12F** on Kai's walk verdict and nothing
- * else (§11.4). While it is false every construction behind it is either unbuilt
- * or dead, and every world compiles byte-identically — a world hash that moves
- * before 12F is a bug, not a golden update.
+ * **`false` from wave 12A; flipped to `true` at 12F** on Kai's walk verdict and
+ * nothing else (§11.4). While it was false every construction behind it was
+ * either unbuilt or dead, and every world compiled byte-identically — a world
+ * hash that moved before 12F was a bug, not a golden update.
  *
  * What it gates, precisely:
  * - **12B, the block-anchored lattice** (`layout/platforms.ts`,
@@ -524,15 +524,19 @@ export const SEAM_TIERS = true;
  * The per-call fields (`PlatformInput.datum`, `RetainingPassInput.planes`)
  * default to this constant and are how a test asks for either world without
  * moving the switch — the same shape `PlatformInput.tiered` and
- * `RetainingDistrict.tiered` already have.
+ * `RetainingDistrict.tiered` already have. A fixture that wants the untied
+ * election must now say so: silence means the flag, and the flag is on.
  *
- * **Acceptance is a measurement, not a claim of zero.** 12F re-runs
- * `tools/worlds/street-probe.mjs` on the r23 pirates world and publishes the +1
- * road-to-terrain count **against 178**. The attribution behind the flip is
- * 95.5 % (§11.0); the residual is `NO_PLATFORM` slivers and off-lattice columns,
- * and anything left after S6's merge is a new finding with a new measurement.
+ * **Acceptance is a measurement, not a claim of zero**, and it was taken
+ * (§11.11): `tools/worlds/street-probe.mjs` over the pirates document,
+ * recompiled either side of this line. The +1 road-to-terrain count falls
+ * **178 → 11** inside the citadel box and **414 → 35** map-wide, the ≥ +4 tail
+ * **107 → 44**, and `LOAM-T242` is **0** on `world.unicorn_citadel` — the
+ * quarter §11.0 measured as one flat +1 bar. What is left is where the streets
+ * themselves fall: 1,265 columns on `world.pirate_cove_town`, 13,305 on Troy's
+ * acropolis. Physics is clean on all three battery documents.
  */
-export const GROUND_PLANE_TIE = false;
+export const GROUND_PLANE_TIE = true;
 
 /**
  * How far the datum may span along one block's perimeter before that block is
@@ -547,6 +551,7 @@ export const GROUND_PLANE_TIE = false;
  * test pins the two together.
  *
  * Dead while {@link GROUND_PLANE_TIE} is off: no block reads a perimeter datum,
- * so `if (hi - lo <= FLOOR_HEIGHT)` never gains its second clause.
+ * so `if (hi - lo <= FLOOR_HEIGHT)` never gains its second clause. Live from
+ * 12F, when the flag was flipped.
  */
 export const GROUND_TIE_SPAN = 4;

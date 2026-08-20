@@ -442,7 +442,7 @@ describe("the flag's contract (G9, G10)", () => {
     if (GROUND_PLANE_TIE) expect(FRONTAGE_TIE).toBe(true);
   });
 
-  it("is off, so the shipped election is the datum-less one", () => {
-    expect(GROUND_PLANE_TIE).toBe(false);
+  it("is on, so the shipped election is the anchored one (12F)", () => {
+    expect(GROUND_PLANE_TIE).toBe(true);
   });
 });

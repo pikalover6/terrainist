@@ -15,14 +15,13 @@
  * 2. **the wiring, exercised** — the compiled harbour's own declarations, fed
  *    back through the pass with `tiered: true`, are measured, and over a
  *    hillside the quay's back edge comes back as one revetted course.
- *    The shipped compile does not do this: `planes` is handed over with `tiered`
- *    absent, so every plane defaults to `GROUND_PLANE_TIE` and the job list is
- *    empty until 12F. That half is byte-identity and is proved on real documents
- *    rather than here — what is proved here is that the flag is the *only* thing
- *    standing between the quay and its revetment.
+ *    The shipped compile now does this too: `planes` is handed over with
+ *    `tiered` absent, so every plane defaults to `GROUND_PLANE_TIE` — flipped on
+ *    at 12F — and the shipped harbour's quay is measured. The untied world is
+ *    still exactly reachable, by a plane that asks for it by name.
  *
- * 12C rides along: `DistrictStats.planeTie` is absent on every quarter while the
- * flag is off, which is what keeps the report goldens still.
+ * 12C rides along, as a negative: this document lays no district, so
+ * `DistrictStats.planeTie` has nothing to appear on either side of the flip.
  */
 
 import { mkdtemp, readFile, rm } from "node:fs/promises";
@@ -92,15 +91,29 @@ describe("wave 12E — a precinct declares the level it graded to", () => {
 
   it("the shipped compile hands its planes over with the flag's default", () => {
     // The wiring is unconditional; the *serving* is not. `structures/index.ts`
-    // omits `tiered`, so every plane reads `GROUND_PLANE_TIE`, and while that is
-    // false `buildRetainingWalls` builds no job list at all — R6's byte-identity.
-    expect(GROUND_PLANE_TIE).toBe(false);
+    // omits `tiered`, so every plane reads `GROUND_PLANE_TIE` — and 12F flipped
+    // it, so silence now means *served*: the shipped planes are measured.
+    expect(GROUND_PLANE_TIE).toBe(true);
     const planes = (structures.precincts?.declarations ?? []).map(
       (d): RetainingPlane => ({ nodePath: d.nodePath, columns: d.columns, planeY: d.planeY }),
     );
-    const off = buildRetainingWalls({
+    const shipped = buildRetainingWalls({
       districts: [],
       planes,
+      plan,
+      palette: palette(),
+      stack,
+      footprints: [],
+    });
+    expect(shipped.planeEdges.planes).toBe(1);
+    expect(shipped.diagnostics.map((d) => d.code)).toContain("LOAM-I416");
+
+    // …and the pre-flip control, kept: a plane that asks for the untied answer
+    // by name still gets it, and it costs no job list at all — R6's byte-identity
+    // is now reachable only by saying so.
+    const off = buildRetainingWalls({
+      districts: [],
+      planes: planes.map((p) => ({ ...p, tiered: false })),
       plan,
       palette: palette(),
       stack,
@@ -175,11 +188,18 @@ describe("wave 12E — a precinct declares the level it graded to", () => {
 /* -------------------------------------------------------------------------- */
 
 describe("wave 12C — the tie's numbers travel on the report", () => {
-  it("`DistrictStats.planeTie` is absent while the tie is off", () => {
-    // The datum is not handed to the election with the flag off, so nothing is
-    // measured and no report golden moves. With the flag on this is where the
-    // untied/tied/spanSplit counters and the residual histogram appear.
-    expect(GROUND_PLANE_TIE).toBe(false);
+  it("`DistrictStats.planeTie` says nothing here, because there is no quarter", () => {
+    // **Re-pinned at 12F, with the cause written down.** Pre-flip this asserted
+    // that `planeTie` was absent on every district *because the flag was off*,
+    // which read as a flag assertion and was not one: `precinct-harbour` is a
+    // port and a quay and it lays **no district at all**, so the tie has nothing
+    // to measure here in either world. Kept as the statement it really makes —
+    // the plane half of this file's subject is served (`LOAM-I416`, above)
+    // without a quarter anywhere near it — and the counters and the residual
+    // histogram are asserted where a quarter exists, in
+    // `ground-plane-tie.test.ts` and on the battery worlds.
+    expect(GROUND_PLANE_TIE).toBe(true);
+    expect(districts).toHaveLength(0);
     for (const d of districts) expect(d.stats.planeTie).toBeUndefined();
   });
 });

@@ -171,18 +171,27 @@ describe("wave 12D — a claimed plane owes its own edges", () => {
 
   /* --- R6: the flag, and the control -------------------------------------- */
 
-  it("GROUND_PLANE_TIE ships false, and a plane that says nothing is not measured", () => {
-    expect(GROUND_PLANE_TIE).toBe(false);
+  it("GROUND_PLANE_TIE ships true, and a plane must say so to go unmeasured", () => {
+    expect(GROUND_PLANE_TIE).toBe(true);
+    // Silence is the flag, and the flag is on: a plane that says nothing is
+    // measured and served, exactly as one that asks for it by name.
     const quiet = run(hillside(5), [quay({ tiered: undefined })]);
+    expect(quiet.result.planeEdges.planes).toBe(1);
+    expect(quiet.result.blocks.length).toBeGreaterThan(0);
+    expect(quiet.result.diagnostics.map((d) => d.code)).toContain("LOAM-I416");
+
+    // The pre-flip control, inverted and kept: the untied world is still exactly
+    // reachable — and it is still byte-identical to having no plane at all.
+    const silent = run(hillside(5), [quay({ tiered: false })]);
     const none = run(hillside(5), []);
-    expect(quiet.result.planeEdges.planes).toBe(0);
-    expect(quiet.result.stacks).toBe(0);
-    expect(quiet.result.diagnostics).toHaveLength(0);
+    expect(silent.result.planeEdges.planes).toBe(0);
+    expect(silent.result.stacks).toBe(0);
+    expect(silent.result.diagnostics).toHaveLength(0);
     // Byte-identity, measured rather than argued: the same fixture with no
     // planes at all is the same world, column for column and block for block.
-    expect([...quiet.plan.ground]).toEqual([...none.plan.ground]);
-    expect([...quiet.plan.subsurface]).toEqual([...none.plan.subsurface]);
-    expect(quiet.result.blocks).toEqual(none.result.blocks);
+    expect([...silent.plan.ground]).toEqual([...none.plan.ground]);
+    expect([...silent.plan.subsurface]).toEqual([...none.plan.subsurface]);
+    expect(silent.result.blocks).toEqual(none.result.blocks);
   });
 
   it("…and the harness can see a difference: flag-on, the same fixture moves", () => {
