@@ -262,7 +262,12 @@ export function derivePlatforms(input: PlatformInput): FormBench[] {
     const i = x - region.x0;
     const j = z - region.z0;
     if (i < 0 || j < 0 || i >= region.width || j >= region.depth) return 0;
-    return Math.round(field.values[j * region.width + i] as number);
+    // floor, not round: the materialisation rule (`terrain/columns.ts`,
+    // `street-datum.ts` materialisedGround). Rounding here put the quarter's
+    // ground plane one above the street datum on any half-block field — the
+    // walked "streets sunken one block" (unicorn island, r22: 209 of 402
+    // road edges at exactly +1).
+    return Math.floor(field.values[j * region.width + i] as number);
   };
   const columnAt = (k: number): readonly [number, number] => [
     bounds.x0 + (k % width),
@@ -310,7 +315,9 @@ export function derivePlatforms(input: PlatformInput): FormBench[] {
     // ridge are two terraces, not one with a hole in it.
     const bucket = new Int32Array(cells).fill(-1);
     for (const k of block) {
-      bucket[k] = Math.floor((Math.round(smooth[k] as number) - base) / FLOOR_HEIGHT);
+      // floor(smooth), matching heightAt: since 11C the bucket IS the level,
+      // so the partition must sample by the same materialisation rule.
+      bucket[k] = Math.floor((Math.floor(smooth[k] as number) - base) / FLOOR_HEIGHT);
     }
     const inner = new Uint8Array(cells);
     for (const k of block) inner[k] = 1;

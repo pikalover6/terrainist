@@ -4383,7 +4383,11 @@ export function medianGround(field: HeightField, rect: Rect): number {
   }
   if (heights.length === 0) return 0;
   heights.sort((a, b) => a - b);
-  return Math.round(heights[heights.length >> 1] as number);
+  // floor, not round: the materialisation rule. Rounding the continuous median
+  // up on a half-block field seated the quarter's pads and open ground one
+  // above the street datum (the 8F report named this line "itself a one-block
+  // lip generator"); the solver's referenceY made the same move in e29b0b9.
+  return Math.floor(heights[heights.length >> 1] as number);
 }
 
 /* -------------------------------------------------------------------------- */
