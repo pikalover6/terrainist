@@ -244,6 +244,11 @@ function failuresOf(name: string, category: string): readonly string[] {
 describe("the ground contract's equivalence shim", () => {
   describe.each(ALL.map((w) => [w.name, w] as const))("%s", (name, world) => {
     it("zero declaration gaps — no pass writes ground it does not declare", () => {
+      // **WP-G2's law** (`docs/GROUND-CONTRACT-v1.md` §6 WP-G2, §8's G2 row):
+      // `gaps === 0` on the settlement path **with no exceptions**. There is no
+      // per-world allowance and no `WorldCase` field that could grant one — see
+      // the "no world may buy an exception" assertion below, which is what
+      // stops a future round from adding one to make a document pass.
       expect(failuresOf(name, "declaration gap").join("\n")).toBe("");
       expect(reportFor(name).gaps).toBe(0);
     });
@@ -322,6 +327,43 @@ describe("the ground contract's equivalence shim", () => {
       const r = reportFor(world.name);
       expect(r.conflict / r.columns, world.name).toBeLessThan(0.05);
     }
+  });
+
+  it("no world may buy a declaration-gap exception — WP-G2", () => {
+    // §8's G2 row asks for `gaps === 0` "with **no** settlement-path
+    // exceptions". The per-world assertion above already says zero; this one
+    // says the *shape* cannot change — a `WorldCase` carries a golden for
+    // divergences (`inversions`) and one for CLEAN disagreements
+    // (`cleanMismatches`, the pad-apron finding, which is G3's item), and
+    // deliberately no field a gap could be parked in.
+    //
+    // Stated as an assertion rather than a comment because the failure mode is
+    // a future round adding `gapAllowance: 3` next to `cleanMismatches` and
+    // calling it a golden. A gap is a pass writing ground it does not declare:
+    // it is never a measurement, it is always a hole in §3's inventory.
+    for (const world of ALL) {
+      expect(Object.keys(world).sort(), world.name).toEqual(
+        Object.keys(world).includes("doc")
+          ? ["doc", "inversions", "name"]
+          : world.cleanMismatches === undefined
+            ? ["inversions", "name"]
+            : ["cleanMismatches", "inversions", "name"],
+      );
+      expect(reportFor(world.name).gaps, world.name).toBe(0);
+    }
+  });
+
+  it("the only CLEAN allowance in the table is the pad-apron finding — WP-G2", () => {
+    // WP-G2 converted the last three direct writers on the settlement path
+    // (`junction-steps`' mutate-then-declare, and `sweep`/`props`' undeclared
+    // fallbacks, now scoped by type). Nothing it touched produced a CLEAN
+    // mismatch, so the table's one non-zero allowance must still be exactly the
+    // pad-apron finding — `c1-harbourtown`, 55 columns, which belongs to the
+    // layout solver's pads and retires at WP-G3.
+    const allowed = ALL.filter((w) => (w.cleanMismatches ?? 0) > 0);
+    expect(allowed.map((w) => [w.name, w.cleanMismatches])).toEqual([
+      ["c1-harbourtown", PAD_APRON_MISMATCHES["c1-harbourtown"]],
+    ]);
   });
 
   it("the tolerated table is §8.5's, and no row was added to make a world pass", () => {

@@ -34,7 +34,7 @@ import {
   MAX_JUNCTION_LIFT,
   MAX_SEAM_COLUMNS,
   MAX_SEAM_THICKNESS,
-  buildJunctionSteps,
+  buildJunctionStepsOnBarePlan,
   type PavedKind,
 } from "../src/structures/junction-steps.js";
 
@@ -97,7 +97,7 @@ function run(
   paved: readonly { kind: PavedKind; columns: readonly number[] }[],
   blocks: readonly StructureBlock[] = [],
 ) {
-  return buildJunctionSteps({ region: p.region, plan: p, stack, paved, blocks });
+  return buildJunctionStepsOnBarePlan({ region: p.region, plan: p, stack, paved, blocks });
 }
 
 /** The `y` of each column of a row, for readable assertions. */

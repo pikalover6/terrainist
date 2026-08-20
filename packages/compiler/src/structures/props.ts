@@ -269,12 +269,18 @@ export function buildProps(input: PropPassInput): PropPassResult {
       // plinth. `padDeclarations` is the same set, kept as a return value for
       // the report and the tests.
       const pad: GroundClaim[] = [];
+      // WP-G2: the two entry points are chosen **by type**, not by an
+      // `undefined` check inside one. `input.ground` is present on every
+      // settlement compile (`StructurePassInput.ground` is required); it is
+      // absent only for the terrarium and the exhibits.
+      const padGround = { source: `${job.nodePath}#pad`, declare: pad };
       blocks.push(
-        ...levelPropPad(plan, site.footprint, site.baseY, {
-          ...(input.ground === undefined ? {} : { driver: input.ground }),
-          source: `${job.nodePath}#pad`,
-          declare: pad,
-        }),
+        ...(input.ground === undefined
+          ? levelPropPadUndeclared(plan, site.footprint, site.baseY, padGround)
+          : levelPropPad(plan, site.footprint, site.baseY, {
+              ...padGround,
+              driver: input.ground,
+            })),
       );
       if (pad.length > 0) padDeclarations.push({ source: `${job.nodePath}#pad`, columns: pad });
     }
@@ -705,16 +711,6 @@ export function datumPropBase(
 
 /** What {@link levelPropPad} does with the level it computes. */
 export interface PropPadGround {
-  /**
-   * **WP-5** (`docs/GROUND-CONTRACT-v0.md` §3.10b, §9): commit the pad as a
-   * `prop.pad` platform and let the driver write the level, instead of writing
-   * it here.
-   *
-   * Absent for every caller that is not the world pipeline — the authored
-   * programs' pads, the terrarium, the exhibits — which have no driver to
-   * accumulate into and whose plan the contract does not govern (§3.12).
-   */
-  readonly driver?: GroundDriver;
   /** `<nodePath>#pad` — the claim's source (§9 step 3). Used with `driver`. */
   readonly source?: string;
   /**
@@ -760,12 +756,49 @@ interface PadColumn {
  * deliberately not material (§9a.6, step 4).
  *
  * Returns the blocks it laid.
+ *
+ * **WP-G2** (`docs/GROUND-CONTRACT-v1.md` §6, WP-G2 item 3): the driver is now
+ * a **required** argument, so the settlement path cannot reach a mutating
+ * branch by omitting it. The direct-write path still exists for the callers the
+ * contract does not govern (§3.12) — the authored programs' `site-treatment`
+ * pads, the terrarium, the exhibits, the unit tests — but it is a separately
+ * named export, {@link levelPropPadUndeclared}, rather than an `undefined`
+ * check inside this one.
  */
 export function levelPropPad(
   plan: ColumnPlan,
   rect: Rect,
   baseY: number,
-  ground: PropPadGround = {},
+  ground: PropPadGround & { readonly driver: GroundDriver },
+): StructureBlock[] {
+  return padColumns(plan, rect, baseY, ground, ground.driver);
+}
+
+/**
+ * {@link levelPropPad} for a plan the ground contract does not govern.
+ *
+ * The **non-settlement** entry point, enumerated in
+ * `test/ground-writers.test.ts`: with no driver to accumulate into there is no
+ * resolver answer to paint against, so the pad writes its own `ground`,
+ * `fluidTop` and `snow`. Callers: `programs/site-treatment.ts` (authored
+ * programs, deliberately outside the contract — `terrain/compile.ts:892-896`),
+ * `terrarium.ts`, `exhibits/*`, and `test/props.test.ts`.
+ */
+export function levelPropPadUndeclared(
+  plan: ColumnPlan,
+  rect: Rect,
+  baseY: number,
+  ground: Omit<PropPadGround, "driver"> = {},
+): StructureBlock[] {
+  return padColumns(plan, rect, baseY, ground, undefined);
+}
+
+function padColumns(
+  plan: ColumnPlan,
+  rect: Rect,
+  baseY: number,
+  ground: PropPadGround,
+  driver: GroundDriver | undefined,
 ): StructureBlock[] {
   const out: StructureBlock[] = [];
   const top = baseY - 1;
@@ -806,7 +839,6 @@ export function levelPropPad(
   if (pad.length === 0) return out;
 
   for (const column of pad) ground.declare?.push({ idx: column.idx, y: column.want });
-  const driver = ground.driver;
   if (driver !== undefined) {
     driver.commit([
       {
@@ -828,6 +860,9 @@ export function levelPropPad(
       out.push({ x, y, z, stateId: y === want ? cap : fill });
     }
     plan.surface[idx] = cap;
+    // The declared path never reaches the three writes below: `levelPropPad`
+    // takes a `GroundDriver` by type, so only `levelPropPadUndeclared` — the
+    // enumerated non-settlement entry point — can pass `undefined` here.
     if (driver !== undefined) continue;
     plan.ground[idx] = want;
     plan.fluidTop[idx] = want;

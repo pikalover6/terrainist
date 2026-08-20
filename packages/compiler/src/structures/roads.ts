@@ -3263,6 +3263,36 @@ const NO_CORRIDOR = -0x8000_0000;
  * `cart` roles are deliberately **not** corridor: a carriage spine is graded at
  * 1 in 6 and meets its streets at junctions the pins already reconcile, so it
  * never presents the riser this exists to open.
+ *
+ * ## WP-G2's finding — why this is still here
+ *
+ * `docs/GROUND-CONTRACT-v1.md` §4 item 6 puts this on the deletion list ("a
+ * second grader inside one pass") and §6's WP-G2 says to delete it now, on the
+ * claim that a stair's foot meeting the street is already S9's landing
+ * publication plus the `steps` sub-claim the surfacer declares at `:1652`.
+ * **Measured, 2026-08-20, and the claim does not survive the measurement yet.**
+ *
+ * Deleting it *is* byte-identical on all five of WP-G2's acceptance documents —
+ * troy, hellenist, pirates, `hillside-village`, `hilltop-crypt-hamlet` — but
+ * only because it never fires on any of them: instrumented, hellenist and
+ * pirates surface **zero** `steps` jobs, troy surfaces three flights and
+ * produces **zero** landings, and the two examples never reach this phase at
+ * all. The acceptance set is blind to the mechanism.
+ *
+ * Its live witness is `examples/site-plan-hillside`, where it yields **eleven**
+ * columns — `(-30,40)` and `(-29,40)` 116→115, `(-1..1, 42)` 116→115,
+ * `(-1..1, 43)` 116→114, `(5,43)` 116→115, `(5,44)` 116→114 and `(6,44)`
+ * 116→115, the last of which is the three-block riser at `(5, 44)` this
+ * function's own docstring was written about. Deleting it moves that world in
+ * two region files (`r.-1.0.mca`, `r.0.0.mca`), and takes
+ * `test/terminus-landing.test.ts` and `walkability.test.ts:282`'s guarantee
+ * with it.
+ *
+ * So it stays, and the deletion moves to the stage that supplies its
+ * replacement: WP-G4's `finishSeams`, where a street standing two above the
+ * flight beside it is a derived transition the resolver enumerates rather than
+ * a recess one pass cuts for itself. Byte-identity is this stage's law, and
+ * eleven columns of `hillside_town` are not byte-identity.
  */
 export function terminusLandings(
   region: Region,

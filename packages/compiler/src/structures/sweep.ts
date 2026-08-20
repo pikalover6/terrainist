@@ -135,18 +135,24 @@ export interface SweepInput {
    * follow it, because a course painted at a level the resolver refused is a
    * course hanging in the air.
    *
-   * Absent means the mutating path, byte for byte as it has always been: the
-   * sweep writes `ground`, `fluidTop` and `snow` itself. That is what every
-   * caller outside the world pipeline does — the terrarium, the exhibits, the
-   * unit tests that sweep a profile on a bare plan.
+   * **Required — WP-G2** (`docs/GROUND-CONTRACT-v1.md` §6, WP-G2 item 3, and
+   * §4's deletion list). This field used to be optional, and its absence
+   * selected a *mutating* path on which the sweep wrote `ground`, `fluidTop`
+   * and `snow` into the plan itself. That path was scoped by an `undefined`
+   * check rather than by a type, which is exactly the shape the contract has to
+   * be able to rule out: nothing in the type system stopped a settlement-path
+   * caller from reaching it. It is now scoped **by type** — and, since the only
+   * two callers of {@link sweep} in the tree (`retaining.ts:1122`, `:3472`)
+   * always declared, the mutating branch was already dead and its deletion
+   * moves no block. There is no undeclared entry point because no caller needs
+   * one; a future exhibit/terrarium sweep gets its own named export rather than
+   * a re-optionalised field.
    *
    * The class is *supplied by the caller* rather than chosen here, because the
    * engine is an engine: a retaining wall swept by it declares `retaining.seam`,
-   * a street `street.network`, an authored profile `sweep.run`. One optional
-   * field rather than a boolean plus a second class field, so the two can never
-   * disagree — presence of the class *is* the mode.
+   * a street `street.network`, an authored profile `sweep.run`.
    */
-  readonly declare?: SweepDeclaration;
+  readonly declare: SweepDeclaration;
 }
 
 /** How a swept run reaches the ground contract (§3.13). */
@@ -1377,18 +1383,15 @@ const SWEEP_MAX_FILL = 12;
 export function sweep(input: SweepInput): SweepResult {
   const { profile, plan, palette, stack } = input;
   const declaration = input.declare;
-  /** Declaration mode's answer, built beside the writes it replaces. */
+  /** Declaration mode's answer — the only mode there is (WP-G2). */
   const declared: GroundClaim[] = [];
-  const asIntent = (): GroundIntent | undefined =>
-    declaration === undefined
-      ? undefined
-      : {
-          source: declaration.source ?? input.nodePath ?? profile.id,
-          sourceClass: declaration.sourceClass,
-          kind: declaration.kind ?? "profile",
-          columns: declared,
-          transition: declaration.transition ?? "ramp",
-        };
+  const asIntent = (): GroundIntent => ({
+    source: declaration.source ?? input.nodePath ?? profile.id,
+    sourceClass: declaration.sourceClass,
+    kind: declaration.kind ?? "profile",
+    columns: declared,
+    transition: declaration.transition ?? "ramp",
+  });
   const region = plan.region;
   const nodePath = input.nodePath ?? profile.id;
   const cells = region.width * region.depth;
@@ -1405,7 +1408,7 @@ export function sweep(input: SweepInput): SweepResult {
       datum: new Int32Array(0),
       features,
       diagnostics,
-      ...(declaration === undefined ? {} : { intent: asIntent() as GroundIntent }),
+      intent: asIntent(),
     };
   }
 
@@ -1456,7 +1459,7 @@ export function sweep(input: SweepInput): SweepResult {
         datum: Int32Array.from(level),
         features,
         diagnostics,
-        ...(declaration === undefined ? {} : { intent: asIntent() as GroundIntent }),
+        intent: asIntent(),
       };
     }
     for (const [i, v] of treads.levels.entries()) level[i] = v;
@@ -1532,18 +1535,15 @@ export function sweep(input: SweepInput): SweepResult {
   // The commit, between the two phases: the driver resolves the whole prefix and
   // writes its answer over this run's columns (§9a.1 rule 2), including the snow
   // clear the material loop below no longer carries.
-  if (declaration !== undefined) declaration.commit(asIntent() as GroundIntent);
+  declaration.commit(asIntent());
 
   // --- the material phase --------------------------------------------------
-  for (const { col, band, top } of run) {
-    // Declared: the level is the driver's, and the paint follows it. Undeclared:
-    // the sweep is still the writer, and writes what it computed.
-    const built = declaration === undefined ? top : (plan.ground[col.idx] as number);
-    if (declaration === undefined) {
-      plan.ground[col.idx] = top;
-      plan.fluidTop[col.idx] = top;
-      plan.snow[col.idx] = 0;
-    }
+  for (const { col, band } of run) {
+    // The level is the driver's, and the paint follows it. **WP-G2 deleted the
+    // undeclared arm** (`plan.ground`/`fluidTop`/`snow` written here from the
+    // sweep's own `top`): `declare` is required, so the driver's write-through
+    // is the only writer of a swept column.
+    const built = plan.ground[col.idx] as number;
     plan.surface[col.idx] = stateOf(band.surface, col.x, col.z);
     plan.subsurface[col.idx] = stateOf(band.fill ?? band.surface, col.x, col.z);
     if (plan.soil[col.idx] === 0) plan.soil[col.idx] = 1;
@@ -1592,6 +1592,6 @@ export function sweep(input: SweepInput): SweepResult {
     datum: Int32Array.from(level),
     features,
     diagnostics,
-    ...(declaration === undefined ? {} : { intent: asIntent() as GroundIntent }),
+    intent: asIntent(),
   };
 }

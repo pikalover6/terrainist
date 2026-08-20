@@ -315,7 +315,13 @@ export interface PavedSurface {
 
 export interface JunctionStepInput {
   readonly region: Region;
-  /** Mutated in place: `ground`, `soil` and `subsurface` of lifted columns. */
+  /**
+   * Mutated in place: `soil` and `subsurface` of lifted columns — and, on the
+   * bare-plan entry point only, `ground`.
+   *
+   * **WP-G2**: on the settlement path this pass no longer writes `plan.ground`
+   * at all. See {@link buildJunctionSteps}.
+   */
   readonly plan: ColumnPlan;
   readonly stack: PrismarineStack;
   /** For the `ground.stairs` role; absent in unit tests, which get the default. */
@@ -324,9 +330,12 @@ export interface JunctionStepInput {
   /**
    * The ground contract's driver. The lift is committed through it, under the
    * class that already owns each column, so the resolver and the pipeline give
-   * the same answer. Optional only for the unit tests, which grade a bare plan.
+   * the same answer.
+   *
+   * **Required as of WP-G2** — the bare-plan callers use
+   * {@link buildJunctionStepsOnBarePlan} instead.
    */
-  readonly ground?: GroundDriver;
+  readonly ground: GroundDriver;
   /**
    * Every structure block laid so far.
    *
@@ -430,6 +439,29 @@ const NEIGHBOURS8 = [
  * the surfaces were declared in, and the emitted blocks are sorted by column.
  */
 export function buildJunctionSteps(input: JunctionStepInput): JunctionStepResult {
+  return runJunctionSteps(input, input.ground);
+}
+
+/**
+ * {@link buildJunctionSteps} against a plan the ground contract does not
+ * govern — the **non-settlement** entry point, enumerated in
+ * `test/ground-writers.test.ts`.
+ *
+ * With no driver there is no resolver answer to read back, so this is the one
+ * arm on which the pass writes `plan.ground` itself, `+= rise` on each lifted
+ * column. Its only caller is `test/junction-steps.test.ts`, which grades a bare
+ * plan and asserts the lift off it directly.
+ */
+export function buildJunctionStepsOnBarePlan(
+  input: Omit<JunctionStepInput, "ground">,
+): JunctionStepResult {
+  return runJunctionSteps(input, undefined);
+}
+
+function runJunctionSteps(
+  input: Omit<JunctionStepInput, "ground">,
+  ground: GroundDriver | undefined,
+): JunctionStepResult {
   const { region, plan, stack } = input;
   const cells = region.width * region.depth;
 
@@ -632,7 +664,21 @@ export function buildJunctionSteps(input: JunctionStepInput): JunctionStepResult
       if (rise > 0) {
         // The riser is the paving's own material, not the hill's: a three-block
         // step showing a dirt face is the plinth defect wearing a stair.
-        plan.ground[idx] = (plan.ground[idx] as number) + rise;
+        //
+        // **WP-G2** (`docs/GROUND-CONTRACT-v1.md` §6, WP-G2 item 1): the level
+        // write that used to sit here — `plan.ground[idx] += rise` — is gone on
+        // the declared path. It was already dead there: every column it moved
+        // is a column this pass declares below (the two sets are both exactly
+        // `rise > 0`), and `GroundDriver.commit` re-resolves the whole prefix
+        // and writes its answer over every column of the commit whose owner is
+        // not `-1` (`ground-driver.ts:150-163`). So the mutation was overwritten
+        // by the commit on every column, whether the junction claim won it (the
+        // resolver answers `after`, the same number) or lost it (the resolver
+        // answers the winner's, which the mutation had briefly clobbered).
+        // Nothing between here and the commit reads `plan.ground`: `standing`,
+        // `top` and `built` are all snapshotted before the loop, and the tread
+        // geometry below is decided off `top`.
+        if (ground === undefined) plan.ground[idx] = (plan.ground[idx] as number) + rise;
         plan.soil[idx] = Math.max(plan.soil[idx] as number, rise + 1);
         plan.subsurface[idx] = plan.surface[idx] as number;
         lifted++;
@@ -722,8 +768,8 @@ export function buildJunctionSteps(input: JunctionStepInput): JunctionStepResult
   // junction and it has to outrank the street's body to be the answer there.
   // Grouped by winner rather than by declarer so a lane column a doorstep also
   // named is claimed under `road.network`, which is the class that holds it.
-  if (input.ground !== undefined && claims.size > 0) {
-    input.ground.commit(
+  if (ground !== undefined && claims.size > 0) {
+    ground.commit(
       [...claims]
         .sort(([a], [b]) => INTENT_RANK[a] - INTENT_RANK[b])
         .map(([sourceClass, columns]) => ({
@@ -1014,7 +1060,7 @@ function highestNeighbour(
  * know what the *ground* is, and this question is about what was put on it.
  */
 function occupiedAbove(
-  input: JunctionStepInput,
+  input: Omit<JunctionStepInput, "ground">,
   paved: Uint8Array,
 ): { readonly mask: Uint8Array; readonly standing: Int32Array; readonly built: Uint8Array } {
   const { region, plan, stack } = input;

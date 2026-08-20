@@ -1612,7 +1612,11 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
       stack: input.stack,
       palette: input.palette,
       paved: pavedSurfaces,
-      ...(input.ground === undefined ? {} : { ground: input.ground }),
+      // WP-G2: required, not spread-if-present. `StructurePassInput.ground` is
+      // non-optional, so the old conditional was vestigial — and it was the
+      // only thing that made the pass's `plan.ground` write look reachable from
+      // here.
+      ground: input.ground,
       blocks,
     });
     lay("junction-steps", junctions.blocks);

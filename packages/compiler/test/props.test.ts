@@ -33,7 +33,7 @@ import {
   buildProps,
   checkPropFluidSafety,
   groundBase,
-  levelPropPad,
+  levelPropPadUndeclared,
   planPropPlacement,
   propReliefTolerance,
   waterBase,
@@ -750,6 +750,6 @@ describe("relief tolerance scales with the footprint", () => {
     const plan = plainPlan();
     const rect = { x0: 10, z0: 10, x1: 13, z1: 13 };
     const base = groundBase(plan, rect) as number;
-    expect(levelPropPad(plan, rect, base)).toEqual([]);
+    expect(levelPropPadUndeclared(plan, rect, base)).toEqual([]);
   });
 });

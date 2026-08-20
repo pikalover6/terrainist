@@ -467,7 +467,25 @@ describe("sweep's declaration mode (§3.13)", () => {
     const declaring = planOf(stack, (x) => stepped(x));
     const before = Int32Array.from(declaring.ground);
 
-    const wrote = sweep({ profile: RETAINING_PROFILE, path, plan: mutated, palette, stack });
+    // **WP-G2**: `sweep()`'s mutating path is gone — `declare` is required —
+    // so the reference run is a second *declaring* run through its own driver
+    // rather than a run that wrote the plan itself. What it still references is
+    // the same thing: the columns the engine claims and the levels it computed
+    // for them, arrived at without this test's driver in the loop.
+    const mutatedDriver = driverForPlan(mutated);
+    const wrote = sweep({
+      profile: RETAINING_PROFILE,
+      path,
+      plan: mutated,
+      palette,
+      stack,
+      declare: {
+        sourceClass: "retaining.seam",
+        kind: "face",
+        transition: "wall",
+        commit: (intent) => mutatedDriver.commit([intent]),
+      },
+    });
     /** The plan as it stood when the engine handed the intent over. */
     let atCommit: Int32Array | undefined;
     const driver = driverForPlan(declaring);
@@ -523,11 +541,25 @@ describe("sweep's declaration mode (§3.13)", () => {
     expect(declaredRun.blocks).toEqual(wrote.blocks);
   });
 
-  it("the mutating path is unchanged by the flag's existence", () => {
+  it("two runs of the same sweep over the same plan agree", () => {
+    // Was "the mutating path is unchanged by the flag's existence". **WP-G2**
+    // deleted the mutating path (`SweepInput.declare` is required), so what is
+    // left of the assertion is the half that outlives it: the engine is a pure
+    // function of its geometry, and two runs of one profile over two identical
+    // plans build one world.
     const a = planOf(stack, (x) => stepped(x));
     const b = planOf(stack, (x) => stepped(x));
-    sweep({ profile: RETAINING_PROFILE, path, plan: a, palette, stack });
-    sweep({ profile: RETAINING_PROFILE, path, plan: b, palette, stack });
+    const declareFor = (plan: ColumnPlan) => {
+      const driver = driverForPlan(plan);
+      return {
+        sourceClass: "retaining.seam" as const,
+        kind: "face" as const,
+        transition: "wall" as const,
+        commit: (intent: GroundIntent) => driver.commit([intent]),
+      };
+    };
+    sweep({ profile: RETAINING_PROFILE, path, plan: a, palette, stack, declare: declareFor(a) });
+    sweep({ profile: RETAINING_PROFILE, path, plan: b, palette, stack, declare: declareFor(b) });
     expect(Array.from(a.ground)).toEqual(Array.from(b.ground));
     expect(Array.from(a.surface)).toEqual(Array.from(b.surface));
   });

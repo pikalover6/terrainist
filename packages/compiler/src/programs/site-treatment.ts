@@ -46,7 +46,12 @@ import { parseBlockString } from "../emit/blockstring.js";
 import type { ColumnPlan } from "../terrain/columns.js";
 import { FluidKind } from "../terrain/columns.js";
 import { MAX_FOUNDATION_DEPTH, type StructureBlock } from "../structures/buildings.js";
-import { PROP_MAX_RELIEF, PROP_PAD_SKIRT, levelPropPad } from "../structures/props.js";
+import {
+  PROP_MAX_RELIEF,
+  PROP_PAD_SKIRT,
+  levelPropPad,
+  levelPropPadUndeclared,
+} from "../structures/props.js";
 
 /**
  * Columns of apron per block of lift the pad absorbs.
@@ -189,11 +194,17 @@ export function treatProgramSite(input: SiteTreatmentInput): StructureBlock[] {
   }
   if (relief <= PROP_MAX_RELIEF) return [];
 
-  const blocks = levelPropPad(plan, footprint, baseY, {
-    ...(input.ground === undefined ? {} : { driver: input.ground }),
+  // WP-G2: `levelPropPad` takes its driver by type; the undeclared entry point
+  // is named. Authored programs may run with or without one (`compile.ts`
+  // §7.1), so the choice is made here, once, and neither arm changes behaviour.
+  const padGround = {
     source: input.source,
     ...(input.declare === undefined ? {} : { declare: input.declare }),
-  });
+  };
+  const blocks =
+    input.ground === undefined
+      ? levelPropPadUndeclared(plan, footprint, baseY, padGround)
+      : levelPropPad(plan, footprint, baseY, { ...padGround, driver: input.ground });
 
   // `relief` is the deepest fill the pad just laid — how far its outer face has
   // to come back down — which is exactly what the apron is sized on.
