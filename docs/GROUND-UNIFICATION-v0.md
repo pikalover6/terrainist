@@ -1,13 +1,19 @@
 # Ground unification — the road is the ground, and a program stands on it
 
 > Normative for **WP-8** (the frontage tie), **WP-9** (bespoke builds on real
-> terrain), **WP-10** (the lift-keyed edge) and **WP-11** (the served seam).
+> terrain), **WP-10** (the lift-keyed edge), **WP-11** (the served seam) and
+> **WP-12** (the ground-plane tie).
 > The first two headline directions were ratified by Kai on the 2026-08-17 deck
 > walk, the second in his own words: *"What if we feed the bespoke generator the
 > terrain that its structure will be sitting on and let it build naturally on top
 > of that?"* WP-11 (Part IV) answers three walked-bad findings from the padfix
 > and tie2 decks that turn out to be one mechanism, and it closes §3.2's ledger
-> item — *"what does a refused `tallDrop` become"*.
+> item — *"what does a refused `tallDrop` become"*. **WP-12 (Part V)** answers
+> the verdict Kai has now walked on four consecutive decks — *"the streets are
+> sunken one block"* — attributed by measurement rather than by reading: it is
+> the platform election's storey lattice, anchored on a number no street has
+> ever been consulted about (§11.0a). Part V also carries the coastal sibling,
+> the claimed plane that ends at a raw cut face outside any quarter.
 >
 > **`COURTYARDS-AND-LEVELS-v0.md` §3.4 and §3.5 are amended by Part IV**, which
 > is the one place this document does more than generalise its parents: §3.4's
@@ -1364,7 +1370,9 @@ Stated so that a wave that drifts into one of these is visibly wrong.
    argument in `layout/platforms.ts`' own header ("contours are `terraced`'s idea
    and this has to work under `grid`, `grown` and `radial` too") is unchanged.
    S6 only *refuses* an election; it never redraws one. A contour-following
-   election is a rewrite and is WP-12 at the earliest.
+   election is a rewrite and is **WP-13** at the earliest. *(Amended by Part V:
+   this row read "WP-12", which is now the ground-plane tie. The argument is
+   unchanged; only the number moved — §11.9a.)*
 10. **No change to `RETAIN_MAX`, `MIN_RETAIN_RUN`, `RETAIN_RAIL`,
     `FLOOR_HEIGHT` or `MIN_PLATFORM_COLUMNS`.** GROUND-CONTRACT §13.8 measured
     the first three on 2026-08-07 and they stay. WP-11 changes what they *mean
@@ -1474,6 +1482,7 @@ measurement of `PAD_APRON_MISMATCHES` is the evidence WP-7 was waiting for.
 | **WP-9** | bespoke builds on real terrain | Part II, waves 9A–9E | nothing; 9B benefits from 8E |
 | **WP-10** | the lift-keyed edge | Part III, waves 10A–10C | 10A blocked on forensics; 10B notes a WP-6 interaction |
 | **WP-11** | **the served seam** | Part IV, waves 11A–11F | nothing; independent of WP-8 and WP-9. 11E coordinates with the in-flight doorstep foot gate (S10). Closes §3.2's ledger item *"what does a refused `tallDrop` become"* and `COURTYARDS` §3.5 steps 2 and 3 |
+| **WP-12** | **the ground-plane tie** | **Part V, §11, waves 12A–12F** | WP-8 (the datum) and WP-11 (the served seam). Answers the four-deck "sunken streets" verdict: the writer is `derivePlatforms`' storey lattice, anchored on a number no street has ever seen (§11.0a P3/P4) |
 
 ---
 
@@ -1539,3 +1548,686 @@ learns that its terrain asked for a level the town could not serve.
 land-budget feedback diagnostic already in flight is the right place for that
 signal, and two passes telling a model about the same hill is how a prompt gets
 noisy.*
+
+---
+
+# Part V — the ground-plane tie (WP-12)
+
+> **Numbering.** §5–§10 above are the *shared tail* of Parts I–IV and stay
+> where they are. Part V continues at §11 and carries its own tail (§11.5
+> non-goals, §11.6 risks, §11.7 diagnostics, §11.8 walk gates, §11.9 open
+> questions), because it is a later work package answering a later walk and
+> nothing in it amends a law above. Two lines elsewhere *are* amended and both
+> are named in §11.9a.
+
+Kai has walked "the streets are sunken one block" on four consecutive decks.
+The frontage tie (Part I) shipped, `FRONTAGE_TIE` is `true`, doors are flush,
+and he walked it again. Part V is the attribution and the answer.
+
+The question this part answers, plainly:
+
+> **The street is at 90 and the town's own ground is at 91. Which pass wrote
+> the 91?**
+
+## 11. What the probe measured, and what the code says
+
+The measurement is `tools/worlds/street-probe.mjs` (`b2fdba2`) plus three
+throwaway attribution scripts over the *archived* r22 compile
+(`battery/candidates/pirates_r22/pirates_vs_unicorns.loam.json`, seed 301,
+compiled before `61f1cef`). Every number below is read off the emitted region
+files and the compile report, not inferred.
+
+### 11.0 The five findings, as numbers
+
+| finding | what the world says |
+| --- | --- |
+| **the +1 is entirely inside the two quarters** | 470 road-to-terrain edges at exactly +1 map-wide; 209 in `world.unicorn_citadel`, 261 in `world.pirate_cove_town`, **0 anywhere else**. The `+1` neighbour materials are the town's own ground — `coarse_dirt` 149, `dirt_path` 126, `gravel` 87, `grass_block` 95, `podzol` 2. |
+| **and it is the platform election that wrote it** | 449 of those 470 columns (**95.5 %**) stand at *exactly* `levels.levelY[platform]` — the level `derivePlatforms` elected. 19 more are `NO_PLATFORM` slivers; 2 are off by something else. |
+| **it is a constant, not a distribution** | For every platform column in the citadel within four columns of a graded carriageway — **4,180 of them** — `levelY − datum.columnY` is **+1**. Not a mode: the whole histogram is one bar. In the pirate haven 3,909 of 5,125 are +1, and the rest are the −3…+5 spread of a street network that actually falls. |
+| **the two computations disagree on their own shared columns** | 116 citadel columns are inside the datum's own `band` *and* carry a platform index. All 116 are +1 above the datum that claims that very column. |
+| **the western coastal walls are not a road** | The two 4–6 block raw grass faces (x −127…−84 z 65…95, x −160…−137 z 100…115) lie inside the *reseated* footprint of `world.pirate_haven_quay` (`LOAM-W409`: reseated to [−160, 64], 80 columns facing south). They are the quay's back edge. Map-wide there are 111 `smooth_stone ← grass_block` faces of ≥ 2; 73 of them are these two clusters. |
+
+### 11.0a The mechanism, each fact checkable
+
+**P1 — the town-ground passes do not write levels. They write paint.** Every
+pass the brief named is a *painter*: `terrain/urban-floor.ts`' own rule 3 —
+*"Material, not level… This pass writes `plan.surface` and nothing else — not
+`ground`, not `fluidTop`, not `snow` — so it cannot fight the driver and cannot
+move a single column of anybody's finished level"*; `structures/life.ts`'
+`repaint` (`life.ts:2255`) writes `plan.surface`, `plan.snow` and `plan.soil`
+and no height, and it is the single writer behind `layGarden`'s `dirt_path`,
+`layMarketGround`'s `gravel`/`dirt_path`, `dressOpenGround`, `layOrchard` and
+the paddock — the whole of `8e09cc6`'s block dressings. **They make the +1
+legible; not one of them makes it.** Any wave that edits them is wrong (G6).
+
+**P2 — the one writer is a pad list eleven lines long.** `layDistrict`
+(`layout/district.ts:1856`) emits, per derived platform run:
+
+```ts
+for (const [platform, runs] of levels.runs.entries()) {
+  const targetY = levels.levelY[platform] as number;
+  for (const run of runs) padEdits.push({ nodePath, footprint: run, targetY, apron: 0 });
+}
+```
+
+`apron: 0` on every side, at layout stage, so it **cuts as well as fills**
+(§0.3a) and feathers nowhere. That pad is the town's claimed ground: the
+walkways, the yards, the urban floor's substrate, the open patches. One
+`targetY`, one number, per platform.
+
+**P3 — and the number is quantised on a ruler the street has never seen.**
+`derivePlatforms` (`layout/platforms.ts`) computes
+
+```ts
+let base = +Infinity;
+for (let k = 0; k < cells; k++) { if (blocked[k] === 1) continue; const h = heightAt(k); if (h < base) base = h; }
+…
+storey(base, median) = base + Math.round((median - base) / FLOOR_HEIGHT) * FLOOR_HEIGHT   // platforms.ts:553
+```
+
+`blocked` is `carriageway | sidewalk`, so `base` is *the lowest column of the
+quarter that is not a street* — a quantity derived from the ground the streets
+were carved out of, and never from the streets themselves. Every level the
+election can produce lies on `{ base + k · FLOOR_HEIGHT }`, `FLOOR_HEIGHT = 4`.
+
+**P4 — the lattice has no mark under the street, and cannot have one.**
+`gradeProfile` runs at `band = ROAD_FILL_BAND = 0`, which by construction can
+only ever *cut* (§0.1 point 3), and `STREET_CUT_MAX = 2` lets it cut two blocks
+below its own natural ground. So the carriageway sits **at or below** the
+quarter's free-ground minimum — that is, at or below `base` — while `base` is
+the **lowest mark the lattice has**. The nearest available ground plane is
+therefore `base` itself, one to three blocks above the street. Measured on the
+citadel: the whole street network grades to a single level, **90** (all 5,406
+banded columns); the elected levels are **91 and 87**; `91 mod 4 === 87 mod 4
+=== 3` and `90 mod 4 === 2`. *Ninety is not on the ruler.* The pirate haven is
+the same statement at a different offset: levels {70, 66} on `mod 4 === 2`,
+modal street 69 on `mod 4 === 1`, and 63 is the `waterFloor` clamp sitting off
+the lattice on purpose.
+
+This is why `61f1cef`'s rounding harmonisation removed only ~15 %: `floor` vs
+`round` is a half-block correction, and this is a whole-block one. **No
+rounding rule can move a plane onto a ruler that has no mark there.**
+
+**P5 — the verge cannot reach it, by design.** `blendShoulders`
+(`structures/roads.ts:3693`) skips any column where `blocked[idx] === 1 ||
+paved[idx] === 1`, and a platform pad has already claimed and paved these. The
+orchestrator's symmetric cut-side feather (experiment 3, `61f1cef`'s message)
+moved **one edge on the whole map** and was reverted. That is the correct
+outcome, not a failed fix.
+
+**P6 — and the retaining pass declines it by name.** `skirtSeams`
+(`retaining.ts:2196`) refuses any low-side neighbour whose ground stands within
+one block of the platform top:
+
+```ts
+// A one-block lip is a kerb the street pass already copes with; below
+// that there is nothing to retain.
+if ((plan.ground[n] as number) > top - 2) continue;
+```
+
+True of a kerb the street lays for itself; **false of the town's own ground
+standing over the pavement**. So the +1 is thrice disowned: the election makes
+it, the verge is forbidden to touch it, and the skirt classifies it as somebody
+else's kerb. Three passes, each locally correct.
+
+**P7 — on a stepped quarter the frontage tie never fires.** `layDistrict`'s
+seat expression (`district.ts:1930`) is
+
+```ts
+const foundationY = levels !== null && platform !== NO_PLATFORM
+  ? (levels.levelY[platform] as number)
+  : cell?.foundationY ?? tied ?? medianGround(input.field, rect);
+```
+
+with its own comment: *"a quarter that declared its own platforms has already
+answered the question this asks."* Correct — and it means the platform level is
+the *only* seat a stepped quarter's lots ever get. The citadel's 45 infill
+buildings are all at `foundationY = 91` (floor 92) beside a carriageway at 90.
+**F1's authority law is already true; it is the platform election that is not
+yet a client of it.** Every quarter with ≥ `STEP_RELIEF = 10` blocks of relief
+elects `"stepped"` (`district.ts:912`), which is most of the battery.
+
+**P8 — the quay ends at a cut face while its own claim says "ramp".**
+`layOutHarbour` (`structures/precincts.ts:979`) levels `QUAY_DEPTH = 7` columns
+behind the shoreline to `quayTop = waterY + 1` and stops:
+
+```ts
+for (let back = 0; back < QUAY_DEPTH; back++) { …; claims.push({ idx, y: quayTop }); }
+```
+
+`buildPrecincts` then commits those columns as `sourceClass:
+"precinct.ground"`, `kind: "platform"`, **`transition: "ramp"`**, under a
+comment that reads *"`transition: "ramp"`: the forecourt walks out to its own
+ground rather than ending at a cut face."* On the walked world the eighth
+column is grass at 68 against smooth stone at 64. The transition is derived
+into `resolved.transitions` correctly and **nothing builds it** — §3.2 fact 1,
+still true: the only reader in the tree is `farm.ts`'s `countWalls`, which
+counts. Meanwhile `finishCutFaces` (`retaining.ts:1416`) opens with
+`input.districts.filter((d) => d.levels !== undefined)` and `skirtSeams` needs a
+`GroundLevels`, so neither can see a plane that belongs to no quarter.
+
+## 11.1 The laws — the ground plane
+
+Ten, in the GROUND-CONTRACT style, so a wave that violates one is visibly
+wrong. G1 is F1 restated for its last client; G2 is the whole fix.
+
+### G1 — the ground plane is the street's plane
+
+> **Inside a settlement, the ground a town claims between its buildings holds
+> the level of the street that bounds it. A claimed-ground column within reach
+> of a graded carriageway is *at* that carriageway's level, or a **whole
+> storey** from it. One, two and three blocks above it are not answers.**
+
+This is F1's authority sentence applied to the fifth and last client. The lot
+obeys it (F4), the prop obeys it (§1.6), the bespoke site obeys it (§1.6), the
+city cell obeys it (8E) — and the platform election, which outranks all four on
+a stepped quarter (P7), has never been asked.
+
+### G2 — the lattice is anchored on the carriageway
+
+> **`derivePlatforms`' `base` is the level of the street beside the block, not
+> the lowest free column of the quarter. The storey lattice is `{ street +
+> k · FLOOR_HEIGHT }`, so `k = 0` *is* the carriageway's own level and every
+> other mark is a whole storey from it.**
+
+Concretely, and per **block** rather than per quarter — a block is already the
+connected component of ground the carriageway and its verge did not take
+(`platforms.ts`' own header, rule 1: *"a block boundary is already a street and
+a street already grades itself"*), so its own perimeter is the authority for
+it, and one quarter-wide number is exactly what put an entire citadel one block
+proud of an entire street network:
+
+```
+anchorOf(block) =
+  perimeter = the block's boundary columns, region-major
+  levels    = [ datum.levelNear(x, z, tieReach) for each, where defined ]
+  levels.length === 0  ->  undefined            // G3: no frontage, no tie
+  otherwise            ->  levels[(levels.length - 1) >> 1]   // the LOWER median
+base = anchorOf(block) ?? min(heightAt over the quarter's free ground)   // today's number
+```
+
+The **lower** median, and this is F5's corner rule wearing different clothes:
+where the streets around a block disagree, the plane goes low. A plane one
+below its pavement is a kerb you step down off, which is what a kerb is; a
+plane one above its pavement is the defect Kai walked four times. Where the
+plane ends up a whole storey below a *higher* perimeter street, that street
+retains — the cut side, `treatmentForEdge`'s `soft = "rock"` — and that is a
+street on an embankment above a yard, which is a real town.
+
+`tieReach` is `frontageReach(sidewalkWidth)` — **the same reach the lot tie
+already probes with**, so a block that has a street by the fabric's reckoning
+has one by the plane's. No new constant.
+
+### G3 — no frontage, no tie
+
+> **A block with no banded column within `tieReach` of any of its perimeter
+> columns is not tied and keeps exactly the base it has today.**
+
+F6's law, for the platform. The interior of a very large quarter, a block
+against the district boundary, a block behind a plaza: all keep
+`min(free ground)` and the quarter reports it once as `LOAM-T241
+GROUND_PLANE_UNTIED`. Inventing a street for a block that has none is how a
+courtyard ends up on a road's plane.
+
+### G4 — a block whose streets disagree is split, not averaged
+
+> **Where the datum along a block's perimeter spans more than
+> `GROUND_TIE_SPAN = FLOOR_HEIGHT`, the block is split by the construction that
+> already splits a block whose *interior* relief exceeds `FLOOR_HEIGHT`, and
+> each piece re-anchors on the datum along its own share of the perimeter.**
+
+One line moves: `platforms.ts`' `if (hi - lo <= FLOOR_HEIGHT)` gains
+`&& perimeterSpan <= GROUND_TIE_SPAN`. Nothing else changes — the bucket
+partition, `mergeSlivers` (S6 rule 2) and `dissolveTallPairs` (S6 rule 3) all
+run exactly as they do. `GROUND_TIE_SPAN` is *derived*, not tuned: a block that
+straddles more than one storey of street cannot be one platform without one of
+its streets being wrong about it, and one storey is the unit the whole file is
+quantised in.
+
+### G5 — the one-block lip is not treated; it is made not to exist
+
+> **Nothing new is built at the street edge. Once G2 holds, the residual there
+> is `0` or `k · FLOOR_HEIGHT`, and `skirtSeams` already serves the second
+> case.**
+
+This is the part worth pausing on. `retaining.ts:2196`'s exclusion — *"a
+one-block lip is a kerb the street pass already copes with"* — is a **correct
+sentence about a world where one-block lips are kerbs**. Today it is false
+because the election manufactures 4,180 of them. Under G2 it becomes true
+again, and the ≥ 2 drops that remain are exactly the terraces a town means:
+`skirtSeams` groups them 8-connected, `treatmentForSeam` chooses, and the wall
+/ tier-stack / bank path of Part IV serves them unchanged. `buildTieredSeam`'s
+`open()` already refuses to stand a course on a street column, and `walkBack`
+already puts the wall at the back of the pavement rather than across the
+crossing. **Part V adds no seam machinery. It removes the case that had no
+answer and hands the rest to the machinery that has one.**
+
+So: *when is `+N` legitimate ground with a face, and when is it a plane that
+should have come down?* The answer is arithmetic rather than taste. `+N` is
+legitimate exactly when `N` is a whole storey, because a storey is the unit the
+quarter's own architecture is measured in and a face of that height is a thing
+a town builds. Anything between the marks is a plane that should have come
+down, because nothing in the town is that tall.
+
+### G6 — the painters are not clients
+
+> **No pass that writes `plan.surface` is edited by any wave of this work
+> package.**
+
+`terrain/urban-floor.ts`, `structures/life.ts` (`repaint`, `layGarden`,
+`layMarketGround`, `layOrchard`, `dressOpenGround`, `openPatches`, the
+paddock), `structures/grounds.ts`. Stated as a law rather than as a non-goal
+because the obvious reading of the walk — *"the walkway pass levels at the
+quarter plane"* — is false (P1), and a wave that acts on it would edit seven
+files to move zero blocks.
+
+### G7 — the platform pad keeps `apron: 0`
+
+> **The per-run pads at `district.ts:1856` keep `apron: 0` on every side. The
+> tie is in the level, never in the apron.**
+
+Where F7 gave the *lot* pad a per-side apron, a platform needs none: after G2
+every edge of a platform meets either a street at its own level (nothing to
+feather) or another platform at a whole storey (a seam, and *"an apron is a
+smoothstep ramp, and a ramp across a platform edge is the wall not being
+there"* — the existing comment on that very line). `LevelPad.apronBySide` is
+not read by this work package.
+
+### G8 — one law, two directions, and the city is the precedent
+
+> **In a *city cell* the pad is the authority and the datum pins to it
+> (`StreetDatumInput.planeY`, 8E as corrected at 8F). In a *quarter* the datum
+> is the authority and the election pins to it. The rule is the same rule:
+> there is exactly one plane per piece of town, and whichever of the two is a
+> **decision** wins over whichever is a **measurement**.**
+
+A city cell's `foundationY` is chosen by `solveCities` before any ground is
+read; a quarter's platform level is a median of the hillside. §0.1 already
+credits the cell version — *"half the fix has already shipped once, for
+cities"* — and this is the other half, keyed on the street because in a quarter
+the street is the only decided plane there is.
+
+### G9 — the datum is still not a claim
+
+F10, unchanged. Nothing here touches `layout/ground-resolver.ts`,
+`layout/ground-contract.ts`, `INTENT_RANK` or `structures/street-owner.ts`. The
+datum is an input to an election that happens one full stage before the
+resolver exists, and `GROUND_PLANE_TIE` implies `FRONTAGE_TIE`: `gradeDatum`
+returns `null` when the frontage flag is off (`district.ts:1177`), so the two
+flags are ordered and a test asserts it rather than leaving the tie to degrade
+silently.
+
+### G10 — reach and determinism
+
+> **A document with no `"stepped"` quarter compiles byte-identically.**
+
+Terrain-only worlds, `terrarium`, `devworld`, `theme-sweep`, every farm and
+scatter-only world, and every quarter whose relief is under `STEP_RELIEF = 10`
+(which elects `"pad"`, has no platforms, and seats its lots through the
+frontage tie already). A `terraced` quarter's *declared* benches are not
+re-anchored either — they are that form's own contour reading and re-anchoring
+them is a form rewrite (§11.5 non-goal 6).
+
+Determinism: `anchorOf` walks the block's perimeter row-major, `levelNear` is
+already documented as ascending-region-index with ties to the lowest
+(`street-datum.ts:378`), the median takes the lower of two middles, and `base`
+is an integer. No RNG, no clock, no iteration-order dependence. `boxBlur` stays
+an integer box filter (S12).
+
+## 11.2 The laws — the route face and the coastal walls
+
+Six, and between them they hold the whole non-district family: the quay, the
+airport apron, and every later pass that levels ground outside a quarter.
+
+### R1 — a claimed plane owes its own edges
+
+> **Every pass that levels ground to a plane owes the boundary between that
+> plane and the ground it did not level. Inside a quarter the platform election
+> owes it (Part IV). Outside one, nobody does — and that is the bug, not a
+> missing feature.**
+
+The evidence is P8: the quay commits `transition: "ramp"`, promises in its own
+comment that it *"walks out to its own ground rather than ending at a cut
+face"*, and ends at a 4–6 block cut face over 73 columns. Three passes could
+have caught it and each is scoped out: `finishCutFaces` filters to districts,
+`skirtSeams` needs a `GroundLevels`, `buildRetainingWalls` takes
+`RetainingDistrict[]`.
+
+### R2 — the seam is measured, never declared
+
+> **A plane's edges are *measured from the finished ground* by the construction
+> `skirtSeams` already uses, never read from the claim. The adapter is a
+> two-bench synthetic `GroundLevels` — index 0 the claimed plane, index 1 the
+> natural ground standing over it — and after that every existing function
+> applies unchanged.**
+
+`planeSeams(region, plan, claimed, planeY, occupied)` in
+`structures/retaining.ts`, sitting beside `skirtSeams` and sharing its
+8-connected grouping, its median-floor rule (*"a wall is built for the face it
+presents, and one column of gully at the end of a run is not that face"*) and
+its `drop < 2 → skip`. `groundLevelsOf(bounds, [planeBench, naturalBench])`
+builds the `GroundLevels`; `record.above = 1`, `record.below = 0`; and
+`buildTieredSeam` then reads `top = levelY[above]` and `floor = top − drop`
+exactly as it does for a quarter. **No new geometry, no new arbitration, and no
+consumer of `resolved.transitions`** — measuring is what every other seam
+producer in the tree already does, and it is why `deriveTransitions` staying
+unwired is not a blocker (§11.5 non-goal 7).
+
+Declared, never derived, is the wrong way round here for the same reason
+`layout/levels.ts` gives about seams: *"a form that declared its own seams
+could get one wrong, and a wrong seam is a cliff through a town."*
+
+### R3 — the fill side is the skirt, unchanged
+
+> **Where the claimed plane stands *above* the natural ground, the seam is a
+> skirt and takes the existing path: `treatmentForSeam`, then wall / tier stack
+> / landform bank, with S5's `pressedShare` choosing the dressing and S7
+> absorbing anything under `MIN_RETAIN_RUN`.**
+
+An airport apron cut into a hillside presents both sides; the fill half is
+already a solved problem the moment R2 hands it a `GroundLevels`.
+
+### R4 — the cut side is a face, never a ramp
+
+> **Where the natural ground stands *above* the claimed plane, the answer is a
+> face:**
+>
+> - **absorbed** where the run is under `MIN_RETAIN_RUN` — S7's construction,
+>   verbatim;
+> - **revetted** where `tierCountOf(drop) === 1`, i.e. `drop ≤ RETAIN_MAX` — one
+>   course at the back of the plane, `tiersOf(drop, "revetted")` returning a
+>   single tier and `buildTieredSeam` spending `maxDist = 0` columns of the
+>   plane;
+> - **the hill's own rock** for everything taller — `finishCutFaces`, whose
+>   district filter is the only thing standing between it and this face, plus
+>   `LOAM-I417` reporting how much of the world is waiting on the mirror
+>   geometry.
+
+Two things are load-bearing here.
+
+**A ramp on the cut side is a post-materialisation cut of a hillside**, which
+deletes the vegetation, the snow and the soil depth standing on it — the exact
+reason §0.3a gives for the late family being fill-only. `treatmentForEdge`
+already encodes it: `soft = ctx.side === "fill" ? "bank" : "rock"`
+(`levels.ts:518`). The quay's own claim asks for a `ramp` and asking is not
+enough; the answer on this side is a face.
+
+**A terraced stack is not built on a cut face this round.**
+`buildTieredSeam`'s bands step *outward from the seam into the ground below
+it*, and on a cut face that ground is the claimed plane — a terraced stack
+there would eat the quay it is supposed to hold. Stepping back *into the hill*
+is the mirror construction, it is genuinely new geometry, and it is deferred
+behind its own measurement in the tradition §3.1 uses for viaduct promotion and
+S11 uses for wall-course promotion. Every face in the walked evidence is drop
+≤ 6, so one revetted tier serves **100 %** of what the r22 world actually
+produced.
+
+### R5 — causeway, trench or steps: none of the three
+
+> **A line's profile is not changed to avoid a face. The profile is already
+> decided — 1-Lipschitz, cut-only at `ROAD_FILL_BAND = 0`, capped at
+> `STREET_CUT_MAX` and broken into a `role: "steps"` run past it — and what was
+> never decided is what the *face left by that cap* becomes. R4 decides it.**
+
+The open question (never ruled on by Kai) reads as a choice between filling a
+causeway, digging a trench and breaking into steps. All three are already
+answered elsewhere and answered *no*: a causeway is the invented berm W1/W2
+refuse; a trench is the uncapped cut F9 refuses; steps are what
+`STREET_BREAK_FLOOR` already builds where the cut cap binds. The question only
+ever looked open because the fourth answer — *hold the profile and serve the
+edge* — had no machinery. It has had it since 11B. *Recommendation: the fourth
+answer, default `revetted`, and it is walk-gated at 12F.*
+
+### R6 — reach and determinism
+
+> **A document with no `precinct.*` node compiles byte-identically under Part
+> V's second half.**
+
+`planeSeams` is called once per precinct claim and on nothing else this round;
+absent claims mean an empty job list and no allocation. Determinism is
+`skirtSeams`' own: row-major grouping, median floor, ties to the lower region
+index.
+
+## 11.3 What changes, file by file
+
+| file | change | wave |
+| --- | --- | --- |
+| `layout/types.ts` | `export const GROUND_PLANE_TIE = false;` beside `FRONTAGE_TIE`/`SEAM_TIERS`; `GROUND_TIE_SPAN = FLOOR_HEIGHT` | 12A |
+| `spec/src/terrain/diagnostics.ts` | `LOAM-T241`, `LOAM-T242`, `LOAM-I416`, `LOAM-I417` | 12A |
+| `layout/platforms.ts` | `PlatformInput.datum?`; `anchorOf(block)` and the per-block `base` (G2); the perimeter-span split trigger (G4); `LOAM-T241`'s counters | 12B |
+| `layout/district.ts` | pass the datum — **it is already built ~100 lines above, at the `gradeDatum` call (`:1177`), and simply is not handed on**; the untied/tied counters and the two notes | 12B, 12C |
+| `structures/retaining.ts` | `planeSeams` beside `skirtSeams`; the cut-side `tierCountOf === 1` gate; `RetainingPassInput.planes?` | 12D |
+| `structures/retaining.ts` (`finishCutFaces`) | the district filter becomes "districts **and** plane jobs" | 12D |
+| `structures/precincts.ts` | `OneResult` carries the plane's level beside its claims, so the caller can hand `(columns, planeY)` on | 12E |
+| `structures/index.ts` | the plane jobs cross from `buildPrecincts` (`:533`) into `buildRetainingWalls` (`:986`) and `finishCutFaces` (`:1610`) — the ordering already works and no pass moves | 12E |
+
+**What must not be touched.** `layout/ground-resolver.ts`,
+`layout/ground-contract.ts`, `INTENT_RANK`, `structures/street-owner.ts`,
+`terrain/urban-floor.ts`, `structures/life.ts`, `structures/grounds.ts`,
+`layout/city-pass.ts`. If a wave needs one of these, the wave is wrong.
+
+**One import note for 12B.** `layout/platforms.ts` must take `StreetDatum` as
+`import type` only — `layout/street-datum.ts` reaches into `structures/sweep.js`
+and `structures/street-owner.js`, and a value import would close a cycle that
+does not exist today.
+
+## 11.4 Waves
+
+Same shape Parts I and IV used and for the same reason: everything lands behind
+one compile-time flag, every wave before the flip is provably byte-identical,
+and the flip is a single walk verdict. Each half is additionally reachable in a
+test through an input field — `PlatformInput.datum`, `RetainingPassInput.planes`
+— exactly as `PlatformInput.tiered` and `RetainingDistrict.tiered` already are,
+so a test can build the flag-on world for one quarter without flipping a
+constant the whole compiler reads.
+
+- **12A — the flag and the codes.** `opus-5-low`. `GROUND_PLANE_TIE`,
+  `GROUND_TIE_SPAN`, the four diagnostics, and the registry test in
+  `packages/spec/test/`. No call site. **Byte-identical**, trivially.
+- **12B — the anchored lattice.** `opus-5-medium`. `PlatformInput.datum`,
+  `anchorOf`, the per-block base, the G4 split trigger, and the one line in
+  `district.ts` that hands the datum on. New
+  `packages/compiler/test/ground-plane-tie.test.ts`; extend
+  `test/platforms.test.ts`. Assertions: with a datum, every elected level is
+  congruent to the nearest banded datum level modulo `FLOOR_HEIGHT`; a block
+  with no banded column in reach elects today's number to the block
+  (`ground-equivalence`-style, per block); the `waterFloor` clamp still binds
+  after the re-anchor and no platform is elected under the sea (the
+  `damsWater`/`dry()` pair is untouched); shuffling the block order changes
+  nothing. **Byte-identical while the flag is off**, and
+  `test/ground-equivalence.test.ts` proves it — *after* proving the harness can
+  see a difference.
+- **12C — the report.** `opus-5-low`. `LOAM-T241 GROUND_PLANE_UNTIED` and
+  `LOAM-T242 GROUND_PLANE_DRIFT`, plus the per-quarter residual histogram
+  (`levelY − nearest datum level`) that turns §11.0's attribution into a
+  standing number. **Byte-identical**: notes only, and both counters are zero
+  with the flag off.
+- **12D — the plane seam.** `opus-5-medium`. `planeSeams`, the two-bench
+  `GroundLevels` adapter, the cut-side single-tier gate, `finishCutFaces`'
+  widened filter, `LOAM-I416`/`I417`. New `test/plane-seams.test.ts`.
+  Assertions: a 4-block cut face over 40 columns comes back one revetted tier
+  and spends zero columns of the plane; a 3-column face is absorbed; a 9-block
+  face returns rock and fires `LOAM-I417`; `buildTieredSeam` refuses to stand a
+  course on a street or a footprint (its existing `open()`), asserted rather
+  than assumed. **Byte-identical**: no caller yet.
+- **12E — the quay.** `opus-5-low`. `precincts.ts` returns `(claims, planeY)`;
+  `structures/index.ts` hands them to the two passes. This is the wave that
+  moves blocks, and it moves them only for a document with a `precinct.*` node.
+- **12F — the flip and the walk.** Flip `GROUND_PLANE_TIE`, regenerate the deck
+  end to end via `terrainist generate` (never hand-authored — standing
+  decision), install alongside with `--channel`, **re-run
+  `tools/worlds/street-probe.mjs` on the r23 pirates world and report the +1
+  count against 178**, and stop. The verdict on the anchored plane, on whether
+  a whole-storey terrace beside a street reads right, and on the quay's
+  revetment is Kai's and only Kai's.
+
+**Concurrency.** 12A first and alone — everything else imports its constants.
+Then **12B and 12D run together**: disjoint files (`layout/platforms.ts` +
+`layout/district.ts` against `structures/retaining.ts`), and 12D's `planeSeams`
+never reads a platform the election produced. 12C follows 12B (same file), 12E
+follows 12D (same producer). 12F last. **No implementer spawns a subagent**, and
+the shared-tree git discipline applies: any before/after comparison happens in a
+`git worktree` or a `cp -Rc` clone, never by rewinding the shared tree.
+
+## 11.5 Non-goals
+
+Stated so that a wave that drifts into one of these is visibly wrong.
+
+1. **No painter is edited.** G6. `terrain/urban-floor.ts`, `structures/life.ts`
+   and `structures/grounds.ts` write `plan.surface`; the +1 is not theirs to
+   fix and editing them would move zero blocks.
+2. **No second resolver, no new rank, no `INTENT_RANK` change.**
+   `layout/ground-resolver.ts` is not edited by any wave in Part V, exactly as
+   it was not by Parts I–IV.
+3. **No contour-led platform election.** §5 non-goal 9 stands verbatim; only its
+   work-package number moves (§11.9a).
+4. **No change to `FLOOR_HEIGHT`, `STEP_RELIEF`, `MIN_PLATFORM_COLUMNS`,
+   `RETAIN_MAX`, `MIN_RETAIN_RUN`, `ROAD_SHOULDER_REACH`, `VERGE_FILL_FEATHER`
+   or `QUAY_DEPTH`.** Part V changes what a level *is anchored on*, not how tall
+   a storey is or how wide a quay runs.
+5. **No terraced stack on a cut face.** R4; measured by `LOAM-I417`, decided
+   later, in the tradition of §3.1's viaduct note and S11's crossing note.
+6. **No re-anchoring of a `terraced` form's declared benches.**
+   `layout/forms/hillside.ts` cuts them from the contours and owns them;
+   re-anchoring is a form rewrite and a separate walk. The ledger carries it.
+7. **No consumer of `resolved.transitions`.** R2 measures its own seams because
+   every other seam producer in the tree does. Wiring the resolver's transitions
+   to their builders is still WP-6's (§3.2 fact 1, GROUND-CONTRACT §9a.7), and
+   Part V neither does it nor blocks it.
+8. **No `city-pass` change.** A city cell already pins its datum to its own
+   plane; G8 says why the arrow points the other way there.
+9. **No verge change.** P5 is a measurement, not a defect: the verge is right to
+   skip claimed and paved columns, and the reverted experiment 3 is the proof.
+10. **No aesthetic tuning without a walk, and no autonomous critique→repair.**
+    The standing laws.
+
+## 11.6 Risks
+
+| risk | blast radius | mitigation |
+| --- | --- | --- |
+| **12B changes `foundationY` for every building on a derived platform.** This is §6's 11C risk again and larger: G2 can move a plane by a whole storey, not by a rounding. | every quarter that elected `"stepped"` via `STEP_RELIEF` — most of the battery | Behind `GROUND_PLANE_TIE`, asserted **structurally** rather than by golden (every level congruent to its street modulo `FLOOR_HEIGHT`; no platform under the water floor; no block left `NO_PLATFORM` inside levelled ground), and flipped once at 12F on a walk. Buildings move *down, toward their streets*, which is the intent — but "the intent" is not evidence, and the walk is. |
+| **A re-anchored plane sinks into water.** `base` moving down moves every mark down. | any coastal or riverside quarter — the pirate haven, Troy, the hellenist city | `dry()` and `PlatformInput.waterFloor`/`water` are untouched and run *after* the anchor exactly as they run after `storey` today; 12B asserts the clamp still binds and that `damsWater` still exempts a wet piece. The pirate haven's 63-level platforms are that clamp, visible in the r22 report, and they must still be 63. |
+| **G4 shatters a block into slivers.** A new split trigger means new pieces. | dense quarters on rolling ground | `MIN_PLATFORM_COLUMNS` and `mergeSlivers` (S6 rule 2) already exist and already run under the flag; 12B asserts no piece is left under the minimum and that the platform count per quarter is reported, so a shatter is visible in `LOAM-I412`'s counts before it is visible on a walk. |
+| **`GROUND_PLANE_TIE` silently degrades if `FRONTAGE_TIE` is ever turned off.** `gradeDatum` returns `null` and the anchor falls back everywhere. | every settlement, invisibly | G9 makes the implication explicit and a test asserts it: with `GROUND_PLANE_TIE` on and `FRONTAGE_TIE` off, the build fails loudly rather than compiling a quarter with no anchor. |
+| **The report changes even where the world does not.** T241/T242 fire on every stepped quarter at 12C. | every compile report, the battery logs | Report goldens are re-measured **with the cause written down**, never updated silently (§9a.5's rule). A *world* hash that moves at 12A–12D is a bug, not a golden update. |
+| **12E moves a world Kai has not complained about.** The quay's back edge becomes a revetment. | every world with a `precinct.harbour@0` or `precinct.airport@0` — the pirate world, `azure_bay_resort`, `showcase-deltamere` | Same flag, same single flip, and `LOAM-I416` names exactly what every plane edge became so the walk has the numbers in hand. |
+| **`planeSeams` and `skirtSeams` drift.** Two nearly-identical measurements is how a bed ends up a course off its own deck (§6's first row). | the seam family | 12D builds `planeSeams` by **generalising** `skirtSeams` over its `GroundLevels` argument rather than by copying it, and a test asserts the two agree column-for-column on a quarter-shaped fixture. If they cannot be one function, the wave is wrong. |
+| **The +1 does not go to zero at 12F.** The attribution is 95.5 %; the residual 4.5 % is `NO_PLATFORM` slivers and off-lattice columns. | the walk verdict | 12F's acceptance is the probe number, published against 178, not a claim of zero. Slivers are S6 rule 2's business and are already merged under `SEAM_TIERS`; anything left after that is a new finding and gets a new measurement, not a patch. |
+
+## 11.7 Diagnostics this work adds
+
+| code | name | severity | feedback set | fires |
+| --- | --- | --- | --- | --- |
+| `LOAM-T241` | `GROUND_PLANE_UNTIED` | note | no | a stepped quarter where one or more blocks found no graded carriageway within `frontageReach` of any perimeter column and kept the quarter's own floor (G3). Mirrors `LOAM-T238` for the platform |
+| `LOAM-T242` | `GROUND_PLANE_DRIFT` | note | no | a platform column within reach of a carriageway whose elected level is neither the datum's nor a whole storey from it (G1). **This should be 0**, and it is the alarm that says the anchor did not hold. Mirrors `LOAM-T237` |
+| `LOAM-I416` | `PLANE_EDGE_SERVED` | note | no | once per non-district claimed plane: what its edges became — absorbed, revetted, rock, or nothing to serve (R4) |
+| `LOAM-I417` | `PLANE_EDGE_DEFERRED` | note | no | a cut face past `RETAIN_MAX` finished in rock because the mirror stack is not built. The measurement that decides whether it is worth building — the same discipline as `LOAM-T239` for viaducts and `LOAM-I415` for wall crossings |
+
+`LOAM-T241`–`T242` continue the `T23x`/`T24x` block after
+`DISTRICT_BLOCK_ALLEY` (`LOAM-T240`); `LOAM-I416`–`I417` continue the
+level/seam block after `WALL_COURSE_CROSSES_SEAM` (`LOAM-I415`). None enters
+`FEEDBACK_CODES`: not one of them is author-actionable — a document cannot move
+its own storey lattice, and telling a model about a hill twice is how a prompt
+gets noisy (§10.9's argument, unchanged).
+
+## 11.8 Walk gates
+
+**Land without a walk** — machinery, byte-identical or reach-limited: **12A,
+12B, 12C, 12D**. 12E moves blocks only for a document with a precinct and only
+behind the flag.
+
+**Land only on a walk verdict:**
+
+| step | what Kai is judging |
+| --- | --- |
+| **12F** — flip `GROUND_PLANE_TIE` | whether the streets stop reading as sunken; whether a block that comes out a *whole storey* above its street reads as a terrace rather than as a wall in the way; whether the lower-median rule puts too much of the town below its pavements; the quay's revetment against the hillside; and the probe number against 178 |
+
+**Blocked on measurement, not on Kai:** the mirror (cut-side terraced) stack, on
+`LOAM-I417`; re-anchoring `terraced`'s declared benches, on whether `LOAM-T242`
+fires on those quarters at all.
+
+## 11.9 Open questions
+
+Each has a recommendation, so no wave is blocked on an answer.
+
+**11.9.1 Lower median, true median, or lowest street?** G2 takes the lower
+median of the perimeter datum. The lowest street is safest against Kai's
+complaint and worst against the opposite one — a whole quarter sunk to serve one
+low lane. The true median splits the difference and rounds up half the time,
+which is the failure mode this whole part exists to remove.
+*Recommendation: the lower median, as written; it is one expression and one
+recompile, and the walk will show which side of the kerb the town wants to be
+on.*
+
+**11.9.2 Should a whole-storey terrace beside a street be `revetted` or
+`terraced`?** S5's `pressedShare` already chooses, and a street-side face is
+pressed by definition — so today's answer is `revetted`, a battered wall with
+setbacks along the pavement. *Recommendation: leave S5 alone and look at it on
+the 12F walk; if mid-town street faces want planting, the fix is a term in
+`pressedShare`, not a new rule.*
+
+**11.9.3 Should `terraced` quarters be tied too?** Their benches come from the
+form's contour reading and re-anchoring them is a form rewrite (non-goal 6).
+*Recommendation: no this round; let 12C's `LOAM-T242` fire on them and decide
+with the number.*
+
+**11.9.4 Causeway, trench or steps?** Answered by R5: none of the three — the
+profile is already decided and the face is what was missing.
+*Recommendation: the fourth answer, default `revetted`, walk-gated at 12F.*
+
+**11.9.5 What material does a plane's revetment use?** A quay's own
+`quayEdge` (`stone_bricks`, so the wall reads as part of the harbour) or the
+theme's retaining material (so it reads as the same construction as every other
+retaining wall in the world). *Recommendation: the theme's retaining material —
+a revetment is a retaining wall, and one construction reading one way across a
+world is worth more than a local match. Ask on the walk; it is one line.*
+
+**11.9.6 `GROUND_TIE_SPAN`: `FLOOR_HEIGHT` or 2?** Four is the derivation (a
+block that straddles more than one storey of street cannot be one platform);
+two splits more aggressively and ships more, smaller terraces.
+*Recommendation: `FLOOR_HEIGHT`, because it is derived rather than tuned, and it
+is one constant and one recompile.*
+
+**11.9.7 Should `deriveTransitions` pass `{ tiered }` to `treatmentForSeam`?**
+`ground-resolver.ts:591` calls `treatmentForSeam(drop, component.length)` with
+no options, so a resolver-derived transition can never come back `"tiered"` even
+with `SEAM_TIERS` on. Nothing builds from those transitions yet, so nothing is
+wrong today — but the day WP-6 wires a consumer it will be building the untiered
+table. *Recommendation: leave it this round (non-goal 7) and carry it into WP-6's
+ledger as a one-line prerequisite, so the wiring wave does not discover it as a
+bug.*
+
+### 11.9a Two amendments elsewhere in this document
+
+Both are numbering, not law, and both are made in place:
+
+1. **§5 non-goal 9** reserved the number WP-12 for a contour-led platform
+   election (*"A contour-following election is a rewrite and is WP-12 at the
+   earliest"*). WP-12 is the ground-plane tie; the contour-led election is
+   **WP-13 at the earliest**, and non-goal 9's argument is otherwise unchanged.
+2. **§9's ledger** gains a WP-12 row.
+
+## 11.10 Ledger
+
+§9's table is the ledger of record and now carries the WP-12 row. Its
+dependencies in full, because the row has no room for them:
+
+- **WP-8 is a hard prerequisite.** `gradeDatum` returns `null` while
+  `FRONTAGE_TIE` is off (`district.ts:1177`), so without the frontage tie there
+  is no datum to anchor on and G2 has nothing to say. G9 makes the implication
+  explicit and a test enforces it.
+- **WP-11 is a hard prerequisite.** G5 and R3/R4 hand every residual face to
+  `treatmentForSeam`, `tiersOf` and `buildTieredSeam`. Without the served seam,
+  removing the one-block lip would only relocate it into a four-block one that
+  nothing serves.
+- Independent of WP-9 and WP-10.
+- **What it closes.** The four-deck "sunken streets" verdict; `61f1cef`'s
+  message (*"the real remaining fix is the ground-plane tie"*); the
+  never-ruled-on "causeway vs trench vs steps" question (R5); and the plane-side
+  half of §3.1's forensics item *"a `retaining.seam` requires a seam"* — a
+  claimed plane now measures its own.
+- **What it opens.** The mirror (cut-side terraced) stack, on `LOAM-I417`;
+  re-anchoring `terraced`'s declared benches, on `LOAM-T242`;
+  `deriveTransitions`' missing `{ tiered }`, carried into WP-6's ledger
+  (§11.9.7); and **WP-13**, the contour-led election, which §5 non-goal 9
+  renumbered here.
