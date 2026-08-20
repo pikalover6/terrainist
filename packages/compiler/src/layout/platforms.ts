@@ -96,8 +96,136 @@ export interface PlatformInput {
    *
    * Optional: a quarter with no terrain under it (a fixture, a devworld) has no
    * water surface to answer to, and the election is unchanged without one.
+   *
+   * See {@link PlatformInput.water}: the floor lifts a platform out of water it
+   * would *make*, and never fills water that is already there.
    */
   readonly waterFloor?: number;
+  /**
+   * The water that is **already there** — 1 where a column holds water, the
+   * classification's ocean ∪ lake mask, row-major over {@link field}'s region.
+   *
+   * {@link waterFloor} says "no platform under the waterline", and it says it
+   * because grading dry ground *down* below the sea makes a lake and the fabric
+   * is then laid on it. Raising a platform whose own ground is water is the
+   * mirror image and is just as wrong: the piece is not ground the quarter
+   * stands on, it is the river running through it, and a level at the waterline
+   * grades the bed *up* to the surface. That is a dam — the reach above it is
+   * cut off from the sea, the ocean flood-fill (which floods only what the map
+   * edge can reach) leaves it dry, and the quarter ships with half a river and
+   * a lot elected in the bed.
+   *
+   * So a platform whose columns are mostly water is exempt from the floor and
+   * keeps the level its own ground gives it. Nothing else changes: a bank piece
+   * with a few wet columns is land, and land is held to the floor.
+   *
+   * Optional, and the floor behaves exactly as it did before this field existed
+   * when it is absent — a fixture with no hydrology has no water to preserve.
+   */
+  readonly water?: WaterMask;
+}
+
+/** A column mask with the region it is indexed over. */
+export interface WaterMask {
+  /** 1 where the column holds water, row-major over {@link region}. */
+  readonly mask: Uint8Array;
+  /** The mask's own region — {@link PlatformInput.field}'s. */
+  readonly region: { readonly x0: number; readonly z0: number; readonly width: number; readonly depth: number };
+}
+
+/**
+ * **Would levelling the water inside `bounds` cut the water beyond it off from
+ * the sea?** — the one question that separates reclaiming from damming.
+ *
+ * {@link PlatformInput.waterFloor} raises a platform to the waterline, and over
+ * a shallow shelf that is *reclamation*: the quarter fills a fringe of its own
+ * bay and builds a quay on it, which is what the Troy fix is for and what
+ * `platform-waterline.test.ts` pins. Over a river running through the quarter it
+ * is a **dam**, because water is only water where the map edge can reach it
+ * (`computeOceanMask`): fill the channel and the whole reach above it stops
+ * being water at all, which is how a walked world came back with half a river.
+ *
+ * The test is the flood-fill itself, run twice: once with the quarter's own
+ * water passable and once with it blocked. If the second run reaches every
+ * outside column the first one did, the quarter is reclaiming — nothing beyond
+ * it depends on the water it is standing in. If it reaches fewer, the quarter is
+ * a dam and its water is protected instead.
+ *
+ * Blocked rather than filled on purpose: a landlocked lake is unreachable in
+ * *both* runs and so is never mistaken for a reach this quarter stranded.
+ *
+ * Pure: two row-major floods over the mask, no allocation per call beyond them.
+ */
+export function damsWater(water: WaterMask, bounds: Rect): boolean {
+  const { region, mask } = water;
+  const { width, depth } = region;
+  const inBounds = (i: number, j: number): boolean => {
+    const x = region.x0 + i;
+    const z = region.z0 + j;
+    return x >= bounds.x0 && x <= bounds.x1 && z >= bounds.z0 && z <= bounds.z1;
+  };
+  /** Wet columns outside `bounds` the map edge can reach, with the quarter's own water passable or not. */
+  const reachOutside = (throughQuarter: boolean): number => {
+    const seen = new Uint8Array(width * depth);
+    const queue = new Int32Array(width * depth);
+    let head = 0;
+    let tail = 0;
+    let outside = 0;
+    const push = (i: number, j: number): void => {
+      if (i < 0 || j < 0 || i >= width || j >= depth) return;
+      const k = j * width + i;
+      if (seen[k] === 1 || mask[k] !== 1) return;
+      const own = inBounds(i, j);
+      if (own && !throughQuarter) return;
+      seen[k] = 1;
+      queue[tail++] = k;
+      if (!own) outside += 1;
+    };
+    for (let i = 0; i < width; i++) {
+      push(i, 0);
+      push(i, depth - 1);
+    }
+    for (let j = 0; j < depth; j++) {
+      push(0, j);
+      push(width - 1, j);
+    }
+    while (head < tail) {
+      const k = queue[head++] as number;
+      const i = k % width;
+      const j = (k - i) / width;
+      push(i - 1, j);
+      push(i + 1, j);
+      push(i, j - 1);
+      push(i, j + 1);
+    }
+    return outside;
+  };
+  return reachOutside(false) < reachOutside(true);
+}
+
+/**
+ * Is this set of columns water rather than ground? A strict majority, so a bank
+ * with its toes wet is still a bank and a channel is still a channel.
+ */
+function mostlyWater(water: WaterMask, columns: Iterable<readonly [number, number]>): boolean {
+  const { region, mask } = water;
+  let n = 0;
+  let wet = 0;
+  for (const [x, z] of columns) {
+    const i = x - region.x0;
+    const j = z - region.z0;
+    if (i < 0 || j < 0 || i >= region.width || j >= region.depth) continue;
+    n += 1;
+    if (mask[j * region.width + i] === 1) wet += 1;
+  }
+  return n > 0 && wet * 2 > n;
+}
+
+/** The world columns a bench covers. */
+function* benchColumns(bench: FormBench): Generator<readonly [number, number]> {
+  for (const run of bench.runs) {
+    for (let z = run.z0; z <= run.z1; z++) for (let x = run.x0; x <= run.x1; x++) yield [x, z];
+  }
 }
 
 /**
@@ -119,8 +247,9 @@ export function derivePlatforms(input: PlatformInput): FormBench[] {
   // *computed* rather than to the finished benches, so the sliver merge — which
   // breaks ties to the lower level — reasons about levels that exist: a level
   // under the water is not a lower level, it is not a level at all.
-  const dry = (level: number): number =>
-    input.waterFloor === undefined ? level : Math.max(level, input.waterFloor);
+  // …and never a licence to fill (`PlatformInput.water`): a piece that is
+  // itself water keeps the level its own bed gives it, because raising it is
+  // damming the river rather than lifting the town out of a lake it made.
   const width = bounds.x1 - bounds.x0 + 1;
   const depth = bounds.z1 - bounds.z0 + 1;
   const cells = width * depth;
@@ -134,6 +263,15 @@ export function derivePlatforms(input: PlatformInput): FormBench[] {
     const j = z - region.z0;
     if (i < 0 || j < 0 || i >= region.width || j >= region.depth) return 0;
     return Math.round(field.values[j * region.width + i] as number);
+  };
+  const columnAt = (k: number): readonly [number, number] => [
+    bounds.x0 + (k % width),
+    bounds.z0 + Math.floor(k / width),
+  ];
+  const dry = (level: number, cells: readonly number[]): number => {
+    if (input.waterFloor === undefined) return level;
+    if (input.water !== undefined && mostlyWater(input.water, cells.map(columnAt))) return level;
+    return Math.max(level, input.waterFloor);
   };
 
   // The quarter's datum: the lowest column any block stands on. Measured over
@@ -164,7 +302,7 @@ export function derivePlatforms(input: PlatformInput): FormBench[] {
       if (h > hi) hi = h;
     }
     if (hi - lo <= FLOOR_HEIGHT) {
-      push(benches, bounds, block, dry(storey(base, medianOf(block, heightAt))), `block.${start}`);
+      push(benches, bounds, block, dry(storey(base, medianOf(block, heightAt)), block), `block.${start}`);
       continue;
     }
     // Split. The bucket is the blurred storey, and each 4-connected piece of a
@@ -188,6 +326,7 @@ export function derivePlatforms(input: PlatformInput): FormBench[] {
       // stand two storeys apart (§4.0a M4); under the flag they never can.
       const level = dry(
         tiered ? base + b * FLOOR_HEIGHT : storey(base, medianOf(piece, heightAt)),
+        piece,
       );
       pieces.push({ bucket: b, level, cells: piece });
     }
@@ -321,11 +460,17 @@ export interface DissolvedLevel {
  * beside it. Without this a plateau adjacent to a shore piece dissolves *into
  * the sea* — the whole quarter is graded under the waterline, the pad edit's
  * reclassification floods it, and the fabric is laid on a lake.
+ *
+ * `water` is {@link PlatformInput.water} and carries the same exemption: a
+ * platform that *is* water — a river channel through the quarter — keeps its
+ * own bed's level, dissolving or not, because raising it to the waterline dams
+ * the river instead of draining a lake.
  */
 export function dissolveTallPairs(
   bounds: Rect,
   benches: readonly FormBench[],
   waterFloor?: number,
+  water?: WaterMask,
 ): { readonly benches: FormBench[]; readonly dissolved: DissolvedLevel[] } {
   const width = bounds.x1 - bounds.x0 + 1;
   const depth = bounds.z1 - bounds.z0 + 1;
@@ -347,9 +492,14 @@ export function dissolveTallPairs(
       }
     }
   }
-  const dry = (level: number): number =>
-    waterFloor === undefined ? level : Math.max(level, waterFloor);
-  const levels = benches.map((b) => dry(b.level));
+  // Which benches are the water rather than the ground beside it.
+  const submerged =
+    water === undefined
+      ? benches.map(() => false)
+      : benches.map((b) => mostlyWater(water, benchColumns(b)));
+  const dry = (level: number, bench: number): number =>
+    waterFloor === undefined || submerged[bench] === true ? level : Math.max(level, waterFloor);
+  const levels = benches.map((b, i) => dry(b.level, i));
   // Every 4-adjacent pair, once, as `a < b` on index.
   const pairs = new Set<number>();
   for (let k = 0; k < cells; k++) {
@@ -376,7 +526,7 @@ export function dissolveTallPairs(
       if (drop <= DISSOLVE_DROP_MAX) continue;
       const high = (levels[a] as number) > (levels[b] as number) ? a : b;
       const low = high === a ? b : a;
-      levels[high] = dry(levels[low] as number);
+      levels[high] = dry(levels[low] as number, high);
       dissolved.push({
         id: benches[high]?.id ?? `${high}`,
         into: benches[low]?.id ?? `${low}`,
