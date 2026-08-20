@@ -29,6 +29,7 @@ import {
   nodeSeed,
   resolveWorldSeed,
   seed32,
+  HeightField,
   type Classification,
   type Marker,
   type Region,
@@ -103,7 +104,10 @@ import {
 } from "../layout/index.js";
 import type { GroundBaseline } from "../layout/ground-contract.js";
 import { resolveGround } from "../layout/ground-resolver.js";
-import type { GroundEquivalenceOutcome } from "../layout/ground-equivalence.js";
+import type {
+  GroundEquivalenceOutcome,
+  GroundPristineMeasurement,
+} from "../layout/ground-equivalence.js";
 import { declarePadEdits } from "../structures/ground-declare.js";
 import { createGroundDriver, type GroundDriver } from "../layout/ground-driver.js";
 
@@ -631,6 +635,15 @@ async function compileValidated(
   let classification: Classification = terrain.classification;
   let layoutOutcome: LayoutOutcome | undefined;
   let occupancy: OccupancyGrid | undefined;
+  /**
+   * Ground contract v1 §1.2 / WP-G1. `pristineValues` is the height field
+   * before the first pad edit; `padSet` marks every column the pads then moved
+   * and `padSetSize` counts it. All three are populated only under
+   * `options.groundEquivalence`, and nothing but the measurement reads them.
+   */
+  let pristineValues: Float64Array | undefined;
+  let padSet: Uint8Array | undefined;
+  let padSetSize = 0;
   let layoutNodes: readonly LayoutNodeInput[] = [];
   /** Frozen at substage 3b, read by the solver and again by the road router. */
   let corridors: readonly RouteCorridor[] = [];
@@ -719,6 +732,16 @@ async function compileValidated(
     // and the fabric pass reads that ground to seat every building it lays. Run
     // the other way round, each tower would be founded on the hill the district
     // was about to erase.
+    // The ground contract v1 §1.2's pure-terrain baseline, taken **before the
+    // first `applyPadEdits`** — the field as the terrain params and the world
+    // seed left it, with no layout decision in it. WP-G1 measures it and
+    // nothing else: the plan below is still built from the padded field, so a
+    // world is byte-identical whether this is taken or not. The copy itself is
+    // gated on the test-only flag so the production path pays nothing; G3 makes
+    // it unconditional, when something finally reads it.
+    if (options.groundEquivalence === true) {
+      pristineValues = Float64Array.from(terrain.field.values);
+    }
     if (solved.padEdits.length > 0) applyPadEdits(terrain.field, solved.padEdits);
     // Where the water is, as the layout stage can know it: there is no column
     // plan yet, and C1's shoreline drive has to follow a real shore. The union
@@ -746,6 +769,22 @@ async function compileValidated(
     diagnostics.push(...cityFabric.diagnostics);
     const fabricPads = [...fabric.padEdits, ...cityFabric.padEdits];
     if (fabricPads.length > 0) applyPadEdits(terrain.field, fabricPads);
+    // …and the field again, immediately after the **last** `applyPadEdits`: the
+    // padded field is what `buildColumnPlan` reads today, and nothing between
+    // here and it writes a height. The diff is "the pad set" — every column a
+    // pad edit moved, by any amount, aprons included. Kept as a mask rather than
+    // a second Float64Array so the copy above is the only field-sized retention.
+    if (pristineValues !== undefined) {
+      const pristine = pristineValues;
+      const now_ = terrain.field.values;
+      padSet = new Uint8Array(now_.length);
+      for (let k = 0; k < now_.length; k++) {
+        if (now_[k] !== pristine[k]) {
+          padSet[k] = 1;
+          padSetSize++;
+        }
+      }
+    }
     if (solved.padEdits.length + fabricPads.length > 0) {
       classification = classify(terrain.field, terrain.params, {
         temperature: climate.temperature,
@@ -782,7 +821,7 @@ async function compileValidated(
       seed: nodeSeed(worldSeed, `${hfPath}.${child.id}`, ""),
     }));
 
-  const plan = buildColumnPlan({
+  const columnPlanInput = {
     field: terrain.field,
     classification,
     palette,
@@ -793,7 +832,8 @@ async function compileValidated(
     footprints: terrain.edits.footprints,
     volcanoes,
     seed: rootSeed,
-  });
+  };
+  const plan = buildColumnPlan(columnPlanInput);
   const columnsMs = now() - t2;
 
   // The ground contract's baseline (§8.1, step 1) — the three frozen arrays as
@@ -816,6 +856,47 @@ async function compileValidated(
   // is the layout solver's pads, whose field already carries its answer (§3.12).
   const groundDriver: GroundDriver | undefined =
     groundBaseline === undefined ? undefined : createGroundDriver(groundBaseline, plan);
+
+  // WP-G1's measurement (contract v1 §6). A second `ColumnPlan`, materialised
+  // from the **pristine** field with every other input of `buildColumnPlan`
+  // held identical, answers the one number G7 cannot be designed without: how
+  // far the pads move the ground the plan reports. Test-only, read by nothing,
+  // and discarded the moment the counts are taken — the second plan is the
+  // largest allocation in the compile and is not retained.
+  const pristineMeasurement = ((): GroundPristineMeasurement | undefined => {
+    if (options.groundEquivalence !== true) return undefined;
+    if (pristineValues === undefined || padSet === undefined) return undefined;
+    const pristinePlan = buildColumnPlan({
+      ...columnPlanInput,
+      field: new HeightField({ ...terrain.field.region }, pristineValues),
+    });
+    const histogram: Record<string, number> = {};
+    const outsidePadSet: number[] = [];
+    let diffCount = 0;
+    for (let k = 0; k < plan.ground.length; k++) {
+      const delta = (plan.ground[k] as number) - (pristinePlan.ground[k] as number);
+      if (delta === 0) continue;
+      diffCount++;
+      const key = String(delta);
+      histogram[key] = (histogram[key] ?? 0) + 1;
+      // v1 §6/G1's real deliverable: a moved column outside the pad set would be
+      // a height authority the audit did not find.
+      if (padSet[k] !== 1 && outsidePadSet.length < 64) outsidePadSet.push(k);
+    }
+    return {
+      padSetSize,
+      diffCount,
+      // Sorted by delta before the object is rebuilt, so the key order is a
+      // property of the distribution rather than of the scan. (JS then floats
+      // the non-negative integer-like keys ahead of the negative ones — still
+      // deterministic, and the golden is pinned as written.)
+      histogram: Object.fromEntries(
+        Object.entries(histogram).sort((a, b) => Number(a[0]) - Number(b[0])),
+      ),
+      outsidePadSet,
+    };
+  })();
+
 
   // --- pass 5a: caves ------------------------------------------------------
   // Subtractive, and deliberately downstream of everything that decides what
@@ -920,6 +1001,7 @@ async function compileValidated(
             fluidTop: Int32Array.from(plan.fluidTop),
             fluidKind: Uint8Array.from(plan.fluidKind),
           },
+          ...(pristineMeasurement === undefined ? {} : { pristine: pristineMeasurement }),
         };
 
   // --- pass 5d: authored programs ------------------------------------------

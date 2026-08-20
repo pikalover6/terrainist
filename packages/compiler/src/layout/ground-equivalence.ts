@@ -74,6 +74,36 @@ export interface GroundEquivalenceOutcome {
    * an intent, dropped one, or exhausted a generator (§9a.1, rule 4).
    */
   readonly driver: ResolvedGround;
+  /**
+   * WP-G1 (ground contract v1 §1.2, §6). The displacement between the plan as
+   * built — from the **padded** field — and a second plan materialised from the
+   * pure-terrain baseline with every other `buildColumnPlan` input held equal.
+   *
+   * Measurement only: nothing in the pipeline consumes it, and a world compiles
+   * byte-identically whether it is taken or not. Present only when the compile
+   * asked for the shim *and* it ran on the settlement path.
+   */
+  readonly pristine?: GroundPristineMeasurement;
+}
+
+/** {@link GroundEquivalenceOutcome.pristine} — WP-G1's four numbers. */
+export interface GroundPristineMeasurement {
+  /** `|{k : padded[k] !== pristine[k]}|` over the height field. */
+  readonly padSetSize: number;
+  /** `|{k : plan.ground[k] !== pristinePlan.ground[k]}|`. */
+  readonly diffCount: number;
+  /**
+   * Signed `plan.ground − pristinePlan.ground`, delta → column count, keyed by
+   * the decimal delta and ordered numerically.
+   */
+  readonly histogram: Readonly<Record<string, number>>;
+  /**
+   * v1 §6/G1's assertion: the plan diff must be a **subset** of the pad set —
+   * the converse need not hold, since a sub-block float edit floors to the same
+   * integer ground. So this must be empty; a column here is a height authority
+   * the audit did not find. Capped at 64 entries, since one is already a bug.
+   */
+  readonly outsidePadSet: readonly number[];
 }
 
 /* -------------------------------------------------------------------------- */
