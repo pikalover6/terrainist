@@ -46,36 +46,32 @@ render+annotate but INSTALL ANYWAY (reroll-gate only when he asks
 for autonomous iteration). MY DIAGNOSIS OF THE LOOP: every deck
 confounds compiler+authoring-roll+teaching; archived docs + flags
 separate them for free.
-**MATRIX VERDICT (Kai's walk): ALL THREE FLAGS ACQUITTED — NO
-REVERT.** Tie fine at grade (notie mangled an intersection); seams
-+ dens walk-invisible; the good-era feeling was the AUTHORING ROLLS
-(same docs compile beautifully today). Convictions → the 5-item
-plan, all now LANDED except one:
-(1) DRIED RIVER f→ bisected to MY 0a1575a waterline floor (dam →
-stranded reach → reclassified dry → building in bed); fix 48b2177:
-damsWater double edge-flood — a quarter may RECLAIM water, never
-DAM it; river back to 38,894 columns, zero collateral.
-(2) TEACHING fbefa26: more land NEVER means less water; W526 fix
-line can never suggest draining (negative test); prepass PINS
-terrain nouns by count ("two islands separated by open water").
-(3) EMPTY BLOCKS 8e09cc6: inside walls no block is bare — re-draw
-then dress (orchard/market/garden/paddock, era-gated, existing
-vocab only); troy_v14 21 bare → 0, W527 silent; unwalled worlds
-byte-identical.
-(4) HILL DRIFT — IN FLIGHT (medium): datum grades WITHOUT the
-floors the surfacer applies after → hill streets ride 9 high over
-their lots (T237 4x/5x); fix = one grading, datum carries floors,
-berm clamp preserved, river must stay full.
-(5) VERSIONING d0acdb2: build-anchored cohorts — 63 worlds renamed
-_rN, battery/RELEASES.md (21 releases → commit+deck), install
---series --release errors on collision; good era = r16+r5,
-regressed = r21. NEXT DECK = r22.
-**DELEGATION ECONOMICS (Kai, in CLAUDE.md 70c6b46 + memory): spawn
-only when doing it yourself is less efficient; small edits are the
-orchestrator's own job.** Screening = render+annotate, install
-anyway (reroll-gate only on explicit autonomous runs).
-ON DRIFT LANDING: commit, full gate, r22 deck (3 prompts, screened,
---series --release 22), handoff.
+**AUTONOMOUS RUN GRANTED (Kai: "go ahead autonomously on your own
+judgment") — reroll screening gate NOW ACTIVE; battery regen once at
+END (r23).** Prior wave all landed: matrix verdict (flags acquitted),
+five convictions served (river damsWater 48b2177, teaching fbefa26,
+empty blocks 8e09cc6, drift/8G 25e5e68, cohorts d0acdb2), r22 deck
+installed+screened (hellenist sea BACK, two real islands, dense
+Troy). THEN Kai's probe-first ruling on the still-sunken streets:
+built tools/worlds/street-probe.mjs (b2fdba2) — road-edge
+histograms + ASCII cross-sections. FINDINGS (measured): streets one
+below the TOWN'S OWN CLAIMED GROUND (walkways/yards/urban floor at
+quarter plane; doors flush — tie works). Experiment 2 rounding
+harmonisation KEPT 61f1cef (470→414 map-wide, tests free);
+experiment 3 cut-side verge feather DEAD (1 edge map-wide) —
+implemented, measured, REVERTED. Remaining 178 = the town-ground
+passes; fix = GROUND-PLANE TIE.
+**IN FLIGHT: WP-12 design seat (high)** — Part V: ground-plane tie
+(town-ground passes take street level at the seam) + route-face
+service (coastal 4-5 block raw hill walls → WP-11 seam machinery;
+subsumes causeway/trench question, default recommended,
+walk-gated). **+ pack 9 feudal_japanese (low, go-ham).**
+DELEGATION ECONOMICS in force (CLAUDE.md): small edits are mine —
+experiments 2+3 done directly. PLAN: design → capped impl waves →
+probe-verify on archived pirates doc (178 → ~0 target) → full gate
+→ r23 deck (screened WITH REROLL, --series --release 23) → funnel →
+handoff. Kai has "more feedback" queued on other worlds — expect a
+verdict wave.
 
 **AWAITING KAI:** padfix deck walk (*_padfix ×4) + caravan band;
 viewer look verdict + landing skin; WP-6 ledger (preserve/tie E494,
