@@ -97,6 +97,7 @@ import {
   buildRetainingWalls,
   finishCutFaces,
   type RetainingPassResult,
+  type RetainingPlane,
 } from "./retaining.js";
 import { furnishCourtyards, type CourtyardPassResult } from "./courtyards.js";
 import { buildDoorsteps, type DoorstepResult } from "./doorsteps.js";
@@ -538,6 +539,28 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
           ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
         });
   if (precincts !== undefined) diagnostics.push(...precincts.diagnostics);
+
+  /**
+   * **R1's claimed planes** (`docs/GROUND-UNIFICATION-v0.md` §11.2, wave 12E) —
+   * levelled ground no quarter drew, handed to the two passes that serve an edge.
+   *
+   * The qualifying family is the *non-district* one §11.2 names: "the quay, the
+   * airport apron, and every later pass that levels ground outside a quarter" —
+   * which is exactly `PrecinctPassResult.declarations`, one per precinct kit that
+   * graded anything, `precinct.harbour@0` and `precinct.airport@0` alike. Nothing
+   * is filtered by kit: a claim family qualifies because it *levelled ground and
+   * stopped*, not because of whose kit levelled it, and the airport's forecourt
+   * cut into a hillside presents the same raw face the walked quay does.
+   *
+   * `tiered` is left off, so each plane defaults to `GROUND_PLANE_TIE` and this
+   * whole list is inert — measured not at all, allocated not at all — until 12F
+   * flips it. A test builds one plane's flag-on world by passing `tiered: true`.
+   */
+  const planes: RetainingPlane[] = (precincts?.declarations ?? []).map((d) => ({
+    nodePath: d.nodePath,
+    columns: d.columns,
+    planeY: d.planeY,
+  }));
 
   /**
    * The placements every pass after this one reads.
@@ -985,6 +1008,9 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   // nothing here relies on it (§3.4's correction).
   const retaining = buildRetainingWalls({
     districts,
+    // R1's claimed planes ride in beside the quarters and take exactly the same
+    // path through this pass — see `planes` above.
+    ...(planes.length === 0 ? {} : { planes }),
     plan: input.plan,
     ground: input.ground,
     palette: input.palette,
@@ -1609,6 +1635,9 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   // Its input is the finished ground, which is only finished here.
   const cutFaces = finishCutFaces({
     districts,
+    // R4's "the hill's own rock for everything taller", for a plane's cut edge
+    // as much as for a quarter's.
+    ...(planes.length === 0 ? {} : { planes }),
     plan: input.plan,
     palette: input.palette,
     stack: input.stack,

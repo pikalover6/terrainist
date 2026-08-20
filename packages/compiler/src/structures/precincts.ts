@@ -245,6 +245,17 @@ export interface PrecinctPassResult {
 export interface PrecinctDeclaration {
   readonly nodePath: string;
   readonly columns: readonly GroundClaim[];
+  /**
+   * The level the kit graded every one of {@link columns} to.
+   *
+   * The whole of wave 12E on this side: a `PrecinctDeclaration` is already the
+   * list of columns a non-district pass levelled, and with the plane's own level
+   * beside it the record *is* a `RetainingPlane` — R1's "every pass that levels
+   * ground to a plane owes the boundary between that plane and the ground it did
+   * not level". The caller (`structures/index.ts`) hands these to
+   * `buildRetainingWalls` and `finishCutFaces`; nothing in this pass reads it.
+   */
+  readonly planeY: number;
 }
 
 /** Everything {@link buildPrecincts} reads. */
@@ -513,7 +524,7 @@ export function buildPrecincts(input: PrecinctPassInput): PrecinctPassResult {
     anchorPaths.push(job.nodePath);
     if (out.relocation !== undefined) relocations.set(job.nodePath, out.relocation);
     if (out.claims.length > 0) {
-      declarations.push({ nodePath: job.nodePath, columns: out.claims });
+      declarations.push({ nodePath: job.nodePath, columns: out.claims, planeY: out.planeY });
       // §3.1b — one `platform` per precinct kit, at the level it graded its
       // apron, taxiway, quay and forecourt to, committed as soon as the kit is
       // laid out so the next precinct measures the ground this one left.
@@ -572,6 +583,16 @@ interface OneResult {
    * A return value only; nothing in this pass reads it.
    */
   readonly claims: GroundClaim[];
+  /**
+   * The one walking level every column of {@link claims} was cut or filled to —
+   * the apron's `groundY`, the quay's `quayTop`.
+   *
+   * Carried beside the claims (§11.3, wave 12E) so the caller can hand
+   * `(columns, planeY)` on to the retaining pass as a {@link RetainingPlane}:
+   * a claim carries a level per column, and a *plane* is one number. `0` on the
+   * empty result, which carries no claims either.
+   */
+  readonly planeY: number;
   readonly counts: {
     stands: number;
     aircraft: number;
@@ -592,6 +613,7 @@ function empty(diagnostics: LoamDiagnostic[]): OneResult {
     ports: [],
     diagnostics,
     claims: [],
+    planeY: 0,
     counts: { stands: 0, aircraft: 0, hangars: 0, piers: 0, ships: 0, cranes: 0, surfaced: 0 },
   };
 }
@@ -910,6 +932,7 @@ function layOutAirport(job: PrecinctJob, input: PrecinctPassInput, states: Preci
     ports: [port, ...resolvePorts(job.placement, job.placement.size, job.ports)],
     diagnostics: [],
     claims,
+    planeY: groundY,
     counts: {
       stands: standCount,
       aircraft: parked,
@@ -1110,6 +1133,7 @@ function layOutHarbour(job: PrecinctJob, input: PrecinctPassInput, states: Preci
     diagnostics: relocation === undefined ? [] : [relocatedHarbourNote(job, placed, rect, read)],
     ...(relocation === undefined ? {} : { relocation }),
     claims,
+    planeY: quayTop,
     counts: {
       stands: 0,
       aircraft: 0,

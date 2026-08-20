@@ -562,6 +562,61 @@ export interface DistrictStats {
    * {@link COURTYARD_FILL}. Absent when nobody asked for a courtyard.
    */
   readonly courtyardRejects?: Readonly<Partial<Record<CourtyardReject, number>>>;
+  /**
+   * The ground-plane tie's own numbers, as `LOAM-T241`/`LOAM-T242` measure them
+   * (`docs/GROUND-UNIFICATION-v0.md` §11.4, wave 12C).
+   *
+   * **Absent while `GROUND_PLANE_TIE` is off** — the datum is not handed to the
+   * election at all then, so there is nothing measured and no report golden
+   * moves. Present on every quarter the tie reached, whether or not either
+   * diagnostic fired, because "zero untied, zero drift" is exactly the number
+   * 12F's write-up has to be able to quote.
+   *
+   * Report-only: nothing downstream reads it and no block moves because of it,
+   * the way {@link ProgramNodeStats.sites} is report-only.
+   */
+  readonly planeTie?: GroundPlaneTieStats;
+}
+
+/**
+ * What the anchored platform election did on one quarter — the tie's standing
+ * number, so a probe reads it off the report instead of instrumenting a build.
+ *
+ * Four of these are `PlatformTieReport` verbatim (the election's own counters,
+ * filled in place by `derivePlatforms`); the rest are `LOAM-T242`'s post-hoc
+ * measurement of the finished election against the datum that claims those very
+ * columns.
+ */
+export interface GroundPlaneTieStats {
+  /** Blocks the election looked at. */
+  readonly blocks: number;
+  /** Blocks that found a graded carriageway in reach and anchored on it. */
+  readonly tied: number;
+  /** Blocks with no banded column in reach of any perimeter column (G3). */
+  readonly untied: number;
+  /** Blocks split because their *perimeter* datum spanned a storey (G4). */
+  readonly spanSplit: number;
+  /**
+   * Platform columns within `reach` of a graded carriageway — the population
+   * `LOAM-T242` is measured over. `measured === onLattice + drift`.
+   */
+  readonly measured: number;
+  /** Of those, columns a whole number of storeys from the street's own level. */
+  readonly onLattice: number;
+  /** Of those, columns that are not — **this should be 0** once the anchor holds. */
+  readonly drift: number;
+  /** The largest-magnitude off-lattice residual, signed; 0 when none drifted. */
+  readonly worstDrift: number;
+  /** The reach the measurement probed with, in columns — `frontageReach`. */
+  readonly reach: number;
+  /**
+   * §11.0's attribution as a distribution rather than a claim: `levelY − nearest
+   * datum level`, in columns, keyed by the signed residual. Before the anchor
+   * the citadel's whole histogram was one bar at `+1` (4,180 columns); what it
+   * becomes is what 12F publishes. Sort the keys numerically to read the bars in
+   * order — JS enumerates the non-negative ones first.
+   */
+  readonly residuals: Readonly<Record<string, number>>;
 }
 
 /** One district's fabric, as the compile report carries it. */
@@ -1370,27 +1425,56 @@ export function layDistrict(
   // columns at exactly +1, one bar and not a distribution (§11.0).
   //
   // Only measured with the tie on, so a report golden does not move before the
-  // world does. The residual it names is the worst one, which is the histogram
-  // 12C publishes in full.
-  if (tieDatum !== null && levels !== null) {
+  // world does. The note names the worst residual; 12C publishes the histogram
+  // it came out of on `DistrictStats.planeTie`, so a probe reads §11.0's
+  // attribution off the report rather than out of an instrumented build.
+  //
+  // The counters travel whenever the tie ran; the *residual* half is empty on a
+  // quarter that elected no platform at all (`levels === null`), which is a
+  // legal outcome and not a hole in the report.
+  let planeTieStats: GroundPlaneTieStats | null = null;
+  if (tieDatum !== null) {
     let drift = 0;
     let worst = 0;
     let onLattice = 0;
-    for (let z = bounds.z0; z <= bounds.z1; z++) {
-      for (let x = bounds.x0; x <= bounds.x1; x++) {
-        const platform = levels.at(x, z);
-        if (platform === NO_PLATFORM) continue;
-        const near = tieDatum.levelNear(x, z, tieReach);
-        if (near === undefined) continue;
-        const residual = (levels.levelY[platform] as number) - near;
-        if (residual % FLOOR_HEIGHT === 0) {
-          onLattice += 1;
-          continue;
+    /** Signed residual → columns, collected in one pass and sorted at the end. */
+    const residuals = new Map<number, number>();
+    if (levels !== null) {
+      for (let z = bounds.z0; z <= bounds.z1; z++) {
+        for (let x = bounds.x0; x <= bounds.x1; x++) {
+          const platform = levels.at(x, z);
+          if (platform === NO_PLATFORM) continue;
+          const near = tieDatum.levelNear(x, z, tieReach);
+          if (near === undefined) continue;
+          const residual = (levels.levelY[platform] as number) - near;
+          residuals.set(residual, (residuals.get(residual) ?? 0) + 1);
+          if (residual % FLOOR_HEIGHT === 0) {
+            onLattice += 1;
+            continue;
+          }
+          drift += 1;
+          if (Math.abs(residual) > Math.abs(worst)) worst = residual;
         }
-        drift += 1;
-        if (Math.abs(residual) > Math.abs(worst)) worst = residual;
       }
     }
+    planeTieStats = {
+      blocks: platformTie.blocks,
+      tied: platformTie.tied,
+      untied: platformTie.untied,
+      spanSplit: platformTie.spanSplit,
+      measured: drift + onLattice,
+      onLattice,
+      drift,
+      worstDrift: worst,
+      reach: tieReach,
+      // Built in ascending residual order. JS then orders integer-like keys
+      // ahead of the negative ones when the object is enumerated, which is
+      // deterministic but is not the histogram's order: a reader that wants the
+      // bars in order sorts the keys numerically. The *values* are the point.
+      residuals: Object.fromEntries(
+        [...residuals.entries()].sort((a, b) => a[0] - b[0]).map(([r, n]) => [String(r), n]),
+      ),
+    };
     if (drift > 0) {
       diagnostics.push(
         note(
@@ -2185,6 +2269,10 @@ export function layDistrict(
         ...(courtyardShare <= 0
           ? {}
           : { courtyardRejects: Object.fromEntries([...courtyardRejects].sort()) }),
+        // 12C. Absent — and therefore invisible to every report golden — while
+        // `GROUND_PLANE_TIE` is off, because `tieDatum` is `null` then and
+        // nothing was measured.
+        ...(planeTieStats === null ? {} : { planeTie: planeTieStats }),
       },
     },
   };
