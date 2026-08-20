@@ -215,6 +215,15 @@ export const ROAD_FILL_BAND = 0;
  * exists. The arterial path, the `road.network@0` path and every ungraded-datum
  * street keep the uncapped cut they have always had, so `FRONTAGE_TIE = false`
  * is byte-identical. Wave 8F revisits the number on walk evidence.
+ *
+ * **Applied where the datum is graded — wave 8G.** `gradeStreetDatum` takes
+ * this same cap into its floor, and the `max` below is then a no-op wherever
+ * the grader and the surfacer see the same ground. Applying it *here alone* was
+ * the walked defect: the datum dug an uncapped trench across a hill (band caps
+ * fill, never cut), every lot seated in the trench, and this floor then held
+ * the carriageway up to nine blocks above its own frontages. The cut floor is a
+ * function of the street's own sampled ground and needs nothing the layout
+ * stage lacks, so it belongs where F2 says the elevation is decided — once.
  */
 export const STREET_CUT_MAX = 2;
 

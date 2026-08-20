@@ -39,12 +39,14 @@ import { HeightField, nodeSeed, type Region } from "@terrainist/stdlib";
 
 import { loadPrismarine } from "../src/emit/prismarine.js";
 import { EMIT_MINECRAFT_VERSION } from "../src/emit/world.js";
-import { FRONTAGE_TIE } from "../src/layout/types.js";
+import { FRONTAGE_RISE, FRONTAGE_TIE } from "../src/layout/types.js";
+import { frontageReach, frontageSeat } from "../src/layout/district.js";
 import { gradeStreetDatum, type StreetDatum } from "../src/layout/street-datum.js";
 import type { StreetGraph, StreetSegment } from "../src/layout/streets.js";
 import { FluidKind, type ColumnPlan } from "../src/terrain/columns.js";
 import { Palette } from "../src/terrain/palette.js";
 import {
+  ROAD_BERM_MAX,
   STREET_CUT_MAX,
   buildRoadNetwork,
   index,
@@ -322,6 +324,137 @@ describe("F9: a tied carriageway may not dig past STREET_CUT_MAX", () => {
     // constant". A silent retune of this is a silent retune of every tied
     // street's relationship to its own hill.
     expect(STREET_CUT_MAX).toBe(2);
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* 3b. wave 8G: one grading — the cut cap lives in the datum                    */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * **The walked defect** (Kai's flag-matrix walk): on steep and terraced ground
+ * a street rode as much as nine blocks above the frontages seated against it —
+ * `LOAM-T237` four times on the citadel of `p1-tie2`, nine times on `p4-gem1`'s
+ * ruined metro, four on Troy.
+ *
+ * The mechanism, measured rather than assumed: at **every** drifted station of
+ * both flagged worlds the floor that bit was `natural − STREET_CUT_MAX`, never
+ * the water floor (`deckFloor` read 0 or `seaLevel` at all of them). F9's cut
+ * cap was applied only in the surfacer, so the datum dug an uncapped trench —
+ * `ROAD_FILL_BAND` caps fill, never cut — the lots seated in the trench, and
+ * the surfacer then held the carriageway up at the cap. Two graders, one
+ * question, which is the exact thing F2 exists to forbid.
+ *
+ * The cut floor needs nothing the layout stage does not already have: it is a
+ * function of the street's own sampled ground. So it moved into
+ * `gradeStreetDatum`, and what is asserted here is that the two now agree
+ * *without* the surfacer being asked to trust anything: an honestly graded
+ * datum comes back from the surfacer unchanged, station for station, over the
+ * ground that used to drift it.
+ */
+describe("8G: a datum graded over a hill comes back from the surfacer unchanged", () => {
+  // A slope with a ravine cut through it and a lake standing in the ravine —
+  // the two floor-raising features at once, on ground steep enough that the cut
+  // cap binds hard: 24 blocks of fall across the street, and a gully 10 deep.
+  const hillside = (x: number, _z: number): number => {
+    const slope = 96 - Math.floor((x + 30) / 2.5);
+    return Math.abs(x) <= 6 ? Math.min(slope, 74) : slope;
+  };
+  const LAKE_TOP = 78;
+
+  /** The hillside plan, with a lake standing in the ravine at `LAKE_TOP`. */
+  function withLake(r: Region): ColumnPlan {
+    const p = plan(r, hillside);
+    for (let k = 0; k < p.fluidKind.length; k++) {
+      if ((p.ground[k] as number) < LAKE_TOP) {
+        p.fluidKind[k] = FluidKind.WATER;
+        p.fluidTop[k] = LAKE_TOP;
+      }
+    }
+    return p;
+  }
+
+  it("carries F9's cut cap, so the datum never digs past STREET_CUT_MAX", () => {
+    const r = region();
+    const graph = oneStreet();
+    const y = datumFor(r, graph, hillside).bySegment.get("s")?.y as readonly number[];
+    // Sampled along the same line the datum grades on: the ravine is 10 deep
+    // and the profile crosses it, so an uncapped grading digs 8 past the cap.
+    for (const [i, level] of y.entries()) {
+      const x = -30 + i;
+      expect(level).toBeGreaterThanOrEqual(hillside(x, 0) - STREET_CUT_MAX);
+    }
+    // The cap really is the binding constraint here — this fixture would drift
+    // by 8 blocks under the pre-8G grading.
+    expect(Math.min(...y)).toBe(hillside(0, 0) - STREET_CUT_MAX);
+  });
+
+  it("is surfaced at exactly its datum at every station of the dry hill", () => {
+    const r = region();
+    const graph = oneStreet();
+    const datum = datumFor(r, graph, hillside);
+    const want = datum.bySegment.get("s")?.y as readonly number[];
+    const result = surface(plan(r, hillside), graph, { datums: [datum] });
+    expect(declared(result, "s").levels?.y).toEqual([...want]);
+    // T237 is the alarm, and it is silent: nothing departed from the datum, so
+    // no lot on this street was left below its own carriageway. Before 8G this
+    // same fixture drifted at 33 of its 61 stations, by up to 10 blocks.
+    expect(result.diagnostics).toBeUndefined();
+  });
+
+  it("keeps the water floor as the one legal departure, clamped to the berm", () => {
+    // Fill the ravine and the rim floor bites: `routeFloorAt` holds the street
+    // at the surface of the water beside it. That is F8's one legal departure
+    // and the only thing `LOAM-T237` should still have to say — and W1's
+    // pre-envelope clamp bounds it at `ROAD_BERM_MAX`, so the rim lifts the
+    // carriageway a step out of the lake rather than building an embankment.
+    const r = region();
+    const graph = oneStreet();
+    const datum = datumFor(r, graph, hillside);
+    const want = datum.bySegment.get("s")?.y as readonly number[];
+    const result = surface(withLake(r), graph, { datums: [datum] });
+    const y = declared(result, "s").levels?.y as readonly number[];
+    let lifted = 0;
+    for (const [i, level] of y.entries()) {
+      const lift = level - (want[i] as number);
+      expect(lift).toBeGreaterThanOrEqual(0);
+      expect(lift).toBeLessThanOrEqual(ROAD_BERM_MAX);
+      if (lift > 0) lifted++;
+    }
+    expect(lifted).toBeGreaterThan(0);
+    // W1's clamp announces itself first (`LOAM-T239`); the drift note is the
+    // one this test is about.
+    const d = (result.diagnostics ?? []).find((n) => n.code === "LOAM-T237");
+    expect(d?.name).toBe("FRONTAGE_TIE_DRIFT");
+    expect(d?.message).toContain(`at ${lifted} of ${y.length} station(s)`);
+  });
+
+  it("leaves every lot on the dry hill within one step of its street", () => {
+    const r = region();
+    const graph = oneStreet();
+    const datum = datumFor(r, graph, hillside);
+    const result = surface(plan(r, hillside), graph, { datums: [datum] });
+    const built = new Map(declared(result, "s").columns.map((c) => [c.idx, c.y] as const));
+    const reach = frontageReach(graph.sidewalk);
+    let seated = 0;
+    // A row of one-column lots along the street's north face, each seated the
+    // way `layDistrict` seats one: `frontageSeat` off the datum, F5's corner
+    // rule included. Every one of them must be able to step onto the street it
+    // fronts — which is the whole of F1 in one number.
+    for (let x = -28; x <= 28; x++) {
+      const rect = { x0: x, z0: 6, x1: x, z1: 8 };
+      const seat = frontageSeat({ rect, face: "north", corner: false, datum, reach });
+      if (seat === undefined) continue;
+      seated++;
+      // The carriageway column the lot looks at, and the level it was built to.
+      let street: number | undefined;
+      for (let z = 5; z >= -1 && street === undefined; z--) {
+        street = built.get(index(r, x, z));
+      }
+      expect(street, `no carriageway in front of the lot at x=${x}`).toBeDefined();
+      expect(Math.abs((street as number) - (seat - FRONTAGE_RISE))).toBeLessThanOrEqual(1);
+    }
+    expect(seated).toBeGreaterThan(50);
   });
 });
 

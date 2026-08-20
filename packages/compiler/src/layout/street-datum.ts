@@ -27,10 +27,17 @@
  *    order; a segment arriving at a column somebody senior already owns is
  *    pinned to that column's level with `pinLevel`. The ownership machinery is
  *    used unchanged.
- * 4. `gradeProfile(ground, seaLevel, ROAD_FILL_BAND, 0)`. **The deck and rim
- *    floor is deliberately zero here**: `routeFloorAt` needs `fluidTop`, which
- *    does not exist until `buildColumnPlan` runs. The floor is the surfacer's,
- *    and F8 says what happens where it bites.
+ * 4. `gradeProfile(ground, seaLevel, ROAD_FILL_BAND, floor)`, where `floor` is
+ *    F9's cut cap — `ground − STREET_CUT_MAX`, maxed with the junction pins.
+ *    **The deck and rim floor is deliberately zero here**: `routeFloorAt` needs
+ *    `fluidTop`, which does not exist until `buildColumnPlan` runs. That half
+ *    of the floor is the surfacer's, and F8 says what happens where it bites —
+ *    it is the one legal cause `LOAM-T237` names. The *cut* half is not: it is
+ *    a function of this street's own sampled ground and nothing else, so
+ *    leaving it to the surfacer alone was two graders answering one question.
+ *    Wave 8G moved it here, where it belongs (the walked defect: the datum dug
+ *    an uncapped trench across a hill, the lots seated in it, and the surfaced
+ *    carriageway stood up to nine blocks above its own frontages).
  * 5. `arcLevels(frame, profile)` binds the profile to its frame, and the swept
  *    cross-section (`carriagewaySpans`) rasterises `columnY`/`band`.
  *
@@ -47,6 +54,7 @@ import { WORLD_MIN_Y } from "../emit/prismarine.js";
 import { clampY } from "../terrain/columns.js";
 import {
   ROAD_FILL_BAND,
+  STREET_CUT_MAX,
   clampX,
   clampZ,
   gradeProfile,
@@ -263,13 +271,35 @@ export function gradeStreetDatum(input: StreetDatumInput): StreetDatum {
     const stationGround: number[] = [];
     const stationBand: number[] = [];
     const deckFloor: number[] = [];
+    /**
+     * F9's cut cap, held apart from the pins — **the fix of wave 8G.**
+     *
+     * The surfacer's tied branch grades `gradeProfile(datumY, sea, band,
+     * max(waterFloor, natural − STREET_CUT_MAX))`. The cut half of that floor
+     * needs nothing this stage does not already have: it is a function of the
+     * street's *own* sampled ground, the same array this profile is graded
+     * from. Leaving it to the surfacer alone was the second grader — the datum
+     * dug a trench through the hill with no cap (band 0 caps fill, never cut),
+     * the lots seated in the trench, and the surfacer then held the carriageway
+     * up at `natural − 2` and rode as much as nine blocks above them.
+     *
+     * Sampled from the *unpinned* ground on purpose: the surfacer's tied branch
+     * runs no pins at all, so its `ground` is `natural` everywhere, and a floor
+     * built from pinned ground would be a third answer. {@link pinLevel} then
+     * maxes the pin into `deckFloor` below, and the two are combined once, in
+     * the same `max` the surfacer uses.
+     */
+    const cutFloor: number[] = [];
     for (const p of frame.stations) {
       const k = index(region, clampX(region, p.x), clampZ(region, p.z));
       stationGround.push(ground[k] as number);
       stationBand.push(ROAD_FILL_BAND);
       // F3 step 4: zero, deliberately. `routeFloorAt` needs `fluidTop`, which
-      // does not exist yet; the water floor is the surfacer's to apply.
+      // does not exist yet; the water floor is the surfacer's to apply — and
+      // it is the one departure from the datum F8 declares legal, which is
+      // exactly what `LOAM-T237` says a residual drift means.
       deckFloor.push(0);
+      cutFloor.push((ground[k] as number) - STREET_CUT_MAX);
     }
     for (const [i, c] of job.path.entries()) {
       const k = index(region, clampX(region, c.x), clampZ(region, c.z));
@@ -285,7 +315,10 @@ export function gradeStreetDatum(input: StreetDatumInput): StreetDatum {
         columnY[k] as number,
       );
     }
-    const profile = gradeProfile(stationGround, seaLevel, stationBand, deckFloor);
+    // One floor, one grading (F8): the same `max` the surfacer's tied branch
+    // takes, so the profile it re-grades from this one is this one.
+    const floor = deckFloor.map((f, i) => Math.max(f, cutFloor[i] as number));
+    const profile = gradeProfile(stationGround, seaLevel, stationBand, floor);
     // 8E's one line for the cities, corrected at 8F. Applied to the graded
     // profile rather than to the sampled ground so the grade cap still governs
     // the *shape* of the run wherever the shape survives; the result is what

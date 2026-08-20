@@ -327,6 +327,22 @@ role exists; a broken run is a flight, which is what a street does on a hill.
 `STREET_CUT_MAX` is set from the same forensics measurement as
 `ROAD_BERM_MAX` (§3.1) and is pinned beside the constant in the §13.8 tradition.
 
+**Where the cap is applied — wave 8G.** In the datum, not in the surfacer.
+8D landed it as a floor inside `surfaceStreetGraph`'s tied branch, which made
+F8's "exactly one further constraint" false: the datum dug an uncapped trench,
+the lots seated in the trench, and the surfacer then held the carriageway up at
+the cap. Kai's flag-matrix walk found the result — hill streets standing up to
+nine blocks above their own frontages, `LOAM-T237` four times on `p1-tie2`'s
+citadel, nine on `p4-gem1`'s ruined metro, four on Troy — and the instrumented
+measurement was unambiguous: at *every* drifted station of both flagged worlds
+the floor that bit was `natural − STREET_CUT_MAX`, never the water floor. The
+cut floor needs nothing the layout stage lacks (it is a function of the street's
+own sampled ground), so `gradeStreetDatum` now grades with
+`max(pins, ground − STREET_CUT_MAX)` and the surfacer's identical `max` is a
+no-op wherever the two see the same ground. F8's sentence is once again exactly
+true: **water is the only further constraint**, and `LOAM-T237` is once again
+the alarm it was written to be — 0 on all three worlds after the change.
+
 ### F10 — the datum is not a claim
 
 The datum declares nothing to the ground driver. It is an input to seating,
