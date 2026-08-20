@@ -72,6 +72,7 @@ import {
   WALL_DEMAND_RANGE,
   bankRun,
   benchedRun,
+  groundLevelsOf,
   seamDressing,
   tierCountOf,
   tieredRun,
@@ -87,8 +88,8 @@ import {
   type SeamTier,
   type SeamTreatment,
 } from "../layout/levels.js";
-import type { PlannedEdge } from "../layout/forms/types.js";
-import { SEAM_TIERS } from "../layout/types.js";
+import type { FormBench, PlannedEdge } from "../layout/forms/types.js";
+import { GROUND_PLANE_TIE, SEAM_TIERS } from "../layout/types.js";
 import type { Palette } from "../terrain/palette.js";
 import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
 import type { PrismarineStack } from "../emit/prismarine.js";
@@ -198,9 +199,60 @@ export interface RetainingDistrict {
   readonly tiered?: boolean;
 }
 
+/**
+ * A **claimed plane** — levelled ground that no quarter drew.
+ *
+ * > **R1 — every pass that levels ground to a plane owes the boundary between
+ * > that plane and the ground it did not level.**
+ * > (`docs/GROUND-UNIFICATION-v0.md` §11.2)
+ *
+ * A `precinct.*` quay, a forecourt, an airport apron: each flattens a patch of
+ * hillside to one Y and then stops, and inside a quarter the platform election
+ * owes that boundary (Part IV) while outside one **nobody does**. That is not a
+ * missing feature, it is the bug — the pirate haven's quay commits
+ * `transition: "ramp"`, promises in its own comment that it *"walks out to its
+ * own ground rather than ending at a cut face"*, and ends at a 4–6 block raw
+ * grass face over 73 columns, because all three passes that could have caught
+ * it are scoped to `RetainingDistrict[]`.
+ *
+ * So a plane is handed to this pass as *itself*, and the pass measures its
+ * edges off the finished ground (R2) rather than reading the claim's own word
+ * for them — *"a form that declared its own seams could get one wrong, and a
+ * wrong seam is a cliff through a town"*.
+ */
+export interface RetainingPlane {
+  readonly nodePath: string;
+  /**
+   * The columns the plane levelled, as the producing pass recorded them —
+   * `precincts.ts`' `OneResult.claims`, handed straight on (§11.3, wave 12E).
+   *
+   * Only `idx` is read: a plane is a plane, and its one level is
+   * {@link planeY}. A claim outside the region is skipped.
+   */
+  readonly columns: readonly GroundClaim[];
+  /** The walking level every column of the plane was cut or filled to. */
+  readonly planeY: number;
+  /**
+   * Whether this plane's own edges are served at all.
+   *
+   * Defaults to {@link GROUND_PLANE_TIE}, the compile-time flag 12F flips on
+   * Kai's walk verdict. The field exists for the reason
+   * {@link RetainingDistrict.tiered} exists: a test must be able to build the
+   * flag-on world for one plane without flipping a constant the whole compiler
+   * reads (§11.4).
+   */
+  readonly tiered?: boolean;
+}
+
 /** Everything {@link buildRetainingWalls} reads. */
 export interface RetainingPassInput {
   readonly districts: readonly RetainingDistrict[];
+  /**
+   * The claimed planes, if any (R1). Absent for every document with no
+   * `precinct.*` node, which is what makes R6's byte-identity hold: no plane
+   * means no job list and no allocation.
+   */
+  readonly planes?: readonly RetainingPlane[];
   /** Mutated exactly as the road pass mutates it — materials only, given a driver. */
   readonly plan: ColumnPlan;
   /**
@@ -324,6 +376,19 @@ export interface RetainingPassResult {
    */
   readonly treatedCut: Readonly<Record<SeamTreatment, number>>;
   /**
+   * **What the claimed planes' own cut edges became** (R4), in columns.
+   *
+   * Kept apart from {@link treated}/{@link treatedCut}, which partition the
+   * edges of a *quarter*: a plane is not a quarter, its cut side is answered by
+   * R4's own three-way rule rather than by §5.2's context table, and folding the
+   * two would make the §5 partition stop adding up. The plane's **fill** side is
+   * in `treated`, because R3 serves it as an ordinary skirt and it really is one.
+   *
+   * All zeroes for every document with no served plane, which is every document
+   * until {@link GROUND_PLANE_TIE} flips.
+   */
+  readonly planeEdges: PlaneEdgeTally;
+  /**
    * Edges whose bank was **benched** rather than ramped: a face past
    * {@link RETAIN_MAX} answered as several short faces with {@link BENCH_TREAD}
    * columns of soil between, rather than as one 1:1 slope of earth.
@@ -361,6 +426,42 @@ export interface RetainingPassResult {
    * materials.
    */
   readonly declaration: RetainingDeclaration;
+}
+
+/**
+ * R4's three answers on the cut side of a claimed plane, plus what deferred.
+ *
+ * - `absorbed` — the run is under {@link MIN_RETAIN_RUN}, so S7's construction
+ *   applies verbatim and nothing of its own is built there;
+ * - `revetted` — `tierCountOf(drop) === 1`, so one course stands at the back of
+ *   the plane and {@link buildTieredSeam} spends `maxDist = 0` columns of it.
+ *   **100 % of the walked evidence** is here: every face the r22 world produced
+ *   is drop ≤ 6;
+ * - `rock` — everything taller, finished by {@link finishCutFaces} in the hill's
+ *   own rock and reported by `LOAM-I417`, because stepping *back into the hill*
+ *   is the mirror of {@link buildTieredSeam}'s geometry and is deferred behind
+ *   its own measurement (§11.2 R4).
+ *
+ * There is deliberately no `ramp`: a ramp on the cut side is a
+ * post-materialisation cut of a hillside, which deletes the vegetation, the snow
+ * and the soil depth standing on it — §0.3a's reason the late family is
+ * fill-only, and what `treatmentForEdge` already encodes as
+ * `soft = side === "fill" ? "bank" : "rock"`. The quay's own claim asks for a
+ * `ramp`; asking is not enough.
+ */
+export interface PlaneEdgeTally {
+  /** Columns of face left to S7's absorption. */
+  readonly absorbed: number;
+  /** Columns of face held by one revetted course. */
+  readonly revetted: number;
+  /** Columns of face handed to the hill's own rock. */
+  readonly rock: number;
+  /** Faces deferred to rock because they ran past one course — `LOAM-I417`. */
+  readonly deferredFaces: number;
+  /** The deepest of those, in blocks; 0 when none deferred. */
+  readonly deepestDeferred: number;
+  /** Planes whose edges were measured at all — one `LOAM-I416` each. */
+  readonly planes: number;
 }
 
 /** The raw material of §3.3b's intents. */
@@ -548,8 +649,42 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
     offPlatform: 0,
     noFace: 0,
   };
+  const planeEdges = {
+    absorbed: 0,
+    revetted: 0,
+    rock: 0,
+    deferredFaces: 0,
+    deepestDeferred: 0,
+    planes: 0,
+  };
 
-  const relevant = input.districts.filter((d) => d.levels !== undefined);
+  // **R1's job list.** A plane whose flag is off is not measured at all: R6's
+  // byte-identity is "a document with no `precinct.*` node compiles
+  // byte-identically", and a document *with* one compiles byte-identically too
+  // until 12F flips the constant.
+  const planeJobs = (input.planes ?? [])
+    .filter((plane) => plane.tiered ?? GROUND_PLANE_TIE)
+    .map((plane) => ({ plane, extent: planeExtent(region, plane) }))
+    .filter((job): job is { plane: RetainingPlane; extent: PlaneExtent } => job.extent !== null);
+
+  // **R3 — the fill side is the skirt, unchanged.** Where the plane stands
+  // *above* the natural ground its edge is exactly what `skirtSeams` already
+  // derives for a quarter's platform, so the plane is handed to the loop below
+  // as a one-bench quarter and every rule in it applies verbatim: `edgeContextOf`
+  // measures the context, `treatmentForEdge` chooses, and S5's dressing, S7's
+  // absorption and S8's bank answer as they do everywhere else. Nothing is
+  // duplicated and no branch in that loop knows a plane from a quarter — which
+  // is R2's whole point, that the adapter is the only new thing.
+  const planeDistricts: RetainingDistrict[] = planeJobs.map(({ plane, extent }) => ({
+    nodePath: plane.nodePath,
+    bounds: extent.bounds,
+    carriageway: new Uint8Array(extent.cells),
+    sidewalk: new Uint8Array(extent.cells),
+    levels: extent.levels,
+    tiered: true,
+  }));
+
+  const relevant = [...input.districts.filter((d) => d.levels !== undefined), ...planeDistricts];
   if (relevant.length === 0) {
     return {
       blocks,
@@ -570,6 +705,7 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
       landings,
       treated,
       treatedCut,
+      planeEdges,
       benchedBanks,
       compositeBanks,
       facesByDrop,
@@ -1162,6 +1298,124 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
     // doc comment for the measurement.
   }
 
+  // --- R4: the cut side of every claimed plane -------------------------------
+  //
+  // The half no existing producer has. `skirtSeams` only ever claims a
+  // neighbour whose ground is *below* the platform top, so the loop above found
+  // the plane's fill edges and nothing else; `planeSeams` is its mirror, and
+  // between them the plane's boundary is partitioned. Run after the quarters so
+  // a plane cut into a hillside a quarter also holds sees that quarter's walls
+  // already standing — the same reason this pass runs after the buildings.
+  for (const { plane, extent } of planeJobs) {
+    planeEdges.planes++;
+    const street = new Uint8Array(cells);
+    const answers: Record<PlaneEdgeAnswer, number> = { absorbed: 0, revetted: 0, rock: 0 };
+    let faces = 0;
+    let deferred = 0;
+    let deepest = 0;
+    for (const [jobIndex, job] of planeSeams(region, plan, extent, plane.planeY).entries()) {
+      const record = job.seam;
+      const run = record.cells.length;
+      faces++;
+      answers[job.answer] += run;
+      if (job.answer === "absorbed") continue;
+      if (job.answer === "rock") {
+        // Nothing is built and no level moves; `finishCutFaces` states what the
+        // face is made of, and `LOAM-I417` says how much of the world is
+        // waiting on the mirror geometry.
+        deferred++;
+        if (record.drop > deepest) deepest = record.drop;
+        continue;
+      }
+      // **One revetted course at the back of the plane.** `tierCountOf` is 1
+      // here by construction, so `tiersOf` returns a single tier, `maxDist` is
+      // 0, and the stack's whole footprint is the seam's own columns — the
+      // plane pays one column of its own width and not a block more. The
+      // dressing is not `seamDressing`'s choice: a one-tier stack has no tread
+      // to dress, and `revetted` is what a face held against a hill is.
+      const laid = buildTieredSeam({
+        region,
+        plan,
+        driver,
+        source: `${plane.nodePath}#plane@${jobIndex}`,
+        nodePath: plane.nodePath,
+        // Measured from the finished ground, never read from the claim (R2).
+        measured: true,
+        levels: job.levels,
+        record,
+        drop: record.drop,
+        dressing: "revetted",
+        street,
+        occupied,
+        states,
+        palette,
+        stack,
+        blocks,
+        seam,
+        diagnostics,
+        declaredWalls,
+      });
+      stacks++;
+      tieredAnywhere = true;
+      stacksByDressing.revetted++;
+      stackTiers += laid.tiers.length;
+      stackColumns += laid.faceColumns;
+      treadColumns += laid.treadColumns;
+      railColumns += laid.railColumns;
+      if (laid.landings.length > 0) {
+        landings.push({
+          source: `${plane.nodePath}#plane@${jobIndex}`,
+          nodePath: plane.nodePath,
+          landings: laid.landings,
+        });
+      }
+      for (const face of laid.faces) {
+        const bucket = face < 1 ? 1 : face > RETAIN_MAX ? RETAIN_MAX : face;
+        facesByDrop[bucket] = (facesByDrop[bucket] as number) + 1;
+      }
+      // S1's one honest refusal, on a plane exactly as on a quarter: the
+      // treatment was chosen and could not be *placed*.
+      if (laid.unplaced > 0 || laid.unsupportedColumns > 0) {
+        diagnostics.push(
+          warning(
+            "SEAM_UNSERVED",
+            plane.nodePath,
+            `the plane "${plane.nodePath}" meets ground ${record.drop} block(s) above it over ${run} column(s) and was served by a revetted course, but ${laid.unplaced} tier(s) found no ground to stand on and ${laid.unsupportedColumns} column(s) were left uncovered — a street, a footprint or water owns the ground the course would have stood on`,
+            "Nothing in the document names the columns directly: move the plane off the ground something else already owns, or shrink it so its edge falls clear.",
+          ),
+        );
+      }
+    }
+    planeEdges.absorbed += answers.absorbed;
+    planeEdges.revetted += answers.revetted;
+    planeEdges.rock += answers.rock;
+    planeEdges.deferredFaces += deferred;
+    if (deepest > planeEdges.deepestDeferred) planeEdges.deepestDeferred = deepest;
+
+    // **R1's receipt, once per plane.**
+    diagnostics.push(
+      note(
+        "PLANE_EDGE_SERVED",
+        plane.nodePath,
+        faces === 0
+          ? `the plane "${plane.nodePath}" meets no ground standing over it: nothing to serve on the cut side (§11.2 R1)`
+          : `the plane "${plane.nodePath}" owes ${faces} cut edge(s), ${answers.absorbed + answers.revetted + answers.rock} column(s) in all: ` +
+            `${answers.revetted} revetted, ${answers.absorbed} absorbed, ${answers.rock} faced in the hill's own rock (§11.2 R4)`,
+        "No action needed.",
+      ),
+    );
+    if (deferred > 0) {
+      diagnostics.push(
+        note(
+          "PLANE_EDGE_DEFERRED",
+          plane.nodePath,
+          `${deferred} cut face(s) of the plane "${plane.nodePath}", ${answers.rock} column(s) in all, run past the ${RETAIN_MAX_TEXT} one revetted course is built for — the deepest by ${deepest} block(s) — and were finished in the hill's own rock: the mirror stack that steps back *into* the hill is new geometry and is deferred behind this measurement (§11.2 R4)`,
+          "No action needed — rock is an honest answer for a hillside that outruns a revetment.",
+        ),
+      );
+    }
+  }
+
   // §5.5 — `offPlatform` becomes an error on a quarter a planner drew.
   //
   // Not counted and survived, as it is today: §3.4 rule 2 refuses to claim a
@@ -1297,6 +1551,7 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
     landings,
     treated,
     treatedCut,
+    planeEdges,
     benchedBanks,
     compositeBanks,
     facesByDrop,
@@ -1348,6 +1603,17 @@ function streetMaskOf(region: Region, district: RetainingDistrict): Uint8Array {
 /** Everything {@link finishCutFaces} reads. */
 export interface CutFaceFinishInput {
   readonly districts: readonly RetainingDistrict[];
+  /**
+   * The claimed planes (R1), if any — **the widened filter**.
+   *
+   * `finishCutFaces` is the pass that states what an unwalled cut is made of,
+   * and its district filter was the only thing standing between it and a plane's
+   * own cut face (§11.2 R4). A plane enters as what it is: a one-bench quarter
+   * whose platforms are cut into a hillside that is mostly still there, which is
+   * `naturalCuts` exactly. Absent, or with {@link GROUND_PLANE_TIE} off, this
+   * pass is byte-for-byte the one that shipped.
+   */
+  readonly planes?: readonly RetainingPlane[];
   /** Mutated — **materials only**: `subsurface` and `soil`, never a level. */
   readonly plan: ColumnPlan;
   readonly palette: Palette;
@@ -1416,7 +1682,24 @@ export interface CutFaceFinishResult {
 export function finishCutFaces(input: CutFaceFinishInput): CutFaceFinishResult {
   const { plan, palette, stack } = input;
   const region = plan.region;
-  const relevant = input.districts.filter((d) => d.levels !== undefined);
+  // The plane jobs, as one-bench quarters that declare `naturalCuts` — R4's
+  // "the hill's own rock for everything taller", and the same synthesis
+  // `buildRetainingWalls` makes for the fill side.
+  const planeDistricts: RetainingDistrict[] = [];
+  for (const plane of input.planes ?? []) {
+    if (!(plane.tiered ?? GROUND_PLANE_TIE)) continue;
+    const extent = planeExtent(region, plane);
+    if (extent === null) continue;
+    planeDistricts.push({
+      nodePath: plane.nodePath,
+      bounds: extent.bounds,
+      carriageway: new Uint8Array(extent.cells),
+      sidewalk: new Uint8Array(extent.cells),
+      levels: extent.levels,
+      naturalCuts: true,
+    });
+  }
+  const relevant = [...input.districts.filter((d) => d.levels !== undefined), ...planeDistricts];
   if (relevant.length === 0) return { revetted: 0, diagnostics: [] };
 
   const states = resolveStates(palette, stack);
@@ -2267,6 +2550,243 @@ function skirtSeams(
         floorY,
       });
     }
+  }
+  return out;
+}
+
+/* -------------------------------------------------------------------------- */
+/* the plane edge — `docs/GROUND-UNIFICATION-v0.md` §11.2, R1–R4               */
+/* -------------------------------------------------------------------------- */
+
+/** R4's answer for one cut edge of a claimed plane. See {@link PlaneEdgeTally}. */
+type PlaneEdgeAnswer = "absorbed" | "revetted" | "rock";
+
+/**
+ * A claimed plane, as this pass needs it: the mask, the frame, and the
+ * one-bench {@link GroundLevels} R3 hands straight to the skirt.
+ */
+interface PlaneExtent {
+  /** 1 on every column the plane levelled, row-major over the **region**. */
+  readonly claimed: Uint8Array;
+  /**
+   * The plane's own frame, **grown by one column** and clipped to the region.
+   *
+   * One column, because the whole of R2 happens in the ring immediately outside
+   * the plane: the natural ground standing over it is the upper bench, and a
+   * bench clipped away by the frame is a bench `levels.at` cannot see.
+   */
+  readonly bounds: Rect;
+  /** `bounds`' column count — what a synthetic quarter's masks are sized to. */
+  readonly cells: number;
+  /** The plane's runs, as {@link groundLevelsOf} wants them. */
+  readonly runs: readonly Rect[];
+  /** One bench: the plane, at its own level. */
+  readonly levels: GroundLevels;
+}
+
+/**
+ * A claimed plane's frame and platform field, or `null` when it claimed nothing
+ * inside the region.
+ */
+function planeExtent(region: Region, plane: RetainingPlane): PlaneExtent | null {
+  const cells = region.width * region.depth;
+  const claimed = new Uint8Array(cells);
+  let x0 = Number.POSITIVE_INFINITY;
+  let x1 = Number.NEGATIVE_INFINITY;
+  let z0 = Number.POSITIVE_INFINITY;
+  let z1 = Number.NEGATIVE_INFINITY;
+  let any = false;
+  for (const claim of plane.columns) {
+    const k = claim.idx;
+    if (k < 0 || k >= cells || claimed[k] === 1) continue;
+    claimed[k] = 1;
+    any = true;
+    const x = region.x0 + (k % region.width);
+    const z = region.z0 + Math.floor(k / region.width);
+    if (x < x0) x0 = x;
+    if (x > x1) x1 = x;
+    if (z < z0) z0 = z;
+    if (z > z1) z1 = z;
+  }
+  if (!any) return null;
+  const bounds: Rect = {
+    x0: Math.max(region.x0, x0 - 1),
+    z0: Math.max(region.z0, z0 - 1),
+    x1: Math.min(region.x0 + region.width - 1, x1 + 1),
+    z1: Math.min(region.z0 + region.depth - 1, z1 + 1),
+  };
+  // One 1×1 rect per column: `groundLevelsOf` rebuilds the maximal horizontal
+  // runs off the *resolved* field anyway, so handing it the coarse form and
+  // handing it the merged one give the same `GroundLevels`, and the coarse form
+  // cannot get the merge wrong.
+  const runs: Rect[] = [];
+  for (let k = 0; k < cells; k++) {
+    if (claimed[k] !== 1) continue;
+    const x = region.x0 + (k % region.width);
+    const z = region.z0 + Math.floor(k / region.width);
+    runs.push({ x0: x, z0: z, x1: x, z1: z });
+  }
+  const levels = groundLevelsOf(bounds, [{ id: "plane", runs, level: plane.planeY }]);
+  if (levels === null) return null;
+  return {
+    claimed,
+    bounds,
+    cells: (bounds.x1 - bounds.x0 + 1) * (bounds.z1 - bounds.z0 + 1),
+    runs,
+    levels,
+  };
+}
+
+/** One measured cut edge of a plane, with the adapter that lets Part IV build it. */
+interface PlaneCutSeam {
+  /**
+   * **R2's two-bench synthetic `GroundLevels`** — index 0 the claimed plane,
+   * index 1 the natural ground standing over *this* face — so that
+   * {@link buildTieredSeam} reads `top = levelY[above]` and `floor = top − drop`
+   * exactly as it does for a quarter, and every existing function applies
+   * unchanged.
+   *
+   * One per face rather than one per plane, and that is forced by the wire
+   * format rather than chosen: a `FormBench` carries **one** level, and two
+   * faces of the same quay meet the hill at two different heights. The plane's
+   * own bench is identical in every one of them, so index 0 means the same thing
+   * everywhere and `record.below` is always 0.
+   */
+  readonly levels: GroundLevels;
+  /** `above = 1`, `below = 0`, and the cells are the plane's own edge columns. */
+  readonly seam: LevelSeam;
+  readonly answer: PlaneEdgeAnswer;
+}
+
+/**
+ * The cut edges of a claimed plane — **the seam is measured, never declared**
+ * (R2), and the mirror of {@link skirtSeams}.
+ *
+ * `skirtSeams` claims a neighbour whose ground is *below* the platform top and
+ * hands back the neighbour's columns; a plane's cut edge is the same
+ * construction run the other way — the neighbour's ground stands *above* the
+ * plane, and the columns handed back are the **plane's own**, because that is
+ * where a face at the back of a quay stands. Everything else is shared word for
+ * word: the two-block floor (*"a one-block lip is a kerb the street pass already
+ * copes with"*), the 8-connected grouping (*"a contour on a lattice is a
+ * staircase"*), and the **median** height (*"a wall is built for the face it
+ * presents, and one column of gully at the end of a run is not that face"*).
+ *
+ * The one deviation from §11.2's sketched signature: no `occupied`. S1's
+ * `open()` inside {@link buildTieredSeam} already owns *"somebody else's ground"*
+ * at build time, and subtracting those columns from the **measurement** would
+ * move the median off the face the plane actually presents — which is exactly
+ * why `skirtSeams` takes no `occupied` either.
+ *
+ * Pure and order-independent: members are collected in region order, components
+ * are flooded from them in that order, and every component's columns are sorted
+ * by region index before anything reads them.
+ */
+function planeSeams(
+  region: Region,
+  plan: ColumnPlan,
+  extent: PlaneExtent,
+  planeY: number,
+): PlaneCutSeam[] {
+  const cells = region.width * region.depth;
+  const claimed = extent.claimed;
+  /** The tallest dry natural neighbour standing over this plane column; −1 if none. */
+  const faceTop = new Int32Array(cells).fill(-1);
+  const members: number[] = [];
+  /** The natural neighbours of a plane column that qualify, as region indices. */
+  const overOf = (k: number): number[] => {
+    const x = region.x0 + (k % region.width);
+    const z = region.z0 + Math.floor(k / region.width);
+    const out: number[] = [];
+    for (const [dx, dz] of NEIGHBOURS) {
+      if (!inside(region, x + dx, z + dz)) continue;
+      const n = index(region, x + dx, z + dz);
+      if (claimed[n] === 1) continue;
+      // Water is not a face — the seaward edge of a quay is the harbour, and
+      // `skirtSeams` skips fluid for the same reason.
+      if (plan.fluidKind[n] !== FluidKind.NONE) continue;
+      if ((plan.ground[n] as number) < planeY + 2) continue;
+      out.push(n);
+    }
+    return out;
+  };
+  for (let k = 0; k < cells; k++) {
+    if (claimed[k] !== 1) continue;
+    const over = overOf(k);
+    if (over.length === 0) continue;
+    let top = -1;
+    for (const n of over) {
+      const g = plan.ground[n] as number;
+      if (g > top) top = g;
+    }
+    faceTop[k] = top;
+    members.push(k);
+  }
+  if (members.length === 0) return [];
+
+  const member = new Set(members);
+  const seen = new Set<number>();
+  const out: PlaneCutSeam[] = [];
+  for (const start of members) {
+    if (seen.has(start)) continue;
+    seen.add(start);
+    const queue = [start];
+    for (let head = 0; head < queue.length; head++) {
+      const k = queue[head] as number;
+      const x = region.x0 + (k % region.width);
+      const z = region.z0 + Math.floor(k / region.width);
+      for (const [dx, dz] of SEAM_NEIGHBOURS) {
+        if (!inside(region, x + dx, z + dz)) continue;
+        const n = index(region, x + dx, z + dz);
+        if (!member.has(n) || seen.has(n)) continue;
+        seen.add(n);
+        queue.push(n);
+      }
+    }
+    queue.sort((a, b) => a - b);
+    const heights = queue.map((k) => faceTop[k] as number).sort((a, b) => a - b);
+    const top = heights[heights.length >> 1] as number;
+    const drop = top - planeY;
+    if (drop < 2) continue;
+    // The upper bench: the natural ground standing over *this* face, deduplicated
+    // and in region order so the bench is a pure function of the component.
+    const overSeen = new Uint8Array(cells);
+    const overRuns: Rect[] = [];
+    for (const k of queue) {
+      for (const n of overOf(k)) {
+        if (overSeen[n] === 1) continue;
+        overSeen[n] = 1;
+        const x = region.x0 + (n % region.width);
+        const z = region.z0 + Math.floor(n / region.width);
+        overRuns.push({ x0: x, z0: z, x1: x, z1: z });
+      }
+    }
+    overRuns.sort((a, b) => (a.z0 === b.z0 ? a.x0 - b.x0 : a.z0 - b.z0));
+    const levels = groundLevelsOf(extent.bounds, [
+      { id: "plane", runs: extent.runs, level: planeY },
+      { id: "hill", runs: overRuns, level: top },
+    ]);
+    if (levels === null) continue;
+    const run = queue.length;
+    // **R4's three-way rule**, decided here so the record's own word and the
+    // pass's answer cannot disagree — `treatmentForSeam` is not asked, because
+    // its table is §5.2's and §5.2 answers a *quarter's* edge.
+    const answer: PlaneEdgeAnswer =
+      run < MIN_RETAIN_RUN ? "absorbed" : tierCountOf(drop) === 1 ? "revetted" : "rock";
+    out.push({
+      levels,
+      answer,
+      seam: {
+        above: 1,
+        below: 0,
+        cells: queue.map((k) => ({
+          x: region.x0 + (k % region.width),
+          z: region.z0 + Math.floor(k / region.width),
+        })),
+        drop,
+        treatment: answer === "revetted" ? "tiered" : "rock",
+      },
+    });
   }
   return out;
 }
