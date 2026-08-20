@@ -96,10 +96,36 @@ render+annotate but INSTALL ANYWAY (reroll-gate only when he asks
 for autonomous iteration). MY DIAGNOSIS OF THE LOOP: every deck
 confounds compiler+authoring-roll+teaching; archived docs + flags
 separate them for free.
-**IN FLIGHT: matrix agent (low)** — P16 (p1-tie2 doc) × {head,
-notie, noseam, nodens, allold} + M1/H1 (gem1 docs) × head; installs
-mx_* alongside; renders for annotation; era baselines already in
-saves. NO OTHER CODING until the matrix verdict.
+**MATRIX VERDICT (Kai's walk): ALL THREE FLAGS ACQUITTED — NO
+REVERT.** Tie fine at grade (notie mangled an intersection); seams
++ dens walk-invisible; the good-era feeling was the AUTHORING ROLLS
+(same docs compile beautifully today). Convictions → the 5-item
+plan, all now LANDED except one:
+(1) DRIED RIVER f→ bisected to MY 0a1575a waterline floor (dam →
+stranded reach → reclassified dry → building in bed); fix 48b2177:
+damsWater double edge-flood — a quarter may RECLAIM water, never
+DAM it; river back to 38,894 columns, zero collateral.
+(2) TEACHING fbefa26: more land NEVER means less water; W526 fix
+line can never suggest draining (negative test); prepass PINS
+terrain nouns by count ("two islands separated by open water").
+(3) EMPTY BLOCKS 8e09cc6: inside walls no block is bare — re-draw
+then dress (orchard/market/garden/paddock, era-gated, existing
+vocab only); troy_v14 21 bare → 0, W527 silent; unwalled worlds
+byte-identical.
+(4) HILL DRIFT — IN FLIGHT (medium): datum grades WITHOUT the
+floors the surfacer applies after → hill streets ride 9 high over
+their lots (T237 4x/5x); fix = one grading, datum carries floors,
+berm clamp preserved, river must stay full.
+(5) VERSIONING d0acdb2: build-anchored cohorts — 63 worlds renamed
+_rN, battery/RELEASES.md (21 releases → commit+deck), install
+--series --release errors on collision; good era = r16+r5,
+regressed = r21. NEXT DECK = r22.
+**DELEGATION ECONOMICS (Kai, in CLAUDE.md 70c6b46 + memory): spawn
+only when doing it yourself is less efficient; small edits are the
+orchestrator's own job.** Screening = render+annotate, install
+anyway (reroll-gate only on explicit autonomous runs).
+ON DRIFT LANDING: commit, full gate, r22 deck (3 prompts, screened,
+--series --release 22), handoff.
 
 **GO-HAM: packs 7+8 SHIPPED.** desert_caravanserai (365eded, 13+2,
 serai_court anchor, crvn_* rows, members 235→250) and
