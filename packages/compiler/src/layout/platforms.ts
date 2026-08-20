@@ -37,7 +37,12 @@ import type { Rect } from "./frames.js";
 import type { FormBench } from "./forms/types.js";
 import { RETAIN_MAX, SEAM_TIER_MAX } from "./levels.js";
 import { maskRuns } from "./masks.js";
-import { SEAM_TIERS } from "./types.js";
+// `import type` only, and it must stay that way: `layout/street-datum.ts`
+// reaches into `structures/sweep.js` and `structures/street-owner.js`, and a
+// value import from here would close a cycle that does not exist today
+// (`docs/GROUND-UNIFICATION-v0.md` §11.3, "one import note for 12B").
+import type { StreetDatum } from "./street-datum.js";
+import { GROUND_TIE_SPAN, SEAM_TIERS } from "./types.js";
 
 /**
  * S6 rule 3's threshold: a platform pair whose seam would need more faces than
@@ -123,6 +128,55 @@ export interface PlatformInput {
    * when it is absent — a fixture with no hydrology has no water to preserve.
    */
   readonly water?: WaterMask;
+  /**
+   * **The street plane the lattice is anchored on** — G2,
+   * `docs/GROUND-UNIFICATION-v0.md` §11.1.
+   *
+   * Present ⇔ the ground-plane tie is on. `layout/district.ts` hands it over
+   * only while {@link GROUND_PLANE_TIE} is true, and a test hands it over
+   * directly to exercise the anchored election without moving a compile-time
+   * constant the whole compiler reads — the same shape {@link tiered} has.
+   *
+   * Absent, every expression below is character-for-character the arithmetic
+   * that shipped: the quarter-wide `min(free ground)` base, `storey(base, …)`,
+   * and the bucket taken against that base. That is what makes 12B
+   * byte-identical while the flag is off.
+   */
+  readonly datum?: PlatformDatum;
+  /**
+   * G3's counters, filled in place when {@link datum} is present so the caller
+   * can report `LOAM-T241 GROUND_PLANE_UNTIED` without this function growing a
+   * second return value (every downstream reader wants `FormBench[]` and
+   * nothing else).
+   */
+  readonly report?: PlatformTieReport;
+}
+
+/**
+ * The datum and the reach it is probed with, together because neither answers
+ * anything alone.
+ *
+ * `reach` is `frontageReach(sidewalkWidth)` — **the same reach the lot tie
+ * already probes with** (G2), so a block that has a street by the fabric's
+ * reckoning has one by the plane's. No new constant.
+ */
+export interface PlatformDatum {
+  /** The graded carriageway plane, exactly as `gradeStreetDatum` built it. */
+  readonly street: StreetDatum;
+  /** `frontageReach(sidewalkWidth)`, in columns. */
+  readonly reach: number;
+}
+
+/** What the anchored election did, per quarter — G3's report, `LOAM-T241`. */
+export interface PlatformTieReport {
+  /** Blocks the election looked at. */
+  blocks: number;
+  /** Blocks that found a graded carriageway in reach and anchored on it. */
+  tied: number;
+  /** Blocks with no banded column in reach of any perimeter column (G3). */
+  untied: number;
+  /** Blocks split because their *perimeter* datum spanned a storey (G4). */
+  spanSplit: number;
 }
 
 /** A column mask with the region it is indexed over. */
@@ -294,6 +348,50 @@ export function derivePlatforms(input: PlatformInput): FormBench[] {
   for (let k = 0; k < cells; k++) raw[k] = heightAt(k);
   const smooth = boxBlur(raw, width, depth, SMOOTH_RADIUS, SMOOTH_PASSES);
 
+  // G2 — the anchor. A block is already street-bounded (rule 1 of this file's
+  // header: "a block boundary is already a street and a street already grades
+  // itself"), so the block's own perimeter is the authority for the block's
+  // plane: the levels the datum reports within `reach` of each perimeter
+  // column, and the **lower** median of them.
+  //
+  // Lower, and this is F5's corner rule wearing different clothes: where the
+  // streets around a block disagree, the plane goes low. A plane one below its
+  // pavement is a kerb you step down off; a plane one above it is the defect
+  // Kai walked four times.
+  //
+  // Deterministic: `component` returns its cells in ascending index order, the
+  // perimeter is read in that order, `levelNear` is documented as
+  // ascending-region-index with ties to the lowest, and the sort is numeric.
+  const datum = input.datum;
+  const perimeterLevels = (piece: readonly number[], owns: (k: number) => boolean): number[] => {
+    const out: number[] = [];
+    if (datum === undefined) return out;
+    for (const k of piece) {
+      const i = k % width;
+      const j = (k - i) / width;
+      let edge = false;
+      for (const [di, dj] of NEIGHBOURS) {
+        const ii = i + di;
+        const jj = j + dj;
+        if (ii < 0 || jj < 0 || ii >= width || jj >= depth) {
+          edge = true;
+          break;
+        }
+        if (!owns(jj * width + ii)) {
+          edge = true;
+          break;
+        }
+      }
+      if (!edge) continue;
+      const level = datum.street.levelNear(bounds.x0 + i, bounds.z0 + j, datum.reach);
+      if (level !== undefined) out.push(level);
+    }
+    out.sort((a, b) => a - b);
+    return out;
+  };
+  /** The lower median of a sorted list, or `undefined` — G3's "no frontage, no tie". */
+  const anchorOf = (levels: readonly number[]): number | undefined =>
+    levels.length === 0 ? undefined : (levels[(levels.length - 1) >> 1] as number);
   const benches: FormBench[] = [];
   const seen = new Uint8Array(cells);
   for (let start = 0; start < cells; start++) {
@@ -306,8 +404,48 @@ export function derivePlatforms(input: PlatformInput): FormBench[] {
       if (h < lo) lo = h;
       if (h > hi) hi = h;
     }
-    if (hi - lo <= FLOOR_HEIGHT) {
-      push(benches, bounds, block, dry(storey(base, medianOf(block, heightAt)), block), `block.${start}`);
+    // The block's own membership mask — needed for the perimeter walk, and the
+    // same mask the split branch below calls `inner`. Allocated only when it is
+    // read, so the flag-off path allocates exactly what it allocated before.
+    let inner: Uint8Array | null = null;
+    const blockMask = (): Uint8Array => {
+      if (inner !== null) return inner;
+      const mask = new Uint8Array(cells);
+      for (const k of block) mask[k] = 1;
+      inner = mask;
+      return mask;
+    };
+    let blockBase = base;
+    let perimeterSpan = 0;
+    if (datum !== undefined) {
+      const mask = blockMask();
+      const levels = perimeterLevels(block, (k) => mask[k] === 1);
+      const anchor = anchorOf(levels);
+      // G3: a block with no banded column within reach of any perimeter column
+      // is not tied and keeps exactly the base it has today. Inventing a street
+      // for a block that has none is how a courtyard ends up on a road's plane.
+      blockBase = anchor ?? base;
+      perimeterSpan =
+        levels.length === 0 ? 0 : (levels[levels.length - 1] as number) - (levels[0] as number);
+      if (input.report !== undefined) {
+        input.report.blocks += 1;
+        if (anchor === undefined) input.report.untied += 1;
+        else input.report.tied += 1;
+        if (perimeterSpan > GROUND_TIE_SPAN) input.report.spanSplit += 1;
+      }
+    }
+    // G4: a block whose *perimeter* datum spans more than one storey of street
+    // cannot be one platform without one of its streets being wrong about it,
+    // so it takes the split the interior-relief case already takes. The second
+    // clause is vacuously true with no datum — `perimeterSpan` is 0.
+    if (hi - lo <= FLOOR_HEIGHT && perimeterSpan <= GROUND_TIE_SPAN) {
+      push(
+        benches,
+        bounds,
+        block,
+        dry(storey(blockBase, medianOf(block, heightAt)), block),
+        `block.${start}`,
+      );
       continue;
     }
     // Split. The bucket is the blurred storey, and each 4-connected piece of a
@@ -317,25 +455,47 @@ export function derivePlatforms(input: PlatformInput): FormBench[] {
     for (const k of block) {
       // floor(smooth), matching heightAt: since 11C the bucket IS the level,
       // so the partition must sample by the same materialisation rule.
-      bucket[k] = Math.floor((Math.floor(smooth[k] as number) - base) / FLOOR_HEIGHT);
+      bucket[k] = Math.floor((Math.floor(smooth[k] as number) - blockBase) / FLOOR_HEIGHT);
     }
-    const inner = new Uint8Array(cells);
-    for (const k of block) inner[k] = 1;
+    const membership = blockMask();
     const split = new Uint8Array(cells);
     const pieces: SplitPiece[] = [];
     for (const k of block) {
       if (split[k] === 1) continue;
       const b = bucket[k] as number;
-      const piece = component(k, cells, width, depth, split, (n) => inner[n] === 1 && bucket[n] === b);
-      // S6 rule 1: the level comes from the bucket that defined the piece, not
-      // from the raw median of its columns. Partitioning on one quantity and
-      // levelling by another is what let two 4-adjacent pieces one bucket apart
-      // stand two storeys apart (§4.0a M4); under the flag they never can.
-      const level = dry(
-        tiered ? base + b * FLOOR_HEIGHT : storey(base, medianOf(piece, heightAt)),
-        piece,
+      const piece = component(
+        k,
+        cells,
+        width,
+        depth,
+        split,
+        (n) => membership[n] === 1 && bucket[n] === b,
       );
-      pieces.push({ bucket: b, level, cells: piece });
+      pieces.push({ bucket: b, level: 0, cells: piece });
+    }
+    // S6 rule 1: the level comes from the bucket that defined the piece, not
+    // from the raw median of its columns. Partitioning on one quantity and
+    // levelling by another is what let two 4-adjacent pieces one bucket apart
+    // stand two storeys apart (§4.0a M4); under the flag they never can.
+    //
+    // **Every piece of a block sits on the block's one lattice**, so the split
+    // pieces step from each other in whole storeys and the congruence law —
+    // *every elected level is congruent to its block's anchor modulo
+    // FLOOR_HEIGHT* — is a property of the whole quarter rather than of one
+    // piece at a time. G4's "each piece re-anchors on the datum along its own
+    // share of the perimeter" was built and measured on the r22 pirates world
+    // first: re-anchoring per piece moved **14 columns** of `LOAM-T242` the
+    // wrong way (1,265 → 1,279) because two pieces of one block can then be
+    // incongruent with each other, which is M4 again wearing the anchor's
+    // clothes. One lattice per block is the version that holds the law the wave
+    // is asserted on.
+    for (const piece of pieces) {
+      piece.level = dry(
+        tiered
+          ? blockBase + piece.bucket * FLOOR_HEIGHT
+          : storey(blockBase, medianOf(piece.cells, heightAt)),
+        piece.cells,
+      );
     }
     if (!tiered) {
       for (const piece of pieces) {

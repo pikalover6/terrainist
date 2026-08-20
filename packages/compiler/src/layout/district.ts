@@ -104,7 +104,13 @@ import {
   type LevelSeam,
 } from "./levels.js";
 import { largestRect } from "./masks.js";
-import { DISSOLVE_DROP_MAX, damsWater, derivePlatforms, dissolveTallPairs } from "./platforms.js";
+import {
+  DISSOLVE_DROP_MAX,
+  damsWater,
+  derivePlatforms,
+  dissolveTallPairs,
+  type PlatformTieReport,
+} from "./platforms.js";
 import { biasedMix } from "./mix-intent.js";
 import { LAYOUT_ROWS } from "./streets-intent.js";
 import type { Point2, Rect } from "./frames.js";
@@ -147,6 +153,7 @@ import {
   CORNER_TOLERANCE,
   FRONTAGE_RISE,
   FRONTAGE_TIE,
+  GROUND_PLANE_TIE,
   SEAM_TIERS,
   type LayoutNodeInput,
   type PadEdit,
@@ -1275,12 +1282,30 @@ export function layDistrict(
       ? undefined
       : { mask: input.water, region: input.field.region };
   const declared = plan.benches ?? [];
+  // --- the ground-plane tie (G2) --------------------------------------------
+  // The datum is graded ~100 lines above and, until this wave, was simply not
+  // handed on: `derivePlatforms` anchored its storey lattice on
+  // `min(free ground)` with the streets *excluded* by `blocked`, so the
+  // carriageway's own level was not a mark on the lattice at all (§11.0a P3/P4 —
+  // citadel streets at 90, elected levels 91 and 87, and 90 mod 4 is neither).
+  // Handing it over is the whole of G2.
+  //
+  // Gated on {@link GROUND_PLANE_TIE}, and G9's implication is why the datum is
+  // also checked for `null`: `gradeDatum` returns `null` while `FRONTAGE_TIE` is
+  // off, so with the frontage tie off there is nothing to anchor on and the
+  // election is exactly today's.
+  const planeTie: boolean = GROUND_PLANE_TIE;
+  const tieDatum = planeTie ? datum : null;
+  const platformTie: PlatformTieReport = { blocks: 0, tied: 0, untied: 0, spanSplit: 0 };
   const derived =
     groundPolicy === "stepped" && declared.length === 0
       ? derivePlatforms({
           bounds,
           blocked,
           field: input.field,
+          ...(tieDatum === null
+            ? {}
+            : { datum: { street: tieDatum, reach: tieReach }, report: platformTie }),
           // The waterline the election may not elect below. A district levels
           // its own ground by editing the field, and the field is *reclassified*
           // after a pad edit — so a platform elected under the sea does not
@@ -1319,6 +1344,64 @@ export function layDistrict(
     );
   }
   const levels = groundLevelsOf(bounds, election.benches);
+  // --- G3's report (`LOAM-T241`) --------------------------------------------
+  // `LOAM-T238 FRONTAGE_UNTIED`'s mirror for the platform, and a note for the
+  // same reason: an untied block is a *legal* outcome — the interior of a very
+  // large quarter, a block against the district boundary, a block behind a
+  // plaza — and G3 says it keeps exactly the number it has today. What is worth
+  // reporting is a quarter where *every* block is untied, because that is the
+  // fabric and the grader disagreeing about where the streets are. Dead while
+  // the flag is off: nothing hands the report over.
+  if (platformTie.untied > 0) {
+    diagnostics.push(
+      note(
+        "GROUND_PLANE_UNTIED",
+        nodePath,
+        `${platformTie.untied} of ${platformTie.blocks} block(s) in "${nodePath}" found no graded carriageway within ${tieReach} block(s) of any perimeter column, and kept the quarter's own floor`,
+        `Nothing to change in the document if these are interior or boundary blocks — that is the designed outcome. A quarter where *every* block is untied means its streets were drawn but not graded: report it.`,
+      ),
+    );
+  }
+  // --- G1's alarm (`LOAM-T242`) ---------------------------------------------
+  // Measured post hoc, from the finished election against the datum that claims
+  // those very columns: a platform column within reach of a carriageway whose
+  // elected level is neither the datum's own nor a whole storey from it. **This
+  // should be 0** once the anchor holds; before the anchor it was 4,180 citadel
+  // columns at exactly +1, one bar and not a distribution (§11.0).
+  //
+  // Only measured with the tie on, so a report golden does not move before the
+  // world does. The residual it names is the worst one, which is the histogram
+  // 12C publishes in full.
+  if (tieDatum !== null && levels !== null) {
+    let drift = 0;
+    let worst = 0;
+    let onLattice = 0;
+    for (let z = bounds.z0; z <= bounds.z1; z++) {
+      for (let x = bounds.x0; x <= bounds.x1; x++) {
+        const platform = levels.at(x, z);
+        if (platform === NO_PLATFORM) continue;
+        const near = tieDatum.levelNear(x, z, tieReach);
+        if (near === undefined) continue;
+        const residual = (levels.levelY[platform] as number) - near;
+        if (residual % FLOOR_HEIGHT === 0) {
+          onLattice += 1;
+          continue;
+        }
+        drift += 1;
+        if (Math.abs(residual) > Math.abs(worst)) worst = residual;
+      }
+    }
+    if (drift > 0) {
+      diagnostics.push(
+        note(
+          "GROUND_PLANE_DRIFT",
+          nodePath,
+          `${drift} of ${drift + onLattice} platform column(s) in "${nodePath}" within ${tieReach} block(s) of a graded carriageway stand off the street's own storey lattice, the worst by ${worst} block(s)`,
+          `Nothing to change in the document — a document cannot move its own storey lattice. A non-zero count is a compiler finding: the anchor did not hold on this quarter.`,
+        ),
+      );
+    }
+  }
   // Never accepted and quietly not met (§5.3): a document that asked for
   // stepped ground and got one plane is told so, in the terms it asked in, and
   // the quarter still compiles — as the `"pad"` it turned out to be.
