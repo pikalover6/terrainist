@@ -60,6 +60,12 @@ import type { SeamLanding, SeamLandingStack, SeamLandings } from "../layout/dist
 import type { Point2, Rect } from "../layout/frames.js";
 import type { GroundClaim, GroundIntent } from "../layout/ground-contract.js";
 import { driverForPlan, type GroundDriver } from "../layout/ground-driver.js";
+import { GROUND_V1_SEAMS } from "../layout/ground-flags.js";
+import {
+  deriveGroundSeams,
+  type DerivedSeam,
+  type SeamCoverage,
+} from "../layout/ground-resolver.js";
 import {
   BENCH_FACE,
   BENCH_TREAD,
@@ -3734,4 +3740,188 @@ function orient(
     else off++;
   }
   return off > onPlatform ? [...path].reverse() : path;
+}
+
+/* -------------------------------------------------------------------------- */
+/* WP-G4 — `finishSeams`, the terminal transition consumer                     */
+/* -------------------------------------------------------------------------- */
+
+/** What {@link finishSeams} reads. */
+export interface SeamFinishInput {
+  readonly plan: ColumnPlan;
+  /** The pipeline's one driver — `finish()` is the resolved field §3.1 measures. */
+  readonly ground: GroundDriver;
+  /** The seated buildings' footprints, for §3.1's `built` classification. */
+  readonly footprints: readonly Rect[];
+  /**
+   * The retaining pass's served-seam mask: the columns it reports standing on.
+   *
+   * The only built-set any pass publishes at HEAD. WP-G5 gives every builder a
+   * built-or-refused report and this argument becomes that union.
+   */
+  readonly seam?: Uint8Array;
+  /** The node the `LOAM-I497` note is attributed to. */
+  readonly nodePath?: string;
+}
+
+/** The `LOAM-I497 GROUND_STAGE` numbers, as a value a test can assert on. */
+export interface GroundStageCounts {
+  /** Intents declared, by `GroundSourceClass`, ascending by class name. */
+  readonly intentsByClass: Readonly<Record<string, number>>;
+  readonly intents: number;
+  /** Resolves this compile performed that the stage can see. Five at WP-G6. */
+  readonly resolves: number;
+  /** Columns the resolve moved off the baseline. */
+  readonly moved: number;
+  /** Derived transitions by §3.1's refined treatment, ascending by treatment. */
+  readonly byTreatment: Readonly<Record<string, number>>;
+  readonly transitions: number;
+  /** …of them, the ones no existing pass reports building. */
+  readonly wouldBuild: number;
+  /** §3.2's accounting, for the invariant's own report. */
+  readonly coverage: SeamCoverage;
+}
+
+export interface SeamFinishResult {
+  readonly transitions: readonly DerivedSeam[];
+  readonly stage: GroundStageCounts;
+  readonly diagnostics: readonly LoamDiagnostic[];
+}
+
+/**
+ * The terminal transition consumer — `docs/GROUND-CONTRACT-v1.md` §3.3, §6/WP-G4.
+ *
+ * > `finishSeams` replaces `finishCutFaces` and is the **terminal** transition
+ * > builder: it walks `resolved.transitions`, skips every one another pass
+ * > reported built, and builds the rest.
+ *
+ * **This is the flag-off half, and it builds nothing.** With
+ * {@link GROUND_V1_SEAMS} off it derives — §3.1's three refinements over the
+ * resolved field — checks §3.2's coverage invariant, and reports: `LOAM-E495`
+ * where a boundary is unaccounted for, and `LOAM-I497 GROUND_STAGE` with the
+ * counts. Every world is byte-identical, and the risky question ("does the
+ * resolver enumerate the same seams `levelSeams`/`skirtSeams` do, plus the ones
+ * they miss?") is answered by a diff rather than by a walk. {@link finishCutFaces}
+ * is untouched; absorbing it is the flag-on half.
+ *
+ * The invariant runs **here**, not inside `resolveGround`: the resolver is
+ * called on every prefix of the declaration set (`ground-driver.ts`'s `commit`),
+ * and a prefix is *supposed* to have boundaries the passes after it will
+ * account for. §3.2 is a statement about the finished field, so it is checked
+ * where the field is finished — which is also why it runs on every settlement
+ * compile regardless of the flag.
+ */
+export function finishSeams(input: SeamFinishInput): SeamFinishResult {
+  if (GROUND_V1_SEAMS) {
+    // WP-G4's building half. Left as a loud stop rather than a silent no-op:
+    // this stage's contract is "derives and reports, builds nothing", and a
+    // flag flipped before the builder lands must not quietly ship a world with
+    // the seams still missing.
+    throw new Error(
+      "GROUND_V1_SEAMS is on but finishSeams' building half has not landed " +
+        "(GROUND-CONTRACT-v1 §6/WP-G4).",
+    );
+  }
+  const plan = input.plan;
+  const region = plan.region;
+  const resolved = input.ground.finish();
+  const intents = input.ground.intents;
+  const occupied = occupancyOf(region, input.footprints);
+
+  const derivation = deriveGroundSeams({
+    region,
+    ground: resolved.ground,
+    owner: resolved.owner,
+    fluidKind: resolved.fluidKind,
+    intents,
+    occupied,
+  });
+
+  const seamMask = input.seam;
+  let wouldBuild = 0;
+  const byTreatment = new Map<string, number>();
+  for (const t of derivation.transitions) {
+    byTreatment.set(t.refined, (byTreatment.get(t.refined) ?? 0) + 1);
+    if (!reportedBuilt(t, seamMask)) wouldBuild++;
+  }
+
+  const intentsByClass = new Map<string, number>();
+  for (const intent of intents) {
+    intentsByClass.set(intent.sourceClass, (intentsByClass.get(intent.sourceClass) ?? 0) + 1);
+  }
+  let moved = 0;
+  for (let k = 0; k < resolved.moved.length; k++) if (resolved.moved[k] === 1) moved++;
+
+  const stage: GroundStageCounts = {
+    intentsByClass: sortedCounts(intentsByClass),
+    intents: intents.length,
+    // One: the `finish()` above. WP-G6's five tier resolves are what this
+    // number becomes, and `ground-stage.test.ts` is where it is asserted.
+    resolves: 1,
+    moved,
+    byTreatment: sortedCounts(byTreatment),
+    transitions: derivation.transitions.length,
+    wouldBuild,
+    coverage: derivation.coverage,
+  };
+
+  const diagnostics: LoamDiagnostic[] = [...derivation.diagnostics];
+  diagnostics.push(
+    note(
+      "GROUND_STAGE",
+      input.nodePath ?? "",
+      `ground stage: ${stage.intents} intent(s) (${describe(stage.intentsByClass)}), ` +
+        `${stage.resolves} resolve(s), ${stage.moved} column(s) moved, ` +
+        `${stage.transitions} transition(s) (${describe(stage.byTreatment)}), ` +
+        `${stage.wouldBuild} of them unbuilt by any pass; ` +
+        `coverage ${derivation.coverage.pairs} boundary pair(s) — ` +
+        `${derivation.coverage.transition} in a transition, ` +
+        `${derivation.coverage.request} suppressed by request, ` +
+        `${derivation.coverage.face} by a face, ` +
+        `${derivation.coverage.kerb} a kerb, ` +
+        `${derivation.coverage.uncovered} uncovered ` +
+        `(excluded: ${derivation.coverage.natural} natural, ${derivation.coverage.water} wet)`,
+      "Nothing — this is the stage's own golden, and it is a note so that a " +
+        "count moving is visible in a diff before a block moves in a world.",
+    ),
+  );
+  return { transitions: derivation.transitions, stage, diagnostics };
+}
+
+/**
+ * Whether some pass already reports building this transition (§3.3's built-set).
+ *
+ * At HEAD only two builders report anything, so only two answers are available
+ * and both are stated here rather than guessed at the call site:
+ *
+ * - a `kerb` is a course of material the streetscape lays and §3.3's table says
+ *   it is *never* refused, so a kerb is always served;
+ * - a run the retaining pass stood on is in its `seam` mask. **A majority of the
+ *   run**, not a single column: a wall clipping the end of a hundred-column
+ *   contour has not served it, which is the same argument `BUILT_SHARE` makes
+ *   about a building clipping a face.
+ *
+ * Everything else is what `finishSeams` would have to build, and that count is
+ * this stage's headline number.
+ */
+function reportedBuilt(t: DerivedSeam, seam: Uint8Array | undefined): boolean {
+  if (t.refined === "kerb") return true;
+  if (t.refined === "built" && t.builtShare >= BUILT_SHARE) return true;
+  if (seam === undefined) return false;
+  let served = 0;
+  for (const k of t.cells) if (seam[k] === 1) served++;
+  return served * 2 >= t.cells.length;
+}
+
+/** A count map as a plain object, ascending by key, so the note is a golden. */
+function sortedCounts(counts: Map<string, number>): Readonly<Record<string, number>> {
+  const out: Record<string, number> = {};
+  for (const key of [...counts.keys()].sort()) out[key] = counts.get(key) as number;
+  return out;
+}
+
+/** `a 3, b 1` — a count map as one deterministic phrase. */
+function describe(counts: Readonly<Record<string, number>>): string {
+  const parts = Object.entries(counts).map(([k, v]) => `${k} ${v}`);
+  return parts.length === 0 ? "none" : parts.join(", ");
 }

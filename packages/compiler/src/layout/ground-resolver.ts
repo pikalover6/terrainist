@@ -33,6 +33,7 @@
  */
 
 import { error, note, warning, type LoamDiagnostic } from "@terrainist/spec";
+import type { Region } from "@terrainist/stdlib";
 
 import { WORLD_MIN_Y } from "../emit/prismarine.js";
 import { FluidKind, WORLD_MAX_Y } from "../terrain/columns.js";
@@ -45,11 +46,25 @@ import {
   type GroundClaimRow,
   type GroundIntent,
   type GroundReport,
+  type GroundSourceClass,
   type GroundTransition,
   type GroundTransitionKind,
+  type ReadonlyInt32Array,
+  type ReadonlyUint8Array,
   type ResolvedGround,
 } from "./ground-contract.js";
-import { MIN_RETAIN_RUN, RETAIN_MAX, treatmentForDrop, treatmentForSeam } from "./levels.js";
+import {
+  MIN_RETAIN_RUN,
+  RETAIN_MAX,
+  WALL_DEMAND_RANGE,
+  bankRun,
+  treatmentForDrop,
+  treatmentForEdge,
+  treatmentForSeam,
+  type EdgeContext,
+  type EdgeUse,
+  type SeamTreatment,
+} from "./levels.js";
 
 /** The four-neighbourhood a boundary column is found in (§5.6 step 1). */
 const EDGE_NEIGHBOURS = [
@@ -490,16 +505,113 @@ interface TransitionInput {
  * seam is a cliff through a town".
  */
 function deriveTransitions(input: TransitionInput, substitutions: Substitution[]): GroundTransition[] {
+  const { intents } = input;
+  const sourceOf = sourceReader(intents);
+  const requestOf = requestReader(intents);
+
+  const components = groupBoundaryRuns(input, substitutions);
+
+  const out: GroundTransition[] = [];
+  for (const { above, below: belowOwner, cells: component, drop } of components) {
+    const treatment = treatmentForSeam(drop, component.length);
+    const built = TREATMENT_KIND[treatment] as GroundTransitionKind;
+    const requested = { above: requestOf(above), below: requestOf(belowOwner) };
+    for (const [side, req] of [
+      [above, requested.above],
+      [belowOwner, requested.below],
+    ] as const) {
+      if (req === built) continue;
+      // Only §2.5's two named causes are recorded. A request the drop table
+      // simply disagrees with at kerb scale is not a *substitution*, it is the
+      // table being authoritative, and `why`'s closed union has no word for it.
+      if (drop > RETAIN_MAX) {
+        substitutions.push({ source: sourceOf(side), requested: req, built, why: "RETAIN_MAX" });
+      } else if (treatmentForDrop(drop) === "retaining" && component.length < MIN_RETAIN_RUN) {
+        substitutions.push({ source: sourceOf(side), requested: req, built, why: "MIN_RETAIN_RUN" });
+      }
+    }
+    out.push({
+      above,
+      below: belowOwner,
+      aboveSource: sourceOf(above),
+      belowSource: sourceOf(belowOwner),
+      cells: component,
+      drop,
+      treatment,
+      requested,
+    });
+  }
+
+  // 5: row-major by first cell, then by the owner pair, so the list is a pure
+  // function of the field.
+  out.sort(byFirstCellThenPair);
+  return out;
+}
+
+/** The winning claim's source on one side of a boundary, or `"baseline"`. */
+function sourceReader(intents: readonly GroundIntent[]): (o: number) => string {
+  return (o: number): string => (o === -1 ? "baseline" : (intents[o] as GroundIntent).source);
+}
+
+/**
+ * What one side of a boundary asked for.
+ *
+ * The baseline asked for nothing, so it is read as `"ramp"`: unclaimed ground
+ * grades out to whatever meets it, which is what `blendShoulders` does today.
+ * Reading it as `"none"` would suppress every platform-against-natural-ground
+ * transition in the world, which is the opposite of what the field says.
+ */
+function requestReader(
+  intents: readonly GroundIntent[],
+): (o: number) => GroundTransitionKind {
+  return (o: number): GroundTransitionKind =>
+    o === -1 ? "ramp" : (intents[o] as GroundIntent).transition;
+}
+
+/** Row-major by first cell, then by the owner pair (§5.6 step 5). */
+function byFirstCellThenPair(
+  a: { readonly above: number; readonly below: number; readonly cells: readonly number[] },
+  b: { readonly above: number; readonly below: number; readonly cells: readonly number[] },
+): number {
+  const ac = a.cells[0] as number;
+  const bc = b.cells[0] as number;
+  if (ac !== bc) return ac - bc;
+  if (a.above !== b.above) return a.above - b.above;
+  return a.below - b.below;
+}
+
+/** One 8-connected boundary run, before any treatment table has been asked. */
+interface BoundaryRun {
+  readonly above: number;
+  readonly below: number;
+  readonly cells: number[];
+  readonly drop: number;
+}
+
+/**
+ * §5.6 steps 1–4: every lower-side boundary column, grouped 8-connected within
+ * its owner pair.
+ *
+ * **The one home for the grouping** — `docs/GROUND-CONTRACT-v1.md` §3.1 requires
+ * that `deriveTransitions` be "unchanged in algorithm … verbatim, never
+ * reimplemented", and the v1 refinements are a second *reading* of the same
+ * runs, not a second enumeration of them. Both {@link deriveTransitions} and
+ * {@link deriveGroundSeams} call this and differ only in what they ask of each
+ * run afterwards.
+ *
+ * `substitutions` is `null` for a caller that is only measuring: the faced and
+ * none-side rows belong to the resolver's own report and must not be recorded
+ * twice.
+ */
+function groupBoundaryRuns(
+  input: TransitionInput,
+  substitutions: Substitution[] | null,
+): BoundaryRun[] {
   const { width, depth, ground, owner, isFace, intents } = input;
   const span = intents.length + 2; // owners are −1..intents.length−1
 
-  const sourceOf = (o: number): string => (o === -1 ? "baseline" : (intents[o] as GroundIntent).source);
-  // The baseline asked for nothing, so it is read as `"ramp"`: unclaimed ground
-  // grades out to whatever meets it, which is what `blendShoulders` does today.
-  // Reading it as `"none"` would suppress every platform-against-natural-ground
-  // transition in the world, which is the opposite of what the field says.
-  const requestOf = (o: number): GroundTransitionKind =>
-    o === -1 ? "ramp" : (intents[o] as GroundIntent).transition;
+  const sourceOf = sourceReader(intents);
+  const requestOf = requestReader(intents);
 
   // 1 + 2: lower-side boundary columns, per ordered (above, below) pair.
   const pairs = new Map<number, Map<number, number>>(); // key → (cell → drop)
@@ -525,7 +637,7 @@ function deriveTransitions(input: TransitionInput, substitutions: Substitution[]
           const faced = isFace[k] === 1 ? above : below;
           const req = requestOf(faced);
           if (req !== "none") {
-            substitutions.push({ source: sourceOf(faced), requested: req, built: "none", why: "faced" });
+            substitutions?.push({ source: sourceOf(faced), requested: req, built: "none", why: "faced" });
           }
           continue;
         }
@@ -533,7 +645,7 @@ function deriveTransitions(input: TransitionInput, substitutions: Substitution[]
           const other = requestOf(above) === "none" ? below : above;
           const req = requestOf(other);
           if (req !== "none") {
-            substitutions.push({
+            substitutions?.push({
               source: sourceOf(other),
               requested: req,
               built: "none",
@@ -557,7 +669,7 @@ function deriveTransitions(input: TransitionInput, substitutions: Substitution[]
   }
 
   // 3 + 4: 8-connected components within each pair.
-  const out: GroundTransition[] = [];
+  const out: BoundaryRun[] = [];
   for (const key of [...pairs.keys()].sort((a, b) => a - b)) {
     const cells = pairs.get(key) as Map<number, number>;
     const above = Math.floor(key / span) - 1;
@@ -588,45 +700,9 @@ function deriveTransitions(input: TransitionInput, substitutions: Substitution[]
       // One number per component, read at its row-major-first cell: a component
       // never mixes owner pairs, so this is the pair's drop.
       const drop = cells.get(component[0] as number) as number;
-      const treatment = treatmentForSeam(drop, component.length);
-      const built = TREATMENT_KIND[treatment] as GroundTransitionKind;
-      const requested = { above: requestOf(above), below: requestOf(belowOwner) };
-      for (const [side, req] of [
-        [above, requested.above],
-        [belowOwner, requested.below],
-      ] as const) {
-        if (req === built) continue;
-        // Only §2.5's two named causes are recorded. A request the drop table
-        // simply disagrees with at kerb scale is not a *substitution*, it is the
-        // table being authoritative, and `why`'s closed union has no word for it.
-        if (drop > RETAIN_MAX) {
-          substitutions.push({ source: sourceOf(side), requested: req, built, why: "RETAIN_MAX" });
-        } else if (treatmentForDrop(drop) === "retaining" && component.length < MIN_RETAIN_RUN) {
-          substitutions.push({ source: sourceOf(side), requested: req, built, why: "MIN_RETAIN_RUN" });
-        }
-      }
-      out.push({
-        above,
-        below: belowOwner,
-        aboveSource: sourceOf(above),
-        belowSource: sourceOf(belowOwner),
-        cells: component,
-        drop,
-        treatment,
-        requested,
-      });
+      out.push({ above, below: belowOwner, cells: component, drop });
     }
   }
-
-  // 5: row-major by first cell, then by the owner pair, so the list is a pure
-  // function of the field.
-  out.sort((a, b) => {
-    const ac = a.cells[0] as number;
-    const bc = b.cells[0] as number;
-    if (ac !== bc) return ac - bc;
-    if (a.above !== b.above) return a.above - b.above;
-    return a.below - b.below;
-  });
   return out;
 }
 
@@ -646,3 +722,549 @@ function dedupeSubstitutions(rows: readonly Substitution[]): Substitution[] {
   }
   return [...byKey.keys()].sort().map((k) => byKey.get(k) as Substitution);
 }
+
+/* -------------------------------------------------------------------------- */
+/* v1 §3 — the refined derivation and the coverage invariant                   */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Columns of the upper side a `depthAfter` walk looks through — `retaining.ts`'s
+ * `RETAIN_FACE_SETBACK · 2`, restated here for the reason `MIN_EDGE_DEPTH` is
+ * restated in `levels.ts`: this module sits upstream of the pass that owns the
+ * constant, and `ground-transitions.test.ts` asserts the two agree.
+ */
+const V1_DEPTH_REACH = 24;
+
+/**
+ * How a winning claim's class reads as an {@link EdgeUse}.
+ *
+ * The owner map's answer to `retaining.ts`'s `street`/`occupied` masks. Rule 3
+ * asks *is anybody using the ground this bank would spread over*, and a class is
+ * the only thing about a winner the resolver knows — which is exactly enough:
+ * the four street classes are the carriageway family, and the built classes are
+ * the ones that put a floor plane on the ground somebody stands on.
+ *
+ * `pad.record` is in the built family **at HEAD only**. WP-G3 gives
+ * `building.footprint` its own declarer and the lot pads stop arriving as
+ * records; the row survives as the answer for a document compiled before that
+ * flip, and the class's own retirement (§4) deletes it.
+ */
+const CLASS_USE: Readonly<Partial<Record<string, EdgeUse>>> = Object.freeze({
+  "fluid.channel": "natural",
+  "building.footprint": "lot",
+  // A block's own levelled ground is used ground, but it is not a lot and it is
+  // not carriageway: nobody is standing on it in the way rule 3 means, so it
+  // presses on nothing. WP-G3 mints it; the row is here so that landing WP-G3
+  // does not silently reclassify every terrace boundary in a hill town.
+  "quarter.plane": "civic",
+  "precinct.ground": "civic",
+  "structure.linework": "civic",
+  "plaza.ground": "civic",
+  "plaza.well": "civic",
+  "courtyard.floor": "lot",
+  "retaining.seam": "natural",
+  "retaining.skirt": "natural",
+  "street.network": "street",
+  "street.sidewalk": "street",
+  "road.network": "street",
+  "sweep.run": "street",
+  "doorstep.landing": "street",
+  "farm.parcel": "lot",
+  "prop.pad": "lot",
+  // The street's own planted strip: street ground, and a bank graded across it
+  // is a bank graded across the street below.
+  verge: "street",
+  "pad.record": "lot",
+});
+
+/**
+ * `CLASS_USE`'s default, and why the table is `Partial`.
+ *
+ * The rewrite mints and retires classes stage by stage — `quarter.plane` arrives
+ * at WP-G3, `pad.record` leaves with it — so an exhaustive `Record` over
+ * `GroundSourceClass` would make this file fail to compile in the middle of
+ * somebody else's stage. Totality is asserted where it belongs instead:
+ * `ground-transitions.test.ts` walks `GROUND_SOURCE_CLASSES` and requires an
+ * explicit row for every member, which is the same guarantee arrived at without
+ * the coupling.
+ */
+const CLASS_USE_DEFAULT: EdgeUse = "natural";
+
+/** The classes whose winner is a building's own floor plane (§3.1 refinement 3). */
+const BUILT_CLASSES: ReadonlySet<string> = new Set<string>([
+  "building.footprint",
+  // At HEAD the lot pads are the building rects, declared as records by
+  // `declarePadEdits`. G3's `building.footprint` class sharpens this to the
+  // rect itself; until then a record over a seated footprint is the only data
+  // that says "a building already stands on this face".
+  "pad.record",
+]);
+
+/**
+ * One boundary run, as v1 §3.1 reads it.
+ *
+ * A superset of {@link GroundTransition}: the same run, the same cells and the
+ * same `treatment` the resolver's own list carries, plus the three refinements —
+ * the levels the run was measured at, the context S5 selects a dressing from,
+ * and the treatment that context chooses.
+ */
+export interface DerivedSeam extends GroundTransition {
+  /** `resolved.ground` on the lower side. Never `GroundLevels.levelY` (§3.1.1). */
+  readonly belowY: number;
+  /** `resolved.ground` on the upper side — `belowY + drop`, by construction. */
+  readonly aboveY: number;
+  /** §3.1.2 — the share of the run something is using the ground beyond. */
+  readonly pressedShare: number;
+  /** §3.1.2 — unclaimed columns a bank could be graded into, median over the run. */
+  readonly availableRun: number;
+  /** §3.1.3 — the share of the face a building already stands on. */
+  readonly builtShare: number;
+  /** §5.4: the fill edge is the downhill one, the cut edge the uphill one. */
+  readonly side: "cut" | "fill";
+  /**
+   * What the **context** chooses — `treatmentForEdge` with §3.1's three
+   * refinements measured, against `treatment`'s drop-and-run-only answer.
+   *
+   * Nothing builds from this at WP-G4: `GROUND_V1_SEAMS` is off and
+   * `finishSeams` reports. It is the golden the flag-on half is diffed against.
+   */
+  readonly refined: SeamTreatment;
+}
+
+/** How a boundary pair was accounted for (§3.2's four clauses). */
+export interface SeamCoverage {
+  /** Boundary pairs the invariant considered, after the two named exclusions. */
+  readonly pairs: number;
+  /** Clause 1 — a derived transition whose cells contain the lower column. */
+  readonly transition: number;
+  /** Clause 2 — either side declared `transition: "none"`. */
+  readonly request: number;
+  /** Clause 3 — either side is a face, and a face *is* the transition. */
+  readonly face: number;
+  /** Clause 4 — a one-block drop the kerb course builds as a material. */
+  readonly kerb: number;
+  /** Excluded: both sides unowned. The hillside, and it must stay. */
+  readonly natural: number;
+  /** Excluded: a fluid on either side. A shore is not a seam. */
+  readonly water: number;
+  /** Pairs matching none of the four, or matching two — every one a `LOAM-E495`. */
+  readonly uncovered: number;
+}
+
+/** What {@link deriveGroundSeams} hands back. */
+export interface SeamDerivation {
+  readonly transitions: readonly DerivedSeam[];
+  readonly coverage: SeamCoverage;
+  /** `LOAM-E495 GROUND_SEAM_UNCOVERED`, at most one per compile. */
+  readonly diagnostics: readonly LoamDiagnostic[];
+}
+
+/** What the refined derivation reads. Everything is the *resolved* field (§3.1.1). */
+export interface SeamDerivationInput {
+  readonly region: Region;
+  readonly ground: ReadonlyInt32Array;
+  readonly owner: ReadonlyInt32Array;
+  readonly fluidKind: ReadonlyUint8Array;
+  readonly intents: readonly GroundIntent[];
+  /**
+   * 1 where a seated building's footprint stands, if the caller has it.
+   *
+   * The structure pass does (`occupancyOf(region, footprints)`), and it is a
+   * sharper answer than {@link BUILT_CLASSES}: a lot pad is declared over the
+   * rect the *solver* reserved, and the building is seated inside it. Absent, the
+   * class table answers.
+   */
+  readonly occupied?: ReadonlyUint8Array;
+  /** The maximum number of `LOAM-E495` witnesses named in the diagnostic. */
+  readonly witnesses?: number;
+}
+
+/**
+ * v1 §3 — every boundary the resolved field holds, refined and checked.
+ *
+ * Two things in one walk, because they are two readings of one enumeration:
+ *
+ * 1. **§3.1's three refinements.** `above`/`below` measured from
+ *    `resolved.ground`; `pressedShare` and `availableRun` measured off the
+ *    resolved field and the owner map, with no `plannedEdges` gate — the whole
+ *    field is the context, which is the first time both halves have been
+ *    available in one place; and `built` as a real classification, for a run
+ *    whose upper side a building already stands on.
+ * 2. **§3.2's coverage invariant.** Every boundary pair accounted for exactly
+ *    once, by exactly one of the four clauses, with the two named exclusions.
+ *    A pair matching none is `LOAM-E495`, and *the derivation is what is wrong* —
+ *    an exclusion is never widened to make it quiet.
+ *
+ * Pure: it reads its argument and allocates its answer, and calls nothing that
+ * is not a pure function of it.
+ */
+export function deriveGroundSeams(input: SeamDerivationInput): SeamDerivation {
+  const { region, ground, owner, fluidKind, intents } = input;
+  const width = region.width;
+  const depth = region.depth;
+
+  // §2.2's faces, recovered from the winners: `resolveGround` sets `isFace` for
+  // exactly the columns a `face` intent won, so the owner map carries it.
+  const isFace = new Uint8Array(width * depth);
+  for (let k = 0; k < isFace.length; k++) {
+    const o = owner[k] as number;
+    if (o !== -1 && (intents[o] as GroundIntent).kind === "face") isFace[k] = 1;
+  }
+
+  const plain = { width, depth, ground: ground as Int32Array, owner: owner as Int32Array, isFace, intents };
+  const runs = groupBoundaryRuns(plain, null);
+  const sourceOf = sourceReader(intents);
+  const requestOf = requestReader(intents);
+  const classOf = (o: number): GroundSourceClass | null =>
+    o === -1 ? null : (intents[o] as GroundIntent).sourceClass;
+  const useOf = (o: number): EdgeUse => {
+    const c = classOf(o);
+    return c === null ? "natural" : (CLASS_USE[c] ?? CLASS_USE_DEFAULT);
+  };
+  const builtAt = (k: number): boolean => {
+    if (input.occupied !== undefined && input.occupied[k] === 1) return true;
+    const c = classOf(owner[k] as number);
+    return c !== null && BUILT_CLASSES.has(c);
+  };
+
+  const transitions: DerivedSeam[] = [];
+  /** Clause 1's index: cell → the pairs it is the lower side of. */
+  const covered = new Map<number, Set<number>>();
+  const span = intents.length + 2;
+  for (const run of runs) {
+    const seam = refineRun(run, {
+      width,
+      depth,
+      ground,
+      owner,
+      fluidKind,
+      isFace,
+      useOf,
+      builtAt,
+      sourceOf,
+      requestOf,
+    });
+    transitions.push(seam);
+    const key = (run.above + 1) * span + (run.below + 1);
+    for (const k of run.cells) {
+      let keys = covered.get(k);
+      if (keys === undefined) {
+        keys = new Set<number>();
+        covered.set(k, keys);
+      }
+      keys.add(key);
+    }
+  }
+  transitions.sort(byFirstCellThenPair);
+
+  const coverage = checkCoverage({
+    width,
+    depth,
+    ground,
+    owner,
+    fluidKind,
+    isFace,
+    requestOf,
+    covered,
+    span,
+  });
+
+  const diagnostics: LoamDiagnostic[] = [];
+  if (coverage.report.uncovered > 0) {
+    const limit = input.witnesses ?? 4;
+    const named = coverage.witnesses
+      .slice(0, limit)
+      .map((w) => `${region.x0 + (w.cell % width)},${region.z0 + Math.floor(w.cell / width)} (${w.why})`)
+      .join("; ");
+    diagnostics.push(
+      error(
+        "GROUND_SEAM_UNCOVERED",
+        "",
+        `ground seams: ${coverage.report.uncovered} of ${coverage.report.pairs} boundary ` +
+          `pair(s) are accounted for by no transition and no suppression — ${named}`,
+        "The derivation is incomplete: find the boundary the enumeration missed. " +
+          "Never widen §3.2's exclusions to silence this — the two exclusions are " +
+          "natural-against-natural and water, and nothing else.",
+      ),
+    );
+  }
+
+  return { transitions, coverage: coverage.report, diagnostics };
+}
+
+/** Everything {@link refineRun} measures a run against. */
+interface RefineContext {
+  readonly width: number;
+  readonly depth: number;
+  readonly ground: ReadonlyInt32Array;
+  readonly owner: ReadonlyInt32Array;
+  readonly fluidKind: ReadonlyUint8Array;
+  readonly isFace: Uint8Array;
+  readonly useOf: (o: number) => EdgeUse;
+  readonly builtAt: (k: number) => boolean;
+  readonly sourceOf: (o: number) => string;
+  readonly requestOf: (o: number) => GroundTransitionKind;
+}
+
+/**
+ * One run, measured — `retaining.ts`'s `edgeContextOf`, asked of the owner map
+ * instead of one district's `GroundLevels` (§3.1 refinement 2).
+ *
+ * Same three measurements, same low-side rule, same medians; the only thing that
+ * changes is what stands in for `levels.at()`, `street` and `occupied`, and that
+ * is the whole of "`EdgeContext` stops being gated on `district.plannedEdges`":
+ * the field's own owner map answers for every boundary in the world, including
+ * the ones no site planner planned.
+ *
+ * The measurement is **not** what the build path reads at this stage. WP-G4
+ * ships with `GROUND_V1_SEAMS` off, so the retaining pass goes on measuring its
+ * own hillside-only context and every world is byte-identical; this is the
+ * comparison the flag-on half is diffed against.
+ */
+function refineRun(run: BoundaryRun, ctx: RefineContext): DerivedSeam {
+  const { width, depth, ground, owner, fluidKind } = ctx;
+  const above = run.above;
+  const drop = run.drop;
+  const reach = bankRun(drop);
+  const inBounds = (i: number, j: number): boolean => i >= 0 && j >= 0 && i < width && j < depth;
+
+  /** The 4-neighbour direction from a run cell towards the face it presents. */
+  const faceDir = (i: number, j: number): readonly [number, number] | null => {
+    for (const [di, dj] of EDGE_NEIGHBOURS) {
+      const ii = i + di;
+      const jj = j + dj;
+      if (!inBounds(ii, jj)) continue;
+      const k = jj * width + ii;
+      if ((owner[k] as number) === above && (ground[k] as number) > (ground[j * width + i] as number)) {
+        return [di, dj];
+      }
+    }
+    return null;
+  };
+
+  const free: number[] = [];
+  const behind: number[] = [];
+  let builtFace = 0;
+  let facedCells = 0;
+  let pressedCells = 0;
+  let use: EdgeUse = "natural";
+  let publicGround = false;
+
+  for (const cell of run.cells) {
+    const i = cell % width;
+    const j = (cell - i) / width;
+    const dir = faceDir(i, j);
+    if (dir === null) continue;
+    const [di, dj] = dir;
+    facedCells++;
+    // Rule 2, as a share (§3.1.3).
+    if (ctx.builtAt((j + dj) * width + (i + di))) builtFace++;
+    // `availableRun` — unclaimed columns straight out from the face. Straight
+    // and never around, for `walkBack`'s reason: a search free to detour
+    // measures somebody else's ground. A claimed column stops the walk whoever
+    // claimed it: grading a bank across a neighbour's level would bury it.
+    let run0 = 0;
+    for (let step = 1; step <= reach; step++) {
+      const ii = i - di * step;
+      const jj = j - dj * step;
+      if (!inBounds(ii, jj)) break;
+      const k = jj * width + ii;
+      if ((owner[k] as number) !== -1) break;
+      if ((fluidKind[k] as number) !== FluidKind.NONE) break;
+      run0++;
+    }
+    free.push(run0);
+    // Rule 6's `depthAfter` — the upper side behind the face, straight in.
+    let deep = 0;
+    for (let step = 1; step <= V1_DEPTH_REACH; step++) {
+      const ii = i + di * step;
+      const jj = j + dj * step;
+      if (!inBounds(ii, jj)) break;
+      if ((owner[jj * width + ii] as number) !== above) break;
+      deep++;
+    }
+    behind.push(deep);
+    // Rule 3's land pressure, on the low side only — §5.2's rule measured where
+    // `edgeContextOf` measures it, and for the same reason: asked of the
+    // platform side every terrace in a hill town is pressed and rule 3 never
+    // discriminates.
+    let pressed = false;
+    for (let ddj = -WALL_DEMAND_RANGE; ddj <= WALL_DEMAND_RANGE; ddj++) {
+      for (let ddi = -WALL_DEMAND_RANGE; ddi <= WALL_DEMAND_RANGE; ddi++) {
+        const ii = i + ddi;
+        const jj = j + ddj;
+        if (!inBounds(ii, jj)) continue;
+        const k = jj * width + ii;
+        if ((owner[k] as number) === above) continue;
+        const u = ctx.useOf(owner[k] as number);
+        if (u === "street") {
+          use = "street";
+          publicGround = true;
+          pressed = true;
+        } else if (u === "lot" || ctx.builtAt(k)) {
+          if (use !== "street") use = "lot";
+          pressed = true;
+        }
+      }
+    }
+    if (pressed) pressedCells++;
+  }
+
+  const median = (list: number[]): number => {
+    if (list.length === 0) return 0;
+    const sorted = [...list].sort((a, b) => a - b);
+    return sorted[sorted.length >> 1] as number;
+  };
+  // §5.4: an unowned upper side is the hill itself, and a boundary against it is
+  // a **cut**; anything else is ground a claim raised, which is a fill face.
+  const side: "cut" | "fill" = above === -1 ? "cut" : "fill";
+  const belowY = ground[run.cells[0] as number] as number;
+  const context: EdgeContext = {
+    drop,
+    run: run.cells.length,
+    availableRun: median(free),
+    adjacentUse: use,
+    access: publicGround ? "public" : "private",
+    depthAfter: median(behind) - 1,
+    side,
+    // The district's masonry ration is the *builder*'s to spend (§3.3's refusal
+    // column): a derivation that priced it would make the enumeration depend on
+    // the order the quarters were walked in, which §5.7 forbids.
+    budget: Number.POSITIVE_INFINITY,
+    builtShare: facedCells === 0 ? 0 : builtFace / facedCells,
+    pressedShare: facedCells === 0 ? 0 : pressedCells / facedCells,
+  };
+  const chosen = treatmentForEdge(context);
+  // `"replan"` collapses exactly as `treatmentForSeam` collapses it: there is no
+  // planner still running to narrow the claim, so the answer is the unbuilt one.
+  const refined: SeamTreatment = chosen === "replan" ? (side === "fill" ? "bank" : "rock") : chosen;
+
+  return {
+    above,
+    below: run.below,
+    aboveSource: ctx.sourceOf(above),
+    belowSource: ctx.sourceOf(run.below),
+    cells: run.cells,
+    drop,
+    treatment: treatmentForSeam(drop, run.cells.length),
+    requested: { above: ctx.requestOf(above), below: ctx.requestOf(run.below) },
+    belowY,
+    aboveY: belowY + drop,
+    pressedShare: context.pressedShare,
+    availableRun: context.availableRun,
+    builtShare: context.builtShare,
+    side,
+    refined,
+  };
+}
+
+/** A boundary pair the invariant could not account for. */
+interface CoverageWitness {
+  readonly cell: number;
+  readonly why: string;
+}
+
+/**
+ * §3.2, executed.
+ *
+ * The four clauses are checked in the order §3.2 states them and a pair is
+ * accounted for by the first that answers. Two of the four overlap **by
+ * design** and neither overlap is a violation:
+ *
+ * - clause 4 subsumes into clause 1 wherever a one-block drop was long enough to
+ *   be grouped into a run — the kerb course and the derived `kerb` transition are
+ *   the same fact, said twice;
+ * - clauses 2 and 3 never overlap clause 1, because the enumeration skips a
+ *   suppressed pair before it reaches the grouping. A pair that is *both* in a
+ *   transition and suppressed is therefore a real derivation bug and is counted
+ *   as uncovered with `double` as its reason, which is §3.2's "or matching two".
+ */
+function checkCoverage(args: {
+  readonly width: number;
+  readonly depth: number;
+  readonly ground: ReadonlyInt32Array;
+  readonly owner: ReadonlyInt32Array;
+  readonly fluidKind: ReadonlyUint8Array;
+  readonly isFace: Uint8Array;
+  readonly requestOf: (o: number) => GroundTransitionKind;
+  readonly covered: Map<number, Set<number>>;
+  readonly span: number;
+}): { readonly report: SeamCoverage; readonly witnesses: CoverageWitness[] } {
+  const { width, depth, ground, owner, fluidKind, isFace, requestOf, covered, span } = args;
+  let pairs = 0;
+  let transition = 0;
+  let request = 0;
+  let face = 0;
+  let kerb = 0;
+  let natural = 0;
+  let water = 0;
+  let uncovered = 0;
+  const witnesses: CoverageWitness[] = [];
+
+  for (let j = 0; j < depth; j++) {
+    for (let i = 0; i < width; i++) {
+      const b = j * width + i;
+      const belowOwner = owner[b] as number;
+      const y = ground[b] as number;
+      for (const [di, dj] of EDGE_NEIGHBOURS) {
+        const ii = i + di;
+        const jj = j + dj;
+        if (ii < 0 || jj < 0 || ii >= width || jj >= depth) continue;
+        const a = jj * width + ii;
+        const aboveOwner = owner[a] as number;
+        if ((ground[a] as number) <= y) continue; // `b` is the lower side, strictly.
+        // Exclusion 1 — the hillside against itself. Counted before the
+        // owner-difference test rather than after, because §3.2's definition
+        // already excludes it (`owner[a] !== owner[b]` cannot hold when both are
+        // −1) and the census would otherwise always read zero. It is the guard
+        // number of §6/WP-G4's acceptance table — "this stage must not touch the
+        // hillside" — so it is worth reporting rather than defining away.
+        if (aboveOwner === -1 && belowOwner === -1) {
+          natural++;
+          continue;
+        }
+        if (aboveOwner === belowOwner) continue;
+        // Exclusion 2 — a shore is not a seam; `fluid.channel`'s `preserve`
+        // governs it.
+        if (
+          (fluidKind[a] as number) !== FluidKind.NONE ||
+          (fluidKind[b] as number) !== FluidKind.NONE
+        ) {
+          water++;
+          continue;
+        }
+        pairs++;
+
+        const inRun = covered.get(b)?.has((aboveOwner + 1) * span + (belowOwner + 1)) === true;
+        const suppressedByRequest =
+          requestOf(aboveOwner) === "none" || requestOf(belowOwner) === "none";
+        const suppressedByFace = isFace[a] === 1 || isFace[b] === 1;
+        if (inRun && (suppressedByRequest || suppressedByFace)) {
+          uncovered++;
+          if (witnesses.length < 32) witnesses.push({ cell: b, why: "double" });
+          continue;
+        }
+        if (inRun) transition++;
+        else if (suppressedByRequest) request++;
+        else if (suppressedByFace) face++;
+        else if ((ground[a] as number) - y === 1) kerb++;
+        else {
+          uncovered++;
+          if (witnesses.length < 32) witnesses.push({ cell: b, why: "no clause" });
+        }
+      }
+    }
+  }
+
+  return {
+    report: { pairs, transition, request, face, kerb, natural, water, uncovered },
+    witnesses,
+  };
+}
+
+/**
+ * `CLASS_USE`, for the test that asserts it is total over
+ * `GROUND_SOURCE_CLASSES`. Not for a consumer: use is read through
+ * `deriveGroundSeams`.
+ */
+export const SEAM_CLASS_USE = CLASS_USE;

@@ -96,6 +96,7 @@ import {
 import {
   buildRetainingWalls,
   finishCutFaces,
+  finishSeams,
   type RetainingPassResult,
   type RetainingPlane,
 } from "./retaining.js";
@@ -1651,6 +1652,25 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     seam: retaining.seam,
   });
   diagnostics.push(...cutFaces.diagnostics);
+
+  // --- the terminal transition consumer (WP-G4) ----------------------------
+  // `docs/GROUND-CONTRACT-v1.md` §3.3, §6/WP-G4. **Derives and reports; builds
+  // nothing**, because `GROUND_V1_SEAMS` is off and building is the flag-on
+  // half. Here, immediately after the cut-face finish it will absorb, and after
+  // every pass that declares: `input.ground.finish()` is the finished field, so
+  // §3.2's coverage invariant is being asked of the thing it is a statement
+  // about. It runs on every settlement compile regardless of the flag — that is
+  // the point of the stage: the counts are a golden before a block moves.
+  const seamStage = finishSeams({
+    plan: input.plan,
+    ground: input.ground,
+    footprints: built.map((b) => b.footprint),
+    // The only built-set any pass publishes at HEAD (§3.3's refusal column is
+    // WP-G5's work), and what the `wouldBuild` count is measured against.
+    seam: retaining.seam,
+    nodePath: rootPath,
+  });
+  diagnostics.push(...seamStage.diagnostics);
 
   // --- ground treatment (F2) -----------------------------------------------
   // Dead last, and that is the whole design: every other pass has by now

@@ -1125,6 +1125,34 @@ export const TERRAIN_DIAGNOSTICS = {
    * was drawn, and what to write instead.
    */
   DISTRICT_FORM_ALIAS: "LOAM-I498",
+  /**
+   * `docs/GROUND-CONTRACT-v1.md` §3.2's coverage invariant is violated: a
+   * boundary pair between two winners at different levels that matches none of
+   * the four accounting clauses — no derived transition, no `transition: "none"`
+   * request, no face, no one-block kerb — or that matches two of them.
+   *
+   * **A compiler bug**, in `GROUND_INVARIANT`'s class: no legal document can
+   * produce it, and the caller aborts loudly. It means the derivation failed to
+   * enumerate a seam, which is the one failure "a missed seam is impossible by
+   * construction" exists to make impossible. The fix is always to complete the
+   * derivation and never to widen §3.2's two exclusions — natural-against-natural
+   * and water, and nothing else.
+   *
+   * Number allocated by v1 §7.5, not picked: two concurrent waves of the rewrite
+   * must not choose the same free integer out of this registry.
+   */
+  GROUND_SEAM_UNCOVERED: "LOAM-E495",
+  /**
+   * Once per settlement compile: the ground stage's own numbers — intents by
+   * class, resolves, columns moved, transitions by treatment, and how many
+   * `finishSeams` had to build (v1 §7.5).
+   *
+   * The golden the staged flip is diffed against, and the reason WP-G4 can ship
+   * with its flag off: the counts move before a block does. Not in
+   * `FEEDBACK_CODES` (v0 §13.6) — a code that fires on every settlement world
+   * costs money in the authoring loop and buys an invented change.
+   */
+  GROUND_STAGE: "LOAM-I497",
 } as const;
 
 /** Symbolic diagnostic name. */
