@@ -39,8 +39,10 @@ export interface InstallResult {
   readonly renamed: boolean;
   /** True when an existing same-name save was deleted to make room. */
   readonly replaced: boolean;
-  /** The version picked, when installed with `series`. */
+  /** The version picked, when installed with `series` and no `release`. */
   readonly seriesVersion?: number;
+  /** The release cohort, when installed with `series` + `release`. */
+  readonly release?: number;
 }
 
 /** Options for {@link installWorld}. */
@@ -83,8 +85,32 @@ export interface InstallOptions {
    *
    * Mutually exclusive with `channel`. `replace` stays forbidden with it —
    * a series never overwrites, it appends.
+   *
+   * Prefer passing `release` alongside it: the auto-incrementing mode below is
+   * the incoherence {@link InstallOptions.release} exists to fix.
    */
   readonly series?: string;
+  /**
+   * The release (build cohort) number this world belongs to: `<slug>_r<N>`.
+   *
+   * The per-slug auto-increment above numbers each prompt's series
+   * independently, so one compiler build could hand out `alien_farm_v5` and
+   * `pirates_v_unicorns_v17` on the same afternoon — two names that say
+   * nothing about being siblings. A *release* is the unit that actually
+   * varies: one deck, one compiler commit, one authoring batch. Every world
+   * generated in that deck carries the same number, so `troy_r16`,
+   * `hellenist_city_r16` and `pirates_v_unicorns_r16` are visibly the same
+   * build seen through three prompts, and comparing r16 to r21 compares two
+   * builds rather than two unrelated counters.
+   *
+   * Numbers are therefore dense per RELEASE, never per slug: a prompt that
+   * was not rolled in a deck simply has no world at that number, and a gap in
+   * `troy_r*` is information, not a mistake. Because the deck picks the
+   * number, an install that would land on a name already present is an error
+   * rather than a bump — auto-incrementing past a collision is exactly how the
+   * numbering came apart. Requires `series`.
+   */
+  readonly release?: number;
 }
 
 /**
@@ -125,6 +151,26 @@ export function seriesFolderName(slug: string, version: number): string {
   return `${slug}_v${version}`;
 }
 
+/** The folder (and display) name for `slug` within release `release`. */
+export function releaseFolderName(slug: string, release: number): string {
+  return `${slug}_r${release}`;
+}
+
+/**
+ * The release number `folder` carries within `slug`, or undefined.
+ *
+ * Exactly as strict as {@link parseSeriesVersion}, and for the same reason: a
+ * `troy_r16-2` produced by some other tool's collision suffix must not read
+ * back as release 16, or the archive would claim two worlds for one build.
+ */
+export function parseReleaseNumber(folder: string, slug: string): number | undefined {
+  const prefix = `${slug}_r`;
+  if (!folder.startsWith(prefix)) return undefined;
+  const rest = folder.slice(prefix.length);
+  if (!/^[1-9][0-9]*$/.test(rest)) return undefined;
+  return Number(rest);
+}
+
 /** The default Minecraft saves directory for this platform. */
 export function defaultSavesDir(): string {
   const home = os.homedir();
@@ -160,17 +206,41 @@ export async function installWorld(options: InstallOptions): Promise<InstallResu
   if (series !== undefined && options.replace === true) {
     throw new Error("--series never replaces: each install is the next version");
   }
+  const release = options.release;
+  if (release !== undefined) {
+    if (series === undefined) {
+      throw new Error("--release names which build a --series world belongs to; pass --series too");
+    }
+    if (!Number.isInteger(release) || release < 1) {
+      throw new Error(`--release must be a positive integer, got ${String(release)}`);
+    }
+  }
   const seriesVersion =
-    series === undefined
+    series === undefined || release !== undefined
       ? undefined
       : nextSeriesVersion(await readdir(savesDir).catch(() => [] as string[]), series);
   const requested =
     series !== undefined
-      ? seriesFolderName(series, seriesVersion as number)
+      ? release === undefined
+        ? seriesFolderName(series, seriesVersion as number)
+        : releaseFolderName(series, release)
       : channel === undefined
         ? path.basename(worldDir)
         : `${path.basename(worldDir)}_${channel}`;
   const replace = options.replace === true;
+  // A release name is chosen by the deck, so a taken one means the deck was
+  // already installed (or the number is wrong). Suffixing it to `_r16-2` would
+  // hide that behind a name that reads as neither a release nor a version.
+  if (release !== undefined) {
+    const existing = new Set(await readdir(savesDir).catch(() => [] as string[]));
+    if (existing.has(requested)) {
+      throw new Error(
+        `${requested} already exists in ${savesDir} — a release number is assigned by the deck,\n` +
+          "so it is never auto-incremented past a collision. Either this deck is already\n" +
+          "installed, or --release is wrong; check battery/RELEASES.md.",
+      );
+    }
+  }
   const folderName = replace ? requested : await freeName(savesDir, requested);
   const installedPath = path.join(savesDir, folderName);
   if (installedPath === worldDir) {
@@ -207,6 +277,7 @@ export async function installWorld(options: InstallOptions): Promise<InstallResu
     savesDir,
     lastPlayed,
     ...(seriesVersion === undefined ? {} : { seriesVersion }),
+    ...(release === undefined ? {} : { release }),
     renamed: folderName !== requested,
     replaced,
   };

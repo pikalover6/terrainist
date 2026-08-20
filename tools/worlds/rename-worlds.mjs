@@ -2,6 +2,14 @@
 /**
  * Retroactively rename the standing battery's worlds to `<slug>_v<N>`.
  *
+ * SUPERSEDED, and kept only as the record of the first pass. The `_v<N>`
+ * numbering below gave every prompt its own private counter, so one compiler
+ * build shipped as `alien_farm_v5` and `pirates_v_unicorns_v17` — sibling
+ * worlds with unrelated numbers. `rerename-worlds.mjs` moved the battery onto
+ * build cohorts (`<slug>_r<N>`, one number per deck, shared across prompts);
+ * `battery/RELEASES.md` is the manifest. Running this script again would find
+ * none of the folder names it expects.
+ *
  * The battery rolls the same seven prompts over and over, and the authoring
  * model picks a fresh world name every single roll: the Trojan-horse prompt
  * alone has landed in the saves folder as `troy_luna`, `trojan_horse_troy_gem`,

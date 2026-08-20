@@ -107,6 +107,7 @@ Usage:
                                  [--keep-doc] [--no-zip] [--allow-unstable]
   terrainist install <worldDir> [--saves <dir>] [--replace] [--force]
                                 [--channel <name>] [--series <slug>]
+                                [--release <N>]
   terrainist compile <doc.loam.json> [--out <dir>] [--no-zip] [--allow-unstable]
                                      [--report <file.json>]
   terrainist export-web <doc.loam.json> --out <dir> [--allow-unstable]
@@ -158,10 +159,20 @@ install options:
                     rewrite the in-game world name to match, so two channels of
                     the same world sit side by side and are told apart in the
                     world list.
-  --series <slug>   Install as <slug>_v<N>, the next free version in that
-                    prompt's series (e.g. "troy" -> troy_v14), and rewrite the
-                    in-game name to match. The prompt, not the model's world
-                    name of the day, is the identity. Never replaces.
+  --series <slug>   The prompt's canonical slug (e.g. "troy"). The prompt, not
+                    the model's world name of the day, is the identity, and the
+                    in-game name is rewritten to match the folder. Never
+                    replaces. Pair it with --release.
+  --release <N>     Install as <slug>_r<N>: the build cohort this world belongs
+                    to. Every world from one deck shares its number, so
+                    troy_r21 and hellenist_city_r21 are the same build seen
+                    through two prompts. Errors on a name already present —
+                    the deck assigns the number, never a counter. See
+                    battery/RELEASES.md.
+                    Without --release, --series falls back to per-slug
+                    auto-increment (<slug>_v<N>, highest + 1). DISCOURAGED:
+                    that mode is what made troy_v14 and alien_farm_v5 the same
+                    build with unrelated numbers.
   Stamps level.dat's LastPlayed with the current time — the only place
   Terrainist reads the wall clock.
 
@@ -924,6 +935,7 @@ export async function runInstall(args: readonly string[]): Promise<number> {
   let force = false;
   let channel: string | undefined;
   let series: string | undefined;
+  let release: number | undefined;
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -936,6 +948,15 @@ export async function runInstall(args: readonly string[]): Promise<number> {
       const value = args[i + 1];
       if (value === undefined) throw new Error("--series requires a slug");
       series = value;
+      i++;
+    } else if (arg === "--release") {
+      const value = args[i + 1];
+      if (value === undefined) throw new Error("--release requires a number");
+      // Accept both "16" and "r16": the ledger, the archive and the folder
+      // names all spell releases with the r, and typing it is the natural thing.
+      const digits = /^r?([1-9][0-9]*)$/.exec(value);
+      if (digits === null) throw new Error(`--release must be a positive integer, got "${value}"`);
+      release = Number(digits[1]);
       i++;
     } else if (arg === "--channel") {
       const value = args[i + 1];
@@ -964,6 +985,7 @@ export async function runInstall(args: readonly string[]): Promise<number> {
     ...(savesDir === undefined ? {} : { savesDir }),
     ...(channel === undefined ? {} : { channel }),
     ...(series === undefined ? {} : { series }),
+    ...(release === undefined ? {} : { release }),
   });
 
   const lines = [
@@ -979,6 +1001,14 @@ export async function runInstall(args: readonly string[]): Promise<number> {
   }
   if (result.replaced) {
     lines.push(`  note       replaced the existing save of the same name`);
+  }
+  if (result.release !== undefined) {
+    lines.push(`  release    r${result.release} (shared by every world in this deck)`);
+  } else if (result.seriesVersion !== undefined) {
+    lines.push(
+      `  note       per-slug auto-increment; prefer --release <N> so this deck's` +
+        ` worlds share a number`,
+    );
   }
   console.log(lines.join("\n"));
   return 0;
@@ -1172,7 +1202,9 @@ export {
   longToMillis,
   millisToLong,
   nextSeriesVersion,
+  parseReleaseNumber,
   parseSeriesVersion,
+  releaseFolderName,
   seriesFolderName,
   stampLastPlayed,
   stampLevelDat,
