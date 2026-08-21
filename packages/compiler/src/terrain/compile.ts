@@ -180,8 +180,10 @@ import {
   buildStructures,
   buildTransitionBand,
   checkTunnelIntegrity,
+  declareStructures,
   roadParamsOf,
   type FarmReportRow,
+  type StructurePassInput,
   type StructurePassResult,
   type StructureStats,
 } from "../structures/index.js";
@@ -953,7 +955,14 @@ async function compileValidated(
         corridors,
       }),
     );
-    structures = buildStructures({
+    // **Pass 5b then pass 5e** (contract v1 §1.6, WP-G5). The one structure
+    // pass is two calls, back-to-back at the one pipeline position it has
+    // always occupied: `declareStructures` runs every pass's declaring half and
+    // hands back the `StructurePlan`, `buildStructures` runs the building half
+    // over it. Nothing between them, and nothing may go between them until G6
+    // puts the four prefix resolves and the freeze there — this stage moves no
+    // number, which is the whole of its value.
+    const structureInput: StructurePassInput = {
       doc,
       worldSeed,
       ground: groundDriver,
@@ -972,7 +981,8 @@ async function compileValidated(
       ...(corridors.some((c) => c.kind === "road")
         ? { roadCorridor: corridorMask(region, corridors.filter((c) => c.kind === "road")) }
         : {}),
-    });
+    };
+    structures = buildStructures(structureInput, declareStructures(structureInput));
     diagnostics.push(...structures.diagnostics);
     layoutOutcome = { ...layoutOutcome, structures };
   }

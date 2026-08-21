@@ -459,8 +459,95 @@ function setColumns(mask: Uint8Array): number[] {
   return out;
 }
 
-/** Build every placed structure, then connect them. */
-export function buildStructures(input: StructurePassInput): StructurePassResult {
+/** One city arterial, as `surfaceStreetGraph` and the stats read it. */
+type Arterial = CityProduct["plan"]["arterials"][number];
+
+/**
+ * **What {@link declareStructures} computed, handed to {@link buildStructures}.**
+ *
+ * `docs/GROUND-CONTRACT-v1.md` §6/WP-G5. The structure pass used to be one
+ * function and one closure: twenty-seven passes sharing thirty-odd locals —
+ * masks, arc frames, occupancy claims, the material deal, the emitted block
+ * list — with no name for any of it. §1.6's target shape needs the pass roster
+ * to be *two* rosters (declare in tier order, then build), and a closure cannot
+ * be cut in half. This interface is that cut, made explicit.
+ *
+ * Two properties are load-bearing and are what makes WP-G5 provably inert:
+ *
+ * 1. **Nothing here is recomputed.** Every field is the *same object* the
+ *    declaring half produced — `blocks` and `blockSpans` by reference, so the
+ *    build half appends to the one list the declare half was already appending
+ *    to; `lay` is the same closure, so a span's attribution is unbroken;
+ *    `built`, `retaining`, `streets`, `roads` are the pass results themselves.
+ *    A field recomputed between the halves is a byte waiting to move.
+ * 2. **The order of statements across the two halves is exactly the order of
+ *    statements in the one function they came from.** WP-G5 introduces the seam;
+ *    WP-G6 is what moves passes across it. So the driver's `commit`
+ *    write-through fires at the same relative position it always did, and every
+ *    build half reads the plan it read before.
+ */
+export interface StructurePlan {
+  readonly rootPath: string;
+  /** Accumulated by both halves; the result's `diagnostics`. */
+  readonly diagnostics: LoamDiagnostic[];
+  /** The one emitted block list, appended to by both halves. */
+  readonly blocks: StructureBlock[];
+  readonly blockSpans: BlockSpan[];
+  /** The one `lay`, so attribution spans are continuous across the seam. */
+  readonly lay: (emitter: string, list: readonly StructureBlock[]) => void;
+  readonly placementByPath: ReadonlyMap<string, Placement>;
+  readonly districts: readonly DistrictProduct[];
+  readonly cities: readonly CityProduct[];
+  readonly districtPaths: ReadonlySet<string>;
+  /** Grows through the declare half — the farmstead and the precinct add to it. */
+  readonly buildingPaths: ReadonlySet<string>;
+  readonly precincts: PrecinctPassResult | undefined;
+  /** R1's claimed planes, shared by the retaining pass and the cut-face finish. */
+  readonly planes: readonly RetainingPlane[];
+  readonly themeSeed: Seed256;
+  readonly theme: MaterialTheme;
+  /** The one per-scope theme resolver; the wall's own jobs still ask it. */
+  readonly themeForNode: (nodePath: string) => MaterialTheme;
+  readonly intents: ReturnType<typeof resolveIntents>;
+  readonly rootIntent: ReturnType<typeof intentFor>;
+  readonly linework: ReturnType<typeof declareLinework> | undefined;
+  /** The settlement's material deal, in job order. */
+  readonly deal: readonly BuildingMaterials[];
+  /** Tags by node path, farmsteads included — the life pass's view. */
+  readonly jobTags: ReadonlyMap<string, readonly string[]>;
+  /** Every building the world holds, the farmstead included. */
+  readonly built: readonly BuiltBuilding[];
+  readonly ruinField: RuinField | undefined;
+  readonly tunnelPass: ReturnType<typeof buildTunnels>;
+  readonly plaza: PlazaResult | undefined;
+  readonly retaining: RetainingPassResult;
+  readonly courtyardPass: CourtyardPassResult;
+  readonly canals: CanalPassResult;
+  readonly streets: StreetSurfaceResult | undefined;
+  /** C3's per-quarter walk lanes, kept rather than re-rasterized. */
+  readonly streetMasks: readonly LifeStreets[];
+  readonly streetFurniture: number;
+  readonly arterials: readonly Arterial[];
+  readonly roads: RoadNetworkResult | undefined;
+  readonly farms: FarmPassResult | undefined;
+  readonly farmPorts: readonly ResolvedPort[];
+  readonly props: PropPassResult;
+  readonly propJobs: readonly PropJob[];
+  readonly propFluids: ReturnType<typeof checkPropFluidSafety>;
+}
+
+/**
+ * **The declaring half** of the structure pass (§6/WP-G5).
+ *
+ * Every pass from the precincts through `prop.place@0`, in the order they have
+ * always run, each ending in exactly the `driver.commit` its old body performed.
+ * At WP-G5 a declaring pass's *emission* has not moved — `buildBuildings` still
+ * lays its masonry here, at pass 9, with an absolute Y (§6/WP-G5's risk note);
+ * WP-G6 is what moves it to pass 5e. What has moved is the seam: the eleven
+ * passes after this line now run in {@link buildStructures}, reading a named
+ * {@link StructurePlan} rather than a closure.
+ */
+export function declareStructures(input: StructurePassInput): StructurePlan {
   const rootPath = input.doc.root.id;
   const diagnostics: LoamDiagnostic[] = [];
   const byId = new Map(input.nodes.map((n) => [n.nodePath, n] as const));
@@ -1540,6 +1627,118 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
   // reported here as well as by the readback lint because a leak is cheapest
   // to attribute at the pass that caused it.
   const propFluids = checkPropFluidSafety(props.blocks, input.plan, input.stack);
+
+  // === the WP-G5 seam ======================================================
+  // Everything above declared; everything below builds. The cut is *here* and
+  // not one line either side of it, because `prop.place@0` is the last pass
+  // whose declaration and whose emission are still one act — `levelPropPad`
+  // commits each plinth's `prop.pad` as it lays it — and the eleven passes
+  // below are the ones that can be lifted whole without a statement changing
+  // places with another. Nothing is recomputed across the seam: every field is
+  // the object the declaring half already built. See {@link StructurePlan}.
+  return {
+    rootPath,
+    diagnostics,
+    blocks,
+    blockSpans,
+    lay,
+    placementByPath,
+    districts,
+    cities,
+    districtPaths,
+    buildingPaths,
+    precincts,
+    planes,
+    themeSeed,
+    theme,
+    themeForNode,
+    intents,
+    rootIntent,
+    linework,
+    deal,
+    jobTags,
+    built,
+    ruinField,
+    tunnelPass,
+    plaza,
+    retaining,
+    courtyardPass,
+    canals,
+    streets,
+    streetMasks,
+    streetFurniture,
+    arterials,
+    roads,
+    farms,
+    farmPorts,
+    props,
+    propJobs,
+    propFluids,
+  };
+}
+
+/**
+ * **The building half** of the structure pass (§6/WP-G5).
+ *
+ * Called back-to-back with {@link declareStructures}, at the same pipeline
+ * position the one old function occupied, over the plan it produced. The eleven
+ * passes here are the tail: the two that still declare at WP-G5 and are lifted
+ * at WP-G6 (`buildDoorsteps`, `buildJunctionSteps`, and `buildInfraEntries`'s
+ * two level-writing entries), and the painters — `finishCutFaces`,
+ * `finishSeams`, `buildGrounds`, `dressSetPieces`, `buildWalls`, `dressLife`,
+ * `growGreenSkin` — which declare nothing at all and therefore have a **no-op
+ * declare**: their absence from `declareStructures` *is* it.
+ *
+ * It reads exactly what it read before: the plan's ground arrays as the last
+ * commit above left them, the emitted block list as far as the declaring half
+ * filled it, and the occupancy grid every pass has been claiming into. The
+ * driver's write-through survives one more stage for precisely this reason
+ * (§6/WP-G5), so no snapshot is needed and none is taken.
+ */
+export function buildStructures(
+  input: StructurePassInput,
+  plan: StructurePlan,
+): StructurePassResult {
+  const {
+    rootPath,
+    diagnostics,
+    blocks,
+    blockSpans,
+    lay,
+    placementByPath,
+    districts,
+    cities,
+    districtPaths,
+    // `buildingPaths` is deliberately not taken: its readers — the street
+    // surfacer and the road router — are still in the declaring half. It stays
+    // on the plan for the WP-G6 move rather than being a field with no reader.
+    precincts,
+    planes,
+    themeSeed,
+    theme,
+    themeForNode,
+    intents,
+    rootIntent,
+    linework,
+    deal,
+    jobTags,
+    built,
+    ruinField,
+    tunnelPass,
+    plaza,
+    retaining,
+    courtyardPass,
+    streets,
+    streetMasks,
+    streetFurniture,
+    arterials,
+    roads,
+    farms,
+    farmPorts,
+    props,
+    propJobs,
+    propFluids,
+  } = plan;
 
   // --- doorsteps -----------------------------------------------------------
   // Last, and it has to be: a doorstep reconciles a threshold with the ground
