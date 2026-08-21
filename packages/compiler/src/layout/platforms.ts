@@ -178,10 +178,13 @@ export interface PlatformInput {
    * steps" is a question about the ground the world came with, and the answer
    * has to be the same one the street datum graded itself against.
    *
-   * Read **only** by the {@link TERRACE_BY_TERRAIN} construction, and only for
-   * the step lines and the untied fallback — every level this function elects
-   * still comes from the datum or from {@link field}, so the flag-off path
-   * reads this field exactly never and is byte-identical without it.
+   * **Since {@link ELECTION_SOLVE} shipped this is a first-class input, not a
+   * side channel**: `p_c` in §1.2's objective *is* this field, so the ground
+   * term prices cut and fill against the hill the world came with, and the
+   * whole election is a function of it. Before the flip it was read only by the
+   * {@link TERRACE_BY_TERRAIN} construction — step lines and the untied
+   * fallback — which is why the pre-election path could be byte-identical
+   * without it; that remains true of the fallback path, and of it alone.
    */
   readonly pristine?: HeightField;
   /**
@@ -189,14 +192,20 @@ export interface PlatformInput {
    * parameter exists so a test may exercise the terrain-split election without
    * moving a compile-time constant the whole compiler reads, exactly the shape
    * {@link tiered} and {@link datum} already have.
+   *
+   * **Moot on the shipped path**: {@link electionSolve} returns before the
+   * terrain criterion is reached, so this only ever selects a behaviour inside
+   * the fallback procedure.
    */
   readonly terraceByTerrain?: boolean;
   /**
    * **The election solve's switch** — {@link ELECTION_SOLVE},
-   * `docs/ELECTION-SOLVE-v0.md`. Defaults to that constant; the parameter
-   * exists so a test may exercise the solve without moving a compile-time
-   * constant the whole compiler reads, exactly the shape {@link tiered},
-   * {@link datum} and {@link terraceByTerrain} already have.
+   * `docs/ELECTION-SOLVE-v0.md`. Defaults to that constant, **which is now
+   * `true`**; the parameter exists so a test may exercise *either*
+   * construction without moving a compile-time constant the whole compiler
+   * reads, exactly the shape {@link tiered}, {@link datum} and
+   * {@link terraceByTerrain} already have. Since the flip its useful value is
+   * `false`: that is how a test still reaches the fallback procedure.
    *
    * On, it **replaces** everything above from `blocksOf` down: no anchor, no
    * span split, no terrace criterion, no storey bucket, no sliver merge. One

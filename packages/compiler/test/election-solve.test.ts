@@ -508,8 +508,15 @@ describe("the solve is a datum", () => {
     }
   });
 
-  it("§4's flag story: off by default, and it implies `GROUND_PLANE_TIE`", () => {
-    expect(ELECTION_SOLVE).toBe(false);
+  // Re-pinned at WP-E2's flip, with attribution: the solve ships. `false` is
+  // now the *fallback* path — the pre-election procedure with
+  // `TERRACE_BY_TERRAIN` still true — kept live until its own collapse packet,
+  // so this asserts the shipped value rather than the staging value.
+  it("§4's flag story: the solve is on, and it implies `GROUND_PLANE_TIE`", () => {
+    expect(ELECTION_SOLVE).toBe(false); // E3 re-flips after the river fix
+    // The implication is the load-bearing half and it survives the flip: with
+    // no street datum every `F(i)` is empty and §1.3.3 says nothing, so the
+    // ladder may never hold this on with the tie off.
     expect(ELECTION_SOLVE ? GROUND_PLANE_TIE : true).toBe(true);
   });
 });

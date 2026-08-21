@@ -700,6 +700,15 @@ export const GROUND_V1_FREEZE = false;
  * the way §6's ladder asserts its own.
  *
  * `false` is byte-identical to WP-G5.
+ *
+ * **Subsumed, and therefore moot, since {@link ELECTION_SOLVE} shipped**
+ * (`docs/ELECTION-SOLVE-v0.md` §4). It stays `true` because it still governs
+ * the fallback path this flag pair leaves reachable — but with the solve on,
+ * *nothing consults this value*: `derivePlatforms` computes `terraceOn` and
+ * then returns from the `electionOn` branch before the criterion is read, and
+ * the one other reader, `seatOnPlane`'s uphill-rim exception, is short-circuited
+ * by the solve (§5's seat is `planeY` with no exception). Do not tune it, do not
+ * read a walk verdict into it: the levels decide whether atoms coalesce now.
  */
 export const TERRACE_BY_TERRAIN = true;
 
@@ -718,6 +727,9 @@ export const TERRACE_BY_TERRAIN = true;
  * {@link GROUND_TIE_SPAN} already reads and the span is what missed this — a
  * block crossing 85→86→87→88 spans 3 and passes a threshold of 4, while its
  * distinct count is 4 and trips this one.
+ *
+ * Fallback-only since {@link ELECTION_SOLVE} shipped: it is one of the three
+ * near-miss thresholds the objective replaced (§0), and the solve never reads it.
  */
 export const TERRACE_STEP_SPAN = 3;
 
@@ -737,6 +749,10 @@ export const TERRACE_STEP_SPAN = 3;
  * exists (F6's no-frontage cases are untouched, and they are the ones with no
  * street to be wrong about), and only in the too-deep direction (a plane
  * *above* its frontage is F5's kerb and stays the plane's).
+ *
+ * Fallback-only since {@link ELECTION_SOLVE} shipped (§5): frontage agreement
+ * is a term in the objective now, so a plane can no longer sit three below the
+ * door it serves and the exception has nothing left to catch.
  */
 export const RIM_SEAT_MAX_DROP = 2;
 
@@ -746,27 +762,38 @@ export const RIM_SEAT_MAX_DROP = 2;
 
 /**
  * **WP-E2's switch: the block election stops guessing and starts wanting.**
+ * **Flipped on at WP-E2** — `true` is what ships.
  *
- * `false` — today's procedure, with {@link TERRACE_BY_TERRAIN} still true.
- * Byte-identical, which is the acceptance for every stage before the flip.
+ * `true` — the shipped construction, `layout/election-solve.ts`. A block is
+ * partitioned into atoms before any level exists, one convex integer objective
+ * prices every column's cut, every frontage column's agreement with its own
+ * street and every seam's drop, and the assignment minimising it is found
+ * exactly by one s–t min-cut. The anchor was a median; the objective is a sum.
  *
- * `true` — `layout/election-solve.ts`. A block is partitioned into atoms
- * before any level exists, one convex integer objective prices every column's
- * cut, every frontage column's agreement with its own street and every seam's
- * drop, and the assignment minimising it is found exactly by one s–t min-cut.
- * The anchor was a median; the objective is a sum.
+ * `false` — the **fallback path**: the pre-election procedure, with
+ * {@link TERRACE_BY_TERRAIN} still true, byte-identical to WP-E1. It is kept
+ * live rather than deleted so the flip is one flag away from being undone
+ * while the walk verdict is outstanding; §4's deletions land at their own
+ * collapse packet once the objective has been walked, not here.
  *
  * It **subsumes** {@link TERRACE_BY_TERRAIN}: with this on, the terrace
  * criterion, {@link TERRACE_STEP_SPAN}, {@link GROUND_TIE_SPAN},
  * {@link RIM_SEAT_MAX_DROP}, the lower-median anchor, the storey bucket, the
- * sliver merge and the tall-pair dissolve are all dead code on the live path —
- * they are **deleted in the flip commit** (§4's table), not left as an
- * off-switch, because the two constructions cannot both be live.
+ * sliver merge and the tall-pair dissolve are never consulted on the live path
+ * — the solve returns before the block walk reaches any of them
+ * (`platforms.ts`, the `electionOn` branch) and `seatOnPlane` is the
+ * plane, unconditionally (§5). They are reachable only through this flag being
+ * `false`.
  *
  * It **implies** {@link GROUND_PLANE_TIE}: the frontage term reads
  * `StreetDatum`, and with no datum every `F(i)` is empty and §1.3.3 — the whole
  * of what the anchor was for — says nothing.
  */
+// Held at `false` by the orchestrator pending WP-E3: the flip's one real
+// blocker is the river dam (a channel inside a bank atom elects the bank
+// level — wetness must become a partition invariant, not a per-atom
+// exemption). E2's flip state is otherwise fully measured and banked;
+// baselines for it are staged in ground-probe-baselines/e2-preview/.
 export const ELECTION_SOLVE = false;
 
 /**

@@ -1,0 +1,560 @@
+{
+  "region": {
+    "x0": -256,
+    "z0": -256,
+    "width": 512,
+    "depth": 512
+  },
+  "bbox": {
+    "x0": -256,
+    "x1": 255,
+    "z0": -219,
+    "z1": 235
+  },
+  "ownedColumns": 92865,
+  "intents": {
+    "total": 235,
+    "byClass": [
+      {
+        "name": "building.footprint",
+        "n": 190
+      },
+      {
+        "name": "street.network",
+        "n": 30
+      },
+      {
+        "name": "road.network",
+        "n": 4
+      },
+      {
+        "name": "quarter.plane",
+        "n": 3
+      },
+      {
+        "name": "street.sidewalk",
+        "n": 3
+      },
+      {
+        "name": "precinct.ground",
+        "n": 2
+      },
+      {
+        "name": "verge",
+        "n": 2
+      },
+      {
+        "name": "prop.pad",
+        "n": 1
+      }
+    ]
+  },
+  "columnsWonByClass": [
+    {
+      "name": "building.footprint",
+      "n": 42782
+    },
+    {
+      "name": "street.network",
+      "n": 25417
+    },
+    {
+      "name": "street.sidewalk",
+      "n": 14600
+    },
+    {
+      "name": "quarter.plane",
+      "n": 8008
+    },
+    {
+      "name": "road.network",
+      "n": 1008
+    },
+    {
+      "name": "precinct.ground",
+      "n": 728
+    },
+    {
+      "name": "verge",
+      "n": 222
+    },
+    {
+      "name": "prop.pad",
+      "n": 100
+    }
+  ],
+  "sanity": {
+    "n": 215738,
+    "byDelta": [
+      {
+        "delta": -3,
+        "n": 1
+      },
+      {
+        "delta": -2,
+        "n": 1
+      },
+      {
+        "delta": -1,
+        "n": 2
+      },
+      {
+        "delta": 0,
+        "n": 178386
+      },
+      {
+        "delta": 1,
+        "n": 1279
+      },
+      {
+        "delta": 2,
+        "n": 554
+      },
+      {
+        "delta": 3,
+        "n": 116
+      },
+      {
+        "delta": 4,
+        "n": 405
+      },
+      {
+        "delta": 5,
+        "n": 509
+      },
+      {
+        "delta": 6,
+        "n": 279
+      },
+      {
+        "delta": 7,
+        "n": 91
+      },
+      {
+        "delta": 8,
+        "n": 149
+      },
+      {
+        "delta": 9,
+        "n": 656
+      },
+      {
+        "delta": 10,
+        "n": 1954
+      },
+      {
+        "delta": 11,
+        "n": 625
+      },
+      {
+        "delta": 12,
+        "n": 709
+      },
+      {
+        "delta": 13,
+        "n": 4205
+      },
+      {
+        "delta": 14,
+        "n": 684
+      },
+      {
+        "delta": 15,
+        "n": 619
+      },
+      {
+        "delta": 16,
+        "n": 381
+      },
+      {
+        "delta": 17,
+        "n": 3936
+      },
+      {
+        "delta": 18,
+        "n": 1285
+      },
+      {
+        "delta": 19,
+        "n": 295
+      },
+      {
+        "delta": 20,
+        "n": 416
+      },
+      {
+        "delta": 21,
+        "n": 2359
+      },
+      {
+        "delta": 22,
+        "n": 639
+      },
+      {
+        "delta": 23,
+        "n": 203
+      },
+      {
+        "delta": 24,
+        "n": 282
+      },
+      {
+        "delta": 25,
+        "n": 2370
+      },
+      {
+        "delta": 26,
+        "n": 433
+      },
+      {
+        "delta": 27,
+        "n": 152
+      },
+      {
+        "delta": 28,
+        "n": 200
+      },
+      {
+        "delta": 29,
+        "n": 3626
+      },
+      {
+        "delta": 30,
+        "n": 349
+      },
+      {
+        "delta": 31,
+        "n": 224
+      },
+      {
+        "delta": 32,
+        "n": 239
+      },
+      {
+        "delta": 33,
+        "n": 3650
+      },
+      {
+        "delta": 34,
+        "n": 450
+      },
+      {
+        "delta": 35,
+        "n": 215
+      },
+      {
+        "delta": 36,
+        "n": 392
+      },
+      {
+        "delta": 37,
+        "n": 263
+      },
+      {
+        "delta": 38,
+        "n": 575
+      },
+      {
+        "delta": 39,
+        "n": 116
+      },
+      {
+        "delta": 40,
+        "n": 192
+      },
+      {
+        "delta": 41,
+        "n": 321
+      },
+      {
+        "delta": 42,
+        "n": 192
+      },
+      {
+        "delta": 43,
+        "n": 120
+      },
+      {
+        "delta": 45,
+        "n": 17
+      },
+      {
+        "delta": 46,
+        "n": 10
+      },
+      {
+        "delta": 47,
+        "n": 5
+      },
+      {
+        "delta": 51,
+        "n": 6
+      },
+      {
+        "delta": 55,
+        "n": 11
+      },
+      {
+        "delta": 57,
+        "n": 191
+      },
+      {
+        "delta": 59,
+        "n": 104
+      },
+      {
+        "delta": 61,
+        "n": 22
+      },
+      {
+        "delta": 62,
+        "n": 9
+      },
+      {
+        "delta": 63,
+        "n": 3
+      },
+      {
+        "delta": 67,
+        "n": 2
+      },
+      {
+        "delta": 70,
+        "n": 1
+      },
+      {
+        "delta": 71,
+        "n": 3
+      },
+      {
+        "delta": 73,
+        "n": 156
+      },
+      {
+        "delta": 75,
+        "n": 69
+      },
+      {
+        "delta": 77,
+        "n": 20
+      },
+      {
+        "delta": 78,
+        "n": 1
+      },
+      {
+        "delta": 79,
+        "n": 8
+      },
+      {
+        "delta": 89,
+        "n": 1
+      }
+    ]
+  },
+  "writtenVsResolved": {
+    "total": 0,
+    "byDelta": [],
+    "byOwner": []
+  },
+  "finalPlanVsWritten": {
+    "total": 0,
+    "byDelta": []
+  },
+  "cliffCensus": [
+    {
+      "pair": "natural over natural",
+      "n": 993,
+      "avg": 2,
+      "max": 3
+    },
+    {
+      "pair": "verge over natural",
+      "n": 3,
+      "avg": 2,
+      "max": 2
+    }
+  ],
+  "buildingSeats": {
+    "count": 156,
+    "sinkHist": [
+      {
+        "delta": -1,
+        "n": 2
+      },
+      {
+        "delta": 0,
+        "n": 154
+      }
+    ],
+    "worst": [
+      {
+        "source": "world.downtown.bay_hotel#pad@8",
+        "floorY": 70,
+        "ringMed": 70,
+        "ringMax": 70,
+        "sink": 0,
+        "worst": 0,
+        "n": 323
+      },
+      {
+        "source": "world.downtown.bay_hotel#pad@8#preserve",
+        "floorY": 70,
+        "ringMed": 70,
+        "ringMax": 70,
+        "sink": 0,
+        "worst": 0,
+        "n": 323
+      },
+      {
+        "source": "world.downtown.infill_145_144#pad@41",
+        "floorY": 70,
+        "ringMed": 70,
+        "ringMax": 70,
+        "sink": 0,
+        "worst": 0,
+        "n": 99
+      },
+      {
+        "source": "world.downtown.infill_145_144#pad@41#preserve",
+        "floorY": 70,
+        "ringMed": 70,
+        "ringMax": 70,
+        "sink": 0,
+        "worst": 0,
+        "n": 99
+      },
+      {
+        "source": "world.downtown.infill_159_144#pad@42",
+        "floorY": 70,
+        "ringMed": 70,
+        "ringMax": 70,
+        "sink": 0,
+        "worst": 0,
+        "n": 99
+      },
+      {
+        "source": "world.downtown.infill_159_144#pad@42#preserve",
+        "floorY": 70,
+        "ringMed": 70,
+        "ringMax": 70,
+        "sink": 0,
+        "worst": 0,
+        "n": 99
+      },
+      {
+        "source": "world.downtown.infill_181_103#pad@39",
+        "floorY": 70,
+        "ringMed": 70,
+        "ringMax": 70,
+        "sink": 0,
+        "worst": 0,
+        "n": 88
+      },
+      {
+        "source": "world.downtown.infill_181_103#pad@39#preserve",
+        "floorY": 70,
+        "ringMed": 70,
+        "ringMax": 70,
+        "sink": 0,
+        "worst": 0,
+        "n": 88
+      },
+      {
+        "source": "world.downtown.infill_194_103#pad@40",
+        "floorY": 70,
+        "ringMed": 70,
+        "ringMax": 70,
+        "sink": 0,
+        "worst": 0,
+        "n": 88
+      },
+      {
+        "source": "world.downtown.infill_194_103#pad@40#preserve",
+        "floorY": 70,
+        "ringMed": 70,
+        "ringMax": 70,
+        "sink": 0,
+        "worst": 0,
+        "n": 88
+      },
+      {
+        "source": "world.downtown.spire_one#pad@6",
+        "floorY": 70,
+        "ringMed": 70,
+        "ringMax": 70,
+        "sink": 0,
+        "worst": 0,
+        "n": 399
+      },
+      {
+        "source": "world.downtown.spire_one#pad@6#preserve",
+        "floorY": 70,
+        "ringMed": 70,
+        "ringMax": 70,
+        "sink": 0,
+        "worst": 0,
+        "n": 399
+      }
+    ]
+  },
+  "streetFlank": [
+    {
+      "name": "street.sidewalk",
+      "n": 7899,
+      "byDelta": [
+        {
+          "delta": 0,
+          "n": 7899
+        }
+      ]
+    },
+    {
+      "name": "natural",
+      "n": 208,
+      "byDelta": [
+        {
+          "delta": 0,
+          "n": 208
+        }
+      ]
+    },
+    {
+      "name": "verge",
+      "n": 104,
+      "byDelta": [
+        {
+          "delta": 0,
+          "n": 104
+        }
+      ]
+    },
+    {
+      "name": "road.network",
+      "n": 7,
+      "byDelta": [
+        {
+          "delta": 0,
+          "n": 7
+        }
+      ]
+    }
+  ],
+  "clusters": {
+    "count": 1,
+    "top": [
+      {
+        "score": 6,
+        "edges": 3,
+        "cx": -73,
+        "cz": 9,
+        "topKinds": [
+          {
+            "name": "verge/natural",
+            "n": 3
+          }
+        ]
+      }
+    ]
+  }
+}

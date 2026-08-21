@@ -151,6 +151,7 @@ import {
 import { gradeStreetDatum, type StreetDatum } from "./street-datum.js";
 import {
   CORNER_TOLERANCE,
+  ELECTION_SOLVE,
   FRONTAGE_RISE,
   FRONTAGE_TIE,
   GROUND_PLANE_TIE,
@@ -3743,9 +3744,29 @@ export function frontageSeat(input: FrontageSeatInput): number | undefined {
  *
  * Dead while {@link TERRACE_BY_TERRAIN} is off: the exception cannot fire, the
  * function is `planeY`, and every world is byte-identical.
+ *
+ * **…and dead while {@link ELECTION_SOLVE} is on, which is the shipped
+ * configuration** — `docs/ELECTION-SOLVE-v0.md` §5, the seat simplification.
+ * The exception existed because a lower-median anchor could seat a block three
+ * below a street on its own rim; the objective prices that disagreement per
+ * column (§1.3.3's frontage term), so the plane a lot stands on is already the
+ * answer the lot's own street argued for, and a second answer here would be the
+ * defect class the design set out to remove. The seat is therefore
+ * `planeY ?? cell?.foundationY ?? tied ?? medianGround(…)` with no exception and
+ * no tied override of a plane: **`levelY`, then the fallbacks** — `frontageSeat`
+ * itself is untouched and still seats pad quarters and lots on no platform.
+ *
+ * A lot that straddles two atoms and is therefore wrong about one of them is
+ * `LOAM-W494 GROUND_SEAT_NONPLANAR`, which the acceptance holds at 0; it is a
+ * missing *term* if it ever fires (§7.1), never a re-armed exception here.
+ *
+ * The flag is read rather than passed for the same reason it always was: this
+ * is a compile-time constant the whole compiler reads, and the tests that
+ * exercise the exception exercise it through the constant.
  */
 export function seatOnPlane(planeY: number | undefined, tied: number | undefined): number | undefined {
   if (planeY === undefined) return undefined;
+  if (ELECTION_SOLVE) return planeY;
   if (TERRACE_BY_TERRAIN && tied !== undefined && tied - planeY > RIM_SEAT_MAX_DROP) return tied;
   return planeY;
 }

@@ -97,10 +97,24 @@ describe("the election is held to the waterline", () => {
   it("leaves the dry half of the same field exactly where it was", () => {
     // The floor raises what is drowned and touches nothing else: a quarter
     // clear of the water elects the platforms it always did.
+    //
+    // **Re-pinned at WP-E2's flip, with attribution** — the comparison drops
+    // `FormBench.id` and keeps geometry and level, which is the whole of what
+    // "exactly where it was" can mean here. Under the solve a bench's id is
+    // `block.<start>.<piece>` where `piece` counts the block's *coalesced
+    // level-groups* in region order (`platforms.ts`, the `electionOn` branch):
+    // the floor merges two sub-sea groups into one, every later group's index
+    // shifts by one, and the dry half's runs and levels come out
+    // character-for-character identical while its labels do not. An id is a
+    // handle for `LOAM-W410`'s message and for nothing that decides a block —
+    // asserting it here would pin the *counter*, not the ground. Both halves
+    // of the claim are still asserted: same shape, same runs, same level.
     const wet = derivePlatforms({ ...input, waterFloor: SEA_LEVEL });
     const dry = derivePlatforms(input);
     const above = (benches: readonly FormBench[]): string =>
-      JSON.stringify(benches.filter((b) => b.level > SEA_LEVEL));
+      JSON.stringify(
+        benches.filter((b) => b.level > SEA_LEVEL).map(({ runs, level }) => ({ runs, level })),
+      );
     expect(above(wet)).toEqual(above(dry));
   });
 

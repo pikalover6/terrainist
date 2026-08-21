@@ -34,10 +34,38 @@ import type { FormBench } from "../src/layout/forms/types.js";
 import {
   type PlatformTieReport,
   type WaterMask,
-  derivePlatforms,
+  derivePlatforms as electPlatforms,
 } from "../src/layout/platforms.js";
+import type { PlatformInput } from "../src/layout/platforms.js";
 import type { StreetDatum } from "../src/layout/street-datum.js";
 import { FRONTAGE_TIE, GROUND_PLANE_TIE, GROUND_TIE_SPAN } from "../src/layout/types.js";
+
+/* -------------------------------------------------------------------------- */
+/* WP-E2's flip: this file tests the FALLBACK election                         */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * `derivePlatforms` with **`ELECTION_SOLVE` forced off** — the pre-election
+ * procedure, which is what every law below is a law *of*.
+ *
+ * Re-pinned at WP-E2's flip, with attribution (`docs/ELECTION-SOLVE-v0.md`
+ * §4). G1–G4's anchored election — the lower-median anchor, the storey lattice and
+ * the span split — is §4's first three deleted rows. These are not
+ * outcomes the objective happens to agree with; they are the construction the
+ * objective *replaced*, and asserting them against the solve would be asserting
+ * that the flip did nothing.
+ *
+ * The procedure is still live — the flag pair keeps it reachable until its own
+ * collapse packet — so its laws are still worth pinning, and this parameter is
+ * the honest way to say which construction is under test. Written first so a
+ * call that names `electionSolve` itself still wins. The solve's own laws live
+ * in `election-solve.test.ts`; the flip's world-level evidence is the
+ * regenerated `tools/worlds/ground-probe-baselines/` against
+ * `preflip-election/`.
+ */
+const derivePlatforms = (input: PlatformInput): FormBench[] =>
+  electPlatforms({ electionSolve: false, ...input });
+
 
 /* -------------------------------------------------------------------------- */
 /* the fixture kit                                                             */

@@ -37,7 +37,8 @@ import {
   levelSeams,
   treatmentForDrop,
 } from "../src/layout/levels.js";
-import { MIN_PLATFORM_COLUMNS, derivePlatforms } from "../src/layout/platforms.js";
+import { MIN_PLATFORM_COLUMNS, derivePlatforms as electPlatforms } from "../src/layout/platforms.js";
+import type { PlatformInput } from "../src/layout/platforms.js";
 import { FLOOR_HEIGHT } from "../src/layout/district.js";
 import type { FormBench } from "../src/layout/forms/types.js";
 import { RETAINING_PROFILE } from "../src/structures/profiles.js";
@@ -45,6 +46,33 @@ import { MIN_RAIL_RUN, buildRetainingWalls, finishCutFaces } from "../src/struct
 import type { ColumnPlan } from "../src/terrain/columns.js";
 import { defineGroundRoles, resolvePalette } from "../src/terrain/palette.js";
 import { compileTerrain, type TerrainCompileReport } from "../src/terrain/compile.js";
+
+/* -------------------------------------------------------------------------- */
+/* WP-E2's flip: this file tests the FALLBACK election                         */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * `derivePlatforms` with **`ELECTION_SOLVE` forced off** — the pre-election
+ * procedure, which is what every law below is a law *of*.
+ *
+ * Re-pinned at WP-E2's flip, with attribution (`docs/ELECTION-SOLVE-v0.md`
+ * §4). The block-median construction — `anchorOf`'s lower median, quantised to
+ * whole storeys — is exactly what §1.2's objective replaced with a sum. These are not
+ * outcomes the objective happens to agree with; they are the construction the
+ * objective *replaced*, and asserting them against the solve would be asserting
+ * that the flip did nothing.
+ *
+ * The procedure is still live — the flag pair keeps it reachable until its own
+ * collapse packet — so its laws are still worth pinning, and this parameter is
+ * the honest way to say which construction is under test. Written first so a
+ * call that names `electionSolve` itself still wins. The solve's own laws live
+ * in `election-solve.test.ts`; the flip's world-level evidence is the
+ * regenerated `tools/worlds/ground-probe-baselines/` against
+ * `preflip-election/`.
+ */
+const derivePlatforms = (input: PlatformInput): FormBench[] =>
+  electPlatforms({ electionSolve: false, ...input });
+
 
 /* -------------------------------------------------------------------------- */
 /* 1. platforms from blocks (§3.3)                                             */

@@ -43,15 +43,44 @@ import type { HeightField } from "@terrainist/stdlib";
 import { FLOOR_HEIGHT, seatOnPlane } from "../src/layout/district.js";
 import type { Rect } from "../src/layout/frames.js";
 import type { FormBench } from "../src/layout/forms/types.js";
-import { type PlatformTieReport, derivePlatforms } from "../src/layout/platforms.js";
+import { type PlatformTieReport, derivePlatforms as electPlatforms } from "../src/layout/platforms.js";
+import type { PlatformInput } from "../src/layout/platforms.js";
 import type { StreetDatum } from "../src/layout/street-datum.js";
 import {
+  ELECTION_SOLVE,
   GROUND_PLANE_TIE,
   GROUND_TIE_SPAN,
   RIM_SEAT_MAX_DROP,
   TERRACE_BY_TERRAIN,
   TERRACE_STEP_SPAN,
 } from "../src/layout/types.js";
+
+/* -------------------------------------------------------------------------- */
+/* WP-E2's flip: this file tests the FALLBACK election                         */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * `derivePlatforms` with **`ELECTION_SOLVE` forced off** — the pre-election
+ * procedure, which is what every law below is a law *of*.
+ *
+ * Re-pinned at WP-E2's flip, with attribution (`docs/ELECTION-SOLVE-v0.md`
+ * §4). T7's terrain criterion and `TERRACE_STEP_SPAN` are subsumed: under the solve
+ * the *levels* decide whether atoms coalesce, so no splitter runs at all. These are not
+ * outcomes the objective happens to agree with; they are the construction the
+ * objective *replaced*, and asserting them against the solve would be asserting
+ * that the flip did nothing.
+ *
+ * The procedure is still live — the flag pair keeps it reachable until its own
+ * collapse packet — so its laws are still worth pinning, and this parameter is
+ * the honest way to say which construction is under test. Written first so a
+ * call that names `electionSolve` itself still wins. The solve's own laws live
+ * in `election-solve.test.ts`; the flip's world-level evidence is the
+ * regenerated `tools/worlds/ground-probe-baselines/` against
+ * `preflip-election/`.
+ */
+const derivePlatforms = (input: PlatformInput): FormBench[] =>
+  electPlatforms({ electionSolve: false, ...input });
+
 
 /* -------------------------------------------------------------------------- */
 /* the fixture kit — the same shape `ground-plane-tie.test.ts` uses             */
@@ -344,8 +373,19 @@ describe("the uphill-rim seat exception (T7)", () => {
 
   it("hands the buried lot back to its own street, past the kerb", () => {
     // The citadel's rims: a plane at 84 under a street band at 87 and 88.
+    //
+    // **Re-pinned at WP-E2's flip, with attribution** (`ELECTION-SOLVE-v0.md`
+    // §5): the exception is *subsumed*, not merely disabled. With the solve on,
+    // frontage agreement is a term in the objective — `FRONT_LOW`, priced per
+    // column — so a plane can no longer sit 3 below the door it serves, and
+    // there is nothing for the exception to catch. `seatOnPlane` is therefore
+    // the plane, unconditionally, and the third arm below is the shipped one.
+    // The T7 arm stays stated because the flag pair leaves the old procedure
+    // reachable until its collapse packet.
     const buried = [3, 4, 12].map((drop) => rim(84, 84 + drop));
-    expect(buried).toEqual(TERRACE_BY_TERRAIN ? [87, 88, 96] : [84, 84, 84]);
+    expect(buried).toEqual(
+      ELECTION_SOLVE ? [84, 84, 84] : TERRACE_BY_TERRAIN ? [87, 88, 96] : [84, 84, 84],
+    );
   });
 });
 
