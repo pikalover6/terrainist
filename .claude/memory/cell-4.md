@@ -15,9 +15,17 @@ T110-fatal (water floor learns the stack) + minted I12 (tier-A/A
 write-order, G6 kills). **WALK DECK INSTALLED: *_r22g4** (config
 row 65eac7b). Known walk debts (all G6): citadel W413=27, quay 118
 dressed-not-flattened, S9 orphan treads = "stairs to nowere" risk.
-**IN FLIGHT: G5 split (byte-zero law)**. Then G6 freeze (I12 dies,
-hellenist 68→0, terminus absorbed, W413≤5 expected), G7 pristine
-+ natural-blend banks (ratified), G8 collapse. BLITZ MODE (Kai,
+**G5 SHIPPED (f0ebbea, one-seam split, 50/50 shasums inert).**
+**CITADEL WINDOW SOLVED (Kai's -115/89/190 confusion)**: streets
+follow pristine nature flush; the QUARTER PLANES are deep-cut
+excavations (interior pristine 86-87 cut to 84, lower-median
+election) — the road never rises, the ground beside it was cut;
+buried doors = uphill rims = the 27 refusals. **TERRACE FIX
+RATIFIED (both levers, flag TERRACE_BY_TERRAIN, measured, rides
+G6 deck)**: split-by-pristine-steps + uphill-rim seat exception.
+Window probe: scratchpad/troy-window/. IN FLIGHT: terrace agent.
+Then G6 core (I12 dies, hellenist 68→0, terminus absorbed,
+W413≤5 expected), G7 pristine + natural-blend banks, G8 collapse. BLITZ MODE (Kai,
 ~4h, uncapped agents): content branch claude/content-packs-r1 at
 d3d4193 (6 packs, 281→373 members, NOT merged — Kai's call);
 claude/empty-block-freerect (24cb2c1) parked ditto. r23 still

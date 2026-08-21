@@ -886,6 +886,21 @@ G4 flip measured land here, each with its mechanism decided:
    ground the course needs") inverts. If the measured count does not fall
    to ≤5, that is a finding against the tier assignment, not a number to
    re-pin.
+4. **The terrace fix (ratified by Kai, 2026-08-21, after the citadel-window
+   probe).** Proven mechanism: quarter planes elect ONE level at the
+   lower-median of the street-perimeter datum and the pad cuts the whole block
+   flat there — on a stepped hill a block spanning 3–4 natural steps becomes
+   one deep excavation (citadel interior: pristine 86–87 cut to 84), streets
+   correctly follow nature beside it, and every uphill rim is a buried
+   building (the 27 refusals ARE these rims). Two levers, one flag
+   (`TERRACE_BY_TERRAIN`), measured then walked with the G6 deck:
+   (a) **split by terrain** — a block spanning ≥`TERRACE_STEP_SPAN` distinct
+   pristine steps splits at the natural step lines (a second split *criterion*
+   through the existing G4 splitter; T4/T5/T6 arithmetic unchanged);
+   (b) **the uphill-rim seat exception** — a lot whose plane sits more than
+   `RIM_SEAT_MAX_DROP` below its own frontage seat prefers the tied seat and
+   straddles the terrace. Requires the pristine snapshot unconditionally
+   (closing G1's "until something reads it" deferral).
 
 ---
 
