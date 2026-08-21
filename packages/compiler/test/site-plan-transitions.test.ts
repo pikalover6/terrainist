@@ -378,9 +378,35 @@ const STEEP_EDGES = {
    * of magnitude more earthwork than the note above ever carried, because the
    * resolver enumerates boundaries `skirtSeams` never saw.
    */
-  derivedBuilt: 56,
-  derivedFaceColumns: 365,
-  derivedBankColumns: 2242,
+  //
+  // **Re-pinned at the GROUND_V1_FREEZE flip, with attribution.** 56 → 34
+  // built, 365 → 247 columns of face, 2,242 → 498 of graded bank. One cause,
+  // and it is the flip's own thesis: `plan.ground` is the fifth resolve, so
+  // `deriveTransitions` enumerates the boundaries of *the* ground once, where
+  // before it enumerated the boundaries of a plan four pad passes had already
+  // edited and each pass's edits made seams for the next one to find. The
+  // composition of what survives is unchanged in kind — bank 10, retaining 6,
+  // revetted 10, rock 1, tiered 7 — and S7 absorbs 242.
+  //
+  // **The bank collapse is a finding, and it is already written down.**
+  // `structures/retaining.ts`'s `gradeBank` records it in full: past the seal a
+  // bank declares nothing, so the ring columns keep their resolved level and the
+  // bank's earth is painted on ground the resolver never raised. Fewer bank
+  // columns is that, measured. The fixture lints zero on all 26 physics rules
+  // either way and `walkability.test.ts`'s goldens for it were re-pinned at the
+  // flip itself, so nothing here is a defect being pinned as an expectation —
+  // but a hillside with a quarter of the earthwork *reads* differently, and how
+  // it reads is Kai's call on a walk, not this file's.
+  derivedBuilt: 34,
+  derivedFaceColumns: 247,
+  derivedBankColumns: 498,
+  /**
+   * Derived transitions the stack served but could not cover (the terminal
+   * builder's per-quarter aggregate). **9 → 10 at the flip**: one more, and the
+   * message names each one's cause — a street, a footprint or water owning the
+   * ground a course needed.
+   */
+  derivedRefusals: 10,
 } as const;
 
 describe("the steep fixture's transitions, compiled", () => {
@@ -553,11 +579,13 @@ describe("the steep fixture's transitions, compiled", () => {
       expect(m).toMatch(/column\(s\) were left uncovered/);
       expect(m).toMatch(/a street, a footprint or water owns the ground/);
     }
-    // …and exactly one of them is the aggregate, carrying the nine derived
-    // refusals the terminal builder could not place.
+    // …and exactly one of them is the aggregate, carrying the derived refusals
+    // the terminal builder could not place — nine before the
+    // `GROUND_V1_FREEZE` flip, ten after, attributed with the rest of the
+    // census at `STEEP_EDGES.derivedRefusals`.
     const aggregated = unserved.filter((m) => m.includes("derived transition(s)"));
     expect(aggregated.length).toBe(1);
-    expect(aggregated[0]).toContain("9 derived transition(s)");
+    expect(aggregated[0]).toContain(`${STEEP_EDGES.derivedRefusals} derived transition(s)`);
   });
 
   it("reports its built faces by finished drop, and none of them past RETAIN_MAX", () => {

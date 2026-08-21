@@ -138,6 +138,15 @@ export interface PlacedProp {
   readonly baseY: number;
   readonly base: PropBase;
   readonly blockCount: number;
+  /**
+   * Where this prop's blocks start in {@link PropPassResult.blocks} — the
+   * half-open range `[blockStart, blockStart + blockCount)` is exactly its own.
+   *
+   * Recorded so {@link reseatProps} can find them again after pass 5c. The
+   * blocks are pushed contiguously per prop (its ops, then its piles), which is
+   * what makes one offset enough.
+   */
+  readonly blockStart: number;
   /** Where another prop may moor: a pier's seaward end, in world columns. */
   readonly anchor?: Point2;
 }
@@ -296,6 +305,7 @@ export function buildProps(input: PropPassInput): PropPassResult {
     const rotated = rotateOps(generated.ops, site.yaw, sizeX, sizeZ);
 
     let count = 0;
+    const blockStart = blocks.length;
     for (const op of rotated) {
       const stateId = resolveState(stack, op, missing);
       if (stateId === undefined) continue;
@@ -323,6 +333,7 @@ export function buildProps(input: PropPassInput): PropPassResult {
       baseY: site.baseY,
       base: generated.meta.base,
       blockCount: count,
+      blockStart,
       ...(anchor === undefined
         ? {}
         : { anchor: { x: site.footprint.x0 + anchor.x, z: site.footprint.z0 + anchor.z } }),
@@ -343,6 +354,58 @@ export function buildProps(input: PropPassInput): PropPassResult {
   }
 
   return { blocks, placed, diagnostics, padDeclarations };
+}
+
+/**
+ * **Stand every land prop back on the resolved ground** — pass 5e, under the
+ * freeze.
+ *
+ * `buildProps` runs in the declaring half, because `prop.pad` is a tier-D claim
+ * and every declarer runs before every builder (v1 §1.6). Until pass 5c,
+ * though, `plan.ground` is still the *pristine* baseline, so `groundBase` — the
+ * plane the prop's feet are put on — answers with the hill as it was before the
+ * settlement cut it. Worse, `prop.pad` is rank 130 and `farm.parcel` is rank
+ * 125: they share tier D, so §1.4 does not let the prop see the parcel's level
+ * even in principle, and a scarecrow on a field the holding levelled *must*
+ * settle after the resolve or not at all. Measured on the farm-yard fixture: a
+ * scarecrow standing at 74 over a parcel the resolver put at 72 — two
+ * `unsupported.chain` findings, and the only ones that world had.
+ *
+ * A prop is rigid and stands on one plane, so re-seating is exactly a vertical
+ * shift: recompute {@link groundBase} over the same footprint against the frozen
+ * plan and move the prop's own blocks by the difference. The blocks are mutated
+ * in place, so the emitter's lay order and the attribution spans are untouched —
+ * a prop that was laid third is still laid third, at the height the resolver
+ * decided.
+ *
+ * Left alone: a prop whose base is not `"ground"` (its plane is a water surface,
+ * which the resolver does not move), and a footprint `groundBase` now refuses —
+ * too much relief, or gone wet. Refusing to guess is the right answer there: the
+ * prop keeps the plane it was sited on and the physics lint keeps its right to
+ * complain about it.
+ *
+ * Returns how many props moved, for the report.
+ */
+export function reseatProps(
+  plan: ColumnPlan,
+  blocks: readonly StructureBlock[],
+  placed: readonly PlacedProp[],
+): number {
+  let moved = 0;
+  for (const prop of placed) {
+    if (prop.base !== "ground") continue;
+    if (prop.blockCount === 0) continue;
+    const now = groundBase(plan, prop.footprint);
+    if (now === undefined || now === prop.baseY) continue;
+    const delta = now - prop.baseY;
+    for (let i = prop.blockStart; i < prop.blockStart + prop.blockCount; i++) {
+      const block = blocks[i] as { y: number } | undefined;
+      if (block === undefined) continue;
+      block.y += delta;
+    }
+    moved++;
+  }
+  return moved;
 }
 
 /* -------------------------------------------------------------------------- */

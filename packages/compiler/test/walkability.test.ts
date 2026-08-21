@@ -376,7 +376,7 @@ const HILLSIDE: Goldens = {
   // step to the natural ground on its uphill side at a handful of places, and a
   // walker crossing there no longer floods through. Twenty-eight columns of
   // hillside out of 185,000 — the control doing its job, and reporting nothing.
-  groundReachable: 185723, // G6 freeze: 185755 -> 185723, the terrain control, following the frozen ground.
+  groundReachable: 185719, // G6 freeze: 185755 -> 185723, the terrain control, following the frozen ground. flip-debt round (2026-08-21): 185723 -> 185719, four columns, and they are the two extra lamp posts below standing on ground rather than over it — a column with a post on it is not a standable one.
   groundReachableShare: 0.709, // G6 freeze: unmoved at 0.709.
   // 5 → 3. Same commit: the dangling connectors *were* the dead ends.
   deadEnds: 5, // G6 freeze: 5 -> 5, unmoved.
@@ -401,8 +401,8 @@ const HILLSIDE: Goldens = {
   // in proportion — which is the reading the row's own rule warns about, so:
   // this is not the town getting emptier, it is 12 fewer courses over a
   // denominator that moved by one column. The numerator is the whole of it.
-  junctionDensity: 0.17, // G6 freeze: 0.167 -> 0.170, UP by three thousandths on a denominator that shrank by one column; the junction pass's own dressing is gone, so what is counted here is other passes' courses. MUST GO DOWN.
-  soloDensity: 0.046, // G6 freeze: 0.048 -> 0.046, the control, DOWN.
+  junctionDensity: 0.171, // G6 freeze: 0.167 -> 0.170, UP by three thousandths on a denominator that shrank by one column; the junction pass's own dressing is gone, so what is counted here is other passes' courses. MUST GO DOWN. flip-debt round (2026-08-21): 0.170 -> 0.171, one thousandth, the two restored lamp posts being counted as the clutter they are — they were in the world before too, hanging over it where this instrument could not see them.
+  soloDensity: 0.047, // G6 freeze: 0.048 -> 0.046, the control, DOWN. flip-debt round (2026-08-21): 0.046 -> 0.047, the two restored posts, counted in the control exactly as they are in the junction number one line above — which is the pair working: both rose together, so this is dressing that came back, not a meeting that got worse.
   // Unmoved at 4 runs, and **0 → 1**: one mid-town face run now goes unearned,
   // at (5, 44) — drop 3 over run 5, earned 1.667 against `EARN_RATIO` 2. It is
   // a *new* row in the wrong direction and it is recorded as such rather than
@@ -449,7 +449,7 @@ const STEEP: Goldens = {
   entranceReachableShare: 0.996, // G6 freeze: 0.999 -> 0.996, DOWN: seventeen of the newly-standable columns are not walked to from the entrance. MUST GO UP.
   // **136343 → 136349** with the archetype-bias wiring (2026-08-11), same
   // cause as the hillside fixture. BY DESIGN.
-  groundReachable: 136408, // G6 freeze: 136386 -> 136408, the control.
+  groundReachable: 136414, // G6 freeze: 136386 -> 136408, the control. flip-debt round (2026-08-21): 136408 -> 136414, UP by six — six columns a prop or a post used to stand on from the pristine baseline, released back to the ground now that the re-seat puts each of them where the resolver did.
   groundReachableShare: 0.754, // G6 freeze: 0.755 -> 0.754.
   // 7 → **10**, up, and the same trade as `components`: the refused causeways
   // leave the streets they used to terminate hanging. MUST GO DOWN.
@@ -462,7 +462,7 @@ const STEEP: Goldens = {
   // the clutter numerator has not moved since the stoop fix.
   junctionDensity: 0.112, // G6 freeze: 0.167 -> 0.112, DOWN — and read it with the control below before calling it a win: the junction pass's 85 columns of dressing are simply not laid. Less clutter because less was built, not because the meeting got tidier.
   // 0.043 → 0.044 at wave close, the same denominator shave as the row above.
-  soloDensity: 0.021, // G6 freeze: 0.049 -> 0.021, the control, DOWN further in proportion — which is exactly the reading this pair exists to expose. The town is emptier of dressing; it is not less of a maze.
+  soloDensity: 0.022, // G6 freeze: 0.049 -> 0.021, the control, DOWN further in proportion — which is exactly the reading this pair exists to expose. The town is emptier of dressing; it is not less of a maze. flip-debt round (2026-08-21): 0.021 -> 0.022, one thousandth, on a walkable denominator that moved by six columns.
   // 3 → 4 runs, and 0 unserved still. The extra run is a face the causeway
   // removal exposed; every one of the four is earned.
   faceRuns: 26, // G6 freeze: 19 -> 26, UP by seven: seven mid-town edges the junction pass used to dress now read as bare face runs. A denominator — see `unservedFaces`.
@@ -590,9 +590,21 @@ const HILLSIDE_DRESSING: DressingGoldens = {
   // (−4, 62) stands `sunkenBy` 1 with `viaCarriageway` true. That is the 8F kerb
   // above, unchanged in kind — the post did not sink, the carriageway two
   // columns away rose. It stays pinned at 1 for the reason argued above.
-  streetLamps: 14, // G6 freeze: 16 -> 14, the denominator: two posts stand on ground the pass no longer finds solid, dry and paved at the moment it plants.
+  streetLamps: 16, // G6 freeze: 16 -> 14, the denominator: two posts stand on ground the pass no longer finds solid, dry and paved at the moment it plants. flip-debt round (2026-08-21): **14 -> 16, back to the pre-flip number, and this row is why the round happened**. The pass plants in the building half now, so "the moment it plants" is past pass 5c and the ground it asks about is the resolved ground rather than the pristine baseline. Both posts are back, and `sunkenLamps` did not move with them.
   sunkenLamps: 3, // G6 freeze: 1 -> 3, UP by two, and the same kerb the 8F rows argue at length: no post sank, the carriageway two columns away stands where the contract put it. MUST GO DOWN, by the sidewalk band following the datum out to the lamp line.
-  deeplySunkenLamps: 0, // G6 freeze: 0 -> 0, held at the bar.
+  // **0 -> 1 at the flip-debt round (2026-08-21), and it is a real row, not a
+  // reclassification: one of the two posts the flip had stopped planting is
+  // back, and where it stands the pavement beside it is two or more blocks up.
+  // It was in the world before the flip too — this instrument counted it at 0
+  // only for the fortnight in which the post was not planted at all, which is
+  // the least useful way there is to hold a defect at its bar. The honest
+  // reading is that the hillside has had a deeply sunken lamp all along and the
+  // freeze briefly hid it by dropping the lamp.
+  //
+  // MUST GO DOWN to 0, by the same fix the three `sunkenLamps` want: the
+  // sidewalk band following the datum out to the lamp line, so the post and the
+  // pavement it serves are graded together. Not by refusing to plant it.
+  deeplySunkenLamps: 1,
   // 21 → 14 raw cuts, and **21 → 0 undressed**: the junction-step wave
   // (4b18ef5) dresses every one of the fourteen. `cutoffColumns` is the
   // denominator and is pinned so that a fix which merely stops cutting reads as
@@ -726,7 +738,7 @@ const STEEP_DRESSING: DressingGoldens = {
   // 2 → 0 and 2 → 0 (eb93a54).
   openOverSoil: 0, // G6 freeze: 0 -> 0, held at the bar.
   floatingDressing: 1, // G6 freeze: 0 -> 1, UP, and a real defect rather than a reclassification: one tread stands with two cells or more of air under it. MUST GO BACK DOWN to 0.
-  streetLamps: 11, // G6 freeze: 11 -> 11, unmoved.
+  streetLamps: 10, // G6 freeze: 11 -> 11, unmoved. flip-debt round (2026-08-21): 11 -> 10. The other direction from the hillside's, same cause: siting against the resolved ground, one post's band column is no longer flat with its neighbours at the prop's own base, so the whole-prop rule refuses it rather than standing it on a step. A refused lamp is a lamp that is not there; a lamp on a step was one that read wrong.
   // **0 → 1 at the 8F flip**, one lamp at (8, 30), `sunkenBy` 1,
   // `viaCarriageway`. The same seam as the hillside fixture's three and the
   // same argument — see that row, which carries the column probe. The
@@ -798,8 +810,8 @@ const STEEP_DRESSING: DressingGoldens = {
   plinthLongestRun: 1, // G6 freeze: 2 -> 1, DOWN.
   // 8 → **0**, and with it the four-column stair-head plinth that was the only
   // plinth with any length on either fixture. The flight-floor fix (eb93a54).
-  stepPlinthColumns: 86, // G6 freeze: 6 -> 86, UP by 80, and the largest single move of the flip on this fixture: the flights stand proud where the junction pass used to blend them. MUST GO DOWN.
-  stepPlinthLongestRun: 17, // G6 freeze: 3 -> 17, UP with it, and a seventeen-column run is a length you see. MUST GO DOWN.
+  stepPlinthColumns: 88, // G6 freeze: 6 -> 86, UP by 80, and the largest single move of the flip on this fixture: the flights stand proud where the junction pass used to blend them. MUST GO DOWN. flip-debt round (2026-08-21): 86 -> 88, two more, and they are two flight columns whose neighbouring dressing moved down onto the resolved ground and stopped covering that side. Same defect, two columns wider; the junction pass is still the cause and still the fix.
+  stepPlinthLongestRun: 18, // G6 freeze: 3 -> 17, UP with it, and a seventeen-column run is a length you see. MUST GO DOWN. flip-debt round (2026-08-21): 17 -> 18, one column, the run reaching one further along the same flight as `stepPlinthColumns`' two. Same defect, same cause, same fix.
   // 7 → **2** faces, 73 → **24** columns, worst drop 9 → **6** — the composite
   // gate (`structures/retaining.ts`, 2026-08-07). Six of the seven runs were a
   // *composite*: a face that stacked past `RETAIN_MAX` while every seam obeyed

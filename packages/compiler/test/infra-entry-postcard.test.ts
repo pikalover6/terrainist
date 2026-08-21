@@ -139,14 +139,29 @@ afterAll(async () => {
 });
 
 describe("P2's postcard", () => {
-  it("builds all four entries from one document", () => {
-    // Four nodes, four entries built: nothing silently dropped, which is the
-    // failure this file exists to catch. A route that cannot be anchored is a
-    // `LOAM-T233` and an entry that is never built is not.
-    expect(stats["infraEntries"]).toBe(4);
+  it("builds three of four entries, and says out loud why the fourth is not", () => {
+    // Four nodes: nothing may be *silently* dropped, which is the failure this
+    // file exists to catch. A route that cannot be anchored is a `LOAM-T233` and
+    // an entry that is never built is not.
+    //
+    // **Re-pinned at the GROUND_V1_FREEZE flip — a named debt, not a re-pin of
+    // taste.** `world.figure` is a `crop_circle` routed `over: north_holding`.
+    // Its class declares ground, so under §1.6 it is sited in the declaring half
+    // at its own tier; the farm's parcels are packed at **tier D**, and the
+    // layout view's `maskOf` is answered from `ParcelDatum`, which is therefore
+    // still empty when the figure asks. `structures/index.ts` says this in the
+    // `parcelDatum` docstring and calls the outcome "the honest report until
+    // `packHolding` itself moves up to pass 4" — so the assertion is that the
+    // compiler says it, by node path and by code, and that the other three are
+    // whole. **The remainder is named: §6a.5's `packHolding` → pass 4, not this
+    // round's work.** When it lands this goes back to four with no T233 at all.
+    expect(stats["infraEntries"]).toBe(3);
     expect(stats["infraEntryColumns"]).toBeGreaterThan(500);
+    const unanchored = compiled.diagnostics.filter((d) => d.code === "LOAM-T233");
+    expect(unanchored.map((d) => d.nodePath)).toEqual(["world.figure"]);
+    expect(`${unanchored[0]?.message}`).toContain("publishes no column mask");
     for (const code of compiled.diagnostics.map((d) => d.code)) {
-      expect(["LOAM-T231", "LOAM-T232", "LOAM-T233"]).not.toContain(code);
+      expect(["LOAM-T231", "LOAM-T232"]).not.toContain(code);
     }
   });
 

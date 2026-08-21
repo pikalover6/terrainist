@@ -364,6 +364,38 @@ export interface StreetscapeResult {
   /** Columns repainted as crossing stripes. */
   readonly crossingColumns: number;
   readonly diagnostics: readonly LoamDiagnostic[];
+  /**
+   * **The furniture, held back for the building half** — v1 §2's `masks.y` row,
+   * landed ("derived in the build phase — street furniture stands on frozen
+   * ground; the post-commit re-read becomes a plain read").
+   *
+   * Present only when the driver is the compile's ground stage
+   * ({@link GroundDriver.staged}), and then {@link StreetscapeResult.blocks}
+   * carries the paving alone: the lamps and the kerbside kit are laid by calling
+   * this, after pass 5c.
+   *
+   * Why it cannot stay where it was. `dressStreets` runs in the *declaring*
+   * half, so the only level §1.4 lets it read is `view("C")` — the tiers
+   * strictly above `street.sidewalk`, which is A and B. Flag-off that read was
+   * the plan at this pipeline position, i.e. the carriageway's own committed
+   * level, and a lamp stood on it. Flag-on it is the level *before* the street
+   * family claimed anything, and a lamp planted on it hangs wherever the street
+   * cut or filled — six `unsupported.chain` findings on the hillside village,
+   * and the same fence-fence-lantern stack on five other worlds. Deferring the
+   * placement is the fix the contract already specified: the frozen ground is a
+   * plain array read once the seal has happened, and `masks.y` is refreshed from
+   * it before a single prop is sited.
+   *
+   * `undefined` off the staged path, where nothing was held back.
+   */
+  readonly furnish?: () => StreetscapeFurnishing;
+}
+
+/** What {@link StreetscapeResult.furnish} laid, once the ground was frozen. */
+export interface StreetscapeFurnishing {
+  readonly blocks: readonly StructureBlock[];
+  readonly props: readonly StreetscapeProp[];
+  readonly diagnostics: readonly LoamDiagnostic[];
 }
 
 const UNSET = -2147483648;
@@ -505,31 +537,65 @@ export function dressStreets(
 
   const driver = ctx.ground ?? driverForPlan(plan);
   const masks = buildStreetMasks(graph, region, ctx.surfaced);
-  paveSidewalks(graph, ctx, driver, driver.view("C"), masks, states, ctx.nodePath ?? "");
+  const band = paveSidewalks(graph, ctx, driver, driver.view("C"), masks, states, ctx.nodePath ?? "");
   thickenCurbs(plan, masks, states);
   const crossingColumns = paintCrossings(graph, plan, masks, states);
 
-  // Blocked columns: a lamp or a piece of furniture may not share one, and
-  // `FURNITURE_MIN_GAP` is measured against it.
-  const taken: Cell[] = [];
-  if (graph.sidewalk >= LAMP_MIN_SIDEWALK) {
-    props.push(...plantLamps(graph, ctx, masks, blocks, taken));
-  } else {
-    diagnostics.push(
-      warning(
-        "CANNOT_FIT",
-        ctx.nodePath ?? "",
-        `sidewalk band is ${graph.sidewalk} column wide, so a lamp post would stand in the walk lane`,
-        `give the district a sidewalk of ${LAMP_MIN_SIDEWALK} or more to get street lighting`,
-      ),
-    );
-  }
-  const kit = ctx.furniture ?? "none";
-  if (kit !== "none") {
-    props.push(...scatterFurniture(ctx, masks, kit, blocks, taken));
+  /**
+   * Sites every prop this quarter carries, over whatever `masks.y` holds when it
+   * is called. On the staged path that is the frozen ground; off it, the plan at
+   * this pass's own pipeline position, which is where it has always been.
+   */
+  const furnish = (): StreetscapeFurnishing => {
+    const out: StructureBlock[] = [];
+    const laid: StreetscapeProp[] = [];
+    const notes: LoamDiagnostic[] = [];
+    // Blocked columns: a lamp or a piece of furniture may not share one, and
+    // `FURNITURE_MIN_GAP` is measured against it.
+    const taken: Cell[] = [];
+    if (graph.sidewalk >= LAMP_MIN_SIDEWALK) {
+      laid.push(...plantLamps(graph, ctx, masks, out, taken));
+    } else {
+      notes.push(
+        warning(
+          "CANNOT_FIT",
+          ctx.nodePath ?? "",
+          `sidewalk band is ${graph.sidewalk} column wide, so a lamp post would stand in the walk lane`,
+          `give the district a sidewalk of ${LAMP_MIN_SIDEWALK} or more to get street lighting`,
+        ),
+      );
+    }
+    const kit = ctx.furniture ?? "none";
+    if (kit !== "none") {
+      laid.push(...scatterFurniture(ctx, masks, kit, out, taken));
+    }
+    return { blocks: out, props: laid, diagnostics: notes };
+  };
+
+  if (!driver.staged) {
+    const now = furnish();
+    blocks.push(...now.blocks);
+    props.push(...now.props);
+    diagnostics.push(...now.diagnostics);
+    return { blocks, props, masks, crossingColumns, diagnostics };
   }
 
-  return { blocks, props, masks, crossingColumns, diagnostics };
+  // **The staged path**: hold the props back to the building half and hand the
+  // caller a closure that re-reads the band's levels from the frozen plan first
+  // (v1 §2's `masks.y` row). Nothing else about the pass moves — the paving, the
+  // kerbs and the crossings are all material, they belong to the declaring half
+  // where they have always been, and they do not care what the level is.
+  return {
+    blocks,
+    props,
+    masks,
+    crossingColumns,
+    diagnostics,
+    furnish: () => {
+      for (const idx of band) masks.y[idx] = plan.ground[idx] as number;
+      return furnish();
+    },
+  };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -636,7 +702,7 @@ function paveSidewalks(
   masks: StreetMasks,
   states: StreetStates,
   nodePath: string,
-): void {
+): readonly number[] {
   const plan = ctx.plan;
   const region = plan.region;
   const half = (w: number): number => (w - 1) >> 1;
@@ -706,7 +772,7 @@ function paveSidewalks(
       }
     }
   }
-  if (band.size === 0) return;
+  if (band.size === 0) return [];
 
   const columns: GroundClaim[] = [];
   for (const c of band.values()) columns.push({ idx: c.idx, y: c.y });
@@ -741,6 +807,7 @@ function paveSidewalks(
     masks.y[c.idx] = view.ground[c.idx] as number;
     if (c.curbAny) masks.curb[c.idx] = 1;
   }
+  return [...band.keys()];
 }
 
 /**

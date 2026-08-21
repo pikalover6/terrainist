@@ -102,6 +102,17 @@ export interface GroundDriver {
    */
   readonly resolves: number;
 
+  /**
+   * **True when this driver is the compile's ground stage** — the one §1.6
+   * governs, with a pass 5c in it. False for a {@link driverForPlan} driver,
+   * which is one pass's private accumulator and keeps v0's write-through.
+   *
+   * Read by the build half wherever "has the seal happened?" decides behaviour,
+   * so that question is answered by *the stage in hand* rather than by a global
+   * that is right for the pipeline and wrong for everybody else.
+   */
+  readonly staged: boolean;
+
   /** An unconverted pass's shadow declaration. Accumulates; writes nothing. */
   record(intents: readonly GroundIntent[]): void;
   /**
@@ -172,7 +183,7 @@ export interface GroundDriver {
  * resolve answer a different question from the one the contract asks.
  */
 export function createGroundDriver(baseline: GroundBaseline, plan: ColumnPlan): GroundDriver {
-  return new AccumulatingDriver(baseline, plan);
+  return new AccumulatingDriver(baseline, plan, true);
 }
 
 /**
@@ -186,9 +197,16 @@ export function createGroundDriver(baseline: GroundBaseline, plan: ColumnPlan): 
  * has no earlier passes to arbitrate against, so "the plan as it stands" *is* the
  * materialised ground for the one pass it runs, and the answer is the same one it
  * would get from a pipeline driver with an empty prefix.
+ *
+ * **Detached, and therefore not frozen** — see {@link AccumulatingDriver.staged}.
+ * This driver has no pass 5c, because there is no pipeline to put one in, so it
+ * keeps v0's write-through: its one pass declares, the resolver arbitrates, and
+ * the answer goes into the plan before the call returns. That is the same
+ * ground contract, applied to a one-pass compile; what it is *not* is the
+ * five-tier stage, and the freeze governs the stage.
  */
 export function driverForPlan(plan: ColumnPlan): GroundDriver {
-  return createGroundDriver(
+  return new AccumulatingDriver(
     {
       region: plan.region,
       ground: Int32Array.from(plan.ground),
@@ -197,6 +215,7 @@ export function driverForPlan(plan: ColumnPlan): GroundDriver {
       seaLevel: plan.seaLevel,
     },
     plan,
+    false,
   );
 }
 
@@ -254,6 +273,31 @@ function viewOf(resolved: ResolvedGround, baseline: GroundBaseline): GroundView 
 class AccumulatingDriver implements GroundDriver {
   readonly baseline: GroundBaseline;
   private readonly plan: ColumnPlan;
+  /**
+   * **Is this driver the compile's ground stage?** — the scope of the freeze,
+   * made explicit.
+   *
+   * §1.6 governs *one* object: the single `GroundDriver` `terrain/compile.ts`
+   * threads through pass 5b, seals at 5c and hands to 5e. Everything the freeze
+   * deletes — the write-through, the tier-order assertion, the tier-less
+   * `view()`'s prefix answer — is deleted *because that stage has a 5c*: the
+   * plan becomes the fifth resolve there, so nothing needs to write it earlier.
+   *
+   * A {@link driverForPlan} driver has no 5c. It is made inside a pass, for a
+   * caller that runs that pass alone (a unit test, an exhibit, the
+   * `input.ground ?? driverForPlan(plan)` fallback in nine passes), and it dies
+   * when the call returns. Reading the global flag there was the flip's one
+   * scope error: those callers kept declaring and stopped being written to, so a
+   * canal dug no water, a bank raised no ground and a dam impounded nothing —
+   * silently, because a `commit` that writes nothing throws nothing. Measured at
+   * the flip: 46 tests across 21 files, every one of them green flag-off.
+   *
+   * So a detached driver keeps v0's mixture semantics, which is exactly what
+   * such a caller had at G5 and exactly what its assertions were pinned against.
+   * The pipeline is untouched: `StructureInput.ground` is mandatory, so no
+   * production path ever reaches the fallback.
+   */
+  readonly staged: boolean;
   private readonly accumulated: GroundIntent[] = [];
   /** Memoised only for {@link finish}; a `commit` invalidates it. */
   private final: ResolvedGround | undefined;
@@ -281,9 +325,10 @@ class AccumulatingDriver implements GroundDriver {
   /** §3.3's built-set, or `undefined` until a builder publishes one. */
   built: ReadonlyUint8Array | undefined;
 
-  constructor(baseline: GroundBaseline, plan: ColumnPlan) {
+  constructor(baseline: GroundBaseline, plan: ColumnPlan, staged: boolean) {
     this.baseline = baseline;
     this.plan = plan;
+    this.staged = staged && GROUND_V1_FREEZE;
     // One object, handed out from every `view()`: the arrays are the plan's own,
     // live, so a pass that holds the view across a commit sees the plan at *its*
     // position rather than a stale copy. The `readonly` typing is what stops it
@@ -317,7 +362,7 @@ class AccumulatingDriver implements GroundDriver {
     // writes `plan.ground` any more, so nothing needs to." Under the freeze both
     // methods are pure accumulation and the two names survive only so the flag's
     // off state can keep the mixture's behaviour at every call site.
-    if (GROUND_V1_FREEZE) return;
+    if (this.staged) return;
     // §9a.1 rule 3 — the whole prefix, re-resolved. Never incrementally patched:
     // that is what makes every intermediate answer the contract applied to a
     // prefix rather than an approximation of the contract.
@@ -361,7 +406,7 @@ class AccumulatingDriver implements GroundDriver {
    * stops being true and the lazy resolve has to appear here.
    */
   view(tier?: GroundTier): GroundView {
-    if (!GROUND_V1_FREEZE) return this.handed;
+    if (!this.staged) return this.handed;
     // Past the freeze the plan's three arrays *are* the fifth resolve's arrays
     // (§1.6 pass 5c), so a build-half reader asking for "the ground" gets the
     // ground. Before it, a caller that named no tier is answered at the tier the
@@ -405,12 +450,12 @@ class AccumulatingDriver implements GroundDriver {
     // Seal every tier up to and including this one, so the resolve happens at
     // the boundary rather than at whichever pass happens to read first. §1.6's
     // "one resolve after each tier" is this line.
-    if (GROUND_V1_FREEZE) this.prefixFor(at);
+    if (this.staged) this.prefixFor(at);
   }
 
   freeze(): ResolvedGround {
     const resolved = this.finish();
-    if (!GROUND_V1_FREEZE) return resolved;
+    if (!this.staged) return resolved;
     // §1.6 pass 5c. Copied in rather than re-pointed: a dozen passes captured
     // `plan.ground` by reference on their way past, and the contract's promise
     // is that from here on those references hold the resolver's answer — which
@@ -453,10 +498,10 @@ class AccumulatingDriver implements GroundDriver {
     // to whichever passes happened to ask for a view — so the count the report
     // carries is a property of the design (one resolve per tier boundary) and
     // not of which subsystems a particular document happened to instantiate.
-    if (GROUND_V1_FREEZE) for (let i = 1; i < TIER_ORDER.length; i++) this.prefixFor(i);
+    if (this.staged) for (let i = 1; i < TIER_ORDER.length; i++) this.prefixFor(i);
     // §3.3's G6 amendment: the fifth resolve is the one that generates. The four
     // prefixes above never do — see {@link ResolveOptions.generate}.
-    this.final = this.resolve(this.accumulated, GROUND_V1_FREEZE);
+    this.final = this.resolve(this.accumulated, this.staged);
     return this.final;
   }
 
@@ -477,7 +522,7 @@ class AccumulatingDriver implements GroundDriver {
       // trusted: a claim arriving in a tier some prefix has already been sealed
       // over is exactly "a prefix resolve that is not a prefix", and it would
       // show up a hundred passes later as a claim that stopped winning.
-      if (GROUND_V1_FREEZE && this.sealedThrough >= 0) {
+      if (this.staged && this.sealedThrough >= 0) {
         const at = tierIndex(GROUND_TIERS[intent.sourceClass]);
         if (at < this.sealedThrough) {
           throw new Error(

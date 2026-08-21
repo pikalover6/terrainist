@@ -65,7 +65,11 @@ import type { ProgramRotation } from "../programs/rotate.js";
 import type { CityProduct } from "../layout/city-pass.js";
 import { deriveSeamStairs, type DistrictProduct } from "../layout/district.js";
 import type { StreetGraph } from "../layout/streets.js";
-import { dressStreets, type SegmentArc } from "./streetscape.js";
+import {
+  dressStreets,
+  type SegmentArc,
+  type StreetscapeFurnishing,
+} from "./streetscape.js";
 import type { GroundDriver } from "../layout/ground-driver.js";
 import { solvedCarriagewayMask } from "../layout/solved-carriageway.js";
 import type { GroundTier } from "../layout/ground-contract.js";
@@ -126,6 +130,7 @@ import { pavePlaza, type PlazaResult } from "./plaza.js";
 import { dressSetPieces } from "./setpieces.js";
 import {
   buildProps,
+  reseatProps,
   checkPropFluidSafety,
   type PlacedProp,
   type PropJob,
@@ -548,6 +553,16 @@ export interface StructurePlan {
   /** C3's per-quarter walk lanes, kept rather than re-rasterized. */
   readonly streetMasks: readonly LifeStreets[];
   readonly streetFurniture: number;
+  /**
+   * **The kerbside dressing, held back for the building half** — v1 §2's
+   * `masks.y` row (see `StreetscapeResult.furnish`).
+   *
+   * One closure per quarter, in quarter order. Empty with `GROUND_V1_FREEZE`
+   * off, which is what makes the move inert: `dressStreets` then plants its own
+   * lamps where it always did, and {@link StructurePlan.streetFurniture} is
+   * already their count.
+   */
+  readonly streetFurnishings: readonly (() => StreetscapeFurnishing)[];
   readonly arterials: readonly Arterial[];
   readonly roads: RoadNetworkResult | undefined;
   readonly farms: FarmPassResult | undefined;
@@ -1322,6 +1337,7 @@ export function declareStructures(input: StructurePassInput): StructurePlan {
 
   let streets: StreetSurfaceResult | undefined;
   const streetMasks: LifeStreets[] = [];
+  const streetFurnishings: (() => StreetscapeFurnishing)[] = [];
   let streetFurniture = 0;
   // Qualified by the city that drew them, for the same reason a district's
   // segments are (`StreetSurfaceInput.graphPaths`): every city plan calls its
@@ -1455,6 +1471,9 @@ export function declareStructures(input: StructurePassInput): StructurePlan {
       lay(`streetscape:${district.nodePath}`, dressed.blocks);
       streetFurniture += dressed.props.length;
       diagnostics.push(...dressed.diagnostics);
+      // Under the freeze the props are not in `dressed` at all: they are sited
+      // in the building half, against the frozen ground, by this closure.
+      if (dressed.furnish !== undefined) streetFurnishings.push(dressed.furnish);
       // Kept for C3: the life pass needs the walk lane it must not touch and
       // the carriageway it parks against, and re-deriving either from the
       // graph would be the same rasterization with a second chance to differ.
@@ -1830,6 +1849,7 @@ export function declareStructures(input: StructurePassInput): StructurePlan {
     streets,
     streetMasks,
     streetFurniture,
+    streetFurnishings,
     arterials,
     roads,
     farms,
@@ -1896,6 +1916,7 @@ export function buildStructures(
     streets,
     streetMasks,
     streetFurniture,
+    streetFurnishings,
     arterials,
     roads,
     farms,
@@ -1904,6 +1925,38 @@ export function buildStructures(
     propJobs,
     propFluids,
   } = plan;
+
+  // --- the props, re-seated -------------------------------------------------
+  // See {@link reseatProps}: `buildProps` had to run in the declaring half, and
+  // the ground it read there was the pristine baseline. Off the staged path the
+  // plan it read was already final, so this is a no-op by construction — every
+  // `groundBase` recomputation returns the number it returned before.
+  if (input.ground.staged) reseatProps(input.plan, props.blocks, props.placed);
+
+  // --- the route lamps ------------------------------------------------------
+  // The road pass's own "dead last" rule, re-stated for the freeze: a lamp
+  // stands on the finished ground, and the finished ground exists from pass 5c.
+  // See `plantLanterns`' call site. Absent off the staged path, where the pass
+  // planted them itself.
+  if (roads?.lanterns !== undefined) lay("road-lanterns", roads.lanterns());
+
+  // --- the kerbside dressing ----------------------------------------------
+  // **v1 §2's `masks.y` row, landed.** Every lamp post and every bench in the
+  // settlement is sited here, past pass 5c, so the column it stands on is the
+  // column the emitter will lay. `dressStreets` decided *where* the band is in
+  // the declaring half — that is geometry, and it was always right; what it
+  // could not know there is the level, because the only view §1.4 grants a
+  // tier-C declarer is the one taken before the street family claimed anything.
+  // Planting on that view is what left six lamps hanging over the hillside
+  // village. Empty off the staged path, where the props are already in
+  // `dressed.blocks`.
+  let furnishedProps = 0;
+  for (const furnish of plan.streetFurnishings) {
+    const furnished = furnish();
+    lay("streetscape:furniture", furnished.blocks);
+    furnishedProps += furnished.props.length;
+    diagnostics.push(...furnished.diagnostics);
+  }
 
   // --- doorsteps -----------------------------------------------------------
   // Last, and it has to be: a doorstep reconciles a threshold with the ground
@@ -2521,7 +2574,9 @@ export function buildStructures(
       props: props.placed.length,
       propsUnplaced: propJobs.length - props.placed.length,
       propWaterLeaks: propFluids.leaks.length,
-      streetFurniture,
+      // The declaring half's own count plus whatever the deferred kerbside
+      // dressing laid: one number, wherever the props were actually sited.
+      streetFurniture: streetFurniture + furnishedProps,
       dressedColumns: grounds.dressedColumns,
       wornColumns: grounds.wornColumns,
       ruinYards: grounds.ruinYards,

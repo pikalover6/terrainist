@@ -494,6 +494,16 @@ export interface RoadNetworkResult {
    * (`structures/ground-declare.ts`).
    */
   readonly declaration: RoadDeclaration;
+  /**
+   * **The route lamps, held back for the building half** — present only on the
+   * staged path (`GroundDriver.staged`), and then absent from
+   * {@link RoadNetworkResult.blocks}.
+   *
+   * A lamp stands on the ground, so it may only be sited once the ground is
+   * final, and under the freeze that is pass 5c and not the end of this pass.
+   * See the comment at the planting site.
+   */
+  readonly lanterns?: () => readonly StructureBlock[];
 }
 
 /** The raw material of §3.9b's intents. */
@@ -780,11 +790,29 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
   // the post it had already planted hanging over the drop. Planting is now the
   // last thing the pass does, so `plan.ground` is the ground the emitter will
   // actually lay.
-  if (wantLanterns) {
+  //
+  // **And under the freeze "last thing the pass does" is not late enough.**
+  // This pass runs in the declaring half, and until pass 5c `plan.ground` is the
+  // *pristine* baseline — the resolve has not been written into it yet. A post
+  // planted here therefore stands on the hill as it was before the settlement
+  // cut it: measured on the hillside village, two lamps at natural 84 over
+  // resolved ground of 68 and 74, hanging sixteen and eleven blocks up, and the
+  // identical stack on the tunnel and mine fixtures. So on the staged path the
+  // planting is handed back as a closure and run by {@link buildStructures}
+  // after the seal, where the comment above is true again. Off it, nothing
+  // moves: the planting happens right here, exactly as it always has.
+  const plantAllLanterns = (): StructureBlock[] => {
+    const lit: StructureBlock[] = [];
+    if (!wantLanterns) return lit;
     for (const route of routes) {
-      plantLanterns(region, plan, road, blocked, route.path, width, spacing, states, blocks, rng, lanternSide);
+      plantLanterns(region, plan, road, blocked, route.path, width, spacing, states, lit, rng, lanternSide);
     }
-  }
+    return lit;
+  };
+  const lanterns: (() => readonly StructureBlock[]) | undefined = driver.staged
+    ? plantAllLanterns
+    : undefined;
+  if (lanterns === undefined) blocks.push(...plantAllLanterns());
 
   let surfacedColumns = 0;
   let bridgeColumns = 0;
@@ -803,6 +831,7 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
     diagnostics,
     unrouted,
     declaration: { routes: declaredRoutes, shoulders: declaredShoulders },
+    ...(lanterns === undefined ? {} : { lanterns }),
   };
 }
 

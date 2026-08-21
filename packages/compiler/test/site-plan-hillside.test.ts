@@ -942,7 +942,26 @@ const STEEP = {
   // stacks and 365 from the terminal builder's 56 derived transitions. Steep
   // ground is where the seam builder has the most to answer for, and 397 is
   // still comfortably inside check 4's 600.
-  wallColumns: 397,
+  //
+  // **397 → 279 at the GROUND_V1_FREEZE flip — re-pinned, with attribution.**
+  // The fifth resolve is the ground now, so the terminal builder derives its
+  // transitions once from the resolved field instead of from a plan four pad
+  // passes had already edited: 56 derived transitions become 34 and their face
+  // 365 columns becomes 247, while the district pass's five revetted stacks are
+  // unmoved at 32. 247 + 32 = 279. Everything the number is a proxy for holds or
+  // improves — this fixture still lints zero on all 26 physics rules, its
+  // walkability goldens were re-pinned at the flip itself and are green, and
+  // refusals move 9 → 10. `site-plan-transitions.test.ts` carries the same
+  // census in words and the same attribution.
+  //
+  // **Flagged for a walk, not waved through**: the graded bank falls 2242 → 498
+  // columns on this fixture, which is a change in how a hillside *reads* and
+  // therefore Kai's to judge (`structures/retaining.ts`'s `gradeBank` already
+  // records the mechanism — past the seal the ring columns keep their resolved
+  // level and the bank's earth is painted on ground the resolver never raised).
+  // The number below pins what the compiler does today; it does not certify the
+  // taste.
+  wallColumns: 279,
   // 3 → 1: the ladder's **first** rung now clears both gates, where before the
   // causeways' paving pushed it two rungs down.
   replanRounds: 1,

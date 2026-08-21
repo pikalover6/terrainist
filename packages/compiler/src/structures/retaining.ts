@@ -4185,7 +4185,7 @@ function buildDerivedSeams(input: DerivedBuildInput): SeamBuildTally {
    * With the flag off nothing changes: the seam stage keeps declaring exactly
    * where it always has, and the byte-identity control set pins it.
    */
-  const postSeal = GROUND_V1_FREEZE;
+  const postSeal = driver.staged;
 
   // The street mask, off the owner map (§3.3's refusal column).
   const street = new Uint8Array(cells);

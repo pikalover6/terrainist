@@ -95,16 +95,12 @@
     "n": 144376,
     "byDelta": [
       {
-        "delta": -1,
-        "n": 2
-      },
-      {
         "delta": 0,
-        "n": 113516
+        "n": 113510
       },
       {
         "delta": 1,
-        "n": 8352
+        "n": 8356
       },
       {
         "delta": 2,
@@ -120,11 +116,11 @@
       },
       {
         "delta": 5,
-        "n": 348
+        "n": 356
       },
       {
         "delta": 6,
-        "n": 63
+        "n": 59
       },
       {
         "delta": 7,
@@ -293,16 +289,16 @@
       "max": 9
     },
     {
-      "pair": "street.sidewalk over natural",
-      "n": 14,
-      "avg": 3.2,
-      "max": 10
-    },
-    {
       "pair": "retaining.skirt over verge",
       "n": 12,
       "avg": 3.9,
       "max": 6
+    },
+    {
+      "pair": "street.sidewalk over natural",
+      "n": 12,
+      "avg": 3.4,
+      "max": 10
     },
     {
       "pair": "retaining.skirt over retaining.skirt",
