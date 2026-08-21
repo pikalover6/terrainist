@@ -8,35 +8,39 @@
   "bbox": {
     "x0": -256,
     "x1": 255,
-    "z0": -211,
+    "z0": -212,
     "z1": 231
   },
-  "ownedColumns": 44128,
+  "ownedColumns": 44636,
   "intents": {
-    "total": 1109,
+    "total": 1293,
     "byClass": [
       {
         "name": "quarter.plane",
-        "n": 898
-      },
-      {
-        "name": "building.footprint",
-        "n": 144
+        "n": 890
       },
       {
         "name": "retaining.seam",
-        "n": 36
+        "n": 204
+      },
+      {
+        "name": "building.footprint",
+        "n": 156
       },
       {
         "name": "street.network",
         "n": 20
       },
       {
-        "name": "road.network",
-        "n": 4
+        "name": "retaining.skirt",
+        "n": 9
       },
       {
         "name": "verge",
+        "n": 7
+      },
+      {
+        "name": "road.network",
         "n": 4
       },
       {
@@ -52,11 +56,11 @@
   "columnsWonByClass": [
     {
       "name": "quarter.plane",
-      "n": 15891
+      "n": 14540
     },
     {
       "name": "building.footprint",
-      "n": 13059
+      "n": 14513
     },
     {
       "name": "street.network",
@@ -71,20 +75,24 @@
       "n": 2470
     },
     {
+      "name": "verge",
+      "n": 593
+    },
+    {
       "name": "precinct.ground",
       "n": 560
     },
     {
-      "name": "verge",
-      "n": 439
+      "name": "retaining.seam",
+      "n": 318
     },
     {
-      "name": "retaining.seam",
-      "n": 108
+      "name": "retaining.skirt",
+      "n": 41
     }
   ],
   "sanity": {
-    "n": 146864,
+    "n": 146953,
     "byDelta": [
       {
         "delta": -5,
@@ -108,75 +116,75 @@
       },
       {
         "delta": 0,
-        "n": 113490
+        "n": 112727
       },
       {
         "delta": 1,
-        "n": 10725
+        "n": 10533
       },
       {
         "delta": 2,
-        "n": 1386
+        "n": 1314
       },
       {
         "delta": 3,
-        "n": 1173
+        "n": 923
       },
       {
         "delta": 4,
-        "n": 761
+        "n": 859
       },
       {
         "delta": 5,
-        "n": 345
+        "n": 484
       },
       {
         "delta": 6,
-        "n": 63
+        "n": 74
       },
       {
         "delta": 7,
-        "n": 660
+        "n": 739
       },
       {
         "delta": 8,
-        "n": 541
+        "n": 605
       },
       {
         "delta": 9,
-        "n": 1788
+        "n": 2174
       },
       {
         "delta": 10,
-        "n": 5879
+        "n": 5955
       },
       {
         "delta": 11,
-        "n": 2514
+        "n": 2513
       },
       {
         "delta": 12,
-        "n": 1958
+        "n": 1911
       },
       {
         "delta": 13,
-        "n": 1716
+        "n": 1792
       },
       {
         "delta": 14,
-        "n": 392
+        "n": 406
       },
       {
         "delta": 15,
-        "n": 2148
+        "n": 2598
       },
       {
         "delta": 16,
-        "n": 158
+        "n": 176
       },
       {
         "delta": 17,
-        "n": 369
+        "n": 372
       },
       {
         "delta": 18,
@@ -260,7 +268,7 @@
   "cliffCensus": [
     {
       "pair": "natural over natural",
-      "n": 4818,
+      "n": 4683,
       "avg": 2.9,
       "max": 9
     },
@@ -271,43 +279,73 @@
       "max": 6
     },
     {
-      "pair": "quarter.plane over natural",
-      "n": 43,
-      "avg": 4.3,
-      "max": 11
-    },
-    {
-      "pair": "verge over natural",
-      "n": 43,
-      "avg": 2.8,
-      "max": 9
-    },
-    {
       "pair": "retaining.seam over retaining.seam",
-      "n": 40,
-      "avg": 3,
-      "max": 3
-    },
-    {
-      "pair": "natural over verge",
-      "n": 38,
-      "avg": 5.9,
-      "max": 12
-    },
-    {
-      "pair": "street.sidewalk over natural",
-      "n": 14,
-      "avg": 3.2,
-      "max": 10
+      "n": 112,
+      "avg": 3.1,
+      "max": 4
     },
     {
       "pair": "quarter.plane over quarter.plane",
-      "n": 8,
-      "avg": 2.4,
+      "n": 96,
+      "avg": 3.6,
+      "max": 4
+    },
+    {
+      "pair": "natural over quarter.plane",
+      "n": 30,
+      "avg": 3.2,
+      "max": 4
+    },
+    {
+      "pair": "natural over retaining.skirt",
+      "n": 18,
+      "avg": 7.9,
+      "max": 8
+    },
+    {
+      "pair": "street.sidewalk over natural",
+      "n": 18,
+      "avg": 3.8,
+      "max": 10
+    },
+    {
+      "pair": "street.sidewalk over verge",
+      "n": 17,
+      "avg": 2.5,
       "max": 3
     },
     {
-      "pair": "natural over street.sidewalk",
+      "pair": "natural over retaining.seam",
+      "n": 11,
+      "avg": 2.6,
+      "max": 4
+    },
+    {
+      "pair": "quarter.plane over natural",
+      "n": 10,
+      "avg": 3.6,
+      "max": 6
+    },
+    {
+      "pair": "street.sidewalk over quarter.plane",
+      "n": 9,
+      "avg": 4,
+      "max": 4
+    },
+    {
+      "pair": "retaining.skirt over natural",
+      "n": 7,
+      "avg": 3.9,
+      "max": 5
+    },
+    {
+      "pair": "verge over natural",
+      "n": 7,
+      "avg": 3.9,
+      "max": 9
+    },
+    {
+      "pair": "verge over verge",
       "n": 7,
       "avg": 2,
       "max": 2
@@ -319,16 +357,52 @@
       "max": 3
     },
     {
-      "pair": "natural over retaining.seam",
+      "pair": "natural over street.sidewalk",
+      "n": 3,
+      "avg": 2,
+      "max": 2
+    },
+    {
+      "pair": "natural over verge",
       "n": 2,
       "avg": 3,
       "max": 3
+    },
+    {
+      "pair": "retaining.skirt over verge",
+      "n": 2,
+      "avg": 4.5,
+      "max": 6
+    },
+    {
+      "pair": "street.sidewalk over retaining.seam",
+      "n": 2,
+      "avg": 3,
+      "max": 4
     },
     {
       "pair": "street.sidewalk over street.network",
       "n": 2,
       "avg": 2.5,
       "max": 3
+    },
+    {
+      "pair": "retaining.seam over street.sidewalk",
+      "n": 1,
+      "avg": 2,
+      "max": 2
+    },
+    {
+      "pair": "retaining.skirt over quarter.plane",
+      "n": 1,
+      "avg": 3,
+      "max": 3
+    },
+    {
+      "pair": "road.network over retaining.skirt",
+      "n": 1,
+      "avg": 7,
+      "max": 7
     },
     {
       "pair": "street.network over street.network",
@@ -341,23 +415,35 @@
       "n": 1,
       "avg": 2,
       "max": 2
-    },
-    {
-      "pair": "verge over verge",
-      "n": 1,
-      "avg": 2,
-      "max": 2
     }
   ],
   "buildingSeats": {
-    "count": 36,
+    "count": 52,
     "sinkHist": [
       {
         "delta": 0,
-        "n": 36
+        "n": 52
       }
     ],
     "worst": [
+      {
+        "source": "world.pirate_cove_town.infill_-99_-69#pad@843",
+        "floorY": 63,
+        "ringMed": 63,
+        "ringMax": 64,
+        "sink": 0,
+        "worst": 1,
+        "n": 56
+      },
+      {
+        "source": "world.pirate_cove_town.infill_-99_-69#pad@843#preserve",
+        "floorY": 63,
+        "ringMed": 63,
+        "ringMax": 64,
+        "sink": 0,
+        "worst": 1,
+        "n": 56
+      },
       {
         "source": "world.alicorn_colossus#pad@1",
         "floorY": 76,
@@ -377,7 +463,25 @@
         "n": 729
       },
       {
-        "source": "world.pirate_cove_town.infill_-53_-109#pad@870",
+        "source": "world.pirate_cove_town.infill_-50_-85#pad@847",
+        "floorY": 69,
+        "ringMed": 69,
+        "ringMax": 69,
+        "sink": 0,
+        "worst": 0,
+        "n": 192
+      },
+      {
+        "source": "world.pirate_cove_town.infill_-50_-85#pad@847#preserve",
+        "floorY": 69,
+        "ringMed": 69,
+        "ringMax": 69,
+        "sink": 0,
+        "worst": 0,
+        "n": 192
+      },
+      {
+        "source": "world.pirate_cove_town.infill_-53_-109#pad@839",
         "floorY": 69,
         "ringMed": 69,
         "ringMax": 69,
@@ -386,7 +490,7 @@
         "n": 210
       },
       {
-        "source": "world.pirate_cove_town.infill_-53_-109#pad@870#preserve",
+        "source": "world.pirate_cove_town.infill_-53_-109#pad@839#preserve",
         "floorY": 69,
         "ringMed": 69,
         "ringMax": 69,
@@ -395,43 +499,7 @@
         "n": 210
       },
       {
-        "source": "world.pirate_cove_town.infill_-53_-184#pad@856",
-        "floorY": 69,
-        "ringMed": 69,
-        "ringMax": 69,
-        "sink": 0,
-        "worst": 0,
-        "n": 105
-      },
-      {
-        "source": "world.pirate_cove_town.infill_-53_-184#pad@856#preserve",
-        "floorY": 69,
-        "ringMed": 69,
-        "ringMax": 69,
-        "sink": 0,
-        "worst": 0,
-        "n": 105
-      },
-      {
-        "source": "world.pirate_cove_town.infill_-57_-85#pad@876",
-        "floorY": 69,
-        "ringMed": 69,
-        "ringMax": 69,
-        "sink": 0,
-        "worst": 0,
-        "n": 152
-      },
-      {
-        "source": "world.pirate_cove_town.infill_-57_-85#pad@876#preserve",
-        "floorY": 69,
-        "ringMed": 69,
-        "ringMax": 69,
-        "sink": 0,
-        "worst": 0,
-        "n": 152
-      },
-      {
-        "source": "world.pirate_cove_town.infill_-70_-109#pad@869",
+        "source": "world.pirate_cove_town.infill_-70_-109#pad@838",
         "floorY": 69,
         "ringMed": 69,
         "ringMax": 69,
@@ -440,7 +508,7 @@
         "n": 210
       },
       {
-        "source": "world.pirate_cove_town.infill_-70_-109#pad@869#preserve",
+        "source": "world.pirate_cove_town.infill_-70_-109#pad@838#preserve",
         "floorY": 69,
         "ringMed": 69,
         "ringMax": 69,
@@ -449,29 +517,29 @@
         "n": 210
       },
       {
-        "source": "world.pirate_cove_town.infill_-94_-148#pad@862",
+        "source": "world.pirate_cove_town.infill_-70_-190#pad@844",
         "floorY": 69,
         "ringMed": 69,
         "ringMax": 69,
         "sink": 0,
         "worst": 0,
-        "n": 180
+        "n": 195
       },
       {
-        "source": "world.pirate_cove_town.infill_-94_-148#pad@862#preserve",
+        "source": "world.pirate_cove_town.infill_-70_-190#pad@844#preserve",
         "floorY": 69,
         "ringMed": 69,
         "ringMax": 69,
         "sink": 0,
         "worst": 0,
-        "n": 180
+        "n": 195
       }
     ]
   },
   "streetFlank": [
     {
       "name": "street.sidewalk",
-      "n": 2646,
+      "n": 2647,
       "byDelta": [
         {
           "delta": -2,
@@ -483,7 +551,7 @@
         },
         {
           "delta": 0,
-          "n": 2624
+          "n": 2625
         },
         {
           "delta": 1,
@@ -501,37 +569,37 @@
     },
     {
       "name": "natural",
-      "n": 242,
+      "n": 238,
       "byDelta": [
         {
           "delta": 0,
-          "n": 242
+          "n": 238
         }
       ]
     },
     {
       "name": "quarter.plane",
-      "n": 62,
+      "n": 59,
       "byDelta": [
         {
           "delta": 0,
-          "n": 62
+          "n": 59
         }
       ]
     },
     {
       "name": "verge",
-      "n": 44,
+      "n": 49,
       "byDelta": [
         {
           "delta": 0,
-          "n": 44
+          "n": 49
         }
       ]
     }
   ],
   "clusters": {
-    "count": 24,
+    "count": 35,
     "top": [
       {
         "score": 324,
@@ -558,30 +626,18 @@
         ]
       },
       {
-        "score": 146,
-        "edges": 20,
-        "cx": 49,
-        "cz": 207,
-        "topKinds": [
-          {
-            "name": "natural/verge",
-            "n": 20
-          }
-        ]
-      },
-      {
-        "score": 143,
+        "score": 200,
         "edges": 50,
-        "cx": -66,
-        "cz": -73,
+        "cx": -57,
+        "cz": -75,
         "topKinds": [
           {
             "name": "retaining.seam/retaining.seam",
-            "n": 40
+            "n": 39
           },
           {
             "name": "street.sidewalk/natural",
-            "n": 3
+            "n": 8
           },
           {
             "name": "natural/retaining.seam",
@@ -590,34 +646,62 @@
         ]
       },
       {
-        "score": 98,
-        "edges": 20,
-        "cx": 33,
-        "cz": 199,
+        "score": 175,
+        "edges": 46,
+        "cx": -59,
+        "cz": -197,
         "topKinds": [
           {
-            "name": "quarter.plane/natural",
-            "n": 14
+            "name": "quarter.plane/quarter.plane",
+            "n": 34
           },
           {
-            "name": "quarter.plane/quarter.plane",
-            "n": 6
+            "name": "street.sidewalk/quarter.plane",
+            "n": 5
+          },
+          {
+            "name": "natural/quarter.plane",
+            "n": 4
           }
         ]
       },
       {
-        "score": 82,
-        "edges": 24,
-        "cx": -69,
-        "cz": -203,
+        "score": 153,
+        "edges": 20,
+        "cx": 52,
+        "cz": 207,
         "topKinds": [
           {
-            "name": "quarter.plane/natural",
-            "n": 13
+            "name": "natural/retaining.skirt",
+            "n": 18
           },
           {
-            "name": "verge/natural",
-            "n": 11
+            "name": "retaining.skirt/verge",
+            "n": 1
+          },
+          {
+            "name": "road.network/retaining.skirt",
+            "n": 1
+          }
+        ]
+      },
+      {
+        "score": 135,
+        "edges": 46,
+        "cx": -104,
+        "cz": -100,
+        "topKinds": [
+          {
+            "name": "retaining.seam/retaining.seam",
+            "n": 40
+          },
+          {
+            "name": "natural/retaining.seam",
+            "n": 3
+          },
+          {
+            "name": "street.sidewalk/natural",
+            "n": 2
           }
         ]
       }

@@ -53,6 +53,7 @@ import {
   type ReadonlyUint8Array,
   type ResolvedGround,
 } from "./ground-contract.js";
+import { generateSeamGeometry } from "./ground-geometry.js";
 import {
   EDGE_PRESSED_SHARE,
   MIN_RETAIN_RUN,
@@ -123,7 +124,42 @@ interface Substitution {
 export function resolveGround(
   baseline: GroundBaseline,
   intents: readonly GroundIntent[],
+  options?: ResolveOptions,
 ): ResolvedGround {
+  // **§3.3's G6 amendment — the transition generator is part of the fifth
+  // resolve.** One call from the caller's side, and inside it the two halves the
+  // amendment names: the claims are resolved, the derivation measures the drops
+  // the settlement actually made, the generator materialises the ramp rings and
+  // the tread levels those transitions want, and the whole set is resolved once
+  // more so that the geometry is arbitrated by the same precedence table every
+  // declared claim is — which is the operational meaning of "a transition may
+  // shape only columns no higher-ranked claim owns".
+  //
+  // Not a sixth resolve: nothing outside this function sees the intermediate
+  // answer, `stats.ground.resolves` counts the call and not the passes, and the
+  // geometry claims never enter the driver's declaration set.
+  if (options?.generate === true) {
+    const first = resolveGround(baseline, intents);
+    const seams = deriveGroundSeams({
+      region: baseline.region,
+      ground: first.ground,
+      owner: first.owner,
+      fluidKind: first.fluidKind,
+      intents,
+    }).transitions;
+    const generated = generateSeamGeometry({
+      region: baseline.region,
+      ground: first.ground,
+      fluidTop: first.fluidTop,
+      fluidKind: first.fluidKind,
+      owner: first.owner,
+      intents,
+      transitions: seams,
+    });
+    if (generated.length === 0) return { ...first, seams };
+    const shaped = resolveGround(baseline, [...intents, ...generated]);
+    return { ...shaped, seams };
+  }
   const { region } = baseline;
   const width = region.width;
   const depth = region.depth;
@@ -483,7 +519,21 @@ export function resolveGround(
     transitions,
     report,
     diagnostics,
+    intents,
   };
+}
+
+/** What {@link resolveGround} may be asked to do beyond resolving (§3.3/G6). */
+export interface ResolveOptions {
+  /**
+   * Run §3.3's transition generator inside this resolve.
+   *
+   * True on exactly one call per compile — the driver's fifth — and false
+   * everywhere else, including every prefix resolve: a prefix is *supposed* to
+   * have boundaries the tiers below it will account for, and shaping ground for
+   * them would make `view(tier)` report a ramp no claim has asked for yet.
+   */
+  readonly generate?: boolean;
 }
 
 /* -------------------------------------------------------------------------- */

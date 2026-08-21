@@ -379,9 +379,9 @@ class AccumulatingDriver implements GroundDriver {
     };
   }
 
-  private resolve(intents: readonly GroundIntent[]): ResolvedGround {
+  private resolve(intents: readonly GroundIntent[], generate = false): ResolvedGround {
     this.resolves++;
-    return resolveGround(this.baseline, intents);
+    return resolveGround(this.baseline, intents, { generate });
   }
 
   finish(): ResolvedGround {
@@ -392,7 +392,9 @@ class AccumulatingDriver implements GroundDriver {
     // carries is a property of the design (one resolve per tier boundary) and
     // not of which subsystems a particular document happened to instantiate.
     if (GROUND_V1_FREEZE) for (let i = 1; i < TIER_ORDER.length; i++) this.prefixFor(i);
-    this.final = this.resolve(this.accumulated);
+    // §3.3's G6 amendment: the fifth resolve is the one that generates. The four
+    // prefixes above never do — see {@link ResolveOptions.generate}.
+    this.final = this.resolve(this.accumulated, GROUND_V1_FREEZE);
     return this.final;
   }
 

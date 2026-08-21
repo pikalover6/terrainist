@@ -1023,8 +1023,15 @@ async function compileValidated(
   // authored-program pass that follows is outside it (§3.12). Comparing against
   // a plan the programs had already written would attribute their writes to a
   // declarer that never claimed them.
-  const groundEquivalence: GroundEquivalenceOutcome | undefined =
+  const shimResolved =
     groundDriver === undefined || groundBaseline === undefined || options.groundEquivalence !== true
+      ? undefined
+      : resolveGround(groundBaseline, groundDriver.intents, { generate: GROUND_V1_FREEZE });
+  const groundEquivalence: GroundEquivalenceOutcome | undefined =
+    groundDriver === undefined ||
+    groundBaseline === undefined ||
+    shimResolved === undefined ||
+    options.groundEquivalence !== true
       ? undefined
       : {
           baseline: groundBaseline,
@@ -1035,8 +1042,13 @@ async function compileValidated(
           // array is live, the authored-program pass that follows commits its
           // instance pads into it, and the shim's question is about the eleven
           // as they stood *here*.
-          intents: [...groundDriver.intents],
-          resolved: resolveGround(groundBaseline, groundDriver.intents),
+          // …and past §3.3's G6 amendment that set is the resolve's **effective**
+          // one: the geometry claims the transition generator files win columns,
+          // so `resolved.owner` indexes them and a shim handed the declared set
+          // alone would be reading a name that is not there. Flag-off the two
+          // lists are the same array.
+          intents: [...shimResolved.intents],
+          resolved: shimResolved,
           // …and computed **by the shim itself**, not read off the driver, so
           // that comparing it against `finish()` proves the accumulating prefix
           // is not a second resolver.

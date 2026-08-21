@@ -11,9 +11,9 @@
     "z0": -255,
     "z1": 222
   },
-  "ownedColumns": 14846,
+  "ownedColumns": 15069,
   "intents": {
-    "total": 121,
+    "total": 123,
     "byClass": [
       {
         "name": "building.footprint",
@@ -28,15 +28,15 @@
         "n": 4
       },
       {
+        "name": "verge",
+        "n": 3
+      },
+      {
         "name": "plaza.well",
         "n": 2
       },
       {
         "name": "plaza.ground",
-        "n": 1
-      },
-      {
-        "name": "verge",
         "n": 1
       }
     ]
@@ -56,7 +56,7 @@
     },
     {
       "name": "verge",
-      "n": 233
+      "n": 456
     }
   ],
   "sanity": {
@@ -64,11 +64,11 @@
     "byDelta": [
       {
         "delta": -1,
-        "n": 2
+        "n": 3
       },
       {
         "delta": 0,
-        "n": 228280
+        "n": 228279
       },
       {
         "delta": 1,
@@ -151,12 +151,6 @@
   },
   "cliffCensus": [
     {
-      "pair": "prop.pad over natural",
-      "n": 68,
-      "avg": 2.6,
-      "max": 4
-    },
-    {
       "pair": "natural over natural",
       "n": 38,
       "avg": 2,
@@ -173,6 +167,12 @@
       "n": 10,
       "avg": 2,
       "max": 2
+    },
+    {
+      "pair": "prop.pad over natural",
+      "n": 8,
+      "avg": 3.4,
+      "max": 4
     },
     {
       "pair": "road.network over road.network",
@@ -218,20 +218,8 @@
   },
   "streetFlank": [],
   "clusters": {
-    "count": 12,
+    "count": 10,
     "top": [
-      {
-        "score": 129,
-        "edges": 49,
-        "cx": -33,
-        "cz": -10,
-        "topKinds": [
-          {
-            "name": "prop.pad/natural",
-            "n": 49
-          }
-        ]
-      },
       {
         "score": 27,
         "edges": 8,
@@ -241,18 +229,6 @@
           {
             "name": "prop.pad/natural",
             "n": 8
-          }
-        ]
-      },
-      {
-        "score": 22,
-        "edges": 11,
-        "cx": 61,
-        "cz": 14,
-        "topKinds": [
-          {
-            "name": "prop.pad/natural",
-            "n": 11
           }
         ]
       },
@@ -293,6 +269,30 @@
           {
             "name": "natural/verge",
             "n": 4
+          }
+        ]
+      },
+      {
+        "score": 4,
+        "edges": 2,
+        "cx": 46,
+        "cz": 86,
+        "topKinds": [
+          {
+            "name": "road.network/road.network",
+            "n": 2
+          }
+        ]
+      },
+      {
+        "score": 2,
+        "edges": 1,
+        "cx": 138,
+        "cz": -147,
+        "topKinds": [
+          {
+            "name": "verge/natural",
+            "n": 1
           }
         ]
       }

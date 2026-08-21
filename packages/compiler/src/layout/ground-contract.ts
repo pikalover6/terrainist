@@ -25,6 +25,7 @@
 import type { LoamDiagnostic } from "@terrainist/spec";
 import type { Region } from "@terrainist/stdlib";
 
+import type { DerivedSeam } from "./ground-resolver.js";
 import type { SeamTreatment } from "./levels.js";
 import { GROUND_V1_RANKS } from "./types.js";
 
@@ -421,6 +422,27 @@ export interface ResolvedGround {
   readonly transitions: readonly GroundTransition[];
   readonly report: GroundReport;
   readonly diagnostics: readonly LoamDiagnostic[];
+  /**
+   * **The effective declaration set** — what `owner` indexes into.
+   *
+   * The caller's own list, except on the resolve that runs §3.3's G6 transition
+   * generator: there it is the caller's list followed by the geometry claims the
+   * generator filed (`verge` rings, `retaining.skirt` treads), because those
+   * claims win columns and a winner has to be nameable. A consumer that reads
+   * `owner` must index **this** and never the array it handed in.
+   */
+  readonly intents: readonly GroundIntent[];
+  /**
+   * **The transitions the generator shaped the field for** (§3.3's G6
+   * amendment), or `undefined` on a resolve that generated nothing.
+   *
+   * The one list the builders consume flag-on. It is derived from the field as
+   * the claims left it and *before* the geometry was materialised, which is the
+   * only ordering in which "the ramp is the resolver's" can be true: the
+   * treatment was chosen against the drop the settlement actually made, and the
+   * ground was then shaped to it.
+   */
+  readonly seams?: readonly DerivedSeam[];
 }
 
 /* -------------------------------------------------------------------------- */

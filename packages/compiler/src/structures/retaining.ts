@@ -3960,7 +3960,9 @@ export function finishSeams(input: SeamFinishInput): SeamFinishResult {
   const plan = input.plan;
   const region = plan.region;
   const resolved = input.ground.finish();
-  const intents = input.ground.intents;
+  // §3.3/G6: `owner` indexes the resolve's **effective** set, which past the
+  // generator is the declaration set plus the geometry claims it filed.
+  const intents = resolved.intents;
   const occupied = occupancyOf(region, input.footprints);
 
   const derivation = deriveGroundSeams({
@@ -3972,13 +3974,29 @@ export function finishSeams(input: SeamFinishInput): SeamFinishResult {
     occupied,
   });
 
+  /**
+   * **What the builders build, and it is not always what this pass derived.**
+   *
+   * Past §3.3's G6 amendment the resolver has already shaped the ground for its
+   * own list — the ramp rings are in `resolved.ground`, the treads are at their
+   * tier levels — so a second derivation over the *shaped* field measures the
+   * drops that are left rather than the drops the settlement made, and would
+   * dress a ramp that is already there as a wall. The resolver's list is the
+   * one geometry exists for, so the builders consume it; the derivation above
+   * stays exactly where it was, because §3.2's coverage invariant is a statement
+   * about the finished field and must go on being measured there.
+   */
+  const buildable: readonly DerivedSeam[] = resolved.seams ?? derivation.transitions;
+
   const seamMask = input.seam;
   let wouldBuild = 0;
   const byTreatment = new Map<string, number>();
-  /** §3.3's complement: the transitions no other pass reports having built. */
-  const complement: DerivedSeam[] = [];
   for (const t of derivation.transitions) {
     byTreatment.set(t.refined, (byTreatment.get(t.refined) ?? 0) + 1);
+  }
+  /** §3.3's complement: the transitions no other pass reports having built. */
+  const complement: DerivedSeam[] = [];
+  for (const t of buildable) {
     if (!reportedBuilt(t, seamMask)) {
       wouldBuild++;
       complement.push(t);
