@@ -99,6 +99,24 @@ export interface DoorstepInput {
    * ground.
    */
   readonly bank?: Uint8Array;
+  /**
+   * **§6a.10 i, finished at G6: decide here, paint there.**
+   *
+   * Tier order (v1 §1.6) requires every declarer before every builder, and this
+   * pass declares `doorstep.landing` — tier D. Under `GROUND_V1_FREEZE` it
+   * therefore runs at pass 5b, at the end of the declaring half, where its read
+   * (`view("D")`, tiers A–C) is exactly the read §1.4 entitles a tier-D
+   * declarer to. What it must *not* do there is paint: `plan.surface` and
+   * `plan.soil` are last-write-wins across the material passes, and moving a
+   * write from 5e to 5b would let a later pass overwrite a threshold.
+   *
+   * So with this set the two material writes are collected into
+   * {@link DoorstepResult.materials} instead of applied, and the building half
+   * applies them at the pipeline position they have always occupied. The blocks
+   * ride along the same way — they are a pure function of the walk, and the walk
+   * is what moved.
+   */
+  readonly deferMaterials?: boolean;
 }
 
 /** What the doorstep pass produced. */
@@ -133,6 +151,31 @@ export interface DoorstepResult {
    * above a ground it does not move.
    */
   readonly declarations: readonly DoorstepDeclaration[];
+  /**
+   * The landing paint this walk decided on, held rather than applied when
+   * {@link DoorstepInput.deferMaterials} is set — see there. Empty otherwise,
+   * because the writes went straight into the plan.
+   */
+  readonly materials: readonly DoorstepMaterial[];
+}
+
+/** One landing column's paint, as {@link DoorstepInput.deferMaterials} holds it. */
+export interface DoorstepMaterial {
+  readonly idx: number;
+  readonly surface: number;
+}
+
+/**
+ * Apply what a deferred walk decided — the building half's half of §6a.10 i.
+ *
+ * The same two writes the loop makes inline, in the same order, at the pipeline
+ * position the pass has always painted from.
+ */
+export function paintDoorsteps(plan: ColumnPlan, materials: readonly DoorstepMaterial[]): void {
+  for (const m of materials) {
+    plan.surface[m.idx] = m.surface;
+    if (plan.soil[m.idx] === 0) plan.soil[m.idx] = 1;
+  }
 }
 
 /** One door's landing, as §3.11b declares it. */
@@ -168,6 +211,8 @@ export function buildDoorsteps(input: DoorstepInput): DoorstepResult {
   const declarations: DoorstepDeclaration[] = [];
   /** Tier D's claims, accumulated for one commit under the freeze (§6a.10 ii). */
   const tierClaims: GroundIntent[] = [];
+  /** {@link DoorstepInput.deferMaterials}' sink; empty on the painting path. */
+  const materials: DoorstepMaterial[] = [];
 
   const stepState = palette.has("road.step")
     ? palette.state("road.step")
@@ -249,7 +294,7 @@ export function buildDoorsteps(input: DoorstepInput): DoorstepResult {
     // a cliff and a wall is a place.
     if (!inside(region, nx, nz) || claimed(nx, nz)) return true;
     const n = index(region, nx, nz);
-    if (plan.fluidKind[n] !== FluidKind.NONE) return true;
+    if (view.fluidKind[n] !== FluidKind.NONE) return true;
     // **S8 and S10, and it comes before the heights on purpose.** A bank is a
     // landform and a landform carries nothing. A bank graded at 1:2 steps half a
     // block per column, so both of the tests below pass on it all the way up the
@@ -274,7 +319,7 @@ export function buildDoorsteps(input: DoorstepInput): DoorstepResult {
     const mz = nz + dz;
     if (!inside(region, mx, mz) || claimed(mx, mz)) return true;
     const m = index(region, mx, mz);
-    if (plan.fluidKind[m] !== FluidKind.NONE) return true;
+    if (view.fluidKind[m] !== FluidKind.NONE) return true;
     if (bankMask !== undefined && bankMask[m] === 1) return false;
     return Math.abs((view.ground[m] as number) - gn) <= DOORSTEP_FOOT_STEP;
   };
@@ -315,7 +360,11 @@ export function buildDoorsteps(input: DoorstepInput): DoorstepResult {
       const z = pz + dz * k;
       if (!inside(region, x, z) || claimed(x, z)) break;
       const idx = index(region, x, z);
-      if (plan.fluidKind[idx] !== FluidKind.NONE) break;
+      // The **view's** fluid, not the plan's: at pass 5b the plan still holds
+      // the materialised baseline and `fluid.channel` is a tier-A claim the
+      // prefix already answers. Off the freeze path the view *is* the plan's
+      // three arrays, so this is the same read it has always been.
+      if (view.fluidKind[idx] !== FluidKind.NONE) break;
       walked.push(idx);
       const g = view.ground[idx] as number;
 
@@ -391,10 +440,15 @@ export function buildDoorsteps(input: DoorstepInput): DoorstepResult {
       // observable there and moving it would move a byte.
       if (GROUND_V1_FREEZE) tierClaims.push(intent);
       else driver.commit([intent]);
-      // §9 step 2's second loop.
+      // §9 step 2's second loop — held rather than applied on the declaring
+      // path, so a material write does not change places with another pass's
+      // (see {@link DoorstepInput.deferMaterials}).
       for (const cut of cuts) {
-        plan.surface[cut.idx] = stepState;
-        if (plan.soil[cut.idx] === 0) plan.soil[cut.idx] = 1;
+        if (input.deferMaterials === true) materials.push({ idx: cut.idx, surface: stepState });
+        else {
+          plan.surface[cut.idx] = stepState;
+          if (plan.soil[cut.idx] === 0) plan.soil[cut.idx] = 1;
+        }
       }
     }
   }
@@ -402,5 +456,5 @@ export function buildDoorsteps(input: DoorstepInput): DoorstepResult {
   // §6a.10 ii's other half: the tier's claims, in door order, as one commit.
   if (tierClaims.length > 0) driver.commit(tierClaims);
 
-  return { blocks, stepped, dropped, flush, refused, touched, declarations };
+  return { blocks, stepped, dropped, flush, refused, touched, declarations, materials };
 }

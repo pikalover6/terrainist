@@ -60,7 +60,7 @@ import type { SeamLanding, SeamLandingStack, SeamLandings } from "../layout/dist
 import type { Point2, Rect } from "../layout/frames.js";
 import type { GroundClaim, GroundIntent, ResolvedGround } from "../layout/ground-contract.js";
 import { driverForPlan, type GroundDriver } from "../layout/ground-driver.js";
-import { GROUND_V1_SEAMS } from "../layout/types.js";
+import { GROUND_V1_FREEZE, GROUND_V1_SEAMS } from "../layout/types.js";
 import {
   deriveGroundSeams,
   type DerivedSeam,
@@ -3035,6 +3035,27 @@ function gradeBank(
    * the shipped geometry, so nothing moves until `GROUND_V1_SEAMS` flips.
    */
   easedRun = 0,
+  /**
+   * **Past the seal** — v1 §3, §1.6 pass 5c, and the freeze's own law.
+   *
+   * `finishSeams` runs in the *building* half: the fifth resolve has happened,
+   * `plan.ground` is the resolver's answer, and §3's rule is that a transition
+   * builder "consumes `resolved.transitions` and declares nothing". So on that
+   * call path this function is a pure block-placer — it paints the bank's earth
+   * and publishes the bank mask, and the `verge` claim below is not made,
+   * because a claim arriving after the seal could only be one of two things:
+   * silently inert (the freeze writes nothing through a `commit`) or a sixth
+   * resolve, which §1.6 does not have.
+   *
+   * See {@link finishSeams} for the measured consequence, which is a finding
+   * and not a fix: the resolved field does **not** carry the ramp geometry, so
+   * with the flag on the ring columns keep their resolved level and the bank's
+   * earth is painted on ground the resolver never raised.
+   *
+   * False for `buildRetainingWalls`' own calls, which are tier B in the
+   * declaring half and go on declaring exactly as they always have.
+   */
+  postSeal = false,
 ): number {
   const view = driver.view();
   const cells = region.width * region.depth;
@@ -3105,15 +3126,18 @@ function gradeBank(
   // above stay for this round: deleting a defence the rank makes redundant is
   // §10's work, not a conversion's.
   if (rings.length === 0) return raised;
-  driver.commit([
-    {
-      source,
-      sourceClass: "verge",
-      kind: "profile",
-      columns: rings.map((r) => ({ idx: r.idx, y: r.target })),
-      transition: "ramp",
-    },
-  ]);
+  // …and past the seal it is not declared at all (§3, and {@link postSeal}).
+  if (!postSeal) {
+    driver.commit([
+      {
+        source,
+        sourceClass: "verge",
+        kind: "profile",
+        columns: rings.map((r) => ({ idx: r.idx, y: r.target })),
+        transition: "ramp",
+      },
+    ]);
+  }
   // §9 step 2's second loop, over the columns the bank **claimed**. Earth, and
   // enough of it to cover what the ramp raised: the face of a bank is the bank,
   // and it is not masonry. The depth follows the cut the claim asked for, whether
@@ -3181,6 +3205,19 @@ export interface TieredSeamInput {
   readonly seam: Uint8Array;
   readonly diagnostics: LoamDiagnostic[];
   readonly declaredWalls: RetainingDeclaration["walls"][number][];
+  /**
+   * **Past the seal** — the same rule `gradeBank`'s own `postSeal` states.
+   *
+   * `finishSeams` calls this from the building half, after pass 5c. On that path
+   * the stack lays its masonry and its coping and declares nothing: neither S4's
+   * tread claim nor the sweep's `face`/`preserve` pair. Both would arrive after
+   * the fifth resolve, where the freeze writes nothing through and §1.6 has no
+   * sixth resolve to put them in.
+   *
+   * Absent (the default) for `buildRetainingWalls`' calls, which are tier B in
+   * the declaring half.
+   */
+  readonly postSeal?: boolean;
 }
 
 /** What one stack came to. */
@@ -3502,10 +3539,12 @@ export function buildTieredSeam(input: TieredSeamInput): TieredSeamResult {
     // the tier's own level rather than the ground the hill happened to have.
     const tierSource = `${input.source}/${k}`;
     const claims: GroundClaim[] = band.map((c) => ({ idx: c, y }));
-    driver.commit([
-      { source: tierSource, sourceClass, kind: "face", columns: claims, transition: "wall" },
-      { source: tierSource, sourceClass, kind: "preserve", columns: claims, transition: "none" },
-    ]);
+    if (input.postSeal !== true) {
+      driver.commit([
+        { source: tierSource, sourceClass, kind: "face", columns: claims, transition: "wall" },
+        { source: tierSource, sourceClass, kind: "preserve", columns: claims, transition: "none" },
+      ]);
+    }
 
     // A one-column course on a diagonal is a sawtooth, for the fifth time in
     // this compiler. Thickened inside the tier's own band and nowhere else.
@@ -3557,6 +3596,7 @@ export function buildTieredSeam(input: TieredSeamInput): TieredSeamResult {
           source,
           transition: "wall",
           commit: (intent) => {
+            if (input.postSeal === true) return;
             const wall: GroundIntent[] = [intent];
             if ([...intent.columns].length > 0) {
               wall.push({
@@ -4114,6 +4154,20 @@ const SEAM_BLOCKING_CLASSES: ReadonlySet<string> = new Set<string>([
 function buildDerivedSeams(input: DerivedBuildInput): SeamBuildTally {
   const { region, plan, driver, resolved, intents, occupied, states, seam } = input;
   const cells = region.width * region.depth;
+  /**
+   * **v1 §3, and the freeze's own law.** `finishSeams` is the *terminal*
+   * transition builder and it runs in the building half, past pass 5c: with
+   * `GROUND_V1_FREEZE` on the fifth resolve has happened, `plan.ground` is the
+   * resolver's answer, and §3's rule is that a transition builder consumes
+   * `resolved.transitions` and declares nothing. So every builder this dispatch
+   * reaches is a pure block-placer, and the `verge` / `retaining.skirt` claims
+   * they used to make — the two the tier-order assertion catches on five of the
+   * six acceptance documents — are simply not made.
+   *
+   * With the flag off nothing changes: the seam stage keeps declaring exactly
+   * where it always has, and the byte-identity control set pins it.
+   */
+  const postSeal = GROUND_V1_FREEZE;
 
   // The street mask, off the owner map (§3.3's refusal column).
   const street = new Uint8Array(cells);
@@ -4185,6 +4239,7 @@ function buildDerivedSeams(input: DerivedBuildInput): SeamBuildTally {
           seam,
           diagnostics: input.diagnostics,
           declaredWalls,
+          postSeal,
         });
         faceColumns += laid.faceColumns;
         if (laid.faceColumns > 0) {
@@ -4233,6 +4288,7 @@ function buildDerivedSeams(input: DerivedBuildInput): SeamBuildTally {
             seam,
             diagnostics: input.diagnostics,
             declaredWalls,
+            postSeal,
           });
           faceColumns += laid.faceColumns;
           if (laid.faceColumns > 0) {
@@ -4267,6 +4323,7 @@ function buildDerivedSeams(input: DerivedBuildInput): SeamBuildTally {
         true,
         bankMask,
         easedRun,
+        postSeal,
       );
       bankColumns += raised;
       if (easedRun > 0) blended++;
@@ -4300,6 +4357,7 @@ function buildDerivedSeams(input: DerivedBuildInput): SeamBuildTally {
       seam,
       diagnostics: input.diagnostics,
       declaredWalls,
+      postSeal,
     });
     faceColumns += laid.faceColumns;
     if (laid.faceColumns > 0) {

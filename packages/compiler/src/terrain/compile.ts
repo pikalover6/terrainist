@@ -110,6 +110,7 @@ import type {
 } from "../layout/ground-equivalence.js";
 import { declarePads } from "../layout/ground-declarers.js";
 import { createGroundDriver, type GroundDriver } from "../layout/ground-driver.js";
+import { GROUND_V1_FREEZE } from "../layout/types.js";
 
 import { EMIT_MINECRAFT_VERSION } from "../emit/world.js";
 import { loadPrismarine } from "../emit/prismarine.js";
@@ -994,7 +995,19 @@ async function compileValidated(
         ? { roadCorridor: corridorMask(region, corridors.filter((c) => c.kind === "road")) }
         : {}),
     };
-    structures = buildStructures(structureInput, declareStructures(structureInput));
+    const structurePlan = declareStructures(structureInput);
+    // **Pass 5c — the freeze** (contract v1 §1.6). The one place it can go: the
+    // declaring half has just finished, so the fifth resolve is over the whole
+    // declaration set, and the building half has not started, so nothing has
+    // read a level yet. `freeze()` writes the resolver's three arrays over
+    // `plan.ground`/`.fluidTop`/`.fluidKind` and applies v0 §1.3's `moved` snow
+    // rule; from here on `driver.view()` *is* the plan and the plan *is* the
+    // resolve. With `GROUND_V1_FREEZE` off it is `finish()` and nothing else,
+    // which is what keeps this line inert on the control path — and the guard
+    // keeps it from costing a resolve there either, so `stats.ground.resolves`
+    // stays the mixture's own number with the flag off.
+    if (GROUND_V1_FREEZE) groundDriver.freeze();
+    structures = buildStructures(structureInput, structurePlan);
     diagnostics.push(...structures.diagnostics);
     layoutOutcome = { ...layoutOutcome, structures };
   }

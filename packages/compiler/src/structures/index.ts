@@ -114,7 +114,7 @@ import {
   type RetainingPlane,
 } from "./retaining.js";
 import { furnishCourtyards, type CourtyardPassResult } from "./courtyards.js";
-import { buildDoorsteps, type DoorstepResult } from "./doorsteps.js";
+import { buildDoorsteps, paintDoorsteps, type DoorstepResult } from "./doorsteps.js";
 import { buildGrounds, softSurfaceStates, type GroundPassResult } from "./grounds.js";
 import { buildJunctionSteps, type PavedSurface } from "./junction-steps.js";
 import { buildRuinField, type RuinField } from "./ruin-field.js";
@@ -555,6 +555,19 @@ export interface StructurePlan {
   readonly props: PropPassResult;
   readonly propJobs: readonly PropJob[];
   readonly propFluids: ReturnType<typeof checkPropFluidSafety>;
+  /**
+   * **The doorstep walk, decided in the declaring half** — §6a.10 i, finished.
+   *
+   * `doorstep.landing` is tier D, and tier order (§1.6) requires every declarer
+   * before every builder, so under `GROUND_V1_FREEZE` the walk runs here, last
+   * in the declaring half, reading `view("D")` — the tiers strictly above it,
+   * which is precisely §1.4's entitlement. The building half lays its blocks and
+   * applies its paint at the pipeline position the pass has always occupied.
+   *
+   * `undefined` with the flag off, which is what makes the move inert: the
+   * building half then runs the walk itself, exactly where it always did.
+   */
+  readonly doorsteps: DoorstepResult | undefined;
 }
 
 /**
@@ -1743,6 +1756,34 @@ export function declareStructures(input: StructurePassInput): StructurePlan {
   // to attribute at the pass that caused it.
   const propFluids = checkPropFluidSafety(props.blocks, input.plan, input.stack);
 
+  // --- the doorstep walk (§6a.10 i, finished at G6) ------------------------
+  // The last tier-D declarer, and the last declaration there is. It runs here
+  // rather than in the building half for one reason and it is the whole of
+  // §1.6: `doorstep.landing` is tier D, and a tier-D claim arriving after the
+  // fifth resolve is either silently inert or a sixth resolve. Its read is
+  // `view("D")` — tiers A through C — which is exactly what §1.4 entitles a
+  // tier-D declarer to, and every input it takes (the seated buildings, the
+  // farm's own ports, the retaining pass's landings and bank mask) is a fact
+  // the declaring half has already produced.
+  //
+  // `deferMaterials` is the other half: the walk decides here and the paint
+  // lands at 5e, so a threshold's surface does not change places with another
+  // material pass's. With the flag off this is `undefined` and the building
+  // half runs the walk itself, unmoved.
+  const doorsteps: DoorstepResult | undefined = !GROUND_V1_FREEZE
+    ? undefined
+    : buildDoorsteps({
+        buildings: built,
+        ports: farmPorts.length === 0 ? input.ports : [...input.ports, ...farmPorts],
+        plan: input.plan,
+        ground: input.ground,
+        palette: input.palette,
+        stack: input.stack,
+        landings: retaining.landings,
+        bank: retaining.bank,
+        deferMaterials: true,
+      });
+
   // === the WP-G5 seam ======================================================
   // Everything above declared; everything below builds. The cut is *here* and
   // not one line either side of it, because `prop.place@0` is the last pass
@@ -1790,6 +1831,7 @@ export function declareStructures(input: StructurePassInput): StructurePlan {
     props,
     propJobs,
     propFluids,
+    doorsteps,
   };
 }
 
@@ -1866,20 +1908,25 @@ export function buildStructures(
   // emitter will lay. Adds nothing on a world with no roads.
   lay("aprons", underpinAprons(built, input.plan));
 
-  const doorsteps = buildDoorsteps({
-    buildings: built,
-    // The farmstead's own doors, appended: a farmhouse whose door faces its own
-    // field gets a flush threshold rather than a step into the crop (§5.4).
-    ports: farmPorts.length === 0 ? input.ports : [...input.ports, ...farmPorts],
-    plan: input.plan,
-    ground: input.ground,
-    palette: input.palette,
-    stack: input.stack,
-    // S10's two sources of truth, straight from the retaining pass: the ground
-    // a served seam left walkable, and the ground a bank took.
-    landings: retaining.landings,
-    bank: retaining.bank,
-  });
+  // Decided in the declaring half under the freeze (§6a.10 i); the walk is here
+  // only on the control path. Either way the paint and the masonry land here.
+  const doorsteps =
+    plan.doorsteps ??
+    buildDoorsteps({
+      buildings: built,
+      // The farmstead's own doors, appended: a farmhouse whose door faces its own
+      // field gets a flush threshold rather than a step into the crop (§5.4).
+      ports: farmPorts.length === 0 ? input.ports : [...input.ports, ...farmPorts],
+      plan: input.plan,
+      ground: input.ground,
+      palette: input.palette,
+      stack: input.stack,
+      // S10's two sources of truth, straight from the retaining pass: the ground
+      // a served seam left walkable, and the ground a bank took.
+      landings: retaining.landings,
+      bank: retaining.bank,
+    });
+  paintDoorsteps(input.plan, doorsteps.materials);
   lay("doorsteps", doorsteps.blocks);
 
   // --- junction steps ------------------------------------------------------
@@ -1922,7 +1969,17 @@ export function buildStructures(
   // on c1-harbourtown lifts 1,036 columns and regresses unservedFaces 18→29.
   // A flat world therefore keeps byte-identity (and its pre-existing cutoffs)
   // until Kai decides the global enable with those numbers in front of him.
-  if (districts.some((d) => (d.levels?.levelY.length ?? 0) > 1)) {
+  //
+  // **Deleted on the freeze path** — v1 §4 item 7. The pass exists to reconcile
+  // two paved claims that disagree about a column; under one resolve they
+  // cannot disagree, because the higher-ranked claim owns the column outright
+  // and the loser's report row records the loss. It is also the last pass that
+  // declares a tier-C class (`street.network`/`road.network`) from the build
+  // half, which is a tier-order violation by construction rather than by
+  // accident: there is no legal position for it after the seal. With the flag
+  // off every line of it survives untouched, which is what the byte-identity
+  // control set pins.
+  if (!GROUND_V1_FREEZE && districts.some((d) => (d.levels?.levelY.length ?? 0) > 1)) {
     const junctions = buildJunctionSteps({
       region: input.plan.region,
       plan: input.plan,
