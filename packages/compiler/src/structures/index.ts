@@ -68,6 +68,8 @@ import type { StreetGraph } from "../layout/streets.js";
 import { dressStreets, type SegmentArc } from "./streetscape.js";
 import type { GroundDriver } from "../layout/ground-driver.js";
 import { solvedCarriagewayMask } from "../layout/solved-carriageway.js";
+import type { GroundTier } from "../layout/ground-contract.js";
+import { GROUND_V1_FREEZE } from "../layout/types.js";
 import type { LayoutNodeInput, OccupancyGrid, Placement, ResolvedPort } from "../layout/types.js";
 import { mergeSpanSets } from "../terrain/caves.js";
 import type { ColumnPlan } from "../terrain/columns.js";
@@ -89,8 +91,19 @@ import {
 } from "./buildings.js";
 import { digCanals, type CanalPassResult } from "./canals.js";
 import {
+  EMPTY_PARCEL_DATUM,
+  declareInfraEntries,
+  declaresGround,
+  parcelExtentOf,
+  parcelMaskOf,
+  type InfraSiting,
+  type InfraSitings,
+  type ParcelDatum,
+} from "./infra-entry-declare.js";
+import {
   buildInfraEntries,
   type InfraEntryJob,
+  type InfraPlacementView,
   type InfraRouteSpec,
 } from "./infra-entry.js";
 import {
@@ -511,6 +524,14 @@ export interface StructurePlan {
   readonly intents: ReturnType<typeof resolveIntents>;
   readonly rootIntent: ReturnType<typeof intentFor>;
   readonly linework: ReturnType<typeof declareLinework> | undefined;
+  /**
+   * **WP-G6a's declaring-half hand-off** (§6a.3): node path → the siting the
+   * tier slots produced, for the *declaring* rows only.
+   *
+   * Empty with `GROUND_V1_FREEZE` off, which is what makes the split inert: the
+   * build half then sites every row itself, exactly as it always did.
+   */
+  readonly infraSitings: InfraSitings;
   /** The settlement's material deal, in job order. */
   readonly deal: readonly BuildingMaterials[];
   /** Tags by node path, farmsteads included — the life pass's view. */
@@ -847,17 +868,95 @@ export function declareStructures(input: StructurePassInput): StructurePlan {
   // It writes no block. The materials stay in the wall's slot with the rest of
   // the infrastructure host and are laid against `plan.ground` — the resolver's
   // answer — through the `LineworkBeds` handoff below (rule 9).
-  const lineworkJobs = infraEntryJobsOf(input.doc, rootPath, input.worldSeed, (p) =>
+  const allInfraJobs = infraEntryJobsOf(input.doc, rootPath, input.worldSeed, (p) =>
     themeForNode(p),
-  ).filter(declaresLinework);
+  );
+  const lineworkJobs = allInfraJobs.filter(declaresLinework);
+  // **WP-G6a's declaring rows** (§6a.2): the ones with a tier at all. A painter
+  // is not here — it declares nothing, §1.4 does not govern it, and it is sited
+  // from the finished world in the build half exactly as it always was.
+  const declaringInfraJobs = GROUND_V1_FREEZE ? allInfraJobs.filter(declaresGround) : [];
   // §13.2a rule 5's first bullet: the **solved** carriageway, not the surfaced
   // one. The street graphs, the arterials and the frozen road corridor are all
   // decided in the layout stage, which is exactly the distinction that let the
   // rank stop being reserved.
   const solvedCarriageway =
-    lineworkJobs.length === 0
+    lineworkJobs.length === 0 && declaringInfraJobs.length === 0
       ? undefined
       : solvedCarriagewayMask(input.plan.region, districts, cities, [], input.roadCorridor);
+  /**
+   * **The parcel layout as a datum** (§6a.5).
+   *
+   * Published by the farm pass from the rects `packHolding` decided *before* its
+   * own commit, so it is a fact about the layout rather than about arbitration
+   * and any tier may read it. It is empty at the tier-A and tier-B slots because
+   * the holdings are packed at tier D — a farm-anchored *declaring* entry
+   * therefore resolves `unanchored` and says so, which is the honest report
+   * until `packHolding` itself moves up to pass 4.
+   */
+  let parcelDatum: ParcelDatum = EMPTY_PARCEL_DATUM;
+  /** Every declaring entry's siting, accumulated across the three tier slots. */
+  const infraSitings = new Map<string, InfraSiting>();
+  /**
+   * The layout view one declaring tier sees (§6a.4).
+   *
+   * `declareLinework`'s view generalised, and narrow for the same reason: the
+   * solver's footprint rather than a fabric hull (no fabric exists yet), the
+   * widest **solved** street rather than a surfaced one, the parcel *datum*
+   * rather than the resolved parcel mask, and `driver.view(tier)` — §1.4's
+   * prefix — as the ground.
+   */
+  const layoutInfraView = (tier: GroundTier): InfraPlacementView => {
+    const region = input.plan.region;
+    const carriageway = solvedCarriageway;
+    return {
+      bounds: { x0: region.x0, z0: region.z0, width: region.width, depth: region.depth },
+      extentOf: (id: string) => {
+        const nodePath = `${rootPath}.${id}`;
+        const fields = parcelExtentOf(parcelDatum, nodePath);
+        if (fields !== undefined) return fields;
+        const footprint = placementByPath.get(nodePath)?.footprint;
+        if (footprint === undefined) return undefined;
+        return [
+          { x: footprint.x0, z: footprint.z0 },
+          { x: footprint.x1, z: footprint.z0 },
+          { x: footprint.x1, z: footprint.z1 },
+          { x: footprint.x0, z: footprint.z1 },
+        ];
+      },
+      corridorOf: (id: string) => widestSolvedStreet(districts, `${rootPath}.${id}`),
+      maskOf: (id: string) => parcelMaskOf(parcelDatum, `${rootPath}.${id}`, region),
+      ground: (x: number, z: number) => {
+        const view = input.ground.view(tier);
+        if (!inside(view.region, x, z)) return undefined;
+        const k = index(view.region, x, z);
+        if (view.fluidKind[k] !== 0) return undefined;
+        return (view.ground[k] as number) + 1;
+      },
+      onRoad: (x: number, z: number): boolean => {
+        if (carriageway === undefined || !inside(region, x, z)) return false;
+        return carriageway[index(region, x, z)] === 1;
+      },
+    };
+  };
+  /** Site and declare every declaring row whose class sits in `tier` (§6a.3). */
+  const declareInfraAt = (tier: GroundTier): void => {
+    if (declaringInfraJobs.length === 0 || solvedCarriageway === undefined) return;
+    const out = declareInfraEntries(
+      {
+        region: input.plan.region,
+        baseline: input.ground.baseline,
+        jobs: declaringInfraJobs,
+        ground: input.ground,
+        solvedCarriageway,
+        ...(input.occupancy === undefined ? {} : { occupancy: input.occupancy }),
+        view: layoutInfraView(tier),
+      },
+      tier,
+    );
+    for (const [path, siting] of out.sitings) infraSitings.set(path, siting);
+    diagnostics.push(...out.diagnostics);
+  };
   const linework =
     lineworkJobs.length === 0 || solvedCarriageway === undefined
       ? undefined
@@ -915,6 +1014,11 @@ export function declareStructures(input: StructurePassInput): StructurePlan {
           },
         });
   if (linework !== undefined) diagnostics.push(...linework.diagnostics);
+  // **Tier A** (§6a.3): `fluid.channel` — the water movers — and any row whose
+  // class is `structure.linework`. Beside the linework slot, and for its reason:
+  // pipeline order and rank order agree from 0 through 30 here, so this view is
+  // a legal tier-A read rather than a convenient one.
+  declareInfraAt("A");
 
   const jobThemes = jobs.map((job) => themeForNode(job.nodePath));
   const groups = new Map<string, number[]>();
@@ -1107,6 +1211,11 @@ export function declareStructures(input: StructurePassInput): StructurePlan {
   });
   diagnostics.push(...retaining.diagnostics);
   lay("retaining", retaining.blocks);
+  // **Tier B** (§6a.3): `retaining.seam` and `retaining.skirt` — the entries
+  // that are not a run following the ground but the step itself. Beside the
+  // retaining pass, whose tier they share and whose `face`+`preserve` pairing
+  // they borrow, and before any tier-C read.
+  declareInfraAt("B");
 
   // --- the seam stairs (S9) ------------------------------------------------
   // Here, and it can be nowhere else: the retaining pass has just published the
@@ -1403,6 +1512,12 @@ export function declareStructures(input: StructurePassInput): StructurePlan {
     lay("roads", roads.blocks);
   }
 
+  // **Tier C** (§6a.3): `sweep.run` — the furrow, the crop circle, the terrace
+  // flight. After the streets and the roads, whose tier it shares, and before
+  // the holdings: a scar outranks a field and yields to every built thing,
+  // which is the disposition a gouge across a farm should have.
+  declareInfraAt("C");
+
   // --- farms ---------------------------------------------------------------
   // `docs/FARM-PLAN-v0.md` §5.5: after the roads, the streets, the precincts
   // and the retaining, and before the grounds, the props and the life pass. A
@@ -1655,6 +1770,7 @@ export function declareStructures(input: StructurePassInput): StructurePlan {
     intents,
     rootIntent,
     linework,
+    infraSitings,
     deal,
     jobTags,
     built,
@@ -1720,6 +1836,7 @@ export function buildStructures(
     intents,
     rootIntent,
     linework,
+    infraSitings,
     deal,
     jobTags,
     built,
@@ -2096,6 +2213,11 @@ export function buildStructures(
           // in at rank 25 in the linework slot; these are the columns they went
           // in on, so the materials can be laid here, on the resolver's answer.
           ...(linework === undefined ? {} : { lineworkBeds: linework.beds }),
+          // §6a.3's hand-off. Empty with the flag off, so every row below is
+          // sited from the finished world exactly as it always was; flag on it
+          // carries every *declaring* row's course, openings, gates and water
+          // plan, and this pass re-derives nothing on them.
+          ...(infraSitings.size === 0 ? {} : { sitings: infraSitings }),
           view: {
             bounds: {
               x0: input.plan.region.x0,

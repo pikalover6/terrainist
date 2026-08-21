@@ -75,6 +75,16 @@ export interface GroundEquivalenceOutcome {
    */
   readonly driver: ResolvedGround;
   /**
+   * v1 §7.3's budget — every `resolveGround` call the driver made.
+   *
+   * **5** on a settlement path under `GROUND_V1_FREEZE` (one per tier boundary,
+   * plus the final resolve); the mixture's twenty-plus with the flag off. Read
+   * off the driver *after* `finish()`, which forces the four prefixes, so the
+   * number is a property of the stage rather than of which subsystems a
+   * particular document happened to instantiate.
+   */
+  readonly resolves: number;
+  /**
    * WP-G1 (ground contract v1 §1.2, §6). The displacement between the plan as
    * built — from the **padded** field — and a second plan materialised from the
    * pure-terrain baseline with every other `buildColumnPlan` input held equal.

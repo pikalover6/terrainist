@@ -1028,6 +1028,13 @@ async function compileValidated(
           // that comparing it against `finish()` proves the accumulating prefix
           // is not a second resolver.
           driver: groundDriver.finish(),
+          // v1 §7.3's budget, reported rather than inferred: five `resolveGround`
+          // calls on a settlement path under `GROUND_V1_FREEZE` — one per tier
+          // boundary and the final one — and the mixture's twenty-plus with the
+          // flag off. It rides on the shim rather than on `report.stats` because
+          // a terrain-profile compile has no driver at all and `settlement.test`
+          // pins the two reports' `stats` equal.
+          resolves: groundDriver.resolves,
           // A copy, not the live plan: the passes after this one go on writing
           // it, and comparing against a moving array would credit their writes
           // to the eleven.

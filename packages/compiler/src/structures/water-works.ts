@@ -121,6 +121,22 @@ export type WatercourseResult =
   | ({ readonly kind: "crossing" } & WatercourseCrossing)
   | { readonly kind: "none"; readonly detail: string };
 
+/**
+ * **The four arrays the water planner reads, and no others** (§6a.1, WP-G6a).
+ *
+ * `findWatercourse`, `planWaterWorks` and `firstLeak` were typed on
+ * `ColumnPlan` and read exactly `region`, `ground`, `fluidTop` and `fluidKind`
+ * — the audit's "already pure; becomes `baseline.*` by name". Narrowing the
+ * parameter is the whole of the relocation: a `ColumnPlan` still satisfies it,
+ * so every existing caller is unchanged, and a `GroundBaseline` satisfies it
+ * too, so the tier-A declarer can plan against the baseline it is entitled to
+ * without a cast and without seeing a plan the build half has been writing.
+ *
+ * `drownPool` deliberately keeps its `ColumnPlan`: it is the **material** half
+ * (`surface`, `soil`, `snow`) and stays where materials belong.
+ */
+export type WaterField = Pick<ColumnPlan, "region" | "ground" | "fluidTop" | "fluidKind">;
+
 /** A rectangle of world, in the shape every pass here states one. */
 export interface WaterBounds {
   readonly x0: number;
@@ -155,7 +171,7 @@ function betterCrossing(candidate: Candidate, held: Candidate): boolean {
  * across the open sea would otherwise be legal.
  */
 export function findWatercourse(
-  plan: ColumnPlan,
+  plan: WaterField,
   bounds: WaterBounds,
   extent: readonly CoursePoint[],
   search = WATERCOURSE_SEARCH,
@@ -265,7 +281,7 @@ export function findWatercourse(
  * chain ends at a lexicographic order over the step itself, because an unstated
  * tie is two runs of the same document damming opposite sides of a bridge.
  */
-function upstreamOf(plan: ColumnPlan, wet: readonly CoursePoint[], perp: Step): Step {
+function upstreamOf(plan: WaterField, wet: readonly CoursePoint[], perp: Step): Step {
   const region = plan.region;
   const sample = (sign: number): { ground: number; fluid: number; count: number } => {
     let ground = 0;
@@ -352,7 +368,7 @@ export interface WaterWorks {
 
 /** Everything {@link planWaterWorks} reads about the world it is planning in. */
 export interface WaterWorksInput {
-  readonly plan: ColumnPlan;
+  readonly plan: WaterField;
   readonly crossing: WatercourseCrossing;
   readonly spec: WaterWorksSpec;
   /** The profile's lateral half-width — how thick the barrier is along the flow. */
@@ -594,7 +610,7 @@ function sortedMap(m: ReadonlyMap<number, number>): ReadonlyMap<number, number> 
  * which is that function's own rule and not a convenience taken here.
  */
 export function firstLeak(
-  plan: ColumnPlan,
+  plan: WaterField,
   pool: ReadonlyMap<number, number>,
   barrier: ReadonlyMap<number, number>,
   held: number,

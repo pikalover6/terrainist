@@ -739,3 +739,105 @@ export const TERRACE_STEP_SPAN = 3;
  * *above* its frontage is F5's kerb and stays the plane's).
  */
 export const RIM_SEAT_MAX_DROP = 2;
+
+/* -------------------------------------------------------------------------- */
+/* the election solve — `docs/ELECTION-SOLVE-v0.md`                            */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * **WP-E2's switch: the block election stops guessing and starts wanting.**
+ *
+ * `false` — today's procedure, with {@link TERRACE_BY_TERRAIN} still true.
+ * Byte-identical, which is the acceptance for every stage before the flip.
+ *
+ * `true` — `layout/election-solve.ts`. A block is partitioned into atoms
+ * before any level exists, one convex integer objective prices every column's
+ * cut, every frontage column's agreement with its own street and every seam's
+ * drop, and the assignment minimising it is found exactly by one s–t min-cut.
+ * The anchor was a median; the objective is a sum.
+ *
+ * It **subsumes** {@link TERRACE_BY_TERRAIN}: with this on, the terrace
+ * criterion, {@link TERRACE_STEP_SPAN}, {@link GROUND_TIE_SPAN},
+ * {@link RIM_SEAT_MAX_DROP}, the lower-median anchor, the storey bucket, the
+ * sliver merge and the tall-pair dissolve are all dead code on the live path —
+ * they are **deleted in the flip commit** (§4's table), not left as an
+ * off-switch, because the two constructions cannot both be live.
+ *
+ * It **implies** {@link GROUND_PLANE_TIE}: the frontage term reads
+ * `StreetDatum`, and with no datum every `F(i)` is empty and §1.3.3 — the whole
+ * of what the anchor was for — says nothing.
+ */
+export const ELECTION_SOLVE = false;
+
+/**
+ * §1.3.1 — what one column of **cut** below its pristine height costs.
+ *
+ * Cut is worse than fill, 3:2. Every walked complaint names a cut — the west
+ * flank cut 2, the citadel interior cut 3, the r22g4 rims that are the 27
+ * `LOAM-W413` refusals — and none names a fill: a cut destroys the pristine
+ * surface and buries whatever stands on the uphill rim, a fill is ground the
+ * dressing already finishes. 3:2 and not 5:1 so a terrace still sits *in* the
+ * hill rather than on a podium above it.
+ */
+export const CUT_W = 3;
+
+/** §1.3.1 — what one column of **fill** above its pristine height costs. */
+export const FILL_W = 2;
+
+/** §1.3.2 — the first block of drop between two atoms. A kerb is cheap. */
+export const EDGE_KERB = 1;
+
+/** §1.3.2 — the linear part of a deeper drop. */
+export const EDGE_STEP = 1;
+
+/**
+ * §1.3.2 — the **superlinear** part: a ditch is dear, quadratically.
+ *
+ * Fixed by the walked fixture, not tuned: for the smallest legal atom (9
+ * columns, ~12 contact) one block of cut saves 27 and costs `12·ΔEDGE`;
+ * `ΔEDGE(0→1) = 12` and `ΔEDGE(1→2) = 24` are under it, `ΔEDGE(2→3) = 48` is
+ * over. A sliver follows the hill to a relative drop of 2 and then joins its
+ * neighbour — precisely the walked boundary, out of two weights, with no size
+ * threshold anywhere.
+ */
+export const EDGE_DITCH = 1;
+
+/** §1.3.3 — a plane **one** below its own pavement: a kerb, nearly free. */
+export const FRONT_KERB = 1;
+
+/**
+ * §1.3.3 — every further block below its own frontage: the buried door.
+ *
+ * {@link RIM_SEAT_MAX_DROP}'s content as a price instead of a threshold, the
+ * jump `1 → 7` being where "more than 2" used to live.
+ */
+export const FRONT_BURY = 6;
+
+/**
+ * §1.3.3 — every block a plane stands **above** its own pavement.
+ *
+ * Dear, but linear, because a plinth is a mistake and not a hole. This is the
+ * +1 lip Kai walked four times.
+ */
+export const FRONT_LIP = 4;
+
+/**
+ * §3.1 A4 — the most atoms one block's solve may carry.
+ *
+ * The one place the design deliberately loses fidelity (§7.4): an acropolis
+ * block with 32 blocks of relief gets 12 terraces, not 32 — a monumental
+ * terraced acropolis with ~3-block risers, well inside H1. It bounds the solve
+ * a priori: the cut graph is `ATOM_MAX · (DOMAIN_MAX − 1)` nodes at worst.
+ */
+export const ATOM_MAX = 12;
+
+/**
+ * §3.3 — the most levels one block's domain may hold.
+ *
+ * A block whose span exceeds it is a block the fabric should not have drawn at
+ * that `blockSize`. The domain truncates to the 48 values centred on the
+ * block's pristine median, the result is optimal within the truncation, and the
+ * block is counted `overSpan` in the explanation record. Measured: Troy's
+ * citadel spans 29 across the *whole quarter*, so nothing reaches this today.
+ */
+export const DOMAIN_MAX = 48;

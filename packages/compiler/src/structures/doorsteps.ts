@@ -27,9 +27,9 @@
  */
 
 import type { SeamLandings } from "../layout/district.js";
-import type { ResolvedPort } from "../layout/types.js";
+import { GROUND_V1_FREEZE, type ResolvedPort } from "../layout/types.js";
 import type { ColumnPlan } from "../terrain/columns.js";
-import type { GroundClaim } from "../layout/ground-contract.js";
+import type { GroundClaim, GroundIntent } from "../layout/ground-contract.js";
 import { driverForPlan, type GroundDriver } from "../layout/ground-driver.js";
 import { FluidKind } from "../terrain/columns.js";
 import type { Palette } from "../terrain/palette.js";
@@ -166,6 +166,8 @@ export function buildDoorsteps(input: DoorstepInput): DoorstepResult {
   let refused = 0;
   const touched = new Uint8Array(region.width * region.depth);
   const declarations: DoorstepDeclaration[] = [];
+  /** Tier D's claims, accumulated for one commit under the freeze (§6a.10 ii). */
+  const tierClaims: GroundIntent[] = [];
 
   const stepState = palette.has("road.step")
     ? palette.state("road.step")
@@ -371,15 +373,24 @@ export function buildDoorsteps(input: DoorstepInput): DoorstepResult {
       // street keeps it; the door meets a flush threshold instead.
       const source = `${port.nodePath}#doorstep@${port.ref}`;
       declarations.push({ source, columns: cuts });
-      driver.commit([
-        {
-          source,
-          sourceClass: "doorstep.landing",
-          kind: "platform",
-          columns: cuts,
-          transition: "step",
-        },
-      ]);
+      const intent = {
+        source,
+        sourceClass: "doorstep.landing" as const,
+        kind: "platform" as const,
+        columns: cuts,
+        transition: "step" as const,
+      };
+      // **One commit for the whole tier** under the freeze (§6a.10 ii). The
+      // per-door commit's stated reason — "so the next door reads the answer
+      // rather than the request" — is already dead at G6: the view is taken
+      // *once* before this loop, at `driver.view("D")`, and a tier-D commit is
+      // invisible to a tier-D reader by construction. Two doors cutting one
+      // column now settle by rank and then by claim order, the resolver's own
+      // stated tie-break, deterministically. With the flag off the per-door
+      // commit stays exactly where it was, because its write-through is still
+      // observable there and moving it would move a byte.
+      if (GROUND_V1_FREEZE) tierClaims.push(intent);
+      else driver.commit([intent]);
       // §9 step 2's second loop.
       for (const cut of cuts) {
         plan.surface[cut.idx] = stepState;
@@ -387,6 +398,9 @@ export function buildDoorsteps(input: DoorstepInput): DoorstepResult {
       }
     }
   }
+
+  // §6a.10 ii's other half: the tier's claims, in door order, as one commit.
+  if (tierClaims.length > 0) driver.commit(tierClaims);
 
   return { blocks, stepped, dropped, flush, refused, touched, declarations };
 }

@@ -75,6 +75,7 @@ import { FluidKind } from "../terrain/columns.js";
 import type { ColumnPlan } from "../terrain/columns.js";
 import type { Palette } from "../terrain/palette.js";
 import type { StructureBlock } from "./buildings.js";
+import type { ParcelDatum, ParcelRect } from "./infra-entry-declare.js";
 import { index, inside } from "./roads.js";
 
 /** One holding the structure pass is asked to lay out. */
@@ -344,6 +345,16 @@ export interface FarmPassResult {
   /** 1 on every column of a seated yard. §9.1 clears it; §9.2 dresses it. */
   readonly yardMask: Uint8Array;
   /**
+   * **The parcel layout as a datum** (§1.3, §6a.5) — the rects the packer
+   * decided, published before this pass's own `commit`.
+   *
+   * Not {@link parcelMask}: that is stamped from *resolved* ownership and is a
+   * tier-D product, so §1.4 forbids a tier-A/B/C declarer from reading it. This
+   * is the field **as laid out**, a pure function of the footprint, the ports
+   * and the baseline, and any tier may read it.
+   */
+  readonly parcelDatum: ParcelDatum;
+  /**
    * Parcel and yard rectangles, for §8's `farmParcels` seam.
    *
    * **Never the holding envelope**: the envelope is mostly untouched ground,
@@ -460,6 +471,11 @@ export function farmSettings(
  * either, because two `farm.parcel` intents are ordered by their `source`
  * strings, which are node paths and therefore unique and stable.
  */
+/** A layout rect as a {@link ParcelRect} — the datum's own four numbers. */
+function rectDatum(rect: Rect): ParcelRect {
+  return { x0: rect.x0, z0: rect.z0, x1: rect.x1, z1: rect.z1 };
+}
+
 export function buildFarms(input: FarmPassInput): FarmPassResult {
   const scan = scanOf(input);
   const farms: FarmReportRow[] = [];
@@ -565,6 +581,22 @@ export function buildFarms(input: FarmPassInput): FarmPassResult {
     });
   }
 
+  // **`ParcelDatum`** (`docs/GROUND-CONTRACT-v1.md` §1.3, §6a.5) — the parcel
+  // layout as a *datum*, published **before** the commit and therefore before
+  // any arbitration has happened to it. `seatYard` and `packParcels` decide
+  // these rects from the holding footprint, its ports and the baseline scan
+  // alone; `parcelMask` further down is a different object with a different
+  // meaning, stamped from *resolved* ownership, and a declarer at a tier above
+  // D may read this and never that. Nothing here reads `plan.ground`.
+  const parcelRects = new Map<string, readonly ParcelRect[]>();
+  for (const sow of sowable) {
+    if (sow === undefined) continue;
+    const rects: ParcelRect[] = [rectDatum(sow.yard)];
+    for (const parcel of sow.parcels) rects.push(rectDatum(parcel.rect));
+    parcelRects.set(sow.job.nodePath, rects);
+  }
+  const parcelDatum: ParcelDatum = { rectsByPath: parcelRects };
+
   if (intents.length > 0) input.ground.commit(intents);
   const resolved = intents.length === 0 ? undefined : input.ground.finish();
   const settled = farms.map((row, i) => settle(row, owned[i] ?? [], resolved));
@@ -622,6 +654,7 @@ export function buildFarms(input: FarmPassInput): FarmPassResult {
     diagnostics,
     parcelMask,
     yardMask,
+    parcelDatum,
     landUseRects,
     nodePaths: input.jobs.map((job) => job.nodePath),
     stats: {

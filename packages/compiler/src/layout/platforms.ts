@@ -53,11 +53,13 @@ import { maskRuns } from "./masks.js";
 // (`docs/GROUND-UNIFICATION-v0.md` §11.3, "one import note for 12B").
 import type { StreetDatum } from "./street-datum.js";
 import {
+  ELECTION_SOLVE,
   GROUND_TIE_SPAN,
   SEAM_TIERS,
   TERRACE_BY_TERRAIN,
   TERRACE_STEP_SPAN,
 } from "./types.js";
+import { electBlock, type QuarterElection } from "./election-solve.js";
 
 /**
  * S6 rule 3's threshold: a platform pair whose seam would need more faces than
@@ -189,6 +191,26 @@ export interface PlatformInput {
    * {@link tiered} and {@link datum} already have.
    */
   readonly terraceByTerrain?: boolean;
+  /**
+   * **The election solve's switch** — {@link ELECTION_SOLVE},
+   * `docs/ELECTION-SOLVE-v0.md`. Defaults to that constant; the parameter
+   * exists so a test may exercise the solve without moving a compile-time
+   * constant the whole compiler reads, exactly the shape {@link tiered},
+   * {@link datum} and {@link terraceByTerrain} already have.
+   *
+   * On, it **replaces** everything above from `blocksOf` down: no anchor, no
+   * span split, no terrace criterion, no storey bucket, no sliver merge. One
+   * objective per block, minimised exactly.
+   */
+  readonly electionSolve?: boolean;
+  /**
+   * §3.6's **explanation record**, filled in place when the solve runs — the
+   * same out-parameter shape {@link report} has, for the same reason.
+   *
+   * "Not diagnostics-as-nicety: a procedure can be debugged by reading it, an
+   * optimum cannot." Without this record the design is not maintainable.
+   */
+  readonly election?: QuarterElection;
 }
 
 /**
@@ -504,11 +526,72 @@ export function derivePlatforms(input: PlatformInput): FormBench[] {
   /** The lower median of a sorted list, or `undefined` — G3's "no frontage, no tie". */
   const anchorOf = (levels: readonly number[]): number | undefined =>
     levels.length === 0 ? undefined : (levels[(levels.length - 1) >> 1] as number);
+  /* --- the election solve (`ELECTION_SOLVE`) ------------------------------- */
+  // Everything below the block walk is replaced when this is on: no anchor, no
+  // span split, no terrace criterion, no storey bucket, no sliver merge. The
+  // three probes the solve needs are the three this file already had — the
+  // pristine field, the blurred step field, and `levelNear` at the lot tie's
+  // own reach — so nothing new is read and no new constant appears.
+  const electionOn = input.electionSolve ?? ELECTION_SOLVE;
+  const frontageAt = (k: number): number | undefined => {
+    if (datum === undefined) return undefined;
+    const i = k % width;
+    const j = (k - i) / width;
+    return datum.street.levelNear(bounds.x0 + i, bounds.z0 + j, datum.reach);
+  };
+  const isWet = (piece: readonly number[]): boolean =>
+    input.water !== undefined && mostlyWater(input.water, piece.map(columnAt));
+
   const benches: FormBench[] = [];
   const seen = new Uint8Array(cells);
   for (let start = 0; start < cells; start++) {
     if (blocked[start] === 1 || seen[start] === 1) continue;
     const block = component(start, cells, width, depth, seen, (k) => blocked[k] !== 1);
+    if (electionOn) {
+      const elected = electBlock({
+        id: `block.${start}`,
+        width,
+        depth,
+        block,
+        pristineAt,
+        stepAt: (k) => Math.floor(stepField()[k] as number),
+        frontageAt,
+        minColumns: MIN_PLATFORM_COLUMNS,
+        ...(input.waterFloor === undefined ? {} : { waterFloor: input.waterFloor }),
+        isWet,
+      });
+      const record = input.election;
+      if (record !== undefined) {
+        record.blocks.push(elected.record);
+        record.atoms += elected.record.atoms.length;
+        record.a3Merges += elected.record.a3Merges;
+        record.a4Merges += elected.record.a4Merges;
+        if (elected.record.overSpan) record.overSpan += 1;
+      }
+      // §1.1: adjacent atoms that end up at the same level coalesce into one
+      // platform. That is how the terrace count gets decided, and why no
+      // splitter and no merger survives — a block is one plane exactly when its
+      // atoms all wanted the same number.
+      const levelAt = new Map<number, number>();
+      for (const atom of elected.atoms) for (const k of atom.cells) levelAt.set(k, atom.level);
+      if (record !== undefined && datum !== undefined) {
+        for (const [k, level] of [...levelAt.entries()].sort((a, b) => a[0] - b[0])) {
+          const s = frontageAt(k);
+          if (s === undefined) continue;
+          const r = level - s;
+          record.residuals.set(r, (record.residuals.get(r) ?? 0) + 1);
+        }
+      }
+      const joined = new Uint8Array(cells);
+      let piece = 0;
+      for (const k0 of block) {
+        if (joined[k0] === 1) continue;
+        const level = levelAt.get(k0) as number;
+        const group = component(k0, cells, width, depth, joined, (k) => levelAt.get(k) === level);
+        push(benches, bounds, group, level, `block.${start}.${piece++}`);
+      }
+      continue;
+    }
     let lo = Number.POSITIVE_INFINITY;
     let hi = Number.NEGATIVE_INFINITY;
     for (const k of block) {
