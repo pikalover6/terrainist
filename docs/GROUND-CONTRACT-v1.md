@@ -395,6 +395,28 @@ built, and builds the rest. That is what makes "a missed seam is impossible"
 true operationally as well as by construction — the invariant proves the
 resolver enumerated it; `finishSeams` proves something stood on it.
 
+> **Amended at the G6 second stop (measured; ratified by the doc owner).**
+> This section under-specified the treatments that *shape ground*: a bank
+> raises its ring columns and a tiered stack levels its treads, and until G6
+> both did it by declaring (`verge` 140 / `retaining.skirt` 90) after the
+> derivation — claims that, under the freeze, have no write-through to land
+> in and no sixth resolve to be arbitrated by. Measured cost of pretending
+> otherwise: skirt-owned coverage collapses to masonry laid on ground the
+> resolver never moved (hellenist 134→0, pirates 106→0, harbourtown 605→0
+> cliff pairs). **Resolution (a): the transition generator is part of the
+> fifth resolve.** `deriveGroundSeams` stops being a describer: inside
+> `resolveGround`'s final pass it materialises ramp rings, eased blends and
+> tread levels directly into the resolved arrays — constrained exactly as
+> the derivation already computes (`availableRun` against the owner map; a
+> transition may shape only columns no higher-ranked claim owns), determinism
+> unchanged. §1.6's "five is the number of tiers" stands; tier E stays
+> empty; the `verge`/`retaining.skirt` *claims* those builders filed become
+> resolver-internal geometry, and the builders are what §3.1 always claimed:
+> block placers. The rejected alternatives, for the record: a sixth resolve
+> (keeps transitions as claims — two sources of truth for one geometry) and
+> a C→D-boundary derivation (cannot serve tier B, and surrenders "measured
+> from the final resolved field").
+
 The audit's confession that this replaces (`index.ts:1625-1634`, verbatim:
 `finishCutFaces` "exists precisely because passes 14–21 keep exposing faces the
 wall pass already finished") stops being true at pass 5c: after the freeze
