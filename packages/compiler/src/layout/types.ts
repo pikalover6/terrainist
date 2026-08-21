@@ -701,7 +701,7 @@ export const GROUND_V1_FREEZE = false;
  *
  * `false` is byte-identical to WP-G5.
  */
-export const TERRACE_BY_TERRAIN = false;
+export const TERRACE_BY_TERRAIN = true;
 
 /**
  * How many distinct **pristine** ground levels a block's perimeter must cross
