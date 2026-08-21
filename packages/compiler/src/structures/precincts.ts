@@ -58,6 +58,7 @@ import { driverForPlan, type GroundDriver } from "../layout/ground-driver.js";
 import type { PrismarineStack } from "../emit/prismarine.js";
 import type { Rect } from "../layout/frames.js";
 import { resolvePorts } from "../layout/ports.js";
+import { QUAY_SHED_OWN_SHORE } from "../layout/types.js";
 import type { OccupancyGrid, Placement, ResolvedPort } from "../layout/types.js";
 import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
 import type { GroundClaim } from "../layout/ground-contract.js";
@@ -1124,7 +1125,21 @@ function layOutHarbour(job: PrecinctJob, input: PrecinctPassInput, states: Preci
     let cursor = Math.max(0, ((f.uLen - 30) >> 1));
     for (const [i, shed] of sheds.entries()) {
       if (cursor + shed.width - 1 >= f.uLen) break;
-      const shedRect = frameRect(f, cursor, shedV, cursor + shed.width - 1, shedV + 11);
+      // §6a — behind *its own* frontage. See `QUAY_SHED_OWN_SHORE`: the band
+      // above is measured from the one line that reaches furthest seaward
+      // anywhere on the quay, and a shed that inherits it stands over the water
+      // on every line whose waterline cuts further inland than that.
+      const ownShore = QUAY_SHED_OWN_SHORE
+        ? minShoreOver(shore, cursor, cursor + shed.width - 1)
+        : -1;
+      const v = QUAY_SHED_OWN_SHORE
+        ? (ownShore < 0 ? -1 : ownShore - QUAY_DEPTH - 12)
+        : shedV;
+      if (v < 0) {
+        cursor += shed.width + 3;
+        continue;
+      }
+      const shedRect = frameRect(f, cursor, v, cursor + shed.width - 1, v + 11);
       buildings.push({
         nodePath: `${job.nodePath}.${shed.archetype}_${i}`,
         placement: placementAt(
@@ -1639,6 +1654,21 @@ function clampInt(raw: unknown, fallback: number, lo: number, hi: number): numbe
 }
 
 /** The largest entry of an `Int32Array`, or `-1` when it is all `-1`. */
+/**
+ * The most **landward** waterline across `[u0, u1]`, or `-1` when no line in
+ * that span has one. See `QUAY_SHED_OWN_SHORE`: `v` decreases landward, so the
+ * minimum is the line that constrains everything sharing the span.
+ */
+export function minShoreOver(shore: Int32Array, u0: number, u1: number): number {
+  let best = -1;
+  for (let u = u0; u <= u1; u++) {
+    const s = shore[u];
+    if (s === undefined || s < 0) continue;
+    if (best < 0 || s < best) best = s;
+  }
+  return best;
+}
+
 function maxOf(values: Int32Array): number {
   let best = -1;
   for (const v of values) if (v > best) best = v;

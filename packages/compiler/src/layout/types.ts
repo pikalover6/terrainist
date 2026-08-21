@@ -169,7 +169,12 @@ export type LadderRung =
    * the building slope veto refused it (`LOAM-W520`). It sits here because the
    * report has one place where "why is this node where it is" is answered.
    */
-  | "landmark_coarse_seat";
+  | "landmark_coarse_seat"
+  /**
+   * Not a v0.2 rung either: a landmark moved to the nearest feasible site to a
+   * coarse target nothing could stand on ({@link LANDMARK_COARSE_RING}).
+   */
+  | "landmark_coarse_ring";
 
 /** How one constraint fared, for the solver report. */
 export interface ConstraintReport {
@@ -873,3 +878,75 @@ export const ATOM_MAX = 12;
  * citadel spans 29 across the *whole quarter*, so nothing reaches this today.
  */
 export const DOMAIN_MAX = 48;
+
+/**
+ * A **landmark whose coarse target holds no feasible site** is seated at the
+ * *nearest* feasible site to that target, not at whichever random candidate
+ * the pool happened to sample.
+ *
+ * **The walked defect (Kai, r22 deck, `pirates_vs_unicorns`):** the prompt's
+ * two protagonists — the pirates' skull fort and the unicorns' crystal
+ * colossus — were authored `at [0.22, 0.18]` and `at [0.78, 0.82]`, one per
+ * faction. Both targets landed *inside* their own district's 160 × 150
+ * envelope, so every candidate drawn from the coarse zero-cost region was
+ * refused by the sibling-overlap veto. `buildCandidates` draws
+ * `COARSE_SAMPLE_SHARE` of the pool from that region and the rest
+ * uniformly over the whole domain — so the placement fell to ~29 uniform dice
+ * rolls across 512², and `candidateAt`'s frame clamp piles those rolls onto
+ * the region border. The fort landed at (-243, -34) and the colossus at
+ * (242, 210): both on the map edge, 163 and 110 blocks from the sites the
+ * document named, with the pirate fort nowhere near the pirate island. Moving
+ * the `at` had *no effect at all* on where either finished — measured across
+ * four variants of the archived document, the winner never moved one block.
+ *
+ * `landmarkCoarseSeat` (`LOAM-W520`) already rescues the case
+ * where the ground alone refused the target. This is the other half: when the
+ * target is refused by anything the *solver* put there — a sibling footprint,
+ * a clearance ring, a corridor reservation — the answer is still "as close to
+ * what the document asked for as the world allows", not a lottery. The solver
+ * searches outward from the target's centre in {@link COARSE_RING_STEP}-block
+ * square rings up to {@link COARSE_RING_MAX} and takes the cheapest feasible
+ * site on the first ring that holds one, and only when that site is strictly
+ * nearer the target than the candidate the ordinary pass found.
+ *
+ * Narrow by construction, and therefore cheap in byte-identity terms: only a
+ * `landmark`, only one that **declared** a coarse `at`/`zone`, only when the
+ * ordinary answer finished outside it, and only when the ring beats it on
+ * distance. A world whose landmarks already sit on their targets — or that
+ * declares none — cannot reach this code.
+ *
+ * `false` restores the r22 behaviour exactly.
+ */
+export const LANDMARK_COARSE_RING = true;
+
+/** Ring spacing for {@link LANDMARK_COARSE_RING}, in blocks. */
+export const COARSE_RING_STEP = 4;
+
+/** How far {@link LANDMARK_COARSE_RING} will search out from the target. */
+export const COARSE_RING_MAX = 224;
+
+/**
+ * A harbour's **quay sheds are seated behind their own frontage**, not behind
+ * the whole quay's deepest one.
+ *
+ * **The walked defect (Kai, r22 deck, `pirates_vs_unicorns`):** "a couple of
+ * houses partially underwater". `layOutHarbour` laid its warehouse and
+ * boathouse in one band, `maxOf(shore) - QUAY_DEPTH - 12` — measured from the
+ * single shoreline column that reached furthest **seaward** anywhere along the
+ * quay. On a straight beach that is harmless. On the ragged bank this world's
+ * strait actually produced, it is a band drawn from a headland and applied to
+ * a bay: every line whose own waterline cut further inland than the headland's
+ * had its share of the shed standing *seaward* of it, over open water, with
+ * the shed floor pinned at `quayTop` and the sea lapping through its lower
+ * courses. The quay pavement never covered them — that is claimed per line,
+ * `QUAY_DEPTH` columns behind each line's *own* `shore[u]` — so the fault is
+ * the one band the sheds share, and nothing else.
+ *
+ * With this on, each shed measures the **most landward** waterline across the
+ * columns it actually spans and sits behind that, so its seaward face lands
+ * one column inside the quay band on its worst line. A shed with no room
+ * behind its own frontage is not built rather than built into the water.
+ *
+ * `false` restores the r22 behaviour exactly.
+ */
+export const QUAY_SHED_OWN_SHORE = true;

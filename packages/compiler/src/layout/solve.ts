@@ -75,10 +75,13 @@ import {
 import { resolvePorts, rotatedSize } from "./ports.js";
 import { clampY } from "../terrain/columns.js";
 import {
+  COARSE_RING_MAX,
+  COARSE_RING_STEP,
   DEFAULT_BLEND,
   DEFAULT_CANDIDATES,
   DEFAULT_IMPROVEMENT_ROUNDS,
   DEFAULT_MAX_SLOPE,
+  LANDMARK_COARSE_RING,
   type ConstraintReport,
   type CorridorReport,
   type CoarseReport,
@@ -143,6 +146,8 @@ interface Scored {
   readonly groundOnly: boolean;
   /** This candidate is a landmark seated on its coarse target (`LOAM-W520`). */
   readonly coarseSeat?: true;
+  /** This candidate is the nearest feasible site to a blocked coarse target. */
+  readonly coarseRing?: true;
 }
 
 /** Place every structure node. */
@@ -238,6 +243,7 @@ export function solveLayout(request: LayoutRequest): LayoutResult {
       report.appliedRungs.push("landmark_coarse_seat");
       diagnostics.push(coarseSeatDiagnostic(node, best));
     }
+    if (best.coarseRing === true) report.appliedRungs.push("landmark_coarse_ring");
     if (report.appliedRungs.length === 0) report.appliedRungs.push("absorbed");
     commit(node, best, placed, report, demoted);
   }
@@ -646,7 +652,9 @@ function bestOf(
   demoted: ReadonlySet<number>,
 ): Scored | null {
   const best = cheapestFeasible(node, pool, ctx, request, demoted);
-  return landmarkCoarseSeat(node, pool, ctx, request, demoted, best) ?? best;
+  const seated = landmarkCoarseSeat(node, pool, ctx, request, demoted, best);
+  if (seated !== null) return seated;
+  return landmarkCoarseRing(node, ctx, request, demoted, best) ?? best;
 }
 
 /** The cheapest feasible candidate, or `null`. Ties break by candidate order. */
@@ -715,6 +723,87 @@ function landmarkCoarseSeat(
     if (seat === null || scored.total < seat.total - IMPROVEMENT_EPSILON) seat = scored;
   }
   return seat === null ? null : { ...seat, feasible: true, coarseSeat: true };
+}
+
+/**
+ * The anchors on one square ring of Chebyshev radius `r` about `(cx, cz)`,
+ * walked in a fixed order so the search is a pure function of its inputs.
+ * `r === 0` is the target's own centre.
+ */
+function* ringAnchors(cx: number, cz: number, r: number): Generator<Point2> {
+  if (r === 0) {
+    yield { x: cx, z: cz };
+    return;
+  }
+  for (let x = cx - r; x <= cx + r; x += COARSE_RING_STEP) {
+    yield { x, z: cz - r };
+    yield { x, z: cz + r };
+  }
+  for (let z = cz - r + COARSE_RING_STEP; z <= cz + r - COARSE_RING_STEP; z += COARSE_RING_STEP) {
+    yield { x: cx - r, z };
+    yield { x: cx + r, z };
+  }
+}
+
+/**
+ * A **landmark** whose coarse target holds no feasible site at all, seated on
+ * the nearest site that *is* feasible rather than on a random one.
+ *
+ * See {@link LANDMARK_COARSE_RING} for the walked defect and the reasoning.
+ * The two halves are deliberately separate: {@link landmarkCoarseSeat} rescues
+ * a target the **ground** refused, by relaxing the veto and standing there
+ * anyway; this rescues a target the **solver** refused — a sibling footprint,
+ * a clearance ring — where standing there anyway is not on offer, and the only
+ * honest answer is the closest ground the world will take.
+ *
+ * Cost: bounded by construction. The rings are searched outward and the first
+ * one holding a feasible site ends the search, so a target with clear ground a
+ * few blocks out costs a handful of `scoreCandidate` calls; only a target
+ * walled in for two hundred blocks pays the full sweep, and that is a world
+ * whose landmark had nowhere to go regardless.
+ */
+function landmarkCoarseRing(
+  node: LayoutNodeInput,
+  ctx: EvalContext,
+  request: LayoutRequest,
+  demoted: ReadonlySet<number>,
+  best: Scored | null,
+): Scored | null {
+  if (!LANDMARK_COARSE_RING) return null;
+  if (node.landmark !== true) return null;
+  const target = coarseTargetRegion(node, ctx);
+  if (target === null) return null;
+  if (best !== null && containsPoint(target, best.candidate.anchor)) return null;
+
+  const cx = Math.round((target.x0 + target.x1) / 2);
+  const cz = Math.round((target.z0 + target.z1) / 2);
+  const away = (p: Point2): number => {
+    const dx = p.x - cx;
+    const dz = p.z - cz;
+    return dx * dx + dz * dz;
+  };
+  // Never a *worse* answer than the one the ordinary pass found: the ring only
+  // ever moves a landmark closer to the site its document named.
+  const limit = best === null ? Infinity : away(best.candidate.anchor);
+  const yaws = node.rotations.length > 0 ? node.rotations : ([0] as readonly Yaw[]);
+
+  for (let r = 0; r <= COARSE_RING_MAX; r += COARSE_RING_STEP) {
+    let seat: Scored | null = null;
+    for (const anchor of ringAnchors(cx, cz, r)) {
+      for (const yaw of yaws) {
+        const candidate = candidateAt(node, anchor, yaw, ctx.frame);
+        // `candidateAt` clamps into the frame, so an off-map ring point folds
+        // onto the border; the distance guard is what stops that fold from
+        // winning a ring it never really stood on.
+        if (away(candidate.anchor) >= limit) continue;
+        const scored = scoreCandidate(node, candidate, ctx, request, demoted);
+        if (!scored.feasible) continue;
+        if (seat === null || scored.total < seat.total - IMPROVEMENT_EPSILON) seat = scored;
+      }
+    }
+    if (seat !== null) return { ...seat, coarseRing: true };
+  }
+  return null;
 }
 
 /** The zero-cost region a node's coarse constraints agree on, or `null`. */

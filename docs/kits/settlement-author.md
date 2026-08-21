@@ -257,6 +257,20 @@ region wet, or move the settlement onto the coast rather than drying the coast.
 Every sea, strait, bay, lake and river the prompt names must still be a body of
 water a walker can swim in when the settlement fits.
 
+**And when the prompt says *islands*, use the `island` verb.** A `plateau` edit
+raises ground; it does not surround it with sea, so two plateaus on a
+continental field are two hills on one landmass, and a `valley` cut between
+them is a river, not a strait. The walked version of this failure shipped as
+"a pirate island and a unicorn island" in which the pirates got a real island
+and the unicorns got a headland of a continent that ran off the map — so the
+war had no front and both factions' landmarks drifted onto the region border
+looking for a coast. Say it directly: one `island` edit per landmass, `at` the
+fraction that landmass belongs at, with a `radius` that leaves open water
+between them; a `seaFraction` at or above **0.55** so the field is sea-first;
+and if you cut a channel as well, give its `course` the string `"coast"` at
+**both** ends so it is a strait joining two seas rather than a river ending in
+a field.
+
 ---
 
 ## 5. `terrain.climate@0` — temperature and humidity
@@ -3185,6 +3199,46 @@ landmark yourself and it has to be *that* ground:
 A landmark pointed `at` ground that is too steep for a *building* is seated
 there anyway — a monument is not a building, and its ground is padded — with a
 `LOAM-W520` saying so. Move the target if that is not what you meant.
+
+#### The prominence law: point a set-piece at ground nothing else owns
+
+**Never point a landmark `at` a spot that lies inside a `district` or `city`
+envelope.** A settlement's envelope is enormous — a 160 × 150 box is ordinary —
+and every column of it is already spoken for, so a landmark aimed into it is
+refused at every site the target offers. The solver then seats it at the
+nearest ground it *can* take, which is a compromise, not your composition; the
+compile says `LOAM-W521 LANDMARK_COARSE_ABANDONED` and prints how far it
+walked. If the piece belongs *in* the town, make it a **child of the district**
+(the district's own landmark list) instead of a sibling with an `at`.
+
+**A prompt's protagonists go on the front, not the back.** When the prompt is
+`X versus Y` — pirates and unicorns, a horse at the gates of Troy, two
+squabbling clans — each faction's named set-piece is the thing the *other* side
+is meant to see. Put it on the shore, ridge or gate that **faces the enemy**,
+between its own settlement and the water or ground that divides them; never on
+the far side of its own island, where a walk reaches it last and reads it as
+scenery. Concretely, for a landmark belonging to a district:
+
+```json
+{ "id": "guardian_colossus", "kind": "generator", "generator": "authored:unicorn_colossus",
+  "constraints": [ { "at": [0.56, 0.72] },
+                   { "distance": { "to": "unicorn_citadel", "min": 12, "max": 60 } } ],
+  "params": { "face": { "toward": "pirate_haven" } } }
+```
+
+- the `at` fraction is **outside** `unicorn_citadel`'s envelope and on the side
+  of it that looks at the pirates;
+- the `distance` band keeps it tethered to its own faction — without a `max`
+  the nearest-feasible search is free to cross the strait and hand your
+  unicorn monument to the pirates;
+- `face.toward` names the antagonist, so the piece is squared to the
+  confrontation rather than to the ground it happens to stand on.
+
+Check your own work before you emit: for each landmark, is its `at` fraction
+outside every settlement envelope you declared, and is it on the half of its
+island that faces the other side? If not, move it — this is the single most
+common way a world reads wrong on a walk while every constraint reports
+satisfied.
 
 A **plugin** program is invoked by a `scatter.program@0` node instead, whose
 `params.program` names the id; it takes the ordinary scatter placement fields:
