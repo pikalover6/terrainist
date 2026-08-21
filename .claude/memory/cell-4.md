@@ -1,4 +1,21 @@
-# Cell 4 — current state (2026-08-20, ground-root diagnosis)
+# Cell 4 — current state (2026-08-20 late, GROUND-CONTRACT-v1 ladder)
+
+**THE REWRITE IS RATIFIED AND RUNNING: docs/GROUND-CONTRACT-v1.md**
+(one baseline, one resolve, one frozen ground; stages G0-G8). Landed:
+G0 harness d6fa8b6 (probe = acceptance bar, baselines committed);
+G1 pristine bb40eb6 (pad-set containment proven); G2 d8d4366
+(declare-only writers; terminusLandings NOT redundant — 11-col witness
+on site-plan-hillside, deletion moved to G4); G4-derive 399d5ad
+(E495 coverage invariant 0-fire; seam debt: troy 716/1648 unbuilt);
+G3 21f3c10 (classes filled behind GROUND_V1_RANKS; flag-on preview
+713→64, 447→316; city-terrace claimClass catch); ladder consolidated
+db2d48d. **IN FLIGHT: G4 flip half** (finishSeams builds, natural-blend
+banks per §7.2 ratified para, terminusLandings deletion flag-on,
+acceptance table §6/G4) → then Kai's FIRST WALK GATE of the rewrite.
+Apron call RATIFIED (delete + natural-blend policy; generator-side
+pre-blend declined). Flags all ship false until flip commits.
+Next after G4: G5 split (byte-zero), G6 freeze (hellenist 68→0),
+G7 pristine, G8 collapse. r23 deck parked (credits + old ground).
 
 **2026-08-20 (late): Kai's verdict on r22tie = wack-a-mole; ratified
 appetite for a ROOT REWRITE.** Probe-first diagnosis DONE, consult
