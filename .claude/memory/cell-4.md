@@ -9,13 +9,19 @@ on site-plan-hillside, deletion moved to G4); G4-derive 399d5ad
 (E495 coverage invariant 0-fire; seam debt: troy 716/1648 unbuilt);
 G3 21f3c10 (classes filled behind GROUND_V1_RANKS; flag-on preview
 713→64, 447→316; city-terrace claimClass catch); ladder consolidated
-db2d48d. **IN FLIGHT: G4 flip half** (finishSeams builds, natural-blend
-banks per §7.2 ratified para, terminusLandings deletion flag-on,
-acceptance table §6/G4) → then Kai's FIRST WALK GATE of the rewrite.
-Apron call RATIFIED (delete + natural-blend policy; generator-side
-pre-blend declined). Flags all ship false until flip commits.
-Next after G4: G5 split (byte-zero), G6 freeze (hellenist 68→0),
-G7 pristine, G8 collapse. r23 deck parked (credits + old ground).
+db2d48d. **THE G4 FLIP IS SHIPPED (5bb259b)**: RANKS+SEAMS true; troy
+verge/verge 1164→19; coverage 0 uncovered ×3; flip triage fixed
+T110-fatal (water floor learns the stack) + minted I12 (tier-A/A
+write-order, G6 kills). **WALK DECK INSTALLED: *_r22g4** (config
+row 65eac7b). Known walk debts (all G6): citadel W413=27, quay 118
+dressed-not-flattened, S9 orphan treads = "stairs to nowere" risk.
+**IN FLIGHT: G5 split (byte-zero law)**. Then G6 freeze (I12 dies,
+hellenist 68→0, terminus absorbed, W413≤5 expected), G7 pristine
++ natural-blend banks (ratified), G8 collapse. BLITZ MODE (Kai,
+~4h, uncapped agents): content branch claude/content-packs-r1 at
+d3d4193 (6 packs, 281→373 members, NOT merged — Kai's call);
+claude/empty-block-freerect (24cb2c1) parked ditto. r23 still
+credit-blocked. Apron call RATIFIED (delete + natural-blend).
 
 **2026-08-20 (late): Kai's verdict on r22tie = wack-a-mole; ratified
 appetite for a ROOT REWRITE.** Probe-first diagnosis DONE, consult
