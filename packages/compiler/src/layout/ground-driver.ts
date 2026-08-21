@@ -47,20 +47,21 @@
  * behaves exactly as WP-G5 shipped it, which is what the byte-identity control
  * set pins.
  *
- * **The flag is not yet wired into `structures/index.ts`** — the pipeline still
- * declares in pipeline order, and three passes (`buildInfraEntries`'
- * `declareWaterWorks` at tier A and `declareRun` at tier C, and
- * `buildDoorsteps` at tier D) declare from the *build* half, downstream of
- * passes whose tier is higher. Turning the flag on before those declarations
- * move across the WP-G5 seam trips {@link AccumulatingDriver}'s own tier-order
- * assertion, deliberately: a silently non-prefix prefix is the one failure this
- * whole construction exists to make impossible.
+ * **Every declarer is across the WP-G5 seam** as of G6a and §7.1: the
+ * infra-entry water works and sweeps, the doorstep walk, and — last of all —
+ * the authored programs' siting and their `prop.pad` claims, which G6-r4 moved
+ * to pass 5b″ (`declarePrograms`). The tier-order assertion in
+ * {@link AccumulatingDriver.absorb} is what found each of them in turn, and it
+ * found them by throwing: a silently non-prefix prefix is the one failure this
+ * whole construction exists to make impossible, so it is the one failure that
+ * is loud.
  */
 
 import type { ColumnPlan } from "../terrain/columns.js";
 
 import {
   GROUND_TIERS,
+  type ReadonlyUint8Array,
   type GroundBaseline,
   type GroundClaim,
   type GroundIntent,
@@ -103,6 +104,26 @@ export interface GroundDriver {
 
   /** An unconverted pass's shadow declaration. Accumulates; writes nothing. */
   record(intents: readonly GroundIntent[]): void;
+  /**
+   * **A builder's built-set** (§3.3), for the resolve that generates.
+   *
+   * Called once, by the retaining pass's declaring half, with the served-seam
+   * mask it publishes. The generator inside the fifth resolve must skip exactly
+   * the runs `finishSeams` will skip, and the mask is the only evidence of that
+   * either of them has — see {@link ResolveOptions.built}.
+   *
+   * **Copied on receipt**, and that is not defensive tidiness: `retaining.seam`
+   * is also a *sink* — `buildDerivedSeams` sets a bit for every column of
+   * masonry it lays in the building half — so a mask held by reference would
+   * mean the fifth resolve and the equivalence shim's re-resolve of the same
+   * intents were computed against two different built-sets. Measured, on the
+   * first attempt: troy's `written vs resolved` went 0 → 862 with 772 of the
+   * mismatches on `verge` columns, which are precisely the generator's own
+   * ramp rings deciding differently the second time.
+   */
+  reportBuilt(mask: ReadonlyUint8Array): void;
+  /** The built-set {@link reportBuilt} was given, for the equivalence shim. */
+  readonly built: ReadonlyUint8Array | undefined;
   /** A converted pass's claims. Accumulates, resolves, and writes them through. */
   commit(intents: readonly GroundIntent[]): void;
   /**
@@ -180,6 +201,38 @@ export function driverForPlan(plan: ColumnPlan): GroundDriver {
 }
 
 /**
+ * **A plan at one tier's prefix** — v1 §1.4's view, in the shape the passes
+ * that were never converted still ask for.
+ *
+ * A converted pass takes a {@link GroundView} and reads `view.ground`. A pass
+ * the contract governs but has not typed — the authored-program siting, whose
+ * `planProgramSites`, `conformSeatPlane` and `nodeLocalHeight` all reach into a
+ * `ColumnPlan` — takes the plan itself, and under the freeze the plan's arrays
+ * are the *baseline* until pass 5c writes them. Handing such a pass `plan`
+ * would have it site against ground three tiers out of date; handing it this
+ * alias hands it exactly what §1.4 entitles it to.
+ *
+ * Everything but the three arrays is the plan's own object, live and shared:
+ * `surface`, `subsurface`, `snow` and `occupancy` are material, not level, and
+ * the contract has nothing to say about them.
+ *
+ * The one cast in the ground stage, and it is here so it is in one place: a
+ * `GroundView` hands its arrays out `readonly` precisely so a holder cannot
+ * write through its own read, and a `ColumnPlan` field is a mutable
+ * `Int32Array`. The alias is handed only to the **declaring** half of a pass,
+ * which writes no level by construction — that is what "declaring half" means —
+ * and §10's typed `ColumnPlan.ground` is what removes the cast for good.
+ */
+export function planAt(plan: ColumnPlan, view: GroundView): ColumnPlan {
+  return {
+    ...plan,
+    ground: view.ground as Int32Array,
+    fluidTop: view.fluidTop as Int32Array,
+    fluidKind: view.fluidKind as Uint8Array,
+  };
+}
+
+/**
  * A resolve's three arrays as a {@link GroundView} — §1.4's two cases in one
  * object.
  *
@@ -225,6 +278,8 @@ class AccumulatingDriver implements GroundDriver {
   private currentTier = 0;
   /** True once {@link freeze} has aliased the plan onto the fifth resolve. */
   private frozen = false;
+  /** §3.3's built-set, or `undefined` until a builder publishes one. */
+  built: ReadonlyUint8Array | undefined;
 
   constructor(baseline: GroundBaseline, plan: ColumnPlan) {
     this.baseline = baseline;
@@ -248,6 +303,10 @@ class AccumulatingDriver implements GroundDriver {
 
   record(intents: readonly GroundIntent[]): void {
     this.absorb(intents);
+  }
+
+  reportBuilt(mask: ReadonlyUint8Array): void {
+    this.built = Uint8Array.from(mask);
   }
 
   commit(intents: readonly GroundIntent[]): void {
@@ -381,7 +440,10 @@ class AccumulatingDriver implements GroundDriver {
 
   private resolve(intents: readonly GroundIntent[], generate = false): ResolvedGround {
     this.resolves++;
-    return resolveGround(this.baseline, intents, { generate });
+    return resolveGround(this.baseline, intents, {
+      generate,
+      ...(this.built === undefined ? {} : { built: this.built }),
+    });
   }
 
   finish(): ResolvedGround {

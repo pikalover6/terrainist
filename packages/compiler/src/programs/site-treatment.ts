@@ -49,8 +49,11 @@ import { MAX_FOUNDATION_DEPTH, type StructureBlock } from "../structures/buildin
 import {
   PROP_MAX_RELIEF,
   PROP_PAD_SKIRT,
-  levelPropPad,
-  levelPropPadUndeclared,
+  decidePropPad,
+  paintPropPad,
+  propPadIntent,
+  propPadRelief,
+  type PropPadColumn,
 } from "../structures/props.js";
 
 /**
@@ -179,36 +182,112 @@ export interface SiteTreatmentInput {
  * which is what keeps a plugin on a plain exactly as cheap as it was.
  */
 export function treatProgramSite(input: SiteTreatmentInput): StructureBlock[] {
+  const decided = decideProgramSite(input);
+  if (decided === undefined) return [];
+  for (const column of decided.pad) input.declare?.push({ idx: column.idx, y: column.want });
+  for (const column of decided.apron) input.declare?.push({ idx: column.idx, y: column.want });
+  const driver = input.ground;
+  if (driver !== undefined && decided.intents.length > 0) driver.commit(decided.intents);
+  return paintProgramSite(input.plan, decided, driver === undefined);
+}
+
+/* -------------------------------------------------------------------------- */
+/* WP-G6 §7.1 — the same treatment, decided at 5b and laid at 5f              */
+/* -------------------------------------------------------------------------- */
+
+/** One column of graded apron, decided but not yet laid. */
+export interface ProgramApronColumn {
+  readonly idx: number;
+  readonly x: number;
+  readonly z: number;
+  /** The level the apron asks for. */
+  readonly want: number;
+  /** The ground under it **before** the apron, which the fill starts one above. */
+  readonly g: number;
+}
+
+/**
+ * One site's treatment, **decided**: which columns the pad and its apron would
+ * fill, to what level, from what ground, and the `prop.pad` claims that says.
+ *
+ * The whole reason this type exists is time. Under {@link GROUND_V1_FREEZE} an
+ * authored program's `prop.pad` is a tier-D declaration and therefore has to be
+ * filed at pass 5b, before the fifth resolve seals the ground; its blocks
+ * cannot be laid until 5f, when the run they carry has been executed against
+ * the ground the resolver actually decided. Between the two the decision is
+ * this object — and it is the decision taken against `view("D")`, which is what
+ * a tier-D declarer is entitled to read (§1.4).
+ */
+export interface ProgramSiteTreatment {
+  readonly pad: readonly PropPadColumn[];
+  readonly apron: readonly ProgramApronColumn[];
+  /** The pad claim and the apron claim, in that order. Either may be absent. */
+  readonly intents: readonly GroundIntent[];
+}
+
+/**
+ * **The decision half** of {@link treatProgramSite}: pure, reads `input.plan`,
+ * writes nothing and declares nothing.
+ *
+ * `undefined` when the site is flat enough that neither pad nor apron is owed —
+ * the pad's own gate, asked here as well, because the apron only exists to
+ * grade out of a pad and a site the pad refuses gets no apron either.
+ */
+export function decideProgramSite(input: SiteTreatmentInput): ProgramSiteTreatment | undefined {
   const { plan, footprint, baseY } = input;
   const top = baseY - 1;
+  const relief = propPadRelief(plan, footprint, baseY);
+  if (relief <= PROP_MAX_RELIEF) return undefined;
 
-  // The pad's own gate, asked here as well: the apron only exists to grade out
-  // of a pad, so a site the pad refuses gets no apron either.
-  let relief = 0;
-  for (let z = footprint.z0; z <= footprint.z1; z++) {
-    for (let x = footprint.x0; x <= footprint.x1; x++) {
-      const idx = indexOf(plan, x, z);
-      if (idx === undefined) continue;
-      relief = Math.max(relief, top - (plan.ground[idx] as number));
-    }
-  }
-  if (relief <= PROP_MAX_RELIEF) return [];
-
-  // WP-G2: `levelPropPad` takes its driver by type; the undeclared entry point
-  // is named. Authored programs may run with or without one (`compile.ts`
-  // §7.1), so the choice is made here, once, and neither arm changes behaviour.
-  const padGround = {
-    source: input.source,
-    ...(input.declare === undefined ? {} : { declare: input.declare }),
-  };
-  const blocks =
-    input.ground === undefined
-      ? levelPropPadUndeclared(plan, footprint, baseY, padGround)
-      : levelPropPad(plan, footprint, baseY, { ...padGround, driver: input.ground });
-
-  // `relief` is the deepest fill the pad just laid — how far its outer face has
+  const pad = decidePropPad(plan, footprint, baseY);
+  // `relief` is the deepest fill the pad will lay — how far its outer face has
   // to come back down — which is exactly what the apron is sized on.
-  for (const block of gradeApron(input, top, relief)) blocks.push(block);
+  const apron = decideApron(input, top, relief);
+  const intents: GroundIntent[] = [];
+  const padIntent = propPadIntent(input.source, pad);
+  if (padIntent !== undefined) intents.push(padIntent);
+  if (apron.length > 0) {
+    intents.push({
+      source: `${input.source}.apron`,
+      sourceClass: "prop.pad",
+      kind: "platform",
+      columns: apron.map((c) => ({ idx: c.idx, y: c.want })),
+      // The apron *is* the transition: it asks to be absorbed as a ramp, so a
+      // neighbour that disagrees about the level meets a slope rather than the
+      // step the pad's own edge would otherwise leave.
+      transition: "ramp",
+    } satisfies GroundIntent);
+  }
+  return { pad, apron, intents };
+}
+
+/**
+ * **The painting half**: the pad's blocks then the apron's, in the order
+ * {@link treatProgramSite} has always emitted them.
+ *
+ * `write` is true only off the contract's path — the terrarium, the exhibits,
+ * the gate — exactly as in {@link paintPropPad}.
+ */
+export function paintProgramSite(
+  plan: ColumnPlan,
+  decided: ProgramSiteTreatment,
+  write: boolean,
+): StructureBlock[] {
+  const blocks = paintPropPad(plan, decided.pad, write);
+  for (const { idx, x, z, want, g } of decided.apron) {
+    const fill = plan.subsurface[idx] as number;
+    const cap = plan.surface[idx] as number;
+    for (let y = g + 1; y <= want; y++) {
+      blocks.push({ x, y, z, stateId: y === want ? cap : fill });
+    }
+    plan.surface[idx] = cap;
+    if (!write) continue;
+    plan.ground[idx] = want;
+    plan.fluidTop[idx] = want;
+    // Fresh ground carries no snow layer; re-laying it is the climate pass's
+    // business. Left alone, the emitter floats the old one.
+    plan.snow[idx] = 0;
+  }
   return blocks;
 }
 
@@ -224,13 +303,16 @@ export function treatProgramSite(input: SiteTreatmentInput): StructureBlock[] {
  * outermost ring asks for the ground the pad grew out of. That is the property
  * the pad's hard edge lacked and the one `program-pad.test.ts` measures.
  */
-function gradeApron(input: SiteTreatmentInput, top: number, lift: number): StructureBlock[] {
+function decideApron(
+  input: SiteTreatmentInput,
+  top: number,
+  lift: number,
+): readonly ProgramApronColumn[] {
   const { plan, footprint } = input;
-  const out: StructureBlock[] = [];
   const rings = programApronRings(footprint, lift);
   const inner = PROP_PAD_SKIRT;
   const outer = inner + rings;
-  const columns: { idx: number; x: number; z: number; want: number; g: number }[] = [];
+  const columns: ProgramApronColumn[] = [];
   // Row-major over the whole apron band, so the block list is a pure function
   // of the geometry rather than of the order the rings were walked in.
   for (let z = footprint.z0 - outer; z <= footprint.z1 + outer; z++) {
@@ -249,40 +331,7 @@ function gradeApron(input: SiteTreatmentInput, top: number, lift: number): Struc
       columns.push({ idx, x, z, want, g });
     }
   }
-  if (columns.length === 0) return out;
-
-  for (const column of columns) input.declare?.push({ idx: column.idx, y: column.want });
-  const driver = input.ground;
-  if (driver !== undefined) {
-    driver.commit([
-      {
-        source: `${input.source}.apron`,
-        sourceClass: "prop.pad",
-        kind: "platform",
-        columns: columns.map((c) => ({ idx: c.idx, y: c.want })),
-        // The apron *is* the transition: it asks to be absorbed as a ramp, so a
-        // neighbour that disagrees about the level meets a slope rather than the
-        // step the pad's own edge would otherwise leave.
-        transition: "ramp",
-      } satisfies GroundIntent,
-    ]);
-  }
-
-  for (const { idx, x, z, want, g } of columns) {
-    const fill = plan.subsurface[idx] as number;
-    const cap = plan.surface[idx] as number;
-    for (let y = g + 1; y <= want; y++) {
-      out.push({ x, y, z, stateId: y === want ? cap : fill });
-    }
-    plan.surface[idx] = cap;
-    if (driver !== undefined) continue;
-    plan.ground[idx] = want;
-    plan.fluidTop[idx] = want;
-    // Fresh ground carries no snow layer; re-laying it is the climate pass's
-    // business. Left alone, the emitter floats the old one.
-    plan.snow[idx] = 0;
-  }
-  return out;
+  return columns;
 }
 
 /** Everything {@link underpinProgramInstance} reads. */

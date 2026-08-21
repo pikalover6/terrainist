@@ -99,6 +99,12 @@ export interface SeamGeometryInput {
   readonly intents: readonly GroundIntent[];
   /** The derivation, in its canonical row-major order. */
   readonly transitions: readonly DerivedSeam[];
+  /**
+   * §3.3's **built-set**: 1 on every column a builder reports standing on.
+   * See {@link ResolveOptions.built} for why it is handed in rather than read
+   * off the owner map, and what reading the owner map cost.
+   */
+  readonly built?: ReadonlyUint8Array;
 }
 
 /**
@@ -150,10 +156,11 @@ export function generateSeamGeometry(input: SeamGeometryInput): GroundIntent[] {
     // S7's absorption, verbatim: a run shorter than `MIN_RETAIN_RUN` is a step in
     // the ground, never a construction that failed to fit.
     if (t.cells.length < MIN_RETAIN_RUN) continue;
-    // §3.3's built-set, read off the owner map: where the retaining pass already
-    // stands on a majority of the run it declared those columns itself, and the
-    // generator would be shaping ground a tier-B claim has already decided.
-    if (alreadyRetained(t, classOf)) continue;
+    // §3.3's built-set: where a builder already stands on a majority of the run,
+    // the generator would be shaping ground that is about to have masonry laid
+    // on it — and `finishSeams` filters its complement by the same test, so the
+    // two halves cover the transition list exactly once between them.
+    if (alreadyRetained(t, input.built, classOf)) continue;
 
     const above = upperSideOf(t, input);
     if (above === null) continue;
@@ -191,19 +198,39 @@ export function generateSeamGeometry(input: SeamGeometryInput): GroundIntent[] {
 }
 
 /**
- * Whether the retaining pass already stands on this run.
+ * Whether some builder already stands on this run — `reportedBuilt`'s question,
+ * asked of the same mask and by the same **majority** rule (a wall clipping the
+ * end of a hundred-column contour has not served it).
  *
- * The owner map's answer to `reportedBuilt`'s `seam` mask, and the same
- * **majority** rule: a wall clipping the end of a hundred-column contour has not
- * served it. It is available here and the mask is not, because the pass declares
- * every column it stands on at `retaining.seam` / `retaining.skirt` — which is
- * §3.1 refinement 2's whole point, one construction over.
+ * **G6-r4's reconciliation.** r3 asked the *owner map* instead, on the argument
+ * that the retaining pass declares every column it stands on. It does — but a
+ * declared column is not a won one: a footprint at rank 10 or a plaza at 30
+ * takes columns a skirt at 70 asked for, and on those the owner map says
+ * `building.footprint` and the generator files a bank across ground a wall is
+ * already standing in. `finishSeams` then correctly refuses to build the run a
+ * second time (it filters on the mask), so the geometry stands alone and the
+ * masonry the mask promised never arrives — the two halves disagreeing about
+ * the same set. Pirates measured it exactly: `retaining.skirt`-owned cliff pairs
+ * 106 → 29 with the town's ground pairs rising 343 → 482.
+ *
+ * The mask is authoritative when it is present. The owner-map reading survives
+ * as the fallback for a caller with no built-set to hand in — the unit tests and
+ * any resolve outside the settlement pipeline — where it is the only evidence
+ * there is.
  */
-function alreadyRetained(t: DerivedSeam, classOf: (k: number) => string | null): boolean {
+function alreadyRetained(
+  t: DerivedSeam,
+  built: ReadonlyUint8Array | undefined,
+  classOf: (k: number) => string | null,
+): boolean {
   let served = 0;
-  for (const k of t.cells) {
-    const c = classOf(k);
-    if (c !== null && RETAINING_CLASSES.has(c)) served++;
+  if (built !== undefined) {
+    for (const k of t.cells) if ((built[k] as number) === 1) served++;
+  } else {
+    for (const k of t.cells) {
+      const c = classOf(k);
+      if (c !== null && RETAINING_CLASSES.has(c)) served++;
+    }
   }
   return served * 2 >= t.cells.length;
 }

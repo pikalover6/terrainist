@@ -66,6 +66,8 @@ import {
 } from "@terrainist/spec";
 import {
   buildPrograms,
+  declarePrograms,
+  executePrograms,
   coarseHintArea,
   planLandmarkSite,
   planHoverSite,
@@ -73,8 +75,10 @@ import {
   remeasureLandmarkFacings,
   type PlacedProgram,
   type ProgramFacing,
+  type ProgramDeclaration,
   type ProgramJob,
   type ProgramPlacement,
+  type ProgramPassInput,
   type ProgramPassResult,
   type ProgramRotation,
 } from "../programs/index.js";
@@ -109,7 +113,7 @@ import type {
   GroundPristineMeasurement,
 } from "../layout/ground-equivalence.js";
 import { declarePads } from "../layout/ground-declarers.js";
-import { createGroundDriver, type GroundDriver } from "../layout/ground-driver.js";
+import { createGroundDriver, planAt, type GroundDriver } from "../layout/ground-driver.js";
 import { GROUND_V1_FREEZE } from "../layout/types.js";
 
 import { EMIT_MINECRAFT_VERSION } from "../emit/world.js";
@@ -943,6 +947,48 @@ async function compileValidated(
   // pass has just finished filling in.
   const tStruct = now();
   let structures: StructurePassResult | undefined;
+  // **The authored programs' declaring half, hoisted** (contract v1 §7.1).
+  //
+  // `prop.pad` is tier D, and pass 5f is a hundred passes past the seal — so
+  // under the freeze the siting and the claims have to happen *here*, between
+  // `declareStructures` and `freeze()`, and only the execution stays at 5f.
+  // Both are filled in below; with the flag off they stay empty and the whole
+  // pass runs uncut at its old position, which is what keeps that state
+  // byte-identical.
+  let programJobs: readonly ProgramJob[] = [];
+  let programJobsPlanned = false;
+  let programDeclaration: ProgramDeclaration | undefined;
+  /**
+   * Which authored-program nodes this document asks for, and how each is
+   * turned — the input both halves share.
+   *
+   * `groundPlan` is what a landmark's site is measured against: `plan` on the
+   * uncut path, and `planAt(plan, view("D"))` on the cut one, because a tier-D
+   * declarer reads tiers A through C and not the un-resolved baseline the plan
+   * still holds before pass 5c.
+   */
+  const planProgramJobs = (groundPlan: ColumnPlan): readonly ProgramJob[] => {
+    // The scattered half of the facing question, and it is asked *here* rather
+    // than beside the landmarks': a scatter's instances are placed inside this
+    // pass, after the solve, so the nodes it faces have real sites to be
+    // measured against by then.
+    const scatterFacings = planProgramFacings({
+      doc,
+      rootPath,
+      region,
+      worldSeed,
+      scope: "plugin",
+      placements: layoutOutcome?.placements ?? [],
+    });
+    diagnostics.push(...scatterFacings.diagnostics);
+    return programJobsFrom(doc, rootPath, layoutOutcome?.placements ?? [], diagnostics, {
+      plan: groundPlan,
+      worldSeed,
+      solved: isSettlement(doc),
+      rotations: landmarkRotations,
+      facings: scatterFacings.facings,
+    });
+  };
   // Nothing placed means nothing to build *and* nothing to connect, and the
   // report must stay identical to a terrain-profile compile's in that case.
   if (
@@ -996,8 +1042,35 @@ async function compileValidated(
         : {}),
     };
     const structurePlan = declareStructures(structureInput);
+    // **Pass 5b″ — the authored programs declare** (contract v1 §7.1). After
+    // every other tier-D declarer and before the seal, which is the only window
+    // there is: `resolveSites` reads the ground of tiers A through C through
+    // `planAt(plan, view("D"))`, `decideProgramSite` decides each site's pad and
+    // apron against that same ground, and the claims go in as `prop.pad`. Not
+    // one block is laid here — `executePrograms` does that at 5f, over the
+    // resolved ground, which is what finally makes `api.heightAt` show a
+    // program the pad it is standing on.
+    if (GROUND_V1_FREEZE) {
+      programJobs = planProgramJobs(planAt(plan, groundDriver.view("D")));
+      programJobsPlanned = true;
+      if (programJobs.length > 0) {
+        programDeclaration = declarePrograms({
+          jobs: programJobs,
+          plan: planAt(plan, groundDriver.view("D")),
+          stack,
+          worldSeed,
+          ...(occupancy === undefined ? {} : { occupancy }),
+          reserved: layoutOutcome.placements.map((p) => p.footprint),
+          ground: groundDriver,
+          ...(structurePlan.districts.some((d) => d.datum !== undefined)
+            ? { datums: structurePlan.districts.map((d) => d.datum) }
+            : {}),
+        });
+      }
+    }
     // **Pass 5c — the freeze** (contract v1 §1.6). The one place it can go: the
-    // declaring half has just finished, so the fifth resolve is over the whole
+    // declaring half has just finished — including §7.1's program siting above,
+    // the last `prop.pad` there is — so the fifth resolve is over the whole
     // declaration set, and the building half has not started, so nothing has
     // read a level yet. `freeze()` writes the resolver's three arrays over
     // `plan.ground`/`.fluidTop`/`.fluidKind` and applies v0 §1.3's `moved` snow
@@ -1026,7 +1099,14 @@ async function compileValidated(
   const shimResolved =
     groundDriver === undefined || groundBaseline === undefined || options.groundEquivalence !== true
       ? undefined
-      : resolveGround(groundBaseline, groundDriver.intents, { generate: GROUND_V1_FREEZE });
+      : resolveGround(groundBaseline, groundDriver.intents, {
+          generate: GROUND_V1_FREEZE,
+          // The same built-set the driver's own fifth resolve was given: the
+          // shim's whole value is that it recomputes the driver's answer from
+          // the outside, and an answer computed from a different built-set is a
+          // different question.
+          ...(groundDriver.built === undefined ? {} : { built: groundDriver.built }),
+        });
   const groundEquivalence: GroundEquivalenceOutcome | undefined =
     groundDriver === undefined ||
     groundBaseline === undefined ||
@@ -1078,34 +1158,21 @@ async function compileValidated(
   // ordinary structure blocks from here on.
   const tPrograms = now();
   let programs: ProgramPassResult | undefined;
-  let programJobs: readonly ProgramJob[] = [];
   {
     // The bespoke tier is legal in both profiles. A settlement landmark takes
     // the site the solver reserved; a terrain-profile one has no solver, so its
     // site comes from the ground (see `planLandmarkSite`).
-    // The scattered half of the facing question, and it is asked *here* rather
-    // than beside the landmarks': a scatter's instances are placed inside this
-    // pass, after the solve, so the nodes it faces have real sites to be
-    // measured against by then.
-    const scatterFacings = planProgramFacings({
-      doc,
-      rootPath,
-      region,
-      worldSeed,
-      scope: "plugin",
-      placements: layoutOutcome?.placements ?? [],
-    });
-    diagnostics.push(...scatterFacings.diagnostics);
-    const jobs = programJobsFrom(doc, rootPath, layoutOutcome?.placements ?? [], diagnostics, {
-      plan,
-      worldSeed,
-      solved: isSettlement(doc),
-      rotations: landmarkRotations,
-      facings: scatterFacings.facings,
-    });
-    programJobs = jobs;
+    //
+    // The jobs are planned here on the uncut path and were planned at 5b″ on
+    // the cut one (§7.1); either way `programJobs` is the same list, from the
+    // same call, and only the ground it was measured against differs.
+    if (!programJobsPlanned) {
+      programJobs = planProgramJobs(plan);
+      programJobsPlanned = true;
+    }
+    const jobs = programJobs;
     if (jobs.length > 0) {
-      programs = buildPrograms({
+      const programInput: ProgramPassInput = {
         jobs,
         plan,
         stack,
@@ -1125,7 +1192,13 @@ async function compileValidated(
         ...(structures?.districts.some((d) => d.datum !== undefined) === true
           ? { datums: structures.districts.map((d) => d.datum) }
           : {}),
-      });
+      };
+      // **Pass 5f** (§7.1). `executePrograms` when the siting and the claims
+      // already happened at 5b″; the uncut `buildPrograms` otherwise.
+      programs =
+        programDeclaration === undefined
+          ? buildPrograms(programInput)
+          : executePrograms(programInput, programDeclaration);
       diagnostics.push(...programs.diagnostics);
       // What a program stands on is claimed ground: the scatter that follows
       // must not plant a tree through a saucer.

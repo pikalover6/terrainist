@@ -155,6 +155,7 @@ export function resolveGround(
       owner: first.owner,
       intents,
       transitions: seams,
+      ...(options.built === undefined ? {} : { built: options.built }),
     });
     if (generated.length === 0) return { ...first, seams };
     const shaped = resolveGround(baseline, [...intents, ...generated]);
@@ -534,6 +535,25 @@ export interface ResolveOptions {
    * them would make `view(tier)` report a ramp no claim has asked for yet.
    */
   readonly generate?: boolean;
+  /**
+   * **The built-set** the generator must not shape for (§3.3): 1 on every column
+   * a builder reports already standing on.
+   *
+   * At HEAD that is the retaining pass's served-seam mask, and it is the same
+   * array `finishSeams` filters its complement by. Handing it in is what makes
+   * the two agree: the generator shapes ground for exactly the transitions
+   * `finishSeams` will build, so no run gets geometry *and* masonry and no run
+   * gets masonry with no geometry under it.
+   *
+   * G6-r3 read the built-set off the owner map instead, on the argument that a
+   * retaining pass declares every column it stands on. It does — but a column it
+   * stands on can be *won* by a rank above it (a footprint at 10, a plaza at 30),
+   * and then the owner map does not say `retaining.*` and the generator files a
+   * ramp over a wall. That is measurable: pirates' `retaining.skirt`-owned cliff
+   * pairs fell 106 → 29 while its town-ground pairs rose 343 → 482, which is the
+   * same runs counted twice.
+   */
+  readonly built?: ReadonlyUint8Array;
 }
 
 /* -------------------------------------------------------------------------- */

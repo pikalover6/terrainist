@@ -55,7 +55,7 @@ import { error, warning, type LoamDiagnostic } from "@terrainist/spec";
 import { isZoneToken } from "../layout/frames.js";
 import { jitteredZonePoint, type Frame, type Point2, type Rect } from "../layout/frames.js";
 import type { OccupancyGrid } from "../layout/types.js";
-import type { GroundClaim } from "../layout/ground-contract.js";
+import type { GroundClaim, GroundIntent } from "../layout/ground-contract.js";
 import type { GroundDriver } from "../layout/ground-driver.js";
 import type { StreetDatum } from "../layout/street-datum.js";
 import type { PrismarineStack } from "../emit/prismarine.js";
@@ -720,8 +720,18 @@ export interface PropPadGround {
   readonly declare?: GroundClaim[];
 }
 
-/** One column of pad, decided but not yet laid. */
-interface PadColumn {
+/**
+ * One column of pad, **decided but not yet laid**.
+ *
+ * The type is exported because WP-G6 pulls the two halves of a pad apart in
+ * time (§7.1): under {@link GROUND_V1_FREEZE} an authored program's pad is
+ * *decided* at pass 5b, where `prop.pad` is still a legal tier-D declaration,
+ * and *laid* at 5f, after the freeze. Between the two the decision has to
+ * survive as data — and it has to be the decision made against the ground the
+ * declarer read, because `g` is where the fill starts and after the freeze
+ * `plan.ground` is the level the pad itself asked for.
+ */
+export interface PropPadColumn {
   readonly idx: number;
   readonly x: number;
   readonly z: number;
@@ -793,14 +803,16 @@ export function levelPropPadUndeclared(
   return padColumns(plan, rect, baseY, ground, undefined);
 }
 
-function padColumns(
-  plan: ColumnPlan,
-  rect: Rect,
-  baseY: number,
-  ground: PropPadGround,
-  driver: GroundDriver | undefined,
-): StructureBlock[] {
-  const out: StructureBlock[] = [];
+/**
+ * The deepest fill a pad at `baseY` would have to lay under `rect` — the pad's
+ * own gate, and the thing an apron is sized on.
+ *
+ * Split out because three callers ask the identical question against three
+ * different grounds ({@link decidePropPad} here, `treatProgramSite`'s gate and
+ * `programApronRings`' `lift`), and asking it twice from two loops is how the
+ * gate and the apron come to disagree about whether a site is rough.
+ */
+export function propPadRelief(plan: ColumnPlan, rect: Rect, baseY: number): number {
   const top = baseY - 1;
   let relief = 0;
   for (let z = rect.z0; z <= rect.z1; z++) {
@@ -810,7 +822,24 @@ function padColumns(
       relief = Math.max(relief, top - (plan.ground[idx] as number));
     }
   }
-  if (relief <= PROP_MAX_RELIEF) return out;
+  return relief;
+}
+
+/**
+ * **The decision half of a pad** (§3.10b, split in time at WP-G6 §7.1).
+ *
+ * Which columns a pad at `baseY` would fill, to what level, from what ground.
+ * Pure: it reads `plan` and writes nothing, declares nothing and emits no
+ * block. Empty when the site is flatter than {@link PROP_MAX_RELIEF}, which is
+ * what keeps a cart exactly as cheap as it has always been.
+ */
+export function decidePropPad(
+  plan: ColumnPlan,
+  rect: Rect,
+  baseY: number,
+): readonly PropPadColumn[] {
+  const top = baseY - 1;
+  if (propPadRelief(plan, rect, baseY) <= PROP_MAX_RELIEF) return [];
 
   const skirted: Rect = {
     x0: rect.x0 - PROP_PAD_SKIRT,
@@ -820,7 +849,7 @@ function padColumns(
   };
   // Sorted iteration by construction: the loops are the order, so the block
   // list is a pure function of the geometry.
-  const pad: PadColumn[] = [];
+  const pad: PropPadColumn[] = [];
   for (let z = skirted.z0; z <= skirted.z1; z++) {
     for (let x = skirted.x0; x <= skirted.x1; x++) {
       const idx = indexOf(plan, x, z);
@@ -836,34 +865,54 @@ function padColumns(
       pad.push({ idx, x, z, want, g, fill, cap: inside ? fill : (plan.surface[idx] as number) });
     }
   }
-  if (pad.length === 0) return out;
+  return pad;
+}
 
-  for (const column of pad) ground.declare?.push({ idx: column.idx, y: column.want });
-  if (driver !== undefined) {
-    driver.commit([
-      {
-        source: ground.source ?? "prop#pad",
-        sourceClass: "prop.pad",
-        kind: "platform",
-        columns: pad.map((column) => ({ idx: column.idx, y: column.want })),
-        transition: "step",
-      },
-    ]);
-  }
+/**
+ * A decided pad as the `prop.pad` claim it is (§3.10b), or `undefined` when the
+ * pad is empty and there is nothing to claim.
+ */
+export function propPadIntent(
+  source: string,
+  pad: readonly PropPadColumn[],
+): GroundIntent | undefined {
+  if (pad.length === 0) return undefined;
+  return {
+    source,
+    sourceClass: "prop.pad",
+    kind: "platform",
+    columns: pad.map((column) => ({ idx: column.idx, y: column.want })),
+    transition: "step",
+  };
+}
 
-  // §9 step 2's second loop. The fill runs from the ground the pad measured to
-  // the level it asked for whether or not the rank let it have the column: a
-  // plinth is what the prop stands on, and narrowing it to the won columns
-  // would change the painting on every contested one.
+/**
+ * **The painting half of a pad** — §9 step 2's second loop, over the columns
+ * {@link decidePropPad} chose.
+ *
+ * The fill runs from the ground the pad measured to the level it asked for
+ * whether or not the rank let it have the column: a plinth is what the prop
+ * stands on, and narrowing it to the won columns would change the painting on
+ * every contested one. That is also why it may run long after the decision was
+ * taken (WP-G6 §7.1): every level it needs is in the {@link PropPadColumn}s,
+ * and none of it is re-read from a `plan` the freeze has since rewritten.
+ *
+ * `write` is false on every path the ground contract governs — the level is the
+ * resolver's to write, not this pass's — and true only for the enumerated
+ * non-settlement callers of {@link levelPropPadUndeclared}.
+ */
+export function paintPropPad(
+  plan: ColumnPlan,
+  pad: readonly PropPadColumn[],
+  write: boolean,
+): StructureBlock[] {
+  const out: StructureBlock[] = [];
   for (const { idx, x, z, want, g, fill, cap } of pad) {
     for (let y = g + 1; y <= want; y++) {
       out.push({ x, y, z, stateId: y === want ? cap : fill });
     }
     plan.surface[idx] = cap;
-    // The declared path never reaches the three writes below: `levelPropPad`
-    // takes a `GroundDriver` by type, so only `levelPropPadUndeclared` — the
-    // enumerated non-settlement entry point — can pass `undefined` here.
-    if (driver !== undefined) continue;
+    if (!write) continue;
     plan.ground[idx] = want;
     plan.fluidTop[idx] = want;
     // A pad is bare ground: the snow layer that sat on the old surface is
@@ -872,6 +921,24 @@ function padColumns(
     plan.snow[idx] = 0;
   }
   return out;
+}
+
+function padColumns(
+  plan: ColumnPlan,
+  rect: Rect,
+  baseY: number,
+  ground: PropPadGround,
+  driver: GroundDriver | undefined,
+): StructureBlock[] {
+  const pad = decidePropPad(plan, rect, baseY);
+  if (pad.length === 0) return [];
+  for (const column of pad) ground.declare?.push({ idx: column.idx, y: column.want });
+  const intent = propPadIntent(ground.source ?? "prop#pad", pad);
+  if (driver !== undefined && intent !== undefined) driver.commit([intent]);
+  // The declared path never writes: `levelPropPad` takes a `GroundDriver` by
+  // type, so only `levelPropPadUndeclared` — the enumerated non-settlement
+  // entry point — can pass `undefined` here.
+  return paintPropPad(plan, pad, driver === undefined);
 }
 
 /**

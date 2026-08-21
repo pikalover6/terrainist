@@ -46,10 +46,12 @@ import type { GroundDriver } from "../layout/ground-driver.js";
 import type { StreetDatum } from "../layout/street-datum.js";
 import { materialThemeById, programThemeOf } from "./theme.js";
 import {
+  decideProgramSite,
+  paintProgramSite,
   siteIsWet,
   siteWaterLine,
-  treatProgramSite,
   underpinProgramInstance,
+  type ProgramSiteTreatment,
 } from "./site-treatment.js";
 import { invokeLandmark, invokePlugin } from "./invoke.js";
 import { facingRotationAt, type ProgramFacing } from "./facing.js";
@@ -201,7 +203,122 @@ export interface ProgramPassResult {
   readonly fuelUsed: number;
 }
 
-/** Build every authored-program node, in document order. */
+/* -------------------------------------------------------------------------- */
+/* WP-G6 §7.1 — the pass, cut in two                                          */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * One job, **sited and claimed**, waiting for its run.
+ *
+ * `docs/GROUND-CONTRACT-v1.md` §7.1. The authored-program pass is the last
+ * `prop.pad` declarer there is, and it runs at 5f — a hundred passes after the
+ * fifth resolve sealed the ground. Under {@link GROUND_V1_FREEZE} that is not a
+ * late claim, it is an illegal one: a tier-D intent arriving after tier E has
+ * been read is exactly the non-prefix prefix `AccumulatingDriver` throws on.
+ *
+ * So the pass is cut where the structure pass was cut at WP-G5 — siting and
+ * claims above, execution below — and this is the plan carried across the cut.
+ * Everything on it was decided against `view("D")`: the resolved ground of
+ * tiers A through C, which is what a tier-D declarer is entitled to read.
+ */
+export interface DeclaredProgramJob {
+  readonly job: ProgramJob;
+  /** How it meets the ground, or `undefined` when it hovers. */
+  readonly seat: SeatDecision | undefined;
+  readonly sites: readonly ProgramSite[];
+  /**
+   * One entry per site, positionally: the pad and apron that site is owed, or
+   * `undefined` where it is owed none — flat enough, wet, or not `"pad"`-seated.
+   */
+  readonly treatments: readonly (ProgramSiteTreatment | undefined)[];
+}
+
+/** What {@link declarePrograms} decided, for {@link executePrograms} to build. */
+export interface ProgramDeclaration {
+  readonly jobs: readonly DeclaredProgramJob[];
+  readonly diagnostics: readonly LoamDiagnostic[];
+  /**
+   * The running `taken` list the siting read, as it stood when the last job was
+   * sited. Carried so the execution half does not re-derive it and cannot
+   * disagree with the siting about what was already spoken for.
+   */
+  readonly claimed: readonly Rect[];
+}
+
+/**
+ * **The declaring half** (§7.1): site every job, and file every `prop.pad`.
+ *
+ * Called at pass 5b, between `declareStructures` and the freeze, over a plan
+ * whose ground arrays are `driver.view("D")`. It writes no block and no level;
+ * the only thing it does to the world is `driver.commit`.
+ *
+ * One knowing difference from {@link buildPrograms}' interleaved order, and it
+ * is inherent in cutting the pass: a later job's siting sees every earlier
+ * job's **sites** rather than its successfully executed instances, because the
+ * execution has not happened yet. That is a superset — the instances that drop
+ * are the ones a run refused — so the later job is sited around slightly more
+ * than it needs to be, never less. Flag-off the interleaved order is untouched.
+ */
+export function declarePrograms(input: ProgramPassInput): ProgramDeclaration {
+  const diagnostics: LoamDiagnostic[] = [];
+  const claimed: Rect[] = [...(input.reserved ?? [])];
+  const jobs: DeclaredProgramJob[] = [];
+  for (const job of input.jobs) {
+    const declared = declareJob(job, input, claimed, diagnostics, true);
+    if (declared === undefined) continue;
+    jobs.push(declared);
+    const driver = input.ground;
+    if (driver === undefined) continue;
+    for (const treatment of declared.treatments) {
+      if (treatment !== undefined && treatment.intents.length > 0) driver.commit(treatment.intents);
+    }
+  }
+  return { jobs, diagnostics, claimed };
+}
+
+/**
+ * **The building half** (§7.1): lay every treatment and run every instance.
+ *
+ * Runs at 5f over the *real* plan, whose ground is the fifth resolve's — which
+ * is the point of the cut. `api.heightAt` now shows a program the ground it
+ * will actually stand on, pad included, rather than the ground that was there
+ * before its own pad was arbitrated; under the mixture that was true only
+ * because the pad wrote through, and under the freeze nothing writes through.
+ */
+export function executePrograms(
+  input: ProgramPassInput,
+  declaration: ProgramDeclaration,
+): ProgramPassResult {
+  const blocks: StructureBlock[] = [];
+  const markers: Marker[] = [];
+  const placed: PlacedProgram[] = [];
+  const diagnostics: LoamDiagnostic[] = [...declaration.diagnostics];
+  const claimed: Rect[] = [...declaration.claimed];
+  const theme: ProgramTheme = programThemeOf(materialThemeById(input.themeId));
+  let fuelUsed = 0;
+  for (const declared of declaration.jobs) {
+    fuelUsed += runJob(declared, input, {
+      blocks,
+      markers,
+      placed,
+      diagnostics,
+      claimed,
+      theme,
+      claimSites: false,
+    });
+  }
+  return { blocks, markers, placed, diagnostics, fuelUsed };
+}
+
+/**
+ * Build every authored-program node, in document order.
+ *
+ * The **uncut** path: declaration and execution interleaved per job, exactly as
+ * the pass has always run them. This is what every caller outside the world
+ * pipeline uses (the gate, the terrarium, the exhibits) and what the pipeline
+ * itself uses with {@link GROUND_V1_FREEZE} off, which is what keeps the
+ * control state byte-identical.
+ */
 export function buildPrograms(input: ProgramPassInput): ProgramPassResult {
   const blocks: StructureBlock[] = [];
   const markers: Marker[] = [];
@@ -216,203 +333,267 @@ export function buildPrograms(input: ProgramPassInput): ProgramPassResult {
   const theme: ProgramTheme = programThemeOf(materialThemeById(input.themeId));
 
   for (const job of input.jobs) {
-    const hashProblem = checkSourceHash(job.programId, job.program, job.nodePath);
-    if (hashProblem !== undefined) {
-      diagnostics.push(hashProblem);
-      continue;
-    }
-    if (input.skipOutputHash !== true) {
-      const mismatch = verifyOutputHash(job.programId, job.program, input.worldSeed, job.nodePath);
-      if (mismatch !== undefined) {
-        diagnostics.push(mismatch);
-        continue;
-      }
-      // The terrain suite's sibling check, and a no-op for every document that
-      // predates the verdict: `verifyConformHash` returns immediately when the
-      // record carries no `conformHash` (GROUND-UNIFICATION §2.6).
-      const drift = verifyConformHash(job.programId, job.program, input.worldSeed, job.nodePath);
-      if (drift !== undefined) {
-        diagnostics.push(drift);
-        continue;
+    const declared = declareJob(job, input, claimed, diagnostics, false);
+    if (declared === undefined) continue;
+    const driver = input.ground;
+    if (driver !== undefined) {
+      for (const treatment of declared.treatments) {
+        if (treatment !== undefined && treatment.intents.length > 0)
+          driver.commit(treatment.intents);
       }
     }
+    fuelUsed += runJob(declared, input, {
+      blocks,
+      markers,
+      placed,
+      diagnostics,
+      claimed,
+      theme,
+      claimSites: true,
+    });
+  }
 
-    const seat = seatOf(job);
-    // §2.5's compile-report half: "this instance is on a platform because its
-    // program did not conform" is the sentence a walker needs and cannot
-    // otherwise get. Only for a record the gate actually judged — a document
-    // with no verdict says nothing, because nothing was measured.
-    if (job.program.conforms === false && seat?.policy === "pad") {
-      diagnostics.push(
-        note(
-          "PROGRAM_SEATED_PAD",
-          job.nodePath,
-          `${JSON.stringify(job.programId)} writes the same sole on every column, so it is seated on a levelled pad rather than on the real ground`,
-          "no change needed here — the fix is in the program: read api.heightAt at every column it touches and answer it, and the next authoring run will seat it on the ground itself",
-        ),
-      );
-    }
-    const refusals: SiteRefusals = { cliff: 0 };
-    const sites = resolveSites(job, input, claimed, refusals, seat);
-    if (refusals.cliff > 0) {
-      diagnostics.push(
-        warning(
-          "PROGRAM_DROPPED",
-          job.nodePath,
-          `${refusals.cliff} candidate site${refusals.cliff === 1 ? "" : "s"} for ${JSON.stringify(job.programId)} ${refusals.cliff === 1 ? "was" : "were"} refused: the ground under them falls away like a cliff, and no pad would seat a structure across that`,
-          "widen the scatter's area, or accept fewer instances — rough ground is padded, but a cliff is not ground a landmark stands on",
-        ),
-      );
-    }
-    if (sites.length === 0) {
-      // Warning, not an error (Kai, 2026-08-15; LOAM-SPEC §15.2 gate leniency):
-      // a program that finds no acceptable site is the W337 PROGRAM_DROPPED
-      // pattern — reported, absent from the world, never fatal. The world
-      // emitted anyway, so an error here only lied about the exit status.
-      diagnostics.push(
-        warning(
-          "PROGRAM_DROPPED",
-          job.nodePath,
-          `no site would take ${JSON.stringify(job.programId)}; it is absent from the world`,
-          // The water clause is the P5 sea-monster lesson: a water- or
-          // shore-seated program needs water in reach, and no amount of
-          // loosening on land will seat one inland. Default chosen under the
-          // never-wait rule, 2026-08-14; revisit on walk evidence.
-          "loosen the placement — a larger area, a smaller spacing, or a gentler maxSlope — or shrink the program's declared envelope; and if the program is seated on water or a shore, put its area where there is water in reach, because no land site will take it",
-        ),
-      );
-      continue;
-    }
-    // Asking for eighteen and getting one is not a placement detail, it is the
-    // world missing most of what the prompt asked for. The invasion world
-    // shipped one crop circle where the document said eight and nothing said
-    // so — the count is a request, and a request the compiler cannot meet has
-    // to be reported rather than quietly rounded down.
-    const wanted = job.params?.count;
-    if (wanted !== undefined && sites.length < wanted) {
-      diagnostics.push(
-        warning(
-          "PROGRAM_DROPPED",
-          job.nodePath,
-          `${JSON.stringify(job.programId)} asked for ${wanted} instance${wanted === 1 ? "" : "s"} and only ${sites.length} site${sites.length === 1 ? "" : "s"} would take one`,
-          `the area cannot hold that many at this spacing: widen "area", lower "spacing" below ${Math.max(1, (job.params?.spacing ?? 1) - 1)}, relax "maxSlope"/"avoidTags", or ask for fewer`,
-        ),
-      );
-    }
+  return { blocks, markers, placed, diagnostics, fuelUsed };
+}
 
-    // The pad and its apron go down *before* the run, so `api.heightAt` shows
-    // the program the ground it will actually stand on rather than the ground
-    // that was there first. Fill-only, exactly as a prop's pad is, and declared
-    // to the ground driver rather than written behind its back.
-    //
-    // `"pad"` only: a `wade` instance stands on the seabed, a `drape` one has
-    // already conformed itself through `api.heightAt`, an `embed` one is
-    // *supposed* to be in the hillside, and a hovering one claims no ground at
-    // all (`seatOf` returns `undefined` for it).
-    if (seat?.policy === "pad") {
-      for (const site of sites) {
-        if (siteIsWet(input.plan, site.footprint)) continue;
-        appendAll(
-          blocks,
-          treatProgramSite({
+/**
+ * Site one job and decide what its sites are owed. Declares nothing and writes
+ * nothing — the caller commits, so the two halves can commit at two different
+ * times. `undefined` when the job contributes no instance at all.
+ *
+ * `claimSites` is the split path's substitute for the interleaved order's
+ * `claimed.push` inside the execution loop: with no execution to push, the
+ * sites themselves are what a later job is sited around.
+ */
+function declareJob(
+  job: ProgramJob,
+  input: ProgramPassInput,
+  claimed: Rect[],
+  diagnostics: LoamDiagnostic[],
+  claimSites: boolean,
+): DeclaredProgramJob | undefined {
+  const hashProblem = checkSourceHash(job.programId, job.program, job.nodePath);
+  if (hashProblem !== undefined) {
+    diagnostics.push(hashProblem);
+    return undefined;
+  }
+  if (input.skipOutputHash !== true) {
+    const mismatch = verifyOutputHash(job.programId, job.program, input.worldSeed, job.nodePath);
+    if (mismatch !== undefined) {
+      diagnostics.push(mismatch);
+      return undefined;
+    }
+    // The terrain suite's sibling check, and a no-op for every document that
+    // predates the verdict: `verifyConformHash` returns immediately when the
+    // record carries no `conformHash` (GROUND-UNIFICATION §2.6).
+    const drift = verifyConformHash(job.programId, job.program, input.worldSeed, job.nodePath);
+    if (drift !== undefined) {
+      diagnostics.push(drift);
+      return undefined;
+    }
+  }
+
+  const seat = seatOf(job);
+  // §2.5's compile-report half: "this instance is on a platform because its
+  // program did not conform" is the sentence a walker needs and cannot
+  // otherwise get. Only for a record the gate actually judged — a document
+  // with no verdict says nothing, because nothing was measured.
+  if (job.program.conforms === false && seat?.policy === "pad") {
+    diagnostics.push(
+      note(
+        "PROGRAM_SEATED_PAD",
+        job.nodePath,
+        `${JSON.stringify(job.programId)} writes the same sole on every column, so it is seated on a levelled pad rather than on the real ground`,
+        "no change needed here — the fix is in the program: read api.heightAt at every column it touches and answer it, and the next authoring run will seat it on the ground itself",
+      ),
+    );
+  }
+  const refusals: SiteRefusals = { cliff: 0 };
+  const sites = resolveSites(job, input, claimed, refusals, seat);
+  if (refusals.cliff > 0) {
+    diagnostics.push(
+      warning(
+        "PROGRAM_DROPPED",
+        job.nodePath,
+        `${refusals.cliff} candidate site${refusals.cliff === 1 ? "" : "s"} for ${JSON.stringify(job.programId)} ${refusals.cliff === 1 ? "was" : "were"} refused: the ground under them falls away like a cliff, and no pad would seat a structure across that`,
+        "widen the scatter's area, or accept fewer instances — rough ground is padded, but a cliff is not ground a landmark stands on",
+      ),
+    );
+  }
+  if (sites.length === 0) {
+    // Warning, not an error (Kai, 2026-08-15; LOAM-SPEC §15.2 gate leniency):
+    // a program that finds no acceptable site is the W337 PROGRAM_DROPPED
+    // pattern — reported, absent from the world, never fatal. The world
+    // emitted anyway, so an error here only lied about the exit status.
+    diagnostics.push(
+      warning(
+        "PROGRAM_DROPPED",
+        job.nodePath,
+        `no site would take ${JSON.stringify(job.programId)}; it is absent from the world`,
+        // The water clause is the P5 sea-monster lesson: a water- or
+        // shore-seated program needs water in reach, and no amount of
+        // loosening on land will seat one inland. Default chosen under the
+        // never-wait rule, 2026-08-14; revisit on walk evidence.
+        "loosen the placement — a larger area, a smaller spacing, or a gentler maxSlope — or shrink the program's declared envelope; and if the program is seated on water or a shore, put its area where there is water in reach, because no land site will take it",
+      ),
+    );
+    return undefined;
+  }
+  // Asking for eighteen and getting one is not a placement detail, it is the
+  // world missing most of what the prompt asked for. The invasion world
+  // shipped one crop circle where the document said eight and nothing said
+  // so — the count is a request, and a request the compiler cannot meet has
+  // to be reported rather than quietly rounded down.
+  const wanted = job.params?.count;
+  if (wanted !== undefined && sites.length < wanted) {
+    diagnostics.push(
+      warning(
+        "PROGRAM_DROPPED",
+        job.nodePath,
+        `${JSON.stringify(job.programId)} asked for ${wanted} instance${wanted === 1 ? "" : "s"} and only ${sites.length} site${sites.length === 1 ? "" : "s"} would take one`,
+        `the area cannot hold that many at this spacing: widen "area", lower "spacing" below ${Math.max(1, (job.params?.spacing ?? 1) - 1)}, relax "maxSlope"/"avoidTags", or ask for fewer`,
+      ),
+    );
+  }
+
+  // The pad and its apron go down *before* the run, so `api.heightAt` shows
+  // the program the ground it will actually stand on rather than the ground
+  // that was there first. Fill-only, exactly as a prop's pad is, and declared
+  // to the ground driver rather than written behind its back.
+  //
+  // `"pad"` only: a `wade` instance stands on the seabed, a `drape` one has
+  // already conformed itself through `api.heightAt`, an `embed` one is
+  // *supposed* to be in the hillside, and a hovering one claims no ground at
+  // all (`seatOf` returns `undefined` for it).
+  const treatments: (ProgramSiteTreatment | undefined)[] = [];
+  for (const site of sites) {
+    treatments.push(
+      seat?.policy !== "pad" || siteIsWet(input.plan, site.footprint)
+        ? undefined
+        : decideProgramSite({
             plan: input.plan,
             footprint: site.footprint,
             baseY: site.baseY,
             source: `${job.nodePath}#pad@${site.index}`,
             ...(input.ground === undefined ? {} : { ground: input.ground }),
           }),
-        );
-      }
-    }
-
-    const runs = executeSites(job, input, sites, diagnostics, theme);
-    fuelUsed += runs.fuelUsed;
-    if (!runs.ok) continue;
-
-    let clampedFluid = 0;
-    let residual: ConformResidual = { occupied: 0, underpinned: 0, buried: 0 };
-    for (const [i, executed] of runs.runs.entries()) {
-      const site = sites[i] as ProgramSite;
-      // Out of the sandbox and into the world frame. Everything below — the
-      // blocks, the anchors, the interiors the fit-out furnishes — is the
-      // turned instance; the hashes on `run` are deliberately left in the frame
-      // the program was verified in (see `rotate.ts`).
-      const run = rotateRun(executed, site.rotation ?? 0, job.program.envelope);
-      const baseY = seatedBaseY(site, run, seat);
-      // Only an instance that stands in water is held to the waterline: a
-      // fountain on a hill is a fountain, and a dry site's fluid is its own
-      // business (the physics lint still refuses an unstable one).
-      const inWater = seat?.policy === "wade" || siteIsWet(input.plan, site.footprint);
-      const lowered = lowerRun(
-        run,
-        site,
-        baseY,
-        input.stack,
-        job,
-        diagnostics,
-        inWater ? siteWaterLine(input.plan, site.footprint) : undefined,
-      );
-      if (lowered === undefined) continue;
-      clampedFluid += lowered.clampedFluid;
-      // A hovering instance stands over the ground, not on it: the ground
-      // beneath stays buildable, so its footprint is never claimed.
-      if (!isHovering(job)) claimed.push(site.footprint);
-      appendAll(blocks, lowered.blocks);
-      // The foundation, after the run: only the finished instance knows which
-      // columns it actually stands in, and a leg over a dip is the daylight
-      // this fills. Skipped for the seats that are not standing on land.
-      // `"conform"` joins `"pad"` here, and for a conforming instance this is
-      // the *only* ground courtesy left (§2.7.3): no pad, no apron, just a
-      // foundation under exactly the columns that would otherwise hang in the
-      // air. A program that conformed perfectly gets zero blocks from it.
-      if (
-        (seat?.policy === "pad" || seat?.policy === "conform") &&
-        !siteIsWet(input.plan, site.footprint)
-      ) {
-        const skirt = underpinProgramInstance({
-          plan: input.plan,
-          stack: input.stack,
-          blocks: lowered.blocks,
-          // The run's own seat course, in world Y: `seatedBaseY` put the
-          // program's `seatY` plane exactly on the site's ground plane.
-          seatPlane: site.baseY,
-          plinth: theme.ground.plinth,
-        });
-        appendAll(blocks, skirt);
-        if (seat.policy === "conform") residual = tallyResidual(residual, input.plan, lowered.blocks, skirt);
-      }
-      // v2: the shell is the program's, the fit-out inside it is the grammar's.
-      appendAll(blocks, furnishRunInteriors({ run, site, baseY, stack: input.stack, worldSeed: input.worldSeed, nodePath: job.nodePath, ...(input.themeId === undefined ? {} : { themeId: input.themeId }), ...(job.seedSalt === undefined ? {} : { seedSalt: job.seedSalt }) }));
-      appendAll(markers, lowered.markers);
-      placed.push(lowered.placed);
-    }
-
-    // §2.8 — the number §2.9's carve is gated on, once per node.
-    if (seat?.policy === "conform" && residual.occupied > 0) {
-      const pct = (n: number): string => `${Math.round((n / residual.occupied) * 100)}%`;
-      diagnostics.push(
-        note(
-          "PROGRAM_CONFORM_RESIDUAL",
-          job.nodePath,
-          `${JSON.stringify(job.programId)} conformed to the ground it was given: of ${residual.occupied} occupied column${residual.occupied === 1 ? "" : "s"}, ${residual.underpinned} (${pct(residual.underpinned)}) needed a skirt under them and ${residual.buried} (${pct(residual.buried)}) are buried in the hill`,
-          "no change needed — a skirted column is a leg the compiler footed, and a buried one is ground standing above the seat plane, which only the program's own answer or a carve can help",
-        ),
-      );
-    }
-
-    if (clampedFluid > 0) {
-      diagnostics.push(
-        warning(
-          "PROGRAM_WATER_CLAMPED",
-          job.nodePath,
-          `${JSON.stringify(job.programId)} wrote ${clampedFluid} fluid block${clampedFluid === 1 ? "" : "s"} above the waterline of the body it stands in; they were dropped and the sea kept its own surface`,
-          "a wading program's node-local y = 0 is the SEABED, not the waterline, so it cannot know how deep the water over it is: model the seabed and whatever breaks the surface, and let the world's own water fill the gap",
-        ),
-      );
-    }
+    );
   }
 
-  return { blocks, markers, placed, diagnostics, fuelUsed };
+  if (claimSites) {
+    for (const site of sites) if (!isHovering(job)) claimed.push(site.footprint);
+  }
+  return { job, seat, sites, treatments };
+}
+
+/** The mutable sinks {@link runJob} appends one job's output to. */
+interface RunSink {
+  readonly blocks: StructureBlock[];
+  readonly markers: Marker[];
+  readonly placed: PlacedProgram[];
+  readonly diagnostics: LoamDiagnostic[];
+  readonly claimed: Rect[];
+  readonly theme: ProgramTheme;
+  /** False when {@link declareJob} already claimed the sites (the split path). */
+  readonly claimSites: boolean;
+}
+
+/** Lay one declared job's treatments, run its instances, and place them. */
+function runJob(declared: DeclaredProgramJob, input: ProgramPassInput, sink: RunSink): number {
+  const { job, seat, sites, treatments } = declared;
+  const { blocks, markers, placed, diagnostics, claimed, theme } = sink;
+
+  for (const treatment of treatments) {
+    if (treatment === undefined) continue;
+    appendAll(blocks, paintProgramSite(input.plan, treatment, input.ground === undefined));
+  }
+
+  const runs = executeSites(job, input, sites, diagnostics, theme);
+  if (!runs.ok) return runs.fuelUsed;
+
+  let clampedFluid = 0;
+  let residual: ConformResidual = { occupied: 0, underpinned: 0, buried: 0 };
+  for (const [i, executed] of runs.runs.entries()) {
+    const site = sites[i] as ProgramSite;
+    // Out of the sandbox and into the world frame. Everything below — the
+    // blocks, the anchors, the interiors the fit-out furnishes — is the
+    // turned instance; the hashes on `run` are deliberately left in the frame
+    // the program was verified in (see `rotate.ts`).
+    const run = rotateRun(executed, site.rotation ?? 0, job.program.envelope);
+    const baseY = seatedBaseY(site, run, seat);
+    // Only an instance that stands in water is held to the waterline: a
+    // fountain on a hill is a fountain, and a dry site's fluid is its own
+    // business (the physics lint still refuses an unstable one).
+    const inWater = seat?.policy === "wade" || siteIsWet(input.plan, site.footprint);
+    const lowered = lowerRun(
+      run,
+      site,
+      baseY,
+      input.stack,
+      job,
+      diagnostics,
+      inWater ? siteWaterLine(input.plan, site.footprint) : undefined,
+    );
+    if (lowered === undefined) continue;
+    clampedFluid += lowered.clampedFluid;
+    // A hovering instance stands over the ground, not on it: the ground
+    // beneath stays buildable, so its footprint is never claimed.
+    if (sink.claimSites && !isHovering(job)) claimed.push(site.footprint);
+    appendAll(blocks, lowered.blocks);
+    // The foundation, after the run: only the finished instance knows which
+    // columns it actually stands in, and a leg over a dip is the daylight
+    // this fills. Skipped for the seats that are not standing on land.
+    // `"conform"` joins `"pad"` here, and for a conforming instance this is
+    // the *only* ground courtesy left (§2.7.3): no pad, no apron, just a
+    // foundation under exactly the columns that would otherwise hang in the
+    // air. A program that conformed perfectly gets zero blocks from it.
+    if (
+      (seat?.policy === "pad" || seat?.policy === "conform") &&
+      !siteIsWet(input.plan, site.footprint)
+    ) {
+      const skirt = underpinProgramInstance({
+        plan: input.plan,
+        stack: input.stack,
+        blocks: lowered.blocks,
+        // The run's own seat course, in world Y: `seatedBaseY` put the
+        // program's `seatY` plane exactly on the site's ground plane.
+        seatPlane: site.baseY,
+        plinth: theme.ground.plinth,
+      });
+      appendAll(blocks, skirt);
+      if (seat.policy === "conform")
+        residual = tallyResidual(residual, input.plan, lowered.blocks, skirt);
+    }
+    // v2: the shell is the program's, the fit-out inside it is the grammar's.
+    appendAll(blocks, furnishRunInteriors({ run, site, baseY, stack: input.stack, worldSeed: input.worldSeed, nodePath: job.nodePath, ...(input.themeId === undefined ? {} : { themeId: input.themeId }), ...(job.seedSalt === undefined ? {} : { seedSalt: job.seedSalt }) }));
+    appendAll(markers, lowered.markers);
+    placed.push(lowered.placed);
+  }
+
+  // §2.8 — the number §2.9's carve is gated on, once per node.
+  if (seat?.policy === "conform" && residual.occupied > 0) {
+    const pct = (n: number): string => `${Math.round((n / residual.occupied) * 100)}%`;
+    diagnostics.push(
+      note(
+        "PROGRAM_CONFORM_RESIDUAL",
+        job.nodePath,
+        `${JSON.stringify(job.programId)} conformed to the ground it was given: of ${residual.occupied} occupied column${residual.occupied === 1 ? "" : "s"}, ${residual.underpinned} (${pct(residual.underpinned)}) needed a skirt under them and ${residual.buried} (${pct(residual.buried)}) are buried in the hill`,
+        "no change needed — a skirted column is a leg the compiler footed, and a buried one is ground standing above the seat plane, which only the program's own answer or a carve can help",
+      ),
+    );
+  }
+
+  if (clampedFluid > 0) {
+    diagnostics.push(
+      warning(
+        "PROGRAM_WATER_CLAMPED",
+        job.nodePath,
+        `${JSON.stringify(job.programId)} wrote ${clampedFluid} fluid block${clampedFluid === 1 ? "" : "s"} above the waterline of the body it stands in; they were dropped and the sea kept its own surface`,
+        "a wading program's node-local y = 0 is the SEABED, not the waterline, so it cannot know how deep the water over it is: model the seabed and whatever breaks the surface, and let the world's own water fill the gap",
+      ),
+    );
+  }
+  return runs.fuelUsed;
 }
 
 /**

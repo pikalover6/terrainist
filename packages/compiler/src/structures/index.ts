@@ -1224,6 +1224,12 @@ export function declareStructures(input: StructurePassInput): StructurePlan {
   });
   diagnostics.push(...retaining.diagnostics);
   lay("retaining", retaining.blocks);
+  // §3.3's built-set, published to the stage the moment it exists. The
+  // generator inside the fifth resolve and `finishSeams`' complement walk must
+  // skip *the same* runs, and this mask is the only evidence either of them has;
+  // reading it off the owner map instead cost pirates 77 skirt-owned cliff pairs
+  // and 139 spurious ones (see `ResolveOptions.built`).
+  if (retaining.wallColumns > 0) input.ground.reportBuilt(retaining.seam);
   // **Tier B** (§6a.3): `retaining.seam` and `retaining.skirt` — the entries
   // that are not a run following the ground but the step itself. Beside the
   // retaining pass, whose tier they share and whose `face`+`preserve` pairing
