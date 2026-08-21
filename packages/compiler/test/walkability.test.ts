@@ -221,6 +221,113 @@ interface Goldens {
  * Two rows went the right way and are worth as much: `buried` fell by one on
  * the hillside and `strandedTreads` went to zero there.
  */
+/**
+ * **Re-pinned wholesale at WP-G6's flip (`GROUND_V1_FREEZE` on) — attribution:
+ * the freeze, and nothing else.**
+ *
+ * Every golden in the four blocks below moved at `46118f7` and was left red
+ * there; this is the re-pin, taken after the fact and **measured against the
+ * flag rather than asserted**. The method is worth stating because it is what
+ * makes the attribution a fact instead of a story: the same two fixtures were
+ * compiled in an isolated worktree at the same commit with
+ * `GROUND_V1_FREEZE = false`, and that run reproduces the *previous* goldens
+ * on every one of the forty-odd rows, exactly. So the flag is the whole cause,
+ * every row below is `flag-off -> flag-on`, and no other change is hiding in
+ * the diff.
+ *
+ * Two mechanisms account for all of it, and the second one is the interesting
+ * one:
+ *
+ * 1. **The ground is the resolver's, and nothing moves it afterwards.** Troy's
+ *    247 after-the-fact ground moves went to zero; on these fixtures the same
+ *    thing shows up as the paving landing where the contract put it rather than
+ *    where the last writer left it. `buried` falls hard on both (21 -> 17 and
+ *    **156 -> 49**), `sheerFaces` on the steep fixture falls 9 -> 2 and
+ *    `sheerColumns` 74 -> 7, and `halfTreads` moves because the tread mix is
+ *    decided once.
+ * 2. **The junction pass is dead on-flag** (`structures/junction-steps.ts`,
+ *    WP-G6's second landing). `junctionColumns` is **16 -> 0 and 85 -> 0**, and
+ *    that single fact is the whole of the rows that went the wrong way. The
+ *    pass used to lay a stair, a nosing or a lift at every seam between two
+ *    surfaces *after* the ground was written; with the ground frozen it has no
+ *    licence to and does not run. So the seams it used to dress are now
+ *    reported raw, by three different instruments:
+ *    - `undressedCutoffs` 17 -> 31 and 13 -> **80** — the cuts it used to nose;
+ *    - `plinthColumns` 34 -> 40 and `stepPlinthColumns` 9 -> 15 / 6 -> **86** —
+ *      a column reads *proud* when the ground on both sides of it is open, and
+ *      a junction stair beside it used to make that side dressed. The longest
+ *      *run* on the hillside does not move (5 -> 5): the six new columns are
+ *      isolated, which is dressing withdrawing at six places and is not a road
+ *      standing up anywhere;
+ *    - `faceRuns` on the steep fixture 19 -> **26** — seven more mid-town edges
+ *      read as bare face runs for the same reason, and this is a *denominator*:
+ *      `unservedFaces` went **10 -> 6**, DOWN, on the same fixture and in the
+ *      same run.
+ *
+ *    Their orders of magnitude agree, which is the check that makes this an
+ *    attribution rather than a coincidence: 85 junction columns vanish from the
+ *    steep fixture and +67 undressed cutoffs, +80 step-plinth columns and +7
+ *    face runs appear.
+ *
+ * **`blindStairs`, `strandedTreads`, `kerbStairs` and `cascadeLargest` all read
+ * 0 on both fixtures now, and not one of them was fixed.** They are subsets of
+ * `junctionColumns`, and their denominator went to zero. They are pinned at 0
+ * so that a junction pass which comes back has to argue its defects again, and
+ * this paragraph is here so nobody reads the zeroes as progress.
+ *
+ * ## The orphans, and a hypothesis this round refuted
+ *
+ * `orphans` is the headline defect on both fixtures and the freeze barely
+ * touched it: **271 -> 271** on the hillside, 3,318 -> 3,421 on the steep one.
+ * The standing explanation — written at WP-G4's flip, three blocks up — was "a
+ * tread published as a landing that no flight reaches", with S9's stair named as
+ * the lever. **That is wrong, and it was measured wrong at the column.** The
+ * orphan columns are not landings and the seam builders do not publish them:
+ * 97% of them stand at *exactly* the level their own emitter declared, and they
+ * are attributed to `street:segment:*` — whole streets and whole flights.
+ *
+ * What actually severs them is a handful of columns per fixture, and the
+ * mechanism is the ground contract's rank order:
+ *
+ * > A flight declares its tread band as `street.network` — rank 80, tier C. A
+ * > quarter's platform plane is `quarter.plane` — **rank 15, tier A**. Where the
+ * > two overlap the flight always loses, so the level it publishes on that
+ * > column is a level it never gets, and what ships is a flight with a notch cut
+ * > through it. The segment still publishes the station at its own level, so no
+ * > instrument downstream can see the notch — only this audit can, and only as
+ * > two components where there should be one.
+ *
+ * Proved at the column on `site-plan-hillside`: the carriage spine `sp0`
+ * declares y = 111 across z = 56…60; the resolver's winner at (94…100, 58) is
+ * `world.hill_town#pad@26`, `quarter.plane`, at **109**. Seven columns, two
+ * blocks down, and they orphan **223 columns of spine** — the largest single
+ * piece on the fixture. The same shape accounts for `dn1_96` (5), `dn1_32` (2)
+ * and, on the steep fixture, the 4-block break in `dn2_32` at (23, 28…29) that
+ * separates two 600-column terraces.
+ *
+ * **Two candidate fixes were built and measured this round, and both were
+ * rejected on the numbers**; they are recorded here so the next attempt does not
+ * pay for them again:
+ *
+ * - *Pin the tread law to the decided columns and refuse the run that cannot
+ *   meet them* (`GroundDriver.decided`, `synthesizeTreads`' `pinAt`). It works:
+ *   hillside orphans **271 -> 9**, `unservedFaces` -> 0 on both. It is also not
+ *   shippable — a one-column notch two blocks deep is infeasible by arithmetic,
+ *   so nearly every contested flight refuses whole, and the steep fixture loses
+ *   a third of its paving (4,369 -> 2,927 columns; the tread mix 323 -> 35
+ *   half-treads). That is deleting the fabric, which this module's own rule
+ *   forbids reading as a win.
+ * - *Bend where you can, keep today's answer where you cannot.* Monotone and
+ *   safe, and worth **nothing**: measured, the hillside does not move one
+ *   column and the steep fixture moves three. There is no bend — 111, 109, 111
+ *   is a two-block riser whichever way a 1-Lipschitz law is bent.
+ *
+ * So the lever is neither the stair nor the tread law. It is upstream, and it is
+ * a design decision rather than a patch: either a quarter's plane yields where a
+ * street crosses it, or the street router does not route across a plane it
+ * cannot match. Until one of those is chosen, `orphans` is pinned where it
+ * stands and this note is the reason it did not go down.
+ */
 const HILLSIDE: Goldens = {
   // 5120 → 3972. Down, and down is not a loss here: the causeway landing
   // (b90f87a) stopped the lowest street throwing 495 declared columns of
@@ -232,19 +339,19 @@ const HILLSIDE: Goldens = {
   // surfacer had dug below its neighbours now sits level with them and resolves
   // to a standable cell instead of a buried one. The denominator, moving by
   // 0.03%.
-  columns: 4010, // G4 flip: 4007 -> 4010, the seam builders' own treads and copings entering the paved network.
+  columns: 4009, // G6 freeze: 4010 -> 4009, the denominator, one column.
   // 120 → 19. **The flight-floor fix (eb93a54)** — a flight lies in the ground
   // rather than on it, so the rail no longer stands on its own carriageway
   // anywhere. What is left is nine columns on the spine, the plaza's six, and
   // four on the terrace lanes.
-  buried: 21, // G4 flip: 22 -> 21, DOWN by one: a coping column that stood on a lane is a tread now.
+  buried: 17, // G6 freeze: 21 -> 17, DOWN: the ground is the resolver's, so four columns of coping no longer stand on declared lane.
   // 15 → 10, and 797 → **9**. **The causeway landing (b90f87a).** This is the
   // lever the old comment on `deadEnds` said had been implemented, measured and
   // reverted because it broke the steep fixture's §5.5 planning; it landed for
   // real this wave, and it reads exactly what that measurement predicted:
   // ten components, nine orphan columns, 0.2% of the paving.
-  components: 14, // G4 flip: 11 -> 14, UP. Every derived transition's tread is a landing until a flight reaches it.
-  orphans: 271, // G4 flip: 41 -> 271, UP, and the largest single move on this fixture: 230 more tread columns published as landings with no stair onto them yet. MUST GO DOWN — the lever is S9's stair, exactly as at 11F, and it is now the biggest one.
+  components: 14, // G6 freeze: 14 -> 14, unmoved.
+  orphans: 271, // G6 freeze: 271 -> 271, UNMOVED — see the note above for the mechanism and for the two fixes that were built and rejected. MUST GO DOWN, and not by S9's stair.
   // 0.998 → **1.000** (domain fix, 2026-08-07): the flood now runs over all
   // standable ground rather than over declared paving alone, so the nine
   // orphan columns that a walker reaches across two blocks of grass are
@@ -254,8 +361,8 @@ const HILLSIDE: Goldens = {
   // numerator: the one new standable column is reachable like the rest of them,
   // and the share is still 1. The invariant this row is really for — "every
   // laid column but one" — is unchanged.
-  entranceReachable: 4007, // G4 flip: 4006 -> 4007, the numerator following `columns`.
-  entranceReachableShare: 0.999, // G4 flip: 1 -> 0.999, three of the new tread columns are not walked to from the entrance.
+  entranceReachable: 4008, // G6 freeze: 4007 -> 4008, the numerator, with the share.
+  entranceReachableShare: 1, // G6 freeze: 0.999 -> 1.000, UP, which is this row's direction: every laid column but one is walked to from the entrance again.
   // The terrain control: 71% of the region's standable columns. The remainder
   // is the hill's own cliffs and the ground beyond them — nobody's to serve.
   //
@@ -269,10 +376,10 @@ const HILLSIDE: Goldens = {
   // step to the natural ground on its uphill side at a handful of places, and a
   // walker crossing there no longer floods through. Twenty-eight columns of
   // hillside out of 185,000 — the control doing its job, and reporting nothing.
-  groundReachable: 185755, // G4 flip: 185696 -> 185755, the ground control, following the seam builders' grading.
-  groundReachableShare: 0.709,
+  groundReachable: 185723, // G6 freeze: 185755 -> 185723, the terrain control, following the frozen ground.
+  groundReachableShare: 0.709, // G6 freeze: unmoved at 0.709.
   // 5 → 3. Same commit: the dangling connectors *were* the dead ends.
-  deadEnds: 5, // G4 flip: 5 -> 5, unmoved.
+  deadEnds: 5, // G6 freeze: 5 -> 5, unmoved.
   // 0.188 → 0.175, and 0.075 → 0.048 (eb93a54, junction steps 4b18ef5). The
   // solo control fell by a third again; junctions remain the lever.
   //
@@ -294,8 +401,8 @@ const HILLSIDE: Goldens = {
   // in proportion — which is the reading the row's own rule warns about, so:
   // this is not the town getting emptier, it is 12 fewer courses over a
   // denominator that moved by one column. The numerator is the whole of it.
-  junctionDensity: 0.167, // G4 flip: 0.165 -> 0.167, UP. Derived seams meet streets where nothing met them before, and a meeting costs junction dressing. MUST GO DOWN.
-  soloDensity: 0.048, // G4 flip: 0.043 -> 0.048, the control, up with it — the town is not emptier, it has more edges.
+  junctionDensity: 0.17, // G6 freeze: 0.167 -> 0.170, UP by three thousandths on a denominator that shrank by one column; the junction pass's own dressing is gone, so what is counted here is other passes' courses. MUST GO DOWN.
+  soloDensity: 0.046, // G6 freeze: 0.048 -> 0.046, the control, DOWN.
   // Unmoved at 4 runs, and **0 → 1**: one mid-town face run now goes unearned,
   // at (5, 44) — drop 3 over run 5, earned 1.667 against `EARN_RATIO` 2. It is
   // a *new* row in the wrong direction and it is recorded as such rather than
@@ -313,24 +420,24 @@ const HILLSIDE: Goldens = {
   // now staircases and not faces at all, which is why the *denominator* fell
   // with the defect. The one run left is (93, 37), drop 2 — unrelated, and
   // under the drop `unservedFaces` counts.
-  faceRuns: 9, // G4 flip: 3 -> 9, UP. Six of the nine are a derived stack's own tread line, which is a face run by construction.
-  unservedFaces: 2, // G4 flip: 1 -> 2, UP by one. MUST GO DOWN, and by S9 cutting a flight there, never by shortening the face.
+  faceRuns: 9, // G6 freeze: 9 -> 9, unmoved on this fixture.
+  unservedFaces: 2, // G6 freeze: 2 -> 2, unmoved. MUST GO DOWN, by a flight that reaches, never by a shorter face.
 };
 
 const STEEP: Goldens = {
   // 4453 → 4216 (b90f87a, eb93a54), 211 → 110 — the same two levers, and the
   // same direction, at two thirds the effect: this fixture's flights are longer
   // so more of the buried count was rail on carriageway.
-  columns: 4262, // G4 flip: 4247 -> 4262, as `HILLSIDE.columns`.
-  buried: 156, // G4 flip: 118 -> 156, UP. More coping over more lanes. MUST GO DOWN.
+  columns: 4369, // G6 freeze: 4262 -> 4369, the denominator: 107 more columns resolve to a standable cell rather than to masonry (see `buried`).
+  buried: 49, // G6 freeze: 156 -> 49, DOWN by two thirds and the largest good move of the flip: the coping that used to stand on declared lane is decided once, with the lane, instead of written over it.
   // 9 → **12** and 941 → 649. The count went UP and the area went down, and
   // both are the causeway landing (b90f87a): refusing the lowest street's
   // connectors splits off three small pieces that the causeways used to bridge,
   // while removing 292 columns of paving that led nowhere. This is a decision,
   // not a regression — but the component count is a row that MUST come back
   // DOWN, and on this fixture the entrance share below says why it matters.
-  components: 22, // G4 flip: 15 -> 22, UP, same cause as the hillside's.
-  orphans: 3318, // G4 flip: 666 -> 3318, UP, and the number to read first on this fixture: 2,652 more tread columns published as landings that no flight reaches. MUST GO DOWN.
+  components: 22, // G6 freeze: 22 -> 22, unmoved.
+  orphans: 3421, // G6 freeze: 3318 -> 3421, UP by 103, and 78% of this fixture's paving. The mechanism is the note above the hillside block — the terraces are severed from each other by columns their flights lost to `quarter.plane`. MUST GO DOWN.
   // 0.150 → **1.000**, and this row is why the domain was fixed. Kai walked
   // `hillside_town_steep-5` on 2026-08-07 and reached 100% of the town on foot
   // by intended paths; the instrument said 15%. It was the instrument: the
@@ -338,28 +445,28 @@ const STEEP: Goldens = {
   // bridges these flights everywhere was not in the graph and the town read as
   // path-islands. Over all standable ground, every laid column but one is
   // reachable. `components` below stays network-scoped by design.
-  entranceReachable: 4258, // G4 flip: 4243 -> 4258.
-  entranceReachableShare: 0.999, // 11F: 4215 -> 4243, share 1.000 -> 0.999. Four of the new tread columns are not walked to from the entrance; every other laid column still is.
+  entranceReachable: 4352, // G6 freeze: 4258 -> 4352, following `columns`.
+  entranceReachableShare: 0.996, // G6 freeze: 0.999 -> 0.996, DOWN: seventeen of the newly-standable columns are not walked to from the entrance. MUST GO UP.
   // **136343 → 136349** with the archetype-bias wiring (2026-08-11), same
   // cause as the hillside fixture. BY DESIGN.
-  groundReachable: 136386, // G4 flip: 136295 -> 136386.
-  groundReachableShare: 0.755, // G4 flip: 0.754 -> 0.755.
+  groundReachable: 136408, // G6 freeze: 136386 -> 136408, the control.
+  groundReachableShare: 0.754, // G6 freeze: 0.755 -> 0.754.
   // 7 → **10**, up, and the same trade as `components`: the refused causeways
   // leave the streets they used to terminate hanging. MUST GO DOWN.
-  deadEnds: 14, // G4 flip: 12 -> 14, UP by two, same cause as `components`.
+  deadEnds: 15, // G6 freeze: 14 -> 15, UP by one. MUST GO DOWN.
   // 0.142 → 0.124, 0.082 → 0.043 (eb93a54, 4b18ef5). **0.124 → 0.125** with
   // the stoop fix (2026-08-07), for the reason the hillside row gives: three
   // fewer lifts, a marginally smaller denominator, an unmoved numerator.
   // **0.125 → 0.126** at wave close (2026-08-07, composed tree): the relief
   // redesign's dressed landings shave the walkable denominator once more;
   // the clutter numerator has not moved since the stoop fix.
-  junctionDensity: 0.167, // G4 flip: 0.126 -> 0.167, UP, and the largest density move: 56 derived transitions meet streets. MUST GO DOWN.
+  junctionDensity: 0.112, // G6 freeze: 0.167 -> 0.112, DOWN — and read it with the control below before calling it a win: the junction pass's 85 columns of dressing are simply not laid. Less clutter because less was built, not because the meeting got tidier.
   // 0.043 → 0.044 at wave close, the same denominator shave as the row above.
-  soloDensity: 0.049, // G4 flip: 0.045 -> 0.049, the control, up in proportion.
+  soloDensity: 0.021, // G6 freeze: 0.049 -> 0.021, the control, DOWN further in proportion — which is exactly the reading this pair exists to expose. The town is emptier of dressing; it is not less of a maze.
   // 3 → 4 runs, and 0 unserved still. The extra run is a face the causeway
   // removal exposed; every one of the four is earned.
-  faceRuns: 19, // G4 flip: 9 -> 19, UP. Ten of the nineteen are the derived stacks' own tread lines.
-  unservedFaces: 10, // G4 flip: 3 -> 10, UP, and this is the walk gate on this fixture: ten faces earned by no route within `SERVICE_REACH`. MUST GO DOWN.
+  faceRuns: 26, // G6 freeze: 19 -> 26, UP by seven: seven mid-town edges the junction pass used to dress now read as bare face runs. A denominator — see `unservedFaces`.
+  unservedFaces: 6, // G6 freeze: 10 -> 6, DOWN by four on a denominator that rose, which is the honest direction: more faces found, fewer of them unearned.
 };
 
 /**
@@ -430,14 +537,14 @@ const HILLSIDE_DRESSING: DressingGoldens = {
   // Re-pinned from the values HEAD actually produces (319/41 were stale before
   // this wave: HEAD measured 312/36 — the two rows were red on arrival and the
   // `openSided` assertion never ran, being shadowed by `halfTreads`).
-  halfTreads: 286, // G4 flip: 306 -> 286, the tread mix following the absorbed skirt.
-  openSided: 36, // G4 flip: 39 -> 36.
+  halfTreads: 272, // G6 freeze: 286 -> 272, the tread-mix denominator.
+  openSided: 32, // G6 freeze: 36 -> 32.
   // **1 → 0.** The floating slab over exposed dirt is gone from this fixture,
   // and not by deleting the tread mix — `openSided` fell with it because the
   // flights sit lower, not because the slabs went away.
-  openOverSoil: 0,
+  openOverSoil: 0, // G6 freeze: 0 -> 0, held at the bar.
   // 3 → 0 (eb93a54).
-  floatingDressing: 0,
+  floatingDressing: 0, // G6 freeze: 0 -> 0, held at the bar.
   // 47 → 32 lamps stand within reach of paving, and **13 → 0** of them stand
   // below it; the deep three are gone too. The denominator fell because the
   // refused causeways took their lit stubs with them (b90f87a); the defect fell
@@ -483,9 +590,9 @@ const HILLSIDE_DRESSING: DressingGoldens = {
   // (−4, 62) stands `sunkenBy` 1 with `viaCarriageway` true. That is the 8F kerb
   // above, unchanged in kind — the post did not sink, the carriageway two
   // columns away rose. It stays pinned at 1 for the reason argued above.
-  streetLamps: 16,
-  sunkenLamps: 1,
-  deeplySunkenLamps: 0,
+  streetLamps: 14, // G6 freeze: 16 -> 14, the denominator: two posts stand on ground the pass no longer finds solid, dry and paved at the moment it plants.
+  sunkenLamps: 3, // G6 freeze: 1 -> 3, UP by two, and the same kerb the 8F rows argue at length: no post sank, the carriageway two columns away stands where the contract put it. MUST GO DOWN, by the sidewalk band following the datum out to the lamp line.
+  deeplySunkenLamps: 0, // G6 freeze: 0 -> 0, held at the bar.
   // 21 → 14 raw cuts, and **21 → 0 undressed**: the junction-step wave
   // (4b18ef5) dresses every one of the fourteen. `cutoffColumns` is the
   // denominator and is pinned so that a fix which merely stops cutting reads as
@@ -523,8 +630,8 @@ const HILLSIDE_DRESSING: DressingGoldens = {
   // these five are the saying. They MUST GO DOWN — by the two surfaces arriving
   // at a level a step can bridge, or by a flight being built there — never by
   // going back to dressing a wall's foot.
-  cutoffColumns: 44, // G4 flip: 9 -> 44, UP, and walk-gate material: five times as many cut-off columns, because the seam builders cut five times as many faces.
-  undressedCutoffs: 17, // G4 flip: 3 -> 17, UP with the denominator. MUST GO DOWN.
+  cutoffColumns: 48, // G6 freeze: 44 -> 48, the denominator.
+  undressedCutoffs: 31, // G6 freeze: 17 -> 31, UP, and this is the junction pass dying: fourteen cuts it used to nose are reported raw. MUST GO DOWN, by the pass coming back inside the freeze or by the two surfaces arriving level.
   // The 2c rows (2026-08-08), pinned from the first compile that has them.
   // `blindStairs` and `strandedTreads` MUST GO DOWN, to 0. `junctionColumns` is
   // the denominator: a "fix" that stops laying junction dressing altogether
@@ -533,14 +640,14 @@ const HILLSIDE_DRESSING: DressingGoldens = {
   // The one blind stair left on this fixture is at `(50, 70, 227)` — a lane
   // tread facing a column that reads back as no surface at all, beside the
   // lower cottage's doorstep. It is the same site on both fixtures.
-  junctionColumns: 16, // G4 flip: 9 -> 16, UP: seven more columns where a derived seam's flight meets a lane.
-  blindStairs: 0, // re-pinned 2026-08-19: combined waves — to zero, the MUST-GO-DOWN target
+  junctionColumns: 0, // G6 freeze: 16 -> 0. The pass does not run on-flag. This is a denominator going to zero, and the three rows under it go with it.
+  blindStairs: 0, // G6 freeze: 0 -> 0 — held, and now trivially, because nothing lays a junction stair. Not a fix.
   // `(75, 70, 244)`, both fixtures: a tread whose four neighbours all read back
   // as unstandable. The columns round it are declared paving that the audit
   // counts as `buried` — a defect of a different pass, showing up here.
-  strandedTreads: 0, // G4 flip: 1 -> 0, DOWN to zero, which is the direction this row wants.
+  strandedTreads: 0, // G6 freeze: 0 -> 0, same reading as `blindStairs`.
   // A point seam is a handful of columns. Four.
-  cascadeLargest: 4,
+  cascadeLargest: 0, // G6 freeze: 4 -> 0, same reading: no junction dressing, no patch of it.
   // 32 → **30**, longest run still two. Still the external road's own kerb,
   // still no run of plinth road on this fixture — two of the columns that read
   // proud were lane cells raised against a stoop, and they are not raised now
@@ -588,17 +695,17 @@ const HILLSIDE_DRESSING: DressingGoldens = {
   // them (§2.4's tie rule) and stays one under the higher. `plinthRuns` is
   // still 0. On `glowcap_vale` itself the same change reads 78 → 20 proud
   // columns, longest run 14 → 2.
-  plinthColumns: 34, // G4 flip: 33 -> 34, UP by one.
-  plinthLongestRun: 5,
-  stepPlinthColumns: 9, // G4 flip: 5 -> 9.
-  stepPlinthLongestRun: 3, // G4 flip: 2 -> 3.
+  plinthColumns: 40, // G6 freeze: 34 -> 40, UP by six. The six are isolated (the longest run does not move), so this is junction dressing withdrawing at six places and NOT a carriageway standing up. MUST GO DOWN.
+  plinthLongestRun: 5, // G6 freeze: 5 -> 5, unmoved, which is the half of this pair that carries the argument above.
+  stepPlinthColumns: 15, // G6 freeze: 9 -> 15, UP, same cause on the flights.
+  stepPlinthLongestRun: 8, // G6 freeze: 3 -> 8, UP with it. MUST GO DOWN.
   // 7 → **0**, 84 → 0. No built face on this fixture is five blocks or taller
   // over three columns any more (eb93a54's band-end closure plus the causeway
   // landing, which removed the fills those walls were retaining).
-  sheerFaces: 0,
-  sheerColumns: 0,
-  sheerWorstDrop: 0,
-  kerbStairs: 0,
+  sheerFaces: 0, // G6 freeze: 0 -> 0, held at the bar.
+  sheerColumns: 0, // G6 freeze: 0 -> 0.
+  sheerWorstDrop: 0, // G6 freeze: 0 -> 0.
+  kerbStairs: 0, // G6 freeze: 0 -> 0, and trivially — see `junctionColumns`.
 };
 
 const STEEP_DRESSING: DressingGoldens = {
@@ -614,12 +721,12 @@ const STEEP_DRESSING: DressingGoldens = {
   //
   // Re-pinned from the values HEAD actually produces (594/178 were stale before
   // this wave: HEAD measured 548/133).
-  halfTreads: 500, // G4 flip: 520 -> 500.
-  openSided: 112, // G4 flip: 123 -> 112.
+  halfTreads: 323, // G6 freeze: 500 -> 323, the tread-mix denominator, decided once instead of rewritten.
+  openSided: 51, // G6 freeze: 112 -> 51.
   // 2 → 0 and 2 → 0 (eb93a54).
-  openOverSoil: 0,
-  floatingDressing: 0,
-  streetLamps: 11, // G4 flip: 9 -> 11.
+  openOverSoil: 0, // G6 freeze: 0 -> 0, held at the bar.
+  floatingDressing: 1, // G6 freeze: 0 -> 1, UP, and a real defect rather than a reclassification: one tread stands with two cells or more of air under it. MUST GO BACK DOWN to 0.
+  streetLamps: 11, // G6 freeze: 11 -> 11, unmoved.
   // **0 → 1 at the 8F flip**, one lamp at (8, 30), `sunkenBy` 1,
   // `viaCarriageway`. The same seam as the hillside fixture's three and the
   // same argument — see that row, which carries the column probe. The
@@ -631,8 +738,8 @@ const STEEP_DRESSING: DressingGoldens = {
   // to split the finding; now the post at (8, 30) reports once, `sunkenBy` 1,
   // `viaCarriageway`. Same defect, honestly attributed; audit-only, no world
   // bytes moved.
-  sunkenLamps: 2, // G4 flip: 1 -> 2, UP by one. MUST GO DOWN.
-  deeplySunkenLamps: 0,
+  sunkenLamps: 3, // G6 freeze: 2 -> 3, UP by one, same kerb as the hillside row. MUST GO DOWN.
+  deeplySunkenLamps: 2, // G6 freeze: 0 -> 2, UP, and the worse of the two lamp rows: two posts stand two or more below the pavement beside them, which is the slot Kai walked. MUST GO DOWN to 0.
   // 11 → 13 cuts, **11 → 0 undressed** (4b18ef5). **13 → 16** with the stoop
   // fix (2026-08-07) — three lane columns beside doorsteps that are nosed where
   // they stand instead of climbing the side of a step. See the hillside row for
@@ -643,8 +750,8 @@ const STEEP_DRESSING: DressingGoldens = {
   // seven are the treads that used to stand at the foot of a face they could not
   // climb, including the pair at the mangled corner where the carriage spine
   // `sp0` meets the terrace street `hs2_0` three blocks down.
-  cutoffColumns: 63, // G4 flip: 23 -> 63, UP, walk-gate material as on the hillside.
-  undressedCutoffs: 13, // G4 flip: 5 -> 13, UP with it. MUST GO DOWN.
+  cutoffColumns: 106, // G6 freeze: 63 -> 106, the denominator.
+  undressedCutoffs: 80, // G6 freeze: 13 -> 80, UP by 67 — the junction pass's 85 columns, seen from the other side. MUST GO DOWN.
   // The 2c rows (2026-08-08). See the hillside block for what each one is.
   //
   // `cascadeLargest` 31 → **24** is the mangled corner at `(53 … 65, 9 … 12)`,
@@ -664,10 +771,10 @@ const STEEP_DRESSING: DressingGoldens = {
   // three columns smaller. `blindStairs` and `strandedTreads`, the two rows
   // that are actually defects, are unmoved at 1 and 1: nothing was hidden, less
   // was needed. It still MUST GO DOWN further and the lever is still a flight.
-  junctionColumns: 85, // G4 flip: 55 -> 85, UP: the derived flights each meet a street.
-  blindStairs: 1, // 11F: 0 -> 1, UP, and a defect rather than a denominator: one tread of a derived flight faces a column that reads back as no surface. MUST GO DOWN, back to 0.
-  strandedTreads: 1,
-  cascadeLargest: 21,
+  junctionColumns: 0, // G6 freeze: 85 -> 0. The pass does not run on-flag; the three rows under it are its subsets and go to zero with it.
+  blindStairs: 0, // G6 freeze: 1 -> 0, and NOT a fix: the denominator is zero.
+  strandedTreads: 0, // G6 freeze: 1 -> 0, same reading.
+  cascadeLargest: 0, // G6 freeze: 21 -> 0, same reading.
   // 3 → 5 columns, longest run 1 → 2, and then **5 → 3, run 2 → 1** with the
   // stoop fix (2026-08-07): the lifts it withdrew were exactly the cells that
   // stood proud of the ground beside them. Small either way; a kerb detail,
@@ -687,12 +794,12 @@ const STEEP_DRESSING: DressingGoldens = {
   // `VERGE_FILL_FEATHER`) — see the hillside row for the walked defect and the
   // mechanism. The three-column stretch on `hs0_0` is gone entirely; what is
   // left is five isolated columns, each one beside a road cell that steps.
-  plinthColumns: 4, // G4 flip: 2 -> 4, UP by two.
-  plinthLongestRun: 2, // G4 flip: 1 -> 2.
+  plinthColumns: 2, // G6 freeze: 4 -> 2, DOWN.
+  plinthLongestRun: 1, // G6 freeze: 2 -> 1, DOWN.
   // 8 → **0**, and with it the four-column stair-head plinth that was the only
   // plinth with any length on either fixture. The flight-floor fix (eb93a54).
-  stepPlinthColumns: 6, // G4 flip: 5 -> 6.
-  stepPlinthLongestRun: 3,
+  stepPlinthColumns: 86, // G6 freeze: 6 -> 86, UP by 80, and the largest single move of the flip on this fixture: the flights stand proud where the junction pass used to blend them. MUST GO DOWN.
+  stepPlinthLongestRun: 17, // G6 freeze: 3 -> 17, UP with it, and a seventeen-column run is a length you see. MUST GO DOWN.
   // 7 → **2** faces, 73 → **24** columns, worst drop 9 → **6** — the composite
   // gate (`structures/retaining.ts`, 2026-08-07). Six of the seven runs were a
   // *composite*: a face that stacked past `RETAIN_MAX` while every seam obeyed
@@ -709,11 +816,11 @@ const STEEP_DRESSING: DressingGoldens = {
   // Kai's aesthetic call after a walk and not a compiler's. The compile report
   // now carries "built faces by finished drop" so that call has numbers behind
   // it. They still MUST GO DOWN, but only by a decision, not by a fix.
-  sheerFaces: 9, // G4 flip: 6 -> 9, UP. Three more sheer runs, every one of them the terminal seam builder's. MUST GO DOWN, by benching.
-  sheerColumns: 74, // G4 flip: 53 -> 74, UP with the run count.
-  sheerWorstDrop: 9, // G4 flip: 10 -> 9, DOWN by one — the worst face is a block shorter.
+  sheerFaces: 2, // G6 freeze: 9 -> 2, DOWN by seven, and the best row of the flip: the seam builder no longer runs a face down to a ground a later pass moved.
+  sheerColumns: 7, // G6 freeze: 74 -> 7, DOWN with the run count.
+  sheerWorstDrop: 6, // G6 freeze: 9 -> 6, DOWN by three.
   // 11F: 0 -> 1, UP, and a defect: see the assertion in `DEFECT GOLDEN 2c`.
-  kerbStairs: 1,
+  kerbStairs: 0, // G6 freeze: 1 -> 0, and trivially — see `junctionColumns`.
 };
 
 const scratch: string[] = [];
