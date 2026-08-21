@@ -37,7 +37,12 @@ import {
 import { groundLevelsOf, levelSeams } from "../src/layout/levels.js";
 import type { FormBench } from "../src/layout/forms/types.js";
 import type { StreetGraph, StreetSegment } from "../src/layout/streets.js";
-import { levelClaimsByColumn } from "../src/structures/ground-declare.js";
+// `levelClaimsByColumn` moved with WP-G3: `structures/ground-declare.ts` was
+// deleted with `pad.record` (GROUND-CONTRACT-v1 §4 item 10) and the partition
+// helper — which is about the declaration *set*, not about pads — went to
+// `layout/ground-declarers.ts`, where the equivalence shim reads it. Everything
+// this file pins is still live; only the module moved.
+import { levelClaimsByColumn } from "../src/layout/ground-declarers.js";
 import { driverForPlan, type GroundDriver } from "../src/layout/ground-driver.js";
 import { dressStreets, type SegmentArc, type StreetscapeResult } from "../src/structures/streetscape.js";
 import {

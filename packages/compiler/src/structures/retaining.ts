@@ -58,7 +58,7 @@ import { APRON_RUN_PER_BLOCK, type Region } from "@terrainist/stdlib";
 
 import type { SeamLanding, SeamLandingStack, SeamLandings } from "../layout/district.js";
 import type { Point2, Rect } from "../layout/frames.js";
-import type { GroundClaim, GroundIntent } from "../layout/ground-contract.js";
+import type { GroundClaim, GroundIntent, ResolvedGround } from "../layout/ground-contract.js";
 import { driverForPlan, type GroundDriver } from "../layout/ground-driver.js";
 import { GROUND_V1_SEAMS } from "../layout/types.js";
 import {
@@ -78,6 +78,7 @@ import {
   WALL_DEMAND_RANGE,
   bankRun,
   benchedRun,
+  blendedBankFall,
   groundLevelsOf,
   seamDressing,
   tierCountOf,
@@ -668,7 +669,11 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
   // byte-identity is "a document with no `precinct.*` node compiles
   // byte-identically", and a document *with* one compiles byte-identically too
   // until 12F flips the constant.
-  const planeJobs = (input.planes ?? [])
+  // §4 item 21 again: with `GROUND_V1_SEAMS` on, a plane's boundary is a
+  // `GroundTransition` like any other and `finishSeams` builds it, so the
+  // plane's own job list — and the two-bench coercion `planeSeams` needs to
+  // express it — is absorbed with the skirt.
+  const planeJobs = (GROUND_V1_SEAMS ? [] : (input.planes ?? []))
     .filter((plane) => plane.tiered ?? GROUND_PLANE_TIE)
     .map((plane) => ({ plane, extent: planeExtent(region, plane) }))
     .filter((job): job is { plane: RetainingPlane; extent: PlaneExtent } => job.extent !== null);
@@ -784,7 +789,16 @@ export function buildRetainingWalls(input: RetainingPassInput): RetainingPassRes
     // is a storey down, and you see the wall that makes it so" (§4.6) — so it
     // is derived here, from the platform field and the finished ground, rather
     // than left as a bank of raw dirt.
-    jobs.push(...skirtSeams(region, plan, levels, tiered).map((j) => ({ ...j, measured: true })));
+    //
+    // **Absorbed at WP-G4's flip** (§4 item 21). With `GROUND_V1_SEAMS` on the
+    // skirt is not derived here at all: the resolver enumerates the same face —
+    // and the ones this construction misses — and `finishSeams` builds it from
+    // the transition list, against the *resolved* field rather than against a
+    // plan four passes still have to edit. Off, this is the shipped derivation
+    // and every world is byte-identical.
+    if (!GROUND_V1_SEAMS) {
+      jobs.push(...skirtSeams(region, plan, levels, tiered).map((j) => ({ ...j, measured: true })));
+    }
 
     for (const [jobIndex, { seam: record, floorY, measured }] of jobs.entries()) {
       // **§5.2, and the whole of WP-3.** On a quarter no planner drew the
@@ -3012,6 +3026,15 @@ function gradeBank(
    * honest even where nothing consults it yet.
    */
   bank: Uint8Array | undefined = undefined,
+  /**
+   * **§7.2's natural blend**, as a run: the eased bank spends `easedRun` columns
+   * and falls on {@link blendedBankFall}'s quantised curve rather than on the
+   * straight 1:2 ramp.
+   *
+   * Zero — the default, and every caller but `finishSeams`' flag-on half — is
+   * the shipped geometry, so nothing moves until `GROUND_V1_SEAMS` flips.
+   */
+  easedRun = 0,
 ): number {
   const view = driver.view();
   const cells = region.width * region.depth;
@@ -3029,17 +3052,22 @@ function gradeBank(
   let raised = 0;
   /** The ring targets, with the ground each was measured against (§9 step 2). */
   const rings: { readonly idx: number; readonly target: number; readonly g: number }[] = [];
-  const steps = benched ? benchedRun(drop) : lifted ? bankRun(drop) : drop;
+  const eased = easedRun > 0;
+  const steps = eased ? easedRun : benched ? benchedRun(drop) : lifted ? bankRun(drop) : drop;
   for (let ring = 0; ring < steps && frontier.length > 0; ring++) {
     // One block per column, or one bench of `BENCH_FACE` blocks every
     // `BENCH_TREAD` columns. The benched profile is clamped one block above the
     // floor rather than cut off at it, so the last face is a kerb and never a
     // step the bench does not reach.
-    const target = benched
-      ? Math.max(floor + 1, top - BENCH_FACE * (Math.floor(ring / BENCH_TREAD) + 1))
-      : lifted
-        ? top - Math.ceil((ring + 1) / APRON_RUN_PER_BLOCK)
-        : top - ring - 1;
+    const target = eased
+      ? top - blendedBankFall(ring + 1, drop, steps)
+      : benched
+        ? Math.max(floor + 1, top - BENCH_FACE * (Math.floor(ring / BENCH_TREAD) + 1))
+        : lifted
+          ? top - Math.ceil((ring + 1) / APRON_RUN_PER_BLOCK)
+          : top - ring - 1;
+    // The eased profile reaches the floor at its last ring by construction, so
+    // the same stop applies to it: past that column the bank is the ground.
     if (!benched && target <= floor) break;
     const next: number[] = [];
     for (const k of frontier) {
@@ -3762,6 +3790,39 @@ export interface SeamFinishInput {
   readonly seam?: Uint8Array;
   /** The node the `LOAM-I497` note is attributed to. */
   readonly nodePath?: string;
+  /**
+   * The palette and stack the builders resolve their masonry from.
+   *
+   * Optional for the reason the flag is: with `GROUND_V1_SEAMS` off this pass
+   * builds nothing and needs neither, and every test that only wants the
+   * derivation may go on calling it with three arguments.
+   */
+  readonly palette?: Palette;
+  readonly stack?: PrismarineStack;
+  /** Sink for the masonry the flag-on half emits. Appended to, never read. */
+  readonly blocks?: StructureBlock[];
+  /** The quarters, so §3.4's `LOAM-W413` can be aggregated per quarter. */
+  readonly quarters?: readonly { readonly nodePath: string; readonly bounds: Rect }[];
+}
+
+/** What the flag-on half built, per §3.3's table. */
+export interface SeamBuildTally {
+  /** Transitions the complement walk actually put something on. */
+  readonly built: number;
+  /** …by the treatment that built them, ascending by treatment. */
+  readonly byTreatment: Readonly<Record<string, number>>;
+  /** Runs under `MIN_RETAIN_RUN`, absorbed by S7 rather than built or refused. */
+  readonly absorbed: number;
+  /** Transitions refused with `LOAM-W413`, per §3.3's refusal column. */
+  readonly refused: number;
+  /** …the same count keyed by quarter, which is the budget §6/WP-G4 sets. */
+  readonly refusalsByQuarter: Readonly<Record<string, number>>;
+  /** Columns of masonry face, graded bank and painted rock, respectively. */
+  readonly faceColumns: number;
+  readonly bankColumns: number;
+  readonly rockColumns: number;
+  /** …of the banks, the ones §7.2's eased profile shaped. */
+  readonly blended: number;
 }
 
 /** The `LOAM-I497 GROUND_STAGE` numbers, as a value a test can assert on. */
@@ -3786,6 +3847,10 @@ export interface SeamFinishResult {
   readonly transitions: readonly DerivedSeam[];
   readonly stage: GroundStageCounts;
   readonly diagnostics: readonly LoamDiagnostic[];
+  /** What the flag-on half built; all zeroes with `GROUND_V1_SEAMS` off. */
+  readonly tally: SeamBuildTally;
+  /** The masonry, for the caller to lay. Empty with the flag off. */
+  readonly blocks: readonly StructureBlock[];
 }
 
 /**
@@ -3812,16 +3877,6 @@ export interface SeamFinishResult {
  * compile regardless of the flag.
  */
 export function finishSeams(input: SeamFinishInput): SeamFinishResult {
-  if (GROUND_V1_SEAMS) {
-    // WP-G4's building half. Left as a loud stop rather than a silent no-op:
-    // this stage's contract is "derives and reports, builds nothing", and a
-    // flag flipped before the builder lands must not quietly ship a world with
-    // the seams still missing.
-    throw new Error(
-      "GROUND_V1_SEAMS is on but finishSeams' building half has not landed " +
-        "(GROUND-CONTRACT-v1 §6/WP-G4).",
-    );
-  }
   const plan = input.plan;
   const region = plan.region;
   const resolved = input.ground.finish();
@@ -3840,9 +3895,51 @@ export function finishSeams(input: SeamFinishInput): SeamFinishResult {
   const seamMask = input.seam;
   let wouldBuild = 0;
   const byTreatment = new Map<string, number>();
+  /** §3.3's complement: the transitions no other pass reports having built. */
+  const complement: DerivedSeam[] = [];
   for (const t of derivation.transitions) {
     byTreatment.set(t.refined, (byTreatment.get(t.refined) ?? 0) + 1);
-    if (!reportedBuilt(t, seamMask)) wouldBuild++;
+    if (!reportedBuilt(t, seamMask)) {
+      wouldBuild++;
+      complement.push(t);
+    }
+  }
+
+  // **WP-G4's flag-on half — §3.3, the terminal builder.** Off, the block below
+  // does not run and the world is the shipped one; on, every transition the
+  // complement holds is built through the construction §3.3's table names for
+  // its treatment, and a refusal is `LOAM-W413 SEAM_UNSERVED`.
+  const built: StructureBlock[] = input.blocks ?? [];
+  const buildDiagnostics: LoamDiagnostic[] = [];
+  let tally: SeamBuildTally = {
+    built: 0,
+    byTreatment: {},
+    absorbed: 0,
+    refused: 0,
+    refusalsByQuarter: {},
+    faceColumns: 0,
+    bankColumns: 0,
+    rockColumns: 0,
+    blended: 0,
+  };
+  if (GROUND_V1_SEAMS && input.palette !== undefined && input.stack !== undefined) {
+    tally = buildDerivedSeams({
+      region,
+      plan,
+      driver: input.ground,
+      resolved,
+      intents,
+      occupied,
+      transitions: complement,
+      states: resolveStates(input.palette, input.stack),
+      palette: input.palette,
+      stack: input.stack,
+      blocks: built,
+      seam: seamMask ?? new Uint8Array(region.width * region.depth),
+      diagnostics: buildDiagnostics,
+      nodePath: input.nodePath ?? "world",
+      quarters: input.quarters ?? [],
+    });
   }
 
   const intentsByClass = new Map<string, number>();
@@ -3885,7 +3982,449 @@ export function finishSeams(input: SeamFinishInput): SeamFinishResult {
         "count moving is visible in a diff before a block moves in a world.",
     ),
   );
-  return { transitions: derivation.transitions, stage, diagnostics };
+  if (tally.built + tally.refused > 0) {
+    diagnostics.push(
+      note(
+        "SEAM_SERVED",
+        input.nodePath ?? "world",
+        `terminal seam builder (§3.3): ${tally.built} derived transition(s) built ` +
+          `(${describe(tally.byTreatment)}) over ${tally.faceColumns} column(s) of face, ` +
+          `${tally.bankColumns} of graded bank (${tally.blended} eased under §7.2's ` +
+          `natural blend) and ${tally.rockColumns} finished in the hill's own rock; ` +
+          `${tally.absorbed} absorbed under S7, ${tally.refused} refused`,
+        "No action needed.",
+      ),
+    );
+  }
+  diagnostics.push(...buildDiagnostics);
+  return { transitions: derivation.transitions, stage, diagnostics, tally, blocks: built };
+}
+
+/* -------------------------------------------------------------------------- */
+/* §3.3 — the complement, built                                                */
+/* -------------------------------------------------------------------------- */
+
+/** Everything {@link buildDerivedSeams} reads, and the sinks it appends to. */
+interface DerivedBuildInput {
+  readonly region: Region;
+  readonly plan: ColumnPlan;
+  readonly driver: GroundDriver;
+  readonly resolved: ResolvedGround;
+  readonly intents: readonly GroundIntent[];
+  readonly occupied: Uint8Array;
+  readonly transitions: readonly DerivedSeam[];
+  readonly states: RetainingStates;
+  readonly palette: Palette;
+  readonly stack: PrismarineStack;
+  readonly blocks: StructureBlock[];
+  readonly seam: Uint8Array;
+  readonly diagnostics: LoamDiagnostic[];
+  readonly nodePath: string;
+  /**
+   * The quarters, for §3.4's "aggregated per quarter" — a refusal is attributed
+   * to the quarter whose bounds hold the run's first cell, and to the root when
+   * the run falls outside every quarter (a plane's edge, or open country).
+   */
+  readonly quarters: readonly { readonly nodePath: string; readonly bounds: Rect }[];
+}
+
+/**
+ * The classes whose ground a seam construction may not stand on — the owner
+ * map's answer to `buildRetainingWalls`' hand-built `street` mask.
+ *
+ * §3.3's refusal column names three owners a course or a bank may not take: a
+ * street, a footprint, or water. The first is this set, the second is
+ * `occupied`, and the third is `fluidKind`. Reading it off the resolved owner
+ * map rather than off a district's `carriageway`/`sidewalk` rasters is the whole
+ * of "`EdgeContext` stops being gated on `plannedEdges`", applied to the build
+ * half: every street in the world answers, including the ones no site planner
+ * drew.
+ */
+const SEAM_BLOCKING_CLASSES: ReadonlySet<string> = new Set<string>([
+  "street.network",
+  "street.sidewalk",
+  "road.network",
+  "sweep.run",
+  "doorstep.landing",
+]);
+
+/**
+ * **§3.3, executed** — every derived transition no other pass built, built.
+ *
+ * One dispatch, five rows, and not one new construction: `buildTieredSeam` for a
+ * face (`retaining` and `tiered` alike — a single face *is* a one-tier stack, and
+ * routing both through one builder is what stops the wall path and the stack path
+ * from being two answers to one question), `gradeBank` for a ramp, `faceCuts` for
+ * the hill's own rock, and nothing at all for a kerb or a built face, which
+ * {@link reportedBuilt} has already accounted for.
+ *
+ * The adapter is the only new thing, and it is the one `planeSeams` already
+ * writes down: a **two-bench synthetic `GroundLevels`** — index 0 the run's own
+ * columns at `belowY`, index 1 the upper side at `aboveY` — so that every
+ * existing builder reads `top = levelY[record.above]`, `floor = top − drop` and
+ * `levels.at` exactly as it does for a quarter. §4 item 21's absorption is
+ * therefore a *move*, not a deletion: the coercion stops being `planeSeams`'
+ * private trick and becomes the one adapter between the resolver's list and the
+ * constructions.
+ *
+ * Deterministic: the transition list is already sorted row-major by first cell,
+ * every synthetic bench is built in region order, and nothing here reads a clock
+ * or an RNG.
+ */
+function buildDerivedSeams(input: DerivedBuildInput): SeamBuildTally {
+  const { region, plan, driver, resolved, intents, occupied, states, seam } = input;
+  const cells = region.width * region.depth;
+
+  // The street mask, off the owner map (§3.3's refusal column).
+  const street = new Uint8Array(cells);
+  for (let k = 0; k < cells; k++) {
+    const o = resolved.owner[k] as number;
+    if (o === -1) continue;
+    if (SEAM_BLOCKING_CLASSES.has((intents[o] as GroundIntent).sourceClass)) street[k] = 1;
+  }
+
+  const byTreatment = new Map<string, number>();
+  let builtCount = 0;
+  let refused = 0;
+  let faceColumns = 0;
+  let bankColumns = 0;
+  let rockColumns = 0;
+  let blended = 0;
+  let absorbed = 0;
+  const declaredWalls: RetainingDeclaration["walls"][number][] = [];
+  const bankMask = new Uint8Array(cells);
+  /** §3.4's aggregation: quarter → the refusals inside it. */
+  const refusals = new Map<string, string[]>();
+
+  for (const [jobIndex, t] of input.transitions.entries()) {
+    if (t.refined === "kerb" || t.refined === "built") continue;
+    // **T9, and it is not a refusal.** "A run shorter than `MIN_RETAIN_RUN` is
+    // absorbed, never graded" (§5's pinned taste, S7): a two-block drop over one
+    // column is a step in the ground, not a construction that failed to fit, and
+    // reporting it as `LOAM-W413` would bury the refusals that mean something
+    // under a thousand that do not — the `SWEEP_FEATURES_PLACED` lesson, and the
+    // reason §6/WP-G4 budgets five per quarter rather than five hundred.
+    if (t.cells.length < MIN_RETAIN_RUN) {
+      absorbed++;
+      continue;
+    }
+    const adapted = adaptSeam(region, t, resolved);
+    if (adapted === null) continue;
+    const { levels, record } = adapted;
+    const source = `${input.nodePath}#seam@${jobIndex}`;
+
+    if (t.refined === "rock") {
+      // **R4, whole** — and R4 has two answers, not one. The hill's own rock is
+      // what a cut against *natural* ground is made of; a cut whose low side a
+      // claim owns is a plane or a bench standing against the hill, and
+      // `docs/GROUND-UNIFICATION-v0.md` §11.2 R4 answers that with **one revetted
+      // course** wherever `tierCountOf(drop) === 1` — the construction
+      // `planeSeams` used to reach through its own job list and which this stage
+      // absorbed (§4 item 21). Absorbing a pass may not lose its second answer,
+      // so the condition is R4's verbatim: one course, `revetted`, and rock for
+      // everything taller (the mirror geometry §11.2 defers by name).
+      const ownedLow = (resolved.owner[t.cells[0] as number] as number) !== -1;
+      if (ownedLow && t.cells.length >= MIN_RETAIN_RUN && tierCountOf(t.drop) === 1) {
+        const laid = buildTieredSeam({
+          region,
+          plan,
+          driver,
+          source,
+          nodePath: input.nodePath,
+          measured: true,
+          levels,
+          record: { ...record, treatment: "tiered" },
+          drop: t.drop,
+          dressing: "revetted",
+          street,
+          occupied,
+          states,
+          palette: input.palette,
+          stack: input.stack,
+          blocks: input.blocks,
+          seam,
+          diagnostics: input.diagnostics,
+          declaredWalls,
+        });
+        faceColumns += laid.faceColumns;
+        if (laid.faceColumns > 0) {
+          builtCount++;
+          byTreatment.set("revetted", (byTreatment.get("revetted") ?? 0) + 1);
+          continue;
+        }
+      }
+      // Materials only: the face is the hill, and what it is made of is rock.
+      rockColumns += faceCuts(region, plan, levels, states, seam, street, occupied, true);
+      builtCount++;
+      byTreatment.set("rock", (byTreatment.get("rock") ?? 0) + 1);
+      continue;
+    }
+
+    if (t.refined === "bank") {
+      // §7.2's blend where the boundary is unpressed and the ground affords it;
+      // S8's 1:2 ramp everywhere else. One arithmetic either way — `gradeBank`
+      // is the only thing that grades.
+      const easedRun = t.blendRun;
+      if (easedRun === 0 && t.availableRun < bankRun(t.drop) && t.side === "fill") {
+        // **§3.3's refusal column, in full**: "`LOAM-W413` where
+        // `availableRun < bankRun(drop)` — **and S5 then re-dresses the stack
+        // `revetted`, which always fits**." The re-dressing is the sentence that
+        // matters: a bank with no room is not a hole in the ground, it is a face,
+        // and a revetted stack spends `SEAM_SETBACK` columns rather than `2·drop`.
+        // Only where even that finds no ground to stand on is anything refused.
+        if (tierCountOf(t.drop) <= SEAM_TIER_MAX) {
+          const laid = buildTieredSeam({
+            region,
+            plan,
+            driver,
+            source,
+            nodePath: input.nodePath,
+            measured: true,
+            levels,
+            record: { ...record, treatment: "tiered" },
+            drop: t.drop,
+            dressing: "revetted",
+            street,
+            occupied,
+            states,
+            palette: input.palette,
+            stack: input.stack,
+            blocks: input.blocks,
+            seam,
+            diagnostics: input.diagnostics,
+            declaredWalls,
+          });
+          faceColumns += laid.faceColumns;
+          if (laid.faceColumns > 0) {
+            builtCount++;
+            byTreatment.set("revetted", (byTreatment.get("revetted") ?? 0) + 1);
+            continue;
+          }
+        }
+        refused++;
+        refuse(
+          refusals,
+          quarterOf(input, t.cells[0] as number),
+          `a derived bank at ${describeCell(region, t.cells[0] as number)} falls ${t.drop} block(s) over ${t.cells.length} column(s), but only ${t.availableRun} column(s) of open ground stand beyond it where a 1:2 bank wants ${bankRun(t.drop)}, and the revetted stack S5 re-dresses it as found no ground to stand on either`,
+        );
+        continue;
+      }
+      const ringTargets: GroundClaim[] = [];
+      const raised = gradeBank(
+        region,
+        plan,
+        driver,
+        source,
+        levels,
+        record,
+        t.belowY,
+        street,
+        occupied,
+        states,
+        ringTargets,
+        false,
+        t.drop,
+        true,
+        bankMask,
+        easedRun,
+      );
+      bankColumns += raised;
+      if (easedRun > 0) blended++;
+      if (raised > 0) {
+        builtCount++;
+        byTreatment.set("bank", (byTreatment.get("bank") ?? 0) + 1);
+      }
+      continue;
+    }
+
+    // `retaining` and `tiered`: one face or several, one builder.
+    const dressing = seamDressing(t.pressedShare, t.availableRun, tierCountOf(t.drop));
+    const laid = buildTieredSeam({
+      region,
+      plan,
+      driver,
+      source,
+      nodePath: input.nodePath,
+      // Measured from the resolved field, never read from a claim (R2, §3.1.1).
+      measured: true,
+      levels,
+      record,
+      drop: t.drop,
+      dressing,
+      street,
+      occupied,
+      states,
+      palette: input.palette,
+      stack: input.stack,
+      blocks: input.blocks,
+      seam,
+      diagnostics: input.diagnostics,
+      declaredWalls,
+    });
+    faceColumns += laid.faceColumns;
+    if (laid.faceColumns > 0) {
+      builtCount++;
+      byTreatment.set(t.refined, (byTreatment.get(t.refined) ?? 0) + 1);
+    }
+    if (laid.unplaced > 0 || laid.unsupportedColumns > 0 || laid.faceColumns === 0) {
+      refused++;
+      refuse(
+        refusals,
+        quarterOf(input, t.cells[0] as number),
+        `a derived ${t.refined} seam at ${describeCell(region, t.cells[0] as number)} drops ${t.drop} block(s) over ${t.cells.length} column(s) and was served by a ${dressing} stack of ${laid.tiers.length} tier(s), but ${laid.unplaced} tier(s) found no ground to stand on and ${laid.unsupportedColumns} column(s) were left uncovered — a street, a footprint or water owns the ground the course needed`,
+      );
+    }
+  }
+
+  for (const quarter of [...refusals.keys()].sort()) {
+    const rows = refusals.get(quarter) as string[];
+    input.diagnostics.push(
+      warning(
+        "SEAM_UNSERVED",
+        quarter,
+        `${rows.length} derived transition(s) in "${quarter}" were chosen and could not be placed: ` +
+          rows.slice(0, 3).join("; ") +
+          (rows.length > 3 ? `; and ${rows.length - 3} more` : ""),
+        "Nothing in the document names the columns directly: widen the block so the construction has room, or lower the quarter's density so the two levels are closer together.",
+      ),
+    );
+  }
+
+  return {
+    built: builtCount,
+    byTreatment: sortedCounts(byTreatment),
+    absorbed,
+    refusalsByQuarter: Object.fromEntries([...refusals.keys()].sort().map((q) => [q, (refusals.get(q) as string[]).length])),
+    refused,
+    faceColumns,
+    bankColumns,
+    rockColumns,
+    blended,
+  };
+}
+
+/** `x,z` for a region index — the witness a refusal names. */
+function describeCell(region: Region, k: number): string {
+  return `${region.x0 + (k % region.width)},${region.z0 + Math.floor(k / region.width)}`;
+}
+
+/**
+ * §3.3's refusal, **aggregated per quarter** the way §3.4's lint table asks.
+ *
+ * `LOAM-W413 SEAM_UNSERVED` and no new code: §7.5 allocates `W494` to WP-G6's
+ * non-planar seat and nothing else to this stage, and §3.3's table names W413
+ * for exactly this — a treatment that was chosen and could not be placed.
+ *
+ * One warning per quarter, with a count and three witnesses, rather than one per
+ * transition: §3.4 says "aggregated per quarter", and the `SEAM_SERVED` lesson
+ * says why — fifty warnings that each name one column is a report nobody acts
+ * on, and the budget §6/WP-G4 sets (five per quarter) is only readable if the
+ * report is keyed the way the budget is.
+ */
+function refuse(rows: Map<string, string[]>, quarter: string, message: string): void {
+  let list = rows.get(quarter);
+  if (list === undefined) {
+    list = [];
+    rows.set(quarter, list);
+  }
+  list.push(message);
+}
+
+/** The quarter a run belongs to — its first cell's, or the root's. */
+function quarterOf(input: DerivedBuildInput, cell: number): string {
+  const region = input.region;
+  const x = region.x0 + (cell % region.width);
+  const z = region.z0 + Math.floor(cell / region.width);
+  for (const q of input.quarters) {
+    const b = q.bounds;
+    if (x >= b.x0 && x <= b.x1 && z >= b.z0 && z <= b.z1) return q.nodePath;
+  }
+  return input.nodePath;
+}
+
+/**
+ * One derived transition, as the existing builders want it — §4 item 21's
+ * coercion, moved from `planeSeams` to the one place it belongs.
+ *
+ * `null` where the upper side presents no column inside the region, which is a
+ * run against the region edge and has no face to build.
+ */
+function adaptSeam(
+  region: Region,
+  t: DerivedSeam,
+  resolved: ResolvedGround,
+): { readonly levels: GroundLevels; readonly record: LevelSeam } | null {
+  const cells = region.width * region.depth;
+  const lowRuns: Rect[] = [];
+  const points: Point2[] = [];
+  let x0 = Number.POSITIVE_INFINITY;
+  let x1 = Number.NEGATIVE_INFINITY;
+  let z0 = Number.POSITIVE_INFINITY;
+  let z1 = Number.NEGATIVE_INFINITY;
+  const grow = (x: number, z: number): void => {
+    if (x < x0) x0 = x;
+    if (x > x1) x1 = x;
+    if (z < z0) z0 = z;
+    if (z > z1) z1 = z;
+  };
+  for (const k of t.cells) {
+    const x = region.x0 + (k % region.width);
+    const z = region.z0 + Math.floor(k / region.width);
+    lowRuns.push({ x0: x, z0: z, x1: x, z1: z });
+    points.push({ x, z });
+    grow(x, z);
+  }
+  // The upper bench: the 4-neighbours of the run the *upper side owns and stands
+  // over*, in region order and deduplicated, exactly as `planeSeams` builds its
+  // `hill`. The owner test is not decoration — a neighbour that is merely higher
+  // is the next column of the same hillside, and calling it the bench would tell
+  // every builder the face is somewhere it is not.
+  const inRun = new Uint8Array(cells);
+  for (const k of t.cells) inRun[k] = 1;
+  const seen = new Uint8Array(cells);
+  const highRuns: Rect[] = [];
+  for (const k of t.cells) {
+    const x = region.x0 + (k % region.width);
+    const z = region.z0 + Math.floor(k / region.width);
+    const y = resolved.ground[k] as number;
+    for (const [dx, dz] of NEIGHBOURS) {
+      if (!inside(region, x + dx, z + dz)) continue;
+      const n = index(region, x + dx, z + dz);
+      if (seen[n] === 1 || inRun[n] === 1) continue;
+      if ((resolved.owner[n] as number) !== t.above) continue;
+      if ((resolved.ground[n] as number) <= y) continue;
+      seen[n] = 1;
+      highRuns.push({ x0: x + dx, z0: z + dz, x1: x + dx, z1: z + dz });
+      grow(x + dx, z + dz);
+    }
+  }
+  highRuns.sort((a, b) => (a.z0 === b.z0 ? a.x0 - b.x0 : a.z0 - b.z0));
+  if (highRuns.length === 0) return null;
+  // The frame is the run plus everything a construction may spend beside it: a
+  // stack steps `tieredRun` columns out and a bank grades `blendedBankRun`, and
+  // a bench clipped away by the frame is a bench `levels.at` cannot see.
+  const reach = Math.max(t.blendRun, bankRun(t.drop), tieredRun(SEAM_TIER_MAX, "terraced")) + 1;
+  const bounds: Rect = {
+    x0: Math.max(region.x0, x0 - reach),
+    z0: Math.max(region.z0, z0 - reach),
+    x1: Math.min(region.x0 + region.width - 1, x1 + reach),
+    z1: Math.min(region.z0 + region.depth - 1, z1 + reach),
+  };
+  const levels = groundLevelsOf(bounds, [
+    { id: "below", runs: lowRuns, level: t.belowY },
+    { id: "above", runs: highRuns, level: t.aboveY },
+  ]);
+  if (levels === null) return null;
+  return {
+    levels,
+    record: {
+      above: 1,
+      below: 0,
+      cells: points,
+      drop: t.drop,
+      treatment: t.refined,
+    },
+  };
 }
 
 /**

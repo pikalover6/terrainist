@@ -27,6 +27,8 @@
  * `structures/retaining.ts`) is what builds a seam.
  */
 
+import { APRON_RUN_PER_BLOCK } from "@terrainist/stdlib";
+
 import type { Point2, Rect } from "./frames.js";
 import type { FormBench } from "./forms/types.js";
 import { SEAM_TIERS } from "./types.js";
@@ -510,6 +512,52 @@ export function treatmentForSeam(
  */
 export function bankRun(drop: number): number {
   return 2 * drop;
+}
+
+/**
+ * **The natural-blend policy's run** — `docs/GROUND-CONTRACT-v1.md` §7.2, the
+ * paragraph Kai ratified on 2026-08-20.
+ *
+ * > Where a footprint or plane edge is not pressed and `availableRun` affords
+ * > it, the transition is a bank with run scaled to the drop (never steeper
+ * > than 1:2 / `APRON_RUN_PER_BLOCK`; it may widen), with a deterministic eased
+ * > profile — the quantised easing curve, not a straight ramp — so an
+ * > open-ground lot reads as hillside rather than engineering.
+ *
+ * Returns the columns the eased bank wants, or `0` where the boundary cannot
+ * afford even the 1:2 ramp {@link bankRun} sizes — which is the caller's signal
+ * that the policy does not apply and the ordinary treatment stands.
+ *
+ * It **widens** rather than steepens: the eased profile spends its first columns
+ * on a shoulder that barely falls, so a curve squeezed into `bankRun(drop)`
+ * would have to make that back in the middle at more than 1:2. Half again is
+ * what a smoothstep needs to keep its midpoint at the ramp's own gradient, and
+ * the widening is clamped to the run the ground actually has.
+ */
+export function blendedBankRun(drop: number, availableRun: number): number {
+  const straight = bankRun(drop);
+  if (drop < 2 || availableRun < straight) return 0;
+  return Math.min(availableRun, straight + Math.ceil(straight / 2));
+}
+
+/**
+ * How far below the top an eased bank stands, `ring` columns out — the whole of
+ * §7.2's geometry, in one function so the derivation and the builder cannot
+ * disagree about what "eased" means.
+ *
+ * A quantised smoothstep (`3s² − 2s³`), clamped two ways and monotone by
+ * construction: never past the drop, and never steeper than
+ * `APRON_RUN_PER_BLOCK` measured from the top, which is the "never steeper than
+ * 1:2" half of the policy stated as an invariant rather than as an intention.
+ * At `ring === run` the cap is at or past the drop and the curve is at 1, so an
+ * eased bank always reaches its floor.
+ */
+export function blendedBankFall(ring: number, drop: number, run: number): number {
+  if (run <= 0) return drop;
+  const s = Math.min(1, Math.max(0, ring / run));
+  const eased = Math.round(drop * (3 * s * s - 2 * s * s * s));
+  const cap = Math.ceil(ring / APRON_RUN_PER_BLOCK);
+  return Math.max(0, Math.min(drop, eased, cap));
 }
 
 /**

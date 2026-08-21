@@ -1623,6 +1623,14 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
   // because here is the first moment both are known: the flight's treads are
   // settled and so is the street's graded profile, and nothing has been
   // declared or painted yet.
+  //
+  // **It stays, and WP-G4 measured why** — see {@link terminusLandings}' own
+  // comment: deleting it behind `GROUND_V1_SEAMS` was built and walked, and the
+  // eleven columns it yields on `site-plan-hillside` are not served by anything
+  // the resolver derives, because both sides of that step are `street.network`
+  // claims and the flight's own `preserve` band suppresses the pair by request
+  // (§3.2 clause 2). So the deletion is G6's, not this stage's, and the pass is
+  // unconditional on both paths.
   const landing = terminusLandings(region, jobs, owner, columnY, blocked, paved, water);
   for (const [idx, y] of landing) {
     columnY[idx] = y;
@@ -3289,10 +3297,29 @@ const NO_CORRIDOR = -0x8000_0000;
  * with it.
  *
  * So it stays, and the deletion moves to the stage that supplies its
- * replacement: WP-G4's `finishSeams`, where a street standing two above the
- * flight beside it is a derived transition the resolver enumerates rather than
- * a recess one pass cuts for itself. Byte-identity is this stage's law, and
- * eleven columns of `hillside_town` are not byte-identity.
+ * replacement.
+ *
+ * ## WP-G4's finding — the replacement is not this stage's either
+ *
+ * WP-G4 was that stage, and the deletion was built, flipped and measured on
+ * 2026-08-20. It does not survive either, and the reason is sharper than G2's:
+ * **the resolver never sees this step.** All eleven columns stay at the street's
+ * graded 116 with the flight's treads at 113–115 beside them, and *both sides
+ * are `street.network` claims* — so the pair is enumerated and then suppressed
+ * by request (§3.2 clause 2), because the flight declares `preserve` over its
+ * whole tread band. Nothing is uncovered and nothing is built: the landing
+ * simply becomes an unserved two-to-three block step at the foot of every
+ * flight. Measured on `site-plan-hillside` with `GROUND_V1_SEAMS` on, the
+ * walkability audit reads it straight back — the paved network breaks into 14
+ * pieces rather than 11, and unserved mid-town faces go 3 → 12.
+ *
+ * S9's landings are no help here: they are published per *tier stack*, and a
+ * flight meeting a street has no stack. So the replacement this function is
+ * waiting for is **WP-G6's**, where one resolve arbitrates the street family
+ * and a foot landing can be published by the surfacer as a claim rather than
+ * cut as a recess — and `docs/GROUND-CONTRACT-v1.md` §4 item 6 is amended by
+ * this measurement, not by an argument. The pass is unconditional on both flag
+ * paths until then.
  */
 export function terminusLandings(
   region: Region,

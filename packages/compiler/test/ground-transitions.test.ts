@@ -13,8 +13,15 @@
  * the world is byte-identical either way.
  */
 
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 import type { Region } from "@terrainist/stdlib";
 import { describe, expect, it } from "vitest";
+
+import { compileTerrain } from "../src/terrain/compile.js";
 
 import { GROUND_SOURCE_CLASSES, type GroundIntent } from "../src/layout/ground-contract.js";
 import { GROUND_V1_SEAMS } from "../src/layout/types.js";
@@ -454,6 +461,70 @@ export const GROUND_STAGE_GOLDEN = {
     coverage: { pairs: 1675, transition: 1007, request: 660, face: 8, kerb: 0, uncovered: 0 },
   },
 } as const;
+
+/**
+ * **The stage guard, stated where it is exactly true** (WP-G4's flip
+ * measurement, 2026-08-20).
+ *
+ * `docs/GROUND-CONTRACT-v1.md` §6/WP-G4 guards the hillside with
+ * "`natural/natural` ± 0" on the probe's census. Measured at the flip, that row
+ * moves without a single column of terrain moving: the census keys a pair by the
+ * *owner map*, and a column that was owned flag-off by a claim `skirtSeams` or
+ * `planeSeams` made is unowned once those passes are absorbed, so the same two
+ * columns re-key from `verge/natural` to `natural/natural`. Hellenist's row
+ * moves 1,469 → 1,843 that way, and every one of those 1,840 pairs is ground
+ * that never moved.
+ *
+ * So the substance of the guard is asserted here instead, over the thing that
+ * would actually be a defect: **no column the resolver left unowned may have its
+ * ground moved by the structure pass.** A bank that graded unclaimed hillside, a
+ * course that stood on ground nothing claimed, a pass writing `plan.ground`
+ * behind the contract's back — each of those moves this number off zero, and
+ * none of them can hide inside a census row that a rank change also moves.
+ *
+ * Measured 0 on troy, hellenist and pirates in both flag states; `hillside-village`
+ * is the fixture because it is the cheapest committed world with real platforms.
+ * The post-structure passes (programs, scatter — §7.1's 247 columns on troy, and
+ * WP-G6's work) are deliberately outside it: this is a statement about the
+ * structure pass, so it is asked of `written`, not of the final plan.
+ */
+describe("the hillside guard: the structure pass moves no unowned column", () => {
+  it("hillside-village: every unowned column's written ground is its baseline", async () => {
+    const doc = JSON.parse(
+      await readFile(
+        fileURLToPath(new URL("../../../examples/hillside-village.loam.json", import.meta.url)),
+        "utf8",
+      ),
+    ) as Record<string, unknown>;
+    const root = await mkdtemp(path.join(tmpdir(), "terrainist-ground-guard-"));
+    try {
+      const out = await compileTerrain(doc, {
+        outDir: path.join(root, "hillside-village"),
+        skipEmit: true,
+        groundEquivalence: true,
+      });
+      expect(out.ok, "hillside-village compiles").toBe(true);
+      const ge = out.groundEquivalence;
+      if (ge === undefined) throw new Error("no groundEquivalence — is the option on?");
+      const { baseline, resolved, written } = ge;
+      const region = baseline.region;
+      const moved: string[] = [];
+      for (let k = 0; k < written.ground.length; k++) {
+        if ((resolved.owner[k] as number) !== -1) continue;
+        if (written.ground[k] === baseline.ground[k]) continue;
+        if (moved.length < 8) {
+          moved.push(
+            `${region.x0 + (k % region.width)},${region.z0 + Math.floor(k / region.width)}: ` +
+              `${baseline.ground[k]} → ${written.ground[k]}`,
+          );
+        }
+      }
+      expect(moved.join("; "), "unowned columns the structure pass moved").toBe("");
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  }, 240_000);
+});
 
 describe("the WP-G4 goldens", () => {
   it("ships with the flag off, which is the only state this stage has", () => {

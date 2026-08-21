@@ -1669,8 +1669,17 @@ export function buildStructures(input: StructurePassInput): StructurePassResult 
     // WP-G5's work), and what the `wouldBuild` count is measured against.
     seam: retaining.seam,
     nodePath: rootPath,
+    // The flag-on half's masonry: with `GROUND_V1_SEAMS` off none of the three
+    // is read, and the pass builds nothing.
+    palette: input.palette,
+    stack: input.stack,
+    blocks: [],
+    // §3.4: `LOAM-W413` is aggregated **per quarter**, and the quarter a run
+    // belongs to is the one whose bounds hold it.
+    quarters: districts.map((d) => ({ nodePath: d.nodePath, bounds: d.bounds })),
   });
   diagnostics.push(...seamStage.diagnostics);
+  if (seamStage.blocks.length > 0) lay("seam-finish", seamStage.blocks);
 
   // --- ground treatment (F2) -----------------------------------------------
   // Dead last, and that is the whole design: every other pass has by now

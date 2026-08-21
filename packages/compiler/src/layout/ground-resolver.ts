@@ -54,10 +54,12 @@ import {
   type ResolvedGround,
 } from "./ground-contract.js";
 import {
+  EDGE_PRESSED_SHARE,
   MIN_RETAIN_RUN,
   RETAIN_MAX,
   WALL_DEMAND_RANGE,
   bankRun,
+  blendedBankRun,
   treatmentForDrop,
   treatmentForEdge,
   treatmentForSeam,
@@ -829,6 +831,16 @@ export interface DerivedSeam extends GroundTransition {
    * `finishSeams` reports. It is the golden the flag-on half is diffed against.
    */
   readonly refined: SeamTreatment;
+  /**
+   * §7.2's natural blend — the eased bank's run in columns, or `0` where the
+   * policy does not apply (the boundary is pressed, or the ground beside it
+   * cannot afford even the 1:2 ramp).
+   *
+   * Derived here rather than at the builder because report and build must agree:
+   * the number is {@link blendedBankRun}'s and the profile it implies is
+   * {@link blendedBankFall}'s, and neither has a second home.
+   */
+  readonly blendRun: number;
 }
 
 /** How a boundary pair was accounted for (§3.2's four clauses). */
@@ -1138,6 +1150,16 @@ function refineRun(run: BoundaryRun, ctx: RefineContext): DerivedSeam {
   // `"replan"` collapses exactly as `treatmentForSeam` collapses it: there is no
   // planner still running to narrow the claim, so the answer is the unbuilt one.
   const refined: SeamTreatment = chosen === "replan" ? (side === "fill" ? "bank" : "rock") : chosen;
+  // **§7.2's natural blend, as treatment *and* geometry.** `treatmentForEdge`
+  // rule 3 already prefers the bank on an unpressed fill edge with the room for
+  // one — that is the policy's first half, and it is not restated here. What is
+  // decided here is the second half: the run the bank actually spends and the
+  // profile it spends it on. A pressed edge keeps its face (S5 unchanged), and a
+  // treatment that is not a bank has nothing to ease.
+  const blendRun =
+    refined === "bank" && side === "fill" && context.pressedShare < EDGE_PRESSED_SHARE
+      ? blendedBankRun(drop, context.availableRun)
+      : 0;
 
   return {
     above,
@@ -1155,6 +1177,7 @@ function refineRun(run: BoundaryRun, ctx: RefineContext): DerivedSeam {
     builtShare: context.builtShare,
     side,
     refined,
+    blendRun,
   };
 }
 
