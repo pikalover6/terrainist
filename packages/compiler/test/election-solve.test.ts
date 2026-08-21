@@ -71,7 +71,11 @@ interface Grid {
   readonly step?: readonly (number | null)[];
   readonly minColumns?: number;
   readonly waterFloor?: number;
-  readonly wet?: (cells: readonly number[]) => boolean;
+  /**
+   * A5, per **column** — the WP-E3 invariant. A fixture says which columns are
+   * water and the partition is obliged to keep them out of every bank atom.
+   */
+  readonly wet?: (k: number) => boolean;
 }
 
 function inputOf(grid: Grid): ElectionInput {
@@ -89,7 +93,7 @@ function inputOf(grid: Grid): ElectionInput {
     frontageAt: (k) => grid.street?.[k] ?? undefined,
     minColumns: grid.minColumns ?? MIN_PLATFORM_COLUMNS,
     ...(grid.waterFloor === undefined ? {} : { waterFloor: grid.waterFloor }),
-    ...(grid.wet === undefined ? {} : { isWet: grid.wet }),
+    ...(grid.wet === undefined ? {} : { wetAt: grid.wet }),
   };
 }
 
@@ -272,8 +276,8 @@ describe("§3.4 S4 — the min-cut agrees with the oracle, level for level", () 
         street,
         minColumns: 1,
         waterFloor: 62,
-        // The lowest atom is the channel: exempt, and it keeps its bed.
-        wet: (cells) => cells.every((k) => (pristine[k] as number) <= 60),
+        // The lowest columns are the channel: exempt, and they keep their bed.
+        wet: (k) => (pristine[k] as number) <= 60,
       };
       const input = inputOf(grid);
       const problem = buildProblem(input);
@@ -460,11 +464,150 @@ describe("the hard constraints", () => {
         depth,
         pristine,
         waterFloor: 62,
-        wet: (cells) => cells.every((k) => (pristine[k] as number) === 58),
+        wet: (k) => (pristine[k] as number) === 58,
       }),
     );
     expect(levelAt(election, 0)).toBe(58);
     expect(levelAt(election, 11)).toBeGreaterThanOrEqual(62);
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* §3.1 A5 — wetness is a partition invariant (WP-E3)                          */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * **The river fix**, in the shape that blocked the flip.
+ *
+ * `platform-waterline-river.test.ts`' valley, at unit scale and with the walked
+ * world's relief: a shelf cut by a **sixteen-column** channel whose bed sits ten
+ * below it, water standing in the channel, and a bank road either side whose
+ * `levelNear` reaches the channel's middle from both sides at once — which is
+ * what `reach` does to a channel only sixteen wide.
+ *
+ * The blur runs over the *pristine* field, so the step floor carries straight
+ * across a channel that narrow; the fixture writes that out with a `step`
+ * override, which is the compiled world's failure and not a contrivance. A1
+ * then seeds **one** atom over shelf and bed together, the per-atom
+ * `mostlyWater` exemption has nothing to exempt because the atom is a bank by
+ * majority, and the objective elects the shelf's level over the water: a dam
+ * (1,951 wet columns → 718 in the compiled probe).
+ *
+ * A5's answer is one law with three clauses, and the compiled probe needed all
+ * three — no floor (718 alone), no frontage (1,341 with the first two), no seam
+ * (1,995, against the fallback path's 1,951). Each is asserted below, and the
+ * last assertion is the oracle: with the three clauses in place the bed is the
+ * **exact optimum**, so nothing here is a rule imposed on the solve.
+ */
+describe("§3.1 A5 — a channel is never inside its own bank", () => {
+  const WIDTH = 40;
+  const DEPTH = 12;
+  const SHELF = 65;
+  const BED = 55;
+  const WATERLINE = 63;
+  const CHANNEL_X0 = 12;
+  const CHANNEL_X1 = 27; // sixteen columns, the walked river's width
+  const inChannel = (k: number): boolean => k % WIDTH >= CHANNEL_X0 && k % WIDTH <= CHANNEL_X1;
+
+  const pristine: (number | null)[] = [];
+  for (let k = 0; k < WIDTH * DEPTH; k++) pristine.push(inChannel(k) ? BED : SHELF);
+  /** The step floor the blur leaves: flat across the channel — A1's blind spot. */
+  const step: (number | null)[] = new Array<number>(WIDTH * DEPTH).fill(SHELF);
+  /** The bank roads, reaching over the water from both sides — clause 2's case. */
+  const street: (number | null)[] = new Array<number>(WIDTH * DEPTH).fill(SHELF);
+  const base = { width: WIDTH, depth: DEPTH, pristine, step, street, waterFloor: WATERLINE } as const;
+  const wetGrid = { ...base, wet: inChannel } as const;
+  /** A column in the middle of the channel, and one on each bank. */
+  const MID = WIDTH * 6 + 20;
+  const WEST = WIDTH * 6 + 2;
+  const EAST = WIDTH * 6 + 37;
+
+  it("dams the channel when wetness is only a per-atom exemption", () => {
+    // The harness proving it can see the difference, exactly as the sibling
+    // river file does before its own assertion means anything.
+    const election = electBlock(inputOf(base));
+    expect(election.atoms.length).toBe(1);
+    expect(levelAt(election, MID)).toBeGreaterThanOrEqual(WATERLINE);
+  });
+
+  it("A1 seeds on `(step, wet)`, so bed and banks are three atoms", () => {
+    const election = electBlock(inputOf(wetGrid));
+    expect(election.atoms.length).toBe(3);
+    for (const atom of election.atoms) {
+      const wetCells = atom.cells.filter(inChannel).length;
+      expect(wetCells === 0 || wetCells === atom.cells.length).toBe(true);
+    }
+  });
+
+  it("clause 2: a wet atom has no frontage — a riverbed has no door to bury", () => {
+    const problem = buildProblem(inputOf(wetGrid));
+    for (const [i, atom] of problem.atoms.entries()) {
+      const columns = [...((problem.front[i] as ReadonlyMap<number, number>).values() ?? [])].reduce(
+        (a, b) => a + b,
+        0,
+      );
+      // Every column here is within reach of a bank road, so a dry atom's
+      // `F(i)` is full and a wet one's is empty — the difference is the clause.
+      expect({ wet: atom.wet, columns: columns > 0 }).toEqual({
+        wet: atom.wet,
+        columns: !atom.wet,
+      });
+    }
+  });
+
+  it("clause 3: a wet atom forms no pair — nobody retains a river", () => {
+    const problem = buildProblem(inputOf(wetGrid));
+    // The channel touches both banks along its whole length, so without the
+    // clause there would be two pairs here and `EDGE(10)` on every contact
+    // column of them; with it there are none, and H1 — which `solveIshikawa`
+    // reads off the same list — falls away with it.
+    expect(problem.pairs.length).toBe(0);
+    expect(problem.wet.filter((w) => w).length).toBe(1);
+  });
+
+  it("…so the wet atom elects its own bed, and the banks keep the waterline", () => {
+    const election = electBlock(inputOf(wetGrid));
+    expect(levelAt(election, MID)).toBe(BED);
+    // H2 is untouched: only the partition it applies over changed.
+    expect(levelAt(election, WEST)).toBeGreaterThanOrEqual(WATERLINE);
+    expect(levelAt(election, EAST)).toBeGreaterThanOrEqual(WATERLINE);
+    // …and the banks sit on their own ground rather than being dragged toward
+    // the river by a seam they never had to build.
+    expect(levelAt(election, WEST)).toBe(SHELF);
+    expect(levelAt(election, EAST)).toBe(SHELF);
+  });
+
+  it("…and that is the exact optimum, not a rule imposed on the solve", () => {
+    // §3.4 S4 on the fixture that matters: the oracle enumerates `|D|^3` over
+    // the same problem and must reach the same three levels. Were the bed only
+    // elected because something forced it, this is where the forcing would show.
+    const input = inputOf(wetGrid);
+    expect(electBlock(input).atoms.map((a) => a.level)).toEqual(bruteForce(input));
+  });
+
+  it("A3 never absorbs a thread of water into the bank around it", () => {
+    // A channel two columns wide is under `MIN_PLATFORM_COLUMNS` on every row
+    // and has no wet neighbour to be absorbed into: it stays its own atom, at
+    // the cost of granularity, because the alternative is the dam.
+    const thin = (k: number): boolean => k % WIDTH === 20 || k % WIDTH === 21;
+    const thinPristine: (number | null)[] = [];
+    for (let k = 0; k < WIDTH * DEPTH; k++) thinPristine.push(thin(k) ? BED : SHELF);
+    const election = electBlock(
+      inputOf({ ...base, pristine: thinPristine, wet: thin, minColumns: 40 }),
+    );
+    const wetAtom = election.atoms.find((a) => a.cells.some(thin));
+    expect(wetAtom).toBeDefined();
+    expect((wetAtom as { cells: readonly number[] }).cells.every(thin)).toBe(true);
+  });
+
+  it("is byte-identical to the old election wherever nothing is wet", () => {
+    // The invariant may not move dry ground, and this is the whole reason the
+    // flip's non-wet baseline rows do not budge: with no `wetAt` and with one
+    // false everywhere, every clause of A5 is vacuous and the election is the
+    // same object.
+    const a = electBlock(inputOf(base));
+    const b = electBlock(inputOf({ ...base, wet: () => false }));
+    expect(JSON.stringify(b)).toBe(JSON.stringify(a));
   });
 });
 
@@ -513,7 +656,7 @@ describe("the solve is a datum", () => {
   // `TERRACE_BY_TERRAIN` still true — kept live until its own collapse packet,
   // so this asserts the shipped value rather than the staging value.
   it("§4's flag story: the solve is on, and it implies `GROUND_PLANE_TIE`", () => {
-    expect(ELECTION_SOLVE).toBe(false); // E3 re-flips after the river fix
+    expect(ELECTION_SOLVE).toBe(true);
     // The implication is the load-bearing half and it survives the flip: with
     // no street datum every `F(i)` is empty and §1.3.3 says nothing, so the
     // ladder may never hold this on with the tie off.

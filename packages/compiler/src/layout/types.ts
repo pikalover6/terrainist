@@ -761,8 +761,9 @@ export const RIM_SEAT_MAX_DROP = 2;
 /* -------------------------------------------------------------------------- */
 
 /**
- * **WP-E2's switch: the block election stops guessing and starts wanting.**
- * **Flipped on at WP-E2** — `true` is what ships.
+ * **The switch: the block election stops guessing and starts wanting.**
+ * **On — `true` is what ships** (flipped at WP-E3, once A5 made wetness a
+ * partition invariant and the river stopped being dammed by its own bank).
  *
  * `true` — the shipped construction, `layout/election-solve.ts`. A block is
  * partitioned into atoms before any level exists, one convex integer objective
@@ -789,12 +790,7 @@ export const RIM_SEAT_MAX_DROP = 2;
  * `StreetDatum`, and with no datum every `F(i)` is empty and §1.3.3 — the whole
  * of what the anchor was for — says nothing.
  */
-// Held at `false` by the orchestrator pending WP-E3: the flip's one real
-// blocker is the river dam (a channel inside a bank atom elects the bank
-// level — wetness must become a partition invariant, not a per-atom
-// exemption). E2's flip state is otherwise fully measured and banked;
-// baselines for it are staged in ground-probe-baselines/e2-preview/.
-export const ELECTION_SOLVE = false;
+export const ELECTION_SOLVE = true;
 
 /**
  * §1.3.1 — what one column of **cut** below its pristine height costs.

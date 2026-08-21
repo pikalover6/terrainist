@@ -176,10 +176,27 @@ describe("a walled quarter leaves no block bare", () => {
     // **redrawn 12 → 16**, and the remainders left over for tier 2 shrink with
     // them, **dressed 44 → 34**. `bare` itself barely moves, 52 → 51. The sum
     // falls from 56 to 50 and crosses `bare` — arithmetic, not a new hole.
+    //
+    // **Re-pinned again at WP-E3's flip** (`ELECTION_SOLVE`), and the cause is
+    // the previous paragraph run backwards. The tie flattened a block onto one
+    // storey; the election does the opposite by design — a block is partitioned
+    // into atoms before any level exists and comes out with as many terraces as
+    // its own ground wants (§1.1, `docs/ELECTION-SOLVE-v0.md`). This fixture's
+    // field is a diagonal ramp climbing one block every fourteen columns, so
+    // almost every block in it now carries a step, and a block that steps has
+    // no single plane for the first-tier lot draw to stand a building on:
+    // **bare 51 → 162**. The two answering tiers follow it — the re-draw finds
+    // fewer whole standable lots (**redrawn 16 → 5**) and the dressing tier
+    // picks up what it leaves (**dressed 34 → 152**) — so the proportion the
+    // law actually cares about is unmoved: 157 of 162 bare blocks answered
+    // here against 50 of 51 before, the same handful of `MIN_INFILL_SIDE`
+    // escapes either side. Nothing here is A5's doing: this fixture hands
+    // `solveDistricts` no water mask, so every clause of the wet invariant is
+    // vacuous over it, and the whole delta is the flip's.
     expect({ bare, redrawn, dressed: dressedCount }).toEqual({
-      bare: 51,
-      redrawn: 16,
-      dressed: 34,
+      bare: 162,
+      redrawn: 5,
+      dressed: 152,
     });
     // The direction of the law still holds where it can be stated without the
     // remainder tier's padding: the re-draw and the dressings between them

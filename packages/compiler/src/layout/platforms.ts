@@ -548,8 +548,25 @@ export function derivePlatforms(input: PlatformInput): FormBench[] {
     const j = (k - i) / width;
     return datum.street.levelNear(bounds.x0 + i, bounds.z0 + j, datum.reach);
   };
-  const isWet = (piece: readonly number[]): boolean =>
-    input.water !== undefined && mostlyWater(input.water, piece.map(columnAt));
+  /**
+   * §3.1 A5 — is this **column** water?
+   *
+   * Per column, because the election makes wetness a partition invariant: a
+   * channel and its banks are never one atom, so the `mostlyWater` majority the
+   * fallback path takes over a finished piece has nothing left to decide. The
+   * majority rule stays exactly where it was for the fallback (`dry`, and the
+   * bench pass at the foot of this file) — this is the solve's own probe.
+   */
+  const wetAt = (k: number): boolean => {
+    const water = input.water;
+    if (water === undefined) return false;
+    const { region: wr, mask } = water;
+    const [x, z] = columnAt(k);
+    const i = x - wr.x0;
+    const j = z - wr.z0;
+    if (i < 0 || j < 0 || i >= wr.width || j >= wr.depth) return false;
+    return mask[j * wr.width + i] === 1;
+  };
 
   const benches: FormBench[] = [];
   const seen = new Uint8Array(cells);
@@ -567,7 +584,7 @@ export function derivePlatforms(input: PlatformInput): FormBench[] {
         frontageAt,
         minColumns: MIN_PLATFORM_COLUMNS,
         ...(input.waterFloor === undefined ? {} : { waterFloor: input.waterFloor }),
-        isWet,
+        wetAt,
       });
       const record = input.election;
       if (record !== undefined) {

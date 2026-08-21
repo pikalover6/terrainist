@@ -109,8 +109,37 @@ export interface ElectionInput {
   readonly minColumns: number;
   /** H2's floor. Absent ⇒ no hydrology to answer to. */
   readonly waterFloor?: number;
-  /** A5 — is this set of columns the water rather than the ground beside it? */
-  readonly isWet?: (cells: readonly number[]) => boolean;
+  /**
+   * **A5 — is this *column* water rather than the ground beside it?**
+   *
+   * Per column, not per atom, because wetness is a **partition invariant**
+   * (§3.1 A1/A3/A4): the channel and its banks are never the same atom, so
+   * "mostly water" and "all water" are the same question by the time anything
+   * asks it. A per-atom `mostlyWater` exemption could only skip H2's floor; it
+   * could not stop the *objective* electing the bank's level across a channel
+   * that had been swallowed whole by a bank atom, and a 16-wide river inside a
+   * ~1,700-column block is exactly that (WP-E3: 1,951 wet columns → 718).
+   *
+   * **A5 is one law with three clauses, and the river needs all three** —
+   * each was measured on the compiled river quarter and each is a statement
+   * about what the town does *not* build over water:
+   *
+   * 1. **No floor.** H2 does not raise a wet atom to the waterline; the water
+   *    is already at the waterline. (The clause that shipped before WP-E3, and
+   *    on its own it is worth nothing — 718 wet columns.)
+   * 2. **No frontage.** `F(i)` is empty for a wet atom: §1.3.3 prices a plane's
+   *    agreement with the pavement that serves it, and a riverbed has no door
+   *    to bury. Without this the bank roads either side of a 16-wide channel
+   *    are both within `reach` of its middle and `FRONT_BURY` reads the river
+   *    as a trench of buried doorsteps. (Alone: 1,341.)
+   * 3. **No seam.** A pair with one wet endpoint is not a pair: §1.3.2 prices
+   *    retaining tiers and H1 refuses a drop deeper than `tiersOf` dresses,
+   *    and a riverbank is neither — nobody retains a river. (Alone: 718.)
+   *
+   * All three: **1,995 wet columns and 16 dry cross-sections**, against the
+   * pre-election fallback path's 1,951 and 16.
+   */
+  readonly wetAt?: (k: number) => boolean;
 }
 
 /** One atom, as the solve elected it. */
@@ -203,6 +232,13 @@ export interface Atom {
   cells: number[];
   /** A1's step floor. A merge keeps the **absorbing** atom's floor. */
   floor: number;
+  /**
+   * A5's wetness — **invariant** across the atom, and across every merge.
+   *
+   * A1 seeds on `(floor, wet)` and A3/A4 refuse every merge that would cross
+   * it, so this is a property of the atom rather than a majority vote over it.
+   */
+  wet: boolean;
   /** The atom's lowest cell index — every tie in §3.1 ends here. */
   minIdx: number;
   dead: boolean;
@@ -231,13 +267,21 @@ export function partitionBlock(input: ElectionInput): {
   const owner = new Int32Array(cells).fill(-1);
   const member = new Uint8Array(cells);
   for (const k of block) member[k] = 1;
+  /** A5, per column. No hydrology ⇒ the whole block is dry and A1 is unchanged. */
+  const wetAt = (k: number): boolean => input.wetAt !== undefined && input.wetAt(k);
 
-  /* --- A1: 4-connected components of constant `floor(blur(pristine))` ------ */
+  /* --- A1: 4-connected components of constant `(floor(blur(pristine)), wet)` */
+  // Wetness joins the step floor in the seed key because the alternative — a
+  // per-atom exemption applied after the fact — cannot separate a channel from
+  // the bank that has already absorbed it (§3.1 A5). The blur runs over the
+  // *pristine* field, so a 16-wide channel's bed and its banks can share a step
+  // floor near the lip; the water mask cannot be blurred away.
   const atoms: Atom[] = [];
   const seen = new Uint8Array(cells);
   for (const start of block) {
     if (seen[start] === 1) continue;
     const floor = stepAt(start);
+    const wet = wetAt(start);
     const out: number[] = [];
     seen[start] = 1;
     const queue = [start];
@@ -251,7 +295,7 @@ export function partitionBlock(input: ElectionInput): {
         const jj = j + dj;
         if (ii < 0 || jj < 0 || ii >= width || jj >= depth) continue;
         const n = jj * width + ii;
-        if (seen[n] === 1 || member[n] !== 1 || stepAt(n) !== floor) continue;
+        if (seen[n] === 1 || member[n] !== 1 || stepAt(n) !== floor || wetAt(n) !== wet) continue;
         seen[n] = 1;
         queue.push(n);
       }
@@ -259,7 +303,7 @@ export function partitionBlock(input: ElectionInput): {
     out.sort((a, b) => a - b);
     const idx = atoms.length;
     for (const k of out) owner[k] = idx;
-    atoms.push({ cells: out, floor, minIdx: out[0] as number, dead: false });
+    atoms.push({ cells: out, floor, wet, minIdx: out[0] as number, dead: false });
   }
 
   /** Contact columns between `i` and every atom it touches. */
@@ -279,6 +323,13 @@ export function partitionBlock(input: ElectionInput): {
     }
     return out;
   };
+  /**
+   * A3/A4's refusal: no merge may cross wetness (§3.1 A5).
+   *
+   * The invariant is enforced here rather than by trusting the callers, so a
+   * later merge rule inherits it for free.
+   */
+  const joinable = (i: number, o: number): boolean => (atoms[i] as Atom).wet === (atoms[o] as Atom).wet;
   const absorb = (into: number, gone: number): void => {
     const target = atoms[into] as Atom;
     const source = atoms[gone] as Atom;
@@ -301,18 +352,12 @@ export function partitionBlock(input: ElectionInput): {
     }
     if (small < 0) break;
     const contacts = contactsOf(small);
-    if (contacts.size === 0) {
-      // A sliver with no neighbour at all — a block that came out as one atom.
-      // Kept, exactly as `mergeSlivers` kept it: levelled ground with a small
-      // platform in it is honest, natural ground inside levelled ground is not.
-      stuck.add(small);
-      continue;
-    }
     const mine = atoms[small] as Atom;
     let best = -1;
     let bestCount = -1;
     let bestFloorGap = Number.POSITIVE_INFINITY;
     for (const o of [...contacts.keys()].sort((a, b) => a - b)) {
+      if (!joinable(small, o)) continue;
       const count = contacts.get(o) as number;
       const gap = Math.abs((atoms[o] as Atom).floor - mine.floor);
       const better =
@@ -326,6 +371,16 @@ export function partitionBlock(input: ElectionInput): {
         bestCount = count;
         bestFloorGap = gap;
       }
+    }
+    if (best < 0) {
+      // A sliver with no neighbour it may join — either a block that came out
+      // as one atom, or (A5) a thread of water with nothing but bank around it.
+      // Kept, exactly as `mergeSlivers` kept it: levelled ground with a small
+      // platform in it is honest, natural ground inside levelled ground is not
+      // — and a puddle absorbed into its bank is the dam this rule exists to
+      // refuse, whatever it costs in granularity.
+      stuck.add(small);
+      continue;
     }
     absorb(best, small);
     a3Merges += 1;
@@ -342,7 +397,7 @@ export function partitionBlock(input: ElectionInput): {
     for (const [i, atom] of atoms.entries()) {
       if (atom.dead) continue;
       for (const [o, count] of [...contactsOf(i).entries()].sort((x, y) => x[0] - y[0])) {
-        if (o < i) continue;
+        if (o < i || !joinable(i, o)) continue;
         const a = atom.minIdx <= (atoms[o] as Atom).minIdx ? i : o;
         const b = a === i ? o : i;
         const key = [
@@ -358,6 +413,9 @@ export function partitionBlock(input: ElectionInput): {
         }
       }
     }
+    // No legal merge left — every remaining adjacency crosses wetness (§3.1
+    // A5). The cap yields to the invariant: a block over `ATOM_MAX` costs a
+    // larger cut graph, a dammed river costs the river.
     if (bestKey === null) break;
     absorb(bestA, bestB);
     a4Merges += 1;
@@ -426,6 +484,18 @@ export function buildProblem(input: ElectionInput): BlockProblem {
       allPristine.push(p);
       if (p < A) A = p;
       if (p > B) B = p;
+      // **A5 — water has no frontage.** §1.3.3 prices the agreement between a
+      // plane and the pavement that serves it: a kerb to step off, a door not
+      // buried, no plinth. A riverbed is served by nothing and no door opens
+      // onto it, so `F(i)` is empty for a wet atom and the whole term is
+      // silent. Without this the channel's own columns sit within `reach` of
+      // the bank roads either side (a 16-wide channel is inside the lot tie's
+      // reach from both banks at once), `FRONT_BURY` reads ten blocks of
+      // riverbed as ten blocks of buried doorstep, and the solve buys its way
+      // out by filling the river to the road — the dam again, wearing the
+      // frontage term instead of the partition (WP-E3, measured: 4,158 of one
+      // wet atom's cost was frontage it cannot have).
+      if (atom.wet) continue;
       const s = frontageAt(k);
       if (s === undefined) continue;
       f.set(s, (f.get(s) ?? 0) + 1);
@@ -434,7 +504,9 @@ export function buildProblem(input: ElectionInput): BlockProblem {
     }
     ground.push(g);
     front.push(f);
-    wet.push(input.isWet !== undefined && input.isWet(atom.cells));
+    // A5 — read off the partition, never re-measured: §3.1's invariant makes
+    // the atom uniformly wet or uniformly dry, so there is no majority to take.
+    wet.push(atom.wet);
   }
   allPristine.sort((a, b) => a - b);
   const blockMedian = allPristine.length === 0 ? 0 : (allPristine[allPristine.length >> 1] as number);
@@ -474,6 +546,24 @@ export function buildProblem(input: ElectionInput): BlockProblem {
       if (ii < 0 || jj < 0 || ii >= width || jj >= depth) continue;
       const b = owner[jj * width + ii] as number;
       if (b < 0 || b === a) continue;
+      // **A5 — water forms no seam.** §1.3.2 prices the drop between two
+      // atoms as the retaining tiers a town has to build across it, and §2.1's
+      // H1 refuses a drop deeper than `tiersOf` can dress. Neither is a
+      // statement about a riverbank: nobody retains a river, the bank is the
+      // terrain's own scarp, and a channel eight deep is not an unserviceable
+      // seam, it is a channel eight deep. `dissolveTallPairs` says the same
+      // thing on the fallback path — a tall pair over water is left alone
+      // rather than levelled into the bed — and this is that rule stated once,
+      // inside the decision. Dropping the pair drops `EDGE` **and** H1
+      // together, because `solveIshikawa` derives both from this list.
+      //
+      // Measured (WP-E3, the compiled river quarter): with the seam priced,
+      // the channel is pulled to the bank whatever else is done — 718 wet
+      // columns and 86 dry cross-sections, the dam entire. With A5's three
+      // clauses — no floor, no frontage, no seam — the election reproduces the
+      // pre-election river and then some: **1,995 wet columns, 16 dry**
+      // against the fallback path's 1,951 and 16.
+      if ((atoms[a] as Atom).wet !== (atoms[b] as Atom).wet) continue;
       const key = Math.min(a, b) * n + Math.max(a, b);
       contact.set(key, (contact.get(key) ?? 0) + 1);
     }
