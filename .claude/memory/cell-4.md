@@ -1,4 +1,17 @@
-# Cell 4 — current state (2026-08-20 late, GROUND-CONTRACT-v1 ladder)
+# Cell 4 — current state (2026-08-21, election-solve pivot)
+
+**RATIFIED (Kai, r22ter walk verdicts): STOP GUARD-PATCHING THE
+ELECTION — approach A, "the election becomes a solve"** (one cost
+objective per quarter: cut/fill-vs-pristine + edge drops + frontage
+disagreement + terrace count; guards DELETED, walk verdicts
+calibrate weights). Freeze branch `freeze/pre-election-solve`
+(a62c57f) preserves the revert point for approaches B (contour-led
+WP-13) / C (joint street+terrace solve). Design in flight →
+docs/ELECTION-SOLVE-v0.md. Walk calibration record: 1-deep cut
+beside street = good, 2-deep = bad; the basin lot (pristine 86-87
+elected 84, all neighbors higher, door into stone — no facing can
+save it; three guards each missed by one). G6a implementation also
+in flight (infra declaration split; design a62c57f ~§907).
 
 **THE REWRITE IS RATIFIED AND RUNNING: docs/GROUND-CONTRACT-v1.md**
 (one baseline, one resolve, one frozen ground; stages G0-G8). Landed:
