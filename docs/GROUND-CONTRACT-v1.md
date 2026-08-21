@@ -440,6 +440,13 @@ list, with a verdict and one line of justification.
    after grading and before declaring, which is a second grader inside one
    pass. A stair's foot meeting the street is S9's landing publication plus the
    `steps` sub-claim the surfacer already declares (`roads.ts:1652`).
+   > **Amended by measurement, twice.** G2: not redundant — live witness
+   > site-plan-hillside, 11 columns. G4: the replacement this item names does
+   > not exist yet — S9 landings only exist for tier stacks, and deleting the
+   > pass flag-on left each flight's foot an unserved 2–3-block step
+   > (site-plan-hillside sunken cuts 9→50, unserved faces 3→12). **The pass
+   > stays unconditional until WP-G6**, where one resolve arbitrates the
+   > street family or the surfacer publishes a foot landing of its own.
 7. **`buildJunctionSteps` entirely** (`junction-steps.ts`, including the
    unconditional `plan.ground[idx] += rise` at `:635` and the declare-after-the-
    fact at `:726`) — the pass reconciles two paved claims that disagree about a
@@ -742,6 +749,25 @@ The `natural/natural` row is the guard: this stage must not touch the hillside.
 resolved levels is *itself* the transition where the drop is 1; the residual is
 the kerb case of §3.2 clause 4 and 60 is the budget.
 
+> **Amended by measurement (G4 flip half, 2026-08-20).** The gate row is
+> ratified as §3.4's own reading — owned-side pairs accounted for by **no**
+> §3.2 clause, minus transition cells — which measured **0 on all three
+> documents**; the raw census cannot reach 0 because a built wall face is a
+> `|Δ|≥2` pair by construction. The `natural/natural` census row re-keys when
+> `skirtSeams`/`planeSeams` claims are absorbed (their pairs become
+> unowned-vs-unowned), so the hillside guard is replaced by the stronger
+> assertion that measured exactly 0: **no unowned column's ground moves during
+> the structure pass**; the census row stays a report. Measured headlines:
+> troy `verge/verge` 1164→19 (hellenist 17 / pirates 7 re-pinned as transition
+> cells); sidewalk flank no regression; physics delta 0/0/+4 cave-decor.
+> **Known-gap goldens carried to G6:** troy citadel `LOAM-W413` = 27 (honest
+> S1 refusals boxed in by street and footprint ground; the ≤5/quarter target
+> transfers to G6) and the quay's `natural/precinct.ground` = 118 (rank
+> inversion: the plane outranks the skirt that would dress its own back edge —
+> R1's "a plane owes its own edges" is a G6 design item). Two triage fixes
+> became law on the way: sub-`MIN_RETAIN_RUN` runs are absorbed, never refused
+> (T9, W413 1142→27), and a bank with no run re-dresses revetted (S5).
+
 *Walk gate.* Yes. This is the first stage that changes what a hill town looks
 like, and the change is exactly "the terraces got their walls".
 
@@ -812,6 +838,32 @@ the assertion that catches a prefix resolve that is not a prefix.
 
 *Walk gate.* Yes — the canal/courtyard reorder and the deletion of
 `buildJunctionSteps` both change multi-platform towns.
+
+**Carried items from G4, resolved (orchestrator, 2026-08-20).** Three gaps the
+G4 flip measured land here, each with its mechanism decided:
+
+1. **`terminusLandings` is absorbed, not deleted** (amending §4 item 6 a third
+   time, final form). The flight and the street are one subsystem (v0 §3.6b),
+   so the foot-meets-street reconciliation is *intra-family arithmetic*, like
+   `ArcLevels`: at G6 the surfacer runs the identical foot computation
+   **before the family declares** — the declared street profile already carries
+   the yielded landing columns, and S9's landing publication extends to street
+   flights so `footLands` and the walkability audit see a landing, not a step.
+   The function survives; what dies is the post-grade mutate.
+2. **The quay's census target was wrong, not the quay** — a dressed cut face is
+   still a `|Δ|≥2` pair, so `natural/precinct.ground` 118 → 0 was never
+   reachable by dressing. Re-targeted: the 118 pairs must be
+   **transition-covered (rock) and dressed** (the R4 revetted course G4
+   restored), uncovered = 0 — and the *look* is judged at the G6 walk. The R1
+   plane-edge `face` declaration remains the escalation IF the walk reads the
+   back edge as raw; it is not built pre-emptively.
+3. **Citadel `LOAM-W413` 27 → ≤5 is expected to fall out of tier order**: at
+   G6 retaining (tier B) declares before streets (tier C), so the course
+   columns a seam needs are claimable by the seam first and the street ties to
+   the resolved wall — the current refusal ("street or footprint owns the
+   ground the course needs") inverts. If the measured count does not fall
+   to ≤5, that is a finding against the tier assignment, not a number to
+   re-pin.
 
 ---
 

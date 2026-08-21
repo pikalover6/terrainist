@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terrainist — Codebase Map</title>
+<style>
+  :root {
+    --bg: #0d1117; --bg2: #11161f; --bg3: #161d29; --bg4: #1c2534;
+    --fg: #dbe4f0; --fg2: #9fb0c8; --fg3: #6b7d99;
+    --acc: #3ecf8e; --acc2: #58a6ff; --amber: #e3b341; --red: #f47067; --purple: #bc8cff;
+    --border: #243046;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 14px; line-height: 1.55; }
+  a { color: var(--acc2); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* header */
+  header { position: sticky; top: 0; z-index: 50; background: linear-gradient(180deg, #10151f, #0d1117); border-bottom: 1px solid var(--border); backdrop-filter: blur(8px); }
+  .hwrap { max-width: 1280px; margin: 0 auto; padding: 10px 20px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .logo { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, var(--acc), var(--acc2)); display: grid; place-items: center; font-weight: 800; color: #06121a; font-size: 15px; }
+  .brand h1 { font-size: 16px; letter-spacing: .2px; }
+  .brand small { display: block; color: var(--fg3); font-size: 11px; font-weight: 400; }
+  nav { display: flex; gap: 2px; flex-wrap: wrap; }
+  nav button { background: none; border: 1px solid transparent; color: var(--fg2); padding: 6px 12px; border-radius: 7px; cursor: pointer; font-size: 13px; font-weight: 500; }
+  nav button:hover { color: var(--fg); background: var(--bg3); }
+  nav button.active { color: var(--fg); background: var(--bg3); border-color: var(--border); }
+  .searchwrap { margin-left: auto; position: relative; }
+  .searchwrap input { background: var(--bg3); border: 1px solid var(--border); color: var(--fg); border-radius: 8px; padding: 7px 12px 7px 30px; font-size: 13px; width: 220px; outline: none; }
+  .searchwrap input:focus { border-color: var(--acc2); }
+  .searchwrap::before { content: "⌕"; position: absolute; left: 10px; top: 5px; color: var(--fg3); font-size: 15px; }
+  #scount { color: var(--fg3); font-size: 11px; margin-left: 6px; }
+
+  main { max-width: 1280px; margin: 0 auto; padding: 22px 20px 80px; }
+  section { display: none; }
+  section.active { display: block; animation: fade .18s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; } }
+
+  h2 { font-size: 20px; margin: 6px 0 14px; letter-spacing: .2px; }
+  h3 { font-size: 15px; margin: 22px 0 8px; color: var(--acc2); letter-spacing: .2px; }
+  h4 { font-size: 13.5px; margin: 14px 0 6px; color: var(--fg2); }
+  p { margin: 6px 0; color: var(--fg2); }
+  code { font-family: var(--mono); font-size: 12px; background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; color: #d7e3ff; }
+  .lead { font-size: 15px; color: var(--fg); max-width: 900px; }
+  .muted { color: var(--fg3); }
+  .small { font-size: 12px; }
+
+  /* stat cards */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 16px 0 22px; }
+  .stat { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+  .stat .n { font-size: 22px; font-weight: 700; font-family: var(--mono); color: var(--acc); }
+  .stat .l { font-size: 11px; color: var(--fg3); text-transform: uppercase; letter-spacing: .6px; margin-top: 2px; }
+
+  /* cards / grids */
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin: 12px 0; }
+  .card h3 { margin-top: 0; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+  @media (max-width: 860px) { .grid2 { grid-template-columns: 1fr; } }
+
+  /* tables */
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin: 8px 0; }
+  th { text-align: left; color: var(--fg3); font-size: 11px; text-transform: uppercase; letter-spacing: .5px; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+  td { padding: 6px 8px; border-bottom: 1px solid #1a2332; vertical-align: top; }
+  tr:hover td { background: var(--bg3); }
+  td.mono, .mono { font-family: var(--mono); font-size: 12px; }
+  .tag { display: inline-block; font-size: 10.5px; font-family: var(--mono); padding: 1px 7px; border-radius: 20px; border: 1px solid var(--border); color: var(--fg2); background: var(--bg3); margin-right: 4px; }
+  .tag.g { color: #7ee2a8; border-color: #2a5c42; }
+  .tag.b { color: #9ecbff; border-color: #2b4a75; }
+  .tag.a { color: #ffd28a; border-color: #6b5223; }
+  .tag.r { color: #ff9d94; border-color: #6b2f2a; }
+  .tag.p { color: #d9b8ff; border-color: #573a7a; }
+
+  /* pipeline diagram */
+  .flow { overflow-x: auto; padding: 10px 0; }
+  .flow svg text { font-family: var(--mono); }
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 11.5px; color: var(--fg2); margin: 8px 0 4px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+
+  /* file tree */
+  .treewrap { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .treebar { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--border); flex-wrap: wrap; background: var(--bg3); }
+  .treebar button { background: var(--bg4); border: 1px solid var(--border); color: var(--fg2); padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+  .treebar button:hover { color: var(--fg); }
+  .treebar .pkgbtns { display: flex; gap: 4px; }
+  .treebar .pkgbtns button.active { background: var(--acc); color: #06121a; border-color: var(--acc); font-weight: 600; }
+  .tfilter { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+  .tfilter input { background: var(--bg2); border: 1px solid var(--border); color: var(--fg); border-radius: 6px; padding: 4px 9px; font-size: 12.5px; width: 180px; outline: none; }
+  .tree { font-family: var(--mono); font-size: 12.5px; max-height: 560px; overflow-y: auto; }
+  .tnode { display: flex; align-items: center; padding: 3px 10px; cursor: pointer; white-space: nowrap; }
+  .tnode:hover { background: var(--bg3); }
+  .tnode .tw { color: var(--fg2); }
+  .tnode .tl { color: var(--fg3); margin-left: 8px; font-size: 11px; min-width: 52px; text-align: right; }
+  .tnode .tnote { color: var(--fg3); margin-left: 12px; font-size: 11.5px; font-family: var(--sans); white-space: normal; overflow: hidden; text-overflow: ellipsis; }
+  .tnode .caret { display: inline-block; width: 14px; color: var(--fg3); }
+  .tnode.dir > .tw { color: var(--acc2); font-weight: 600; }
+  .tnode.hit { background: #23304a; }
+  .children { display: none; padding-left: 16px; }
+  .children.open { display: block; }
+
+  /* lint grid */
+  .rules { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px; }
+  .rule { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; display: flex; gap: 10px; align-items: baseline; }
+  .rule .rn { font-family: var(--mono); color: var(--amber); font-size: 12px; min-width: 26px; }
+  .rule .rid { font-family: var(--mono); color: var(--fg); font-size: 12px; }
+  .rule .rd { color: var(--fg2); font-size: 12px; }
+
+  /* constants */
+  .const-row { display: grid; grid-template-columns: 260px 130px 1fr; gap: 10px; padding: 5px 8px; border-bottom: 1px solid #1a2332; font-size: 12.5px; align-items: baseline; }
+  .const-row:hover { background: var(--bg3); }
+  .const-row .cn { font-family: var(--mono); color: #d7e3ff; }
+  .const-row .cv { font-family: var(--mono); color: var(--acc); font-size: 12px; }
+  .const-row .cd { color: var(--fg2); font-size: 12px; }
+  .chead { display: grid; grid-template-columns: 260px 130px 1fr; gap: 10px; padding: 6px 8px; color: var(--fg3); font-size: 11px; text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid var(--border); }
+
+  /* docs */
+  .docrow { display: flex; justify-content: space-between; gap: 14px; padding: 7px 8px; border-bottom: 1px solid #1a2332; align-items: baseline; }
+  .docrow:hover { background: var(--bg3); }
+  .docrow .dd { color: var(--fg2); font-size: 12.5px; }
+  .docrow .dm { color: var(--fg3); font-size: 11.5px; white-space: nowrap; font-family: var(--mono); }
+
+  /* chips for feature list */
+  .feat { display: flex; gap: 8px; align-items: flex-start; padding: 5px 0; }
+  .feat .dot { color: var(--acc); margin-top: 1px; }
+  footer { max-width: 1280px; margin: 0 auto; padding: 20px; color: var(--fg3); font-size: 12px; border-top: 1px solid var(--border); }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: #2a3649; border-radius: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  kbd { font-family: var(--mono); background: var(--bg4); border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; font-size: 11px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="hwrap">
+    <div class="brand"><div class="logo">T</div><div><h1>Terrainist <span class="muted small">codebase map</span></h1><small>prompt → Loam → deterministic compiler → Minecraft world</small></div></div>
+    <nav id="nav">
+      <button data-sec="overview" class="active">Overview</button>
+      <button data-sec="pipeline">Pipeline</button>
+      <button data-sec="packages">Packages</button>
+      <button data-sec="files">Files</button>
+      <button data-sec="constants">Constants</button>
+      <button data-sec="lint">Physics lint</button>
+      <button data-sec="docs">Docs &amp; tools</button>
+    </nav>
+    <div class="searchwrap"><input id="q" type="text" placeholder="Search map… ( / )" autocomplete="off"><span id="scount"></span></div>
+  </div>
+</header>
+
+<main>
+<!-- ============================== OVERVIEW ============================== -->
+<section id="sec-overview" class="active">
+  <h2>Terrainist — interactive codebase map</h2>
+  <p class="lead">Text prompt → downloadable Minecraft world <code>.zip</code>. An LLM (GPT&nbsp;5.6&nbsp;Luna via OpenRouter) authors a deterministic spec language called <b>Loam</b>; a pure-TypeScript compiler turns Loam into a Java&nbsp;1.21.11 (DataVersion&nbsp;4671) world. The compiler is <b>deterministic</b> — same document + seed → byte-identical world, forever, no model in the loop — and verified by a <b>27-rule physics lint</b> that reads the emitted world back off disk and refuses findings.</p>
+
+  <div class="stats">
+    <div class="stat"><div class="n">154.6k</div><div class="l">src lines / 280 files</div></div>
+    <div class="stat"><div class="n">6</div><div class="l">packages (TS monorepo)</div></div>
+    <div class="stat"><div class="n">27</div><div class="l">physics lint rules</div></div>
+    <div class="stat"><div class="n">~2,900</div><div class="l">tests</div></div>
+    <div class="stat"><div class="n">441</div><div class="l">catalog entries (345 impl)</div></div>
+    <div class="stat"><div class="n">26</div><div class="l">golden example fixtures</div></div>
+  </div>
+
+  <h3>Package dependency graph</h3>
+  <div class="card">
+    <div class="flow" id="depgraph"></div>
+    <div class="legend">
+      <span><span class="sw" style="background:var(--acc2)"></span>runtime dependency</span>
+      <span><span class="sw" style="background:var(--fg3)"></span>deprecated (Tripo)</span>
+      <span class="muted">arrow = imports @terrainist/* of the target</span>
+    </div>
+    <table style="max-width:640px">
+      <tr><th>package</th><th>role</th><th>lines</th><th>imports</th></tr>
+      <tr><td class="mono">spec</td><td>Loam types + validation (leaf — imports nothing)</td><td class="mono">9,550</td><td class="muted">—</td></tr>
+      <tr><td class="mono">stdlib</td><td>curated deterministic generators (terrain, buildings, props)</td><td class="mono">49,665</td><td class="muted">spec ×1</td></tr>
+      <tr><td class="mono">compiler</td><td>the pipeline: layout solve, structures, emit, lint, program sandbox</td><td class="mono">84,727</td><td class="muted">spec ×79, stdlib ×110</td></tr>
+      <tr><td class="mono">render</td><td>headless PNG rendering of built worlds</td><td class="mono">2,373</td><td class="muted">compiler ×3, spec ×1</td></tr>
+      <tr><td class="mono">agents</td><td>LLM orchestration: intent pre-pass, authoring, program gate</td><td class="mono">4,080</td><td class="muted">spec ×5</td></tr>
+      <tr><td class="mono">cli</td><td>composition root: generate, compile, install, devworld, terrarium…</td><td class="mono">3,252</td><td class="muted">everything</td></tr>
+    </table>
+  </div>
+
+  <h3>The two moats</h3>
+  <div class="grid2">
+    <div class="card">
+      <h3>1 · Determinism</h3>
+      <div class="feat"><span class="dot">▸</span><div>Every random draw seeded <code>hash(worldSeed, nodePath)</code>; <code>xoshiro256**</code> RNG, position-keyed draws, BLAKE3 throughout.</div></div>
+      <div class="feat"><span class="dot">▸</span><div>No wall-clock in the compiler: chunk <code>LastUpdate</code>, region timestamp sector and <code>level.dat</code> <code>LastPlayed</code> are pinned/zeroed (stamped at <b>install</b> only).</div></div>
+      <div class="feat"><span class="dot">▸</span><div>No unseeded Math: 15° trig table (<code>TRIG_SCALE=4096</code>), pinned transcendentals; a test forbids <code>Math.*</code> transcendentals in dist.</div></div>
+      <div class="feat"><span class="dot">▸</span><div>Byte-identity harness: git worktree + diff of <b>decompressed chunk NBT</b> (raw zlib framing drifts run-to-run).</div></div>
+    </div>
+    <div class="card">
+      <h3>2 · Correctness (27-rule physics lint)</h3>
+      <div class="feat"><span class="dot">▸</span><div>Reads the emitted world back off disk: no floating blocks, no doors into walls, no unreachable stairs, no unstable fluid, no unsupported furniture.</div></div>
+      <div class="feat"><span class="dot">▸</span><div>Walking agent checks reciprocal-move connectivity (takes 3-block drops — floods downhill, so "connected" is climbable).</div></div>
+      <div class="feat"><span class="dot">▸</span><div>Plus readback audits: <b>walkability</b> (pedestrian-network metrics, goldens may only improve) and <b>dressing</b> (defects the graph misses).</div></div>
+      <div class="feat"><span class="dot">▸</span><div>Lint proves well-formedness, not quality — walks stay the human's instrument.</div></div>
+    </div>
+  </div>
+
+  <h3>Shape of the system</h3>
+  <div class="card">
+    <p>Two sides meet at the compiler: the <b>agent side</b> (<code>packages/agents</code> + <code>packages/cli</code>) turns a prompt into a validated Loam document with frozen, hash-verified bespoke programs; the <b>compiler side</b> (<code>packages/compiler</code> + <code>packages/stdlib</code> + <code>packages/spec</code>) turns the document into voxels, worlds and zips — deterministically, with no model in the loop. Everything an author writes is a <i>request</i> (envelope, constraints, ports, zones), never absolute coordinates; a layout solver places it.</p>
+    <p class="small muted">Key mechanisms: the <b>ground contract</b> (nothing modifies ground after it's decided — every pass declares <code>GroundIntent</code>s, a resolver owns precedence), the <b>SweptProfile</b> linework engine (arc-length datum, tread law), the <b>AuthoredProgram</b> sandbox (model-written code, double-run byte-compared, E334 on mismatch), the <b>flora grammar</b> (shape programs + 17-species registry), and the <b>intent fan-out</b> (dials → subsystem knobs, every row total).</p>
+  </div>
+
+  <h3>Read the map</h3>
+  <div class="grid3">
+    <div class="card"><h3>Pipeline</h3><p class="small muted">The full prompt→zip flow as a diagram: agent side, 10 compiler stages, the ground contract, emit and validation.</p></div>
+    <div class="card"><h3>Packages</h3><p class="small muted">Deep per-package dives: module inventories, key types, invariants, cross-package imports, test surface — all six packages.</p></div>
+    <div class="card"><h3>Files</h3><p class="small muted">Every one of the 280 source files with line counts, searchable and collapsible, annotated with what each file owns.</p></div>
+    <div class="card"><h3>Constants</h3><p class="small muted">The load-bearing named constants — solver weights, geometry limits, budgets, emission versions.</p></div>
+    <div class="card"><h3>Physics lint</h3><p class="small muted">All 27 rules, named and explained, from <code>emit/physics.ts</code>.</p></div>
+    <div class="card"><h3>Docs &amp; tools</h3><p class="small muted">17 design documents, 5 tool suites, 26 golden fixtures, the memory funnel, CI.</p></div>
+  </div>
+</section>
+
+<!-- ============================== PIPELINE ============================== -->
+<section id="sec-pipeline">
+  <h2>Pipeline — prompt to world</h2>
+  <div class="card">
+    <h3>Agent side (model in the loop, <code>packages/agents</code> + <code>cli</code>)</h3>
+    <div class="flow" id="agentside"></div>
+    <p class="small muted">Cost controls: <code>DEFAULT_BESPOKE_BUDGET_USD = 1.00</code> spend stop, area-scaled program budgets (<code>clamp(3·A/512², 3, 12)</code> landmarks / 3–6 plugins), bounded rounds (<code>MAX_AUTHOR_ATTEMPTS=3</code>, <code>MAX_COMPILE_ROUNDS=2</code>, ≤3 program repair rounds), and revision-conversation trimming (superseded rounds collapse to one marker line — ~10× cheaper rounds). Everything except document authoring is <b>fail-open</b>: nothing may stop a world shipping except the authoring loop itself.</p>
+  </div>
+  <div class="card">
+    <h3>Compiler — the deterministic 10-stage pipeline (<code>packages/compiler</code>)</h3>
+    <div class="flow" id="compilepipe"></div>
+    <p class="small muted">Every stage's random draws are seeded <code>hash(worldSeed, nodePath)</code>. The <b>ground contract</b> cuts across stages 6–8: each pass declares <code>GroundIntent</code>s through the <code>GroundDriver</code>; the resolver (<code>resolveGround</code>) reconciles all declarations into a frozen ground with explicit total precedence (<code>INTENT_RANK</code>) before any material is laid.</p>
+  </div>
+  <div class="card">
+    <h3>Emit &amp; verification</h3>
+    <div class="flow" id="emitpipe"></div>
+    <p class="small muted">All three world-writing paths (G1 spike <code>emitWorld</code>, Loam <code>emitTerrain</code>, Terrarium) funnel through <code>write.ts</code>: clean region dir → chunks saved in (z,x) order → zeroed chunk timestamps → hand-built <code>level.dat</code> (DataVersion 4671). Then readback: <code>applyConnectionStates</code> (fences), <code>applyGrowthFaces</code> (vines), physics lint, walkability + dressing audits. <code>LastPlayed</code> is stamped at install only.</p>
+  </div>
+</section>
+
+<!-- ============================== PACKAGES ============================== -->
+<section id="sec-packages">
+  <h2>Packages</h2>
+  <div id="pkgtabs"></div>
+  <div id="pkgbody"></div>
+</section>
+
+<!-- ============================== FILES ============================== -->
+<section id="sec-files">
+  <h2>File tree — all 280 source files</h2>
+  <div class="treewrap">
+    <div class="treebar">
+      <button id="expandall">Expand all</button>
+      <button id="collapseall">Collapse</button>
+      <span class="pkgbtns" id="pkgbtns"></span>
+      <span class="tfilter"><input id="fq" type="text" placeholder="filter files…"><span id="fcount" class="muted small"></span></span>
+    </div>
+    <div class="tree" id="tree"></div>
+  </div>
+  <p class="small muted" style="margin-top:8px">Annotations are one-line responsibilities from the cartography scouts. Line counts from <code>wc -l</code>. Click a directory to expand; type to filter (matches path and annotation).</p>
+</section>
+
+<!-- ============================== CONSTANTS ============================== -->
+<section id="sec-constants">
+  <h2>Load-bearing constants</h2>
+  <div class="tfilter" style="margin-bottom:10px"><input id="cq" type="text" placeholder="filter constants…" style="width:300px;background:var(--bg2);border:1px solid var(--border);color:var(--fg);border-radius:6px;padding:5px 10px;outline:none"></div>
+  <div class="chead"><span>constant</span><span>value</span><span>what it governs</span></div>
+  <div id="constlist"></div>
+</section>
+
+<!-- ============================== LINT ============================== -->
+<section id="sec-lint">
+  <h2>The physics lint — all 27 rules</h2>
+  <p class="lead">Reads the emitted world back off disk and refuses findings; defined in <code>packages/compiler/src/emit/physics.ts</code> (<code>PHYSICS_RULES</code>). Rule 27 (<code>unsupported.multiface</code>) landed with RUINS-PLAN WP-6 — the first rule policing a block whose whole state <i>is</i> its attachment.</p>
+  <div class="rules" id="rules"></div>
+  <div class="card" style="margin-top:14px">
+    <h3>Beyond the rules</h3>
+    <div class="feat"><span class="dot">▸</span><div><b>Walking agent</b> — a 1×2 player body flood over standable ground (3-block drops); <code>traversal.no_start</code> / <code>traversal.unreachable</code> are the rules that see a town nobody can climb.</div></div>
+    <div class="feat"><span class="dot">▸</span><div><b>palette/registry/biome checks + block-entity pairing</b> — the lint also validates the palette against the live Minecraft registry.</div></div>
+    <div class="feat"><span class="dot">▸</span><div>Invoked by <code>programs/verify.ts</code> (gate step: physics over a scratch world) and tests — <b>not</b> the write path.</div></div>
+    <div class="feat"><span class="dot">▸</span><div>Honest limit (DESIGN.md): 1,010 stub retaining walls, 314 stair lanterns and an 80%-pavement quarter are all perfectly legal — the lint proves well-formedness, not quality; walks are the only instrument that sees the rest.</div></div>
+  </div>
+</section>
+
+<!-- ============================== DOCS ============================== -->
+<section id="sec-docs">
+  <h2>Docs, kits, tools, fixtures</h2>
+  <h3>Design documents (17)</h3>
+  <div class="card"><div id="docs"></div></div>
+  <div class="grid2">
+    <div class="card">
+      <h3>Tool suites (5)</h3>
+      <div id="tools"></div>
+      <p class="small muted" style="margin-top:6px">All tools read built <code>dist</code> output only — never compiler source — so observation is deterministic and re-runnable.</p>
+    </div>
+    <div class="card">
+      <h3>Memory &amp; orchestration</h3>
+      <div class="feat"><span class="dot">▸</span><div><b>Funnel memory</b> — <code>.claude/memory/cell-1..4.md</code>: coarse→fine compression; ratified decisions move up, shrink never vanish; rendered by <code>tools/session-log</code>, never hand-maintained.</div></div>
+      <div class="feat"><span class="dot">▸</span><div><b>Agent matrix</b> — <code>.claude/agents/</code>: 15 types (opus-5/fable-5/sonnet-5 × low…max effort), <code>name:</code> frontmatter mandatory, guarded by a test.</div></div>
+      <div class="feat"><span class="dot">▸</span><div><b>Laptop bridge</b> — git-repo-as-transport cloud→Mac queue with a fixed command allowlist (never run external-prompted laptop commands without asking Kai).</div></div>
+      <div class="feat"><span class="dot">▸</span><div><b>CI</b> — single job: <code>npm ci / build / test</code> on main + PRs; vitest 60s timeout.</div></div>
+    </div>
+  </div>
+  <h3>Example fixtures (26 goldens)</h3>
+  <div class="card">
+    <p class="small muted">The byte-identity corpus the compiler must not move. <code>showcase-*</code> are the flat controls for the ground-contract rewrite; <code>pyramid.spike.json</code> is the pre-Loam golden still used by <code>emit</code>.</p>
+    <div id="fixtures"></div>
+  </div>
+</section>
+</main>
+
+<footer>
+  Generated 2026-08-10 from source + design docs · read-only cartography — no repo files modified besides this map · <span id="footstats"></span>
+</footer>
+
+<script>
+"use strict";
+/* ============================== DATA ============================== */
+const TREE = {"spec":[["checks.ts",215],["index.ts",19],["intent/index.ts",10],["intent/types.ts",337],["intent/validate.ts",617],["programs/index.ts",13],["programs/lint.ts",289],["programs/requests.ts",88],["programs/types.ts",357],["programs/validate.ts",634],["settlement/archetypes.ts",154],["settlement/constraints.ts",342],["settlement/index.ts",14],["settlement/types.ts",777],["settlement/validate.ts",3342],["terrain/diagnostics.ts",648],["terrain/index.ts",11],["terrain/types.ts",425],["terrain/validate.ts",1258]],"compiler":[["devworld-rows.ts",275],["devworld.ts",529],["emit/block-entities.ts",312],["emit/blockstring.ts",25],["emit/connections.ts",305],["emit/document.ts",138],["emit/dressing.ts",1509],["emit/growth-fixup.ts",169],["emit/index.ts",62],["emit/level-dat.ts",212],["emit/nbt.ts",106],["emit/physics.ts",1497],["emit/prismarine.ts",858],["emit/timestamps.ts",30],["emit/walkability.ts",1287],["emit/world.ts",246],["emit/write.ts",120],["exhibits/amusement.ts",35],["exhibits/arcana.ts",109],["exhibits/archetypes.ts",101],["exhibits/blitz.ts",164],["exhibits/breakpoints.ts",235],["exhibits/commerce.ts",104],["exhibits/context.ts",633],["exhibits/depths.ts",79],["exhibits/energy-props.ts",20],["exhibits/faith.ts",107],["exhibits/footprints.ts",117],["exhibits/garrison.ts",111],["exhibits/highrise.ts",95],["exhibits/homestead.ts",106],["exhibits/industry.ts",103],["exhibits/institution.ts",101],["exhibits/leisure.ts",103],["exhibits/props.ts",322],["exhibits/regional.ts",106],["exhibits/relic-props.ts",20],["exhibits/relic.ts",91],["exhibits/residential.ts",104],["exhibits/science.ts",102],["exhibits/seeds.ts",65],["exhibits/spectacle-props.ts",20],["exhibits/spectacle.ts",91],["exhibits/street-props.ts",20],["exhibits/terminus.ts",106],["exhibits/town.ts",82],["exhibits/trade.ts",85],["exhibits/types.ts",56],["exhibits/underground.ts",93],["exhibits/utility.ts",99],["exhibits/vehicles.ts",330],["exhibits/vernacular.ts",83],["exhibits/wave2.ts",99],["exhibits/wayside-props.ts",20],["exhibits/works.ts",101],["index.ts",30],["intent/fanout.ts",103],["intent/index.ts",11],["intent/resolve.ts",252],["intent/seam.ts",38],["layout/city-intent.ts",53],["layout/city-pass.ts",943],["layout/city.ts",1597],["layout/corridors.ts",414],["layout/cost.ts",659],["layout/courtyards.ts",290],["layout/district.ts",3401],["layout/fitness.ts",235],["layout/forms/axial.ts",676],["layout/forms/canal.ts",300],["layout/forms/carriage-spine.ts",632],["layout/forms/contour-lines.ts",549],["layout/forms/grid.ts",51],["layout/forms/grown.ts",366],["layout/forms/hillside.ts",1572],["layout/forms/index.ts",20],["layout/forms/linear.ts",423],["layout/forms/organic.ts",28],["layout/forms/radial.ts",451],["layout/forms/registry.ts",279],["layout/forms/types.ts",403],["layout/frames.ts",204],["layout/from-document.ts",393],["layout/ground-contract.ts",481],["layout/ground-driver.ts",208],["layout/ground-equivalence.ts",598],["layout/ground-resolver.ts",648],["layout/index.ts",62],["layout/levels.ts",583],["layout/masks.ts",160],["layout/platforms.ts",259],["layout/ports.ts",204],["layout/products.ts",217],["layout/prominence.ts",507],["layout/solve.ts",1048],["layout/streets-intent.ts",218],["layout/streets.ts",314],["layout/types.ts",339],["layout/vistas.ts",1109],["programs/fuel.ts",134],["programs/hash.ts",78],["programs/index.ts",20],["programs/interiors.ts",235],["programs/invoke.ts",135],["programs/pass.ts",447],["programs/place.ts",467],["programs/road-anchors.ts",247],["programs/run.ts",387],["programs/sandbox.ts",156],["programs/verify.ts",622],["provenance.ts",34],["structures/bridge.ts",279],["structures/buildings.ts",701],["structures/canals.ts",423],["structures/courtyards.ts",919],["structures/doorsteps.ts",227],["structures/farm-intent.ts",217],["structures/farm.ts",2270],["structures/green-skin.ts",2049],["structures/ground-declare.ts",116],["structures/grounds.ts",1356],["structures/index.ts",2068],["structures/junction-steps.ts",1241],["structures/life.ts",2469],["structures/plaza.ts",492],["structures/precincts.ts",1601],["structures/profiles.ts",577],["structures/props.ts",929],["structures/reclaim-species.ts",165],["structures/retaining.ts",2398],["structures/roads.ts",3498],["structures/ruin-field.ts",131],["structures/setpieces.ts",976],["structures/street-owner.ts",167],["structures/street-stairs.ts",914],["structures/streetscape.ts",1130],["structures/sweep.ts",1597],["structures/themes-intent.ts",332],["structures/tunnels.ts",2398],["structures/vocabulary.ts",383],["structures/wall-course.ts",364],["structures/wall-sweep-seam.ts",325],["structures/walls.ts",536],["terrain/biomes.ts",240],["terrain/caves.ts",679],["terrain/clearing.ts",297],["terrain/climate-intent.ts",130],["terrain/climate.ts",104],["terrain/clip.ts",338],["terrain/cluster.ts",120],["terrain/columns.ts",784],["terrain/compile.ts",2091],["terrain/decorate.ts",620],["terrain/detail.ts",63],["terrain/emit.ts",633],["terrain/flora/index.ts",13],["terrain/flora/naturalistic.ts",851],["terrain/flora/parts.ts",423],["terrain/flora/programs.ts",298],["terrain/flora/species.ts",292],["terrain/flora/types.ts",169],["terrain/index.ts",24],["terrain/landuse.ts",671],["terrain/palette.ts",828],["terrain/validate.ts",246],["terrain/vegetation.ts",2332],["terrarium-stations.ts",769],["terrarium.ts",1635],["theme-sweep.ts",441]],"stdlib":[["caves/index.ts",992],["classify/index.ts",610],["determinism/index.ts",367],["edits/index.ts",2358],["field/index.ts",258],["index.ts",137],["math/index.ts",458],["noise/index.ts",545],["structures/aircraft-wave6.ts",307],["structures/aircraft.ts",858],["structures/archetypes-arcana.ts",1474],["structures/archetypes-blitz.ts",1185],["structures/archetypes-civic.ts",1150],["structures/archetypes-commerce.ts",1095],["structures/archetypes-depths.ts",238],["structures/archetypes-faith.ts",1294],["structures/archetypes-garrison.ts",1260],["structures/archetypes-homestead.ts",1178],["structures/archetypes-industry.ts",1238],["structures/archetypes-institution.ts",944],["structures/archetypes-leisure.ts",1179],["structures/archetypes-regional.ts",1236],["structures/archetypes-relic.ts",518],["structures/archetypes-residential.ts",1078],["structures/archetypes-science.ts",1570],["structures/archetypes-spectacle.ts",1080],["structures/archetypes-terminus.ts",1491],["structures/archetypes-town.ts",649],["structures/archetypes-trade.ts",551],["structures/archetypes-utility.ts",1275],["structures/archetypes-vernacular.ts",620],["structures/archetypes-wave2.ts",1047],["structures/archetypes-works.ts",855],["structures/archetypes.ts",938],["structures/catalog.ts",1801],["structures/core.ts",2768],["structures/decay.ts",1628],["structures/greenery.ts",138],["structures/highrise.ts",1319],["structures/index.ts",62],["structures/props-amusement.ts",359],["structures/props-blitz.ts",925],["structures/props-energy.ts",298],["structures/props-relics.ts",714],["structures/props-spectacle.ts",675],["structures/props-street.ts",604],["structures/props-wayside.ts",928],["structures/props.ts",1001],["structures/railcraft.ts",402],["structures/ships-wave6.ts",474],["structures/ships.ts",919],["structures/support.ts",170],["structures/terrace.ts",962],["structures/themes.ts",453],["structures/underground.ts",1032]],"render":[["biome-registry.ts",41],["biome-tint.ts",216],["block-colors.ts",81],["index.ts",62],["top-down.ts",225],["voxel/canvas.ts",211],["voxel/grid.ts",170],["voxel/index.ts",11],["voxel/isometric.ts",254],["voxel/orthographic.ts",153],["voxel/palette.ts",614],["voxel/png.ts",44],["voxel/views.ts",136],["world-grid.ts",155]],"agents":[["asset-lock.ts",407],["author.ts",512],["config.ts",79],["env.ts",110],["index.ts",211],["intent-prepass.ts",515],["json.ts",87],["kit.ts",52],["openrouter.ts",316],["program-author.ts",889],["program-gate.ts",106],["program-wiring.ts",328],["tripo-config.ts",77],["tripo.ts",391]],"cli":[["feedback.ts",137],["generate.ts",468],["index.ts",1126],["install.ts",291],["program-gate-live.ts",65],["provenance.ts",62],["review-freeroam.ts",460],["review-import.ts",597],["zip.ts",46]]};
+
+const NOTES = {
+  // spec
+  "spec/settlement/validate.ts": "validateSettlementDocument — the big settlement validator (3,342 lines)",
+  "spec/terrain/diagnostics.ts": "~200-code LOAM diagnostic catalog (T0xx) + formatDiagnostic",
+  "spec/terrain/validate.ts": "validateTerrainDocument — terrain profile validator",
+  "spec/settlement/constraints.ts": "v0.2 constraint vocabulary: CONSTRAINT_REGISTRY, tiers, canonicalize",
+  "spec/programs/lint.ts": "static lint for authored programs (gate step 1)",
+  "spec/programs/types.ts": "AuthoredProgramRecord, ProgramMap, ProgramApi",
+  "spec/intent/types.ts": "SemanticIntent dials: era/wealth/decline/formality/event/climate/character",
+  "spec/settlement/archetypes.ts": "KNOWN_BUILDING_ARCHETYPES (226) + Levenshtein near-miss suggestions",
+  // compiler — terrain
+  "compiler/terrain/compile.ts": "compileTerrain/compileValidated — the whole pipeline orchestrator",
+  "compiler/terrain/columns.ts": "ColumnPlan: ground/surface/subsurface/fluidKind typed arrays",
+  "compiler/terrain/emit.ts": "emitTerrain: fillChunk, paintBiomes 4×4×4, punchCaves, write",
+  "compiler/terrain/biomes.ts": "biomeForColumn, PROFILE_BIOMES (+20 intent rows), snow consistency",
+  "compiler/terrain/landuse.ts": "clampLandUse, BAYER_8 per-stored-cell dither, ambient vote",
+  "compiler/terrain/vegetation.ts": "scatterForests: Poisson-disk, strata, emergent budget",
+  "compiler/terrain/climate.ts": "temperature/humidity fBm fields, snow lapse, CLIMATE_DEFAULTS",
+  "compiler/terrain/detail.ts": "position-keyed integer avalanche hashing (hash3i/hashPick)",
+  "compiler/terrain/validate.ts": "checkFluidStability, checkFloatingVegetation",
+  "compiler/terrain/flora/programs.ts": "conifer+blob shape programs, SHAPE_PROGRAMS, LAW2_REACH",
+  "compiler/terrain/flora/naturalistic.ts": "broadleaf/giant/ancient/columnar/umbrella/weeping programs",
+  "compiler/terrain/flora/species.ts": "17-entry species registry (13 naturalistic + 4 legacy)",
+  "compiler/terrain/flora/parts.ts": "parts→blockstate mapping, LEAF_STATE_POLICY",
+  // compiler — layout
+  "compiler/layout/solve.ts": "THE greedy solver: candidates, relaxation ladder, padFor, least-bad",
+  "compiler/layout/cost.ts": "constraint evaluation (zone/at/distance/adjacent_to/facing/connected/along/on)",
+  "compiler/layout/fitness.ts": "terrain fitness: FLATNESS_WEIGHT 0.55 / SLOPE_WEIGHT 0.45",
+  "compiler/layout/frames.ts": "coarse placement frames, zone grid, TRIG_15 table",
+  "compiler/layout/from-document.ts": "validated document → solver input (per-kind inputs)",
+  "compiler/layout/corridors.ts": "route corridors (course + road registration)",
+  "compiler/layout/levels.ts": "level platforms + seams: RETAIN_MAX=6, MIN_RETAIN_RUN=6",
+  "compiler/layout/prominence.ts": "skyline field: W_CORE .56 / W_FRONTAGE .14 / W_SPIKE .16",
+  "compiler/layout/vistas.ts": "vista axes + set pieces (MAX_VISTAS=3)",
+  "compiler/layout/city.ts": "CityPlan: arterials → cells (MIN_CELL_AREA=420)",
+  "compiler/layout/district.ts": "fabric F1: street graph → blocks → lots → terraces → infill",
+  "compiler/layout/ground-contract.ts": "GroundIntent/GroundClaim/INTENT_RANK vocabulary",
+  "compiler/layout/ground-resolver.ts": "resolveGround — the ground resolver (pure reconcile)",
+  "compiler/layout/ground-driver.ts": "AccumulatingDriver: record/commit/view per pass",
+  "compiler/layout/ground-equivalence.ts": "WP-2 equivalence shim vs the mutating pipeline (I1–I7)",
+  "compiler/layout/forms/registry.ts": "urban-form registry + drawFabric dispatch",
+  "compiler/layout/forms/hillside.ts": "hillside form: principal contour streets, strips, cut platforms",
+  "compiler/layout/forms/carriage-spine.ts": "switchbacking cart road (SPINE_GRADE_RUN=6)",
+  "compiler/layout/forms/contour-lines.ts": "contour toolkit: boxBlur, doubleSweep, linkComponents",
+  "compiler/layout/forms/grown.ts": "grown form: recursive split-town with T-junctions",
+  "compiler/layout/forms/radial.ts": "radial form: hub, rings, doubling spokes",
+  "compiler/layout/forms/canal.ts": "canal form: channels (CANAL_MAX_FALL=6)",
+  "compiler/layout/streets.ts": "StreetGraph skeleton F1 contract",
+  "compiler/layout/ports.ts": "port geometry: face → world position/normal under yaw",
+  "compiler/layout/products.ts": "terrain products for `on`: coastline/ridge/peak",
+  "compiler/layout/masks.ts": "column-mask arithmetic (erode, largestRect)",
+  "compiler/layout/courtyards.ts": "courtyard block selection (MIN_COURT_SIDE=9)",
+  "compiler/layout/platforms.ts": "derived platforms for stepped ground",
+  "compiler/layout/streets-intent.ts": "layout fan-out rows (blockSize/streetWidth/…)",
+  "compiler/intent/resolve.ts": "intent deep merge along node path (arrays replace whole)",
+  "compiler/intent/fanout.ts": "fan-out registry (dial → knob rows)",
+  "compiler/intent/seam.ts": "single seam wiring all fan-out rows",
+  // compiler — structures
+  "compiler/structures/index.ts": "buildStructures — ~18-step structure pass orchestrator",
+  "compiler/structures/sweep.ts": "SweptProfile engine: ArcFrame, tread law, thickenCourse (1.6k)",
+  "compiler/structures/roads.ts": "surfaceStreetGraph + buildRoadNetwork (A*) + terminusLandings",
+  "compiler/structures/street-owner.ts": "StreetRank total order, claimColumns, pinLevel",
+  "compiler/structures/junction-steps.ts": "bounded-Lipschitz reconciliation of finished paving",
+  "compiler/structures/retaining.ts": "retaining pass + finishCutFaces + faceCuts revetment",
+  "compiler/structures/street-stairs.ts": "street stairs (tread law), cart landings, hairpins",
+  "compiler/structures/streetscape.ts": "F4 dressing: sidewalk band, lamps, kerbside kit",
+  "compiler/structures/profiles.ts": "shared SweptProfiles: BRIDGE/STAIR/CART/CANAL/RETAINING",
+  "compiler/structures/buildings.ts": "building.grammar@0 client: ops rotate, apron, decay handling",
+  "compiler/structures/precincts.ts": "precinct.airport@0 / harbour@0 compounds",
+  "compiler/structures/life.ts": "C3 life pass: awnings/balconies, Planter occupancy",
+  "compiler/structures/setpieces.ts": "C4 set pieces: bridge/promenade/stair/monument dressing",
+  "compiler/structures/plaza.ts": "pavePlaza: plaza.ground + plaza.well",
+  "compiler/structures/doorsteps.ts": "buildDoorsteps: stepped/dropped/flush landings",
+  "compiler/structures/courtyards.ts": "furnishCourtyards: cloister, passage arches, well",
+  "compiler/structures/grounds.ts": "F2 ground treatment: worn paint, decayCoverage, reclaim",
+  "compiler/structures/farm.ts": "precinct.farm@0: parcels, rows/crops/baulks, farmstead",
+  "compiler/structures/ruin-field.ts": "per-column ruin field from decay",
+  "compiler/structures/green-skin.ts": "WP-6 green skin: vines, colonizer, greenSkinShares",
+  "compiler/structures/walls.ts": "infra.wall@0: towers, gates at road crossings",
+  "compiler/structures/wall-course.ts": "24×15° support-hull polygon, walkEdge ring",
+  "compiler/structures/canals.ts": "digCanals: fluid.channel claim, quay/coping",
+  "compiler/structures/tunnels.ts": "cellars, tunnel links, bore carving",
+  "compiler/structures/props.ts": "prop placer, prop.pad claims, fluid-leak safety",
+  "compiler/structures/bridge.ts": "bridge kit: spans, piers",
+  "compiler/structures/vocabulary.ts": "registry grounding of intent free strings",
+  "compiler/structures/themes-intent.ts": "structure fan-out rows (materialTheme/roofForm/decay…)",
+  "compiler/structures/ground-declare.ts": "remnant shadow declarers (pad.record)",
+  // compiler — emit
+  "compiler/emit/physics.ts": "THE 27-rule physics lint + walking agent",
+  "compiler/emit/walkability.ts": "pedestrian-network audit (components, orphans, reachability)",
+  "compiler/emit/dressing.ts": "dressing audit — 4 defect classes the graph misses",
+  "compiler/emit/write.ts": "shared deterministic Anvil write (all paths funnel here)",
+  "compiler/emit/prismarine.ts": "typed adapter over prismarine stack (WORLD_MIN_Y=-64)",
+  "compiler/emit/level-dat.ts": "hand-built level.dat (DataVersion 4671)",
+  "compiler/emit/connections.ts": "two-phase fence/pane/wall/rail connection recompute",
+  "compiler/emit/growth-fixup.ts": "re-derive vine/lichen attachment faces",
+  "compiler/emit/blockstring.ts": "parse minecraft:oak_stairs[facing=north,…]",
+  "compiler/emit/block-entities.ts": "sign/command-block entities + correspondence tables",
+  "compiler/emit/timestamps.ts": "zero region chunk-timestamp sector (offset 4096)",
+  "compiler/emit/world.ts": "G1 spike emitWorld (palette → fill → connections → write)",
+  "compiler/emit/document.ts": "pre-Loam spike fixture parser (throwaway)",
+  // compiler — programs
+  "compiler/programs/sandbox.ts": "node:vm realm, ambient-world shadowing, ProgramExecutor seam",
+  "compiler/programs/fuel.ts": "FuelMeter, FUEL_COSTS, source instrumentation",
+  "compiler/programs/hash.ts": "BLAKE3 sourceHash (E333) / opStreamHash (E334)",
+  "compiler/programs/run.ts": "runProgramInstance: ProgramApi, budgets",
+  "compiler/programs/invoke.ts": "invokeLandmark (once) / invokePlugin (N times)",
+  "compiler/programs/verify.ts": "five-step gate + verifyOutputHash (E334)",
+  "compiler/programs/place.ts": "planProgramSites, hover sites, ground plane",
+  "compiler/programs/pass.ts": "buildPrograms pass (E333/E334, seats, markers)",
+  "compiler/programs/interiors.ts": "v2 fit-out: furnishRunInteriors via building grammar",
+  "compiler/programs/road-anchors.ts": "landmark door anchors → road_stub ports",
+  "compiler/devworld.ts": "devworld exhibit grid builder",
+  "compiler/devworld-rows.ts": "devworld row layout",
+  // stdlib — core
+  "stdlib/determinism/index.ts": "BLAKE3 seeds, position-keyed draws, xoshiro256**",
+  "stdlib/math/index.ts": "pinned deterministic transcendentals (ctx.math)",
+  "stdlib/noise/index.ts": "gradient/fBm/ridged/warp/curve/erode noise stack",
+  "stdlib/field/index.ts": "HeightField materialization + heightAt",
+  "stdlib/edits/index.ts": "8 terrain verbs + hydrology + level pads",
+  "stdlib/classify/index.ts": "slope, surface classes, markers, snow gate",
+  "stdlib/caves/index.ts": "subtractive cave carver (CSR air spans)",
+  "stdlib/index.ts": "root re-export + buildTerrainField entry",
+  // stdlib — structures
+  "stdlib/structures/core.ts": "building.grammar@0 shape half: LocalVoxelOp, rotateOps, generateBuilding",
+  "stdlib/structures/archetypes.ts": "BUILDING_ARCHETYPES union + priority dispatch + furnish()",
+  "stdlib/structures/archetypes-civic.ts": "shared fit-out layer: FitOutContext, furnishExtended/Wing",
+  "stdlib/structures/catalog.ts": "441-entry structure catalog (345 implemented)",
+  "stdlib/structures/themes.ts": "pickTheme, seeded Fisher-Yates material deal, styleOf",
+  "stdlib/structures/decay.ts": "the decay engine: crumbleWalls/breakRoof/spill/green/rubble",
+  "stdlib/structures/greenery.ts": "multi-face growth vocabulary",
+  "stdlib/structures/support.ts": "shared support vocabulary (needsGround/canSupport)",
+  "stdlib/structures/highrise.ts": "emitHighrise: switchback stair core, curtain wall, setbacks",
+  "stdlib/structures/terrace.ts": "planTerrace/emitTerrace: party walls, cornice, shopfront",
+  "stdlib/structures/underground.ts": "cellar styles: crypt/catacombs/vault/wine_cellar/mine",
+  "stdlib/structures/props.ts": "prop.place@0: PROP_GENERATORS single lookup",
+  "stdlib/structures/aircraft.ts": "airliner→zeppelin (ringCells, ellipseRadius conics)",
+  "stdlib/structures/ships.ts": "longship→houseboat, shared hull/mast/sail",
+  "stdlib/structures/railcraft.ts": "locomotive + rolling stock",
+  "stdlib/structures/archetypes-town.ts": "representative wave file pattern",
+  // render
+  "render/top-down.ts": "renderTopDown: hill-shaded per-column PNG",
+  "render/world-grid.ts": "worldToGrid: Anvil world → dense VoxelGrid",
+  "render/voxel/isometric.ts": "2:1 dimetric rasterizer, hidden-cell removal, cutaways",
+  "render/voxel/orthographic.ts": "floor-plan / section / top-down renders",
+  "render/voxel/views.ts": "renderWorldViews/renderStructureViews",
+  "render/voxel/palette.ts": "BLOCK_APPEARANCE color table (Java 1.21)",
+  "render/voxel/png.ts": "dependency-free PNG encoder",
+  "render/biome-tint.ts": "hand-tabled vanilla biome tints",
+  "render/block-colors.ts": "blockColor + FNV-1a hashed fallback",
+  // agents
+  "agents/author.ts": "authorLoamDoc/reviseLoamDoc, trimRevisionConversation",
+  "agents/intent-prepass.ts": "classify-the-prompt, fail-open, one cheap call",
+  "agents/program-author.ts": "bespoke program authoring: proposal → gate → repair ≤3",
+  "agents/program-wiring.ts": "orphan-program detection + one focused revision",
+  "agents/kit.ts": "kit loader (system prompts from docs/kits/*.md)",
+  "agents/openrouter.ts": "OpenRouter client, 3-armed retry, spend stop",
+  "agents/config.ts": "AUTHORING_MODEL_ID=gpt-5.6-luna, budgets, MAX_* rounds",
+  "agents/env.ts": "forgiving .env parser, keys never logged",
+  "agents/program-gate.ts": "ProgramVerificationGate seam + stub",
+  "agents/json.ts": "extractJson/stripFences from model replies",
+  "agents/asset-lock.ts": "assets.lock.json (content-addressed, LOAM-E311)",
+  "agents/tripo.ts": "DEPRECATED Tripo3D client",
+  // cli
+  "cli/index.ts": "USAGE + main() dispatch; every command runner",
+  "cli/generate.ts": "the full product path: prompt → doc → compile → revise → zip",
+  "cli/feedback.ts": "compile diagnostics → model-actionable feedback",
+  "cli/install.ts": "installWorld, --channel, level.dat LastPlayed stamp",
+  "cli/provenance.ts": "gitProvenance stamped into report/manifest sidecars",
+  "cli/zip.ts": "zipWorld (shells to Info-ZIP)",
+  "cli/review-import.ts": "in-game client log → review session markdown",
+  "cli/review-freeroam.ts": "F3+C free-roam review sessions",
+  "cli/program-gate-live.ts": "compiler verifyPrograms → agents gate adapter",
+};
+
+const CONSTS = [
+  ["WORLD_MIN_Y", "-64", "emission vertical datum (emit/prismarine.ts)"],
+  ["WORLD_HEIGHT", "384", "world height in blocks"],
+  ["EMIT_MINECRAFT_VERSION", "1.21.11", "target; DataVersion 4671"],
+  ["DEFAULT_BIOME", "minecraft:plains", "level.dat default biome"],
+  ["RETAIN_MAX", "6", "max retaining wall height (layout/levels.ts)"],
+  ["RETAIN_RAIL", "3", "parapet rail trigger height"],
+  ["MIN_RETAIN_RUN", "6", "min run for a retaining transition"],
+  ["STEP_RELIEF", "10", "relief at which a district elects stepped ground"],
+  ["MAX_TREAD_CUT", "4", "max blocks a flight may cut into the upper platform"],
+  ["MIN/MAX_PRINCIPAL_STREETS", "2/4", "hillside principal contour street count"],
+  ["STRIP_DEPTH_MAX", "28", "hillside buildable strip depth cap"],
+  ["TERRACE_RISE", "= RETAIN_MAX", "hillside terrace rise"],
+  ["SPINE_GRADE_RUN", "6", "carriage-spine grade run"],
+  ["SPINE_WIDTH", "5", "carriage-spine width"],
+  ["DEFAULT_CORRIDOR_WIDTH", "7", "route corridor width (layout/corridors.ts)"],
+  ["CORRIDOR_RESERVATION_COST", "0.35", "cost of crossing a reserved corridor"],
+  ["MAX_VISTAS / SET_PIECE_MAX", "3 / 6", "vista axes and set-piece caps"],
+  ["MIN_CELL_AREA", "420", "minimum district cell area"],
+  ["W_CORE / W_FRONTAGE", "0.56 / 0.14", "prominence field weights"],
+  ["W_SPIKE / W_CLUSTER / W_NOISE", "0.16 / 0.09 / 0.05", "prominence field weights"],
+  ["FLATNESS_WEIGHT / SLOPE_WEIGHT", "0.55 / 0.45", "terrain fitness weights"],
+  ["FOREST_COVERAGE_DENSITY", "0.02", "scatter density below which a forest isn't coverage"],
+  ["UPLAND_RISE / HIGH_ROCK_RISE", "24 / 48", "absolute rise for land bands (F20 fix)"],
+  ["BIOME_CELL", "4", "Anvil biome storage cell (4×4×4)"],
+  ["MAX_PROFILE_DEPTH", "3", "loam node depth cap (spec/terrain/validate.ts)"],
+  ["MAX_PROGRAM_SOURCE_BYTES", "64 KiB", "authored program source cap"],
+  ["PROGRAM_BUDGET landmarks", "clamp(3·A/512², 3, 12)", "bespoke landmark budget (A = size²)"],
+  ["PROGRAM_BUDGET plugins", "clamp(3·A/512², 3, 6)", "bespoke plugin budget"],
+  ["DEFAULT_BESPOKE_BUDGET_USD", "1.00", "per-world spend stop (F18, up from 0.50)"],
+  ["MAX_AUTHOR_ATTEMPTS / MAX_COMPILE_ROUNDS", "3 / 2", "validation retries vs compile rounds"],
+  ["MAX_PROGRAM_ROUNDS", "3", "program repair rounds"],
+  ["WIRING_MAX_ATTEMPTS", "2", "wiring-check revision attempts"],
+  ["PROGRAM_AUTHOR_MAX_TOKENS", "120_000", "max-effort program calls must not die on length"],
+  ["AUTHORING_TEMPERATURE", "0", "same prompt+seed → same world"],
+  ["TRIG_15 / TRIG_SCALE", "15° / 4096", "fixed trig table (no transcendentals)"],
+  ["MIN_COURT_SIDE / COURTYARD_FILL", "9 / 0.8", "courtyard block selection"],
+  ["PASSAGE_HEAD", "4", "courtyard passage headroom"],
+  ["MIN_PLATFORM_COLUMNS", "9", "minimum stepped-platform columns"],
+  ["GROWN_MAX_DEPTH / GROWN_AVENUE_SPLITS", "8 / 2", "grown-form recursion"],
+  ["RADIAL_RING_GAIN / BASE_SPOKES", "116 / 6", "radial form"],
+  ["CANAL_MAX_FALL / CANAL_SEA_REACH", "6 / 24", "canal form"],
+  ["DEFAULT_CANDIDATES", "96", "solver candidate pool (flagged thin, F22)"],
+  ["ORGANIC_AMPLITUDE / WAVELENGTH", "6 / 24", "organic-form line wobble"],
+  ["AVENUE_EVERY", "3", "axial grid avenue cadence"],
+  ["MIN_BLOCK_SPACING", "16", "axial min block spacing"],
+  ["STREET_WIDTH (axial)", "7", "axial street width"],
+  ["DEFAULT_BUILDING_FOOTPRINT", "9", "default building footprint (layout/from-document.ts)"],
+  ["DEFAULT_BUILDING_FLOORS / FLOOR_HEIGHT", "2 / 4", "default building massing"],
+  ["HIGHRISE_MAX_FLOORS / STOREY_HEIGHT", "? / ?", "highrise grammar caps (stdlib/structures/highrise.ts)"],
+  ["TERRACE_MAX_FLOORS / STOREY_HEIGHT", "? / ?", "terrace grammar caps (stdlib/structures/terrace.ts)"],
+  ["DEFAULT_BASEMENT_DEPTH", "?", "cellar depth (stdlib/structures/core.ts)"],
+  ["DOORSTEP_REACH", "?", "doorstep landing reach"],
+  ["NICHE_SPACING", "?", "cellar niche spacing"],
+  ["EARN_RATIO / SERVICE_REACH / LEVEL_SLACK / MIN_DANGLE", "?", "walkability audit thresholds"],
+  ["MAX_JUNCTION_LIFT / MAX_SEAM_THICKNESS / MAX_SEAM_COLUMNS", "?", "junction-steps reconciliation caps"],
+  ["COASTLINE_STRIDE / RIDGE_STRIDE", "4 / 4", "terrain-product sampling stride"],
+  ["ALONG_ELONGATION", "?", "along-constraint elongation"],
+  ["ON_DEFAULT_BAND / ON_DEFAULT_PARTIAL", "?", "on-constraint defaults"],
+  ["SPINE_STRIP_COST / SPINE_SECOND_SPAN", "40 / 96", "carriage-spine routing"],
+  ["ZONE_CELL", "?", "coarse zone grid cell size"],
+  ["SEAM_NEIGHBOURS", "8-connected", "level seam grouping"],
+  ["MIN_MARKET_RADIUS", "8", "grown-form market"],
+];
+
+const RULES = [
+  ["palette.registry", "block in palette missing from the live registry", "g"],
+  ["palette.biome", "invalid biome id", "g"],
+  ["unsupported.ladder", "ladder with no backing block", "b"],
+  ["unsupported.wall_torch", "wall torch on nothing", "b"],
+  ["unsupported.wall_sign", "wall sign on nothing", "b"],
+  ["unsupported.torch", "torch with no support", "b"],
+  ["unsupported.lantern", "lantern with no support", "b"],
+  ["unsupported.door", "door without jamb/support", "b"],
+  ["door.half_mismatch", "door halves disagree", "b"],
+  ["bed.pairing", "bed halves unpaired", "b"],
+  ["floating.slab", "slab with nothing below", "b"],
+  ["floating.stair", "stair with nothing below", "b"],
+  ["floating.isolated", "isolated floating block", "b"],
+  ["unsupported.chain", "chain on nothing", "b"],
+  ["unsupported.bell", "bell on nothing", "b"],
+  ["prop.fluid_leak", "fluid escaping a contained prop", "b"],
+  ["interior.blocked_column", "blocked vertical column inside a furnished interior", "b"],
+  ["traversal.no_start", "walking agent has no start column (building unreachable)", "a"],
+  ["traversal.unreachable", "room/structure unreachable from its door (3-block-drop flood)", "a"],
+  ["traversal.tunnel", "tunnel traversal defect", "a"],
+  ["connection.stale", "fence/pane/wall connection state stale vs recomputed", "b"],
+  ["road.proud", "road proud of its datum", "b"],
+  ["dripstone.unattached", "dripstone with nothing above", "b"],
+  ["cave.fluid_shell", "cave fluid shell defect", "b"],
+  ["cave.surface_breach", "cave breaches the surface", "b"],
+  ["blockentity.orphan", "block entity without its block", "b"],
+  ["unsupported.multiface", "multi-face growth (vine/lichen) with no legal face — rule 27, RUINS-PLAN WP-6", "p"],
+];
+
+const DOCS = [
+  ["docs/DESIGN.md", "1119 lines", "master design + current state + roadmap + open defects"],
+  ["docs/LOAM-SPEC-v0.2.md", "249KB", "the Loam language spec, §§0–14 (ratified 2026-07-28)"],
+  ["docs/LOAM-TERRAIN-PROFILE-v0.md", "15.7KB", "normative terrain-only subset for G2/G3"],
+  ["docs/GROUND-CONTRACT-v0.md", "124KB", "declare→resolve→build ground rewrite, WP-1→6, INTENT_RANK"],
+  ["docs/SITE-PLAN-v0.md", "98KB", "frontage-led hill-town site planner; hillside form contract"],
+  ["docs/FARM-PLAN-v0.md", "39KB", "F17 minimal farm: precinct.farm@0 (ratified 08-09)"],
+  ["docs/RUINS-PLAN-v0.md", "39.5KB", "F19 district ruins: decay operators, intensity bands (ratified 08-09)"],
+  ["docs/RUINS-PLAN-v0-WP6.md", "49.7KB", "green-skin addendum + lint rule 27 (ratified 08-10)"],
+  ["docs/URBAN-FORMS-v0.md", "58KB", "Phase 4.1 street-skeleton registry, seven forms"],
+  ["docs/FLORA-GRAMMAR-v0.md", "95.7KB", "shape-program grammar: six laws, strata, species (draft)"],
+  ["docs/COURTYARDS-AND-LEVELS-v0.md", "62.8KB", "column ownership + multi-level ground (Phase 4.2)"],
+  ["docs/SHIP-PLAN-v0.md", "49.5KB", "shipping plan: rung B ratified, 7-prompt battery, backstop 08-28"],
+  ["docs/kits/settlement-author.md", "217KB", "default system prompt for Luna (settlement profile)"],
+  ["docs/kits/terrain-author.md", "26.9KB", "terrain-profile system prompt"],
+  ["docs/CLOUD-LAPTOP-BRIDGE.md", "4.4KB", "cloud→Mac git queue + launchd watcher"],
+  ["docs/HANDOFF-2026-07-29.md", "9.9KB", "cloud-workflow setup, agent matrix, snapshot 1075 tests"],
+  ["docs/HANDOFF-2026-07-30.md", "16.6KB", "local→cloud handoff, standing constraints"],
+];
+
+const TOOLS = [
+  ["tools/session-log/", "renders the project-memory page (4 cells + live transcript); zero deps"],
+  ["tools/shootout/", "Luna-vs-Tripo comparison: dependency-free GLB voxelizer (voxelize.ts) + superflat assembler — historic"],
+  ["tools/e2e-compare/", "per-model metrics tables from out/e2e runs (usage, rounds, diagnostics, cost, zip bytes)"],
+  ["tools/laptop-bridge/", "cloud→Kai's Mac: Tailscale SOCKS5 + launchd watcher, fixed command allowlist"],
+  ["tools/cc-effort-probe/", "probes whether stock CC honors effort: frontmatter (canned-SSE, zero cost)"],
+];
+
+const FIXTURES = [
+  ["world-bayline", "settlement", "Miami-spirit resort bay"],
+  ["world-meridian", "settlement", "rectilinear metropolis with diagonals + flatirons"],
+  ["world-oldharrow", "settlement", "old hill town above a river gorge"],
+  ["showcase-bayline", "settlement", "dense waterfront city: grid + river + harbour + airport (flat control)"],
+  ["showcase-heathershire", "settlement", "dense shire: high street, manor, farms (flat control)"],
+  ["showcase-ironvale", "settlement", "industrial railway valley (flat control)"],
+  ["showcase-kingsfall", "settlement", "dense capital: citadel + faith quarter (flat control)"],
+  ["showcase-aerodale", "settlement", "5-shelf resort city + airfield (flat control)"],
+  ["showcase-deltamere", "settlement", "delta harbour/trade city, whole fleet (flat control)"],
+  ["demo-saltmarsh-keep", "settlement", "walled old town + harbour + crypt"],
+  ["demo-meridian-shore", "settlement", "modern lakeside city + airfield + observatory"],
+  ["demo-deltaport", "settlement", "fortified river-delta port town"],
+  ["site-plan-hillside", "settlement", "terrace town on a broad shoulder, chapel at top"],
+  ["site-plan-hillside-steep", "settlement", "steep 208-block-terrain town with retaining walls"],
+  ["precinct-airfield", "settlement", "country aerodrome"],
+  ["precinct-harbour", "settlement", "working harbour"],
+  ["c1-harbourtown", "settlement", "coastal city with diagonal boulevard (moved 186 chunks at 747eaf8, attributed)"],
+  ["hillside-village", "settlement", "timber houses + plaza + river + watchtower"],
+  ["mine-and-crypt", "settlement", "chapel/crypt ↔ town hall via catacombs"],
+  ["tunnel-junction", "settlement", "four halls + two crossing crypt tunnels"],
+  ["tunnel-test", "settlement", "chapel + town hall joined by tunnel, one unrelated cottage"],
+  ["hilltop-crypt-hamlet", "settlement", "watchtower + longhouse over crypt + flooded mine"],
+  ["misty-fjords", "terrain", "fjords/black-sand coast (LOAM-SPEC example A)"],
+  ["cave-styles", "terrain", "one hill, all cave styles compared"],
+  ["caverns-test", "terrain", "wooded hill with walkable cave entrances"],
+  ["flora-oldgrowth", "terrain", "old-growth vale exercising the flora grammar"],
+  ["pyramid.spike.json", "spike", "pre-Loam terrainist-spike-0 golden (glass pyramid), used by emit"],
+];
+
+/* ============================== PKG CONTENT ============================== */
+const PKG = {
+  spec: {
+    name: "@terrainist/spec",
+    size: "9,550 lines · 19 files",
+    role: "Loam language types + validation. Owns what is legal to write down — deliberately executes nothing (sandbox, fuel, hashes and the five-step gate live in compiler/agents). Hand-rolled validators (never schema-driven) so every rejection carries an LLM-targeted fix hint.",
+    deps: "leaf — zero @terrainist imports",
+    types: ["TerrainDocument / SettlementDocument", "HeightfieldNode / EditNode / ClimateNode / ForestNode / CaveNode", "StructureNode / PropNode / PlazaNode / DistrictNode / CityNode", "SemanticIntent (era/wealth/decline/formality/event/climate/character)", "AuthoredProgramRecord, ProgramMap, ProgramApi", "LoamDiagnostic (LOAM-* codes, ~200)"],
+    mods: [
+      ["terrain/diagnostics.ts", "diagnostic catalog + formatDiagnostic (T0xx W/I/E)", "648"],
+      ["terrain/types.ts", "terrain node types, vocabs (PROFILE_GENERATORS, EDIT_VERBS)", "425"],
+      ["terrain/validate.ts", "validateTerrainDocument, per-node validators, MAX_PROFILE_DEPTH=3", "1258"],
+      ["settlement/types.ts", "settlement node types, envelopes, ports, farm params", "777"],
+      ["settlement/validate.ts", "validateSettlementDocument — the big one, 3.3k lines", "3342"],
+      ["settlement/constraints.ts", "v0.2 constraint vocabulary: CONSTRAINT_REGISTRY, tiers, weights", "342"],
+      ["settlement/archetypes.ts", "KNOWN_BUILDING_ARCHETYPES (226) + Levenshtein suggestions", "154"],
+      ["intent/types.ts", "SemanticIntent dials, ERA_CLASSES/ERA_ALIASES", "337"],
+      ["intent/validate.ts", "validateIntentValue/validateIntentPlacement", "617"],
+      ["programs/types.ts", "AuthoredProgramRecord, ProgramApi, PROGRAM_LIMITS", "357"],
+      ["programs/validate.ts", "validateProgramMap (b3: hashes, envelope caps)", "634"],
+      ["programs/lint.ts", "static lint — gate step 1 (banned globals, braced bodies)", "289"],
+      ["programs/requests.ts", "pending-program requests from intent.character.programs", "88"],
+      ["checks.ts", "shared validators: isObject, unknownKeys, checkId…", "215"],
+    ],
+    invariants: ["Two profiles (terrain/settlement) over one shared core; settlement reuses terrain validators wholesale", "Validation returns {diagnostics, document?} only when hasErrors is false", "Every rejection carries a model-usable fix hint"],
+    tests: ["kit.test.ts validates kit examples against the same bytes the model reads", "agent-defs.test.ts guards the 15-type .claude/agents matrix", "catalog cross-checks (spec mirror vs stdlib registry)"],
+  },
+  stdlib: {
+    name: "@terrainist/stdlib",
+    size: "49,665 lines · 55 files",
+    role: "Curated deterministic generators — the L1 layer of Loam. Pure voxel half, no minecraft-data. Determinism core (BLAKE3 seeds, xoshiro256**, pinned trig) + terrain field verbs + the building.grammar@0 and prop.place@0 grammars with a 441-entry catalog.",
+    deps: "spec ×1",
+    types: ["LocalVoxelOp (block names, not state ids)", "BuildingRequest/Params/Result, ResolvedBuildingParams", "BuildingArchetype, BUILDING_ARCHETYPES union (24 wave files)", "PropGenerator, PropContext, PROP_GENERATORS", "MaterialTheme, BuildingMaterials, styleOf", "DecayProfile/DecayMaterials (RUINS-PLAN engine)", "HeightField, Rng, CaveSpan"],
+    mods: [
+      ["determinism/", "BLAKE3 seed derivation, position-keyed draws, xoshiro256** Rng", "367"],
+      ["math/", "pinned deterministic transcendentals (ctx.math)", "458"],
+      ["noise/", "gradient → fBm/ridged → domain warp → continentalness; erode", "545"],
+      ["field/", "HeightField materialization + heightAt", "258"],
+      ["edits/", "8 terrain verbs + hydrology (open basins, pond chains) + level pads", "2358"],
+      ["classify/", "slope, surface classes, markers, snow gate", "610"],
+      ["caves/", "subtractive cave carver emitting CSR air spans", "992"],
+      ["structures/core.ts", "building.grammar@0 shape: LocalVoxelOp, rotateOps family, generateBuilding", "953+"],
+      ["structures/archetypes.ts", "archetype union + priority dispatch + furnish() (decay last — RUIN LAW)", "—"],
+      ["structures/archetypes-civic.ts", "shared fit-out: FitOutContext, furnishExtended/Wing/UpperFloors", "—"],
+      ["structures/archetypes-*.ts", "24 wave files: *_BUILDING_ARCHETYPES + *_ArchetypeOfTags + furnish*", "—"],
+      ["structures/themes.ts", "pickTheme, seeded Fisher-Yates material deal, MODERN_CITY by-name-only", "—"],
+      ["structures/highrise.ts", "emitHighrise: switchback stair core, curtain wall, setbacks", "—"],
+      ["structures/terrace.ts", "planTerrace/emitTerrace: party walls, cornice snap, shopfront band", "—"],
+      ["structures/underground.ts", "cellar styles: crypt/catacombs/vault/wine_cellar/mine", "—"],
+      ["structures/decay.ts", "decay engine: crumbleWalls/breakRoof/spill/green/rubble", "—"],
+      ["structures/props.ts", "prop.place@0 registry root (PROP_GENERATORS merge point)", "—"],
+      ["structures/props-*.ts", "7 prop waves: street, wayside, amusement, blitz, energy, spectacle, relics", "—"],
+      ["structures/aircraft.ts + wave6", "airliner→zeppelin; ringCells/ellipseRadius integer conics", "—"],
+      ["structures/ships.ts + wave6", "longship→houseboat; shared hull/mast/sail helpers", "—"],
+      ["structures/railcraft.ts", "locomotive + rolling stock on RAIL_CZ", "—"],
+      ["structures/catalog.ts", "441-entry registry, 345 implemented — ground truth for `terrainist catalog`", "—"],
+      ["structures/support.ts", "support vocabulary (needsGround/canSupport) shared with physics lint", "—"],
+      ["structures/greenery.ts", "multi-face growth vocabulary (GROWTH_FACES)", "—"],
+    ],
+    invariants: ["Generators are pure (params, seed, style, footprint) → LocalVoxelOp[]", "Rotation is one post-pass rotateOps (rewrites coords AND direction-bearing props)", "Iteration order never affects output (test-pinned)", "No Math.* transcendentals in dist (test-forbidden)"],
+    tests: ["determinism.test.ts, golden.test.ts (pinned field/classification hashes), no-math-transcendentals.test.ts, noise/field/edits/classify/caves suites", "catalog.test.ts validates the registry against live registries"],
+  },
+  compiler: {
+    name: "@terrainist/compiler",
+    size: "84,727 lines · 169 files",
+    role: "The pipeline. 10 deterministic stages from validated Loam document to Anvil world: intent resolution, terrain field, layout solve, fabric, structures (~18 passes), authored programs, ground contract, clearing/scatter/biomes, emit + 27-rule physics lint.",
+    deps: "spec ×79, stdlib ×110; prismarine stack (require'd, version-keyed), blake3",
+    types: ["ColumnPlan (ground/surface/subsurface/fluidKind)", "LayoutNodeInput/Placement/ResolvedPort/LayoutResult/SolverReport", "GroundIntent/GroundClaim/GroundTransition/INTENT_RANK", "SweptProfile, ArcFrame, StreetGraph, StreetSegment", "ProgramApi, ProgramRun, FuelMeter", "EmitChunk/PrismarineStack, PhysicsContext/Finding/Report", "WalkabilityReport, DressingReport"],
+    mods: [
+      ["terrain/compile.ts", "compileTerrain/compileValidated — whole-pipeline orchestrator", "—"],
+      ["terrain/columns.ts", "ColumnPlan intermediate model + materials", "—"],
+      ["terrain/biomes.ts + landuse.ts", "biomeForColumn, PROFILE_BIOMES, BAYER_8 dither, ambient vote", "—"],
+      ["terrain/flora/*", "flora grammar: shape programs, 17 species, strata, six laws", "2046"],
+      ["layout/solve.ts", "greedy solver + relaxation ladder + padFor + least-bad", "—"],
+      ["layout/ground-*.ts", "the ground contract: types, resolver, driver, equivalence shim", "—"],
+      ["layout/forms/*", "urban-form registry + 8 forms (grid…hillside, carriage-spine)", "5750"],
+      ["structures/index.ts", "buildStructures — ~18-step orchestrator", "—"],
+      ["structures/sweep.ts", "SweptProfile linework engine (1.6k lines)", "1598"],
+      ["structures/roads.ts + street-owner.ts", "street family: claim/level/dress/furnish + StreetRank order", "—"],
+      ["structures/junction-steps.ts", "bounded-Lipschitz reconciliation of finished paving", "—"],
+      ["programs/*", "AuthoredProgram tier: sandbox, fuel, verify (five-step gate), place", "2928"],
+      ["emit/physics.ts", "THE 27-rule physics lint + walking agent", "—"],
+      ["emit/walkability.ts + dressing.ts", "readback audits (metrics + goldens)", "—"],
+      ["emit/write.ts + prismarine.ts", "deterministic Anvil write + typed prismarine adapter", "—"],
+      ["exhibits/*", "devworld exhibit grid (38 files of rows)", "4418"],
+    ],
+    invariants: ["Deterministic and ordered: every draw seeded hash(worldSeed, nodePath); no wall-clock", "Nothing modifies the ground after the ground is decided (WP-1→5 shipped)", "A fix verifies a countable proxy ≠ the walk passes — instrument-first doctrine", "Program output is the one array whose length a model chooses — no spread-append"],
+    tests: ["~69k lines across 6 packages; physics-lint suites, byte-identity goldens, road-cross-section flatness, WP-2 ground equivalence, programs gate/seats/interiors, walkability goldens (may only improve)"],
+  },
+  render: {
+    name: "@terrainist/render",
+    size: "2,373 lines · 14 files",
+    role: "Headless multi-angle world rendering for tests and render critique. Two pure-Node paths, both reading the emitted Anvil world back off disk — never the in-memory document.",
+    deps: "compiler ×3 (prismarine adapter), spec ×1, minecraft-data, pngjs",
+    types: ["TopDownRender, VoxelGrid (Uint16Array + palettes)", "NamedView, WorldViewOptions", "BLOCK_APPEARANCE, BiomeTint"],
+    mods: [
+      ["top-down.ts", "renderTopDown: hill-shaded per-column PNG (G1 deterministic)", "—"],
+      ["world-grid.ts", "worldToGrid: Anvil region dir → dense VoxelGrid bridge", "—"],
+      ["voxel/isometric.ts", "2:1 dimetric rasterizer, exact hidden-cell removal, cutawayClip", "—"],
+      ["voxel/orthographic.ts", "renderFloorPlan / renderSection / grid top-down", "—"],
+      ["voxel/views.ts", "renderWorldViews/renderStructureViews", "—"],
+      ["voxel/palette.ts", "BLOCK_APPEARANCE color table (Java 1.21) + families", "—"],
+      ["voxel/canvas.ts", "software RGBA8 canvas + 5×7 bitmap font", "—"],
+      ["voxel/png.ts", "dependency-free PNG encoder (zlib deflateSync)", "—"],
+      ["biome-tint.ts", "hand-tabled vanilla tints (the DESIGN.md gap, now partially tabled)", "—"],
+      ["block-colors.ts", "blockColor + FNV-1a hashed fallback", "—"],
+    ],
+    invariants: ["Deterministic byte output (top-down)", "World data always the emitted Anvil world off disk, via compiler's prismarine adapter"],
+    tests: ["Render tests exercise both paths against built worlds"],
+  },
+  agents: {
+    name: "@terrainist/agents",
+    size: "4,080 lines · 14 files",
+    role: "LLM orchestration. Turns a prompt into a validated Loam document + frozen, hash-verified bespoke programs. Depends only on spec + blake3 — never the compiler or stdlib. Engineered to be total and fail-open: nothing may stop a world shipping except document authoring itself.",
+    deps: "spec ×5; blake3",
+    types: ["AuthorRequest/AuthorResult, ReviseRequest", "IntentClassification", "ProgramBudget, ProgramRequest, ProgramVerificationGate", "AuthoredProgramEntry, OrphanProgram, ProgramWiringResult", "AssetLock, AssetCacheKey, TripoTask"],
+    mods: [
+      ["config.ts", "AUTHORING_MODEL_ID=gpt-5.6-luna, temp 0, effort max, budgets, MAX_* rounds", "—"],
+      ["env.ts", "forgiving .env parser, repo-root discovery, keys never logged", "—"],
+      ["openrouter.ts", "tiny client, 3-armed retry, verifyModelAvailable pin, sumUsage", "—"],
+      ["kit.ts", "kit loader — system prompts read from docs/kits/*.md at call time", "—"],
+      ["intent-prepass.ts", "classify-the-prompt, one cheap call, fail-open (MAX_INTENT_ATTEMPTS=2)", "—"],
+      ["author.ts", "authorLoamDoc/reviseLoamDoc, trimRevisionConversation, pinCallerValues", "—"],
+      ["program-author.ts", "proposal → gate → ≤3 repairs; $1.00 spend stop; BLAKE3 hashSource", "—"],
+      ["program-gate.ts", "ProgramVerificationGate seam + stub (real gate injected by CLI)", "—"],
+      ["program-wiring.ts", "orphan-program detection + one focused revision (invasion-p1 backstop)", "—"],
+      ["json.ts", "extractJson/stripFences from model replies", "—"],
+      ["asset-lock.ts", "assets.lock.json content-addressed lockfile (LOAM-E311)", "—"],
+      ["tripo.ts / tripo-config.ts", "DEPRECATED (2026-08-08) Tripo3D mesh client", "—"],
+    ],
+    invariants: ["AUTHORING_TEMPERATURE=0 — same prompt+seed → same world", "Revision trimming: superseded rounds collapse to one marker line (~10× cheaper)", "Programs are frozen artifacts: sourceHash/outputHash (b3:) frozen in the doc; gate deterministic (double-run byte-compare)", "Fail-open everywhere except the authoring loop"],
+    tests: ["author, settlement-author, intent-prepass, program-author (gate accept/repair/drop exactly 3 rounds), program-wiring, revision-trim, openrouter, asset-lock, tripo"],
+  },
+  cli: {
+    name: "@terrainist/cli",
+    size: "3,252 lines · 9 files",
+    role: "Composition root. USAGE string + main() switch dispatching to per-command runners; holds both ends — agents (authoring) and compiler (build).",
+    deps: "agents ×5, compiler ×8, render ×2, spec ×2, stdlib ×2",
+    types: ["— (command runners + helpers)"],
+    mods: [
+      ["index.ts", "bin entry; every command: generate, compile, install, devworld, terrarium, catalog, review-import, emit, render", "—"],
+      ["generate.ts", "the full product path: seedFromPrompt (BLAKE3) → author → compile → feedback loop → zip → persist artifacts", "—"],
+      ["feedback.ts", "FEEDBACK_CODES/PHYSICS_LINT_CODES; renders compile/solver diagnostics for the model", "—"],
+      ["install.ts", "installWorld, --channel, level.dat LastPlayed stamp (sole clock read), lsof guard", "—"],
+      ["provenance.ts", "gitProvenance → report/manifest sidecars (deliberately outside the compiler)", "—"],
+      ["zip.ts", "zipWorld — shells to Info-ZIP (zip -r -q -X)", "—"],
+      ["review-import.ts", "client chat log → review session markdown (markers/verdicts/screenshots)", "—"],
+      ["review-freeroam.ts", "F3+C position fixes → free-roam review sessions", "—"],
+      ["program-gate-live.ts", "compiler verifyPrograms → agents ProgramVerificationGate adapter", "—"],
+    ],
+    invariants: ["install is the only place the wall clock is read", "Provenance via shell-out, kept out of the compiler for determinism"],
+    tests: ["CLI-level tests + e2e fixtures"],
+  },
+};
+
+/* ============================== RENDER ============================== */
+const $ = s => document.querySelector(s);
+const esc = s => s.replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+/* --- nav --- */
+const SECTIONS = ["overview","pipeline","packages","files","constants","lint","docs"];
+document.getElementById("nav").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  SECTIONS.forEach(s => { $("#sec-"+s).classList.toggle("active", s === b.dataset.sec); });
+  document.querySelectorAll("#nav button").forEach(x => x.classList.toggle("active", x === b));
+  window.scrollTo({top: 0});
+});
+
+/* --- global search --- */
+$("#q").addEventListener("input", e => {
+  const t = e.target.value.trim().toLowerCase();
+  let n = 0;
+  SECTIONS.forEach(s => {
+    const el = $("#sec-"+s); if (!el) return;
+    const hit = !t || el.textContent.toLowerCase().includes(t);
+    el.style.display = hit ? "" : "none";
+    if (hit) n++;
+  });
+  $("#scount").textContent = n + "/7 sections match";
+});
+
+/* --- dependency graph --- */
+(function depgraph() {
+  const pkgs = [
+    {id:"spec", x:60, y:120, w:110, h:56, c:"#58a6ff", d:"Loam types + validation"},
+    {id:"stdlib", x:60, y:250, w:110, h:56, c:"#3ecf8e", d:"deterministic generators"},
+    {id:"compiler", x:300, y:190, w:150, h:62, c:"#e3b341", d:"pipeline: layout, structures, emit, lint, sandbox"},
+    {id:"render", x:560, y:110, w:110, h:56, c:"#bc8cff", d:"headless PNG rendering"},
+    {id:"agents", x:300, y:40, w:150, h:56, c:"#3ecf8e", d:"LLM orchestration"},
+    {id:"cli", x:560, y:230, w:110, h:56, c:"#f47067", d:"composition root"},
+  ];
+  const edges = [
+    ["spec","stdlib"], ["spec","compiler"], ["stdlib","compiler"], ["compiler","render"],
+    ["spec","agents"], ["agents","cli"], ["compiler","cli"], ["render","cli"], ["stdlib","cli"], ["spec","cli"],
+  ];
+  const W = 720, H = 320;
+  const svg = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:680px" xmlns="http://www.w3.org/2000/svg">
+    <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#4a5b78"/></marker></defs>`;
+  const pos = Object.fromEntries(pkgs.map(p => [p.id, p]));
+  const edgesSvg = edges.map(([a,b]) => {
+    const A = pos[a], B = pos[b];
+    const x1 = A.x + A.w, y1 = A.y + A.h/2, x2 = B.x, y2 = B.y + B.h/2;
+    const mx = (x1+x2)/2;
+    return `<path d="M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}" fill="none" stroke="#4a5b78" stroke-width="1.6" marker-end="url(#ah)" opacity="0.85"/>`;
+  }).join("");
+  const pkgsSvg = pkgs.map(p => `
+    <g>
+      <rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" rx="9" fill="#161d29" stroke="${p.c}" stroke-width="1.6"/>
+      <text x="${p.x+p.w/2}" y="${p.y+24}" text-anchor="middle" fill="${p.c}" font-size="14" font-weight="700">${p.id}</text>
+      <text x="${p.x+p.w/2}" y="${p.y+42}" text-anchor="middle" fill="#9fb0c8" font-size="9.5">${p.d}</text>
+    </g>`).join("");
+  $("#depgraph").innerHTML = svg + edgesSvg + pkgsSvg + `</svg>`;
+})();
+
+/* --- pipeline SVG (agent side) --- */
+(function agentside() {
+  const stages = [
+    ["prompt", "user text prompt"],
+    ["intent\npre-pass", "cheap classifier · fail-open"],
+    ["author\ndocument", "Luna max · kit as system prompt · validation retries"],
+    ["author\nprograms", "proposal → 5-step gate → ≤3 repairs"],
+    ["wiring\ncheck", "programs actually invoked? one revision"],
+    ["compile\nfeedback", "≤N revision rounds · diagnostics verbatim"],
+    ["zip +\npersist", "<name>.loam.json · .report.json"],
+  ];
+  const W = 980, H = 150, bw = 124, gap = 20, x0 = 10, y0 = 40;
+  const svg = [`<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:900px" xmlns="http://www.w3.org/2000/svg">`];
+  stages.forEach((s, i) => {
+    const x = x0 + i*(bw+gap);
+    svg.push(`<rect x="${x}" y="${y0}" width="${bw}" height="64" rx="8" fill="#161d29" stroke="${i===2||i===3?"#3ecf8e":"#4a5b78"}" stroke-width="1.4"/>`);
+    const lines = s[0].split("\n");
+    lines.forEach((ln, j) => svg.push(`<text x="${x+bw/2}" y="${y0+22+j*15}" text-anchor="middle" fill="#dbe4f0" font-size="12" font-weight="600">${ln}</text>`));
+    svg.push(`<text x="${x+bw/2}" y="${y0+56}" text-anchor="middle" fill="#9fb0c8" font-size="9">${s[1]}</text>`);
+    if (i < stages.length-1) svg.push(`<path d="M${x+bw+2},${y0+32} h${gap-6}" stroke="#4a5b78" stroke-width="1.6" marker-end="url(#ah)" fill="none"/>`);
+  });
+  svg.push(`<defs><marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#4a5b78"/></marker></defs>`);
+  svg.push(`<text x="10" y="20" fill="#6b7d99" font-size="10">agent side — model in the loop (packages/agents + cli)</text>`);
+  svg.push(`</svg>`);
+  $("#agentside").innerHTML = svg.join("");
+})();
+
+/* --- pipeline SVG (compiler) --- */
+(function compilepipe() {
+  const stages = [
+    ["parse +\nvalidate", "profile validators · fix hints"],
+    ["resolve\nintent", "deep merge · fan-out rows"],
+    ["terrain\nfield", "heightfield + verbs · hydrology · climate · caves"],
+    ["layout\nsolve", "greedy + relaxation ladder · padFor"],
+    ["fabric", "arterials → cells → streets → blocks → lots → terraces"],
+    ["structures", "~18 passes: buildings → roads → props → walls → life"],
+    ["authored\nprograms", "sandboxed · hash-verified · pass 5d"],
+    ["clearing /\nscatter /\nbiomes", "vegetation clip · forest scatter · biome paint"],
+    ["emit", "Anvil write · connections · growth faces"],
+    ["lint +\naudit", "27-rule physics · walkability · dressing"],
+  ];
+  const W = 1180, H = 175, bw = 100, gap = 12, x0 = 10, y0 = 48;
+  const svg = [`<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:1080px" xmlns="http://www.w3.org/2000/svg">`];
+  stages.forEach((s, i) => {
+    const x = x0 + i*(bw+gap);
+    const hot = i === 3 || i === 5 || i === 6 || i === 9;
+    svg.push(`<rect x="${x}" y="${y0}" width="${bw}" height="74" rx="8" fill="#161d29" stroke="${hot?"#e3b341":"#4a5b78"}" stroke-width="1.4"/>`);
+    s[0].split("\n").forEach((ln, j) => svg.push(`<text x="${x+bw/2}" y="${y0+22+j*14}" text-anchor="middle" fill="#dbe4f0" font-size="11.5" font-weight="600">${ln}</text>`));
+    svg.push(`<text x="${x+bw/2}" y="${y0+66}" text-anchor="middle" fill="#9fb0c8" font-size="8.5">${s[1]}</text>`);
+    if (i < stages.length-1) svg.push(`<path d="M${x+bw+1},${y0+37} h${gap-4}" stroke="#4a5b78" stroke-width="1.6" marker-end="url(#ah3)" fill="none"/>`);
+  });
+  svg.push(`<defs><marker id="ah3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#4a5b78"/></marker></defs>`);
+  svg.push(`<text x="10" y="24" fill="#6b7d99" font-size="10">compiler — deterministic, no model in the loop (packages/compiler + stdlib + spec)</text>`);
+  svg.push(`<rect x="10" y="136" width="1170" height="30" rx="7" fill="#1c2534" stroke="#2b4a75" stroke-width="1"/>
+    <text x="18" y="155" fill="#9ecbff" font-size="10">ground contract (WP-1→5): every pass declares GroundIntent through the GroundDriver — resolver owns precedence (INTENT_RANK), ground is frozen before material is laid</text>`);
+  svg.push(`</svg>`);
+  $("#compilepipe").innerHTML = svg.join("");
+})();
+
+/* --- pipeline SVG (emit) --- */
+(function emitpipe() {
+  const W = 980, H = 120;
+  const svg = [`<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:900px" xmlns="http://www.w3.org/2000/svg">`];
+  const stages = [
+    ["world paths", "emitWorld (G1) · emitTerrain (Loam) · Terrarium"],
+    ["write.ts", "clean region · (z,x) order · zeroed timestamps · level.dat 4671"],
+    ["connections", "fence/pane/wall/rail recompute"],
+    ["growth faces", "vine/lichen attachment re-derive"],
+    ["readback", "physics lint · walkability · dressing"],
+    ["install", "LastPlayed stamped · zip · --channel"],
+  ];
+  const bw = 145, gap = 14, x0 = 10, y0 = 40;
+  stages.forEach((s, i) => {
+    const x = x0 + i*(bw+gap);
+    svg.push(`<rect x="${x}" y="${y0}" width="${bw}" height="58" rx="8" fill="#161d29" stroke="${i===4?"#f47067":"#4a5b78"}" stroke-width="1.4"/>`);
+    svg.push(`<text x="${x+bw/2}" y="${y0+20}" text-anchor="middle" fill="#dbe4f0" font-size="11.5" font-weight="600">${s[0]}</text>`);
+    svg.push(`<text x="${x+bw/2}" y="${y0+40}" text-anchor="middle" fill="#9fb0c8" font-size="8.5">${s[1]}</text>`);
+    if (i < stages.length-1) svg.push(`<path d="M${x+bw+1},${y0+29} h${gap-4}" stroke="#4a5b78" stroke-width="1.6" marker-end="url(#ah4)" fill="none"/>`);
+  });
+  svg.push(`<defs><marker id="ah4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#4a5b78"/></marker></defs>`);
+  svg.push(`</svg>`);
+  $("#emitpipe").innerHTML = svg.join("");
+})();
+
+/* --- packages tabs --- */
+(function pkgs() {
+  const names = ["spec","stdlib","compiler","render","agents","cli"];
+  const tabs = document.getElementById("pkgtabs");
+  names.forEach(n => {
+    const b = document.createElement("button");
+    b.textContent = n; b.dataset.pkg = n;
+    b.style.cssText = "background:none;border:1px solid var(--border);color:var(--fg2);padding:6px 14px;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600;margin:0 4px 8px 0;";
+    tabs.appendChild(b);
+  });
+  const body = document.getElementById("pkgbody");
+  function show(n) {
+    const p = PKG[n];
+    tabs.querySelectorAll("button").forEach(b => {
+      const on = b.dataset.pkg === n;
+      b.style.background = on ? "var(--acc)" : "none";
+      b.style.color = on ? "#06121a" : "var(--fg2)";
+      b.style.borderColor = on ? "var(--acc)" : "var(--border)";
+    });
+    body.innerHTML = `
+      <div class="card">
+        <h3>${p.name} <span class="tag g">${p.size}</span> <span class="tag b">${p.deps}</span></h3>
+        <p>${p.role}</p>
+        <h4>Key types</h4>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">${p.types.map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div>
+        <h4>Modules</h4>
+        <table><tr><th>module</th><th>responsibility</th><th style="width:70px">lines</th></tr>
+        ${p.mods.map(m => `<tr><td class="mono">${esc(m[0])}</td><td>${esc(m[1])}</td><td class="mono muted">${esc(m[2])}</td></tr>`).join("")}</table>
+        <h4>Invariants</h4>
+        <div>${p.invariants.map(i => `<div class="feat"><span class="dot">▸</span><div>${esc(i)}</div></div>`).join("")}</div>
+        <h4>Test surface</h4>
+        <p class="small">${esc(p.tests.join(" · "))}</p>
+      </div>`;
+  }
+  tabs.addEventListener("click", e => { const b = e.target.closest("button"); if (b) show(b.dataset.pkg); });
+  show("compiler");
+})();
+
+/* --- file tree --- */
+(function tree() {
+  const pkgNames = Object.keys(TREE);
+  const bar = document.getElementById("pkgbtns");
+  const all = document.createElement("button");
+  all.textContent = "all"; all.dataset.pkg = "*"; all.classList.add("active");
+  bar.appendChild(all);
+  pkgNames.forEach(n => {
+    const b = document.createElement("button");
+    b.textContent = n; b.dataset.pkg = n; bar.appendChild(b);
+  });
+  let activePkg = "*", filter = "";
+
+  function build() {
+    const root = document.getElementById("tree");
+    root.innerHTML = "";
+    if (activePkg !== "*") { renderPkg(root, activePkg); return; }
+    pkgNames.forEach(n => renderPkg(root, n, true));
+  }
+  function renderPkg(root, pkg, showHeader) {
+    const files = TREE[pkg];
+    if (showHeader) {
+      const h = document.createElement("div");
+      h.className = "tnode dir";
+      h.innerHTML = `<span class="caret">▸</span><span class="tw">packages/${pkg}/src</span><span class="tl">${files.length} files</span>`;
+      h.addEventListener("click", () => { h.querySelector(".caret").textContent = ch(h); });
+      root.appendChild(h);
+    }
+    // group by dir
+    const dirs = {}, flat = [];
+    files.forEach(([path, lines]) => {
+      const idx = path.lastIndexOf("/");
+      if (idx === -1) flat.push([path, lines]);
+      else { const d = path.slice(0, idx); (dirs[d] = dirs[d] || []).push([path.slice(idx+1), lines]); }
+    });
+    const dirNames = Object.keys(dirs).sort();
+    const allRows = [];
+    dirNames.forEach(d => {
+      const dnode = {kind:"dir", name:d, children: dirs[d].map(([f,l]) => ({kind:"file", name:f, lines:l, note:NOTES[pkg+"/"+d+"/"+f]}))};
+      allRows.push(dnode);
+    });
+    flat.forEach(([f,l]) => allRows.push({kind:"file", name:f, lines:l, note:NOTES[pkg+"/"+f]}));
+    allRows.forEach(r => {
+      const el = document.createElement("div");
+      if (r.kind === "dir") {
+        el.className = "tnode dir";
+        el.innerHTML = `<span class="caret">▸</span><span class="tw">${esc(r.name)}/</span><span class="tl">${r.children.length}</span>`;
+        const kids = document.createElement("div"); kids.className = "children";
+        r.children.forEach(c => {
+          const k = document.createElement("div");
+          k.className = "tnode";
+          k.innerHTML = `<span class="caret"></span><span class="tw">${esc(c.name)}</span><span class="tl">${c.lines}</span>${c.note?`<span class="tnote">${esc(c.note)}</span>`:""}`;
+          kids.appendChild(k);
+        });
+        el.addEventListener("click", () => {
+          const open = kids.classList.toggle("open");
+          el.querySelector(".caret").textContent = open ? "▾" : "▸";
+        });
+        root.appendChild(el); root.appendChild(kids);
+      } else {
+        el.className = "tnode";
+        el.innerHTML = `<span class="caret"></span><span class="tw">${esc(r.name)}</span><span class="tl">${r.lines}</span>${r.note?`<span class="tnote">${esc(r.note)}</span>`:""}`;
+        root.appendChild(el);
+      }
+    });
+  }
+  function ch(h) { return h.querySelector(".caret").textContent === "▸" ? "▾" : "▸"; }
+
+  bar.addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    activePkg = b.dataset.pkg;
+    bar.querySelectorAll("button").forEach(x => x.classList.toggle("active", x === b));
+    apply();
+  });
+  $("#expandall").addEventListener("click", () => { document.querySelectorAll(".children").forEach(c => { c.classList.add("open"); }); document.querySelectorAll(".tnode.dir .caret").forEach(c => c.textContent = "▾"); });
+  $("#collapseall").addEventListener("click", () => { document.querySelectorAll(".children").forEach(c => { c.classList.remove("open"); }); document.querySelectorAll(".tnode.dir .caret").forEach(c => c.textContent = "▸"); });
+  $("#fq").addEventListener("input", e => { filter = e.target.value.trim().toLowerCase(); apply(); });
+  function apply() {
+    document.getElementById("tree").innerHTML = "";
+    const root = document.getElementById("tree");
+    const pkgs = activePkg === "*" ? pkgNames : [activePkg];
+    let shown = 0;
+    pkgs.forEach(p => {
+      const files = TREE[p];
+      const matches = files.filter(([path, lines]) => {
+        if (!filter) return true;
+        const note = NOTES[p+"/"+path] || "";
+        return (path + " " + note).toLowerCase().includes(filter);
+      });
+      if (filter && !matches.length) return;
+      shown += matches.length;
+      if (matches.length === files.length || !filter) {
+        renderPkg(root, p, true);
+        if (filter) document.querySelectorAll(".children").forEach(c => c.classList.add("open"));
+      } else {
+        const h = document.createElement("div");
+        h.className = "tnode dir";
+        h.innerHTML = `<span class="caret">▾</span><span class="tw">packages/${p}/src</span><span class="tl">${matches.length}/${files.length} match</span>`;
+        root.appendChild(h);
+        const kids = document.createElement("div"); kids.className = "children open";
+        matches.forEach(([path, lines]) => {
+          const k = document.createElement("div");
+          k.className = "tnode hit";
+          k.innerHTML = `<span class="caret"></span><span class="tw">${esc(path)}</span><span class="tl">${lines}</span>${NOTES[p+"/"+path]?`<span class="tnote">${esc(NOTES[p+"/"+path])}</span>`:""}`;
+          kids.appendChild(k);
+        });
+        root.appendChild(kids);
+      }
+    });
+    $("#fcount").textContent = filter ? shown + " files" : "";
+  }
+  apply();
+})();
+
+/* --- constants --- */
+(function consts() {
+  function render() {
+    const q = ($("#cq").value || "").toLowerCase();
+    const rows = CONSTS.filter(c => (c[0]+" "+c[1]+" "+c[2]).toLowerCase().includes(q));
+    $("#constlist").innerHTML = rows.map(c =>
+      `<div class="const-row"><span class="cn">${esc(c[0])}</span><span class="cv">${esc(c[1])}</span><span class="cd">${esc(c[2])}</span></div>`).join("") ||
+      `<div class="muted" style="padding:10px">no match</div>`;
+  }
+  $("#cq").addEventListener("input", render);
+  render();
+})();
+
+/* --- lint rules --- */
+(function rules() {
+  $("#rules").innerHTML = RULES.map((r, i) =>
+    `<div class="rule"><span class="rn">${i+1}</span><div><span class="rid">${esc(r[0])}</span><div class="rd">${esc(r[1])}</div></div></div>`).join("");
+})();
+
+/* --- docs / tools / fixtures --- */
+(function docs() {
+  $("#docs").innerHTML = DOCS.map(d =>
+    `<div class="docrow"><span class="dd mono">${esc(d[0])}</span><span class="dd">${esc(d[2])}</span><span class="dm">${esc(d[1])}</span></div>`).join("");
+  $("#tools").innerHTML = TOOLS.map(t =>
+    `<div class="docrow"><span class="dd mono">${esc(t[0])}</span><span class="dd">${esc(t[1])}</span></div>`).join("");
+  $("#fixtures").innerHTML = FIXTURES.map(f =>
+    `<div class="docrow"><span class="dd mono">${esc(f[0])}</span><span class="tag ${f[1]==="settlement"?"g":f[1]==="terrain"?"b":"a"}">${f[1]}</span><span class="dd">${esc(f[2])}</span></div>`).join("");
+})();
+
+/* --- footer stats --- */
+(function stats() {
+  let files = 0, lines = 0;
+  Object.values(TREE).forEach(fs => fs.forEach(([p,l]) => { files++; lines += l; }));
+  $("#footstats").textContent = `${files} source files · ${lines.toLocaleString()} lines`;
+})();
+
+/* --- keyboard: / focuses search --- */
+document.addEventListener("keydown", e => {
+  if (e.key === "/" && document.activeElement.tagName !== "INPUT") { e.preventDefault(); $("#q").focus(); }
+  if (e.key === "Escape") { $("#q").value = ""; $("#q").dispatchEvent(new Event("input")); }
+});
+</script>
+</body>
+</html>
