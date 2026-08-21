@@ -666,8 +666,15 @@ const GOLDEN = {
    * masonry, which passes check 4 by building nothing — the number to watch is
    * the bank, and the answer belongs with §5.2 rule 9's uphill masonry rather
    * than here.
+   *
+   * **0 → 136 at WP-G4's flip, and this is the stage that put the walls back.**
+   * The terraces get their faces from `finishSeams` now: 4 columns from the
+   * district pass's one revetted stack and 132 from the terminal builder's 30
+   * derived transitions. Still an order of magnitude under check 4's 600, and
+   * the earthworks number is still the larger one (1,547 columns of graded
+   * bank) — this town is terraced, not walled, which is the taste §5 pins.
    */
-  wallColumns: 0,
+  wallColumns: 136,
   /** Rungs of §6.3's ladder walked, and where it landed. */
   replanRounds: 3,
   principalStreets: 2,
@@ -694,6 +701,25 @@ const GOLDEN = {
   spineHairpins: 1,
 } as const;
 
+/**
+ * **Columns of masonry face, re-keyed at WP-G4's flip — check 4's subject.**
+ *
+ * The check has always been "this town is not a wall": fewer than 600 columns of
+ * built face on a hillside. It used to read the retaining pass's own
+ * "multi-level ground: N retaining wall(s) over M column(s)" note, and after the
+ * flip that note is not emitted on these fixtures at all — the skirt is absorbed
+ * and `finishSeams` builds the complement from the derived transitions. So the
+ * number is summed from the two `SEAM_SERVED` notes that now carry it: the
+ * district pass's own stacks ("over N face(s) and M column(s)") and the terminal
+ * builder's ("over M column(s) of face"). Same quantity, both builders counted,
+ * and a builder that stopped reporting would read as zero rather than as -1.
+ */
+function wallColumnsOf(served: string): number {
+  const stacks = /over \d+ face\(s\) and (\d+) column\(s\)/.exec(served);
+  const derived = /over (\d+) column\(s\) of face/.exec(served);
+  return Number(stacks?.[1] ?? 0) + Number(derived?.[1] ?? 0);
+}
+
 describe("the fixture hill town, compiled", () => {
   let district: {
     bounds: Rect;
@@ -704,6 +730,7 @@ describe("the fixture hill town, compiled", () => {
     form: { id: string; requested: string; adapted: string[] };
   };
   let sweep: string;
+  let served: string;
   let buildings: number;
   let worldDir: string;
   let lintInput: { buildings: unknown[]; roads: unknown[]; props: unknown[] };
@@ -735,7 +762,20 @@ describe("the fixture hill town, compiled", () => {
     };
     district = report.layout.districts[0] as typeof district;
     buildings = report.stats.structures.districtBuildings;
-    sweep = report.diagnostics.find((d) => d.name === "SWEEP_FEATURES_PLACED")?.message ?? "";
+    // **Every** sweep note, joined — re-pinned at WP-G4's flip. `find` took the
+    // first, which used to be the retaining pass's "multi-level ground:" line;
+    // the flip absorbs the skirt into `finishSeams` and that pass emits no note
+    // at all on these fixtures, so `find` began returning the *transitions*
+    // note and check 3 (`not.toContain("offPlatform")`) silently stopped being
+    // a check. Joined, it cannot go vacuous again.
+    sweep = report.diagnostics
+      .filter((d) => d.name === "SWEEP_FEATURES_PLACED")
+      .map((d) => d.message)
+      .join("\n");
+    served = report.diagnostics
+      .filter((d) => d.name === "SEAM_SERVED")
+      .map((d) => d.message)
+      .join("\n");
   }, 300_000);
 
   it("drew the form the document asked for, rather than a fallback", () => {
@@ -755,7 +795,7 @@ describe("the fixture hill town, compiled", () => {
   });
 
   it("builds fewer than 600 columns of wall — check 4", () => {
-    const walls = Number(/over (\d+) column\(s\)/.exec(sweep)?.[1] ?? -1);
+    const walls = wallColumnsOf(served);
     expect(walls).toBe(GOLDEN.wallColumns);
     expect(walls).toBeLessThan(600);
   });
@@ -898,7 +938,11 @@ const STEEP = {
   // seam's median, and this one is benched like any other face past
   // `RETAIN_MAX`. It owned five of the seven sheer runs `walkability.test.ts`
   // measured on this fixture.
-  wallColumns: 48,
+  // **48 → 397 at WP-G4's flip** — 32 from the district pass's five revetted
+  // stacks and 365 from the terminal builder's 56 derived transitions. Steep
+  // ground is where the seam builder has the most to answer for, and 397 is
+  // still comfortably inside check 4's 600.
+  wallColumns: 397,
   // 3 → 1: the ladder's **first** rung now clears both gates, where before the
   // causeways' paving pushed it two rungs down.
   replanRounds: 1,
@@ -934,6 +978,7 @@ describe("the steep fixture hill town, compiled", () => {
     form: { id: string; requested: string; adapted: string[] };
   };
   let sweep: string;
+  let served: string;
   let buildings: number;
   let worldDir: string;
   let lintInput: { buildings: unknown[]; roads: unknown[]; props: unknown[] };
@@ -971,7 +1016,20 @@ describe("the steep fixture hill town, compiled", () => {
     };
     district = report.layout.districts[0] as typeof district;
     buildings = report.stats.structures.districtBuildings;
-    sweep = report.diagnostics.find((d) => d.name === "SWEEP_FEATURES_PLACED")?.message ?? "";
+    // **Every** sweep note, joined — re-pinned at WP-G4's flip. `find` took the
+    // first, which used to be the retaining pass's "multi-level ground:" line;
+    // the flip absorbs the skirt into `finishSeams` and that pass emits no note
+    // at all on these fixtures, so `find` began returning the *transitions*
+    // note and check 3 (`not.toContain("offPlatform")`) silently stopped being
+    // a check. Joined, it cannot go vacuous again.
+    sweep = report.diagnostics
+      .filter((d) => d.name === "SWEEP_FEATURES_PLACED")
+      .map((d) => d.message)
+      .join("\n");
+    served = report.diagnostics
+      .filter((d) => d.name === "SEAM_SERVED")
+      .map((d) => d.message)
+      .join("\n");
   }, 300_000);
 
   it("plans a hill town on 1:2.5 ground rather than falling back", () => {
@@ -1014,7 +1072,7 @@ describe("the steep fixture hill town, compiled", () => {
       COMPOSITION_GATES.streetFraction,
     );
     expect(district.stats["spineFraction"]).toBeCloseTo(STEEP.spineFraction, 3);
-    const walls = Number(/over (\d+) column\(s\)/.exec(sweep)?.[1] ?? -1);
+    const walls = wallColumnsOf(served);
     expect(walls).toBe(STEEP.wallColumns);
     expect(walls).toBeLessThan(600);
   });

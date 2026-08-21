@@ -394,8 +394,13 @@ describe("rankOf — the flag-off deferral (v1 §6/G3)", () => {
 });
 
 describe("the v1 flag ladder (§6)", () => {
-  it("ships with GROUND_V1_RANKS off — the byte-identical state", () => {
-    expect(GROUND_V1_RANKS).toBe(false);
+  it("ships with GROUND_V1_RANKS on — WP-G4's flip", () => {
+    // **Re-pinned at WP-G4's flip.** Off was G3's shipped state and its whole
+    // acceptance (byte-identical everywhere); on is the shipped state from the
+    // flip, because §6's ladder makes `GROUND_V1_SEAMS` imply this one and the
+    // seams are built now. The assertion is kept rather than deleted: it is what
+    // stops the constant drifting back, and the rung below asserts the implication.
+    expect(GROUND_V1_RANKS).toBe(true);
   });
 
   it("is implied by every flag below it", () => {

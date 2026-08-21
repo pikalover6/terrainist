@@ -768,6 +768,28 @@ the kerb case of §3.2 clause 4 and 60 is the budget.
 > became law on the way: sub-`MIN_RETAIN_RUN` runs are absorbed, never refused
 > (T9, W413 1142→27), and a bank with no run re-dresses revetted (S5).
 
+> **Amended at the flip (2026-08-20).** Two findings from the flip triage:
+> (1) **The water floor now governs the tiered stack.** A derived
+> `retaining.skirt` stack could cut a dry column below a 4-adjacent fluid
+> surface (`platform-waterline`, fatal `LOAM-T110`) — flag-off the case could
+> not arise because no transition was ever derived down to a shore. T13's law
+> (`waterFloor`, W1) is stated for `buildTieredSeam` as `standsAbove`/`openAt`:
+> a band column is refused where a neighbouring fluid stands above the level
+> the tier would set. The fix moves no r22 ground. (2) **I12, tier A over
+> tier A**: `building.footprint` (10) resolved above `quarter.plane` (15) on a
+> shared pad column, but the platform run writes later and the pipeline kept
+> its 73 over the resolver's 76 — the exact write-order divergence
+> `GROUND_V1_FREEZE` deletes; tolerated as v0-§8.5 row I12 (witnessed,
+> golden 15 on c1-harbourtown, 0 elsewhere) with G6 as its owner.
+> `PAD_APRON_MISMATCHES` 55 → 190 is the same finding seen from the partition
+> side (the §1.7 band subtraction re-keys CONFLICT → CLEAN), same owner.
+> **Walk-gate risk, named:** three audit rows move the wrong way and share one
+> lever — S9 publishes landings for stacks whose flights G4 does not yet
+> build (orphan treads, sunken cuts ×5 on the fixtures); it is the same G6
+> street-family item as `terminusLandings`. The walk card must say "stairs to
+> nowhere are a known G6 debt", because Kai has convicted that exact look
+> before.
+
 *Walk gate.* Yes. This is the first stage that changes what a hill town looks
 like, and the change is exactly "the terraces got their walls".
 

@@ -289,6 +289,18 @@ describe("the constants cannot drift apart", () => {
  * that tall is a benched bank, and that it is a *treatment* rather than a
  * refusal.
  */
+/**
+ * **Re-pinned at WP-G4's flip (`GROUND_V1_SEAMS` on), attribution: the seam
+ * builders.**
+ *
+ * Every golden below that moved, moved for one reason: `skirtSeams` and
+ * `planeSeams` are absorbed (§4 item 21), so the *district* pass's transition
+ * note now covers only what `levelSeams` derives, and everything it used to
+ * carry is enumerated by the resolver and built by `finishSeams` — which reports
+ * on its own `LOAM-I412` line. Nothing here says less is built; it says the
+ * numbers are on the other note. The two notes together are the composition, and
+ * both are pinned.
+ */
 const STEEP_EDGES = {
   /**
    * Goldens, re-measured 2026-08-07 (evening) after the causeway landing
@@ -308,7 +320,12 @@ const STEEP_EDGES = {
   // tiered**. Two hundred and fifty-four columns of 45° raw earth became
   // stepped masonry. The seven columns that left the fill total are seam
   // columns S7 absorbed into their neighbours.
-  fillColumns: 530,
+  // **530 → 63 at WP-G4's flip, and all 63 are tiered.** The fill side was
+  // mostly the platform *skirt*, and the skirt is absorbed: the resolver
+  // enumerates those same faces and the terminal builder answers them, at
+  // `derivedFaceColumns` + `derivedBankColumns` below. What is left on this note
+  // is `levelSeams`' own fill, which was always the smaller half.
+  fillColumns: 63,
   cutColumns: 415, // 269 → 415 (377 retaining, 38 rock); unmoved at the 11F flip
   // 10 → 11 (2026-08-07, the composite gate). The extra bank is the 90-column
   // skirt that reported `drop: 6` — a face rule 9 sanctions — while thirteen of
@@ -320,8 +337,14 @@ const STEEP_EDGES = {
   // walked fixture: ten of the eleven benched banks are stacks now. The one
   // left is the 183-column seven-block face below, whose foot the street owns
   // for its whole run, so no tier can step down there.
-  benchedBanks: 1,
-  plannedColumns: 945, // 952 → 945 at the flip: seven columns absorbed by S7
+  // **1 → 0 at WP-G4's flip**: the one benched bank left on this note was a
+  // skirt, and the note omits the clause entirely at zero. The benched landform
+  // did not stop being built — `derivedBankColumns` is where it is now.
+  benchedBanks: 0,
+  // 952 → 945 at the 11F flip (seven columns absorbed by S7); **945 → 478 at
+  // WP-G4's**, which is `fillColumns`' 467 absorbed columns and nothing else —
+  // the cut side is unmoved, to the column.
+  plannedColumns: 478,
   /** Unmoved: the seven-block terrace face WP-3 was given, still 183 columns. */
   tallDropSeamColumns: 183,
   /**
@@ -329,11 +352,35 @@ const STEEP_EDGES = {
    * with the composite gate, which is `benchedBanks`' own +1 and the same seam.
    */
   // **8 → 1 at the 11F flip**, the same seven seams as `benchedBanks` above.
-  benchedFaceRefusals: 1,
-  /** Seams the stack served but could not cover to the last column (W413). */
-  unservedSeams: 7,
-  /** Bank seams in `SEAM_SERVED`'s tally — the benched one plus eight short ones. */
-  banks: 9,
+  // **1 → 0 at WP-G4's flip**, the same absorbed seam as `benchedBanks`.
+  benchedFaceRefusals: 0,
+  /**
+   * Seams the stack served but could not cover to the last column (W413).
+   *
+   * **7 → 6 at WP-G4's flip**, and the shape changed with the count: five are
+   * the district pass's own, reported per seam as before, and the sixth is the
+   * terminal builder's single per-quarter aggregate (§3.4's "aggregated per
+   * quarter"), which carries nine derived refusals inside it.
+   */
+  unservedSeams: 6,
+  /**
+   * Bank seams in the district `SEAM_SERVED` tally — the benched one plus eight
+   * short ones. **9 → 0 at WP-G4's flip**: every one of them was a skirt.
+   */
+  banks: 0,
+  /** The district pass's own stacks, after the absorption: 7 → 5 over 14 → 10 faces. */
+  stacks: 5,
+  stackFaces: 10,
+  /**
+   * **The other half of the composition, on the terminal builder's note.** What
+   * the district pass stopped reporting did not stop being built: 56 derived
+   * transitions, 365 columns of masonry face and 2,242 of graded bank — an order
+   * of magnitude more earthwork than the note above ever carried, because the
+   * resolver enumerates boundaries `skirtSeams` never saw.
+   */
+  derivedBuilt: 56,
+  derivedFaceColumns: 365,
+  derivedBankColumns: 2242,
 } as const;
 
 describe("the steep fixture's transitions, compiled", () => {
@@ -390,13 +437,22 @@ describe("the steep fixture's transitions, compiled", () => {
   });
 
   it("treats every tall seam column instead of counting them as unwalled", () => {
-    const multi = sweep.find((m) => m.includes("multi-level ground")) ?? "";
-    expect(multi).not.toContain("tallDrop");
-    expect(multi).not.toContain("shortRun");
+    // The "multi-level ground:" note is not emitted at all once the skirt is
+    // absorbed, so the two words are asserted absent from the note that *is*
+    // there rather than from an empty string — a vacuous `not.toContain` is not
+    // a check, and that is the trap this re-pin walks past.
     const transitions = sweep.find((m) => m.includes("transitions by context")) ?? "";
-    expect(transitions).toContain(`fill ${STEEP_EDGES.fillColumns}`);
+    expect(transitions).not.toBe("");
+    expect(transitions).not.toContain("tallDrop");
+    expect(transitions).not.toContain("shortRun");
+    expect(transitions).toContain(`fill ${STEEP_EDGES.fillColumns} (${STEEP_EDGES.fillColumns} tiered)`);
     expect(transitions).toContain(`cut ${STEEP_EDGES.cutColumns}`);
-    expect(transitions).toContain(`${STEEP_EDGES.benchedBanks} bank(s) benched`);
+    // At zero the clause is omitted, which is the assertion: no bank on this
+    // note at all — they are the terminal builder's now, and counted there.
+    expect(STEEP_EDGES.benchedBanks).toBe(0);
+    expect(transitions).not.toContain("bank(s) benched");
+    const derived = sweep.find((m) => m.includes("terminal seam builder")) ?? "";
+    expect(derived).toContain(`${STEEP_EDGES.derivedBankColumns} of graded bank`);
     // "planned edge column(s)" until GROUND-UNIFICATION wave 11A: the note now
     // fires on quarters no planner drew (§4.0a M2), so the word came off. The
     // count is unchanged — this quarter's edges are still planned ones.
@@ -417,11 +473,20 @@ describe("the steep fixture's transitions, compiled", () => {
     // What the test is *for* survives, and it is checked here from the two
     // notes that do still carry it: the face is still benched rather than
     // ramped, and it is still the only one, which is the fact WP-3 was given.
+    // **Re-pinned again at WP-G4's flip, attribution: the seam builders.** The
+    // seven-block face is a skirt, and the skirt is absorbed — so the fact this
+    // test is for now lives on the terminal builder's note: the face is still
+    // *graded* rather than ramped, and the grading is the 2,242 columns of bank
+    // that note reports. The district note carries neither clause at zero.
     expect(sweep.filter((m) => m.includes("RETAINING_REFUSED"))).toEqual([]);
     const transitions = sweep.find((m) => m.includes("transitions by context")) ?? "";
-    expect(transitions).toContain(`${STEEP_EDGES.benchedFaceRefusals} bank(s) benched rather than ramped`);
+    expect(STEEP_EDGES.benchedFaceRefusals).toBe(0);
+    expect(transitions).not.toContain("bank(s) benched rather than ramped");
     const served = sweep.find((m) => m.includes("seams served (S1)")) ?? "";
     expect(served).toContain(`${STEEP_EDGES.banks} bank(s)`);
+    const derived = sweep.find((m) => m.includes("terminal seam builder")) ?? "";
+    expect(derived).toContain(`${STEEP_EDGES.derivedBuilt} derived transition(s) built`);
+    expect(derived).toContain(`${STEEP_EDGES.derivedBankColumns} of graded bank`);
     // …and the arithmetic the old message spelled out is still the arithmetic:
     // a seven-block fall answered with `BENCH_FACE`-block benches.
     expect(Math.ceil(7 / BENCH_FACE)).toBe(4);
@@ -449,12 +514,20 @@ describe("the steep fixture's transitions, compiled", () => {
     expect(composite.length).toBe(0);
     const served = sweep.find((m) => m.includes("seams served (S1)"));
     expect(served, "the S1 note is missing from the report").toBeDefined();
-    expect(served).toContain("7 tier stack(s) (7 revetted) over 14 face(s)");
-    // The 90-column skirt, served as a stack of 4 + 3 rather than benched.
-    const skirt = sweep.find(
-      (m) => m.includes("SEAM_UNSERVED") && m.includes("over 90 column(s)"),
+    // **Re-pinned at WP-G4's flip, attribution: the seam builders.** Two of the
+    // seven stacks were skirts and are absorbed, so the district note reports
+    // five over ten faces; the 90-column skirt is one of the two, and it is now
+    // a derived transition the terminal builder serves. What the test is *for*
+    // is unmoved and is asserted below: a composite past the ceiling is a stack
+    // sized for the measured face, never a refusal, on either builder.
+    expect(served).toContain(
+      `${STEEP_EDGES.stacks} tier stack(s) (${STEEP_EDGES.stacks} revetted) over ${STEEP_EDGES.stackFaces} face(s)`,
     );
-    expect(skirt).toContain("stack of 2 tier(s) (faces 4+3)");
+    const derived = sweep.find((m) => m.includes("terminal seam builder")) ?? "";
+    expect(derived).toContain(`over ${STEEP_EDGES.derivedFaceColumns} column(s) of face`);
+    // …and no seam anywhere is refused for being a composite: the only refusals
+    // either builder reports are `W413`'s "no ground to stand on", checked next.
+    expect(sweep.filter((m) => m.includes("the face it would have presented"))).toEqual([]);
   });
 
   it("names the only refusal S1 leaves — a stack with no ground to step down onto", () => {
@@ -467,11 +540,24 @@ describe("the steep fixture's transitions, compiled", () => {
     // built over those columns anyway and the sweep ran its face down to the
     // natural ground — a nine-block single face of masonry, past the ceiling
     // S2 calls a hard law.)
+    // **Re-pinned at WP-G4's flip.** Six warnings now, not seven, and they come
+    // in two shapes: the district pass still reports one per seam ("N seam
+    // column(s) were left uncovered"), and the terminal builder reports one per
+    // *quarter* (§3.4), naming its count and three witnesses. Both are held to
+    // the same sentence — a treatment chosen and not placed, because a street, a
+    // footprint or water owns the ground — which is what S1's one honest
+    // exception says, on either builder.
     const unserved = sweep.filter((m) => m.includes("SEAM_UNSERVED"));
     expect(unserved.length).toBe(STEEP_EDGES.unservedSeams);
     for (const m of unserved) {
-      expect(m).toMatch(/seam column\(s\) were left uncovered/);
+      expect(m).toMatch(/column\(s\) were left uncovered/);
+      expect(m).toMatch(/a street, a footprint or water owns the ground/);
     }
+    // …and exactly one of them is the aggregate, carrying the nine derived
+    // refusals the terminal builder could not place.
+    const aggregated = unserved.filter((m) => m.includes("derived transition(s)"));
+    expect(aggregated.length).toBe(1);
+    expect(aggregated[0]).toContain("9 derived transition(s)");
   });
 
   it("reports its built faces by finished drop, and none of them past RETAIN_MAX", () => {

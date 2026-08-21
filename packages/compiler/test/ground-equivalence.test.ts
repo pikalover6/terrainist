@@ -57,13 +57,16 @@ const NONE: InversionCounts = {
   I5: 0,
   I6: 0,
   I7: 0,
-  // The ground contract v1 §6/WP-G3's four. Zero on every world while
-  // `GROUND_V1_RANKS` is off — which is what "nothing wins differently" means
-  // measured rather than asserted.
+  // The ground contract v1 §6/WP-G3's four. Zero on every world — measured
+  // rather than asserted, on both sides of WP-G4's flip: with the ranks on, a
+  // footprint, a plane and a precinct still agree with the tiers below them
+  // everywhere the goldens run.
   I8: 0,
   I9: 0,
   I10: 0,
   I11: 0,
+  // WP-G4's flip. Non-zero on `c1-harbourtown` alone; see the row's own comment.
+  I12: 0,
 };
 
 interface WorldCase {
@@ -103,8 +106,21 @@ interface WorldCase {
  * fixed here, because both candidate fixes (declare the apron's profile; declare
  * only what the edit achieved) decide §13.3 by implementation. **WP-3 should
  * settle §13.3 before the buildings pass is converted.**
+ *
+ * **Re-pinned 55 → 190 at WP-G4's flip, and the growth is a partition move
+ * rather than a new defect.** §1.7's carriageway band is subtracted from
+ * `quarter.plane` *with the rank* (G3's ratified refinement), so with
+ * `GROUND_V1_RANKS` on the plane stops claiming a band column that no street
+ * ended up on. Those columns had two claims and now have one: they move from
+ * CONFLICT — where the plane's later `subRank` matched what the pipeline wrote
+ * and nothing diverged — into CLEAN, where the pad's claim is the only one and
+ * the same apron grading disagrees with it. Measured on `c1-harbourtown`: 135
+ * such columns, all on `vista_opera_house#pad@1`'s band, all with the identical
+ * signature (declared 73, written 71). It is the same finding under a new
+ * partition, still owned by the layout solver's pads, and it goes with the pads
+ * at G6 exactly as the 55 did.
  */
-const PAD_APRON_MISMATCHES = { "c1-harbourtown": 55 } as const;
+const PAD_APRON_MISMATCHES = { "c1-harbourtown": 190 } as const;
 
 /**
  * **WP-3's finding, and WP-4's answer to it.**
@@ -148,7 +164,12 @@ const CONTROLS: readonly WorldCase[] = [
     // WP-4 converted the doorsteps and those 12 went too. Every row is zero, and
     // the only number left on this world is the pad-apron finding below, which
     // no conversion touches (§9a.5) and which is WP-6's first item.
-    inversions: { ...NONE, I3: DOORSTEP_RESELECTION["c1-harbourtown"] },
+    // **Re-pinned at WP-G4's flip, with the mechanism named.** `I12` is the
+    // vista train station's pad, three blocks above the plaza plane its block
+    // elected: the footprint wins at rank 10 and the platform run writes the
+    // plane's level afterwards, which is a write-order divergence and goes to
+    // zero at G6. See `I12`'s row in `ground-equivalence.ts`.
+    inversions: { ...NONE, I3: DOORSTEP_RESELECTION["c1-harbourtown"], I12: 15 },
     cleanMismatches: PAD_APRON_MISMATCHES["c1-harbourtown"],
   },
   // **I4: 41 → 0** and **20 → 0** at WP-5. `levelPropPad` commits its plinth as
@@ -388,6 +409,14 @@ describe("the ground contract's equivalence shim", () => {
     // flip — a row added to make a world pass is what §8.5's closing line
     // exists to prevent, and a row *deferred* until it is needed is the same
     // failure wearing a schedule.
+    //
+    // **I12 is the one row this repo has added at a flip**, and it is added the
+    // way §8.5's closing line allows: not to silence a divergence but to name a
+    // pair G3 could not have measured — `building.footprint` over
+    // `quarter.plane`, tier A over tier A — with the witness column, the world
+    // and the reason the resolver's answer is the right one written at the row.
+    // It is an inversion of I8's kind whose loser turned out to be a tier-A
+    // plane rather than the dressing around it.
     expect(TOLERATED_INVERSIONS.map((r) => r.id)).toEqual([
       "I1",
       "I2",
@@ -400,6 +429,7 @@ describe("the ground contract's equivalence shim", () => {
       "I9",
       "I10",
       "I11",
+      "I12",
     ]);
     // I11 is the deletion of `pad.record` recorded in the place a reader will
     // look for it: no winners, no losers, matches nothing, counts zero.

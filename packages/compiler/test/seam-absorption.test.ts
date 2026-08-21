@@ -38,7 +38,7 @@ import {
   groundLevelsOf,
   levelSeams,
 } from "../src/layout/levels.js";
-import { SEAM_TIERS } from "../src/layout/types.js";
+import { GROUND_V1_SEAMS, SEAM_TIERS } from "../src/layout/types.js";
 import type { Rect } from "../src/layout/frames.js";
 import type { FormBench } from "../src/layout/forms/types.js";
 import { buildRetainingWalls, terminatesOnBank } from "../src/structures/retaining.js";
@@ -281,14 +281,32 @@ describe("wave 11D — absorption (S7) and the landform bank (S8)", () => {
 
   /* --- S8: the bank falls at 1:2 ----------------------------------------- */
 
-  it("the bank fixture is a long unpressed drop-4 seam, and rule 3 grades it", () => {
+  /**
+   * **Absorbed at WP-G4's flip** (v1 §4 item 21): this fixture is a *single*
+   * bench — one platform standing over open hillside — so its edge is
+   * `skirtSeams`' subject, and with `GROUND_V1_SEAMS` on `buildRetainingWalls`
+   * does not derive the skirt at all. The resolver enumerates that same face and
+   * `finishSeams` builds it, against the resolved field rather than a plan four
+   * passes still have to edit. Kept, running, for the flag-off fallback: what
+   * the construction owes in that state is what these statements are.
+   */
+  it.skipIf(GROUND_V1_SEAMS)("the bank fixture is a long unpressed drop-4 seam, and rule 3 grades it", () => {
     const { result } = run(BANK_BENCHES(), true, bankHeight, BANK_FOOTPRINTS);
     expect(result.banks).toBe(1);
     expect(result.walls).toBe(0);
     expect(result.treated.bank).toBe(SIZE);
   });
 
-  it("…and it falls 1:2 — the exact ring ladder, two columns per block", () => {
+  /**
+   * **Absorbed at WP-G4's flip** (v1 §4 item 21): this fixture is a *single*
+   * bench — one platform standing over open hillside — so its edge is
+   * `skirtSeams`' subject, and with `GROUND_V1_SEAMS` on `buildRetainingWalls`
+   * does not derive the skirt at all. The resolver enumerates that same face and
+   * `finishSeams` builds it, against the resolved field rather than a plan four
+   * passes still have to edit. Kept, running, for the flag-off fallback: what
+   * the construction owes in that state is what these statements are.
+   */
+  it.skipIf(GROUND_V1_SEAMS)("…and it falls 1:2 — the exact ring ladder, two columns per block", () => {
     const { plan } = run(BANK_BENCHES(), true, bankHeight, BANK_FOOTPRINTS);
     expect(APRON_RUN_PER_BLOCK).toBe(2);
     // Ring `r` (0-based, outward from the seam) is `top − ceil((r + 1) / 2)`,
@@ -303,7 +321,16 @@ describe("wave 11D — absorption (S7) and the landform bank (S8)", () => {
     expect(bankRun(DROP)).toBe(2 * DROP);
   });
 
-  it("the control: the shipped fall is 1:1, and the harness sees the difference", () => {
+  /**
+   * **Absorbed at WP-G4's flip** (v1 §4 item 21): this fixture is a *single*
+   * bench — one platform standing over open hillside — so its edge is
+   * `skirtSeams`' subject, and with `GROUND_V1_SEAMS` on `buildRetainingWalls`
+   * does not derive the skirt at all. The resolver enumerates that same face and
+   * `finishSeams` builds it, against the resolved field rather than a plan four
+   * passes still have to edit. Kept, running, for the flag-off fallback: what
+   * the construction owes in that state is what these statements are.
+   */
+  it.skipIf(GROUND_V1_SEAMS)("the control: the shipped fall is 1:1, and the harness sees the difference", () => {
     // Two controls, because the fixture cannot be its own: flag-off this edge
     // is not a bank at all — `chooses` is off, so the drop table answers and a
     // long drop-4 run is a wall — which is already a difference the harness
@@ -322,7 +349,16 @@ describe("wave 11D — absorption (S7) and the landform bank (S8)", () => {
 
   /* --- S8: a landform carries nothing ------------------------------------- */
 
-  it("the bank is published as a mask, over exactly the columns it raised", () => {
+  /**
+   * **Absorbed at WP-G4's flip** (v1 §4 item 21): this fixture is a *single*
+   * bench — one platform standing over open hillside — so its edge is
+   * `skirtSeams`' subject, and with `GROUND_V1_SEAMS` on `buildRetainingWalls`
+   * does not derive the skirt at all. The resolver enumerates that same face and
+   * `finishSeams` builds it, against the resolved field rather than a plan four
+   * passes still have to edit. Kept, running, for the flag-off fallback: what
+   * the construction owes in that state is what these statements are.
+   */
+  it.skipIf(GROUND_V1_SEAMS)("the bank is published as a mask, over exactly the columns it raised", () => {
     const { result } = run(BANK_BENCHES(), true, bankHeight, BANK_FOOTPRINTS);
     const marked = [...result.bank].filter((c) => c === 1).length;
     expect(marked).toBeGreaterThan(0);
@@ -333,7 +369,16 @@ describe("wave 11D — absorption (S7) and the landform bank (S8)", () => {
     );
   });
 
-  it("…and it refuses a claim: nothing may terminate on a bank column", () => {
+  /**
+   * **Absorbed at WP-G4's flip** (v1 §4 item 21): this fixture is a *single*
+   * bench — one platform standing over open hillside — so its edge is
+   * `skirtSeams`' subject, and with `GROUND_V1_SEAMS` on `buildRetainingWalls`
+   * does not derive the skirt at all. The resolver enumerates that same face and
+   * `finishSeams` builds it, against the resolved field rather than a plan four
+   * passes still have to edit. Kept, running, for the flag-off fallback: what
+   * the construction owes in that state is what these statements are.
+   */
+  it.skipIf(GROUND_V1_SEAMS)("…and it refuses a claim: nothing may terminate on a bank column", () => {
     const { result } = run(BANK_BENCHES(), true, bankHeight, BANK_FOOTPRINTS);
     // A flight, a stair or a path whose foot lands here lands on a landform.
     expect(terminatesOnBank(result.bank, REGION, SIZE >> 1, SEAM_Z + 1)).toBe(true);

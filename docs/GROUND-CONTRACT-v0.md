@@ -1355,6 +1355,18 @@ I7's expected count is zero, and a non-zero count fails rather than being
 tolerated. A tolerated divergence with an expected count is how the table stops
 being a rubber stamp.
 
+Rows added after WP-2c, by later stages (the code table in
+`layout/ground-equivalence.ts` is authoritative for their exact shapes):
+**I8–I11** at v1's WP-G3 (the filled classes over tiers B–D, and the
+disappearance of `pad.record`), and **I12** at v1's WP-G4 flip —
+`building.footprint` (10) over `quarter.plane` (15), the one tier-A-over-tier-A
+row: the resolver's seat level is the answer, the platform run merely writes
+later, and `GROUND_V1_FREEZE` (WP-G6) deletes the divergence. I12 carries a
+witness column and a per-world golden (15 on `c1-harbourtown`, 0 elsewhere); it
+is the only row this repo has added at a flip, and the licence is exactly its
+G6 owner: a tolerated inversion may be born at a flip only when the stage that
+kills it is already named.
+
 ---
 
 ## 9. Conversion recipe — WP-3, WP-4, WP-5

@@ -3353,6 +3353,43 @@ export function buildTieredSeam(input: TieredSeamInput): TieredSeamResult {
     }
   }
 
+  /**
+   * **The waterline is a cap on cutting, never a licence to fill** (§13 T13) —
+   * held on the stack, because from WP-G4's flip the stack is what reaches the
+   * shore.
+   *
+   * `open` already refuses a column the water *owns*. That is not the whole
+   * rule: a **dry** column 4-adjacent to water may not be levelled below that
+   * water's surface either, because the tier's own tread is then a hole in the
+   * bank with the sea in the wall of it, and the sea flows into it on the first
+   * tick — `LOAM-T110 UNSTABLE_FLUID`, fatal, which is exactly what the flip
+   * measured on `platform-waterline`'s shelf town (a derived `retaining.skirt`
+   * stack cut 68,-3 from 65 to 60 with the sea standing at 63 one column east).
+   * Flag-off nothing derived a transition down to a shore, so the case could not
+   * arise; flag-on the resolver enumerates every boundary a settlement made and
+   * some of them end at the water.
+   *
+   * This is the same law the platform election (`waterFloor`, §4 item 29) and
+   * the street's W1 floor already carry, stated for the one construction that
+   * did not have it. A column refused here is refused the way every other
+   * `open` refusal is: no course, `LOAM-W413` where it was a seam column, and
+   * the ground it already had.
+   */
+  const standsAbove = (k: number, y: number): boolean => {
+    const x = region.x0 + (k % region.width);
+    const z = region.z0 + Math.floor(k / region.width);
+    for (const [dx, dz] of NEIGHBOURS) {
+      if (!inside(region, x + dx, z + dz)) continue;
+      const m = index(region, x + dx, z + dz);
+      if (plan.fluidKind[m] === FluidKind.NONE) continue;
+      if ((plan.fluidTop[m] as number) > y) return false;
+    }
+    return true;
+  };
+  /** {@link open}, at the level the column would actually be levelled to. */
+  const openAt = (k: number, d: number): boolean =>
+    open(k) && standsAbove(k, levelOf[tierAt(d)] as number);
+
   const faces: number[] = [];
   let faceColumns = 0;
   let railColumns = 0;
@@ -3406,7 +3443,7 @@ export function buildTieredSeam(input: TieredSeamInput): TieredSeamResult {
     // two footed columns would vouch for eleven that stand on nothing.
     for (let d = maxDist; d >= 0; d--) {
       for (let c = 0; c < cells; c++) {
-        if ((dist[c] as number) !== d || !open(c)) continue;
+        if ((dist[c] as number) !== d || !openAt(c, d)) continue;
         if (d === maxDist) {
           held[c] = 1;
           continue;
@@ -3438,7 +3475,7 @@ export function buildTieredSeam(input: TieredSeamInput): TieredSeamResult {
     let courseColumns = 0;
     for (let c = 0; c < cells; c++) {
       const d = dist[c] as number;
-      if (d < 0 || tierAt(d) !== k || !open(c)) continue;
+      if (d < 0 || tierAt(d) !== k || !openAt(c, d)) continue;
       if (held[c] !== 1) {
         // A column of this tier's band with nothing under it. On the top tier
         // that is a seam column left unserved, which is what W413 reports.
@@ -3475,7 +3512,10 @@ export function buildTieredSeam(input: TieredSeamInput): TieredSeamResult {
     thickenCourse(
       region,
       course,
-      (idx) => (dist[idx] as number) >= 0 && tierAt(dist[idx] as number) === k && open(idx),
+      (idx) =>
+        (dist[idx] as number) >= 0 &&
+        tierAt(dist[idx] as number) === k &&
+        openAt(idx, dist[idx] as number),
       (idx) => cells - idx,
     );
     const columns: number[] = [];

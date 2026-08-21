@@ -35,7 +35,7 @@ import { MATERIAL_THEMES, nodeSeed, type MaterialTheme } from "@terrainist/stdli
 
 import { loadPrismarine, type PrismarineStack } from "../src/emit/prismarine.js";
 import { EMIT_MINECRAFT_VERSION } from "../src/emit/world.js";
-import { GROUND_PLANE_TIE } from "../src/layout/types.js";
+import { GROUND_PLANE_TIE, GROUND_V1_SEAMS } from "../src/layout/types.js";
 import { buildRetainingWalls, type RetainingPlane } from "../src/structures/retaining.js";
 import type { StructurePassResult } from "../src/structures/index.js";
 import type { ColumnPlan } from "../src/terrain/columns.js";
@@ -89,7 +89,18 @@ describe("wave 12E — a precinct declares the level it graded to", () => {
     }
   });
 
-  it("the shipped compile hands its planes over with the flag's default", () => {
+  /**
+   * **Absorbed at WP-G4's flip** (v1 §4 item 21). The three cases below feed
+   * planes back into `buildRetainingWalls`, and with `GROUND_V1_SEAMS` on that
+   * pass takes no plane job list at all — `finishSeams` builds a plane's edge
+   * from the derived transition like every other boundary. They stay for the
+   * flag-off fallback; the flag-on state of this subject is the quay's back edge
+   * carried to G6 as a named gap (`natural/precinct.ground` = 118 on the pirate
+   * haven; see `plane-seams.test.ts`' header). The *wiring* they were written to
+   * prove — a precinct declares one level per plane, and `structures/index.ts`
+   * hands it over — is asserted above, unconditionally.
+   */
+  it.skipIf(GROUND_V1_SEAMS)("the shipped compile hands its planes over with the flag's default", () => {
     // The wiring is unconditional; the *serving* is not. `structures/index.ts`
     // omits `tiered`, so every plane reads `GROUND_PLANE_TIE` — and 12F flipped
     // it, so silence now means *served*: the shipped planes are measured.
@@ -124,7 +135,18 @@ describe("wave 12E — a precinct declares the level it graded to", () => {
     expect(off.diagnostics).toHaveLength(0);
   });
 
-  it("…and flag-on the quay is measured, and this fixture's coast is flat", () => {
+  /**
+   * **Absorbed at WP-G4's flip** (v1 §4 item 21). The three cases below feed
+   * planes back into `buildRetainingWalls`, and with `GROUND_V1_SEAMS` on that
+   * pass takes no plane job list at all — `finishSeams` builds a plane's edge
+   * from the derived transition like every other boundary. They stay for the
+   * flag-off fallback; the flag-on state of this subject is the quay's back edge
+   * carried to G6 as a named gap (`natural/precinct.ground` = 118 on the pirate
+   * haven; see `plane-seams.test.ts`' header). The *wiring* they were written to
+   * prove — a precinct declares one level per plane, and `structures/index.ts`
+   * hands it over — is asserted above, unconditionally.
+   */
+  it.skipIf(GROUND_V1_SEAMS)("…and flag-on the quay is measured, and this fixture's coast is flat", () => {
     const on = buildRetainingWalls({
       districts: [],
       planes: tiered(),
@@ -143,7 +165,18 @@ describe("wave 12E — a precinct declares the level it graded to", () => {
     expect(on.diagnostics.map((d) => d.code)).toContain("LOAM-I416");
   });
 
-  it("…and put the same quay under a hillside and its back edge is revetted", () => {
+  /**
+   * **Absorbed at WP-G4's flip** (v1 §4 item 21). The three cases below feed
+   * planes back into `buildRetainingWalls`, and with `GROUND_V1_SEAMS` on that
+   * pass takes no plane job list at all — `finishSeams` builds a plane's edge
+   * from the derived transition like every other boundary. They stay for the
+   * flag-off fallback; the flag-on state of this subject is the quay's back edge
+   * carried to G6 as a named gap (`natural/precinct.ground` = 118 on the pirate
+   * haven; see `plane-seams.test.ts`' header). The *wiring* they were written to
+   * prove — a precinct declares one level per plane, and `structures/index.ts`
+   * hands it over — is asserted above, unconditionally.
+   */
+  it.skipIf(GROUND_V1_SEAMS)("…and put the same quay under a hillside and its back edge is revetted", () => {
     // The walked defect, reproduced through the *shipped* claim columns rather
     // than through a synthetic plane (`plane-seams.test.ts` owns that): the
     // ground the quay did not level is raised five blocks, which is the 4–6 the

@@ -55,7 +55,7 @@ import {
   type SeamTier,
 } from "../src/layout/levels.js";
 import { DISSOLVE_DROP_MAX } from "../src/layout/platforms.js";
-import { SEAM_TIERS } from "../src/layout/types.js";
+import { GROUND_V1_SEAMS, SEAM_TIERS } from "../src/layout/types.js";
 import type { Rect } from "../src/layout/frames.js";
 import type { FormBench } from "../src/layout/forms/types.js";
 import { buildRetainingWalls } from "../src/structures/retaining.js";
@@ -523,7 +523,16 @@ describe("wave 11B — the tier stack, built", () => {
 
   /* --- the terraced stack -------------------------------------------------- */
 
-  it("an unpressed seam with room to step becomes a `terraced` stack", () => {
+  /**
+   * **Absorbed at WP-G4's flip** (v1 §4 item 21): this fixture is a *single*
+   * bench — one platform standing over open hillside — so its edge is
+   * `skirtSeams`' subject, and with `GROUND_V1_SEAMS` on `buildRetainingWalls`
+   * does not derive the skirt at all. The resolver enumerates that same face and
+   * `finishSeams` builds it, against the resolved field rather than a plan four
+   * passes still have to edit. Kept, running, for the flag-off fallback: what
+   * the construction owes in that state is what these statements are.
+   */
+  it.skipIf(GROUND_V1_SEAMS)("an unpressed seam with room to step becomes a `terraced` stack", () => {
     const { result } = run(midtown(true));
     expect(result.stacks).toBe(1);
     expect(result.stacksByDressing.terraced).toBe(1);
@@ -531,7 +540,16 @@ describe("wave 11B — the tier stack, built", () => {
     expect(result.stackTiers).toBe(2);
   });
 
-  it("…whose treads are SEAM_TREAD columns of the tier's own ground (S4)", () => {
+  /**
+   * **Absorbed at WP-G4's flip** (v1 §4 item 21): this fixture is a *single*
+   * bench — one platform standing over open hillside — so its edge is
+   * `skirtSeams`' subject, and with `GROUND_V1_SEAMS` on `buildRetainingWalls`
+   * does not derive the skirt at all. The resolver enumerates that same face and
+   * `finishSeams` builds it, against the resolved field rather than a plan four
+   * passes still have to edit. Kept, running, for the flag-off fallback: what
+   * the construction owes in that state is what these statements are.
+   */
+  it.skipIf(GROUND_V1_SEAMS)("…whose treads are SEAM_TREAD columns of the tier's own ground (S4)", () => {
     const { result, plan } = run(midtown(true));
     // Two columns of earth behind each course, at the tier's own level — the
     // tread a body turns on and the flora pass can plant.
@@ -544,7 +562,16 @@ describe("wave 11B — the tier stack, built", () => {
     expect(groundAt(plan, SEAM_Z + SEAM_TREAD + 1)).toBe(LOWER_Y);
   });
 
-  it("…and the tread is levelled and declared, so a later pass cannot pull it away", () => {
+  /**
+   * **Absorbed at WP-G4's flip** (v1 §4 item 21): this fixture is a *single*
+   * bench — one platform standing over open hillside — so its edge is
+   * `skirtSeams`' subject, and with `GROUND_V1_SEAMS` on `buildRetainingWalls`
+   * does not derive the skirt at all. The resolver enumerates that same face and
+   * `finishSeams` builds it, against the resolved field rather than a plan four
+   * passes still have to edit. Kept, running, for the flag-off fallback: what
+   * the construction owes in that state is what these statements are.
+   */
+  it.skipIf(GROUND_V1_SEAMS)("…and the tread is levelled and declared, so a later pass cannot pull it away", () => {
     const { result } = run(midtown(true));
     const sources = result.declaration.walls.map((w) => w.source);
     expect(sources.length).toBeGreaterThan(0);

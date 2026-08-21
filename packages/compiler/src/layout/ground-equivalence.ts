@@ -125,7 +125,9 @@ export type InversionId =
   | "I8"
   | "I9"
   | "I10"
-  | "I11";
+  | "I11"
+  // WP-G4's flip found the one tier-A-over-tier-A pair G3 did not foresee.
+  | "I12";
 
 /** One row of §8.5's table. A table, deliberately, and not a predicate. */
 export interface ToleratedInversion {
@@ -247,6 +249,37 @@ export const TOLERATED_INVERSIONS: readonly ToleratedInversion[] = Object.freeze
     winners: Object.freeze([] as const),
     losers: Object.freeze([] as const),
     expectZero: true,
+  },
+  {
+    /**
+     * **v1 §6/WP-G4's flip, and the one pair G3 did not foresee.**
+     *
+     * I8 and I9 were written at G3 against tiers B–D, because a lot's footprint
+     * and the plane it stands on *agreed* on every world measured then: the pad
+     * was seated at the platform's own level, so rank 10 over rank 15 decided
+     * nothing and no divergence appeared. The flip's plane is not that plane —
+     * §1.7's carriageway band is subtracted from it with the rank, and its level
+     * is `PlaneDatum`'s — and on `c1-harbourtown` the vista train station's pad
+     * sits **three blocks above** the plaza plane its block elected. The
+     * footprint wins at 76, the pipeline writes the plane's 73, and the pair
+     * `building.footprint` over `quarter.plane` matches no row above.
+     *
+     * It is an inversion of exactly I8's kind and not a defect in the order: §1.5
+     * puts the footprint at rank 10 and the plane at 15 deliberately — "a pad
+     * stops being bookkeeping and becomes a claim a street cannot take back" —
+     * and the resolver's 76 is the answer a seat is supposed to get. What
+     * diverges is *when* it is written: the platform run writes the plane after
+     * the pad, and until `GROUND_V1_FREEZE` makes the resolve the write (WP-G6)
+     * the pipeline's answer is the later writer's. That is the definition of a
+     * tolerated inversion, and it is why this row is a row and not a fix.
+     *
+     * The count is a golden per world (15 on `c1-harbourtown`, zero everywhere
+     * else). It goes to zero at G6 with the rest of the table.
+     */
+    id: "I12",
+    what: "a building's footprint beats the plane it stands on",
+    winners: Object.freeze(["building.footprint"] as const),
+    losers: Object.freeze(["quarter.plane"] as const),
   },
 ] as const);
 
@@ -440,6 +473,7 @@ export function assertGroundEquivalence(
     I9: 0,
     I10: 0,
     I11: 0,
+    I12: 0,
   };
 
   for (let k = 0; k < n; k++) {

@@ -40,7 +40,7 @@ import { loadPrismarine, type PrismarineStack } from "../src/emit/prismarine.js"
 import { EMIT_MINECRAFT_VERSION } from "../src/emit/world.js";
 import type { GroundClaim } from "../src/layout/ground-contract.js";
 import { MIN_RETAIN_RUN, RETAIN_MAX, tierCountOf } from "../src/layout/levels.js";
-import { GROUND_PLANE_TIE } from "../src/layout/types.js";
+import { GROUND_PLANE_TIE, GROUND_V1_SEAMS } from "../src/layout/types.js";
 import type { Rect } from "../src/layout/frames.js";
 import {
   buildRetainingWalls,
@@ -137,7 +137,32 @@ function hillside(face: number, patch?: readonly [number, number]) {
   };
 }
 
-describe("wave 12D — a claimed plane owes its own edges", () => {
+/**
+ * **Absorbed at WP-G4's flip** (v1 §4 item 21), which is why this whole describe
+ * is gated on the flag rather than re-pinned assertion by assertion.
+ *
+ * `buildRetainingWalls` no longer takes a plane job list with `GROUND_V1_SEAMS`
+ * on: `planeJobs` is `[]` unconditionally, because a plane's boundary is a
+ * `GroundTransition` like every other and `finishSeams` is the terminal builder
+ * for all of them. There is no per-call escape and there should not be one — the
+ * point of the absorption is that the resolver enumerates the edge, so a second
+ * enumeration inside the retaining pass would be the duplicate the stage exists
+ * to delete. Every fixture below drives that deleted enumeration directly, so on
+ * the shipped flag they measure an empty pass and nothing else.
+ *
+ * They are kept, running, for the flag-off fallback: R1–R6 are the contract the
+ * construction still owes in that state, and a re-pin to zero would have turned
+ * eighteen statements about revetted courses into eighteen statements about
+ * nothing.
+ *
+ * **What replaces them flag-on is not yet equivalent, and that is recorded, not
+ * hidden.** The flip's own measurement carries the quay's back edge as a known
+ * gap to WP-G6: `natural/precinct.ground` = 118 on the pirate haven, because the
+ * plane outranks the skirt that would dress its own back edge. R1 — "a plane
+ * owes its own edges" — is a G6 design item, and this file is the statement of
+ * what it owes.
+ */
+describe.skipIf(GROUND_V1_SEAMS)("wave 12D — a claimed plane owes its own edges", () => {
   let stack: PrismarineStack;
   beforeAll(() => {
     stack = loadPrismarine(EMIT_MINECRAFT_VERSION);

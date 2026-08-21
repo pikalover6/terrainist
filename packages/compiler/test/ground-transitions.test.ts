@@ -8,9 +8,13 @@
  * §8 names. The compile-level guard is `ground-probe-harness.test.ts` and the
  * `LOAM-I497` goldens recorded at the bottom of this file.
  *
- * WP-G4 ships with `GROUND_V1_SEAMS` **off**: the derivation reports and builds
- * nothing, so every assertion here is about what the resolver *enumerates*, and
- * the world is byte-identical either way.
+ * WP-G4's derive half shipped with `GROUND_V1_SEAMS` **off** and its flip half
+ * ships with it **on**. Nothing in this file depends on which: every assertion
+ * here is about what the resolver *enumerates*, and the enumeration is the same
+ * on both sides of the flip — which is exactly what made the front-loaded
+ * comparison possible. What the flip changed is who builds the complement, and
+ * that is `ground-probe-harness.test.ts`' and `site-plan-transitions.test.ts`'
+ * subject.
  */
 
 import { mkdtemp, readFile, rm } from "node:fs/promises";
@@ -527,8 +531,12 @@ describe("the hillside guard: the structure pass moves no unowned column", () =>
 });
 
 describe("the WP-G4 goldens", () => {
-  it("ships with the flag off, which is the only state this stage has", () => {
-    expect(GROUND_V1_SEAMS).toBe(false);
+  it("ships with the flag on — the flip half", () => {
+    // **Re-pinned at WP-G4's flip.** Off was the derive half's shipped state
+    // (derive, report, build nothing, byte-identical); on is the shipped state
+    // now, and the goldens below are unchanged by it because they measure the
+    // *derivation*, which the flip does not touch.
+    expect(GROUND_V1_SEAMS).toBe(true);
   });
 
   it("is internally consistent: the treatments partition the transitions", () => {
