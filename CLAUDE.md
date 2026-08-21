@@ -12,7 +12,7 @@ git history, `battery/RELEASES.md`, the memory cells).
 
 ## Orchestration
 
-- A **Fable 5 session at high effort is the orchestrator**: plans, delegates,
+- A **Fable 5 session at high/xhigh effort is the orchestrator**: plans, delegates,
   integrates, verifies, commits. It does not grind bulk implementation, but it
   DOES do small-to-medium changes and owns design docs directly when that is
   cheaper than a subagent — **delegation economics (Kai, 2026-08-19): spawn a
