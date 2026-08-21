@@ -129,7 +129,7 @@ function coverage(benches: readonly FormBench[]): Set<number> {
 }
 
 function report(): PlatformTieReport {
-  return { blocks: 0, tied: 0, untied: 0, spanSplit: 0 };
+  return { blocks: 0, tied: 0, untied: 0, spanSplit: 0, terraceSplit: 0, terraceAreaOnly: 0 };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -183,7 +183,7 @@ describe("the citadel's lattice (G1, G2)", () => {
     // storey from it.
     for (const bench of benches) expect(Math.abs((bench.level - STREET_Y) % FLOOR_HEIGHT)).toBe(0);
     expect(levelsOf(benches).filter((y) => y - STREET_Y === 1)).toEqual([]);
-    expect(tie).toEqual({ blocks: 4, tied: 4, untied: 0, spanSplit: 0 });
+    expect(tie).toEqual({ blocks: 4, tied: 4, untied: 0, spanSplit: 0, terraceSplit: 0, terraceAreaOnly: 0 });
   });
 
   it("moves the plane down toward the street, never up", () => {
@@ -243,7 +243,7 @@ describe("a block with no graded carriageway in reach (G3, LOAM-T241)", () => {
     // kept `min(free ground)`'s answer — 95, character for character the number
     // the datum-less election produced above.
     expect(levelsOf(benches)).toEqual([90, 90, 95, 95]);
-    expect(tie).toEqual({ blocks: 4, tied: 2, untied: 2, spanSplit: 0 });
+    expect(tie).toEqual({ blocks: 4, tied: 2, untied: 2, spanSplit: 0, terraceSplit: 0, terraceAreaOnly: 0 });
   });
 
   it("reports nothing at all when every block is tied", () => {

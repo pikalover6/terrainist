@@ -741,9 +741,17 @@ async function compileValidated(
     // world is byte-identical whether this is taken or not. The copy itself is
     // gated on the test-only flag so the production path pays nothing; G3 makes
     // it unconditional, when something finally reads it.
-    if (options.groundEquivalence === true) {
-      pristineValues = Float64Array.from(terrain.field.values);
-    }
+    //
+    // **Unconditional from the terrace wave (T7).** `layout/platforms.ts`'
+    // terrain criterion is the something: "where does the hill under this block
+    // step" is a question about the ground the world came with, and the field
+    // below this line has the solver's pads in it. The cost argument is the one
+    // already written above — a single `Float64Array` copy of the height field,
+    // one per compile, against a stage that allocates a column plan of the same
+    // region several times over. `padSet` stays gated on the measurement,
+    // because that one is a second field-sized retention *and* a full sweep.
+    pristineValues = Float64Array.from(terrain.field.values);
+    const pristineField = new HeightField({ ...terrain.field.region }, pristineValues);
     if (solved.padEdits.length > 0) applyPadEdits(terrain.field, solved.padEdits);
     // Where the water is, as the layout stage can know it: there is no column
     // plan yet, and C1's shoreline drive has to follow a real shore. The union
@@ -760,6 +768,10 @@ async function compileValidated(
       seaLevel: terrain.params.seaLevel,
       placements: solved.placements,
       water: wetColumns,
+      // T7's pure terrain. `field` above is still the levelled master field and
+      // still the authority for every seat the fabric takes; this is the second
+      // argument to one narrow question the padded field cannot answer.
+      pristine: pristineField,
     };
     const fabric = solveDistricts(fabricInput);
     diagnostics.push(...fabric.diagnostics);
@@ -776,7 +788,7 @@ async function compileValidated(
     // here and it writes a height. The diff is "the pad set" — every column a
     // pad edit moved, by any amount, aprons included. Kept as a mask rather than
     // a second Float64Array so the copy above is the only field-sized retention.
-    if (pristineValues !== undefined) {
+    if (options.groundEquivalence === true) {
       const pristine = pristineValues;
       const now_ = terrain.field.values;
       padSet = new Uint8Array(now_.length);

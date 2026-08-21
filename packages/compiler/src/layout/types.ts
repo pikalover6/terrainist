@@ -623,3 +623,88 @@ export const GROUND_V1_RANKS = true;
  * a diff before a block moved.
  */
 export const GROUND_V1_SEAMS = true;
+
+/* -------------------------------------------------------------------------- */
+/* terraces from the terrain — the T4/T5/T6 fix                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * **The split criterion reads the hill, not the datum's span.**
+ *
+ * The defect, measured on Troy r22g4 at `x∈[88,142] z∈[-218,-158]`: natural
+ * terrain steps 85→86→87→88 toward the citadel crest and the streets follow it
+ * flush, one column per step, which is correct. But the quarter's *planes*
+ * elected one level at the lower median of each block's street-perimeter datum
+ * and the pad then cut the whole block flat there — the east strip 86→85, the
+ * citadel interior 86/87→84. What a walker reads as "the street ramps +1/+2/+3
+ * over flat ground" is not a ramp at all: the ground beside it is an
+ * excavation, and every building on a plane's uphill rim seats three or four
+ * blocks below the street band in front of its own door (the citadel's 27
+ * refused seams are exactly those rims).
+ *
+ * The root cause is that {@link GROUND_TIE_SPAN} reads the **span** of the
+ * perimeter datum — `max − min` — and a block crossing three natural steps
+ * spans 3, which is inside the threshold of 4. So the block that most needs to
+ * be two terraces is precisely the block the criterion lets through as one deep
+ * cut. Kai's walk-calibrated law (`memory: hill-town-aesthetic-calibration`) is
+ * "flattened terraces following the hill's shape are correct": *more, shallower*
+ * terraces on a stepped hill **is** that law, and one deep cut is its violation.
+ *
+ * So this flag adds a **second split criterion** to the same splitter (T5 is
+ * unchanged — a block still splits, never averages; T4's lower-median anchor is
+ * unchanged; T6 is what this finally delivers): a block whose own perimeter
+ * crosses {@link TERRACE_STEP_SPAN} or more distinct **pristine** ground levels
+ * is cut at the natural step lines, and each terrace re-anchors on the lower
+ * median of *its own* share of the perimeter — the street it actually fronts.
+ * `dissolveTallPairs` still gets the last word.
+ *
+ * It also gates the **uphill-rim seat exception** ({@link RIM_SEAT_MAX_DROP}),
+ * which is the same defect seen from the lot rather than from the block.
+ *
+ * Independent of the {@link GROUND_V1_RANKS} ladder — it changes what a
+ * claimant *asks for*, not where the answer arbitrates — but it **implies**
+ * {@link GROUND_PLANE_TIE}, because both halves read the street datum: with no
+ * datum there is no per-terrace anchor and no `frontageSeat` to compare a plane
+ * against, and the whole construction is dead. A test asserts that implication
+ * the way §6's ladder asserts its own.
+ *
+ * `false` is byte-identical to WP-G5.
+ */
+export const TERRACE_BY_TERRAIN = false;
+
+/**
+ * How many distinct **pristine** ground levels a block's perimeter must cross
+ * before {@link TERRACE_BY_TERRAIN} cuts it into terraces.
+ *
+ * Three, and the number is the defect's own: two distinct levels are one step,
+ * and one step is what a kerb, a doorstep and `FRONTAGE_RISE` already absorb —
+ * cutting there would put a seam through every gently rolling block in every
+ * world. Three distinct levels is the first case where a single plane must be
+ * wrong about at least one of the block's own streets by two or more, which is
+ * the depth at which a door is buried rather than stepped up to.
+ *
+ * Counted as *distinct levels*, not as a span, deliberately: the span is what
+ * {@link GROUND_TIE_SPAN} already reads and the span is what missed this — a
+ * block crossing 85→86→87→88 spans 3 and passes a threshold of 4, while its
+ * distinct count is 4 and trips this one.
+ */
+export const TERRACE_STEP_SPAN = 3;
+
+/**
+ * How far **below** its own frontage a lot's plane may sit before the lot takes
+ * the frontage instead — the uphill-rim exception, gated on
+ * {@link TERRACE_BY_TERRAIN}.
+ *
+ * A building on the uphill rim of a plane is straddling a terrace: its plane is
+ * the block's, its door is on the street, and where the two disagree by more
+ * than a step-and-a-kerb the door is *underground*. Two, because
+ * `FRONTAGE_RISE` already lifts a tied seat one above its carriageway and a
+ * one-block kerb down off a pavement is a thing towns do — a drop of three or
+ * more is not a kerb, it is a hole.
+ *
+ * Narrow on purpose, and both narrowings matter: it fires only where a frontage
+ * exists (F6's no-frontage cases are untouched, and they are the ones with no
+ * street to be wrong about), and only in the too-deep direction (a plane
+ * *above* its frontage is F5's kerb and stays the plane's).
+ */
+export const RIM_SEAT_MAX_DROP = 2;

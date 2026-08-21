@@ -21,6 +21,16 @@
  *    a 5-column box blur applied twice, then a bucket per storey — and each
  *    4-connected piece of a bucket is a platform of its own. That is the
  *    split-level block, and it costs no new algorithm.
+ * 3a. **…and split a block the hill steps under**, `TERRACE_BY_TERRAIN`/T7. A
+ *    block whose relief is *inside* a storey was never asked step 3's question
+ *    at all, so a block crossing three or four natural steps stayed one plane
+ *    and the pad cut it flat at the lower median — the ground beside a flush
+ *    street became an excavation and the doors on the uphill rim ended up
+ *    underground (Troy r22g4, the citadel window). The criterion is a count of
+ *    distinct **pristine** levels along the block's own perimeter, the bucket
+ *    is the terrain's own floor rather than a storey, and each piece re-anchors
+ *    on the lower median of its own share of the perimeter. Same splitter, one
+ *    more criterion.
  * 4. **Blocks are re-derived after step 3.** Not here: the caller puts the
  *    seams into `blocked` before `blocksOf` runs, which is the one line the
  *    rest of §3 rests on.
@@ -42,7 +52,12 @@ import { maskRuns } from "./masks.js";
 // value import from here would close a cycle that does not exist today
 // (`docs/GROUND-UNIFICATION-v0.md` §11.3, "one import note for 12B").
 import type { StreetDatum } from "./street-datum.js";
-import { GROUND_TIE_SPAN, SEAM_TIERS } from "./types.js";
+import {
+  GROUND_TIE_SPAN,
+  SEAM_TIERS,
+  TERRACE_BY_TERRAIN,
+  TERRACE_STEP_SPAN,
+} from "./types.js";
 
 /**
  * S6 rule 3's threshold: a platform pair whose seam would need more faces than
@@ -150,6 +165,30 @@ export interface PlatformInput {
    * nothing else).
    */
   readonly report?: PlatformTieReport;
+  /**
+   * **The pure terrain** — `docs/GROUND-CONTRACT-v1.md` §1.2's pristine
+   * baseline, before the first `applyPadEdits`.
+   *
+   * {@link field} is the *padded* master field: by the time the fabric pass
+   * runs, the solver's own pads have been composed into it, so a block beside a
+   * landmark's pad is already reading somebody else's decision as if it were
+   * the hill. The terrain criterion may not: "where are this block's natural
+   * steps" is a question about the ground the world came with, and the answer
+   * has to be the same one the street datum graded itself against.
+   *
+   * Read **only** by the {@link TERRACE_BY_TERRAIN} construction, and only for
+   * the step lines and the untied fallback — every level this function elects
+   * still comes from the datum or from {@link field}, so the flag-off path
+   * reads this field exactly never and is byte-identical without it.
+   */
+  readonly pristine?: HeightField;
+  /**
+   * T7's switch — {@link TERRACE_BY_TERRAIN}. Defaults to that constant; the
+   * parameter exists so a test may exercise the terrain-split election without
+   * moving a compile-time constant the whole compiler reads, exactly the shape
+   * {@link tiered} and {@link datum} already have.
+   */
+  readonly terraceByTerrain?: boolean;
 }
 
 /**
@@ -177,6 +216,21 @@ export interface PlatformTieReport {
   untied: number;
   /** Blocks split because their *perimeter* datum spanned a storey (G4). */
   spanSplit: number;
+  /**
+   * Blocks cut into terraces because their perimeter crossed
+   * `TERRACE_STEP_SPAN` distinct pristine levels (T7). Zero while the flag is
+   * off, and zero without a `pristine` field to read.
+   */
+  terraceSplit: number;
+  /**
+   * Blocks whose **area** would have tripped T7 where the perimeter did not —
+   * a measurement, never a criterion. It is the number that says whether the
+   * honest question is "does this block's boundary cross the hill" or "does
+   * anything inside it": interior-only relief elects terraces that all re-anchor
+   * on the same street and so is churn, which is why the perimeter is what
+   * `derivePlatforms` actually splits on.
+   */
+  terraceAreaOnly: number;
 }
 
 /** A column mask with the region it is indexed over. */
@@ -363,9 +417,17 @@ export function derivePlatforms(input: PlatformInput): FormBench[] {
   // perimeter is read in that order, `levelNear` is documented as
   // ascending-region-index with ties to the lowest, and the sort is numeric.
   const datum = input.datum;
-  const perimeterLevels = (piece: readonly number[], owns: (k: number) => boolean): number[] => {
+  /**
+   * The columns of `piece` that touch something `piece` does not own — its own
+   * boundary, in ascending index order because `piece` is.
+   *
+   * Split out of `perimeterLevels` for T7, which asks a second question of the
+   * same set of columns; the walk, the neighbour order and the early `break`
+   * are the ones that shipped, so `perimeterLevels` still produces the same
+   * list in the same order.
+   */
+  const perimeterCells = (piece: readonly number[], owns: (k: number) => boolean): number[] => {
     const out: number[] = [];
-    if (datum === undefined) return out;
     for (const k of piece) {
       const i = k % width;
       const j = (k - i) / width;
@@ -382,12 +444,62 @@ export function derivePlatforms(input: PlatformInput): FormBench[] {
           break;
         }
       }
-      if (!edge) continue;
+      if (edge) out.push(k);
+    }
+    return out;
+  };
+  const perimeterLevels = (piece: readonly number[], owns: (k: number) => boolean): number[] => {
+    const out: number[] = [];
+    if (datum === undefined) return out;
+    for (const k of perimeterCells(piece, owns)) {
+      const i = k % width;
+      const j = (k - i) / width;
       const level = datum.street.levelNear(bounds.x0 + i, bounds.z0 + j, datum.reach);
       if (level !== undefined) out.push(level);
     }
     out.sort((a, b) => a - b);
     return out;
+  };
+  /* --- T7: the terrain criterion (`TERRACE_BY_TERRAIN`) -------------------- */
+  // Everything below is inert unless the flag is on *and* a pristine field was
+  // handed over *and* there is a datum to re-anchor each terrace on — T7 implies
+  // `GROUND_PLANE_TIE`, and with no anchor a terrace has nothing to be flush
+  // with.
+  const pristineField = input.pristine;
+  const terraceOn =
+    (input.terraceByTerrain ?? TERRACE_BY_TERRAIN) && pristineField !== undefined && datum !== undefined;
+  /** The **pure** terrain under a cell, materialised by the same `floor` rule. */
+  const pristineAt = (k: number): number => {
+    if (pristineField === undefined) return heightAt(k);
+    const pr = pristineField.region;
+    const x = bounds.x0 + (k % width);
+    const z = bounds.z0 + Math.floor(k / width);
+    const i = x - pr.x0;
+    const j = z - pr.z0;
+    if (i < 0 || j < 0 || i >= pr.width || j >= pr.depth) return 0;
+    return Math.floor(pristineField.values[j * pr.width + i] as number);
+  };
+  /**
+   * The blurred pristine field, whose `floor` is the step line.
+   *
+   * Blurred with the same two box passes the storey split uses, and for the
+   * same reason: an unblurred `floor` of a noisy field frays a terrace edge into
+   * a comb of one-column pieces, and `mergeSlivers` would then spend the whole
+   * block reassembling them. Built lazily — a quarter where no block trips T7
+   * allocates nothing.
+   */
+  let terraceSmooth: Float64Array | null = null;
+  const stepField = (): Float64Array => {
+    if (terraceSmooth !== null) return terraceSmooth;
+    const pure = new Float64Array(cells);
+    for (let k = 0; k < cells; k++) pure[k] = pristineAt(k);
+    terraceSmooth = boxBlur(pure, width, depth, SMOOTH_RADIUS, SMOOTH_PASSES);
+    return terraceSmooth;
+  };
+  const distinctPristine = (columns: readonly number[]): number => {
+    const seenLevels = new Set<number>();
+    for (const k of columns) seenLevels.add(pristineAt(k));
+    return seenLevels.size;
   };
   /** The lower median of a sorted list, or `undefined` — G3's "no frontage, no tie". */
   const anchorOf = (levels: readonly number[]): number | undefined =>
@@ -417,6 +529,8 @@ export function derivePlatforms(input: PlatformInput): FormBench[] {
     };
     let blockBase = base;
     let perimeterSpan = 0;
+    /** T7: does this block's own boundary cross the hill? */
+    let terrace = false;
     if (datum !== undefined) {
       const mask = blockMask();
       const levels = perimeterLevels(block, (k) => mask[k] === 1);
@@ -433,12 +547,42 @@ export function derivePlatforms(input: PlatformInput): FormBench[] {
         else input.report.tied += 1;
         if (perimeterSpan > GROUND_TIE_SPAN) input.report.spanSplit += 1;
       }
+      // T7. The block's **boundary**, in pristine levels: that is the set of
+      // heights the streets around it graded themselves to, so it is exactly the
+      // set of heights one plane would have to be wrong about. `>=` on a count
+      // of distinct levels, not `>` on a span — the span is what G4 reads and
+      // the span is what let 85→86→87→88 through as one plane.
+      //
+      // **Only where the shipped criteria declined to split**, and this is the
+      // load-bearing narrowing rather than a nicety. The defect is a block that
+      // stayed *one* plane while crossing three or four natural steps; a block
+      // the relief or span test already cut is not that block, and it is
+      // usually the opposite — a citadel block climbing forty blocks of
+      // acropolis, where storey buckets are wide bands and one-block contour
+      // bands are two columns wide. Measured, on Troy r22 with this clause
+      // absent: the contour bands come out under `MIN_PLATFORM_COLUMNS`,
+      // `mergeSlivers` walks them downhill to the lowest neighbour in a
+      // cascade, and the quarter ships with cut depths reaching **-40** and 21
+      // `LOAM-W410 LEVEL_DISSOLVED`. With this clause the terrace election only
+      // ever runs on a block whose whole relief is inside one storey, so the
+      // deepest band-merge it can produce is `FLOOR_HEIGHT`.
+      if (terraceOn && hi - lo <= FLOOR_HEIGHT && perimeterSpan <= GROUND_TIE_SPAN) {
+        const rim = perimeterCells(block, (k) => mask[k] === 1);
+        terrace = distinctPristine(rim) >= TERRACE_STEP_SPAN;
+        if (input.report !== undefined) {
+          if (terrace) input.report.terraceSplit += 1;
+          else if (distinctPristine(block) >= TERRACE_STEP_SPAN) input.report.terraceAreaOnly += 1;
+        }
+      }
     }
     // G4: a block whose *perimeter* datum spans more than one storey of street
     // cannot be one platform without one of its streets being wrong about it,
     // so it takes the split the interior-relief case already takes. The second
     // clause is vacuously true with no datum — `perimeterSpan` is 0.
-    if (hi - lo <= FLOOR_HEIGHT && perimeterSpan <= GROUND_TIE_SPAN) {
+    // T7 is a third clause on the same test, and a third *criterion* rather than
+    // a second splitter: everything below this line is the code that shipped,
+    // parameterised on where the step lines are and on what a piece anchors to.
+    if (hi - lo <= FLOOR_HEIGHT && perimeterSpan <= GROUND_TIE_SPAN && !terrace) {
       push(
         benches,
         bounds,
@@ -451,11 +595,20 @@ export function derivePlatforms(input: PlatformInput): FormBench[] {
     // Split. The bucket is the blurred storey, and each 4-connected piece of a
     // bucket is its own platform: two lobes of one bucket either side of a
     // ridge are two terraces, not one with a hole in it.
+    //
+    // T7 changes the bucket's *quantum* and nothing else: a storey when the
+    // block was split for its own relief, **one block** when it was split
+    // because the hill under it steps. That is the whole of "terraces follow the
+    // hill's shape" (T6) — the natural step lines are where the terrain's own
+    // floor changes, so the bucket is the terrain's own floor.
+    const steps = terrace ? stepField() : smooth;
     const bucket = new Int32Array(cells).fill(-1);
     for (const k of block) {
       // floor(smooth), matching heightAt: since 11C the bucket IS the level,
       // so the partition must sample by the same materialisation rule.
-      bucket[k] = Math.floor((Math.floor(smooth[k] as number) - blockBase) / FLOOR_HEIGHT);
+      bucket[k] = terrace
+        ? Math.floor(steps[k] as number)
+        : Math.floor((Math.floor(smooth[k] as number) - blockBase) / FLOOR_HEIGHT);
     }
     const membership = blockMask();
     const split = new Uint8Array(cells);
@@ -489,13 +642,34 @@ export function derivePlatforms(input: PlatformInput): FormBench[] {
     // incongruent with each other, which is M4 again wearing the anchor's
     // clothes. One lattice per block is the version that holds the law the wave
     // is asserted on.
+    //
+    // …and T7 is the one exception the wave buys, stated where the law it bends
+    // is stated. One lattice per block is right when the block was split for its
+    // own *relief*: the pieces are storeys of one building plot and they must
+    // step from each other in storeys. It is wrong when the block was split
+    // because the **hill** steps, because then each piece has a street of its
+    // own that already followed that hill flush, and a lattice congruent to one
+    // anchor cannot be flush with four streets four blocks apart — which is the
+    // defect this wave exists to fix, restated. So a terrace re-anchors on the
+    // lower median of *its own* share of the perimeter (T4's arithmetic,
+    // unchanged, applied to a smaller perimeter), and where a piece's share of
+    // the perimeter has no street at all it keeps its own natural ground rather
+    // than borrowing a neighbour's street: that is G3's "no frontage, no tie"
+    // one level down.
+    const pieceMask = terrace ? new Uint8Array(cells) : null;
     for (const piece of pieces) {
-      piece.level = dry(
-        tiered
+      let level: number;
+      if (terrace && pieceMask !== null) {
+        for (const k of piece.cells) pieceMask[k] = 1;
+        const anchor = anchorOf(perimeterLevels(piece.cells, (k) => pieceMask[k] === 1));
+        for (const k of piece.cells) pieceMask[k] = 0;
+        level = anchor ?? medianOf(piece.cells, pristineAt);
+      } else {
+        level = tiered
           ? blockBase + piece.bucket * FLOOR_HEIGHT
-          : storey(blockBase, medianOf(piece.cells, heightAt)),
-        piece.cells,
-      );
+          : storey(blockBase, medianOf(piece.cells, heightAt));
+      }
+      piece.level = dry(level, piece.cells);
     }
     if (!tiered) {
       for (const piece of pieces) {

@@ -154,7 +154,9 @@ import {
   FRONTAGE_RISE,
   FRONTAGE_TIE,
   GROUND_PLANE_TIE,
+  RIM_SEAT_MAX_DROP,
   SEAM_TIERS,
+  TERRACE_BY_TERRAIN,
   type LayoutNodeInput,
   type PadEdit,
   type Placement,
@@ -777,6 +779,21 @@ export interface DistrictPassInput {
    * pass turns into `fluidKind` a few stages later.
    */
   readonly water?: Uint8Array;
+  /**
+   * **The pure terrain** — `docs/GROUND-CONTRACT-v1.md` §1.2's pristine
+   * baseline, taken before the first `applyPadEdits`.
+   *
+   * {@link field} is the levelled master field and stays the authority for
+   * every seat and every relief this pass measures; this is a second, narrower
+   * answer to one question the padded field cannot answer honestly — *where
+   * does the hill under this block step* — because by the time the pass runs
+   * the solver's pads are already composed into `field`. Read by
+   * `PlatformInput.pristine` (T7) and nowhere else.
+   *
+   * Optional: a fixture with no terrain stage has none, and the terrain
+   * criterion is simply off without it.
+   */
+  readonly pristine?: HeightField;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1351,13 +1368,25 @@ export function layDistrict(
   // election is exactly today's.
   const planeTie: boolean = GROUND_PLANE_TIE;
   const tieDatum = planeTie ? datum : null;
-  const platformTie: PlatformTieReport = { blocks: 0, tied: 0, untied: 0, spanSplit: 0 };
+  const platformTie: PlatformTieReport = {
+    blocks: 0,
+    tied: 0,
+    untied: 0,
+    spanSplit: 0,
+    terraceSplit: 0,
+    terraceAreaOnly: 0,
+  };
   const derived =
     groundPolicy === "stepped" && declared.length === 0
       ? derivePlatforms({
           bounds,
           blocked,
           field: input.field,
+          // T7's pure terrain (`TERRACE_BY_TERRAIN`). Handed over whenever the
+          // caller has it, and read only by the terrain criterion: `input.field`
+          // is the padded master field and "where does the hill step" is a
+          // question about the ground the world came with.
+          ...(input.pristine === undefined ? {} : { pristine: input.pristine }),
           ...(tieDatum === null
             ? {}
             : { datum: { street: tieDatum, reach: tieReach }, report: platformTie }),
@@ -2110,10 +2139,12 @@ export function layDistrict(
       if (tied === undefined) untiedLots++;
       else tiedLots++;
     }
+    // The platform branch, with T7's uphill-rim exception inside it
+    // ({@link seatOnPlane}). `undefined` where this lot is on no platform, so
+    // the `??` chain below is character-for-character the one that shipped.
+    const planeY = levels !== null && platform !== NO_PLATFORM ? (levels.levelY[platform] as number) : undefined;
     const foundationY =
-      levels !== null && platform !== NO_PLATFORM
-        ? (levels.levelY[platform] as number)
-        : cell?.foundationY ?? tied ?? medianGround(input.field, rect);
+      seatOnPlane(planeY, tied) ?? cell?.foundationY ?? tied ?? medianGround(input.field, rect);
     const made: Placement = {
       nodePath: item.nodePath,
       id: item.id,
@@ -3685,6 +3716,38 @@ export function frontageSeat(input: FrontageSeatInput): number | undefined {
     }
   }
   return seatY + FRONTAGE_RISE;
+}
+
+/**
+ * **The platform branch of the seat, with the uphill-rim exception** — T7,
+ * {@link RIM_SEAT_MAX_DROP}. `undefined` means "this lot is on no platform",
+ * which is the caller's signal to fall through to the rest of its `??` chain.
+ *
+ * The plane wins this branch because a quarter that elected platforms has
+ * already answered "what is the ground here", and two answers to one question
+ * is the defect class. That holds while the lot is *on* its plane.
+ *
+ * A lot on the plane's **uphill rim** is not on it. Its own street is three or
+ * four blocks above the plane it stands on — that is the terrace defect seen
+ * from the lot rather than from the block — so seating it on the plane buries
+ * its door in the terrace it straddles. Where the disagreement is that big the
+ * street is the thing a walker is standing on, so the street wins.
+ *
+ * Narrow in both directions, on purpose:
+ *
+ * - only where a frontage exists. `tied` is `undefined` for F6's no-frontage
+ *   lots, and those are exactly the lots with no street to be wrong about.
+ * - only where the plane is too **low**. A plane *above* its frontage is F5's
+ *   kerb — a step up off a pavement, which is a thing towns do — and it keeps
+ *   the plane.
+ *
+ * Dead while {@link TERRACE_BY_TERRAIN} is off: the exception cannot fire, the
+ * function is `planeY`, and every world is byte-identical.
+ */
+export function seatOnPlane(planeY: number | undefined, tied: number | undefined): number | undefined {
+  if (planeY === undefined) return undefined;
+  if (TERRACE_BY_TERRAIN && tied !== undefined && tied - planeY > RIM_SEAT_MAX_DROP) return tied;
+  return planeY;
 }
 
 /** The frontage record a {@link BuiltLot} carries away from the lots it claimed. */
