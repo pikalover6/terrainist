@@ -192,7 +192,11 @@ describe("the prefix property (§6/WP-G6)", () => {
   it("equals the one-shot resolve at finish()", () => {
     const driver = runStage();
     const final = driver.finish();
-    const oneShot = resolveGround(driver.baseline, driver.intents);
+    // Re-pinned at the GROUND_V1_FREEZE flip: finish()'s fifth resolve is the
+    // GENERATING one (§3.3's G6 amendment), so the oracle must pass the same
+    // options — the assertion's meaning is unchanged: the prefix accumulation
+    // is not a second resolver.
+    const oneShot = resolveGround(driver.baseline, driver.intents, { generate: GROUND_V1_FREEZE });
     expect([...final.ground]).toEqual([...oneShot.ground]);
     expect([...final.owner]).toEqual([...oneShot.owner]);
   });

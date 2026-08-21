@@ -13,7 +13,7 @@
   },
   "ownedColumns": 63952,
   "intents": {
-    "total": 471,
+    "total": 498,
     "byClass": [
       {
         "name": "quarter.plane",
@@ -24,16 +24,16 @@
         "n": 108
       },
       {
+        "name": "retaining.skirt",
+        "n": 34
+      },
+      {
         "name": "street.network",
         "n": 28
       },
       {
         "name": "verge",
         "n": 8
-      },
-      {
-        "name": "retaining.skirt",
-        "n": 7
       },
       {
         "name": "road.network",
@@ -87,20 +87,16 @@
     "n": 115406,
     "byDelta": [
       {
-        "delta": -1,
-        "n": 1
-      },
-      {
         "delta": 0,
-        "n": 94509
+        "n": 94512
       },
       {
         "delta": 1,
-        "n": 698
+        "n": 695
       },
       {
         "delta": 2,
-        "n": 410
+        "n": 411
       },
       {
         "delta": 3,
@@ -108,43 +104,43 @@
       },
       {
         "delta": 4,
-        "n": 174
+        "n": 191
       },
       {
         "delta": 5,
-        "n": 110
+        "n": 112
       },
       {
         "delta": 6,
-        "n": 102
+        "n": 135
       },
       {
         "delta": 7,
-        "n": 63
+        "n": 79
       },
       {
         "delta": 8,
-        "n": 122
+        "n": 124
       },
       {
         "delta": 9,
-        "n": 164
+        "n": 179
       },
       {
         "delta": 10,
-        "n": 1318
+        "n": 1297
       },
       {
         "delta": 11,
-        "n": 666
+        "n": 649
       },
       {
         "delta": 12,
-        "n": 631
+        "n": 609
       },
       {
         "delta": 13,
-        "n": 1563
+        "n": 1538
       },
       {
         "delta": 14,
@@ -252,19 +248,19 @@
       },
       {
         "delta": 40,
-        "n": 206
+        "n": 231
       },
       {
         "delta": 41,
-        "n": 87
+        "n": 62
       },
       {
         "delta": 42,
-        "n": 186
+        "n": 214
       },
       {
         "delta": 43,
-        "n": 92
+        "n": 64
       },
       {
         "delta": 44,
@@ -284,50 +280,88 @@
       },
       {
         "delta": 56,
-        "n": 1
+        "n": 19
       },
       {
         "delta": 57,
-        "n": 32
+        "n": 14
+      },
+      {
+        "delta": 58,
+        "n": 23
       },
       {
         "delta": 59,
-        "n": 37
+        "n": 14
       },
       {
         "delta": 66,
         "n": 1
       },
       {
+        "delta": 72,
+        "n": 16
+      },
+      {
         "delta": 73,
-        "n": 156
+        "n": 140
+      },
+      {
+        "delta": 74,
+        "n": 21
       },
       {
         "delta": 75,
-        "n": 67
+        "n": 46
+      },
+      {
+        "delta": 76,
+        "n": 4
       },
       {
         "delta": 77,
-        "n": 22
+        "n": 18
       },
       {
         "delta": 78,
-        "n": 1
+        "n": 4
       },
       {
         "delta": 79,
-        "n": 8
+        "n": 5
       },
       {
-        "delta": 89,
+        "delta": 88,
         "n": 1
       }
     ]
   },
   "writtenVsResolved": {
-    "total": 0,
-    "byDelta": [],
-    "byOwner": []
+    "total": 239,
+    "byDelta": [
+      {
+        "delta": 1,
+        "n": 156
+      },
+      {
+        "delta": 3,
+        "n": 17
+      },
+      {
+        "delta": 5,
+        "n": 17
+      },
+      {
+        "delta": 6,
+        "n": 49
+      }
+    ],
+    "byOwner": [
+      {
+        "name": "building.footprint",
+        "n": 239
+      }
+    ]
   },
   "finalPlanVsWritten": {
     "total": 0,
@@ -342,13 +376,13 @@
     },
     {
       "pair": "retaining.skirt over verge",
-      "n": 114,
+      "n": 115,
       "avg": 5.3,
       "max": 7
     },
     {
       "pair": "natural over verge",
-      "n": 86,
+      "n": 85,
       "avg": 5.7,
       "max": 15
     },
@@ -655,11 +689,11 @@
         },
         {
           "delta": 0,
-          "n": 203
+          "n": 202
         },
         {
           "delta": 1,
-          "n": 153
+          "n": 154
         },
         {
           "delta": 2,
@@ -673,11 +707,11 @@
     },
     {
       "name": "quarter.plane",
-      "n": 125,
+      "n": 124,
       "byDelta": [
         {
           "delta": 0,
-          "n": 115
+          "n": 114
         },
         {
           "delta": 1,

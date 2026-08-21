@@ -653,7 +653,16 @@ export const GROUND_V1_SEAMS = true;
  * Implies {@link GROUND_V1_SEAMS} (the ladder test). `false` is byte-identical
  * to WP-G5.
  */
-export const GROUND_V1_FREEZE = false;
+// FLIPPED 2026-08-21 (night run, iteration 2): on = shipped. Measured at the
+// flip: resolves exactly 5 on all six acceptance docs, written-vs-resolved 0,
+// troy finalPlanVsWritten 247→0, hellenist 68/239→0, E495/E494 0, physics
+// readback clean, byte-identity was 6/6 in the off state. PENDING (the
+// collapse round, itemised in ground-probe-baselines/preflip-g6/README.md
+// alongside both acceptance tables): 5c readonly aliases, 5d Group C from
+// resolved.wet, buildGrounds-as-total-painter, floorY=view("B")+LOAM-W494
+// (any docstring above claiming those land WITH the flag predates this note),
+// and the I12 row (zero flag-on; removable only when the off path dies).
+export const GROUND_V1_FREEZE = true;
 
 /* -------------------------------------------------------------------------- */
 /* terraces from the terrain — the T4/T5/T6 fix                                */

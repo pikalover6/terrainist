@@ -120,7 +120,10 @@ interface WorldCase {
  * partition, still owned by the layout solver's pads, and it goes with the pads
  * at G6 exactly as the 55 did.
  */
-const PAD_APRON_MISMATCHES = { "c1-harbourtown": 190 } as const;
+// Re-pinned at the GROUND_V1_FREEZE flip: the plan IS the fifth resolve, so
+// the pad-apron write-order class is dead — 190 → 0, the collapse this
+// golden's comment always promised a work package would claim.
+const PAD_APRON_MISMATCHES = { "c1-harbourtown": 0 } as const;
 
 /**
  * **WP-3's finding, and WP-4's answer to it.**
@@ -169,7 +172,9 @@ const CONTROLS: readonly WorldCase[] = [
     // elected: the footprint wins at rank 10 and the platform run writes the
     // plane's level afterwards, which is a write-order divergence and goes to
     // zero at G6. See `I12`'s row in `ground-equivalence.ts`.
-    inversions: { ...NONE, I3: DOORSTEP_RESELECTION["c1-harbourtown"], I12: 15 },
+    // I12 died at the freeze flip: tier-A/A write-order cannot exist when the
+    // write-through is gone. 15 → 0.
+    inversions: { ...NONE, I3: DOORSTEP_RESELECTION["c1-harbourtown"], I12: 0 },
     cleanMismatches: PAD_APRON_MISMATCHES["c1-harbourtown"],
   },
   // **I4: 41 → 0** and **20 → 0** at WP-5. `levelPropPad` commits its plinth as
@@ -396,10 +401,12 @@ describe("the ground contract's equivalence shim", () => {
     // mismatch, so the table's one non-zero allowance must still be exactly the
     // pad-apron finding — `c1-harbourtown`, 55 columns, which belongs to the
     // layout solver's pads and retires at WP-G3.
+    // Re-pinned at the GROUND_V1_FREEZE flip: the pad-apron allowance itself
+    // fell to zero (the write-order class is dead), so the table now carries
+    // NO non-zero CLEAN allowance at all — the strictest state this meta-test
+    // has ever been able to demand.
     const allowed = ALL.filter((w) => (w.cleanMismatches ?? 0) > 0);
-    expect(allowed.map((w) => [w.name, w.cleanMismatches])).toEqual([
-      ["c1-harbourtown", PAD_APRON_MISMATCHES["c1-harbourtown"]],
-    ]);
+    expect(allowed.map((w) => [w.name, w.cleanMismatches])).toEqual([]);
   });
 
   it("the tolerated table is §8.5's, and no row was added to make a world pass", () => {

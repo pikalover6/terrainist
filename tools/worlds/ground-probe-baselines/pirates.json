@@ -13,15 +13,11 @@
   },
   "ownedColumns": 44198,
   "intents": {
-    "total": 1256,
+    "total": 1117,
     "byClass": [
       {
         "name": "quarter.plane",
         "n": 898
-      },
-      {
-        "name": "retaining.skirt",
-        "n": 146
       },
       {
         "name": "building.footprint",
@@ -33,7 +29,11 @@
       },
       {
         "name": "street.network",
-        "n": 21
+        "n": 20
+      },
+      {
+        "name": "retaining.skirt",
+        "n": 8
       },
       {
         "name": "road.network",
@@ -112,19 +112,19 @@
       },
       {
         "delta": -1,
-        "n": 9
+        "n": 11
       },
       {
         "delta": 0,
-        "n": 113482
+        "n": 113474
       },
       {
         "delta": 1,
-        "n": 10732
+        "n": 10740
       },
       {
         "delta": 2,
-        "n": 1385
+        "n": 1387
       },
       {
         "delta": 3,
@@ -136,11 +136,11 @@
       },
       {
         "delta": 5,
-        "n": 355
+        "n": 347
       },
       {
         "delta": 6,
-        "n": 59
+        "n": 63
       },
       {
         "delta": 7,
@@ -310,8 +310,8 @@
     },
     {
       "pair": "street.sidewalk over natural",
-      "n": 12,
-      "avg": 3.4,
+      "n": 14,
+      "avg": 3.2,
       "max": 10
     },
     {
@@ -369,22 +369,28 @@
       "max": 4
     },
     {
+      "pair": "street.sidewalk over street.network",
+      "n": 2,
+      "avg": 2.5,
+      "max": 3
+    },
+    {
       "pair": "road.network over retaining.skirt",
       "n": 1,
       "avg": 7,
       "max": 7
     },
     {
-      "pair": "street.network over street.sidewalk",
+      "pair": "street.network over street.network",
       "n": 1,
       "avg": 2,
       "max": 2
     },
     {
-      "pair": "street.sidewalk over street.network",
+      "pair": "street.network over street.sidewalk",
       "n": 1,
-      "avg": 3,
-      "max": 3
+      "avg": 2,
+      "max": 2
     },
     {
       "pair": "verge over verge",
@@ -523,15 +529,19 @@
         },
         {
           "delta": -1,
-          "n": 14
+          "n": 12
         },
         {
           "delta": 0,
-          "n": 2622
+          "n": 2624
         },
         {
           "delta": 1,
-          "n": 8
+          "n": 7
+        },
+        {
+          "delta": 2,
+          "n": 1
         },
         {
           "delta": 3,
@@ -618,8 +628,8 @@
         ]
       },
       {
-        "score": 141,
-        "edges": 49,
+        "score": 143,
+        "edges": 50,
         "cx": -66,
         "cz": -73,
         "topKinds": [
