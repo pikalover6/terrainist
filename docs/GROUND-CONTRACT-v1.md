@@ -1072,6 +1072,21 @@ radius is **one document**: `troy_r22` uses `retaining_wall` + `terrace_steps` (
 + `cannon_battery`, which declare nothing and are byte-identical for free. That is the
 whole r22 exposure, and why G6a is cheap.
 
+> **Amended at the G6a landing (measured).** The blast-radius claim held
+> exactly (hellenist/pirates byte-identical by construction; troy's
+> `retaining.seam: 2` out-of-order violations go to 0). But this section's
+> framing of infra-entry as *the* blocker holding the freeze was wrong:
+> flag-on, 5/6 docs throw first in `buildJunctionSteps` (tier-C classes
+> from the build half) and `finishSeams`→`gradeBank` (declarations after
+> `finish()` seals) — both already on G6-proper's roster, so the ladder's
+> order is unchanged, only its causal story. Also carried forward: the
+> §6a.5 `packHolding` lift did not land (the ParcelDatum publishes at the
+> farm pass, tier D, so a farm-anchored *declaring* entry resolves
+> `unanchored` flag-on — zero shipped documents affected; the lift is
+> named follow-up work), and `resolves` reports on the equivalence outcome
+> rather than `report.stats` (a terrain-only compile has no driver and
+> `settlement.test.ts` pins the stats shapes equal).
+
 | measure | target |
 | --- | --- |
 | `hellenist_r22`, `pirates_r22`, every non-r22 acceptance world | byte-identical, flag on |
