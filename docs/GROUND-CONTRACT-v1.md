@@ -904,6 +904,218 @@ G4 flip measured land here, each with its mechanism decided:
 
 ---
 
+### WP-G6a — the infra-entry declaration split (inserted by measurement)
+
+Three passes declare from the **build** half, downstream of higher tiers:
+`buildInfraEntries` → `declareWaterWorks` (tier A, `fluid.channel` 0,
+`water-works.ts:650`) and `declareRun` (tier C, `sweep.run` 110, `infra-entry.ts:1482`)
+at `structures/index.ts:2084`, and `buildDoorsteps` (tier D) at `index.ts:1752`. Tier
+order requires every declarer before every builder, and `infra-entry.ts` is 2,609 lines
+straddling that line. G6a is the split: between G6 and G7, the last thing to land before
+`GROUND_V1_FREEZE` flips.
+
+#### 6a.1 The read audit — every input `buildInfraEntries` takes
+
+Sited from `InfraPlacementView` (`infra-entry.ts:304-319`), a `LifeWorld` over the
+accumulated blocks, and the plan. Column 3 is the *source's* tier; all but two have a
+layout-stage equivalent. Two reads are trivially unchanged and omitted:
+`view.bounds` (`plan.region`, `index.ts:2100`) and the `existing` block list the
+`Planter` takes, which is legal in the build half where it stays.
+
+| read | today | src | layout-stage equivalent |
+| --- | --- | --- | --- |
+| `view.extentOf` (`ring`, `into`, water anchor) | `fabricExtent` over emitted `built` footprints ∪ `maskRect(farms.parcelMask)`, `paved` from `wallField` (`index.ts:2109-2137`) | build+D | the solver footprint — exactly `declareLinework`'s (`index.ts:884-893`) — ∪ §6a.5's `ParcelDatum` rects |
+| `view.corridorOf` (`along`, `across`, `between`) | `roads.routes[].path`, else widest `district.streets.segments` (`index.ts:2142-2175`) | C-build+layout | `widestSolvedStreet` (already the linework slot's, `index.ts:897`) ∪ `roads.declaration.routes[].path` ∪ `input.roadCorridor` |
+| `view.maskOf` (`over`, `across`) | `farms.parcelMask` (`index.ts:2178-2182`), stamped from **resolved** ownership at `farm.ts:591` | D | §6a.5 — `ParcelDatum`, the packer's rects |
+| `view.ground` | `plan.ground` at the pass's position (`index.ts:2183`) | write-order pile | `driver.view(tier)`, wet → `undefined`; verbatim `index.ts:901-907` |
+| `view.onRoad` | `roads.roadColumns ∣ streets.road` (`index.ts:2068-2074`) | C-build | `solvedCarriagewayMask(region, districts, cities, [], roadCorridor)` (`index.ts:857`) |
+| `world.standY` (`life.ts:644-650`) | `plan.ground` + `fluidKind` | write-order pile | pure conversion of `view(tier)`; reads no block |
+| `world.taken` (`life.ts:598`) | the emitted block list | every tier | §6a.6 — splits in two, neither half reading a block |
+| `nearStandingWater` (`infra-entry.ts:1270`) | `plan.fluidKind/fluidTop/seaLevel` | baseline | already pure; becomes `baseline.*` by name |
+| `planWaterWorks` (`water-works.ts:407-409`, `:533`, `:551`) | `plan.ground/fluidTop/fluidKind` | write-order pile | `view("A")` = the baseline |
+| `drownPool` (`water-works.ts:708`) | **writes** `plan.surface/soil/snow` | material | pass 5d, on `resolved.wet` (§7.4) |
+| `lineworkBeds` | declare-early/build-late handoff | A | unchanged; G6a generalises it |
+
+#### 6a.2 The resolution: (a) inside (d)
+
+**The split is by *declaration*, not by entry.** A row that declares nothing —
+`declaresLevels !== true` and `water === undefined`: `barricade_line`, `boardwalk`,
+`dry_stone_wall`, `hedgerow`, `quarantine_fence`, `cannon_battery` and the rest — has no
+tier, so §1.4 does not govern it: it is a painter in G5's sense, may read the finished
+world when it runs as `buildGrounds` and `dressLife` do, and stays in the build half
+unmoved. Only the ten declaring rows move, each to its class's tier:
+`fluid.channel`/`structure.linework` → A, `retaining.seam` → B, `sweep.run` → C.
+
+**(b) two-round resolve** loses three ways: a provisional resolve is not a prefix of the
+final one, so §1.4's exactness theorem fails and `view(n)` reverts to v0 §9a.4's
+approximation; `resolves` stops being **5** and grows with the pass list, breaking §7.3;
+and re-declaration is order-dependent on the arbitration it lost, so a claim's identity
+depends on a number it did not win. **(c) re-tiering the water claims** costs zero bytes
+and all the correctness: measured, **no shipped document uses a water mover** (`dam`,
+`weir`, `canal_lock` — 0 nodes across `examples/`, `battery/**`, `docs/**`, exercised
+only by `water-works.test.ts` and `infra-entry-water-veto.test.ts`), so nothing would
+move, but rank 0 is what makes a barrier hold — `firstLeak` (`water-works.ts:556`) is a
+precondition on the *declared* crest, and a street at 80 taking one barrier column
+re-opens the face the retry loop closed and fires `LOAM-T110`. Re-tiering `sweep.run`
+upward is worse: a hedgerow above a street. **(a) alone** is necessary, not sufficient —
+it says which reads relocate and leaves 2,609 lines straddling 5b and 5e with only
+discipline between the declare path and a block. (d) is the shape that makes (a)
+enforceable by typing, and it is **proven**: `declareLinework` (`index.ts:861-916`) is a
+shipped layout-sited declarer for the tier-A span entries, with `layLineworkBed`
+(`infra-entry.ts:1428`) as its build-phase dresser. G6a generalises it on the argument
+INFRA-ENTRIES-v0 §3.5 ratified 2026-08-17: *where a carriageway crosses my line* is a
+fact about the solved layout, *what level it holds there* a fact about the surfaced
+street; a declarer needs the first, never the second.
+
+#### 6a.3 The module boundary
+
+**`structures/infra-route.ts`** (new, moved verbatim) takes the pure geometry over
+`InfraPlacementView`: `resolveInfraRoute` and its six form resolvers
+(`infra-entry.ts:384-868`), `clampToBounds`, `rasterize`, `bendsOf`, `centroid`,
+`crossingOpenings` (`:1320`), `gradeCapOf`, `contextOf`, `nearStandingWater`, and the
+`InfraRouteSpec`/`InfraCourse`/`InfraResolution`/`InfraBounds`/`InfraPlacementView`
+types. Both halves import it; it imports neither — no behaviour, no cycle.
+**`structures/infra-entry-declare.ts`** (new) is `declareInfraEntries(input, tier) →
+InfraSitings`: the tier filter, route resolution against the layout view, the
+carriageway subtraction (§6a.4), `declareRun` (`:1482`) with its `retaining.seam`
+`face`+`preserve` fork, `findWatercourse`/`planWaterWorks`/`declareWaterWorks`, and
+`declareFlat` (`:2558`). It writes no block, holds no `Planter`, imports no `LifeWorld`
+— statically scanned. **`structures/infra-entry.ts`** (retained) is the dresser:
+`buildInfraEntries` **consumes** an `InfraSitings` instead of siting, keeping
+`infraColumnOps`, `declaredColumnOps`, `layLineworkBed`, `buildSpan`,
+`buildCarriedSpan`, `spanHeights`, `seatFittings`, `stampArea`'s material half and
+`buildWaterEntry`'s masonry (`:1644-1706`), with `existing`, the `Planter` and
+`world.standY` over frozen ground — all legal at 5e.
+
+`InfraSitings = ReadonlyMap<string /* nodePath */, InfraSiting>` rides on
+`StructurePlan` beside `linework`, carrying per job `course`, `area`, `openings`,
+`gates`, `works` (water rows), `declared`, `refusal`; the build half re-derives
+**nothing** on it. `sweepCourse` still runs at 5e over `siting.course` against frozen
+ground — re-materialisation, not re-siting, which is why `declaredColumnOps` (`:1400`)
+never reads a band's `level`.
+
+#### 6a.4 What the declare half reads, and the subtraction
+
+`DeclareInfraInput`: `region`; `baseline` (for `nearStandingWater` and
+`planWaterWorks`); `above: ResolvedGround` (§1.4's escape hatch — the tier prefix, the
+only ground it may see); `jobs` (`infraEntryJobsOf`, `index.ts:2075`, unchanged);
+`occupancy: OccupancyGrid` (`layout/types.ts:323`); `solvedCarriageway: Uint8Array`;
+`parcels: ParcelDatum`; and an `InfraPlacementView` from layout data only — `extentOf`
+from `placementByPath.get(…)?.footprint` ∪ `parcels.rectsOf(id)`, `corridorOf` from
+`widestSolvedStreet` ∪ `roads.declaration.routes`, `maskOf` from `parcels`, `ground`
+from `above`, `onRoad` from `solvedCarriageway`. **The carriageway subtraction, third
+instance** (§1.7; v0 §13.2a rule 5): a declaring entry whose row says `crossings:
+"open"` subtracts `solvedCarriagewayMask` before declaring, never the surfaced mask,
+which does not exist yet; `block` and `gap` rows subtract nothing, because they mean it
+(a dam's crest, a furrow, a flight of terrace steps). This replaces the per-column
+`view.onRoad` veto at `infra-entry.ts:1165`, which stays at 5e for the *masonry* and
+must agree with the declaration by rule 6's superset property.
+
+#### 6a.5 `ParcelDatum` — the first hard relocation
+
+`crop_circle` (`sweep.run`, tier C) sites `over` a farm, and the fabric hull folds
+fields into every `ring` (`index.ts:2121-2124`). Both read `farms.parcelMask` — a
+tier-**D** product, stamped from *resolved* ownership at `farm.ts:591`. §1.4 forbids the
+read and inverting the tiers is not available: a fence must yield to a street. Resolved
+by §1.3/§1.4's datum law, the construction that seats a rank-10 frontage tie at a
+rank-80 claimant's level — **the parcel layout is a datum, not a claim.**
+`packHolding`'s `sow.parcels[].rect` and `sow.yard` are decided from the holding
+footprint, its ports and the baseline *before* `input.ground.commit` at `farm.ts:568`;
+`ParcelDatum` publishes exactly those rects, computed in pass 4 beside the other four,
+pure and plan-free, §1.3's purity test extended to cover it, readable by any tier. The
+substitution is the linework slot's verbatim — an entry is sited against **the field as
+laid out**, not as it survived arbitration — and `farms.parcelMask` keeps its other
+readers (`index.ts:1530`, `:1911`) unchanged.
+
+#### 6a.6 `world.taken` — the second hard relocation
+
+`taken` (`life.ts:598`) means "a column something emitted owns", and at 5b nothing is
+emitted. It splits, neither half reading a block. **In `declareRun`
+(`infra-entry.ts:1495`) it is deleted**: its stated purpose — "a furrow that lowered the
+ground under a road would leave the road hanging over it" — is what the resolver does
+under tier order, `sweep.run` at 110 losing the column to `road.network` at 100 by rank
+while the build half paints the top course of the ground it was actually given; §6a.4's
+subtraction replaces it. This widens `retaining.seam`'s claim on the citadel ring, the
+intended direction of G6 carried item 3 (W413 27 → ≤5) — measured, never assumed. **In
+`planWaterWorks` (`water-works.ts:476`, `:511`) it becomes `occupancy.mask[idx] ===
+1`**, where it is not redundant: it is a *refusal* input that walks the head down a
+block at a time, and dropping it would let a pool declare over a reserved lot. At tier A
+the grid holds exactly the solver's reservations (placements, precincts, tunnel mouths)
+— a legal read, because occupancy accumulates in declare order and declare order is now
+tier order (`ground-stage.test.ts` gains that assertion). Consequence: a dam no longer
+backs off a farm parcel or prop pad inside its pool; rank 0 and the pool's `preserve`
+take those columns. Zero shipped worlds move (§6a.2), so the tests must cover it
+deliberately.
+
+#### 6a.7 Byte-identity staging — flag-off inert, before the freeze flips
+
+G6a lands under `GROUND_V1_FREEZE`, **flag off, moving no byte**, in four independently
+shasum-checked steps. (1) **Move without meaning**: `infra-route.ts` extracted verbatim,
+imports re-pointed, `ParcelDatum` computed and published with **no reader** — a moved
+byte is a bug in the move. (2) **Shadow declaration**: `declareInfraEntries` is
+constructed at 5b, sites every declaring job against the layout view, and sends its
+claims to `driver.record()` — accumulated, never written (§9a.1) — while the in-build
+calls still commit; a new equivalence assertion reports the shadow-vs-live claim delta
+per document, and a non-empty delta is expected and *is* the measurement G6a exists to
+produce. (3) **Build half consumes**: `buildInfraEntries` takes `InfraSitings`, and flag
+off those sitings are the ones it computed itself, so nothing moves. (4) **Flag on**:
+the shadow becomes the commit, the in-build declarations die, `drownPool`'s material
+half moves to 5d.
+
+#### 6a.8 Acceptance
+
+*Flag off, all four steps:* per-file shasum identity on the G5/G6 set — all three r22
+documents, both hill towns, `c1-harbourtown`, `showcase-bayline`, `showcase-ironvale`,
+`demo-deltaport`; every probe row identical to the column. *Flag on*, the measured blast
+radius is **one document**: `troy_r22` uses `retaining_wall` + `terrace_steps` (both
+`retaining.seam`, tier B), while `hellenist_r22` and `pirates_r22` use `barricade_line`
++ `cannon_battery`, which declare nothing and are byte-identical for free. That is the
+whole r22 exposure, and why G6a is cheap.
+
+| measure | target |
+| --- | --- |
+| `hellenist_r22`, `pirates_r22`, every non-r22 acceptance world | byte-identical, flag on |
+| troy citadel `LOAM-W413` | G6's inherited 27 → **≤5**; a miss is a finding against the tier assignment (G6 carried item 3), never a re-pin |
+| the quay's 118 `natural/precinct.ground` pairs | still transition-covered (rock) and dressed, uncovered **0** — G6a must not regress G6 carried item 2 |
+| `written vs resolved` (probe) | **0**, all three |
+| entry-declared columns inside the solved carriageway band, `crossings: "open"` | **0** — §6a.4, asserted |
+| superset property (§1.7) over entry claims | no `street.network` `carriageway` column inside a tier-A/B entry claim |
+| all 27 physics rules, all three worlds; `stats.ground.resolves` | **0**; still **5** |
+
+*Walk gate.* Yes, but narrow: troy's citadel ring and terrace flight only.
+
+#### 6a.9 Test surface
+
+`infra-entry.test.ts`, `-face`, `-tail`, `-postcard` and `-water-veto` keep their
+subjects; their sweep-and-build cases build from a hand-made `InfraSiting`, a strictly
+easier fixture. New **`infra-entry-declare.test.ts`**: one case per declaring row that
+the declare half reaches no block (a `LifeWorld` import there is a static-scan failure,
+guarded like `ground-freeze.test.ts`'s scan); one that every route form resolves
+identically against the layout view and the fabric view on a world with no fabric; the
+carriageway subtraction present on an `open` row and absent on a `block` row. Plus
+`ParcelDatum`'s purity case in `ground-datums.test.ts`, the occupancy-refusal case
+replacing `taken` in `water-works.test.ts`, and the tier-order assertion in
+`ground-stage.test.ts`.
+
+#### 6a.10 Doorsteps — the easy one
+
+`buildDoorsteps` already declares at the right *tier* — `doorstep.landing` is 120, tier
+D, and tier D declares last — so nothing re-sites; three mechanical changes finish it.
+(i) `declareDoorsteps` walks every port, computes the cut columns and returns
+`DoorstepDeclaration[]` plus the per-door outcome; `buildDoorsteps` consumes that and
+emits at 5e. (ii) The per-door `driver.commit` in the walk loop (`doorsteps.ts:374`)
+becomes **one commit for the whole tier**; its comment — "committed as soon as this
+door's walk is finished so the next door reads the answer rather than the request" — is
+already dead at G6, because the view is taken once before the loop (`doorsteps.ts:161`,
+`driver.view("D")`) and a tier-D commit is invisible to a tier-D reader by construction.
+Two doors cutting one column now settle by rank then claim order, the resolver's stated
+tie-break, deterministically. (iii) Its inputs are already lawful:
+`retaining.landings`/`.bank` (`index.ts:1763-1764`) are tier-B intra-family data,
+`farmPorts` are placement facts, and `underpinAprons` (`index.ts:1750`) writes blocks
+only and stays at 5e. Land it in step 1, where it costs nothing.
+
+---
+
 ### WP-G7 — the pristine baseline
 
 *Scope.* `buildColumnPlan` materialises `terrain.pristine`; `classify` runs
