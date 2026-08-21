@@ -1,4 +1,20 @@
-# Cell 4 — current state (2026-08-21, election-solve pivot)
+# Cell 4 — current state (2026-08-21 morning, night run closing)
+
+**NIGHT RUN (Kai asleep, license granted): read docs/TROY-RUN-2026-08-21.md
+FIRST — it is the chronological Kai-readable record.** Both flips SHIPPED:
+ELECTION_SOLVE (min-cut election; walked fixtures byte-exact; river wet-law
+3 clauses) and GROUND_V1_FREEZE (5 resolves, written-vs-resolved 0
+everywhere, I12 + pad-apron allowances dead, equivalence table at ZERO
+allowances). Troy decks installed: trojan_horse_troy_n1 (election) and _n2
+(freeze). Freeze branches: troy-iter-1 (7df3bb3), troy-iter-2 (46118f7).
+Iteration 3 = diagnosis: orphan treads are RANK SEVERANCES (street flight
+80 loses overlap to quarter.plane 15) — both fixes measured+rejected; THE
+CROSSING LAW (plane yields vs router refuses) is KAI'S MORNING CALL #1.
+PIRATES STAGED AWAITING GO (6b52fe3): landmark lottery fixed
+(LANDMARK_COARSE_RING), quay sheds ashore (QUAY_SHED_OWN_SHORE), teaching
+prominence law; NOTHING GENERATED. IN FLIGHT: freeze-flip suite-debt triage
+(water/farm/tunnel goldens, isolated worktree) — merge on landing.
+Remaining ladder: chunk-2 internals (preflip-g6/README), G7, G8.
 
 **RATIFIED (Kai, r22ter walk verdicts): STOP GUARD-PATCHING THE
 ELECTION — approach A, "the election becomes a solve"** (one cost
