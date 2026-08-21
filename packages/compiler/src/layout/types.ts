@@ -597,10 +597,27 @@ export const GROUND_TIE_SPAN = 4;
  *   from a seam, a sidewalk or a verge — and, being tier A, one that a street
  *   cannot take back. §6/G3's on-state comparison.
  *
- * **The ladder is ordered and the order is a test** (§6): `GROUND_V1_SEAMS`,
+ * **The ladder is ordered and the order is a test** (§6): {@link GROUND_V1_SEAMS},
  * `GROUND_V1_FREEZE` and `GROUND_V1_PRISTINE` each imply this one, exactly as
- * {@link GROUND_PLANE_TIE} implies {@link FRONTAGE_TIE}. They do not exist yet;
- * when WP-G4 adds the first of them, its implication joins
- * `test/ground-contract.test.ts` beside this one's.
+ * {@link GROUND_PLANE_TIE} implies {@link FRONTAGE_TIE}. The implications live
+ * in `test/ground-contract.test.ts` beside this one's.
  */
 export const GROUND_V1_RANKS = false;
+
+/**
+ * **WP-G4's switch: `finishSeams` builds the transitions the resolver derived.**
+ *
+ * **Off, and this is the only state WP-G4's derive half ships.** With the flag
+ * off the whole v1 seam path *derives and reports* and builds nothing:
+ * `deriveGroundSeams` enumerates every boundary, §3.2's coverage invariant runs
+ * on every settlement compile, `LOAM-I497 GROUND_STAGE` records the counts, and
+ * every world is byte-identical to the one before the stage. That is §6/WP-G4's
+ * front-loaded comparison — the risky question is answered by a diff before a
+ * block moves.
+ *
+ * On, the flip half: `finishSeams` builds the complement of what the other
+ * passes report built, `planeSeams`/`skirtSeams` are absorbed, and the r22
+ * probe targets of §6/G4's table are the acceptance. Implies
+ * {@link GROUND_V1_RANKS} (the ladder test).
+ */
+export const GROUND_V1_SEAMS = false;

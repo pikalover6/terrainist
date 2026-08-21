@@ -17,7 +17,7 @@ import type { Region } from "@terrainist/stdlib";
 import { describe, expect, it } from "vitest";
 
 import { GROUND_SOURCE_CLASSES, type GroundIntent } from "../src/layout/ground-contract.js";
-import { GROUND_V1_SEAMS } from "../src/layout/ground-flags.js";
+import { GROUND_V1_SEAMS } from "../src/layout/types.js";
 import { SEAM_CLASS_USE, deriveGroundSeams } from "../src/layout/ground-resolver.js";
 import {
   RETAIN_MAX,

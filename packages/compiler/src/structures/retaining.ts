@@ -60,7 +60,7 @@ import type { SeamLanding, SeamLandingStack, SeamLandings } from "../layout/dist
 import type { Point2, Rect } from "../layout/frames.js";
 import type { GroundClaim, GroundIntent } from "../layout/ground-contract.js";
 import { driverForPlan, type GroundDriver } from "../layout/ground-driver.js";
-import { GROUND_V1_SEAMS } from "../layout/ground-flags.js";
+import { GROUND_V1_SEAMS } from "../layout/types.js";
 import {
   deriveGroundSeams,
   type DerivedSeam,

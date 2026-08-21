@@ -32,6 +32,7 @@ import {
   FRONTAGE_TIE,
   GROUND_PLANE_TIE,
   GROUND_V1_RANKS,
+  GROUND_V1_SEAMS,
   SEAM_TIERS,
 } from "../src/layout/types.js";
 import { compareStreetRank, type StreetRank } from "../src/structures/street-owner.js";
@@ -399,12 +400,12 @@ describe("the v1 flag ladder (§6)", () => {
 
   it("is implied by every flag below it", () => {
     // §6: "Each implies the ones above it and a test asserts the ordering,
-    // exactly as G9 does for `GROUND_PLANE_TIE ⟹ FRONTAGE_TIE`." Three of the
-    // four flags do not exist yet; the two that do are checked here, and
-    // WP-G4's `GROUND_V1_SEAMS ⟹ GROUND_V1_RANKS` joins this list when its
-    // wave lands. The existing rung is restated so the pattern has a
-    // precedent in the same file.
+    // exactly as G9 does for `GROUND_PLANE_TIE ⟹ FRONTAGE_TIE`." Two of the
+    // four flags do not exist yet; `GROUND_V1_FREEZE ⟹ GROUND_V1_SEAMS` joins
+    // this list when WP-G6 lands. The existing rung is restated so the
+    // pattern has a precedent in the same file.
     expect(GROUND_PLANE_TIE ? FRONTAGE_TIE : true).toBe(true);
     expect(GROUND_V1_RANKS ? SEAM_TIERS && GROUND_PLANE_TIE : true).toBe(true);
+    expect(GROUND_V1_SEAMS ? GROUND_V1_RANKS : true).toBe(true);
   });
 });

@@ -680,6 +680,19 @@ retires (nothing declares `pad.record`); hellenist's `written vs resolved`
 68 → 0, because the 68 were exactly `pad.record` columns whose declaration
 disagreed with the baseline the apron had built.
 
+> **Amended by measurement (G3 landing, 2026-08-20).** The 68 → 0 did not
+> happen, and the reason is the ratified `rankOf` interpretation: the pad
+> claims do not vanish with `declarePadEdits` — they persist under their real
+> class names at the deferred rank — so the same 68 columns still disagree,
+> now attributed to `building.footprint`. They go to 0 at **G6**, when the
+> plan *is* the resolve. Everything else in this stage's off-state held:
+> byte-identity on all five documents, every census count identical under
+> renamed keys, and the flag-on comparison beat its bound (713 → 64,
+> 447 → 316, no forbidden count grew). One §1.7 refinement was also ratified
+> by measurement: the carriageway subtraction is gated with the rank — declared
+> unconditionally at rank 150 it defends a lane in no danger and moves census
+> rows this stage forbids.
+
 *Acceptance, flag on (comparison only, not shipped).*
 `retaining.seam/pad.record` 713 and `street.sidewalk/pad.record` 447 are
 re-attributed to `retaining.seam/building.footprint` and
