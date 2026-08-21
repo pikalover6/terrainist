@@ -177,7 +177,21 @@ Per block, in order, all integer and all deterministic:
   pair minimising `(|floor_a − floor_b|, −contact, minIdx_a, minIdx_b)` — the
   cheapest merge, preserving the hill's shape. Bounds the solve a priori and is
   the one place this design deliberately loses fidelity (§7.4).
-- **A5** A `mostlyWater` atom is marked wet and exempt from H2, as today.
+- **A5** **Wetness is a partition invariant, and it is one law with three
+  clauses** (amended at WP-E3, measured on the compiled river quarter). A1 seeds
+  on `(floor(blur(pristine)), wet)` and A3/A4 refuse every merge that would
+  cross wetness, so an atom is uniformly water or uniformly ground and
+  `mostlyWater` has nothing left to decide. A **wet** atom then: (1) is exempt
+  from H2's floor, as before; (2) has an **empty `F(i)`** — §1.3.3 prices a
+  plane's agreement with the pavement that serves it and a riverbed has no door
+  to bury; and (3) forms **no pair** — §1.3.2 prices retaining tiers and H1
+  refuses a drop deeper than `tiersOf` dresses, and a riverbank is neither, so
+  both `EDGE` and H1 fall away across a wet/dry contact (`dissolveTallPairs`
+  says the same on the fallback path). Clause 1 alone leaves the river dammed
+  (718 wet columns of 1,951); 1+2 gives 1,341; all three give **1,995 wet
+  columns and 16 dry cross-sections** against the fallback path's 1,951 and 16.
+  A block with no wet column is bit-identical either way, which is why the flip
+  moves no dry row.
 
 ## 3.2 Graph size — measured, not estimated
 
