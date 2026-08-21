@@ -1,171 +1,81 @@
-# Terrainist
+# CLAUDE.md — Kai ↔ orchestrator working preferences
 
-Text prompt → Minecraft world .zip. LLMs author a deterministic spec language
-("Loam"); a TypeScript compiler turns Loam into a Java Edition world.
+Project facts, codebase rules, and anything useful to *any* agent or human
+live in `AGENTS.md` — read that first. This file is only the preferences
+between Kai and the Claude Code orchestrator.
 
-- **Read `docs/DESIGN.md` first** — the working design/plan (Loam's four-layer
-  design, compiler pipeline, agent contracts, risks, roadmap G1–G7).
-- `docs/LOAM-SPEC-v0.2.md` — the exhaustive, ratified Loam syntax spec. §12
-  tracks open questions worth checking before building on low-confidence
-  areas.
-- `docs/LOAM-TERRAIN-PROFILE-v0.md` — the normative terrain-only subset.
-- `rough-vision.txt` is the original vision, preserved as a historical
-  reference. Never delete it; `docs/DESIGN.md` supersedes it.
+**Currency rule (Kai, 2026-08-21):** this file and `AGENTS.md` carry ONLY
+current information. When something is superseded, delete it outright — no
+"formerly", no tombstones. This applies to these two high-level documents
+specifically; historical record is still preserved where it belongs (docs/,
+git history, `battery/RELEASES.md`, the memory cells).
+
+## Orchestration
+
+- A **Fable 5 session at high effort is the orchestrator**: plans, delegates,
+  integrates, verifies, commits. It does not grind bulk implementation, but it
+  DOES do small-to-medium changes and owns design docs directly when that is
+  cheaper than a subagent — **delegation economics (Kai, 2026-08-19): spawn a
+  subagent only when doing the work yourself would be less efficient.** Fable
+  ≈2× Opus usage per token, but an agent pays fixed overhead (fresh context,
+  exploration, verification, report). Small few-edit tasks are the
+  orchestrator's own job.
+- Standing cap: **4 concurrent subagents, ≤2 medium, ≤1 high — a TOTAL across
+  the whole tree, not per-level.** Agents never spawn agents (say so in every
+  brief). Kai grants higher caps for specific windows in real time; never
+  assume one.
+- Implementers default **opus-5-low** (ratified design + detailed brief =
+  well-specified); medium is for real diagnosis/judgment; design/spec-heavy
+  work goes to a single **opus-5-high** or is orchestrator-owned.
+- Dispatch via the committed agent matrix in `.claude/agents/`
+  (`opus-5-*`/`fable-5-*`/`sonnet-5-*` × effort). Facts: stock CC honors
+  frontmatter `effort:`; frontmatter `name:` is MANDATORY (silently ignored
+  without it); effort must be a named level; definitions are cached at
+  session start. Re-verify with `tools/cc-effort-probe/` after a CC update.
+- Every brief names: the files the agent owns, the shared-file exclusions,
+  the no-subagents rule, the vitest discipline, and "do not commit" — **the
+  orchestrator commits promptly** and keeps the shared-tree window small.
+  Commit subjects are single evocative sentences.
+
+## Process laws (all Kai-ratified, all load-bearing)
+
+- **NEVER WAIT ON KAI.** If anything remains to do, do it; queue popups and
+  decisions but never idle on them; pick the reversible default and keep
+  moving. Pause only when fully hard-blocked on a human-walk-gated change
+  whose wrongness would compound. This never overrides the manual
+  critique→repair law: visual *taste* lands only on Kai's walk verdicts, and
+  autonomous repair iteration is never built.
+- **Probe before theorize.** Walk impressions and renders both lie; custom
+  probes (plan-vs-voxel attribution, pristine-vs-baseline diffs, ASCII
+  windows) are how ground truth is established. When Kai reports a confusing
+  symptom: probe it to the mechanism, then consult before implementing fixes.
+- **Byte-identity staging.** Behavior changes ship behind flags whose
+  off-state is proven byte-identical (shasums vs a clean-checkout worktree
+  build); the flip is its own commit; a flip triage sorts every moved golden
+  into re-pin-with-attribution vs real bug. Every deck confounds
+  compiler+authoring+teaching — archived docs + flag configs separate them
+  for free.
+- **Screening:** render + annotate but install anyway; the REROLL gate
+  applies only during Kai-declared autonomous runs.
+- **Popups liberally** — AskUserQuestion even for minor decisions; Kai enjoys
+  them and answers from his phone. Walk decks come with a walk card that
+  names exactly what to look for and lists known debts so he doesn't burn
+  attention re-discovering them.
+- **Battery regeneration** is pre-authorized (~$2/run, installed alongside);
+  during an autonomous run regenerate ONCE at the END, never mid-run.
+- **Catalog go-ham rule:** spare capacity goes to growing the structure
+  catalog. Currently rides side branches (`claude/content-packs-r1`) — new
+  bulk content stays off the main branch until the ground push resolves.
+- Website/viewer look iterates on the orchestrator's own judgment
+  (screenshots as it goes); only major art-direction pivots go to Kai.
 
 ## Project memory: the funnel cells + the rendered log
 
-Chronological project memory lives in exactly four committed files,
-`.claude/memory/cell-1.md` … `cell-4.md`, coarse → fine: cell 4 holds roughly
-the last day at fine detail; cell 1 holds months at maximum compression. All
-four share an equal size budget (~6 KB is the guideline, not a hard rule).
-There are **no fixed time windows** — whichever agent is working on the
-project compresses periodically: when cell 4 outgrows its budget, distill its
-older half into cell 3, and so on up the funnel. A ratified decision or
-standing constraint must move *up* the funnel when its cell is compressed —
-it may shrink, never silently vanish.
-
-The user-facing memory/log page is **rendered, never hand-written**:
-`node tools/session-log/render.mjs --out <html>` combines the four cells
-with the live Claude Code transcript (assistant prose only — tool calls,
-diffs, reasoning traces and system noise are stripped), and the orchestrator
-republishes it to the standing artifact at every pause where it would give
-Kai a summary. Artifact:
+Chronological project memory lives in `.claude/memory/cell-1.md` …
+`cell-4.md`, coarse → fine, equal ~6 KB budgets, no fixed time windows: when
+cell 4 outgrows its budget, distill its older half into cell 3, and so on up.
+A ratified decision moves *up* the funnel when its cell compresses — it may
+shrink, never silently vanish. The user-facing log page is **rendered, never
+hand-written**: `node tools/session-log/render.mjs --out <html>`, republished
+to the standing artifact at every pause that gives Kai a summary:
 https://claude.ai/code/artifact/7c312d44-f26b-4108-b98b-127a1a12cdab
-
-**Kai wants popups liberally**: use AskUserQuestion freely, even for minor
-decisions — he enjoys them and answers from his phone, so a popup rarely
-blocks anything. Don't sit on a reversible-but-ambiguous choice when a popup
-would settle it.
-
-## Development workflow (session orchestration)
-
-**Standing workflow:** a **Fable 5 session at high effort is the
-orchestrator** — it plans, delegates, integrates, and verifies; it does not
-grind through bulk implementation itself. It runs **up to 4 concurrent
-subagents, of which at most 2 may be medium reasoning and at most 1 high
-reasoning at any given time**. Kai will explicitly grant a higher cap for
-specific waves in real time — never assume one. Default implementer is
-`opus-5-low` for scaffolding, well-specified coding tasks, and mechanical
-changes; the medium slots are for work needing real diagnosis or judgment.
-Design/spec-heavy work goes to a single **Opus 5 HIGH** subagent, which
-writes docs only and never touches code that parallel work has in flight.
-
-**The cap is a TOTAL across the whole tree, not a per-level fan-out.** An
-implementer subagent must not spawn subagents of its own — say so in every
-brief — and the orchestrator counts any nested agent against the same
-budget. Four concurrent means four agents running, full stop.
-
-**Delegation economics (Kai, 2026-08-19): spawn a subagent only when doing
-the work yourself would be less efficient.** Weigh both sides honestly: the
-orchestrator is a Fable 5 model consuming ~2× the usage of Opus per token
-(more still at xhigh reasoning vs opus-5-low) — but a subagent pays a fixed
-overhead of its own: a fresh context, file exploration, verification runs,
-and a report. A small, well-understood, few-edit task (a teaching paragraph,
-a constant, a kit sentence, a doc amendment) is cheaper done directly even
-at Fable rates; delegation wins when the task needs real exploration, bulk
-implementation, or verification long enough that pulling it into the
-orchestrator's context would bloat it. Judgment call, but the default for
-small edits is: do it yourself.
-
-**Shared-tree git discipline:** an agent working in the shared checkout must
-NEVER run tree-wide git state operations — `git checkout -- .`,
-`git restore .`, `git stash` / `stash pop`, `git clean` — nor revert files
-it does not own. Demonstrating a pre-fix failure or building a baseline
-happens in an isolated copy (`git worktree` + direct source-path compile, or
-a `cp -Rc` clone with relative `@terrainist/*` symlinks), never by rewinding
-the shared tree. The orchestrator commits finished work promptly to shrink
-the window.
-
-### How to spawn subagents at a chosen model + reasoning effort
-
-The repo commits a generic 15-type agent matrix in `.claude/agents/`:
-`opus-5-*`, `fable-5-*`, `sonnet-5-*` × `low|medium|high|xhigh|max`.
-Dispatch with the Agent tool by setting `subagent_type` to the type name —
-e.g. `subagent_type: "opus-5-low"` — and the child runs as that model at
-that effort. This works on **stock** Claude Code (including Claude Code
-Cloud); no patched binary is required. So the standing workflow is:
-implementation → `opus-5-low`, diagnosis → `opus-5-medium`, design →
-`opus-5-high`, within the 4-total / ≤2-medium / ≤1-high cap.
-
-Facts behind this (measured live on the wire + token counts; probe + full
-tables in `tools/cc-effort-probe/`):
-
-- Stock CC honors `effort:` in `.claude/agents/*.md` frontmatter; the
-  effort lands as `output_config.effort` on the child's requests and
-  changes real behavior. The parent session's effort is unaffected.
-- Three SILENT traps, all guarded by
-  `packages/spec/test/agent-defs.test.ts`: frontmatter `name:` is
-  MANDATORY (filename is not a fallback — without it the definition is
-  silently ignored, which looks exactly like "effort is broken"); effort
-  must be a named level (integers silently send nothing); definitions are
-  cached at session start (mid-session edits are no-ops).
-- Kai's local laptop harness additionally carries
-  https://github.com/pikalover6/claude-subagents-effort, which adds a
-  per-invocation `effort` param on the Agent tool — a convenience, not a
-  dependency; prefer the committed agent types so behavior is identical
-  everywhere.
-- After a Claude Code update, re-verify with `tools/cc-effort-probe/`
-  (offline mode is free; `live` mode spends ~4 real requests).
-
-This is the *development* workflow. The *production* worldgen pipeline
-(model authoring via OpenRouter) is a separate concern — see
-`docs/DESIGN.md`.
-
-## Ground rules
-
-- Deterministic everything: same spec + seed → byte-identical world. No
-  wall-clock, no unseeded randomness; RNG seeds derive from
-  `hash(worldSeed, nodePath)`.
-- LLMs never emit absolute coordinates — placement comes from envelopes,
-  constraints, and ports resolved by the layout solver.
-- Target: Minecraft Java, latest release (currently 26.2). Emit format is
-  pinned to **1.21.11 (DataVersion 4671)** — the newest version the
-  prismarine stack supports; the client auto-upgrades worlds on load.
-  Revisit as libraries catch up.
-- Stack: TypeScript monorepo. Key deps: deepslate (rendering/NBT),
-  PrismarineJS (world IO), minecraft-data.
-- Status: the pipeline is end-to-end and walked. Terrain, the
-  arterial-first settlement fabric, ~491/585 catalog archetypes, the
-  `SweptProfile` linework engine (roads, walls, bridges, path-stairs), the
-  semantic intent layer, the land-use biome clamp, `formPacks`, the
-  `infra.entry` host, and the **bespoke tier** (model-written `authored:`
-  programs, gated and frozen into the document, invoked once or scattered)
-  are all shipped. ~4,450 tests; every shipped world lints zero on all 27
-  physics rules. `docs/DESIGN.md` is the current state of the system — it
-  carries no dated status blocks, by design; use git history for what a
-  given round added. **Visual iteration still needs Kai: never tune looks
-  without a walk.**
-- Worlds install to the PrismLauncher "Fabulously Optimized" instance:
-  `terrainist install <worldDir> --saves "/Users/kaihoward/Library/Application Support/PrismLauncher/instances/Fabulously Optimized/minecraft/saves"`.
-  **Never `--replace`** — install alongside with `--channel`; name
-  collisions get `-2`/`-3` suffixes and old walks stay comparable.
-- **Standing decisions (Kai):** production authoring is cheap-model-first
-  (cheapness is a core goal) — the Opus 5 planner is canned indefinitely;
-  escalate only on a hard capability wall. The critique→repair pass stays
-  MANUAL — Kai reviews; never build autonomous repair iteration. Default
-  authoring model is **Gemini 3.7 Flash at effort high**
-  (`AUTHORING_MODEL_ID`); GPT 5.6 Luna stays one `--model` flag away.
-  **Demos are generated e2e from a text prompt by the pinned model, never
-  hand-authored worlds** — every demo/acceptance world comes via
-  `terrainist generate`, so demos measure the real product path
-  (hand-authored docs remain fine as test fixtures and exhibits).
-- **Standing decisions (Kai, 2026-08-17):** gate leniency is PERMANENT
-  (SUSPENDED_GATE_CHECKS is the design, LOAM-SPEC §15.2; the harness
-  study is closed — mend-don't-drop niceties are ordinary future work).
-  The website/viewer look iterates on Claude's OWN judgment (screenshots
-  as it goes; only major art-direction pivots go to Kai — the manual
-  critique→repair law remains for WORLDS). **Catalog go-ham rule: "the
-  larger the loam catalog the better — anytime you have extra time go
-  ham on just adding more and more structures."** Battery regeneration
-  is pre-authorized (~$2/run, installed alongside) but during an
-  autonomous run regenerate ONCE at the END, never mid-run.
-- **Standing rule (Kai): NEVER WAIT ON KAI.** If *anything* remains to do,
-  do it — finish the current work, then start the next discussed/ratified
-  feature without asking. Pause ONLY when fully hard blocked: a crucial
-  change that cannot be verified without a human walk, where building on
-  top of it being wrong would compound the damage, *and* nothing else is
-  unblocked. Kai reviews whenever he can; queue popups and decisions for
-  him but never idle on them — pick the reversible default, note it, and
-  keep moving. This does not override the manual critique→repair law:
-  visual *taste* iteration still lands only on his walk verdicts — but
-  building the next ratified thing never waits for one.
