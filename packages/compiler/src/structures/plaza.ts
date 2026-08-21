@@ -192,7 +192,7 @@ export function pavePlaza(input: PlazaInput): PlazaResult {
 
   const states = resolveStates(input.palette, input.stack);
   const driver = input.ground ?? driverForPlan(plan);
-  const view = driver.view();
+  const view = driver.view("B");
   const index = (x: number, z: number): number =>
     (z - region.z0) * region.width + (x - region.x0);
   const inside = (x: number, z: number): boolean =>

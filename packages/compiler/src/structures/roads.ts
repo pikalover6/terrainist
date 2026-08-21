@@ -552,7 +552,7 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
   const { region } = plan;
   const cells = region.width * region.depth;
   const driver = input.ground ?? driverForPlan(plan);
-  const view = driver.view();
+  const view = driver.view("C");
 
   const width = clampInt(Math.round(input.params.width ?? 3), ROAD_MIN_WIDTH, ROAD_MAX_WIDTH);
   const spacing = Math.max(4, Math.round(input.params.lanternSpacing ?? ROAD_LANTERN_SPACING));
@@ -1188,7 +1188,7 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
   const { region } = plan;
   const cells = region.width * region.depth;
   const driver = input.ground ?? driverForPlan(plan);
-  const view = driver.view();
+  const view = driver.view("C");
 
   const water = buildBridgeableMask(plan);
   const blocked = new Uint8Array(cells);

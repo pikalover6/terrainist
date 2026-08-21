@@ -236,7 +236,7 @@ export function furnishCourtyards(input: CourtyardPassInput): CourtyardPassResul
 
   const states = resolveStates(input.palette, input.stack);
   const driver = input.ground ?? driverForPlan(input.plan);
-  const view = driver.view();
+  const view = driver.view("B");
   const { region } = input.plan;
   const idx = (x: number, z: number): number => (z - region.z0) * region.width + (x - region.x0);
   const inside = (x: number, z: number): boolean =>

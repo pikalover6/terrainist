@@ -34,18 +34,59 @@
  * WP-6 deletes `commit`'s write-through and `record` entirely, and keeps the
  * accumulate-and-resolve half: that is the per-tier machinery §1.4 and §13.7 ask
  * for, and it would have to be built anyway.
+ *
+ * ---
+ *
+ * **WP-G6 built that machinery, behind `GROUND_V1_FREEZE`**
+ * (`docs/GROUND-CONTRACT-v1.md` §1.4, §1.6). With the flag on this object is
+ * v1's `GroundStage` and the mixture is gone: `commit` and `record` accumulate
+ * and write nothing, {@link GroundDriver.view} is the typed prefix view of
+ * §1.4 rather than "the plan at this pipeline position",
+ * {@link GroundDriver.enterTier} seals one prefix resolve per tier boundary, and
+ * {@link GroundDriver.freeze} is pass 5c. With the flag off every line below
+ * behaves exactly as WP-G5 shipped it, which is what the byte-identity control
+ * set pins.
+ *
+ * **The flag is not yet wired into `structures/index.ts`** — the pipeline still
+ * declares in pipeline order, and three passes (`buildInfraEntries`'
+ * `declareWaterWorks` at tier A and `declareRun` at tier C, and
+ * `buildDoorsteps` at tier D) declare from the *build* half, downstream of
+ * passes whose tier is higher. Turning the flag on before those declarations
+ * move across the WP-G5 seam trips {@link AccumulatingDriver}'s own tier-order
+ * assertion, deliberately: a silently non-prefix prefix is the one failure this
+ * whole construction exists to make impossible.
  */
 
 import type { ColumnPlan } from "../terrain/columns.js";
 
-import type {
-  GroundBaseline,
-  GroundClaim,
-  GroundIntent,
-  GroundView,
-  ResolvedGround,
+import {
+  GROUND_TIERS,
+  type GroundBaseline,
+  type GroundClaim,
+  type GroundIntent,
+  type GroundTier,
+  type GroundView,
+  type ResolvedGround,
 } from "./ground-contract.js";
 import { resolveGround } from "./ground-resolver.js";
+import { GROUND_V1_FREEZE } from "./types.js";
+
+/**
+ * The five tiers as an index, so "strictly above" is `<` (v1 §1.4).
+ *
+ * A is 0 and E is 4, which is the same direction the ranks ascend in — the
+ * property §1.4's first bullet rests on ("rank order and tier order ascend
+ * together"), written down once so the prefix arithmetic below cannot invert it.
+ */
+const TIER_ORDER: readonly GroundTier[] = Object.freeze(["A", "B", "C", "D", "E"] as const);
+
+/** 0…4 for A…E. */
+export function tierIndex(tier: GroundTier): number {
+  const at = TIER_ORDER.indexOf(tier);
+  /* c8 ignore next */
+  if (at < 0) throw new Error(`unknown ground tier ${tier}`);
+  return at;
+}
 
 /** The one thing that writes a level during the mixture (§9a.1). */
 export interface GroundDriver {
@@ -53,13 +94,50 @@ export interface GroundDriver {
   readonly baseline: GroundBaseline;
   /** Every intent contributed so far, in pipeline order. */
   readonly intents: readonly GroundIntent[];
+  /**
+   * How many full `resolveGround` calls this driver has made — v1 §7.3's budget,
+   * reported as `stats.ground.resolves`. Exactly 5 on a settlement path under
+   * {@link GROUND_V1_FREEZE}; the mixture's twenty-plus with the flag off.
+   */
+  readonly resolves: number;
 
   /** An unconverted pass's shadow declaration. Accumulates; writes nothing. */
   record(intents: readonly GroundIntent[]): void;
   /** A converted pass's claims. Accumulates, resolves, and writes them through. */
   commit(intents: readonly GroundIntent[]): void;
-  /** The one legal read (§1.4), as it stands at this pipeline position. */
-  view(): GroundView;
+  /**
+   * **The one legal read** — v1 §1.4, generalised.
+   *
+   * > `view(n)` returns, per column: the resolved level where a claim in a tier
+   * > strictly above *n* owns it, and the pristine baseline level otherwise.
+   *
+   * With {@link GROUND_V1_FREEZE} on that is exactly what comes back: the
+   * memoised prefix resolve over tiers `A…n−1`, which is the final resolve
+   * restricted to the columns that prefix owns (the resolver is first-writer-wins
+   * in rank order, and rank order ascends with tier order), and the baseline
+   * everywhere else. There is no third case.
+   *
+   * With the flag off this is v0 §9a.4's view — the plan's three arrays at the
+   * pass's own pipeline position — and `tier` is ignored, which is what keeps
+   * the off state byte-identical while the call sites migrate.
+   *
+   * `tier` is optional for the callers that are not the settlement pipeline: a
+   * `driverForPlan` test driver has no prefix, so its answer is the baseline
+   * either way.
+   */
+  view(tier?: GroundTier): GroundView;
+  /**
+   * The stage moves on to `tier` (§1.6): seal every prefix up to it, and answer
+   * a tier-less {@link view} there from now on. A no-op with the flag off.
+   */
+  enterTier(tier: GroundTier): void;
+  /**
+   * **Pass 5c, the freeze.** The fifth resolve, with its three arrays written
+   * over `plan.ground`/`.fluidTop`/`.fluidKind` and v0 §1.3's snow rule applied
+   * over `moved`. Idempotent-by-memo through {@link finish}; with the flag off it
+   * is `finish()` and nothing else.
+   */
+  freeze(): ResolvedGround;
   /** After the last pass: the final `ResolvedGround`, its report, its diagnostics. */
   finish(): ResolvedGround;
 }
@@ -101,6 +179,25 @@ export function driverForPlan(plan: ColumnPlan): GroundDriver {
   );
 }
 
+/**
+ * A resolve's three arrays as a {@link GroundView} — §1.4's two cases in one
+ * object.
+ *
+ * The resolver already writes the baseline into every column no intent won
+ * (`resolveGround` starts from a copy of the baseline), so "the resolved level
+ * where a higher tier owns it, the baseline otherwise" needs no second pass and
+ * no owner test here: it is what the arrays hold.
+ */
+function viewOf(resolved: ResolvedGround, baseline: GroundBaseline): GroundView {
+  return {
+    region: baseline.region,
+    ground: resolved.ground,
+    fluidTop: resolved.fluidTop,
+    fluidKind: resolved.fluidKind,
+    seaLevel: baseline.seaLevel,
+  };
+}
+
 class AccumulatingDriver implements GroundDriver {
   readonly baseline: GroundBaseline;
   private readonly plan: ColumnPlan;
@@ -108,6 +205,26 @@ class AccumulatingDriver implements GroundDriver {
   /** Memoised only for {@link finish}; a `commit` invalidates it. */
   private final: ResolvedGround | undefined;
   private readonly handed: GroundView;
+  /** v1 §7.3's counter — every `resolveGround` call this driver has made. */
+  resolves = 0;
+  /**
+   * The prefix resolves of §1.6, memoised by tier index: `prefix[i]` is
+   * `resolveGround(baseline, intents in tiers strictly above TIER_ORDER[i])`,
+   * i.e. the answer `view(TIER_ORDER[i])` hands out. `prefix[0]` is the empty
+   * prefix and is the baseline itself, which costs no resolve.
+   */
+  private readonly prefixes: (GroundView | undefined)[] = [];
+  /**
+   * The highest tier any `view` has been taken at. Declaration runs in tier
+   * order (§1.6), so an intent arriving in a tier a prefix has already been
+   * sealed over would silently invalidate that prefix — the one way to get a
+   * "prefix" that is not a prefix, which is the assertion §6/WP-G6 names.
+   */
+  private sealedThrough = -1;
+  /** Which tier the stage is declaring — the default a tier-less `view()` takes. */
+  private currentTier = 0;
+  /** True once {@link freeze} has aliased the plan onto the fifth resolve. */
+  private frozen = false;
 
   constructor(baseline: GroundBaseline, plan: ColumnPlan) {
     this.baseline = baseline;
@@ -137,10 +254,15 @@ class AccumulatingDriver implements GroundDriver {
     const start = this.accumulated.length;
     this.absorb(intents);
     if (this.accumulated.length === start) return;
+    // §1.6: "`record()` and `commit()`'s write-through are deleted — nothing
+    // writes `plan.ground` any more, so nothing needs to." Under the freeze both
+    // methods are pure accumulation and the two names survive only so the flag's
+    // off state can keep the mixture's behaviour at every call site.
+    if (GROUND_V1_FREEZE) return;
     // §9a.1 rule 3 — the whole prefix, re-resolved. Never incrementally patched:
     // that is what makes every intermediate answer the contract applied to a
     // prefix rather than an approximation of the contract.
-    const resolved = resolveGround(this.baseline, this.accumulated);
+    const resolved = this.resolve(this.accumulated);
     this.final = undefined;
 
     // §9a.1 rule 2 — the union of *this commit's* own columns, every kind,
@@ -179,12 +301,98 @@ class AccumulatingDriver implements GroundDriver {
    * with. The moment `view()` stops being the plan (WP-6's tier mask, §9a.7) that
    * stops being true and the lazy resolve has to appear here.
    */
-  view(): GroundView {
-    return this.handed;
+  view(tier?: GroundTier): GroundView {
+    if (!GROUND_V1_FREEZE) return this.handed;
+    // Past the freeze the plan's three arrays *are* the fifth resolve's arrays
+    // (§1.6 pass 5c), so a build-half reader asking for "the ground" gets the
+    // ground. Before it, a caller that named no tier is answered at the tier the
+    // stage is currently declaring — which is what makes an un-migrated helper
+    // deep inside a pass read its own pass's legal prefix rather than a stale
+    // baseline.
+    if (tier === undefined) return this.frozen ? this.handed : this.prefixFor(this.currentTier);
+    return this.prefixFor(tierIndex(tier));
+  }
+
+  /**
+   * §1.6's prefix resolve for one tier, memoised.
+   *
+   * `i === 0` is tier A, whose prefix is empty: §1.4's "the pristine baseline
+   * level otherwise" with no owned columns at all, which is the baseline and
+   * costs no resolve. Every other index is one `resolveGround` over the intents
+   * in tiers strictly above it — which, because the resolver is
+   * first-writer-wins in rank order and rank order ascends with tier order, is
+   * the final resolve restricted to the columns that prefix owns.
+   */
+  private prefixFor(i: number): GroundView {
+    const cached = this.prefixes[i];
+    if (cached !== undefined) return cached;
+    if (i > this.sealedThrough) this.sealedThrough = i;
+    if (i === 0) {
+      const base = this.baselineView();
+      this.prefixes[0] = base;
+      return base;
+    }
+    const prefix = this.accumulated.filter((it) => tierIndex(GROUND_TIERS[it.sourceClass]) < i);
+    const answer = viewOf(this.resolve(prefix), this.baseline);
+    this.prefixes[i] = answer;
+    return answer;
+  }
+
+  enterTier(tier: GroundTier): void {
+    const at = tierIndex(tier);
+    /* c8 ignore next */
+    if (at < this.currentTier) throw new Error(`ground stage: tier ${tier} declared out of order`);
+    this.currentTier = at;
+    // Seal every tier up to and including this one, so the resolve happens at
+    // the boundary rather than at whichever pass happens to read first. §1.6's
+    // "one resolve after each tier" is this line.
+    if (GROUND_V1_FREEZE) this.prefixFor(at);
+  }
+
+  freeze(): ResolvedGround {
+    const resolved = this.finish();
+    if (!GROUND_V1_FREEZE) return resolved;
+    // §1.6 pass 5c. Copied in rather than re-pointed: a dozen passes captured
+    // `plan.ground` by reference on their way past, and the contract's promise
+    // is that from here on those references hold the resolver's answer — which
+    // a copy delivers and a reassignment would silently not.
+    this.plan.ground.set(resolved.ground);
+    this.plan.fluidTop.set(resolved.fluidTop);
+    this.plan.fluidKind.set(resolved.fluidKind);
+    // §2's `plan.snow` row and v0 §1.3's rule, landed at last: the eleven
+    // `plan.snow[idx] = 0` lines become one moved-mask sweep, because there is
+    // no longer a mixture in which that rule is wrong.
+    for (let k = 0; k < resolved.moved.length; k++) {
+      if (resolved.moved[k] === 1) this.plan.snow[k] = 0;
+    }
+    this.frozen = true;
+    return resolved;
+  }
+
+  private baselineView(): GroundView {
+    return {
+      region: this.baseline.region,
+      ground: this.baseline.ground,
+      fluidTop: this.baseline.fluidTop,
+      fluidKind: this.baseline.fluidKind,
+      seaLevel: this.baseline.seaLevel,
+    };
+  }
+
+  private resolve(intents: readonly GroundIntent[]): ResolvedGround {
+    this.resolves++;
+    return resolveGround(this.baseline, intents);
   }
 
   finish(): ResolvedGround {
-    if (this.final === undefined) this.final = resolveGround(this.baseline, this.accumulated);
+    if (this.final !== undefined) return this.final;
+    // §1.6: "five resolves; the fifth is `resolveGround(baseline, all)`." The
+    // four before it are the prefixes, and they are forced here rather than left
+    // to whichever passes happened to ask for a view — so the count the report
+    // carries is a property of the design (one resolve per tier boundary) and
+    // not of which subsystems a particular document happened to instantiate.
+    if (GROUND_V1_FREEZE) for (let i = 1; i < TIER_ORDER.length; i++) this.prefixFor(i);
+    this.final = this.resolve(this.accumulated);
     return this.final;
   }
 
@@ -201,6 +409,18 @@ class AccumulatingDriver implements GroundDriver {
    */
   private absorb(intents: readonly GroundIntent[]): void {
     for (const intent of intents) {
+      // §1.6's ordering invariant, asserted where it can be violated rather than
+      // trusted: a claim arriving in a tier some prefix has already been sealed
+      // over is exactly "a prefix resolve that is not a prefix", and it would
+      // show up a hundred passes later as a claim that stopped winning.
+      if (GROUND_V1_FREEZE && this.sealedThrough >= 0) {
+        const at = tierIndex(GROUND_TIERS[intent.sourceClass]);
+        if (at < this.sealedThrough) {
+          throw new Error(
+            `ground stage: ${intent.sourceClass} (tier ${GROUND_TIERS[intent.sourceClass]}) declared after tier ${TIER_ORDER[this.sealedThrough] as string} was read — declaration must run in tier order (v1 §1.6)`,
+          );
+        }
+      }
       const columns: readonly GroundClaim[] = Object.freeze([...intent.columns]);
       this.accumulated.push({ ...intent, columns });
     }

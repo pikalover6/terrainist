@@ -764,7 +764,7 @@ export interface FarmScan {
 /** Build the scan from a pass input. Exported for the same reason as {@link FarmScan}. */
 export function scanOf(input: FarmPassInput): FarmScan {
   const region = input.plan.region;
-  const view = input.ground.view();
+  const view = input.ground.view("D");
   const columns = region.width * region.depth;
   const stronger = new Uint8Array(columns);
   const rank = rankOf("farm.parcel");

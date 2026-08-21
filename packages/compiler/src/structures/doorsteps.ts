@@ -158,7 +158,7 @@ export function buildDoorsteps(input: DoorstepInput): DoorstepResult {
   // pass's own position — which, this pass running last, is every other pass's
   // finished work — so a door still measures the ground it actually meets.
   const driver = input.ground ?? driverForPlan(plan);
-  const view = driver.view();
+  const view = driver.view("D");
   const blocks: StructureBlock[] = [];
   let stepped = 0;
   let dropped = 0;

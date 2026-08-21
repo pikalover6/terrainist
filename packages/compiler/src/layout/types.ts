@@ -624,6 +624,37 @@ export const GROUND_V1_RANKS = true;
  */
 export const GROUND_V1_SEAMS = true;
 
+/**
+ * **WP-G6's switch: tier-ordered declaration, five resolves, the frozen ground.**
+ *
+ * `docs/GROUND-CONTRACT-v1.md` §1.4, §1.6 and §6/WP-G6. Four things flip
+ * together because none of them is sound without the others:
+ *
+ * 1. **Declaration runs in tier order.** A→B→C→D, with one prefix resolve after
+ *    each tier, so `view(tier)` can be §1.4's typed prefix view — "the resolved
+ *    level where a claim in a tier strictly above *n* owns it, the pristine
+ *    baseline level otherwise" — with no third case and no approximation. Two
+ *    reorders change worlds: `digCanals` (tier A, rank 0) declares *before*
+ *    `buildRetainingWalls` (tier B) instead of after it, and the infra-entry
+ *    sweeps (tier C, rank 110) declare before the doorsteps (tier D).
+ * 2. **The write-through and `record` are deleted.** Nothing writes
+ *    `plan.ground` any more, so nothing needs to; `stats.ground.resolves` is 5
+ *    on the settlement path and 0 on a terrain profile.
+ * 3. **The freeze.** `plan.ground`/`.fluidTop`/`.fluidKind` become the fifth
+ *    resolve's arrays at pass 5c, Group C is re-derived from `resolved.wet` and
+ *    the snow rule becomes v0 §1.3's `moved` mask at pass 5d, and `buildGrounds`
+ *    becomes the total painter over `moved` — a cut lot's floor is a column the
+ *    resolver moved that no material loop covers.
+ * 4. **`floorY` is `resolved.ground[k] + 1`.** The seat stops being
+ *    `Placement.foundationY` and becomes what the resolver said; a footprint
+ *    that did not win its whole rect at one level is `LOAM-W494
+ *    GROUND_SEAT_NONPLANAR` and the building is refused.
+ *
+ * Implies {@link GROUND_V1_SEAMS} (the ladder test). `false` is byte-identical
+ * to WP-G5.
+ */
+export const GROUND_V1_FREEZE = false;
+
 /* -------------------------------------------------------------------------- */
 /* terraces from the terrain — the T4/T5/T6 fix                                */
 /* -------------------------------------------------------------------------- */

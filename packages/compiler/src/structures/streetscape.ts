@@ -505,7 +505,7 @@ export function dressStreets(
 
   const driver = ctx.ground ?? driverForPlan(plan);
   const masks = buildStreetMasks(graph, region, ctx.surfaced);
-  paveSidewalks(graph, ctx, driver, driver.view(), masks, states, ctx.nodePath ?? "");
+  paveSidewalks(graph, ctx, driver, driver.view("C"), masks, states, ctx.nodePath ?? "");
   thickenCurbs(plan, masks, states);
   const crossingColumns = paintCrossings(graph, plan, masks, states);
 
