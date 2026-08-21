@@ -27,7 +27,7 @@
 
 import type { Region } from "@terrainist/stdlib";
 
-import { levelClaimsByColumn } from "../structures/ground-declare.js";
+import { levelClaimsByColumn } from "./ground-declarers.js";
 
 import {
   GROUND_TIERS,
@@ -111,7 +111,21 @@ export interface GroundPristineMeasurement {
 /* -------------------------------------------------------------------------- */
 
 /** §8.5's row ids. */
-export type InversionId = "I1" | "I2" | "I3" | "I4" | "I5" | "I6" | "I7";
+export type InversionId =
+  | "I1"
+  | "I2"
+  | "I3"
+  | "I4"
+  | "I5"
+  | "I6"
+  | "I7"
+  // The ground contract v1 §6/WP-G3's four rows. Allocated in that document so
+  // two concurrent waves cannot pick the same id, exactly as §8's diagnostic
+  // codes are.
+  | "I8"
+  | "I9"
+  | "I10"
+  | "I11";
 
 /** One row of §8.5's table. A table, deliberately, and not a predicate. */
 export interface ToleratedInversion {
@@ -130,6 +144,11 @@ export interface ToleratedInversion {
 /** Tiers A–C, as I4 and I5 name them (§4.2's tier column, as data). */
 const TIERS_ABC: readonly GroundSourceClass[] = GROUND_SOURCE_CLASSES.filter(
   (c) => GROUND_TIERS[c] === "A" || GROUND_TIERS[c] === "B" || GROUND_TIERS[c] === "C",
+);
+
+/** Tiers B–D — everything a tier-A claim outranks. I8, I9 and I10 (v1 §6/G3). */
+const TIERS_BCD: readonly GroundSourceClass[] = GROUND_SOURCE_CLASSES.filter(
+  (c) => GROUND_TIERS[c] === "B" || GROUND_TIERS[c] === "C" || GROUND_TIERS[c] === "D",
 );
 
 /**
@@ -189,6 +208,44 @@ export const TOLERATED_INVERSIONS: readonly ToleratedInversion[] = Object.freeze
     what: "the plaza's immovability becomes a rank",
     winners: Object.freeze(["plaza.ground"] as const),
     losers: Object.freeze(["street.network", "road.network"] as const),
+    expectZero: true,
+  },
+  {
+    // v1 §6/G3. The lot pad's footprint half is a real claim now, and a tier-A
+    // one. While `GROUND_V1_RANKS` is off it arbitrates at `DEFERRED_PAD_RANK`
+    // and this row's count is zero on every world; the row is written with the
+    // rows it belongs beside rather than added at the flip, because a row added
+    // to make a world pass is §8.5's named failure mode.
+    id: "I8",
+    what: "a building's footprint beats the dressing laid around it",
+    winners: Object.freeze(["building.footprint"] as const),
+    losers: TIERS_BCD,
+  },
+  {
+    id: "I9",
+    what: "a quarter's plane beats what is laid on it",
+    winners: Object.freeze(["quarter.plane"] as const),
+    losers: TIERS_BCD,
+  },
+  {
+    // …and the plane's level now comes from `PlaneDatum` rather than from a pad
+    // already sitting in the baseline (§1.5's `precinct.ground` row).
+    id: "I10",
+    what: "a precinct's plane beats what is laid on it, at PlaneDatum's level",
+    winners: Object.freeze(["precinct.ground"] as const),
+    losers: TIERS_BCD,
+  },
+  {
+    // §4 item 10, as an inversion: `pad.record` is gone, so a column the record
+    // used to own is now owned by whatever really claimed it — or by nobody.
+    // There is no class left to name on either side, which is why this row
+    // carries no winners and no losers and matches nothing: it is the table
+    // saying, in the place a reader will look, that the row's subject was
+    // deleted rather than forgotten.
+    id: "I11",
+    what: "pad.record is gone; a pad is its own class now",
+    winners: Object.freeze([] as const),
+    losers: Object.freeze([] as const),
     expectZero: true,
   },
 ] as const);
@@ -379,6 +436,10 @@ export function assertGroundEquivalence(
     I5: 0,
     I6: 0,
     I7: 0,
+    I8: 0,
+    I9: 0,
+    I10: 0,
+    I11: 0,
   };
 
   for (let k = 0; k < n; k++) {

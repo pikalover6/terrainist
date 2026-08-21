@@ -13,11 +13,15 @@
   },
   "ownedColumns": 70065,
   "intents": {
-    "total": 663,
+    "total": 717,
     "byClass": [
       {
-        "name": "pad.record",
-        "n": 626
+        "name": "quarter.plane",
+        "n": 572
+      },
+      {
+        "name": "building.footprint",
+        "n": 108
       },
       {
         "name": "street.network",
@@ -43,12 +47,16 @@
   },
   "columnsWonByClass": [
     {
-      "name": "pad.record",
-      "n": 38241
+      "name": "quarter.plane",
+      "n": 23427
     },
     {
       "name": "street.network",
       "n": 22710
+    },
+    {
+      "name": "building.footprint",
+      "n": 14814
     },
     {
       "name": "street.sidewalk",
@@ -342,7 +350,7 @@
     ],
     "byOwner": [
       {
-        "name": "pad.record",
+        "name": "building.footprint",
         "n": 68
       }
     ]
@@ -359,7 +367,7 @@
       "max": 3
     },
     {
-      "pair": "pad.record over verge",
+      "pair": "quarter.plane over verge",
       "n": 167,
       "avg": 4.4,
       "max": 6
@@ -377,7 +385,7 @@
       "max": 15
     },
     {
-      "pair": "pad.record over natural",
+      "pair": "quarter.plane over natural",
       "n": 46,
       "avg": 4.1,
       "max": 8
@@ -419,7 +427,7 @@
       "max": 4
     },
     {
-      "pair": "pad.record over street.network",
+      "pair": "quarter.plane over street.network",
       "n": 2,
       "avg": 7,
       "max": 7
@@ -432,9 +440,127 @@
     }
   ],
   "buildingSeats": {
-    "count": 0,
-    "sinkHist": [],
-    "worst": []
+    "count": 70,
+    "sinkHist": [
+      {
+        "delta": -1,
+        "n": 2
+      },
+      {
+        "delta": 0,
+        "n": 68
+      }
+    ],
+    "worst": [
+      {
+        "source": "world.neoclassical_metropolis.high_pantheon_tower#pad@1",
+        "floorY": 70,
+        "ringMed": 70,
+        "ringMax": 71,
+        "sink": 0,
+        "worst": 1,
+        "n": 399
+      },
+      {
+        "source": "world.neoclassical_metropolis.high_pantheon_tower#pad@1#preserve",
+        "floorY": 70,
+        "ringMed": 70,
+        "ringMax": 71,
+        "sink": 0,
+        "worst": 1,
+        "n": 399
+      },
+      {
+        "source": "world.neoclassical_metropolis.cell_1.infill_-46_22#pad@188",
+        "floorY": 71,
+        "ringMed": 71,
+        "ringMax": 71,
+        "sink": 0,
+        "worst": 0,
+        "n": 80
+      },
+      {
+        "source": "world.neoclassical_metropolis.cell_1.infill_-46_22#pad@188#preserve",
+        "floorY": 71,
+        "ringMed": 71,
+        "ringMax": 71,
+        "sink": 0,
+        "worst": 0,
+        "n": 80
+      },
+      {
+        "source": "world.neoclassical_metropolis.cell_4.infill_-114_147#pad@623",
+        "floorY": 71,
+        "ringMed": 71,
+        "ringMax": 71,
+        "sink": 0,
+        "worst": 0,
+        "n": 132
+      },
+      {
+        "source": "world.neoclassical_metropolis.cell_4.infill_-114_147#pad@623#preserve",
+        "floorY": 71,
+        "ringMed": 71,
+        "ringMax": 71,
+        "sink": 0,
+        "worst": 0,
+        "n": 132
+      },
+      {
+        "source": "world.neoclassical_metropolis.cell_4.infill_-118_170#pad@624",
+        "floorY": 71,
+        "ringMed": 71,
+        "ringMax": 71,
+        "sink": 0,
+        "worst": 0,
+        "n": 210
+      },
+      {
+        "source": "world.neoclassical_metropolis.cell_4.infill_-118_170#pad@624#preserve",
+        "floorY": 71,
+        "ringMed": 71,
+        "ringMax": 71,
+        "sink": 0,
+        "worst": 0,
+        "n": 210
+      },
+      {
+        "source": "world.neoclassical_metropolis.cell_4.infill_59_95#pad@621",
+        "floorY": 71,
+        "ringMed": 71,
+        "ringMax": 71,
+        "sink": 0,
+        "worst": 0,
+        "n": 117
+      },
+      {
+        "source": "world.neoclassical_metropolis.cell_4.infill_59_95#pad@621#preserve",
+        "floorY": 71,
+        "ringMed": 71,
+        "ringMax": 71,
+        "sink": 0,
+        "worst": 0,
+        "n": 117
+      },
+      {
+        "source": "world.neoclassical_metropolis.cell_4.terrace_-35_185#pad@612",
+        "floorY": 71,
+        "ringMed": 71,
+        "ringMax": 71,
+        "sink": 0,
+        "worst": 0,
+        "n": 300
+      },
+      {
+        "source": "world.neoclassical_metropolis.cell_4.terrace_-35_185#pad@612#preserve",
+        "floorY": 71,
+        "ringMed": 71,
+        "ringMax": 71,
+        "sink": 0,
+        "worst": 0,
+        "n": 300
+      }
+    ]
   },
   "streetFlank": [
     {
@@ -490,7 +616,7 @@
       ]
     },
     {
-      "name": "pad.record",
+      "name": "quarter.plane",
       "n": 1098,
       "byDelta": [
         {
@@ -552,7 +678,7 @@
         "cz": -18,
         "topKinds": [
           {
-            "name": "pad.record/verge",
+            "name": "quarter.plane/verge",
             "n": 88
           },
           {
@@ -584,11 +710,11 @@
         "cz": 97,
         "topKinds": [
           {
-            "name": "pad.record/verge",
+            "name": "quarter.plane/verge",
             "n": 42
           },
           {
-            "name": "pad.record/natural",
+            "name": "quarter.plane/natural",
             "n": 12
           },
           {
@@ -608,11 +734,11 @@
             "n": 19
           },
           {
-            "name": "pad.record/natural",
+            "name": "quarter.plane/natural",
             "n": 4
           },
           {
-            "name": "pad.record/verge",
+            "name": "quarter.plane/verge",
             "n": 2
           }
         ]
@@ -640,7 +766,7 @@
         "cz": 156,
         "topKinds": [
           {
-            "name": "pad.record/verge",
+            "name": "quarter.plane/verge",
             "n": 11
           },
           {
@@ -648,7 +774,7 @@
             "n": 5
           },
           {
-            "name": "pad.record/street.network",
+            "name": "quarter.plane/street.network",
             "n": 2
           }
         ]

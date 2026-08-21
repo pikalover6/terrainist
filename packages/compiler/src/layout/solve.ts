@@ -1374,6 +1374,13 @@ export function padFor(
     targetY: placement.foundationY,
     apron: blend,
     adaptiveApron: true,
+    // Ground contract v1 §1.5, by node scale rather than by kit. A pad under a
+    // *district* is that quarter's decided plane — the thing its own streets,
+    // plaza and sidewalks are laid on — and calling it a footprint would put a
+    // whole quarter at rank 10, where it takes its own boulevard. Everything
+    // else `padFor` still emits for is one placed structure, which is what
+    // §1.5's "plus the solver's landmark pads" names.
+    claimClass: node.kind === "district" ? "quarter.plane" : "building.footprint",
   };
 }
 

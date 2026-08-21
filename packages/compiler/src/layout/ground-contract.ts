@@ -26,6 +26,7 @@ import type { LoamDiagnostic } from "@terrainist/spec";
 import type { Region } from "@terrainist/stdlib";
 
 import type { SeamTreatment } from "./levels.js";
+import { GROUND_V1_RANKS } from "./types.js";
 
 /* -------------------------------------------------------------------------- */
 /* 2. the declaration types                                                    */
@@ -41,6 +42,7 @@ import type { SeamTreatment } from "./levels.js";
 export type GroundSourceClass =
   | "fluid.channel"
   | "building.footprint"
+  | "quarter.plane"
   | "precinct.ground"
   | "structure.linework"
   | "plaza.ground"
@@ -55,8 +57,7 @@ export type GroundSourceClass =
   | "doorstep.landing"
   | "farm.parcel"
   | "prop.pad"
-  | "verge"
-  | "pad.record";
+  | "verge";
 
 /**
  * Every class, in rank order, as a value — the union is a type and a test cannot
@@ -68,6 +69,7 @@ export type GroundSourceClass =
 export const GROUND_SOURCE_CLASSES = Object.freeze([
   "fluid.channel",
   "building.footprint",
+  "quarter.plane",
   "precinct.ground",
   "structure.linework",
   "plaza.ground",
@@ -83,7 +85,6 @@ export const GROUND_SOURCE_CLASSES = Object.freeze([
   "farm.parcel",
   "prop.pad",
   "verge",
-  "pad.record",
 ] as const) satisfies readonly GroundSourceClass[];
 
 /**
@@ -201,6 +202,14 @@ export function isLegalKind(kind: GroundIntentKind, sourceClass: GroundSourceCla
 export const INTENT_RANK: Readonly<Record<GroundSourceClass, number>> = Object.freeze({
   "fluid.channel": 0,
   "building.footprint": 10,
+  // v1 §1.5. A quarter's platform run is a **decided plane** — the thing its
+  // plaza, courtyard, seam, street and sidewalk are all laid *on* — so it must
+  // outrank every one of them, and only a building's floor (10) stands above
+  // it. 15 is the spacing `structure.linework` at 25 already demonstrated, used
+  // for the same reason: inserted, never renumbered. It cannot collide with
+  // `precinct.ground` (20) because the solver reserves a precinct's footprint
+  // before the fabric runs.
+  "quarter.plane": 15,
   "precinct.ground": 20,
   "structure.linework": 25,
   "plaza.ground": 30,
@@ -224,10 +233,17 @@ export const INTENT_RANK: Readonly<Record<GroundSourceClass, number>> = Object.f
   "farm.parcel": 125,
   "prop.pad": 130,
   verge: 140,
-  "pad.record": 150,
 });
 
-/** The five tiers of §4.2/§4.3, in order. */
+/**
+ * The five tiers of §4.2/§4.3, in order.
+ *
+ * `"E"` survives the deletion of `pad.record` — the only class that ever sat in
+ * it — because v1 §1.6 resolves **one tier at a time** and a tier that exists in
+ * the type but holds no class is a resolve of the empty set, which is free. The
+ * alternative, deleting the letter, would renumber a vocabulary four documents
+ * quote by name.
+ */
 export type GroundTier = "A" | "B" | "C" | "D" | "E";
 
 /**
@@ -239,6 +255,7 @@ export type GroundTier = "A" | "B" | "C" | "D" | "E";
 export const GROUND_TIERS: Readonly<Record<GroundSourceClass, GroundTier>> = Object.freeze({
   "fluid.channel": "A",
   "building.footprint": "A",
+  "quarter.plane": "A",
   "precinct.ground": "A",
   "structure.linework": "A",
   "plaza.ground": "B",
@@ -259,8 +276,59 @@ export const GROUND_TIERS: Readonly<Record<GroundSourceClass, GroundTier>> = Obj
   "farm.parcel": "D",
   "prop.pad": "D",
   verge: "D",
-  "pad.record": "E",
 });
+
+/* -------------------------------------------------------------------------- */
+/* v1 §6/G3 — the effective rank, while `GROUND_V1_RANKS` is off               */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Where `pad.record` used to sit: the bottom of the table, below every built
+ * class. Kept as a number rather than as a class so no world can hold such a
+ * claim (§8/G3's four-place absence test) while the *arbitration position* it
+ * occupied survives one stage longer.
+ */
+export const DEFERRED_PAD_RANK = 150;
+
+/**
+ * The classes whose rank is deferred to {@link DEFERRED_PAD_RANK} while
+ * {@link GROUND_V1_RANKS} is off — v1 §6/G3's flag-off state.
+ *
+ * The three declarers G3 gives the pads (`building.footprint` for the lot and
+ * landmark pads, `quarter.plane` for the platform runs) carry their **true**
+ * `sourceClass` from the moment they are written: the report, the probe and the
+ * cliff census all read the real name, which is the whole point of filling the
+ * empty classes. What the flag gates is only *where those names sit in the
+ * order*. Off, they arbitrate exactly where `declarePadEdits`' rank-150 record
+ * arbitrated, so nothing wins differently and every world is byte-identical; on,
+ * they take 10 and 15 and a pad becomes a claim that can win a column from a
+ * street.
+ *
+ * `precinct.ground` is deliberately **not** in this set. Its declarer
+ * (`buildPrecincts`) is a shipped rank-20 claim and was never a pad record;
+ * deferring it would move worlds in the flag's *off* state, which is the one
+ * thing the off state is for.
+ */
+const DEFERRED_CLASSES: ReadonlySet<GroundSourceClass> = new Set<GroundSourceClass>([
+  "building.footprint",
+  "quarter.plane",
+]);
+
+/**
+ * The rank the resolver arbitrates by — {@link INTENT_RANK}, with G3's flag-off
+ * deferral applied.
+ *
+ * Every consumer that asks "does this class outrank that one?" must go through
+ * here rather than indexing {@link INTENT_RANK} directly, because the two
+ * answers differ exactly while the flag is off and exactly for the two classes
+ * G3 introduced. `INTENT_RANK` stays the **table** — v1 §1.5's assignment, the
+ * thing `ground-contract.test.ts` asserts is total, distinct and ascending with
+ * the tiers — and this is the *lookup*.
+ */
+export function rankOf(sourceClass: GroundSourceClass): number {
+  if (!GROUND_V1_RANKS && DEFERRED_CLASSES.has(sourceClass)) return DEFERRED_PAD_RANK;
+  return INTENT_RANK[sourceClass];
+}
 
 /**
  * Negative when `a` owns a column `b` also wants. Total on distinct intents.
@@ -280,8 +348,8 @@ export const GROUND_TIERS: Readonly<Record<GroundSourceClass, GroundTier>> = Obj
  * re-litigated here.
  */
 export function compareIntent(a: GroundIntent, b: GroundIntent): number {
-  const ra = INTENT_RANK[a.sourceClass];
-  const rb = INTENT_RANK[b.sourceClass];
+  const ra = rankOf(a.sourceClass);
+  const rb = rankOf(b.sourceClass);
   if (ra !== rb) return ra - rb;
   const sa = a.subRank ?? 0;
   const sb = b.subRank ?? 0;

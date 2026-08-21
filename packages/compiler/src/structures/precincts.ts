@@ -61,6 +61,7 @@ import { resolvePorts } from "../layout/ports.js";
 import type { OccupancyGrid, Placement, ResolvedPort } from "../layout/types.js";
 import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
 import type { GroundClaim } from "../layout/ground-contract.js";
+import type { PlaneDatum } from "../layout/plane-datum.js";
 
 import type { StructureBlock } from "./buildings.js";
 
@@ -241,20 +242,26 @@ export interface PrecinctPassResult {
   readonly declarations: readonly PrecinctDeclaration[];
 }
 
-/** One precinct's ground works, as §3.1b declares them. */
-export interface PrecinctDeclaration {
+/**
+ * One precinct's ground works, as §3.1b declares them — and, since WP-G3, a
+ * {@link PlaneDatum}.
+ *
+ * The two were always the same three fields; the contract v1 §1.3 gives them a
+ * name and a law. `PrecinctDeclaration` **extends** the datum rather than
+ * holding one, so `structures/index.ts` reads the identical `nodePath`,
+ * `columns` and `planeY` it read before and the formalisation costs no wiring:
+ * a `RetainingPlane` *is* a `PlaneDatum` with a different audience.
+ *
+ * `planeY` is the level the kit graded every one of `columns` to. The whole of
+ * wave 12E on this side: a `PrecinctDeclaration` is already the list of columns
+ * a non-district pass levelled, and with the plane's own level beside it the
+ * record is R1's "every pass that levels ground to a plane owes the boundary
+ * between that plane and the ground it did not level". The caller hands these
+ * to `buildRetainingWalls` and `finishCutFaces`; nothing in this pass reads it.
+ */
+export interface PrecinctDeclaration extends PlaneDatum {
   readonly nodePath: string;
   readonly columns: readonly GroundClaim[];
-  /**
-   * The level the kit graded every one of {@link columns} to.
-   *
-   * The whole of wave 12E on this side: a `PrecinctDeclaration` is already the
-   * list of columns a non-district pass levelled, and with the plane's own level
-   * beside it the record *is* a `RetainingPlane` — R1's "every pass that levels
-   * ground to a plane owes the boundary between that plane and the ground it did
-   * not level". The caller (`structures/index.ts`) hands these to
-   * `buildRetainingWalls` and `finishCutFaces`; nothing in this pass reads it.
-   */
   readonly planeY: number;
 }
 
@@ -524,7 +531,18 @@ export function buildPrecincts(input: PrecinctPassInput): PrecinctPassResult {
     anchorPaths.push(job.nodePath);
     if (out.relocation !== undefined) relocations.set(job.nodePath, out.relocation);
     if (out.claims.length > 0) {
-      declarations.push({ nodePath: job.nodePath, columns: out.claims, planeY: out.planeY });
+      // **The plane datum** (contract v1 §1.3, §1.5's `precinct.ground` row).
+      // The kit decided this level from its own geometry — `QUAY_DEPTH` under
+      // the waterline it found, the apron rect an airport needs flat — never by
+      // reading a plan, which is why G8 lets it *anchor* a datum rather than
+      // measure one. The claim below takes its level from here rather than from
+      // a pad already sitting in the baseline.
+      const datum: PlaneDatum = {
+        nodePath: job.nodePath,
+        columns: out.claims,
+        planeY: out.planeY,
+      };
+      declarations.push(datum);
       // §3.1b — one `platform` per precinct kit, at the level it graded its
       // apron, taxiway, quay and forecourt to, committed as soon as the kit is
       // laid out so the next precinct measures the ground this one left.
@@ -535,10 +553,13 @@ export function buildPrecincts(input: PrecinctPassInput): PrecinctPassResult {
       // `precinct.harbour@0`.
       driver.commit([
         {
-          source: job.nodePath,
+          source: datum.nodePath,
           sourceClass: "precinct.ground",
           kind: "platform",
-          columns: out.claims,
+          // The datum's columns, each already carrying `planeLevel(datum)` —
+          // the kit levelled them to it and recorded them at it in one step, so
+          // there is one arithmetic here and not two (§1.3).
+          columns: datum.columns,
           transition: "ramp",
         },
       ]);

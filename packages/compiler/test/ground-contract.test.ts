@@ -15,17 +15,25 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  DEFERRED_PAD_RANK,
   GROUND_SOURCE_CLASSES,
   GROUND_TIERS,
   INTENT_RANK,
   LEGAL_KINDS,
   compareIntent,
   isLegalKind,
+  rankOf,
   type GroundIntent,
   type GroundIntentKind,
   type GroundSourceClass,
   type GroundTier,
 } from "../src/layout/ground-contract.js";
+import {
+  FRONTAGE_TIE,
+  GROUND_PLANE_TIE,
+  GROUND_V1_RANKS,
+  SEAM_TIERS,
+} from "../src/layout/types.js";
 import { compareStreetRank, type StreetRank } from "../src/structures/street-owner.js";
 
 const intent = (
@@ -52,7 +60,9 @@ describe("INTENT_RANK", () => {
     // members so an entry for a class that is not in the union also fails.
     const ranked = Object.keys(INTENT_RANK).sort();
     expect(ranked).toEqual([...GROUND_SOURCE_CLASSES].sort());
-    // 18 since F17 inserted `farm.parcel` at 125 (`docs/FARM-PLAN-v0.md` §5.3).
+    // 18: F17 inserted `farm.parcel` at 125 (`docs/FARM-PLAN-v0.md` §5.3), and
+    // WP-G3 traded `pad.record` for `quarter.plane` one for one
+    // (`docs/GROUND-CONTRACT-v1.md` §1.5).
     expect(GROUND_SOURCE_CLASSES).toHaveLength(18);
     for (const cls of GROUND_SOURCE_CLASSES) {
       expect(Number.isInteger(INTENT_RANK[cls])).toBe(true);
@@ -77,12 +87,16 @@ describe("INTENT_RANK", () => {
       expect(at).toBeGreaterThanOrEqual(cursor);
       cursor = at;
     }
-    // The tiers named in §4.2 all appear; none is empty.
-    expect([...new Set(seen)]).toEqual(tiers);
+    // The tiers named in §4.2 all appear except E, which WP-G3 emptied by
+    // deleting its one class. The letter stays in the type (v1 §1.6 resolves
+    // one tier at a time and an empty tier is a free resolve); what a test may
+    // not do is stop noticing that it is empty.
+    expect([...new Set(seen)]).toEqual(["A", "B", "C", "D"]);
+    expect(GROUND_SOURCE_CLASSES.filter((c) => GROUND_TIERS[c] === "E")).toEqual([]);
     // Spot-check the two ends and the inversions' hinge (§4.4 I1): a face beats
     // a street, which beats a road, a doorstep and a verge.
     expect(INTENT_RANK["fluid.channel"]).toBe(0);
-    expect(INTENT_RANK["pad.record"]).toBe(150);
+    expect(INTENT_RANK.verge).toBe(140);
     expect(INTENT_RANK["retaining.seam"]).toBeLessThan(INTENT_RANK["street.network"]);
     expect(INTENT_RANK["retaining.skirt"]).toBeLessThan(INTENT_RANK["street.sidewalk"]);
     expect(INTENT_RANK["street.network"]).toBeLessThan(INTENT_RANK["road.network"]);
@@ -249,7 +263,6 @@ describe("structure.linework (GROUND-CONTRACT §13.2a)", () => {
       "farm.parcel",
       "prop.pad",
       "verge",
-      "pad.record",
     ] as const) {
       expect(INTENT_RANK["structure.linework"]).toBeLessThan(INTENT_RANK[loser]);
     }
@@ -259,7 +272,16 @@ describe("structure.linework (GROUND-CONTRACT §13.2a)", () => {
     const beaters = GROUND_SOURCE_CLASSES.filter(
       (cls) => INTENT_RANK[cls] < INTENT_RANK["structure.linework"],
     );
-    expect([...beaters]).toEqual(["fluid.channel", "building.footprint", "precinct.ground"]);
+    // Four since WP-G3: `quarter.plane` (15) joins the three §13.2a rule 7
+    // named, between the footprint and the precinct. A bed under a quarter's
+    // own plane is the quarter's, which is the same answer rule 7 gives the
+    // precinct apron for the same reason.
+    expect([...beaters]).toEqual([
+      "fluid.channel",
+      "building.footprint",
+      "quarter.plane",
+      "precinct.ground",
+    ]);
   });
 
   it("accepts `platform`, `profile`, `clearance` and `preserve` and REJECTS `face`", () => {
@@ -271,5 +293,118 @@ describe("structure.linework (GROUND-CONTRACT §13.2a)", () => {
     }
     expect(isLegalKind("face", "structure.linework")).toBe(false);
     expect([...LEGAL_KINDS.face]).not.toContain("structure.linework");
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* WP-G3 — `quarter.plane` arrives and `pad.record` is deleted                 */
+/* -------------------------------------------------------------------------- */
+
+describe("quarter.plane (GROUND-CONTRACT-v1 §1.5, WP-G3)", () => {
+  it("sits at 15, strictly between the footprint (10) and the precinct (20), in tier A", () => {
+    expect(INTENT_RANK["quarter.plane"]).toBe(15);
+    expect(INTENT_RANK["quarter.plane"]).toBeGreaterThan(INTENT_RANK["building.footprint"]);
+    expect(INTENT_RANK["quarter.plane"]).toBeLessThan(INTENT_RANK["precinct.ground"]);
+    expect(INTENT_RANK["building.footprint"]).toBe(10);
+    expect(INTENT_RANK["precinct.ground"]).toBe(20);
+    expect(GROUND_TIERS["quarter.plane"]).toBe("A");
+  });
+
+  it("outranks the plaza, the courtyard, the seam, the street and the sidewalk it carries", () => {
+    // §1.5's justification, as an assertion: a quarter's platform run is the
+    // thing all five are laid *on*, so all five must lose to it.
+    for (const carried of [
+      "plaza.ground",
+      "plaza.well",
+      "courtyard.floor",
+      "retaining.seam",
+      "retaining.skirt",
+      "street.network",
+      "street.sidewalk",
+      "verge",
+    ] as const) {
+      expect(INTENT_RANK["quarter.plane"]).toBeLessThan(INTENT_RANK[carried]);
+    }
+  });
+
+  it("accepts `platform` and `preserve` — the two kinds its declarer uses", () => {
+    for (const kind of ["platform", "profile", "clearance", "preserve"] as const) {
+      expect(isLegalKind(kind, "quarter.plane")).toBe(true);
+      expect(isLegalKind(kind, "building.footprint")).toBe(true);
+    }
+    // A face is a declared cut and only the two retaining declarers know one.
+    expect(isLegalKind("face", "quarter.plane")).toBe(false);
+    expect(isLegalKind("face", "building.footprint")).toBe(false);
+  });
+});
+
+describe("pad.record is gone from all four places (v1 §8/G3)", () => {
+  // The class removed from one table and left in another is exactly the failure
+  // `agent-defs.test.ts` was written for: it type-checks, it runs, and the
+  // arbitration is silently wrong. So: the union (via the value list, which the
+  // `satisfies` clause pins to it), the ranks, the tiers, and `LEGAL_KINDS`.
+  const GONE = "pad.record";
+
+  it("is absent from GROUND_SOURCE_CLASSES and therefore from GroundSourceClass", () => {
+    expect([...GROUND_SOURCE_CLASSES]).not.toContain(GONE);
+  });
+
+  it("is absent from INTENT_RANK and GROUND_TIERS", () => {
+    expect(Object.keys(INTENT_RANK)).not.toContain(GONE);
+    expect(Object.keys(GROUND_TIERS)).not.toContain(GONE);
+  });
+
+  it("is absent from every LEGAL_KINDS row", () => {
+    for (const kind of Object.keys(LEGAL_KINDS) as GroundIntentKind[]) {
+      expect([...LEGAL_KINDS[kind]]).not.toContain(GONE);
+    }
+  });
+
+  it("leaves no rank at 150 in the table — only in the flag-off lookup", () => {
+    expect(GROUND_SOURCE_CLASSES.map((c) => INTENT_RANK[c])).not.toContain(DEFERRED_PAD_RANK);
+    expect(DEFERRED_PAD_RANK).toBe(150);
+  });
+});
+
+describe("rankOf — the flag-off deferral (v1 §6/G3)", () => {
+  it("agrees with INTENT_RANK on every class the flag does not gate", () => {
+    for (const cls of GROUND_SOURCE_CLASSES) {
+      if (cls === "building.footprint" || cls === "quarter.plane") continue;
+      expect(rankOf(cls)).toBe(INTENT_RANK[cls]);
+    }
+    // `precinct.ground` is emphatically not gated: it is a shipped rank-20
+    // declarer and was never a pad record, so deferring it would move worlds in
+    // the flag's off state.
+    expect(rankOf("precinct.ground")).toBe(20);
+  });
+
+  it("puts the two pad classes where `pad.record` used to arbitrate while the flag is off", () => {
+    const deferred = GROUND_V1_RANKS ? INTENT_RANK : { "building.footprint": 150, "quarter.plane": 150 };
+    expect(rankOf("building.footprint")).toBe(deferred["building.footprint"]);
+    expect(rankOf("quarter.plane")).toBe(deferred["quarter.plane"]);
+    // …and `compareIntent` reads the lookup, not the table: with the flag off a
+    // pad must not take a column from a street, a seam or a verge.
+    const pad = intent("a.pad", "quarter.plane");
+    for (const cls of ["retaining.seam", "street.network", "street.sidewalk", "verge"] as const) {
+      const other = intent("b.other", cls);
+      expect(compareIntent(pad, other) > 0).toBe(!GROUND_V1_RANKS);
+    }
+  });
+});
+
+describe("the v1 flag ladder (§6)", () => {
+  it("ships with GROUND_V1_RANKS off — the byte-identical state", () => {
+    expect(GROUND_V1_RANKS).toBe(false);
+  });
+
+  it("is implied by every flag below it", () => {
+    // §6: "Each implies the ones above it and a test asserts the ordering,
+    // exactly as G9 does for `GROUND_PLANE_TIE ⟹ FRONTAGE_TIE`." Three of the
+    // four flags do not exist yet; the two that do are checked here, and
+    // WP-G4's `GROUND_V1_SEAMS ⟹ GROUND_V1_RANKS` joins this list when its
+    // wave lands. The existing rung is restated so the pattern has a
+    // precedent in the same file.
+    expect(GROUND_PLANE_TIE ? FRONTAGE_TIE : true).toBe(true);
+    expect(GROUND_V1_RANKS ? SEAM_TIERS && GROUND_PLANE_TIE : true).toBe(true);
   });
 });

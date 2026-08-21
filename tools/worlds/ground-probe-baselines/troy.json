@@ -13,15 +13,19 @@
   },
   "ownedColumns": 40349,
   "intents": {
-    "total": 3065,
+    "total": 3107,
     "byClass": [
       {
-        "name": "pad.record",
-        "n": 2405
+        "name": "quarter.plane",
+        "n": 2363
       },
       {
         "name": "retaining.seam",
         "n": 590
+      },
+      {
+        "name": "building.footprint",
+        "n": 84
       },
       {
         "name": "verge",
@@ -47,8 +51,12 @@
   },
   "columnsWonByClass": [
     {
-      "name": "pad.record",
-      "n": 23068
+      "name": "quarter.plane",
+      "n": 16071
+    },
+    {
+      "name": "building.footprint",
+      "n": 6997
     },
     {
       "name": "street.network",
@@ -226,13 +234,13 @@
       "max": 7
     },
     {
-      "pair": "retaining.seam over pad.record",
+      "pair": "retaining.seam over quarter.plane",
       "n": 713,
       "avg": 3.2,
       "max": 14
     },
     {
-      "pair": "street.sidewalk over pad.record",
+      "pair": "street.sidewalk over quarter.plane",
       "n": 447,
       "avg": 3.5,
       "max": 14
@@ -244,7 +252,7 @@
       "max": 20
     },
     {
-      "pair": "natural over pad.record",
+      "pair": "natural over quarter.plane",
       "n": 203,
       "avg": 2.6,
       "max": 5
@@ -274,7 +282,7 @@
       "max": 7
     },
     {
-      "pair": "pad.record over pad.record",
+      "pair": "quarter.plane over quarter.plane",
       "n": 59,
       "avg": 4,
       "max": 4
@@ -298,13 +306,13 @@
       "max": 10
     },
     {
-      "pair": "pad.record over retaining.seam",
+      "pair": "quarter.plane over retaining.seam",
       "n": 39,
       "avg": 2.8,
       "max": 4
     },
     {
-      "pair": "verge over pad.record",
+      "pair": "verge over quarter.plane",
       "n": 38,
       "avg": 4.4,
       "max": 9
@@ -322,7 +330,7 @@
       "max": 13
     },
     {
-      "pair": "pad.record over street.sidewalk",
+      "pair": "quarter.plane over street.sidewalk",
       "n": 26,
       "avg": 4.5,
       "max": 10
@@ -352,7 +360,7 @@
       "max": 4
     },
     {
-      "pair": "pad.record over verge",
+      "pair": "quarter.plane over verge",
       "n": 12,
       "avg": 4.6,
       "max": 7
@@ -395,9 +403,131 @@
     }
   ],
   "buildingSeats": {
-    "count": 0,
-    "sinkHist": [],
-    "worst": []
+    "count": 26,
+    "sinkHist": [
+      {
+        "delta": 0,
+        "n": 18
+      },
+      {
+        "delta": 3,
+        "n": 6
+      },
+      {
+        "delta": 4,
+        "n": 2
+      }
+    ],
+    "worst": [
+      {
+        "source": "world.troy_citadel.infill_109_-208#pad@2382",
+        "floorY": 84,
+        "ringMed": 88,
+        "ringMax": 88,
+        "sink": 4,
+        "worst": 4,
+        "n": 117
+      },
+      {
+        "source": "world.troy_citadel.infill_109_-208#pad@2382#preserve",
+        "floorY": 84,
+        "ringMed": 88,
+        "ringMax": 88,
+        "sink": 4,
+        "worst": 4,
+        "n": 117
+      },
+      {
+        "source": "world.troy_citadel.infill_214_-140#pad@2404",
+        "floorY": 72,
+        "ringMed": 75,
+        "ringMax": 75,
+        "sink": 3,
+        "worst": 3,
+        "n": 176
+      },
+      {
+        "source": "world.troy_citadel.infill_214_-140#pad@2404#preserve",
+        "floorY": 72,
+        "ringMed": 75,
+        "ringMax": 75,
+        "sink": 3,
+        "worst": 3,
+        "n": 176
+      },
+      {
+        "source": "world.troy_citadel.infill_94_-208#pad@2381",
+        "floorY": 84,
+        "ringMed": 87,
+        "ringMax": 87,
+        "sink": 3,
+        "worst": 3,
+        "n": 117
+      },
+      {
+        "source": "world.troy_citadel.infill_94_-208#pad@2381#preserve",
+        "floorY": 84,
+        "ringMed": 87,
+        "ringMax": 87,
+        "sink": 3,
+        "worst": 3,
+        "n": 117
+      },
+      {
+        "source": "world.troy_citadel.infill_94_-221#pad@2378",
+        "floorY": 84,
+        "ringMed": 87,
+        "ringMax": 87,
+        "sink": 3,
+        "worst": 3,
+        "n": 99
+      },
+      {
+        "source": "world.troy_citadel.infill_94_-221#pad@2378#preserve",
+        "floorY": 84,
+        "ringMed": 87,
+        "ringMax": 87,
+        "sink": 3,
+        "worst": 3,
+        "n": 99
+      },
+      {
+        "source": "world.troy_citadel.terrace_48_-187#pad@2369",
+        "floorY": 81,
+        "ringMed": 81,
+        "ringMax": 85,
+        "sink": 0,
+        "worst": 4,
+        "n": 264
+      },
+      {
+        "source": "world.troy_citadel.terrace_48_-187#pad@2369#preserve",
+        "floorY": 81,
+        "ringMed": 81,
+        "ringMax": 85,
+        "sink": 0,
+        "worst": 4,
+        "n": 264
+      },
+      {
+        "source": "world.troy_citadel.infill_77_-226#pad@2376",
+        "floorY": 84,
+        "ringMed": 84,
+        "ringMax": 87,
+        "sink": 0,
+        "worst": 3,
+        "n": 90
+      },
+      {
+        "source": "world.troy_citadel.infill_77_-226#pad@2376#preserve",
+        "floorY": 84,
+        "ringMed": 84,
+        "ringMax": 87,
+        "sink": 0,
+        "worst": 3,
+        "n": 90
+      }
+    ]
   },
   "streetFlank": [
     {
@@ -549,7 +679,7 @@
       ]
     },
     {
-      "name": "pad.record",
+      "name": "quarter.plane",
       "n": 4,
       "byDelta": [
         {
@@ -581,7 +711,7 @@
             "n": 237
           },
           {
-            "name": "retaining.seam/pad.record",
+            "name": "retaining.seam/quarter.plane",
             "n": 177
           }
         ]
@@ -593,7 +723,7 @@
         "cz": -117,
         "topKinds": [
           {
-            "name": "retaining.seam/pad.record",
+            "name": "retaining.seam/quarter.plane",
             "n": 89
           },
           {
@@ -613,7 +743,7 @@
         "cz": -232,
         "topKinds": [
           {
-            "name": "retaining.seam/pad.record",
+            "name": "retaining.seam/quarter.plane",
             "n": 146
           },
           {
@@ -621,7 +751,7 @@
             "n": 77
           },
           {
-            "name": "natural/pad.record",
+            "name": "natural/quarter.plane",
             "n": 10
           }
         ]
@@ -633,7 +763,7 @@
         "cz": -163,
         "topKinds": [
           {
-            "name": "retaining.seam/pad.record",
+            "name": "retaining.seam/quarter.plane",
             "n": 88
           },
           {
@@ -641,7 +771,7 @@
             "n": 47
           },
           {
-            "name": "natural/pad.record",
+            "name": "natural/quarter.plane",
             "n": 23
           }
         ]
@@ -657,7 +787,7 @@
             "n": 81
           },
           {
-            "name": "street.sidewalk/pad.record",
+            "name": "street.sidewalk/quarter.plane",
             "n": 34
           },
           {
@@ -673,7 +803,7 @@
         "cz": -244,
         "topKinds": [
           {
-            "name": "retaining.seam/pad.record",
+            "name": "retaining.seam/quarter.plane",
             "n": 98
           },
           {
@@ -681,7 +811,7 @@
             "n": 35
           },
           {
-            "name": "street.sidewalk/pad.record",
+            "name": "street.sidewalk/quarter.plane",
             "n": 22
           }
         ]

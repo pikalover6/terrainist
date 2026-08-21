@@ -108,7 +108,7 @@ import type {
   GroundEquivalenceOutcome,
   GroundPristineMeasurement,
 } from "../layout/ground-equivalence.js";
-import { declarePadEdits } from "../structures/ground-declare.js";
+import { declarePads } from "../layout/ground-declarers.js";
 import { createGroundDriver, type GroundDriver } from "../layout/ground-driver.js";
 
 import { EMIT_MINECRAFT_VERSION } from "../emit/world.js";
@@ -936,10 +936,23 @@ async function compileValidated(
     layoutOutcome !== undefined &&
     layoutOutcome.placements.length > 0
   ) {
-    // §9a.1 rule 1's one exception of timing: `declarePadEdits` records *before*
-    // the first structure pass, because its "pass" is the layout solver and the
-    // field already carries its answer (§3.12).
-    groundDriver.record(declarePadEdits(plan, layoutOutcome.padEdits));
+    // **The layout stage's declarations** (contract v1 §1.5, WP-G3). Before the
+    // first structure pass, because the pass that decided these levels is the
+    // layout solver and the fabric, both of which finished two stages ago — and
+    // because tier A declares first, which is the order §1.6 makes law at G6.
+    //
+    // `record` rather than `commit` for one stage more: the field already
+    // carries these levels, so there is nothing to write through, and the write
+    // half is what G6 deletes outright.
+    groundDriver.record(
+      declarePads({
+        region: plan.region,
+        padEdits: layoutOutcome.padEdits,
+        districts: layoutOutcome.districts ?? [],
+        cities: layoutOutcome.cities ?? [],
+        corridors,
+      }),
+    );
     structures = buildStructures({
       doc,
       worldSeed,

@@ -26,12 +26,12 @@ const distUrl = new URL("../../packages/compiler/dist/index.js", import.meta.url
 /* class letters for the ASCII maps (text mode only)                          */
 /* -------------------------------------------------------------------------- */
 const CLS = {
-  "fluid.channel": "C", "building.footprint": "B", "precinct.ground": "P",
+  "fluid.channel": "C", "building.footprint": "B", "quarter.plane": "Q", "precinct.ground": "P",
   "structure.linework": "L", "plaza.ground": "Z", "plaza.well": "w",
   "courtyard.floor": "Y", "retaining.seam": "S", "retaining.skirt": "K",
   "street.network": "R", "street.sidewalk": "W", "road.network": "D",
   "sweep.run": "V", "doorstep.landing": "T", "farm.parcel": "F",
-  "prop.pad": "O", "verge": "G", "pad.record": "A",
+  "prop.pad": "O", "verge": "G",
 };
 
 const DECOR = new Set(["short_grass","tall_grass","grass","fern","large_fern","dandelion","poppy","azure_bluet","oxeye_daisy","cornflower","lily_of_the_valley","allium","blue_orchid","tulip","red_tulip","white_tulip","orange_tulip","pink_tulip","torch","lantern","wall_torch","snow","dead_bush","sweet_berry_bush","air","cave_air","vine","pink_petals","wildflowers","bush","firefly_bush","short_dry_grass","tall_dry_grass","leaf_litter","oak_leaves","birch_leaves","spruce_leaves","jungle_leaves","acacia_leaves","dark_oak_leaves","cherry_leaves","azalea_leaves","flowering_azalea_leaves","mangrove_leaves","pale_oak_leaves","oak_log","birch_log","spruce_log","jungle_log","acacia_log","dark_oak_log","cherry_log","pale_oak_log","mangrove_log","oak_sapling","banner","white_banner","red_banner","blue_banner","candle","flower_pot","potted_poppy","scaffolding","ladder","chain","iron_bars","oak_fence","spruce_fence","birch_fence","rail"]);

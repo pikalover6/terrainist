@@ -295,6 +295,22 @@ export interface PadEdit {
    * exactly the scalar `apron` on all four sides.
    */
   readonly apronBySide?: ApronBySide;
+  /**
+   * **Which v1 ground class this pad's level becomes a claim of** — the
+   * contract v1 §2's `PadEdit` row, as a discriminator rather than as a guess.
+   *
+   * WP-G3 turns the pad list into real declarations, and the three fabric pad
+   * sites in `layout/district.ts` mean three different things: a bench run and a
+   * derived platform are a **quarter's plane** (rank 15), a per-lot pad is a
+   * **building's footprint** (rank 10). Nothing outside the list can tell them
+   * apart — a bench pad and a lot pad differ only in whose `nodePath` they carry
+   * — so the pass that knows says so here.
+   *
+   * Omitted on the solver's own pads (`padFor`), which is exactly the reading
+   * `layout/ground-declarers.ts` gives an absent field: a node-scale pad under a
+   * placed structure, i.e. `building.footprint`.
+   */
+  readonly claimClass?: "building.footprint" | "quarter.plane";
 }
 
 /**
@@ -555,3 +571,36 @@ export const GROUND_PLANE_TIE = true;
  * 12F, when the flag was flipped.
  */
 export const GROUND_TIE_SPAN = 4;
+
+/* -------------------------------------------------------------------------- */
+/* the ground contract v1 flag ladder — `docs/GROUND-CONTRACT-v1.md` §6         */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * **WP-G3's switch: the pads arbitrate at their real ranks.**
+ *
+ * v1 §1.5 fills the two empty classes. A lot pad's footprint half declares
+ * `building.footprint` (rank 10) at its seat level; a quarter's platform runs
+ * declare the new `quarter.plane` (rank 15) at the elected level, less the
+ * solved carriageway band (§1.7). Both carry those names from the moment they
+ * are written — the report and the probe read the truth either way.
+ *
+ * What this gates is only **where those names sit in the order**
+ * (`rankOf`, `layout/ground-contract.ts`):
+ *
+ * - **`false`** — the shipped state. Both classes arbitrate at
+ *   `DEFERRED_PAD_RANK` (150), the position `declarePadEdits`' deleted
+ *   `pad.record` record held, so nothing wins differently and every world is
+ *   byte-identical to WP-G2. §6/G3's off-state acceptance.
+ * - **`true`** — 10 and 15. A pad stops being bookkeeping over a decision
+ *   already baked into the baseline and becomes a claim that can take a column
+ *   from a seam, a sidewalk or a verge — and, being tier A, one that a street
+ *   cannot take back. §6/G3's on-state comparison.
+ *
+ * **The ladder is ordered and the order is a test** (§6): `GROUND_V1_SEAMS`,
+ * `GROUND_V1_FREEZE` and `GROUND_V1_PRISTINE` each imply this one, exactly as
+ * {@link GROUND_PLANE_TIE} implies {@link FRONTAGE_TIE}. They do not exist yet;
+ * when WP-G4 adds the first of them, its implication joins
+ * `test/ground-contract.test.ts` beside this one's.
+ */
+export const GROUND_V1_RANKS = false;

@@ -64,7 +64,7 @@ import {
 import type { PrismarineStack } from "../emit/prismarine.js";
 import type { Rect } from "../layout/frames.js";
 import {
-  INTENT_RANK,
+  rankOf,
   type GroundClaim,
   type GroundIntent,
   type GroundTransition,
@@ -767,12 +767,16 @@ export function scanOf(input: FarmPassInput): FarmScan {
   const view = input.ground.view();
   const columns = region.width * region.depth;
   const stronger = new Uint8Array(columns);
-  const rank = INTENT_RANK["farm.parcel"];
+  const rank = rankOf("farm.parcel");
   for (const intent of input.ground.intents) {
     // Level claims only: `clearance` and `preserve` propose no level of their
     // own (ground contract §2.2), so a column named only by those is nobody's.
     if (intent.kind !== "platform" && intent.kind !== "profile" && intent.kind !== "face") continue;
-    if (INTENT_RANK[intent.sourceClass] >= rank) continue;
+    // `rankOf`, not `INTENT_RANK`: WP-G3's two new classes arbitrate at
+    // `DEFERRED_PAD_RANK` while `GROUND_V1_RANKS` is off, and a field that read
+    // the *table* would start yielding to a lot pad a stage before the pads
+    // start winning anything (contract v1 §6/G3).
+    if (rankOf(intent.sourceClass) >= rank) continue;
     for (const claim of intent.columns) stronger[claim.idx] = 1;
   }
   const occupied = new Uint8Array(columns);

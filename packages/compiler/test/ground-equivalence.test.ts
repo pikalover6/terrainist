@@ -49,7 +49,22 @@ import { compileTerrain } from "../src/terrain/compile.js";
 /* -------------------------------------------------------------------------- */
 
 /** Zero everywhere unless a world's golden says otherwise. */
-const NONE: InversionCounts = { I1: 0, I2: 0, I3: 0, I4: 0, I5: 0, I6: 0, I7: 0 };
+const NONE: InversionCounts = {
+  I1: 0,
+  I2: 0,
+  I3: 0,
+  I4: 0,
+  I5: 0,
+  I6: 0,
+  I7: 0,
+  // The ground contract v1 §6/WP-G3's four. Zero on every world while
+  // `GROUND_V1_RANKS` is off — which is what "nothing wins differently" means
+  // measured rather than asserted.
+  I8: 0,
+  I9: 0,
+  I10: 0,
+  I11: 0,
+};
 
 interface WorldCase {
   readonly name: string;
@@ -367,6 +382,12 @@ describe("the ground contract's equivalence shim", () => {
   });
 
   it("the tolerated table is §8.5's, and no row was added to make a world pass", () => {
+    // I1–I7 are §8.5's; I8–I11 are the ground contract v1 §6/WP-G3's four,
+    // allocated in that document so two concurrent waves cannot pick the same
+    // id, and written here with the rows they belong beside rather than at the
+    // flip — a row added to make a world pass is what §8.5's closing line
+    // exists to prevent, and a row *deferred* until it is needed is the same
+    // failure wearing a schedule.
     expect(TOLERATED_INVERSIONS.map((r) => r.id)).toEqual([
       "I1",
       "I2",
@@ -375,7 +396,15 @@ describe("the ground contract's equivalence shim", () => {
       "I5",
       "I6",
       "I7",
+      "I8",
+      "I9",
+      "I10",
+      "I11",
     ]);
+    // I11 is the deletion of `pad.record` recorded in the place a reader will
+    // look for it: no winners, no losers, matches nothing, counts zero.
+    expect(TOLERATED_INVERSIONS.find((r) => r.id === "I11")?.winners).toEqual([]);
+    expect(TOLERATED_INVERSIONS.find((r) => r.id === "I11")?.losers).toEqual([]);
     expect(TOLERATED_INVERSIONS.find((r) => r.id === "I7")?.expectZero).toBe(true);
     expect(TOLERATED_INVERSIONS.find((r) => r.id === "I6")?.maxDelta).toBe(7);
   });

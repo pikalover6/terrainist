@@ -2009,7 +2009,14 @@ export function layDistrict(
   // form but `terraced`) leaves both of these empty and nothing below changes.
   for (const bench of plan.benches ?? []) {
     for (const run of bench.runs) {
-      padEdits.push({ nodePath, footprint: run, targetY: bench.level, apron: 0 });
+      padEdits.push({
+        nodePath,
+        footprint: run,
+        targetY: bench.level,
+        apron: 0,
+        // v1 §1.5: a bench run *is* the quarter's decided plane.
+        claimClass: "quarter.plane",
+      });
     }
   }
   // The **derived** platforms of a `"stepped"` quarter (§3.3). Levelled from
@@ -2023,7 +2030,16 @@ export function layDistrict(
   if (derived.length > 0 && levels !== null) {
     for (const [platform, runs] of levels.runs.entries()) {
       const targetY = levels.levelY[platform] as number;
-      for (const run of runs) padEdits.push({ nodePath, footprint: run, targetY, apron: 0 });
+      for (const run of runs) {
+        padEdits.push({
+          nodePath,
+          footprint: run,
+          targetY,
+          apron: 0,
+          // …and so is a derived platform: `PlatformDatum`'s elected level.
+          claimClass: "quarter.plane",
+        });
+      }
     }
   }
 
@@ -2136,6 +2152,8 @@ export function layDistrict(
       footprint: rect,
       targetY: foundationY,
       apron: touchesSeam(rect) ? 0 : BUILDING_APRON,
+      // v1 §1.5: the footprint half of the lot pad, at `SeatDatum`'s level.
+      claimClass: "building.footprint",
     });
     params.set(item.nodePath, item.params);
   }

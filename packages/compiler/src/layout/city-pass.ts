@@ -419,10 +419,28 @@ function layCity(
     // next cell's pinned ground.
     const ramp = largestRect(cell.bounds, cell.mask);
     if (ramp !== null) {
-      padEdits.push({ nodePath: cellPath, footprint: ramp, targetY: foundationY, apron: 6 });
+      padEdits.push({
+        nodePath: cellPath,
+        footprint: ramp,
+        targetY: foundationY,
+        apron: 6,
+        // Ground contract v1 §1.5: a cell's terrace *is* the quarter's plane,
+        // and it is emphatically not a building's footprint — it is the whole
+        // cell. Tagged here for the same reason `layDistrict`'s three sites
+        // are: nothing outside the pad list can tell a quarter-scale pad from
+        // a lot-scale one, and at rank 10 a mis-tagged cell terrace would take
+        // its own boulevard.
+        claimClass: "quarter.plane",
+      });
     }
     for (const run of maskRuns(cell.bounds, cell.mask)) {
-      padEdits.push({ nodePath: cellPath, footprint: run, targetY: foundationY, apron: 0 });
+      padEdits.push({
+        nodePath: cellPath,
+        footprint: run,
+        targetY: foundationY,
+        apron: 0,
+        claimClass: "quarter.plane",
+      });
     }
 
     const sidewalk = SIDEWALK_BY_DENSITY[cell.density] ?? 1;
@@ -638,7 +656,15 @@ function seatSetPieces(args: SeatInput): SeatResult {
     // the one strip of a city nobody levels — a cell's terrace stops at the
     // kerb — so without this the building would sit on whatever the router
     // happened to climb over on its way to the boundary.
-    padEdits.push({ nodePath: childPath, footprint: rect, targetY: foundationY, apron: 2 });
+    padEdits.push({
+      nodePath: childPath,
+      footprint: rect,
+      targetY: foundationY,
+      apron: 2,
+      // …and a city landmark's own pad is a footprint, exactly as the
+      // district's lot pads are (v1 §1.5's `building.footprint` row).
+      claimClass: "building.footprint",
+    });
     params.set(childPath, nodeParams);
     return rect;
   };
