@@ -314,7 +314,14 @@ describe("the descent registers as the flight (§4.2)", () => {
     );
     // Every column the descent solved carries the solved level, in stand units
     // — the one `+1` between the solver's top-block convention and a flight's.
-    const runs = d.bySegment.get("flight") as readonly {
+    // **The flight nothing named.** Since the WP-D3 amendment a demand is a
+    // face plus two opposing stations — the plateau street and the bench street
+    // here — so the run carries the descent's own id and the surfacer registers
+    // it as a `steps` member of the street family that no segment ever named.
+    // The router's own `flight` is superseded on a claimed face (§5.3), which
+    // is why the two declarations differ above.
+    const demandId = (d.recognition.demands[0] as { segmentId: string }).segmentId;
+    const runs = d.bySegment.get(demandId) as readonly {
       columns: readonly number[];
       levels: readonly number[];
     }[];
@@ -331,7 +338,7 @@ describe("the descent registers as the flight (§4.2)", () => {
         want.set(`${R.x0 + a},${R.z0 + (idx - a) / R.width}`, r.levels[i] as number);
       }
     }
-    const id = qualifySegmentId("flight", QUARTER);
+    const id = qualifySegmentId(demandId, QUARTER);
     const laid = on.declaration.segments.find((s) => s.id === id);
     expect(laid, "the flight was refused whole").toBeDefined();
     expect((laid as { role: string }).role).toBe("steps");

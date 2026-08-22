@@ -51,7 +51,7 @@ import {
 } from "./descent-solve.js";
 import type { StreetGraph } from "./streets.js";
 import { materialisedGround, type StreetDatum } from "./street-datum.js";
-import { DESCENT_SOLVE } from "./types.js";
+import { DESCENT_REACH, DESCENT_SOLVE } from "./types.js";
 
 /** What {@link solveDescents} needs. Everything, and nothing else (§4.1). */
 export interface DescentDatumInput {
@@ -254,16 +254,42 @@ export function solveDescents(input: DescentDatumInput): DescentDatum {
   const faceById = new Map<number, ScarpFace>();
   for (const face of recognition.faces) faceById.set(face.id, face);
 
+  /**
+   * **Columns a descent has already taken** — §6.2's "no colliding independent
+   * stairs", made impossible rather than measured.
+   *
+   * A group is one object and its branches join its trunk's landings, so
+   * nothing inside a group can collide. Two *groups* on one long face are two
+   * objects — §1.4's whole point, a cliff two hundred columns long serving two
+   * quarters — and nothing in the search stops the second from walking across
+   * the first. So it does: a solved descent's columns join T4's forbiddance for
+   * every group after it, in `recognition.groups`' own order, which is
+   * ascending face id and then ascending senior terminal. The order is a fact
+   * about the recognition, so the answer is still a pure function of the input.
+   */
+  const taken = new Uint8Array(cells);
+  let anyTaken = false;
+
   for (const group of recognition.groups) {
     const face = faceById.get((group[0] as DescentDemand).faceId);
     if (face === undefined) continue;
+    const blocked =
+      legal === undefined && !anyTaken
+        ? undefined
+        : (idx: number): boolean => (legal === undefined || legal(idx)) && taken[idx] !== 1;
     const solved = solveDescent({
       region,
       h,
       face,
       group,
-      ...(legal === undefined ? {} : { legal }),
+      ...(blocked === undefined ? {} : { legal: blocked }),
     });
+    for (const run of solved.runs) {
+      for (const k of run.columns) {
+        taken[k] = 1;
+        anyTaken = true;
+      }
+    }
     descents.push(solved);
     for (const refusal of solved.refused) {
       refusals.push({ reason: refusal.reason, what: `demand ${refusal.demandId} on face ${face.id}` });
@@ -272,7 +298,43 @@ export function solveDescents(input: DescentDatumInput): DescentDatum {
     // A face is **claimed** only where a descent was actually built: §5's
     // deletions are scoped to claimed faces, and a face whose every demand
     // refused must keep the procedures it always had.
-    for (const k of face.columns) claimed[k] = 1;
+    //
+    // **And only along the stretch it was built on** — WP-D4's one correction
+    // to §5's scope, forced by the amendment. §5.3 silences `deriveSeamStairs`
+    // on a claimed face because *the descent is the only producer of a flight
+    // or a landing there*; that sentence is true of the cliff the descent came
+    // down and false of a face four thousand columns long which happens to be
+    // one 4-connected component of the scarp mask. Measured on Troy: claiming
+    // the whole component took `LOAM-I414` from **12 derived flights to zero**
+    // across the quarter — one descent silencing every seam stack in the
+    // citadel, which is not a scoping, it is a deletion. The halo is
+    // `DESCENT_SHARE_SPAN`, the span past which §1.4 already calls two demands
+    // two problems — no: `DESCENT_SHARE_SPAN` was measured too and it is too
+    // wide, silencing a seam stack thirty-two columns from the flight that was
+    // supposed to replace it (Troy's S5a window lost its stairs and got nothing
+    // back). The halo is `DESCENT_REACH`, the same distance recognition uses to
+    // decide whether a station belongs to a face at all: inside it a stack is
+    // this descent's business, outside it the stack belongs to a stretch of
+    // cliff no descent was asked about.
+    for (const k of face.columns) {
+      const i = k % region.width;
+      const x = region.x0 + i;
+      const z = region.z0 + (k - i) / region.width;
+      let near = false;
+      for (const run of solved.runs) {
+        for (const c of run.columns) {
+          const ci = c % region.width;
+          const cx = region.x0 + ci;
+          const cz = region.z0 + (c - ci) / region.width;
+          if (Math.abs(cx - x) <= DESCENT_REACH && Math.abs(cz - z) <= DESCENT_REACH) {
+            near = true;
+            break;
+          }
+        }
+        if (near) break;
+      }
+      if (near) claimed[k] = 1;
+    }
     for (const run of solved.runs) {
       corridorOf(region, run, raw);
       const list = bySegment.get(run.demandId);

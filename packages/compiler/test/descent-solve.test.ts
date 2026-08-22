@@ -50,7 +50,9 @@ import {
   DESCENT_CLIMB_W,
   DESCENT_DROP_MIN,
   DESCENT_EARN_RATIO,
+  DESCENT_GROUP_DEMANDS_MAX,
   DESCENT_LANDING_MIN,
+  DESCENT_REACH,
   DESCENT_RUN_W,
   DESCENT_SCARP_W,
   DESCENT_SHARE_SPAN,
@@ -386,7 +388,7 @@ describe("recognition (§1)", () => {
     expect(Math.max(...row) - Math.min(...row)).toBe(19);
   });
 
-  it("Troy's west cliff is one face, and the flight across it is one steep demand", () => {
+  it("Troy's west cliff is one face, and the two streets across it are one demand", () => {
     const f = s4Field();
     const graph = graphOf([
       // The plateau street and the bench street — the two banded terminals.
@@ -406,33 +408,179 @@ describe("recognition (§1)", () => {
     expect(recognized.faces.length).toBeGreaterThanOrEqual(1);
     const biggest = [...recognized.faces].sort((a, b) => b.columns.length - a.columns.length)[0] as ScarpFace;
     expect(biggest.relief).toBeGreaterThanOrEqual(DESCENT_DROP_MIN);
-    // …and the demand across it is steep by both halves of §1.3.
-    const steep = recognized.demands.filter((d) => d.segmentId === "flight");
+    // **The amendment, pinned.** A demand is a face together with opposing
+    // network terminals, so what is recognized here is the *pair of streets* —
+    // the plateau one and the bench one — and not the flight the router drew
+    // between them. Deleting that flight from the graph changes nothing, which
+    // is the whole of "the solver provides the connection".
+    const steep = recognized.demands.filter((d) => d.faceId === biggest.id);
     expect(steep.length).toBe(1);
     const demand = steep[0] as DescentDemand;
     expect(demand.topY - demand.bottomY).toBeGreaterThanOrEqual(DESCENT_DROP_MIN);
     expect(demand.source).toBe("D1");
+    // The terminals stand on the two streets, at their own datum levels — never
+    // on the flight, whose own band is the artefact this design replaces.
+    expect(datum.band[demand.top]).toBe(1);
+    expect(datum.band[demand.bottom]).toBe(1);
+    expect(datum.columnY[demand.top]).toBe(demand.topY);
+    expect(datum.columnY[demand.bottom]).toBe(demand.bottomY);
+    // …and with no flight at all the same demand is recognized, unchanged.
+    const noFlight = graphOf([
+      segment("high", "street", 5, run({ x: 60, z: -113 }, { x: 60, z: -95 })),
+      segment("low", "street", 5, run({ x: 77, z: -113 }, { x: 77, z: -95 })),
+    ]);
+    const without = recognizeDescents({
+      region: S4_REGION,
+      h: materialisedGround(S4_REGION, f),
+      graph: noFlight,
+      datum: gradeStreetDatum({ region: S4_REGION, graph: noFlight, field: f, seaLevel: 62 }),
+    });
+    expect(without.demands.filter((d) => d.faceId === biggest.id)).toEqual(steep);
   });
 
   it("two demands 32 columns apart are two descents, closer together they are one (§1.4)", () => {
     expect(DESCENT_SHARE_SPAN).toBe(32);
     const r: Region = { x0: 0, z0: 0, width: 96, depth: 48 };
     const cliff = field(r, (x) => (x < 20 ? 90 : x > 26 ? 72 : 90 - 3 * (x - 20)));
+    // **Four street stubs, two pairs.** Since the amendment a demand is a pair
+    // of opposing stations, so what is clustered is pairs of streets wanting
+    // through — two approaches from the plateau to the bench, `apart` columns
+    // of `z` from each other.
     const flights = (apart: number): number => {
       const graph = graphOf([
-        segment("high", "street", 5, run({ x: 12, z: 1 }, { x: 12, z: 46 })),
-        segment("low", "street", 5, run({ x: 40, z: 1 }, { x: 40, z: 46 })),
-        segment("a", "lane", 3, run({ x: 12, z: 8 }, { x: 40, z: 8 }), "steps"),
-        segment("b", "lane", 3, run({ x: 12, z: 8 + apart }, { x: 40, z: 8 + apart }), "steps"),
+        segment("high-a", "street", 5, run({ x: 12, z: 4 }, { x: 12, z: 12 })),
+        segment("low-a", "street", 5, run({ x: 40, z: 4 }, { x: 40, z: 12 })),
+        segment("high-b", "street", 5, run({ x: 12, z: 4 + apart }, { x: 12, z: 12 + apart })),
+        segment("low-b", "street", 5, run({ x: 40, z: 4 + apart }, { x: 40, z: 12 + apart })),
       ]);
       const datum = gradeStreetDatum({ region: r, graph, field: cliff, seaLevel: 62 });
       const recognized = recognizeDescents({ region: r, h: materialisedGround(r, cliff), graph, datum });
       const faces = new Set(recognized.demands.map((d) => d.faceId));
       expect(faces.size).toBeGreaterThan(0);
+      expect(recognized.demands.length).toBe(2);
       return recognized.groups.filter((g) => g.length > 0).length;
     };
-    // Two flights sharing a cliff, near and far. Near ⇒ one problem; far ⇒ two.
-    expect(flights(6)).toBeLessThanOrEqual(flights(36));
+    // Two pairs sharing a cliff, near and far. Near ⇒ one problem; far ⇒ two.
+    expect(flights(6)).toBe(1);
+    expect(flights(36)).toBe(2);
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* §1 as amended at WP-D3 — connectivity, not segments                         */
+/* -------------------------------------------------------------------------- */
+
+describe("recognition is connectivity (the WP-D3 amendment)", () => {
+  it("the reach is R2's own budget and cannot drift from it", () => {
+    // The smallest pair R1 and R2 can both accept spans `EARN_RATIO · DROP_MIN`
+    // columns end to end. A reach wider than that adds only pairs R2 throws
+    // away; narrower, and it is a second silent threshold on one quantity.
+    expect(DESCENT_REACH).toBe(DESCENT_EARN_RATIO * DESCENT_DROP_MIN);
+  });
+
+  it("a street's reach is measured from its kerb, not its centre line", () => {
+    // A five-column street with its kerb on the scarp has its centre line three
+    // columns back. Measuring to the centre would put that kerb out of the
+    // face's world for want of three columns — which is what a 96-column
+    // fixture found the moment the amendment landed.
+    const r: Region = { x0: 0, z0: 0, width: 96, depth: 48 };
+    const cliff = field(r, (x) => (x < 20 ? 90 : x > 26 ? 72 : 90 - 3 * (x - 20)));
+    const streets = (width: number): number => {
+      const graph = graphOf([
+        segment("high", "street", width, run({ x: 12, z: 1 }, { x: 12, z: 46 })),
+        segment("low", "street", width, run({ x: 40, z: 1 }, { x: 40, z: 46 })),
+      ]);
+      const datum = gradeStreetDatum({ region: r, graph, field: cliff, seaLevel: 62 });
+      return recognizeDescents({ region: r, h: materialisedGround(r, cliff), graph, datum }).demands.length;
+    };
+    // The low street's centre line stands 13 columns off the face — one past
+    // the reach — and its kerb stands 10. The wide street is recognized.
+    expect(streets(5)).toBeGreaterThan(0);
+  });
+
+  it("two stations of ONE street are a connection the network already has", () => {
+    // …unless its own datum broke into steps inside the face, which is D2: what
+    // the street "has" there is a staircase the grader made, not a street.
+    const r: Region = { x0: 0, z0: 0, width: 64, depth: 32 };
+    // A gentle enough hill that the street grades round it rather than breaking.
+    const hill = field(r, (x) => (x < 24 ? 88 : x > 30 ? 76 : 88 - 2 * (x - 24)));
+    const around = graphOf([
+      // One street down the plateau, along the foot, and back up — both ends
+      // stand either side of the scarp, and the network already joins them.
+      segment("ring", "street", 5, [
+        ...run({ x: 16, z: 2 }, { x: 16, z: 28 }),
+        ...run({ x: 17, z: 28 }, { x: 40, z: 28 }),
+        ...run({ x: 40, z: 27 }, { x: 40, z: 2 }),
+      ]),
+    ]);
+    const datum = gradeStreetDatum({ region: r, graph: around, field: hill, seaLevel: 62 });
+    const recognized = recognizeDescents({ region: r, h: materialisedGround(r, hill), graph: around, datum });
+    // Whatever it recognizes, it never recognizes a `D1` between two stations of
+    // one segment: that is a demand for a stair beside a working street.
+    for (const d of recognized.demands) expect(d.source).toBe("D2");
+  });
+
+  it("one object, at most one branch — §6.2's S4 row, by construction", () => {
+    expect(DESCENT_GROUP_DEMANDS_MAX).toBe(2);
+    const r: Region = { x0: 0, z0: 0, width: 96, depth: 48 };
+    const cliff = field(r, (x) => (x < 20 ? 90 : x > 26 ? 72 : 90 - 3 * (x - 20)));
+    // Three pairs of stubs within one `DESCENT_SHARE_SPAN` of each other: three
+    // demands, one group, and the group keeps the senior two.
+    const graph = graphOf([
+      segment("h0", "street", 5, run({ x: 12, z: 4 }, { x: 12, z: 10 })),
+      segment("l0", "street", 5, run({ x: 40, z: 4 }, { x: 40, z: 10 })),
+      segment("h1", "street", 5, run({ x: 12, z: 14 }, { x: 12, z: 20 })),
+      segment("l1", "street", 5, run({ x: 40, z: 14 }, { x: 40, z: 20 })),
+      segment("h2", "street", 5, run({ x: 12, z: 24 }, { x: 12, z: 30 })),
+      segment("l2", "street", 5, run({ x: 40, z: 24 }, { x: 40, z: 30 })),
+    ]);
+    const datum = gradeStreetDatum({ region: r, graph, field: cliff, seaLevel: 62 });
+    const recognized = recognizeDescents({ region: r, h: materialisedGround(r, cliff), graph, datum });
+    expect(recognized.demands.length).toBe(3);
+    for (const group of recognized.groups) expect(group.length).toBeLessThanOrEqual(2);
+  });
+
+  it("no station is two demands' terminal — the pairing is a matching", () => {
+    const r: Region = { x0: 0, z0: 0, width: 96, depth: 48 };
+    const cliff = field(r, (x) => (x < 20 ? 90 : x > 26 ? 72 : 90 - 3 * (x - 20)));
+    const graph = graphOf([
+      segment("h0", "street", 5, run({ x: 12, z: 4 }, { x: 12, z: 10 })),
+      segment("l0", "street", 5, run({ x: 40, z: 4 }, { x: 40, z: 10 })),
+      segment("l1", "street", 5, run({ x: 40, z: 12 }, { x: 40, z: 18 })),
+    ]);
+    const datum = gradeStreetDatum({ region: r, graph, field: cliff, seaLevel: 62 });
+    const recognized = recognizeDescents({ region: r, h: materialisedGround(r, cliff), graph, datum });
+    // Two low stubs compete for the one high stub; the matching gives it to
+    // exactly one of them rather than making it two demands' terminal.
+    expect(recognized.demands.length).toBe(1);
+    const used = recognized.demands.flatMap((d) => [d.top, d.bottom]);
+    expect(new Set(used).size).toBe(used.length);
+  });
+
+  it("two independent descents over one face never share a column (§6.2)", () => {
+    const r: Region = { x0: 0, z0: 0, width: 96, depth: 96 };
+    const cliff = field(r, (x) => (x < 20 ? 90 : x > 26 ? 72 : 90 - 3 * (x - 20)));
+    // Two pairs, `DESCENT_SHARE_SPAN` + 4 apart: two groups, two objects, one
+    // face — the case nothing inside a group's own solve can rule out.
+    const graph = graphOf([
+      segment("h0", "street", 5, run({ x: 12, z: 4 }, { x: 12, z: 12 })),
+      segment("l0", "street", 5, run({ x: 40, z: 4 }, { x: 40, z: 12 })),
+      segment("h1", "street", 5, run({ x: 12, z: 40 }, { x: 12, z: 48 })),
+      segment("l1", "street", 5, run({ x: 40, z: 40 }, { x: 40, z: 48 })),
+    ]);
+    const f = cliff;
+    const datum = gradeStreetDatum({ region: r, graph, field: f, seaLevel: 62 });
+    const solvedHere = solveDescents({ region: r, graph, field: f, datum, descentSolve: true });
+    expect(solvedHere.recognition.groups.length).toBe(2);
+    const seen = new Set<number>();
+    for (const descent of solvedHere.descents) {
+      for (const flight of descent.runs) {
+        for (const k of flight.columns) {
+          expect(seen.has(k)).toBe(false);
+          seen.add(k);
+        }
+      }
+    }
   });
 });
 

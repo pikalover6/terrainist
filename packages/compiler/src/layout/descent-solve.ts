@@ -51,7 +51,11 @@ import {
   DESCENT_CLIMB_W,
   DESCENT_DROP_MIN,
   DESCENT_EARN_RATIO,
+  DESCENT_FACE_STATIONS_MAX,
+  DESCENT_FLIGHT_WIDTH,
+  DESCENT_GROUP_DEMANDS_MAX,
   DESCENT_LANDING_MIN,
+  DESCENT_REACH,
   DESCENT_RUN_W,
   DESCENT_SCARP_W,
   DESCENT_SHARE_SPAN,
@@ -91,8 +95,66 @@ const STEP4: readonly (readonly [number, number])[] = Object.freeze([
   [-1, 0], // 3 west
 ]);
 
+/**
+ * The eight steps — the neighbourhood {@link DESCENT_REACH} is measured in.
+ *
+ * Chebyshev, because that is the metric R2 already compares a drop against, and
+ * a reach in one metric and an earn ratio in another would be two thresholds
+ * wearing one name.
+ */
+const STEP8: readonly (readonly [number, number])[] = Object.freeze([
+  [-1, -1],
+  [0, -1],
+  [1, -1],
+  [-1, 0],
+  [1, 0],
+  [-1, 1],
+  [0, 1],
+  [1, 1],
+]);
+
 function chebyshev(a: { x: number; z: number }, b: { x: number; z: number }): number {
   return Math.max(Math.abs(a.x - b.x), Math.abs(a.z - b.z));
+}
+
+/**
+ * The 4-connected digital line between two columns — one axis at a time, never
+ * diagonally, because a descent walks in {@link STEP4} and a hint the search
+ * cannot follow is not a hint.
+ *
+ * Used twice and for two different things: as the "do these two stations sit on
+ * **opposite sides** of the face" test (§1 as amended), and as the demand's
+ * `corridorHint`, which is the search domain's connective tissue between two
+ * terminals that may both lie outside the face.
+ */
+function line4(region: Region, from: number, to: number): number[] {
+  const a = columnAt(region, from);
+  const b = columnAt(region, to);
+  let { x, z } = a;
+  const dx = Math.abs(b.x - x);
+  const dz = Math.abs(b.z - z);
+  const sx = Math.sign(b.x - x);
+  const sz = Math.sign(b.z - z);
+  let err = dx - dz;
+  const out: number[] = [];
+  const push = (): void => {
+    const k = descentIndex(region, x, z);
+    if (k >= 0) out.push(k);
+  };
+  push();
+  // Bounded by `dx + dz`, so the loop terminates on any input the region holds.
+  for (let guard = 0; guard <= dx + dz && (x !== b.x || z !== b.z); guard++) {
+    const e2 = 2 * err;
+    if (e2 > -dz && x !== b.x) {
+      err -= dz;
+      x += sx;
+    } else if (z !== b.z) {
+      err += dx;
+      z += sz;
+    }
+    push();
+  }
+  return out;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -258,6 +320,60 @@ function rankOf(segment: StreetSegment): DescentDemand["rank"] {
 }
 
 /**
+ * **One end a demand can have** — a banded network column standing within
+ * {@link DESCENT_REACH} of a face.
+ *
+ * The amendment's whole subject. A demand used to be *a segment the router had
+ * already drawn across the face*, which measured zero on every real document
+ * for two structural reasons (the datum is 1-Lipschitz, so a carriageway can
+ * never present a 2-riser; and the flights that race real cliffs are S9's seam
+ * stairs, born a pass after recognition closes). A demand is now **a face
+ * together with opposing network terminals** — and a terminal is one of these.
+ */
+interface FaceStation {
+  /** The column, region-indexed. Banded by construction. */
+  readonly idx: number;
+  /** Its datum level — the level T5 makes the flight's own end an equality to. */
+  readonly y: number;
+  /** Chebyshev distance to the face, `0` on it. Decides the representative. */
+  readonly dist: number;
+  /** The segment that put it there — how D1 and D2 tell each other apart. */
+  readonly segmentId: string;
+  readonly rank: DescentDemand["rank"];
+}
+
+/**
+ * **T12's break stations**, per segment — the D2 signal, read where the datum
+ * already marks it.
+ *
+ * `ArcLevels.steps` is the flag the surfacer dresses a stepped station with
+ * (`roads.ts:1769`, `:3778`): a station whose graded level differs from the one
+ * before it is a street that **broke into steps rather than digging**, which is
+ * T12 verbatim. WP-D3 measured the alternative — a 2-riser between adjacent
+ * *path cells* — at exactly zero on every document, and could not have measured
+ * anything else: `gradeProfile` is a lower envelope of unit cones, so
+ * consecutive stations differ by at most one. The step flag is the signal; the
+ * riser never was.
+ */
+function breakStations(region: Region, graph: StreetGraph, datum: StreetDatum): Map<string, number[]> {
+  const out = new Map<string, number[]>();
+  for (const segment of graph.segments) {
+    const levels = datum.bySegment.get(segment.id);
+    if (levels === undefined) continue;
+    const marks: number[] = [];
+    for (let s = 1; s < levels.y.length; s++) {
+      if ((levels.y[s] as number) === (levels.y[s - 1] as number)) continue;
+      const p = levels.frame.stations[s] as { x: number; z: number } | undefined;
+      if (p === undefined) continue;
+      const k = descentIndex(region, Math.round(p.x), Math.round(p.z));
+      if (k >= 0) marks.push(k);
+    }
+    if (marks.length > 0) out.set(segment.id, marks);
+  }
+  return out;
+}
+
+/**
  * §1 — every steep face the network must descend, and the demands that must
  * descend it.
  *
@@ -295,126 +411,246 @@ export function recognizeDescents(input: DescentRecognitionInput): DescentRecogn
   }
 
   /* --- the demands ------------------------------------------------------- */
+  //
+  // **§1's demand definition, as amended at WP-D3: recognition is
+  // connectivity, not segments.**
+  //
+  // > *a D1 demand is a face together with opposing network terminals — street
+  // > / carriageway stations within `DESCENT_REACH` of the face on both sides
+  // > at datum levels differing by the steep test — whether or not any stair
+  // > yet exists; the solver PROVIDES the connection S9 would otherwise
+  // > improvise. D2 demands read the break stations.*
+  //
+  // The old definition asked "which segment did the router already draw across
+  // this face", and measured zero on every real document, for two reasons that
+  // are both about *where a stair comes from* rather than about the solve: the
+  // flights that race real cliffs are `deriveSeamStairs`' (pass 5b, after
+  // recognition closes), and a carriageway's graded datum cannot present the
+  // 2-riser the old D2 looked for. So the question is asked the other way
+  // round, in the design's own original language — "the set of streets wanting
+  // through" — and a stair the network does not yet have is exactly the case
+  // the descent exists to serve.
+  const breaks = breakStations(region, graph, datum);
   const demands: DescentDemand[] = [];
-  for (const segment of graph.segments) {
-    const role = segment.role ?? "carriageway";
-    if (role === "channel" || segment.path.length < 2) continue;
-    // Which face does this path cross, and where does it enter and leave it?
-    // A path crossing two faces is two demands — one per face — which is what
-    // "every steep demand crossing the same face" is a statement about.
-    const byFace = new Map<number, number[]>();
-    for (const [i, cell] of segment.path.entries()) {
-      const k = descentIndex(region, cell.x, cell.z);
-      if (k < 0) continue;
-      const face = faceOf[k] as number;
-      if (face < 0) continue;
-      const run = byFace.get(face);
-      if (run === undefined) byFace.set(face, [i]);
-      else run.push(i);
+  // Chebyshev distance to the face under consideration, `-1` off it. One
+  // allocation for the whole recognition; only the columns a face touched are
+  // reset, so the cost is `O(Σ |face| · reach)` rather than `O(faces · cells)`.
+  const reachDist = new Int32Array(region.width * region.depth).fill(-1);
+  /**
+   * **A street's reach is measured from its kerb, not from its centre line.**
+   *
+   * A path cell is a *centre* line; what stands beside the cliff is the band —
+   * the carriageway's own half-width plus the sidewalk, which is precisely the
+   * span `gradeStreetDatum` marks banded around that cell. A five-column avenue
+   * with its kerb on the scarp has its centre line three columns back, and
+   * measuring the reach to the centre would put that kerb out of the face's
+   * world for want of three columns. So each segment is credited its own band
+   * half-width, and the BFS runs far enough for the widest of them.
+   */
+  const creditOf = (segment: StreetSegment): number => ((segment.width - 1) >> 1) + graph.sidewalk;
+  let widestCredit = 0;
+  for (const segment of graph.segments) widestCredit = Math.max(widestCredit, creditOf(segment));
+  for (const face of faces) {
+    /* --- how far is every column from this face? ------------------------- */
+    const touched: number[] = [];
+    let frontier: number[] = [];
+    for (const k of face.columns) {
+      reachDist[k] = 0;
+      touched.push(k);
+      frontier.push(k);
     }
-    // D2's test needs the segment's own graded profile: a riser of `≥ 2` at a
-    // station inside the face is T12's break-into-steps case caught where it
-    // fires rather than where it was intended.
-    const levels = datum.bySegment.get(segment.id);
-    for (const faceId of [...byFace.keys()].sort((a, b) => a - b)) {
-      const inside = byFace.get(faceId) as number[];
-      const first = inside[0] as number;
-      const last = inside[inside.length - 1] as number;
-      let source: "D1" | "D2";
-      if (role === "steps" || role === "cart") source = "D1";
-      else {
-        if (levels === undefined) continue;
-        let breaks = false;
-        for (let i = first; i <= last && i + 1 < segment.path.length; i++) {
-          const a = segment.path[i] as { x: number; z: number };
-          const b = segment.path[i + 1] as { x: number; z: number };
-          const ka = descentIndex(region, a.x, a.z);
-          const kb = descentIndex(region, b.x, b.z);
-          if (ka < 0 || kb < 0 || datum.band[ka] !== 1 || datum.band[kb] !== 1) continue;
-          if (Math.abs((datum.columnY[ka] as number) - (datum.columnY[kb] as number)) >= SCARP_RISER_MIN) {
-            breaks = true;
+    for (let d = 1; d <= DESCENT_REACH + widestCredit && frontier.length > 0; d++) {
+      const next: number[] = [];
+      for (const k of frontier) {
+        const i = k % region.width;
+        const j = (k - i) / region.width;
+        for (const [dx, dz] of STEP8) {
+          const ii = i + dx;
+          const jj = j + dz;
+          if (ii < 0 || jj < 0 || ii >= region.width || jj >= region.depth) continue;
+          const n = jj * region.width + ii;
+          if ((reachDist[n] as number) >= 0) continue;
+          reachDist[n] = d;
+          touched.push(n);
+          next.push(n);
+        }
+      }
+      frontier = next;
+    }
+
+    /* --- the stations this face is offered ------------------------------- */
+    //
+    // One per **maximal run** of a segment's near-and-banded path cells, and
+    // the representative is the cell of that run *nearest the face*: a street
+    // running past a cliff for forty columns is one approach to it, not forty,
+    // and the end that matters is the end the flight would leave from.
+    //
+    // `steps` segments are deliberately not station sources. A flight's own
+    // band is graded by `streetStairLevels` against a frozen `natural`, and on
+    // Troy's west cliff that grading stands **ten blocks** above its own ground
+    // at the foot — the artefact this design exists to replace. Reading a
+    // terminal off it would pin the search to mid-air, which is S5a with the
+    // sign flipped. A face a router's flight crosses is still recognized: the
+    // *streets at either end of that flight* are its stations.
+    const stations: FaceStation[] = [];
+    for (const segment of graph.segments) {
+      const role = segment.role ?? "carriageway";
+      if (role === "channel" || role === "steps" || segment.path.length < 2) continue;
+      const rank = rankOf(segment);
+      const reach = DESCENT_REACH + creditOf(segment);
+      let best: FaceStation | undefined;
+      let held = 0;
+      const flush = (): void => {
+        if (best !== undefined) stations.push(best);
+        best = undefined;
+        held = 0;
+      };
+      for (const cell of segment.path) {
+        const k = descentIndex(region, cell.x, cell.z);
+        if (k < 0 || (reachDist[k] as number) < 0 || (reachDist[k] as number) > reach || datum.band[k] !== 1) {
+          flush();
+          continue;
+        }
+        // **A long approach offers several stations, one every
+        // `DESCENT_SHARE_SPAN` columns.** One per maximal run is right for a
+        // street that touches a cliff and turns away; it is wrong for a street
+        // that runs *along* a four-thousand-column face for eighty columns,
+        // because then the one station it offers sits wherever the run happens
+        // to come nearest, and the street on the other side offers its own
+        // somewhere else entirely — two stations eighty columns apart, which R2
+        // then correctly throws away, leaving the cliff unserved. Chunking at
+        // the span past which §1.4 already calls two demands two problems keeps
+        // the pairing local without adding a threshold: a pair either sits
+        // inside one descent's span or it is two descents.
+        if (held >= DESCENT_SHARE_SPAN) flush();
+        held += 1;
+        const here: FaceStation = {
+          idx: k,
+          y: datum.columnY[k] as number,
+          dist: reachDist[k] as number,
+          segmentId: segment.id,
+          rank,
+        };
+        if (
+          best === undefined ||
+          here.dist < best.dist ||
+          (here.dist === best.dist && here.idx < best.idx)
+        ) {
+          best = here;
+        }
+      }
+      flush();
+    }
+    // M2's discipline applied to the pairing, which is quadratic in this list:
+    // nearest first, ties by ascending region index, and never more than the
+    // bound. Sorted unconditionally so the pairing order is a pure function of
+    // the face rather than of `graph.segments`' order.
+    stations.sort((a, b) => (a.dist !== b.dist ? a.dist - b.dist : a.idx - b.idx));
+    if (stations.length > DESCENT_FACE_STATIONS_MAX) stations.length = DESCENT_FACE_STATIONS_MAX;
+
+    /* --- the pairs that are demands -------------------------------------- */
+    const pairs: { readonly a: number; readonly b: number; readonly span: number; readonly drop: number }[] = [];
+    for (let i = 0; i < stations.length; i++) {
+      for (let j = i + 1; j < stations.length; j++) {
+        const u = stations[i] as FaceStation;
+        const v = stations[j] as FaceStation;
+        const drop = Math.abs(u.y - v.y);
+        // R1 — the drop needing at least one retaining wall to be a face at all.
+        if (drop < DESCENT_DROP_MIN) continue;
+        // R2 — the same ratio the walkability audit decides an earned drop with.
+        const span = chebyshev(columnAt(region, u.idx), columnAt(region, v.idx));
+        if (span >= DESCENT_EARN_RATIO * drop) continue;
+        // **Opposing.** The face has to lie *between* them, or the two stations
+        // are two points on one side of a cliff and the drop between them is
+        // somebody else's. The 4-connected line is the test and, below, the
+        // demand's own corridor hint — one construction, so a pair that passed
+        // the test always hands the search a domain it can cross.
+        const between = line4(region, u.idx, v.idx);
+        let crosses = false;
+        for (let n = 1; n + 1 < between.length; n++) {
+          if (face.mask[between[n] as number] === 1) {
+            crosses = true;
             break;
           }
         }
-        if (!breaks) continue;
-        source = "D2";
-      }
-      // §1.3's terminals: the last banded column of the path on the high side
-      // of the face and the first on the low side, at their datum levels.
-      //
-      // **Whose band, and why the distinction is the whole of S5a.** A `steps`
-      // segment is banded along its own length — `gradeStreetDatum` grades it
-      // like any other run — and that grading is exactly the artefact this
-      // design exists to replace: on Troy's west cliff the flight's own datum
-      // stands **ten blocks** above its natural ground at the foot, because a
-      // 1-Lipschitz profile cannot fall 19 blocks in five columns. Reading the
-      // terminals off it would pin the search to mid-air and refuse every
-      // legal descent, which is S5a with the sign flipped.
-      //
-      // So the band a terminal is read from is the band of *the network the
-      // demand arrives at*, and the two sources say where that is:
-      //
-      // - **D1** — a flight exists only to cross the face, so its terminals are
-      //   its own extreme banded columns, which are the streets at either end:
-      //   `compareStreetRank` gives those shared columns to the wider street,
-      //   so the level read there is the street's, not the flight's.
-      // - **D2** — a carriageway crosses a face in the middle of a run that is
-      //   a street on both sides of it, so the face boundary is the terminal,
-      //   exactly as written.
-      const outward = source === "D1";
-      const terminal = (from: number, step: -1 | 1): { readonly idx: number; readonly at: number } | undefined => {
-        let best: { idx: number; at: number } | undefined;
-        for (let i = from; i >= 0 && i < segment.path.length; i += step) {
-          const cell = segment.path[i] as { x: number; z: number };
-          const k = descentIndex(region, cell.x, cell.z);
-          if (k < 0) continue;
-          if (datum.band[k] !== 1) continue;
-          best = { idx: k, at: i };
-          if (!outward) break;
+        if (!crosses) continue;
+        // **D2, and why it is a restriction rather than a second search.** Two
+        // stations of *the same segment* are a connection the network already
+        // has: the street goes round, and a stair beside a working street is
+        // the thing §5.3 deletes. Unless the street's own datum carries T12's
+        // break markers inside the face — in which case what it "has" is a
+        // carriageway broken into a staircase by the grader, which is exactly
+        // the case the design named D2 and asked the solver to take over.
+        if (u.segmentId === v.segmentId) {
+          const marks = breaks.get(u.segmentId);
+          if (marks === undefined || !marks.some((k) => face.mask[k] === 1)) continue;
         }
-        return best;
-      };
-      const before = terminal(first, -1);
-      const after = terminal(last, 1);
-      if (before === undefined || after === undefined || before.idx === after.idx) continue;
-      const beforeY = datum.columnY[before.idx] as number;
-      const afterY = datum.columnY[after.idx] as number;
-      if (beforeY === afterY) continue;
-      const upper = beforeY > afterY ? before : after;
-      const lower = beforeY > afterY ? after : before;
-      const topY = Math.max(beforeY, afterY);
-      const bottomY = Math.min(beforeY, afterY);
-      // R1 — the drop needing at least one retaining wall to be a face at all.
-      if (topY - bottomY < DESCENT_DROP_MIN) continue;
-      // R2 — the same ratio the walkability audit decides an earned drop with.
-      const u = columnAt(region, upper.idx);
-      const v = columnAt(region, lower.idx);
-      if (chebyshev(u, v) >= DESCENT_EARN_RATIO * (topY - bottomY)) continue;
-      // The heading is the direction of travel *arriving* at the upper
-      // terminal, so the first move out of it is a continuation rather than a
-      // free turn.
-      const prev = segment.path[Math.max(0, upper.at - (upper === before ? 1 : -1))] as
-        | { x: number; z: number }
-        | undefined;
-      const heading = headingOf(prev, u);
+        pairs.push({ a: i, b: j, span, drop });
+      }
+    }
+    // Greedy over the pairs, closest first — a **matching**, so no station is
+    // two demands' terminal and a face with four approaches produces two
+    // descents rather than six. Ties break by drop (the steeper pair is the one
+    // the cliff is about) and then by region index, so the answer is a pure
+    // function of the face.
+    pairs.sort(
+      (p, q) =>
+        p.span - q.span ||
+        q.drop - p.drop ||
+        (stations[p.a] as FaceStation).idx - (stations[q.a] as FaceStation).idx ||
+        (stations[p.b] as FaceStation).idx - (stations[q.b] as FaceStation).idx,
+    );
+    const spent = new Uint8Array(stations.length);
+    for (const pair of pairs) {
+      if (spent[pair.a] === 1 || spent[pair.b] === 1) continue;
+      spent[pair.a] = 1;
+      spent[pair.b] = 1;
+      const u = stations[pair.a] as FaceStation;
+      const v = stations[pair.b] as FaceStation;
+      const upper = u.y > v.y ? u : v;
+      const lower = u.y > v.y ? v : u;
+      const from = columnAt(region, upper.idx);
+      const to = columnAt(region, lower.idx);
+      // The heading a demand starts in. A connectivity demand has no "direction
+      // of travel arriving at the top" — nobody was travelling; a street was
+      // standing beside a cliff. So it is the demand's **own** direction, taken
+      // on the dominant axis, which is the one heading whose first step is not
+      // a turn the flight has to pay for before it has begun.
+      const heading = headingOf(
+        from,
+        Math.abs(to.x - from.x) >= Math.abs(to.z - from.z)
+          ? { x: from.x + Math.sign(to.x - from.x), z: from.z }
+          : { x: from.x, z: from.z + Math.sign(to.z - from.z) },
+      );
       demands.push({
-        segmentId: segment.id,
-        source,
-        faceId,
+        segmentId: `descent:${face.id}:${upper.idx}-${lower.idx}`,
+        source: u.segmentId === v.segmentId ? "D2" : "D1",
+        faceId: face.id,
         top: upper.idx,
-        topY,
+        topY: upper.y,
         bottom: lower.idx,
-        bottomY,
+        bottomY: lower.y,
         heading,
-        // The search domain is the face **plus the demand's own path between
-        // its terminals**: a terminal outside the face has to be reachable
-        // from it, and the line the router drew is the one corridor the
-        // network has already agreed to spend columns on.
-        corridorHint: pathBetween(region, segment, before.at, after.at),
-        width: segment.width,
-        rank: rankOf(segment),
+        // The search domain is the face **plus the line between the terminals**
+        // — both of which may stand off it by up to `DESCENT_REACH` columns, so
+        // without the line the domain is not connected and every demand refuses
+        // `unreachable`.
+        corridorHint: line4(region, upper.idx, lower.idx),
+        width: DESCENT_FLIGHT_WIDTH,
+        // T14's key. The **streets'** rank, not the flight's: which of two
+        // demands over one face is the trunk is a question about which network
+        // wanted through more, and a flight that does not exist yet has no
+        // width to be senior by. The id keeps the order total.
+        rank: {
+          id: `descent:${face.id}:${upper.idx}-${lower.idx}`,
+          width: Math.min(upper.rank.width, lower.rank.width),
+          role: upper.rank.role,
+          kind: upper.rank.kind,
+        },
       });
     }
+
+    for (const k of touched) reachDist[k] = -1;
   }
   demands.sort((a, b) => compareStreetRank(a.rank, b.rank));
 
@@ -453,25 +689,15 @@ export function recognizeDescents(input: DescentRecognitionInput): DescentRecogn
       const bucket = byRoot.get(r) as DescentDemand[];
       // T14 inside the group: the senior demand is the trunk (§2.5).
       bucket.sort((a, b) => compareStreetRank(a.rank, b.rank));
-      groups.push(bucket);
+      // §6.2's S4 row, made true by construction: one object, at most one
+      // branch. The demands this drops are the junior ones, and a third street
+      // wanting down the same cliff within `DESCENT_SHARE_SPAN` of the other
+      // two is asking for a stair beside a stair.
+      groups.push(bucket.slice(0, DESCENT_GROUP_DEMANDS_MAX));
     }
   }
 
   return { faces, demands, groups, refusals, seeds };
-}
-
-/** Every in-region column of a segment's path between two path indices. */
-function pathBetween(region: Region, segment: StreetSegment, a: number, b: number): number[] {
-  const lo = Math.min(a, b);
-  const hi = Math.max(a, b);
-  const out: number[] = [];
-  for (let i = lo; i <= hi; i++) {
-    const cell = segment.path[i] as { x: number; z: number } | undefined;
-    if (cell === undefined) continue;
-    const k = descentIndex(region, cell.x, cell.z);
-    if (k >= 0) out.push(k);
-  }
-  return out;
 }
 
 /** The {@link STEP4} index of the step from `a` to `b`; north where unknown. */
@@ -518,6 +744,16 @@ export interface DescentRun {
   /** Present when the run joined the trunk rather than the street: where. */
   readonly joinedAt?: number;
   readonly width: number;
+  /**
+   * The width class the run is surfaced as — the senior terminal's.
+   *
+   * Carried on the run rather than looked up at the surfacer because, since the
+   * WP-D3 amendment, **a run need not belong to a segment at all**: a demand is
+   * a face plus two stations, so the flight the descent builds is one nothing
+   * else in the graph has ever named. What the surfacer needs off it — a width,
+   * a role, a width class — travels with it.
+   */
+  readonly widthClass: StreetOwnerKind;
 }
 
 /** §2.1's object: a rooted tree of runs over one face. */
@@ -702,6 +938,7 @@ export function solveDescent(input: DescentSolveInput): SolvedDescent {
       demandId: demand.segmentId,
       kind: runs.length === 0 ? "trunk" : "branch",
       width: demand.width,
+      widthClass: demand.rank.kind,
     };
     runs.push(run);
     if (run.kind === "trunk") {
@@ -744,7 +981,7 @@ function search(args: {
   readonly demand: DescentDemand;
   readonly goals: readonly { readonly column: number; readonly y: number }[];
   readonly straightOnly?: boolean;
-}): { readonly run?: Omit<DescentRun, "demandId" | "kind" | "width">; readonly states: number } {
+}): { readonly run?: Omit<DescentRun, "demandId" | "kind" | "width" | "widthClass">; readonly states: number } {
   const { region, h, columns, slot, legal, demand, goals } = args;
   const { topY, bottomY } = demand;
   const span = topY - bottomY;

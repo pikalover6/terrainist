@@ -1165,6 +1165,58 @@ export const DESCENT_DROP_MIN = 6;
 export const DESCENT_EARN_RATIO = 2;
 
 /**
+ * §1 as amended at WP-D3 — how far from a face a network station may stand and
+ * still be one of that face's **terminals**, in Chebyshev columns.
+ *
+ * Twelve, and the number is R2's own budget rather than a taste: a demand is
+ * steep iff `chebyshev(u, v) < DESCENT_EARN_RATIO · drop`, and R1 admits no
+ * drop under {@link DESCENT_DROP_MIN}, so the *smallest* pair R1 and R2 can
+ * both accept spans `2 · 6 = 12` columns end to end. A reach wider than that
+ * can only add pairs R2 is about to throw away; a reach narrower than it would
+ * throw away pairs R2 accepts, which is a second, silent threshold on the same
+ * quantity. So: `DESCENT_EARN_RATIO · DESCENT_DROP_MIN`, asserted in
+ * `test/descent-solve.test.ts` so the three cannot drift apart.
+ */
+export const DESCENT_REACH = 12;
+
+/**
+ * §1 as amended — the width of a solved flight, in columns.
+ *
+ * Three, `STREET_WIDTH`'s lane: a descent is the flight the router would have
+ * drawn across the face, and every flight the router draws is a lane. It is
+ * deliberately *not* the width of the streets it joins — a stair as wide as a
+ * five-column avenue is a paved cliff, and the terminals' own carriageways go
+ * on owning their own columns either side of it (T5 is an equality about a
+ * level, not about a cross-section).
+ */
+export const DESCENT_FLIGHT_WIDTH = 3;
+
+/**
+ * §1 as amended — how many stations one face may offer the pairing, at most.
+ *
+ * The pairing is quadratic in the stations of a single face, so it needs an
+ * a-priori bound for the same reason {@link FACE_MAX_COLUMNS} is one. 64 is an
+ * order above anything measured (Troy's busiest face offers single digits) and
+ * the survivors are the ones **nearest the face**, which is the population the
+ * face is about; ties break by ascending region index, never by iteration
+ * order.
+ */
+export const DESCENT_FACE_STATIONS_MAX = 64;
+
+/**
+ * §2.5 — how many demands one descent object may carry: a trunk and one joiner.
+ *
+ * §6.2's S4 row is "**exactly one** descent object claims the face; ≤ 1
+ * branch", and this is that row stated where it can be true by construction
+ * rather than checked after the fact. The demands a group drops are the junior
+ * ones under `compareStreetRank`, so what survives is the senior pair — and a
+ * third street wanting down the same cliff within {@link DESCENT_SHARE_SPAN}
+ * columns of the other two is asking for a stair beside a stair, which is the
+ * defect this design exists to remove.
+ */
+export const DESCENT_GROUP_DEMANDS_MAX = 2;
+
+/**
  * §1.4 — how far apart two demands' **upper** terminals must be, in Chebyshev
  * columns, before one face is two descent problems.
  *

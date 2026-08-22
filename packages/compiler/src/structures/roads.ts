@@ -1395,6 +1395,35 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
     }));
   };
 
+  /**
+   * **§5.3, applied to the router's own flight** — WP-D4.
+   *
+   * S9 may not cut a flight through a claimed face because *the descent is the
+   * only producer of either a flight or a landing there* (§5.3's invariant).
+   * The router's `steps` segment is the same claim from the other end: since
+   * the WP-D3 amendment the descent's demand is the streets at that flight's
+   * two ends, so the descent has already been asked for the connection the
+   * flight was drawn to make — and building both is S4's defect exactly, two
+   * staircases down one cliff on seemingly-colliding paths that never meet.
+   *
+   * So a `steps` run with a column on a claimed face is superseded whole. Off a
+   * claimed face — which is every flight in every world with no steep demand,
+   * and every flight while the flag is off — nothing is looked at: `claimed` is
+   * only ever 1 on a face a descent was **built** on.
+   */
+  const descentSupersedes = (graphIndex: number, path: readonly { readonly x: number; readonly z: number }[]): boolean => {
+    const datum = input.descents?.[graphIndex];
+    if (datum === undefined || datum.descents.length === 0) return false;
+    const r = datum.region;
+    for (const c of path) {
+      const i = c.x - r.x0;
+      const j = c.z - r.z0;
+      if (i < 0 || j < 0 || i >= r.width || j >= r.depth) continue;
+      if (datum.claimed[j * r.width + i] === 1) return true;
+    }
+    return false;
+  };
+
   const jobs: StreetJob[] = [];
   for (const arterial of input.arterials ?? []) {
     const path = arterial.path.filter((c) => inside(region, c.x, c.z));
@@ -1463,6 +1492,14 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
       // that never met. A `carriageway` demand (D2) is not replaced here: a
       // street is a street, and breaking one into a flight is WP-D3's own
       // change to the router rather than this pass's to guess at.
+      //
+      // **Amended at WP-D4, with §1's demand definition.** A demand is no
+      // longer a segment — it is a face plus two opposing stations — so the
+      // lookup below finds nothing on a real document and the runs are
+      // registered after this loop, where a flight belonging to no segment can
+      // be. What is left here is the case that still exists: a demand whose id
+      // *is* a segment id, which is every unit fixture and every test that
+      // hands the datum a flight by name.
       const solved = role === "steps" || role === "cart" ? descentRuns(graphIndex, segment.id) : undefined;
       if (solved !== undefined) {
         for (const [n, run] of solved.entries()) {
@@ -1489,6 +1526,12 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
         }
         continue;
       }
+      // §5.3's invariant, from the flight's end — and only once the demand
+      // whose id *is* this segment has had its chance above, so a named demand
+      // is replaced by its run and an unnamed one supersedes the flight it was
+      // recognized from. A superseded flight has no job, no claim and no
+      // levels: the descent owns that connection now.
+      if ((role === "steps" || role === "cart") && descentSupersedes(graphIndex, segment.path)) continue;
       jobs.push({
         rank: {
           id: qualifySegmentId(segment.id, graphPath),
@@ -1507,6 +1550,67 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
         marked: segment.kind === "avenue",
         marking: urbanHere.marking,
       });
+    }
+
+    // §4.2's registration for **the flight nothing named** — WP-D4.
+    //
+    // > *The descent's runs register as `role: "steps"` segments on the
+    // > quarter's graph carrying their solved levels, so `surfaceStreetGraph`
+    // > files them in the street family's single commit.*
+    //
+    // Before the WP-D3 amendment every run belonged to a segment the router had
+    // already drawn, so registration was a *replacement* and the loop above was
+    // the whole of it. A demand is now a face plus two opposing stations, and
+    // the flight between them is a run of the street family that no segment
+    // ever named — so it is filed here, in the same family, in the same commit,
+    // with its solved levels and the width class of its senior terminal. It is
+    // the connection `deriveSeamStairs` would otherwise have improvised a pass
+    // later, built by the one owner that can see the cliff.
+    //
+    // Skipped whole where nothing was solved, which is every quarter while the
+    // flag is off and every flat town for ever.
+    const solvedHere = input.descents?.[graphIndex];
+    if (solvedHere !== undefined && solvedHere.descents.length > 0) {
+      const named = new Set(graph.segments.map((s) => s.id));
+      const dr = solvedHere.region;
+      for (const descent of solvedHere.descents) {
+        for (const flight of descent.runs) {
+          // A run whose demand *is* a segment was registered above, as a
+          // replacement; registering it twice would be two flights on one line.
+          if (named.has(flight.demandId)) continue;
+          const runPath = flight.columns
+            .map((idx) => {
+              const i = idx % dr.width;
+              return { x: dr.x0 + i, z: dr.z0 + (idx - i) / dr.width };
+            })
+            .filter((c) => inside(region, c.x, c.z));
+          if (runPath.length !== flight.columns.length || runPath.length < 2) continue;
+          jobs.push({
+            rank: {
+              id: qualifySegmentId(flight.demandId, graphPath),
+              width: flight.width,
+              role: "steps",
+              kind: flight.widthClass,
+            },
+            order: jobs.length,
+            role: "steps",
+            width: flight.width,
+            path: runPath,
+            // An `arterial` terminal takes the widest urban surface the theme
+            // defines, which is what the arterial loop itself does two hundred
+            // lines above; `StreetStateSet` names three classes, not four.
+            states: urbanHere[flight.widthClass === "arterial" ? "avenue" : flight.widthClass],
+            decks: hasChannel,
+            graph,
+            marked: false,
+            marking: urbanHere.marking,
+            // The solver's `y` is a top-block level; a flight's levels are
+            // stand units. The same one `+1` `descentRuns` makes, in the one
+            // other place a run becomes a job.
+            decided: flight.levels.map((y) => y + 1),
+          });
+        }
+      }
     }
   }
 
