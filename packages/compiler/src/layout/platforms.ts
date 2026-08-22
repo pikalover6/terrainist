@@ -84,6 +84,35 @@ const SMOOTH_PASSES = 2;
  */
 export const MIN_PLATFORM_COLUMNS = 9;
 
+/**
+ * `blocked`, plus the solved descent corridor where there is one — §3.2.
+ *
+ * Returns the caller's own array by reference when no corridor was handed over,
+ * which is every caller while `DESCENT_SOLVE` is off and is what makes the flag
+ * off state byte-identical: no copy, no translation, no allocation.
+ */
+function blockedWithDescent(input: PlatformInput): Uint8Array {
+  const corridor = input.descentCorridor;
+  if (corridor === undefined) return input.blocked;
+  const { bounds, field } = input;
+  const width = bounds.x1 - bounds.x0 + 1;
+  const depth = bounds.z1 - bounds.z0 + 1;
+  const out = Uint8Array.from(input.blocked);
+  const fr = field.region;
+  for (let j = 0; j < depth; j++) {
+    const z = bounds.z0 + j;
+    const fj = z - fr.z0;
+    if (fj < 0 || fj >= fr.depth) continue;
+    for (let i = 0; i < width; i++) {
+      const x = bounds.x0 + i;
+      const fi = x - fr.x0;
+      if (fi < 0 || fi >= fr.width) continue;
+      if (corridor[fj * fr.width + fi] === 1) out[j * width + i] = 1;
+    }
+  }
+  return out;
+}
+
 /** Everything {@link derivePlatforms} reads. */
 export interface PlatformInput {
   /** The quarter's footprint; `blocked` is row-major over it. */
@@ -220,6 +249,23 @@ export interface PlatformInput {
    * optimum cannot." Without this record the design is not maintainable.
    */
   readonly election?: QuarterElection;
+  /**
+   * **The solved descent corridor** — `docs/DESCENT-SOLVE-v0.md` §3.2.
+   *
+   * 1 on every column of a solved descent's corridor, row-major over
+   * {@link PlatformInput.field}'s region rather than over
+   * {@link PlatformInput.bounds}, because that is the raster the fifth datum is
+   * computed on and translating once here is cheaper than translating a mask.
+   *
+   * Where present those columns join {@link PlatformInput.blocked}: the
+   * election's atoms are cut around a descent exactly as they are cut around a
+   * street, and the plane never asks for a column the flight is built on. This
+   * is the crossing law, and it is a **subtraction rather than an arbitration**
+   * — no new class, no rank moved, no yield clause, no sixth resolve.
+   *
+   * Absent for every caller while `DESCENT_SOLVE` is off.
+   */
+  readonly descentCorridor?: Uint8Array;
 }
 
 /**
@@ -380,7 +426,21 @@ function* benchColumns(bench: FormBench): Generator<readonly [number, number]> {
  * that stepped nowhere.
  */
 export function derivePlatforms(input: PlatformInput): FormBench[] {
-  const { bounds, blocked, field } = input;
+  const { bounds, field } = input;
+  // **§3.2 of `docs/DESCENT-SOLVE-v0.md`: the corridor joins `blocked`.**
+  //
+  // `blocked` is `carriageway | sidewalk` today (`district.ts`), and the solved
+  // descent corridor is the third thing a plane may not be laid over. As with
+  // §1.7's rule 1 the subtraction is *already* the shape the platform partition
+  // speaks, so the election's atoms are cut around a descent exactly as they
+  // are cut around a street — and the plane never asks for a descent's columns,
+  // so the resolver never arbitrates them.
+  //
+  // A copy, never a mutation of the caller's array: the mask a district builds
+  // is read again after this call, and a datum that edited its own input would
+  // be the second author §1.3 exists to remove. Absent corridor ⇒ the caller's
+  // own array, by reference, which is byte-for-byte the shipped path.
+  const blocked = blockedWithDescent(input);
   const tiered = input.tiered ?? SEAM_TIERS;
   // The waterline floor (`PlatformInput.waterFloor`). Applied where a level is
   // *computed* rather than to the finished benches, so the sliver merge — which

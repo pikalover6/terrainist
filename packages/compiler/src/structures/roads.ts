@@ -42,6 +42,7 @@ import type { StreetGraph } from "../layout/streets.js";
 // Type-only, and it must stay type-only: `layout/street-datum.ts` imports this
 // module's kernels (`gradeProfile`, `index`, `clampX/Z`), so a *value* import
 // back the other way would close a runtime cycle. A type import erases.
+import type { DescentDatum } from "../layout/descent-datum.js";
 import type { StreetDatum } from "../layout/street-datum.js";
 import type { OccupancyGrid, Placement, ResolvedPort } from "../layout/types.js";
 import type {
@@ -967,6 +968,31 @@ export interface StreetSurfaceInput {
    */
   readonly datums?: readonly (StreetDatum | undefined)[];
   /**
+   * The **fifth datum** of each graph, parallel to
+   * {@link StreetSurfaceInput.graphs} — `docs/DESCENT-SOLVE-v0.md` §4.2.
+   *
+   * > The descent's runs register as `role: "steps"` segments on the quarter's
+   * > graph carrying their solved levels, so `surfaceStreetGraph` files them in
+   * > the street family's **single commit**.
+   *
+   * Where a demand was solved, the run *is* the flight: its alignment and its
+   * profile both come from the descent, which chose the path knowing the tread
+   * law rather than filtering a path a router guessed. The claim it files is
+   * exactly the one this pass already files for a flight — `street.network`,
+   * rank 80, `preserve` over its band — so **no new class, no rank moved, no
+   * yield clause, no sixth resolve**: the crossing law is §3.2's subtraction,
+   * one file over, in the plane's own declarer.
+   *
+   * The second thing it carries is `claimed`: the columns of a face a descent
+   * actually built on. §5's three deletions — per-street stair grading,
+   * {@link terminusLandings}, and S9's `deriveSeamStairs` — are scoped to those
+   * columns and **only** to those columns, which is what keeps every world with
+   * no steep demand byte-identical.
+   *
+   * Absent (and absent entries) is the shipped path, unchanged.
+   */
+  readonly descents?: readonly (DescentDatum | undefined)[];
+  /**
    * C1's city arterials, surfaced through this same pass and deliberately so.
    *
    * An arterial is a street that happens to be eleven columns wide: it wants
@@ -1326,7 +1352,48 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
     /** Set by the level phase: one level per station of {@link frame}. */
     levels?: ArcLevels;
     stairs?: StreetStairLevels;
+    /**
+     * §5.1 — the descent already decided this flight's levels, in **stand**
+     * units, one per column of {@link StreetJob.path}.
+     *
+     * Present only for a `steps` job the fifth datum solved; where it is
+     * present the tread law is not run at all — neither for the trial nor for
+     * the pins — and where it is absent this pass is byte-for-byte the one that
+     * shipped.
+     */
+    readonly decided?: readonly number[];
   }
+
+  /**
+   * §4.2 — the solved runs of a graph, as jobs, or the graph's own segments.
+   *
+   * A demand the descent solved is replaced by its run: the run's alignment is
+   * the flight's alignment, because the whole of §2.2 is that the path was
+   * chosen knowing the tread law rather than filtered afterwards. The run spans
+   * terminal to terminal — both of them **banded** columns of the network, by
+   * §1.3's own definition — so nothing is lost off either end: what lies beyond
+   * a terminal belongs to the street that owns it, which is exactly T5's
+   * equality read as a statement about ownership.
+   */
+  const descentRuns = (graphIndex: number, segmentId: string):
+    | readonly { readonly columns: readonly { readonly x: number; readonly z: number }[]; readonly levels: readonly number[] }[]
+    | undefined => {
+    const datum = input.descents?.[graphIndex];
+    const runs = datum?.bySegment.get(segmentId);
+    if (datum === undefined || runs === undefined || runs.length === 0) return undefined;
+    const r = datum.region;
+    return runs.map((run) => ({
+      columns: run.columns.map((idx) => {
+        const i = idx % r.width;
+        return { x: r.x0 + i, z: r.z0 + (idx - i) / r.width };
+      }),
+      // The solver's `y` is a **top-block** level, the convention `columnY` and
+      // the materialised ground both speak; a flight's levels are stand units.
+      // One `+1`, in one place, so the two conventions meet where they always
+      // have (`streetStairLevels`' own pin conversion).
+      levels: run.levels.map((y) => y + 1),
+    }));
+  };
 
   const jobs: StreetJob[] = [];
   for (const arterial of input.arterials ?? []) {
@@ -1390,6 +1457,38 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
         path.length === segment.path.length
           ? input.datums?.[graphIndex]?.bySegment.get(segment.id)
           : undefined;
+      // §4.2's registration. A `steps` or `cart` demand the descent solved
+      // (§1.3's D1) is surfaced as its **run** — one job per run, so a trunk
+      // and its branch are two flights of one object rather than two flights
+      // that never met. A `carriageway` demand (D2) is not replaced here: a
+      // street is a street, and breaking one into a flight is WP-D3's own
+      // change to the router rather than this pass's to guess at.
+      const solved = role === "steps" || role === "cart" ? descentRuns(graphIndex, segment.id) : undefined;
+      if (solved !== undefined) {
+        for (const [n, run] of solved.entries()) {
+          const runPath = run.columns.filter((c) => inside(region, c.x, c.z));
+          if (runPath.length !== run.columns.length || runPath.length < 2) continue;
+          jobs.push({
+            rank: {
+              id: qualifySegmentId(n === 0 ? segment.id : `${segment.id}~${n}`, graphPath),
+              width: segment.width,
+              role,
+              kind: segment.kind,
+            },
+            order: jobs.length,
+            role: role === "cart" ? "cart" : "steps",
+            width: segment.width,
+            path: runPath,
+            states: urbanHere[segment.kind],
+            decks: hasChannel,
+            graph,
+            marked: false,
+            marking: urbanHere.marking,
+            decided: run.levels,
+          });
+        }
+        continue;
+      }
       jobs.push({
         rank: {
           id: qualifySegmentId(segment.id, graphPath),
@@ -1457,7 +1556,19 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
       // columns owned by nobody — grass down the middle of a street that would
       // otherwise have dressed them — so the flight either can be built on the
       // natural ground or it never enters the ownership map at all.
-      const trial = streetStairLevels(geometry, naturalAt, {}, { cart: job.role === "cart" });
+      // §5.1: a flight the descent solved carries its levels; the tread law is
+      // not consulted for it, here or in the level phase. `decided` is indexed
+      // by the *path*, `geometry.centre` by the path filtered to the region —
+      // and the job was only built when the two are the same length, so the
+      // slice below is the identity on every job that has one.
+      const decided =
+        job.decided === undefined ? undefined : job.decided.slice(0, geometry.centre.length);
+      const trial = streetStairLevels(
+        geometry,
+        naturalAt,
+        {},
+        { cart: job.role === "cart", ...(decided === undefined ? {} : { decided }) },
+      );
       if (trial.refusedBecause !== undefined) {
         job.geometry = { ...geometry, refusedBecause: trial.refusedBecause };
         continue;
@@ -1511,6 +1622,18 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
         const k = index(region, cell.x, cell.z);
         return owner[k] === j || owner[k] === -1 ? undefined : (columnY[k] as number);
       };
+      // §5.1 again, and §4.2's own argument for why there is nothing to
+      // re-pin: T5 makes the flight's foot an **equality** against the level
+      // the street was graded to, so a descent's run already lands on its
+      // terminals. Re-grading it against a pin would be the second author the
+      // whole design removes.
+      if (job.decided !== undefined) {
+        for (const column of geometry.columns) {
+          if (owner[column.idx] !== j) continue;
+          columnY[column.idx] = (trial.levels[column.k] as number) - 1;
+        }
+        continue;
+      }
       const first = pinOf(0);
       const last = pinOf(geometry.centre.length - 1);
       const pinned =
@@ -1660,7 +1783,24 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
   // claims and the flight's own `preserve` band suppresses the pair by request
   // (§3.2 clause 2). So the deletion is G6's, not this stage's, and the pass is
   // unconditional on both paths.
-  const landing = terminusLandings(region, jobs, owner, columnY, blocked, paved, water);
+  //
+  // **§5.2 — re-scoped, and only on a claimed face.** This pass negotiates a
+  // street's terminal columns *down* onto a flight corridor because the
+  // flight's foot and the street's profile are two 1-Lipschitz lines falling in
+  // parallel. On a face a descent claims there is nothing to negotiate: T5
+  // makes the flight's foot an equality against the street's own level, so the
+  // yield would cut a recess into a street that already meets its stair. So the
+  // pass is scoped out of claimed faces and stays, **unconditional**, everywhere
+  // else — its live witness `examples/site-plan-hillside`'s three-block riser at
+  // (5, 44) is relief 3 and is never recognized (R1). WP-G2 and WP-G4 each
+  // deleted it whole and each measured the deletion back out; this is that
+  // replacement for the steep case only, and says so rather than repeating their
+  // claim. Full deletion still waits on WP-D0's census of off-face firings.
+  const claimedFace = descentClaimedMask(region, input.descents);
+  const landing = filterClaimed(
+    terminusLandings(region, jobs, owner, columnY, blocked, paved, water),
+    claimedFace,
+  );
   for (const [idx, y] of landing) {
     columnY[idx] = y;
     // A yielded column *is* a step, and is painted as one: the mix that dresses
@@ -3350,6 +3490,50 @@ const NO_CORRIDOR = -0x8000_0000;
  * this measurement, not by an argument. The pass is unconditional on both flag
  * paths until then.
  */
+/**
+ * The union of every quarter's claimed-face mask, or `undefined` where no
+ * descent was solved — `docs/DESCENT-SOLVE-v0.md` §5.
+ *
+ * `undefined` is the whole of the flag-off identity argument: the caller then
+ * takes the map it always took, by reference, and not one column is looked at
+ * twice.
+ */
+function descentClaimedMask(
+  region: Region,
+  descents: readonly (DescentDatum | undefined)[] | undefined,
+): Uint8Array | undefined {
+  if (descents === undefined) return undefined;
+  let out: Uint8Array | undefined;
+  for (const datum of descents) {
+    if (datum === undefined) continue;
+    let any = false;
+    for (const v of datum.claimed) {
+      if (v === 1) {
+        any = true;
+        break;
+      }
+    }
+    if (!any) continue;
+    if (out === undefined) out = new Uint8Array(region.width * region.depth);
+    // Every datum is indexed over the same terrain region as this pass, which
+    // is what makes the union a `|=` rather than a translation.
+    const n = Math.min(out.length, datum.claimed.length);
+    for (let k = 0; k < n; k++) if (datum.claimed[k] === 1) out[k] = 1;
+  }
+  return out;
+}
+
+/** A yield map with its claimed-face entries dropped — §5.2's re-scoping. */
+function filterClaimed(
+  landing: ReadonlyMap<number, number>,
+  claimed: Uint8Array | undefined,
+): ReadonlyMap<number, number> {
+  if (claimed === undefined || landing.size === 0) return landing;
+  const out = new Map<number, number>();
+  for (const [idx, y] of landing) if (claimed[idx] !== 1) out.set(idx, y);
+  return out;
+}
+
 export function terminusLandings(
   region: Region,
   jobs: readonly { readonly role: "carriageway" | "steps" | "cart" }[],

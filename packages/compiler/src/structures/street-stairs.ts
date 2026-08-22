@@ -359,9 +359,32 @@ export function streetStairLevels(
   geometry: StreetStairGeometry,
   ground: (x: number, z: number) => number,
   pins: { readonly first?: number; readonly last?: number } = {},
-  options: { readonly cart?: boolean } = {},
+  options: { readonly cart?: boolean; readonly decided?: readonly number[] } = {},
 ): StreetStairLevels {
   const centreGround = geometry.centre.map((c) => ground(c.x, c.z) + 1);
+  // **§5.1 of `docs/DESCENT-SOLVE-v0.md` — the levels are already decided.**
+  //
+  // On a face a descent claims, the flight's profile was not graded here: it
+  // came out of the descent solve, which chose the *path* knowing the tread law
+  // rather than filtering a path somebody else chose. This function keeps its
+  // signature and gains that one branch; **off a claimed face it is untouched
+  // byte-for-byte**, which is what keeps every world with no steep demand
+  // identical.
+  //
+  // The mix is still `treadPlan`'s, unchanged and unconsulted about who
+  // computed the levels — the relief law is a pure function of the levels
+  // themselves, which is exactly why it survives the change of author (§2.6).
+  const decided = options.decided;
+  if (decided !== undefined) {
+    if (decided.length !== geometry.centre.length) {
+      return {
+        levels: [],
+        shapes: [],
+        refusedBecause: `the descent solved ${decided.length} levels for a flight of ${geometry.centre.length} columns`,
+      };
+    }
+    return { levels: decided, shapes: treadPlan(decided, centreGround, { relief: true }) };
+  }
   if (options.cart === true) {
     // `docs/SITE-PLAN-v0.md` §3.6a. The same three phases and the same pins; the
     // difference is entirely in the law — half a block per `CART_TREAD_RUN`

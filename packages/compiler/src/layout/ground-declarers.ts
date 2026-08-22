@@ -75,6 +75,28 @@ export interface PadDeclarationInput {
    * construction that has to hold it.
    */
   readonly subtractCarriageway?: boolean;
+  /**
+   * **§1.7's third subtraction** — `docs/DESCENT-SOLVE-v0.md` §3.2.
+   *
+   * > **3. `quarter.plane` subtracts the solved descent corridors.**
+   *
+   * 1 on every column of a solved descent's corridor, row-major over
+   * {@link PadDeclarationInput.region} — `DescentDatum.corridor`, which is each
+   * run's cross-section at `streetStairGeometry`'s width dilated 1 Chebyshev,
+   * the same construction rule 1 uses for the carriageway band.
+   *
+   * The crossing law is a **subtraction, not an arbitration**, and the
+   * difference from `064c2d5`'s rejected pin-and-refuse is causal rather than
+   * quantitative: *there is no notch to meet.* The contested columns leave the
+   * plane's claim **before the plane is declared**, so the ground under a
+   * descent is the pristine baseline the search already solved against, the
+   * resolver never arbitrates those columns, and the severance that orphaned
+   * 271 hillside / 3,421 steep stair columns is impossible rather than won.
+   *
+   * Absent — which is every caller while `DESCENT_SOLVE` is off, and every flat
+   * town for ever — and this is §1.7 with two rules, unchanged.
+   */
+  readonly descentCorridor?: Uint8Array;
 }
 
 /**
@@ -129,16 +151,23 @@ export function declarePads(input: PadDeclarationInput): GroundIntent[] {
     ? solvedCarriagewayMask(region, input.districts, input.cities, input.corridors)
     : undefined;
 
+  // §3.2's third subtraction. Unlike rule 1 it is *not* gated on the rank: the
+  // corridor only exists at all when `DESCENT_SOLVE` is on, so the caller's
+  // absent mask is the flag's off state and there is nothing to defend.
+  const descent = input.descentCorridor;
+
   const out: GroundIntent[] = [];
   for (const [i, pad] of padEdits.entries()) {
     const sourceClass = classOf(pad);
     const subtract = sourceClass === "quarter.plane" ? carriageway : undefined;
+    const subtractDescent = sourceClass === "quarter.plane" ? descent : undefined;
     const columns: GroundClaim[] = [];
     for (let z = pad.footprint.z0; z <= pad.footprint.z1; z++) {
       for (let x = pad.footprint.x0; x <= pad.footprint.x1; x++) {
         if (!inside(region, x, z)) continue;
         const idx = index(region, x, z);
         if (subtract !== undefined && subtract[idx] === 1) continue;
+        if (subtractDescent !== undefined && subtractDescent[idx] === 1) continue;
         columns.push({ idx, y: pad.targetY });
       }
     }

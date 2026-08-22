@@ -1095,3 +1095,134 @@ export const FACE_FINISH = true;
  * a run rather than finishing one.
  */
 export const FACE_CROWN_GAP = 3;
+
+/* -------------------------------------------------------------------------- */
+/* the descent solve — `docs/DESCENT-SOLVE-v0.md`                              */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * **The switch: one cliff, one descent, solved against the resolved field.**
+ * **Off — `false` is what ships** while WP-D1 is measured; the flip is WP-D3.
+ *
+ * `true` — `layout/descent-datum.ts` recognizes every steep face the street
+ * network must descend (§1), solves each as **one object** by an exact integer
+ * Dijkstra over the tread law's own state space (§2), and the quarter's plane
+ * **subtracts** the solved corridor (§3.2) so the rank severance that orphaned
+ * 271 hillside / 3,421 steep columns is impossible rather than won.
+ *
+ * `false` — the shipped construction, byte-for-byte: the router draws a
+ * `steps` segment, `streetStairLevels` grades it alone against a frozen
+ * `natural`, `terminusLandings` negotiates its foot, `deriveSeamStairs` may cut
+ * another flight through the same cliff, and the rank table arbitrates what
+ * none of them negotiated. Every consumer below is behind an explicit input
+ * that defaults to this constant, so the off state reads the same code path it
+ * always did.
+ *
+ * It **implies** {@link ELECTION_SOLVE} — it needs the plane's declarer to
+ * subtract a corridor, which is §1.7's construction and lives with the rank —
+ * which in turn implies `GROUND_V1_FREEZE`. The ladder is asserted in
+ * `test/descent-solve.test.ts`.
+ */
+export const DESCENT_SOLVE = false;
+
+/**
+ * §1.2 S1 — the riser that seeds the scarp mask, in blocks.
+ *
+ * Two, because one is a kerb (`ELECTION-SOLVE-v0.md` §1.3.3) and
+ * `STREET_STAIR_RAIL_DROP = 2` is already the first drop a player can fall
+ * down. **A hillside falling one block per column seeds nothing** — the
+ * gentle-slope false positive is answered in the mask rather than by a guard.
+ */
+export const SCARP_RISER_MIN = 2;
+
+/**
+ * §1.2 S2 — how far the scarp mask is dilated, in Chebyshev columns.
+ *
+ * Two, `SEAM_SETBACK`/`SEAM_TREAD`'s order: it makes a stepped scarp — riser,
+ * tread, riser — one face instead of three, so anything a tier stack would
+ * dress as one stack is one face here.
+ */
+export const SCARP_DILATE = 2;
+
+/**
+ * §1.3 R1 — the datum drop a demand must lose across a face before a descent
+ * exists at all. `RETAIN_MAX`, the drop needing at least one retaining wall to
+ * be a face at all.
+ *
+ * Held here rather than imported so the descent's own recognition threshold has
+ * one home and one knob (§6.3's last-but-one row); `test/descent-solve.test.ts`
+ * asserts it equals `levels.ts`' `RETAIN_MAX`, so the two cannot drift.
+ */
+export const DESCENT_DROP_MIN = 6;
+
+/**
+ * §1.3 R2 — the run a drop must be earned in before a street simply grades it.
+ *
+ * The same ratio `emit/walkability.ts` audits routes with: a demand is steep
+ * iff `chebyshev(u, v) < DESCENT_EARN_RATIO · (Ytop − Ybot)`. At or above it a
+ * street grades, which is what a street is for.
+ */
+export const DESCENT_EARN_RATIO = 2;
+
+/**
+ * §1.4 — how far apart two demands' **upper** terminals must be, in Chebyshev
+ * columns, before one face is two descent problems.
+ *
+ * 32: `SEAM_STAIR_JOIN`'s argument taken at cliff scale — past six columns a
+ * flight "is not arriving at the street, it is a second street drawn beside
+ * it", and a whole descent is measured in tens rather than units. Grouping is
+ * single-linkage over the upper terminals in ascending region-index order, so
+ * this is the only clustering parameter there is.
+ */
+export const DESCENT_SHARE_SPAN = 32;
+
+/**
+ * §2.2 T3 — the columns of level run a direction change sits inside.
+ *
+ * `CART_TREAD_RUN`, three. The state's `s` saturates here, a turn is legal only
+ * at `s = DESCENT_LANDING_MIN`, and a turn resets it — so **a switchback's
+ * landings are a property of the state space, not a special case.**
+ */
+export const DESCENT_LANDING_MIN = 3;
+
+/**
+ * §2.4 M2 — the face above which recognition refuses outright (`LOAM-W412`).
+ *
+ * The a-priori bound on the state count is `|F| · (span + 1) · 4 ·
+ * (LANDING_MIN + 1)`, so a cap on `|F|` is a cap on the solve. 4,096 columns is
+ * a 64×64 cliff, an order above anything Troy carries.
+ */
+export const FACE_MAX_COLUMNS = 4096;
+
+/**
+ * §2.3 — what one column of run costs. The unit the other five are priced in.
+ */
+export const DESCENT_RUN_W = 1;
+
+/**
+ * §2.3 — ground falling under a tread faster than the flight is carrying it.
+ *
+ * Two, pinned by the walked S5a section (y 87–91): a flight riding a scarp with
+ * void beneath it prices the drop it is *not* taking, so the path prefers the
+ * traverse that walks the fall down at 1:1 — the side-hug shape, out of one
+ * weight rather than out of an alignment mode.
+ */
+export const DESCENT_SCARP_W = 2;
+
+/**
+ * §2.3 — ground **rising** under a descent.
+ *
+ * Eight, above {@link DESCENT_TURN_W} on purpose: rounding a bulge is cheaper
+ * than climbing it at any bulge under eight blocks.
+ */
+export const DESCENT_CLIMB_W = 8;
+
+/**
+ * §2.3 — a bend in the flight.
+ *
+ * Six, pinned by S4's verdict ("jagged", two lines that never meet): a bend
+ * costs six columns of run, so a fold wins only where the straight line is
+ * infeasible or ~18 columns longer. **This is the term that makes a flight read
+ * as one staircase** (§6.3's first row).
+ */
+export const DESCENT_TURN_W = 6;
