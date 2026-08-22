@@ -30,7 +30,10 @@
  */
 
 import path from "node:path";
+import { writeFileSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+
+import { townSketch, townStructures } from "./town.mjs";
 
 const ROOT = fileURLToPath(new URL("../..", import.meta.url));
 const compiler = await import(path.join(ROOT, "packages/compiler/dist/index.js"));
@@ -272,40 +275,15 @@ const st = (name, props) => {
 };
 
 /**
- * The settlement sketch's buildings: catalog archetypes, hand-laid the way the
- * doc's intent lays them — a megaron palace on the plaza, houses ringing it,
- * a lower town along the bench lane, an inn by the gate, sheds at the harbor.
- * Positions are polar around their center; the terrain BENEATH each is blended
- * to its own level before the final field freezes, so every seat is calm
- * ground with natural falloff — no retaining, no aprons, no pads.
+ * The settlement's asks come from the town module (`town.mjs`) as pure data:
+ * catalog archetypes with positions and facings. The core turns each kept
+ * site into a micro-plateau constraint before the field freezes, so every
+ * seat is calm ground with natural falloff — no retaining, no aprons, no
+ * pads. Rejection (roads, water, overlap) stays HERE: it is the law's, not
+ * the town's.
  */
-const SITES = [];
-function ringSites(center, r, count, startAngle, size, archetype, floors) {
-  for (let i = 0; i < count; i++) {
-    const a = startAngle + (i * 2 * Math.PI) / count;
-    SITES.push({
-      x: Math.round(center.x + r * Math.cos(a)),
-      z: Math.round(center.z + r * Math.sin(a)),
-      facing: a + Math.PI, // face the center
-      size,
-      archetype,
-      floors,
-    });
-  }
-}
-// The palace: a megaron looking down the gate road.
-SITES.push({ x: CITADEL.x - 2, z: CITADEL.z - 18, facing: Math.PI / 2, size: [17, 10, 12], archetype: "megaron", floors: 1 });
-// Citadel houses: two rings between the plaza and the wall, spaced so the
-// overlap rule can keep them, and phased so the gate road passes between.
-ringSites(plaza, 16, 4, 0.6, [10, 8, 8], "peristyle_house", 1);
-ringSites(plaza, 29, 5, 1.55, [10, 9, 8], "townhouse", 2);
-// The lower town: two rings along the bench lane.
-ringSites(BENCH, 15, 5, 0.2, [9, 7, 7], "cottage", 1);
-ringSites({ x: BENCH.x + 4, z: BENCH.z + 2 }, 26, 4, 0.95, [9, 8, 7], "townhouse", 2);
-// The inn beside (not astride) the gate road; sheds up from the water line.
-SITES.push({ x: gate.x + 14, z: gate.z - 4, facing: -Math.PI / 2, size: [12, 9, 9], archetype: "inn", floors: 2 });
-SITES.push({ x: HARBOR.x - 9, z: HARBOR.z + 4, facing: 0, size: [7, 6, 5], archetype: "hut", floors: 1 });
-SITES.push({ x: HARBOR.x + 8, z: HARBOR.z + 6, facing: 0, size: [7, 6, 5], archetype: "hut", floors: 1 });
+const anchors = { CITADEL, BENCH, HARBOR, WALL, gate, plaza };
+const { sites: SITES } = townSketch(anchors);
 
 /** Keep sites off roads and out of the water; snap each to its ground. */
 const roadMask = new Uint8Array(N);
@@ -420,40 +398,17 @@ const jobs = placedSites.map((s, i) => ({
 
 const buildingPass = buildBuildings(jobs, plan, stack);
 
-/** The wall: a ring on the citadel rim. The rim is smooth, so the wall is level work. */
-const wallBlocks = [];
-{
-  const wallStates = [st("smooth_sandstone"), st("cut_sandstone")];
-  const capState = st("smooth_sandstone_slab");
-  const steps = Math.ceil(2 * Math.PI * WALL.r * 2.2);
-  const laid = new Set();
-  for (let i = 0; i < steps; i++) {
-    const a = (i * 2 * Math.PI) / steps;
-    // The gate: an opening where the road leaves, flanked by towers below.
-    let da = Math.abs(a - ((WALL.gateAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI));
-    if (da > Math.PI) da = 2 * Math.PI - da;
-    const x = Math.round(CITADEL.x + WALL.r * Math.cos(a));
-    const z = Math.round(CITADEL.z + WALL.r * Math.sin(a));
-    const key = x + "," + z;
-    if (laid.has(key)) continue;
-    laid.add(key);
-    const base = groundAt(x, z);
-    if (da < WALL.gateHalf) continue;
-    const tower = da < WALL.gateHalf * 2.6;
-    const h = WALL.height + (tower ? 3 : 0);
-    for (let y = base + 1; y <= base + h; y++) {
-      wallBlocks.push({ x, y, z, stateId: wallStates[(x * 31 + z * 17 + y) % 64 < 52 ? 0 : 1] });
-    }
-    // Crenellation: merlon two of three, on the ring's own rhythm.
-    if (tower || i % 3 !== 0) wallBlocks.push({ x, y: base + h + 1, z, stateId: capState });
-  }
-}
+/** Everything the town stands on the frozen ground — from the town module. */
+const townPass = townStructures({
+  anchors, groundAt, st, stack, SEA, positionFloat, streamSeed, SEED,
+  onRoad: (x, z) => x >= REGION.x0 && z >= REGION.z0 && x < REGION.x0 + width && z < REGION.z0 + depth && roadMask[idx(x, z)] === 1,
+});
+const wallBlocks = townPass.blocks;
 
 /** Road surfaces: drape the final ground exactly; stairs where it steps once. */
 const roadBlocks = [];
 {
   const pathState = st("dirt_path");
-  const flagState = st("smooth_sandstone");
   const gravelState = st("gravel");
   // Every surface here REPLACES the plan's own top block at the plan's own
   // level — the road never adds a block above the ground, so it can never
@@ -503,34 +458,6 @@ const roadBlocks = [];
     }
   }
   roadBlocks.push(...stairFixups);
-  // The plaza: a sandstone circle at the summit.
-  for (let dz = -plaza.r; dz <= plaza.r; dz++) for (let dx = -plaza.r; dx <= plaza.r; dx++) {
-    if (Math.hypot(dx, dz) > plaza.r) continue;
-    const x = plaza.x + dx, z = plaza.z + dz;
-    const y = groundAt(x, z);
-    const r = positionFloat(streamSeed(SEED, "plaza-mix"), x, 0, z);
-    roadBlocks.push({ x, y, z, stateId: r < 0.75 ? flagState : st("sandstone") });
-  }
-  // The harbor quay: a stone apron on the pad, and a short pier into the water.
-  for (let dz = -8; dz <= 8; dz++) for (let dx = -8; dx <= 8; dx++) {
-    if (Math.hypot(dx, dz) > 8.5) continue;
-    const x = HARBOR.x + dx, z = HARBOR.z + dz;
-    const y = groundAt(x, z);
-    if (y <= SEA) continue;
-    roadBlocks.push({ x, y, z, stateId: st("smooth_sandstone") });
-  }
-  const pierDir = { x: Math.SQRT1_2, z: Math.SQRT1_2 };
-  for (let i = 0; i < 14; i++) {
-    for (let s = -1; s <= 1; s++) {
-      const x = Math.round(HARBOR.x + 6 + i * pierDir.x + s * pierDir.z * -1);
-      const z = Math.round(HARBOR.z + 6 + i * pierDir.z + s * pierDir.x);
-      roadBlocks.push({ x, y: SEA + 1, z, stateId: st("oak_planks") });
-      if (i % 4 === 0 && s !== 0) {
-        roadBlocks.push({ x, y: SEA, z, stateId: st("oak_log", { axis: "y" }) });
-        roadBlocks.push({ x, y: SEA - 1, z, stateId: st("oak_log", { axis: "y" }) });
-      }
-    }
-  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -618,6 +545,20 @@ const summary = await emitTerrain({
   levelName: "troy_rootpoc",
   spawn: { x: plaza.x, y: spawnY + 1, z: plaza.z },
 });
+
+// The build manifest — what the verify harness holds this world against.
+mkdirSync(outDir, { recursive: true });
+writeFileSync(
+  path.join(outDir, "manifest.json"),
+  JSON.stringify({
+    region: REGION,
+    sea: SEA,
+    anchors,
+    routes: roads.map((road) => road.map((k) => [xOf(k), zOf(k)])),
+    sites: placedSites.map((s) => ({ archetype: s.archetype, x0: s.x0, z0: s.z0, sx: s.sx, sz: s.sz, y: s.y })),
+    wallRing: townPass.wallRing,
+  }),
+);
 
 console.log(`troy_rootpoc emitted -> ${worldDir}`);
 console.log(`  chunks ${summary.chunkCount ?? "?"}, buildings ${buildingPass.built.length}/${jobs.length} (of ${SITES.length} sites), trees ${scatter.trees.length}`);
