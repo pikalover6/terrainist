@@ -4,21 +4,19 @@
 commit-anchored record; prior epoch docs/SESSION-HANDOFF-2026-08-20.md;
 Kai-readable overnight narrative docs/TROY-RUN-2026-08-21.md).
 
-**LIVE — THE ALTERNATE PATH IS THE ACTIVE ARC.** Kai walked the POC
-("looks pretty good now") and gave the overnight license: bold spec +
-impressive demo, max ONE opus-5-low at a time. Shipped overnight:
-**docs/COHERENT-SOURCE-v0.md** (LAW I one writer per block; LAW II
-coherence inherited never repaired; pipeline sketch->constrain->route->
-freeze->dress; verify.mjs is the court — 6 probes). Demo at
-tools/root-poc/ (troy-poc core + town.mjs WP-TOWN + environs.mjs
-WP-ENVIRONS): 60 buildings/25 archetypes, 7-high wall + 8 towers +
-gate rampart, war camp + necropolis + olive terraces + grove walls,
-THE HORSE (doc's authored program invoked on frozen ground). Installed
-**troy_rootpoc_v3** (v2 = bugfix deck, v1 = first walk). Awaiting
-Kai's verdict on the demo — it decides whether the main pipeline ports
-onto the two laws. n5 + its card still stand for head-to-head.
-**PIRATES STAGED AWAITING GO** (6b52fe3). DESCENT_SOLVE shipped on
-(59d9a4a, freeze/troy-iter-5). r23 authoring credit-blocked.
+**LIVE — ROAD_SOVEREIGN SHIPPED ON THE MAIN LINE** (Kai's n5-revival
+directive, 2026-08-22): roads drape the resolved ground through the one
+oracle (never elevated), outrank every writer (mask + 3 headroom,
+enforced last, own-lamps exempt), ALL ground/street stair generation
+silenced under the flag, stone-brick borders both flanks. Landing
+a16276f, flip+triage 1c479b3, freeze/troy-iter-6, FULL suite 2,908/0.
+THE TRADE, said out loud in the goldens: hillside walkability orphans
+271->2,591 (draped roads inherit terrain risers, no stairs to stitch)
+— **the n6 walk judges it**. Deck **trojan_horse_troy_n6** installed;
+rule-web artifact published. Coherent-source path stands: rootpoc_v3,
+COHERENT-SOURCE-v0, verify court. Prior arc: DESCENT_SOLVE on
+(59d9a4a, freeze/troy-iter-5). **PIRATES STAGED AWAITING GO**
+(6b52fe3). r23 authoring credit-blocked (Gemini vision only).
 
 **Shipped flags TRUE:** GROUND_V1_{RANKS,SEAMS,FREEZE}, ELECTION_SOLVE,
 TERRACE_BY_TERRAIN(moot), STREET_PLANE_HARMONIZE, FACE_FINISH.
