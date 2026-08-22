@@ -3515,10 +3515,24 @@ function descentClaimedMask(
     }
     if (!any) continue;
     if (out === undefined) out = new Uint8Array(region.width * region.depth);
-    // Every datum is indexed over the same terrain region as this pass, which
-    // is what makes the union a `|=` rather than a translation.
-    const n = Math.min(out.length, datum.claimed.length);
-    for (let k = 0; k < n; k++) if (datum.claimed[k] === 1) out[k] = 1;
+    // **Translated, not unioned.** A `DescentDatum` is indexed over its own
+    // quarter — recognition reads `StreetDatum.band`, which is row-major over
+    // the quarter's bounds — and this pass is indexed over the whole plan. WP-D1
+    // wrote a bare `|=` here against the guess that the two rasters agreed;
+    // they do not, and the union would have smeared one quarter's claimed face
+    // across the world's north-west corner. One translation, once per quarter.
+    const dr = datum.region;
+    for (let j = 0; j < dr.depth; j++) {
+      const z = dr.z0 + j;
+      const rj = z - region.z0;
+      if (rj < 0 || rj >= region.depth) continue;
+      for (let i = 0; i < dr.width; i++) {
+        if (datum.claimed[j * dr.width + i] !== 1) continue;
+        const ri = dr.x0 + i - region.x0;
+        if (ri < 0 || ri >= region.width) continue;
+        out[rj * region.width + ri] = 1;
+      }
+    }
   }
   return out;
 }

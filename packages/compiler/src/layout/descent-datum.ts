@@ -337,6 +337,42 @@ export function solveDescents(input: DescentDatumInput): DescentDatum {
 }
 
 /**
+ * Every quarter's solved corridor, translated into one mask over `region` —
+ * what `declarePads` subtracts from the `quarter.plane` claim (§3.2).
+ *
+ * A `DescentDatum` is indexed over its own **quarter**; a pad declaration is
+ * indexed over the whole plan. This is that translation, written once, in the
+ * module the corridor belongs to rather than at the call site — the discipline
+ * `layout/solved-carriageway.ts` keeps for §1.7's first subtraction.
+ *
+ * `undefined` when no quarter solved a descent, which is every compile while
+ * `DESCENT_SOLVE` is off: `declarePads` then declares §1.7 with two rules,
+ * unchanged, and allocates nothing.
+ */
+export function descentCorridorMask(
+  region: Region,
+  descents: readonly (DescentDatum | undefined)[],
+): Uint8Array | undefined {
+  let out: Uint8Array | undefined;
+  for (const datum of descents) {
+    if (datum === undefined || datum.descents.length === 0) continue;
+    if (out === undefined) out = new Uint8Array(region.width * region.depth);
+    const dr = datum.region;
+    for (let j = 0; j < dr.depth; j++) {
+      const rj = dr.z0 + j - region.z0;
+      if (rj < 0 || rj >= region.depth) continue;
+      for (let i = 0; i < dr.width; i++) {
+        if (datum.corridor[j * dr.width + i] !== 1) continue;
+        const ri = dr.x0 + i - region.x0;
+        if (ri < 0 || ri >= region.width) continue;
+        out[rj * region.width + ri] = 1;
+      }
+    }
+  }
+  return out;
+}
+
+/**
  * **The landing-iff-run invariant** (§2.5) — *a landing exists iff the run it
  * belongs to exists.*
  *

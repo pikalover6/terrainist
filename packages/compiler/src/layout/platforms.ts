@@ -94,22 +94,9 @@ export const MIN_PLATFORM_COLUMNS = 9;
 function blockedWithDescent(input: PlatformInput): Uint8Array {
   const corridor = input.descentCorridor;
   if (corridor === undefined) return input.blocked;
-  const { bounds, field } = input;
-  const width = bounds.x1 - bounds.x0 + 1;
-  const depth = bounds.z1 - bounds.z0 + 1;
   const out = Uint8Array.from(input.blocked);
-  const fr = field.region;
-  for (let j = 0; j < depth; j++) {
-    const z = bounds.z0 + j;
-    const fj = z - fr.z0;
-    if (fj < 0 || fj >= fr.depth) continue;
-    for (let i = 0; i < width; i++) {
-      const x = bounds.x0 + i;
-      const fi = x - fr.x0;
-      if (fi < 0 || fi >= fr.width) continue;
-      if (corridor[fj * fr.width + fi] === 1) out[j * width + i] = 1;
-    }
-  }
+  const n = Math.min(out.length, corridor.length);
+  for (let k = 0; k < n; k++) if (corridor[k] === 1) out[k] = 1;
   return out;
 }
 
@@ -253,9 +240,16 @@ export interface PlatformInput {
    * **The solved descent corridor** — `docs/DESCENT-SOLVE-v0.md` §3.2.
    *
    * 1 on every column of a solved descent's corridor, row-major over
-   * {@link PlatformInput.field}'s region rather than over
-   * {@link PlatformInput.bounds}, because that is the raster the fifth datum is
-   * computed on and translating once here is cheaper than translating a mask.
+   * {@link PlatformInput.bounds} — the same raster
+   * {@link PlatformInput.blocked} is on, because it is the same raster the
+   * fifth datum is computed on.
+   *
+   * *(WP-D1 wrote this against the field's region on the guess that a descent
+   * would be solved world-wide. It is not: recognition reads `StreetDatum.band`
+   * and `columnY`, which are row-major over the **quarter**, so the datum's
+   * region is the quarter's bounds and the translation D1 wrote was a no-op
+   * waiting to be wrong. WP-D3 deleted it — `blocked | corridor` is now one
+   * loop over one indexing.)*
    *
    * Where present those columns join {@link PlatformInput.blocked}: the
    * election's atoms are cut around a descent exactly as they are cut around a

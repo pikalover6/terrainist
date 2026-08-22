@@ -55,6 +55,7 @@ import {
   terraceMinDepth,
   type DecayBand,
   type HeightField,
+  type Region,
   type Seed256,
   type TerraceBay,
 } from "@terrainist/stdlib";
@@ -103,6 +104,12 @@ import {
   type GroundLevels,
   type LevelSeam,
 } from "./levels.js";
+import {
+  noDescents,
+  solveDescents,
+  type DescentDatum,
+  type DescentRecord,
+} from "./descent-datum.js";
 import { largestRect } from "./masks.js";
 import {
   DISSOLVE_DROP_MAX,
@@ -157,6 +164,7 @@ import {
 } from "./street-datum.js";
 import {
   CORNER_TOLERANCE,
+  DESCENT_SOLVE,
   ELECTION_SOLVE,
   FRONTAGE_RISE,
   FRONTAGE_TIE,
@@ -598,6 +606,49 @@ export interface DistrictStats {
    * does. Report-only, exactly as {@link DistrictStats.planeTie} is.
    */
   readonly streetHarmonize?: StreetHarmonizeStats;
+  /**
+   * **§2.7's explanation record**, per quarter —
+   * `docs/DESCENT-SOLVE-v0.md`'s "without this record the design is not
+   * maintainable and must not ship".
+   *
+   * A procedure can be debugged by reading it; an optimum cannot. What is here
+   * is what a walk verdict has to be able to quote back: the recognition census
+   * (seeds, faces, demands, groups), one {@link DescentRecord} per solved
+   * descent — its face, its terminals, its trunk and branch lengths, its risers
+   * and landings, and **the six cost terms of the chosen path beside those of
+   * the best path down the straight fall line**, which is the marginal that
+   * answers "why did it switchback here" — and every refusal with its reason.
+   *
+   * Report-only, exactly as {@link DistrictStats.planeTie} is. **Absent while
+   * `DESCENT_SOLVE` is off**, so no report golden moves.
+   */
+  readonly descents?: DescentStats;
+}
+
+/**
+ * What the fifth datum did on one quarter (§2.7).
+ *
+ * The recognition half is published whether or not anything was solved,
+ * deliberately: §7.1's suspect population is *faces that carried no demand*,
+ * and a report that only spoke about the descents it built could not name one.
+ */
+export interface DescentStats {
+  /** §1.2 S1's scarp seeds over this quarter. */
+  readonly seeds: number;
+  /** §1.2 S2's faces — 4-connected components of the dilated mask. */
+  readonly faces: number;
+  /** §1.3's steep demands, after R1 and R2. */
+  readonly demands: number;
+  /** §1.4's groups — one descent problem each. */
+  readonly groups: number;
+  /** Descents with at least one built run. */
+  readonly built: number;
+  /** Columns of the solved corridor `quarter.plane` subtracts (§3.2). */
+  readonly corridorColumns: number;
+  /** §7.4's cost witness: states settled over every face of this quarter. */
+  readonly states: number;
+  readonly records: readonly DescentRecord[];
+  readonly refusals: readonly { readonly reason: string; readonly what: string }[];
 }
 
 /**
@@ -682,6 +733,25 @@ export interface DistrictProduct {
    * the surfacer's datum path is unreachable.
    */
   readonly datum?: StreetDatum;
+  /**
+   * **The fifth datum** — every descent this quarter's network makes
+   * (`docs/DESCENT-SOLVE-v0.md` §4.1), solved in pass 4 against the very field
+   * `gradeStreetDatum` graded — §1.1's rule, and the reason the descent and the
+   * street datum cannot disagree about the hill by a block — and before the
+   * election ever saw the ground.
+   *
+   * It rides the product for the reason {@link DistrictProduct.datum} does, and
+   * it crosses the stage boundary by the same route: `terrain/compile.ts`
+   * collects it into `layoutOutcome.districts`, and `buildStructures` lines the
+   * descents up with `graphs` for `surfaceStreetGraph` (§4.2's registration),
+   * with `deriveSeamStairs` (§5.3's scoping), and with `declarePads` (§3.2's
+   * subtraction). One correspondence, no second copy of it to drift.
+   *
+   * **Absent while `DESCENT_SOLVE` is off** — the datum is the empty one then,
+   * and an empty descent is no descent, so the product is the object it has
+   * always been and every consumer below takes the path it always took.
+   */
+  readonly descent?: DescentDatum;
   /**
    * Which urban form drew this quarter, and whether it is the one that was
    * asked for.
@@ -1342,9 +1412,82 @@ export function layDistrict(
   // quarter that was built rather than the one before the alleys.
   let sidewalk = dilate(grid, carriageway, sidewalkWidth);
 
+  // --- the fifth datum: the descent solve -----------------------------------
+  // `docs/DESCENT-SOLVE-v0.md` §4.1. **Pass 4, after `gradeStreetDatum` and
+  // before `derivePlatforms`** — that window is the whole timing argument, and
+  // this is the only place in the compiler that is inside it.
+  //
+  // Pure over `(region, StreetGraph, field, StreetDatum, occupancy)`, declaring
+  // nothing: it recognizes every steep face the network must descend (§1) and
+  // solves each as **one object** (§2). What comes back is consumed twice here
+  // — the corridor joins `blocked` below (§3.2) and the whole datum rides the
+  // product forward to the surfacer and to S9 (§4.2, §5.3) — and nowhere else.
+  //
+  // The region is the quarter's own, and it must be: recognition reads
+  // `datum.band` and `datum.columnY`, which are row-major over exactly this
+  // rectangle, and a descent that indexed the hill differently from the street
+  // datum would disagree with it about the hill by a whole quarter.
+  //
+  // `field` is the same array `gradeStreetDatum` was handed, so §1.1's "the
+  // descent and the street datum never disagree about the hill by one block"
+  // is true by construction rather than by care.
+  //
+  // The flag lives in `solveDescents`, which returns `noDescents` while it is
+  // off: with `DESCENT_SOLVE` false every mask below is a zero array nobody
+  // ever finds a 1 in, and the quarter is byte-for-byte the one that shipped.
+  const descentRegion: Region = {
+    x0: bounds.x0,
+    z0: bounds.z0,
+    width: bounds.x1 - bounds.x0 + 1,
+    depth: bounds.z1 - bounds.z0 + 1,
+  };
+  // **T4's hard forbiddance, as much of it as pass 4 can honestly know.** Water
+  // is `fluid.channel` at rank 0 and is the one tier-A class that exists as a
+  // mask this early; a building footprint inside *this* quarter is not placed
+  // until 400 lines below, and it is kept off the corridor from the other side
+  // — the corridor is in `blocked`, so no lot contains one. Absent when the
+  // caller has no water mask, which is every terrain-less fixture.
+  const descentForbidden = ((): Uint8Array | undefined => {
+    if (!DESCENT_SOLVE || input.water === undefined) return undefined;
+    const fr = input.field.region;
+    const out = new Uint8Array(grid.cells);
+    for (let j = 0; j < descentRegion.depth; j++) {
+      const fj = bounds.z0 + j - fr.z0;
+      if (fj < 0 || fj >= fr.depth) continue;
+      for (let i = 0; i < descentRegion.width; i++) {
+        const fi = bounds.x0 + i - fr.x0;
+        if (fi < 0 || fi >= fr.width) continue;
+        if (input.water[fj * fr.width + fi] === 1) out[j * descentRegion.width + i] = 1;
+      }
+    }
+    return out;
+  })();
+  const descent: DescentDatum =
+    datum === null
+      ? noDescents(descentRegion)
+      : solveDescents({
+          region: descentRegion,
+          graph,
+          field: input.field,
+          datum,
+          ...(descentForbidden === undefined ? {} : { forbidden: descentForbidden }),
+        });
+
   // --- blocks --------------------------------------------------------------
   const blocked = new Uint8Array(grid.cells);
   for (let k = 0; k < grid.cells; k++) blocked[k] = carriageway[k] === 1 || sidewalk[k] === 1 ? 1 : 0;
+  // §3.2's third subtraction, at the one place the mask it subtracts from is
+  // built. "The election's atoms are cut around a descent exactly as they are
+  // cut around a street" — and `blocked` is *how* they are cut around a street,
+  // so a descent joins it in the same line rather than in a second mechanism.
+  // The plane therefore never asks for a descent's columns and the resolver
+  // never arbitrates them: **the severance is impossible rather than won.**
+  //
+  // Guarded on there being a descent at all, so the flag's off state does not
+  // walk a zero array once per quarter.
+  if (descent.descents.length > 0) {
+    for (let k = 0; k < grid.cells; k++) if (descent.corridor[k] === 1) blocked[k] = 1;
+  }
   // Ground outside the cell is somebody else's — the boulevard's, the bay's, or
   // the next quarter's. Blocking it here is what makes a lot stop at the cell
   // edge without the subdivision knowing anything about city plans.
@@ -1432,6 +1575,12 @@ export function layDistrict(
           // is the padded master field and "where does the hill step" is a
           // question about the ground the world came with.
           ...(input.pristine === undefined ? {} : { pristine: input.pristine }),
+          // §3.2, stated to the election in its own vocabulary as well as
+          // through `blocked`. Handed over only where a descent was solved, so
+          // the flag's off state calls this function with exactly the argument
+          // object it has always been called with — and `derivePlatforms` then
+          // takes the caller's `blocked` by reference, without a copy.
+          ...(descent.descents.length === 0 ? {} : { descentCorridor: descent.corridor }),
           ...(tieDatum === null
             ? {}
             : { datum: { street: tieDatum, reach: tieReach }, report: platformTie }),
@@ -2356,6 +2505,11 @@ export function layDistrict(
       // case — omits the key entirely, so the product is byte-for-byte the one
       // a quarter carried before wave 8D.
       ...(datum === null ? {} : { datum }),
+      // §4.1's artifact, handed forward to its three consumers. Omitted whole
+      // when nothing was solved — which is every quarter while the flag is off
+      // and every flat town for ever — so the product a quarter carried before
+      // this work packet is the object it carries now.
+      ...(descent.descents.length === 0 ? {} : { descent }),
       form: plan.record,
       ...(plan.channels === undefined || plan.channels.length === 0
         ? {}
@@ -2429,6 +2583,26 @@ export function layDistrict(
         // absent on a quarter where no segment's flanks asked, so no report
         // golden moves before a world does.
         ...(harmonizeReport.value === null ? {} : { streetHarmonize: harmonizeReport.value }),
+        // §2.7. Published whenever recognition saw *anything* — a face with no
+        // demand is the population §7.1 calls the suspect one, and a report
+        // that spoke only about the descents it built could not name one.
+        // Absent, and so invisible to every report golden, while the flag is
+        // off: `noDescents` seeds nothing and recognizes nothing.
+        ...(descent.recognition.seeds === 0 && descent.descents.length === 0
+          ? {}
+          : {
+              descents: {
+                seeds: descent.recognition.seeds,
+                faces: descent.recognition.faces.length,
+                demands: descent.recognition.demands.length,
+                groups: descent.recognition.groups.length,
+                built: descent.descents.filter((d) => d.runs.length > 0).length,
+                corridorColumns: descent.corridor.reduce((n, v) => n + v, 0),
+                states: descent.states,
+                records: descent.records,
+                refusals: descent.refusals,
+              },
+            }),
       },
     },
   };
@@ -4848,6 +5022,29 @@ export interface SeamStairInput {
   /** True on a column the quarter's street network already owns. */
   readonly onStreet: (x: number, z: number) => boolean;
   /**
+   * True on a column of a face a **solved descent claims** —
+   * `docs/DESCENT-SOLVE-v0.md` §5.3.
+   *
+   * > S9 may **not** cut a flight through a claimed face. Where a landing
+   * > stack's two ends sit on opposite sides of one, the demand belongs to the
+   * > descent as a branch (§2.5) and S9 emits nothing for that stack; every
+   * > other stack is unchanged and {@link MAX_DERIVED_STAIRS} is unaffected.
+   *
+   * The orphan class then dies **by construction** rather than by a guard: §2.5's
+   * invariant is *a landing exists iff the run it belongs to exists*, and on a
+   * claimed face the descent is the only producer of either. A landing stack S9
+   * publishes a flight for and the rank table then severs is exactly the
+   * "stairs to nowhere" defect — and on a claimed face there is now no second
+   * producer left to publish one.
+   *
+   * A predicate rather than a mask because a `DescentDatum` is per quarter and
+   * this pass is per quarter: the caller closes over its own datum, and nothing
+   * here has to know how a descent is indexed. Absent — which is every caller
+   * while `DESCENT_SOLVE` is off — and the pass is byte-for-byte the shipped
+   * one: not one column is asked about.
+   */
+  readonly claimed?: (x: number, z: number) => boolean;
+  /**
    * Per-district flag, defaulting to the compile-time {@link SEAM_TIERS}.
    *
    * The field exists for the reason `PlatformInput.tiered` exists: a test asks
@@ -4958,6 +5155,13 @@ export function deriveSeamStairs(input: SeamStairInput): SeamStairResult {
     ];
     const path = densify4(raw);
     if (path.length < 2) continue;
+    // §5.3. A flight that touches a claimed face is a second staircase down a
+    // cliff that already has one, drawn by a pass that cannot see the cliff —
+    // the exact shape of S4's defect. The descent owns that demand (as its
+    // trunk or as a branch joining at a landing), so S9 emits nothing for this
+    // stack. The cap is untouched: a stack that yields here never became a
+    // flight, so it never spent one.
+    if (input.claimed !== undefined && path.some((c) => input.claimed?.(c.x, c.z) === true)) continue;
     segments.push({
       id: `sst${n}`,
       kind: "lane",

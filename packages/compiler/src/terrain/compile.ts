@@ -113,6 +113,7 @@ import type {
   GroundPristineMeasurement,
 } from "../layout/ground-equivalence.js";
 import { declarePads } from "../layout/ground-declarers.js";
+import { descentCorridorMask } from "../layout/descent-datum.js";
 import { createGroundDriver, planAt, type GroundDriver } from "../layout/ground-driver.js";
 import { GROUND_V1_FREEZE } from "../layout/types.js";
 
@@ -1012,6 +1013,18 @@ async function compileValidated(
         districts: layoutOutcome.districts ?? [],
         cities: layoutOutcome.cities ?? [],
         corridors,
+        // §1.7's **third** subtraction (`docs/DESCENT-SOLVE-v0.md` §3.2): the
+        // quarter's plane subtracts the solved descent corridors, exactly as it
+        // already subtracts the solved carriageway band. `undefined` — and so
+        // §1.7 with two rules, unchanged — for every compile while
+        // `DESCENT_SOLVE` is off.
+        ...((): { descentCorridor?: Uint8Array } => {
+          const mask = descentCorridorMask(
+            plan.region,
+            (layoutOutcome.districts ?? []).map((d) => d.descent),
+          );
+          return mask === undefined ? {} : { descentCorridor: mask };
+        })(),
       }),
     );
     // **Pass 5b then pass 5e** (contract v1 §1.6, WP-G5). The one structure

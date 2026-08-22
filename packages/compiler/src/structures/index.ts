@@ -1270,6 +1270,7 @@ export function declareStructures(input: StructurePassInput): StructurePlan {
       if (mine.length === 0) continue;
       const bounds = d.bounds;
       const width = bounds.x1 - bounds.x0 + 1;
+      const descent = d.descent;
       const derived = deriveSeamStairs({
         nodePath: d.nodePath,
         landings: mine,
@@ -1278,6 +1279,23 @@ export function declareStructures(input: StructurePassInput): StructurePlan {
         // on this one quarter. Reading the compile-time flag again here would
         // drop the fixture's stairs on the floor.
         tiered: true,
+        // §5.3: S9 may not cut a flight through a face a descent already
+        // claims. The demand belongs to the descent — as its trunk or as a
+        // branch joining at a landing — and a second staircase down the same
+        // cliff, drawn by a pass that cannot see the cliff, is exactly S4's
+        // defect. Absent while `DESCENT_SOLVE` is off, so the pass is called
+        // with the argument object it has always been called with.
+        ...(descent === undefined
+          ? {}
+          : {
+              claimed: (x: number, z: number): boolean => {
+                const r = descent.region;
+                const i = x - r.x0;
+                const j = z - r.z0;
+                if (i < 0 || j < 0 || i >= r.width || j >= r.depth) return false;
+                return descent.claimed[j * r.width + i] === 1;
+              },
+            }),
         onStreet: (x: number, z: number): boolean => {
           if (x < bounds.x0 || x > bounds.x1 || z < bounds.z0 || z > bounds.z1) return false;
           const at = (z - bounds.z0) * width + (x - bounds.x0);
@@ -1364,6 +1382,18 @@ export function declareStructures(input: StructurePassInput): StructurePlan {
       // argument object it has always been called with.
       ...(districts.some((d) => d.datum !== undefined)
         ? { datums: districts.map((d) => d.datum) }
+        : {}),
+      // §4.2's registration, lined up with `graphs` by the same `districts`
+      // walk: where a demand was solved, the descent's **run** is the flight —
+      // its alignment and its profile both — and it files exactly the claim
+      // this pass already files for a flight (`street.network`, rank 80,
+      // `preserve` over its band). The second thing it carries is §5.2's
+      // scoping: `terminusLandings` is skipped on a claimed face, where T5's
+      // equality means there is nothing to negotiate. Handed over only when at
+      // least one quarter solved one, so the flag's off state calls the
+      // surfacer with the argument object it has always been called with.
+      ...(districts.some((d) => d.descent !== undefined)
+        ? { descents: districts.map((d) => d.descent) }
         : {}),
       ground: input.ground,
       ...(arterials.length === 0
