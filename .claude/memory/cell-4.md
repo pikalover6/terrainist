@@ -33,6 +33,12 @@ FULL-suite gate → flip commit → deck _nN + freeze/troy-iter-N branch.
 Massively-overdo-analysis is doctrine; blinded Gemini on iso renders;
 beware 1-column ASCII slice misreads (twice).
 
+**QUEUED BY KAI (2026-08-22, next/later generation — DO NOT build yet):**
+ban bespoke artifacts (authored landmarks, e.g. the horse) within 10% of
+world size (side-to-side measure) of the world border; the horse sits at
+the edge today, so the placer needs logic to find an entirely new spot
+far away.
+
 **Ladder debt:** chunk-2 internals (preflip-g6/README) → G7 (apron
 deletion + natural-blend, ratified, walk-gated) → G8 collapse. Open:
 troy W413 7-8 geometry-residual, quay 118, S8 crown (builder-side),
