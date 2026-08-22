@@ -313,8 +313,10 @@ function oracleCost(args: {
 /* -------------------------------------------------------------------------- */
 
 describe("the flag and the ladder (§6.1)", () => {
-  it("ships off, and implies the election solve, which implies the freeze", () => {
-    expect(DESCENT_SOLVE).toBe(false);
+  it("ships ON since the WP-D4 flip, and implies the election solve, which implies the freeze", () => {
+    // Re-pinned at the DESCENT_SOLVE flip (WP-D4): the west cliff solves, S4's
+    // live orphan class dies, S5a is untouched — the flag ships on.
+    expect(DESCENT_SOLVE).toBe(true);
     // The descent needs the plane's declarer to subtract a corridor, which is
     // §1.7's construction and lives with the rank.
     if (DESCENT_SOLVE) {

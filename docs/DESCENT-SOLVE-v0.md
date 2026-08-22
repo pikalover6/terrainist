@@ -265,3 +265,48 @@ scoped off claimed faces. D2 demands read the break stations. The fixture
 orphan classes (1:2.5 cones, zero seeds) are explicitly OUT of the descent
 solver's scope and keep their own S9 ownership — their targets move out of
 this design's acceptance and back to the walkability goldens.
+
+## Amended at WP-D4 (measured): the amendment's constants, and §5's scope
+
+WP-D4 implemented the connectivity amendment and measured five corrections
+into it, each forced by a number rather than a taste:
+
+- **`DESCENT_REACH = DESCENT_EARN_RATIO · DESCENT_DROP_MIN` (12), test-pinned.**
+  The reach is R2's own budget: the smallest pair R1 and R2 both accept spans
+  exactly 12 columns, so any other reach is a second silent threshold on the
+  same quantity. Reach is credited **from each street's kerb** (its band
+  half-width plus the sidewalk), not its centre line — measured: a 5-wide
+  street with its kerb on the scarp lost the west cliff by 3 columns.
+- **A long approach offers a station every `DESCENT_SHARE_SPAN` columns.**
+  One station per maximal run left the relief-47 face with 6 scattered
+  stations and zero legal pairs (27 pairs died on R1, 26 on R2). Chunking at
+  the span §1.4 already calls "two problems" keeps the pairing local without
+  a new threshold. Pairing is a greedy closest-first **matching** (no station
+  serves two demands); groups truncate to `DESCENT_GROUP_DEMANDS_MAX = 2`
+  (§6.2's S4 row by construction); flights are `DESCENT_FLIGHT_WIDTH = 3`
+  wide — the router's lane, not the terminals' carriageway width.
+- **§5's claim is the corridor's neighbourhood, not the face's component.**
+  `claimed` marks only face columns within `DESCENT_REACH` of a solved run.
+  Measured: claiming the whole 4-connected component took `LOAM-I414` from 12
+  derived flights to ZERO across the citadel — one descent silencing every
+  seam stack, a deletion wearing a scoping's name. (`DESCENT_SHARE_SPAN` as
+  the halo was measured too and is too wide: S5a lost its stairs and got
+  nothing back.)
+- **Solved runs join T4's forbiddance for every later group**, in
+  recognition's own deterministic order — §6.2's "no colliding independent
+  stairs" made impossible rather than checked.
+- **§4.2's registration covers the flight nothing named.** A run whose
+  demand is no segment files as a `steps` member of the street family with
+  its solved levels and its senior terminal's width class; a router `steps`
+  segment crossing a claimed stretch is superseded whole (§5.3 read from the
+  flight's end).
+
+Flag-on acceptance on Troy: 3 faces, 3 demands (all D1 connectivity), 2
+descents built, west cliff relief-47 SOLVED (trunk 27 columns, 11 risers,
+3 landings, cost 74; straight fall infeasible on both faces, so the
+switchback is forced, not preferred), one honest `unreachable` refusal on
+the junior demand. S4 flank orphans 9 → 2 (worst −8); S5a untouched;
+physics 14 = 14 identical by rule; `LOAM-I414` 12 flights with the cap
+exhausted → 12 with the cap free. §7.3's predicted dressing debt appeared
+on schedule: retaining.seam flank gains on 4 columns. §7.2's coupling
+measured at the east cluster (210,−98): 2066 → 2505, away from any descent.

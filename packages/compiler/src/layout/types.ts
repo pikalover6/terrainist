@@ -1123,7 +1123,7 @@ export const FACE_CROWN_GAP = 3;
  * which in turn implies `GROUND_V1_FREEZE`. The ladder is asserted in
  * `test/descent-solve.test.ts`.
  */
-export const DESCENT_SOLVE = false;
+export const DESCENT_SOLVE = true;
 
 /**
  * §1.2 S1 — the riser that seeds the scarp mask, in blocks.
