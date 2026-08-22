@@ -44,6 +44,7 @@ import type { StreetGraph } from "../layout/streets.js";
 // back the other way would close a runtime cycle. A type import erases.
 import type { DescentDatum } from "../layout/descent-datum.js";
 import type { StreetDatum } from "../layout/street-datum.js";
+import { ROAD_SOVEREIGN } from "../layout/types.js";
 import type { OccupancyGrid, Placement, ResolvedPort } from "../layout/types.js";
 import type {
   GroundClaim,
@@ -444,6 +445,8 @@ export interface RoadNetworkInput {
    * corridor is not a hard bound.
    */
   readonly corridor?: Uint8Array;
+  /** The switch — see `StreetSurfaceInput.sovereign`. Defaults to {@link ROAD_SOVEREIGN}. */
+  readonly sovereign?: boolean;
 }
 
 /**
@@ -495,6 +498,11 @@ export interface RoadNetworkResult {
    * (`structures/ground-declare.ts`).
    */
   readonly declaration: RoadDeclaration;
+  /**
+   * `ROAD_SOVEREIGN` item 4's border: 1 on every `stone_bricks` column the pass
+   * laid one step outside the lane. Absent while the flag is off.
+   */
+  readonly border?: Uint8Array;
   /**
    * **The route lamps, held back for the building half** — present only on the
    * staged path (`GroundDriver.staged`), and then absent from
@@ -564,6 +572,16 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
   const cells = region.width * region.depth;
   const driver = input.ground ?? driverForPlan(plan);
   const view = driver.view("C");
+  /**
+   * `ROAD_SOVEREIGN` item 1's oracle for the rural network — the same one the
+   * street surfacer takes, snapshotted at pass entry for the same reason it
+   * freezes `natural`: on the unstaged driver `view()` *is* the plan, and a
+   * lane graded against a lane this pass has already committed would be reading
+   * its own answer back. Under the drape the two are the same number anyway,
+   * which is the point: a sovereign lane moves no ground for the next one to
+   * inherit.
+   */
+  const drape = (input.sovereign ?? ROAD_SOVEREIGN) ? Int32Array.from(view.ground) : undefined;
 
   const width = clampInt(Math.round(input.params.width ?? 3), ROAD_MIN_WIDTH, ROAD_MAX_WIDTH);
   const spacing = Math.max(4, Math.round(input.params.lanternSpacing ?? ROAD_LANTERN_SPACING));
@@ -726,12 +744,12 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
     // columns, up to 4 blocks, decided by alphabetical accident.
     const source = `${input.nodePath}#route@${anchor.nodePath}→${hub.nodePath}`;
     const subRank = -declaredRoutes.length;
-    const claimed = declareRoute(view, blocked, spots, levels, paved, water);
+    const claimed = declareRoute(view, blocked, spots, levels, paved, water, undefined, drape);
     // Before the commit: the relief test sees the land this lane is cut into.
     const steep = reliefOf(region, view.ground, spots);
     driver.commit(routeIntents(source, subRank, claimed));
     declaredRoutes.push({ source, columns: claimed.level, bridged: claimed.bridged });
-    surfaceRoute(region, plan, blocked, road, roadY, spots, width, levels, states, occupancy, paved, water, bridged, steep);
+    surfaceRoute(region, plan, blocked, road, roadY, spots, width, levels, states, occupancy, paved, water, bridged, steep, undefined, drape);
     blocks.push(
       ...buildBridgeKit(
         region,
@@ -768,17 +786,25 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
   if (foreign !== undefined) {
     for (let k = 0; k < cells; k++) if (foreign[k] === 1) keepOut[k] = 1;
   }
-  const declaredShoulders = blendShoulders(
-    region,
-    plan,
-    view,
-    driver,
-    "road#shoulders",
-    road,
-    roadY,
-    keepOut,
-    paved,
-  );
+  // The verge, and a sovereign lane has none — see the street surfacer's own
+  // note at the identical call.
+  const declaredShoulders =
+    drape === undefined
+      ? blendShoulders(region, plan, view, driver, "road#shoulders", road, roadY, keepOut, paved)
+      : [];
+
+  // `ROAD_SOVEREIGN` item 4 for the rural network, after every route: the same
+  // dilation-minus-ribbon the street surfacer draws, so a lane and a street get
+  // the same kerb and a lane that joins a street does not change edge material
+  // halfway along.
+  // `keepOut`, not `blocked`: it carries the foreign road tag as well, so a
+  // lane running beside a district street borders the verge and never repaints
+  // the street itself. Surface beats border across passes for the same reason
+  // it does within one.
+  const border =
+    drape === undefined
+      ? undefined
+      : paintRoadBorder(region, plan, input.stack, road, keepOut, paved, water);
 
   // --- lanterns, dead last -------------------------------------------------
   // A post planted while routes were still being laid could have a later route
@@ -832,6 +858,7 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
     diagnostics,
     unrouted,
     declaration: { routes: declaredRoutes, shoulders: declaredShoulders },
+    ...(border === undefined ? {} : { border }),
     ...(lanterns === undefined ? {} : { lanterns }),
   };
 }
@@ -1074,6 +1101,13 @@ export interface StreetSurfaceInput {
    */
   readonly seam?: Uint8Array;
   /**
+   * The switch. Defaults to {@link ROAD_SOVEREIGN}; the parameter exists so a
+   * test may exercise the sovereign road without moving a compile-time constant
+   * the whole compiler reads — the shape `DescentDatumInput.descentSolve`
+   * already has.
+   */
+  readonly sovereign?: boolean;
+  /**
    * The street break-up (RUINS-PLAN-v0 §7.3), or absent when nothing broke.
    *
    * Above `decline ≥ 0.8` a share of carriageway columns goes past *worn* to
@@ -1125,6 +1159,16 @@ export interface StreetSurfaceResult {
   readonly bridgeColumns: number;
   /** Arterial carriageway columns, of the total. */
   readonly arterialColumns: number;
+  /**
+   * `ROAD_SOVEREIGN` item 4's border: 1 on every column of `stone_bricks` the
+   * pass laid one step outside the ribbon. **Absent while the flag is off**,
+   * which is what makes its off state cost not one allocation.
+   *
+   * It joins {@link StreetSurfaceResult.road} to form the sovereign mask item 2
+   * defends — the border is as much the road as the carriageway is, and a
+   * retaining course dropped across it severs the road just as surely.
+   */
+  readonly border?: Uint8Array;
   /**
    * 1 on every carriageway column §7.3's break-up took back to soil.
    *
@@ -1244,6 +1288,18 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
   const cells = region.width * region.depth;
   const driver = input.ground ?? driverForPlan(plan);
   const view = driver.view("C");
+  /**
+   * `ROAD_SOVEREIGN`, read once so every consequence below reads the same word.
+   *
+   * The fifth datum goes with it. A sovereign road carries no stair, so a
+   * solved descent has nothing to register, nothing to supersede and no claimed
+   * face to scope anything out of — and the solve itself is already off
+   * upstream (`solveDescents`), so this is belt to that brace and the one place
+   * a fixture that forces `descentSolve: true` under the flag still lands
+   * somewhere coherent.
+   */
+  const sovereign = input.sovereign ?? ROAD_SOVEREIGN;
+  const descents = sovereign ? undefined : input.descents;
 
   const water = buildBridgeableMask(plan);
   const blocked = new Uint8Array(cells);
@@ -1378,7 +1434,7 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
   const descentRuns = (graphIndex: number, segmentId: string):
     | readonly { readonly columns: readonly { readonly x: number; readonly z: number }[]; readonly levels: readonly number[] }[]
     | undefined => {
-    const datum = input.descents?.[graphIndex];
+    const datum = descents?.[graphIndex];
     const runs = datum?.bySegment.get(segmentId);
     if (datum === undefined || runs === undefined || runs.length === 0) return undefined;
     const r = datum.region;
@@ -1412,7 +1468,7 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
    * only ever 1 on a face a descent was **built** on.
    */
   const descentSupersedes = (graphIndex: number, path: readonly { readonly x: number; readonly z: number }[]): boolean => {
-    const datum = input.descents?.[graphIndex];
+    const datum = descents?.[graphIndex];
     if (datum === undefined || datum.descents.length === 0) return false;
     const r = datum.region;
     for (const c of path) {
@@ -1532,16 +1588,27 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
       // recognized from. A superseded flight has no job, no claim and no
       // levels: the descent owns that connection now.
       if ((role === "steps" || role === "cart") && descentSupersedes(graphIndex, segment.path)) continue;
+      // `ROAD_SOVEREIGN` item 3, at the one place a tread role is minted from a
+      // document: **a flight is surfaced as a road.** The router may still draw
+      // a `steps` or a `cart` run — the fabric's own alignment is not the
+      // flag's business — but the tread law never sees it, so no
+      // `streetStairGeometry`, no `streetStairLevels`, no `dressStreetStairs`
+      // and no balustrade exist for it. Draped over the ground the run crosses,
+      // which is item 1, it is a path up a hill rather than a staircase cut
+      // into one. The rank's role goes with it so `compareStreetRank` sorts the
+      // run as what it is now rather than as what the form called it.
+      const laid: "carriageway" | "steps" | "cart" =
+        sovereign || role === "carriageway" ? "carriageway" : role === "steps" ? "steps" : "cart";
       jobs.push({
         rank: {
           id: qualifySegmentId(segment.id, graphPath),
           width: segment.width,
-          role,
+          role: laid,
           kind: segment.kind,
         },
         ...(datumLevels === undefined ? {} : { datumY: datumLevels.y, datumPath: graphPath }),
         order: jobs.length,
-        role: role === "steps" ? "steps" : role === "cart" ? "cart" : "carriageway",
+        role: laid,
         width: segment.width,
         path,
         states: urbanHere[segment.kind],
@@ -1569,7 +1636,7 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
     //
     // Skipped whole where nothing was solved, which is every quarter while the
     // flag is off and every flat town for ever.
-    const solvedHere = input.descents?.[graphIndex];
+    const solvedHere = descents?.[graphIndex];
     if (solvedHere !== undefined && solvedHere.descents.length > 0) {
       const named = new Set(graph.segments.map((s) => s.id));
       const dr = solvedHere.region;
@@ -1624,6 +1691,18 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
   // WP-6: the baseline *is* the snapshot, and there is only one.)
   const natural = Int32Array.from(view.ground);
   const naturalAt = (x: number, z: number): number => natural[index(region, x, z)] as number;
+  /**
+   * `ROAD_SOVEREIGN` item 1's oracle, and there is exactly one of it.
+   *
+   * `view("C")` is the plan's single ground answer as the street family
+   * inherits it — the resolve over every tier above this one, which is the
+   * ground the terrain and the quarter already agreed on. A sovereign road
+   * declares *that number* at every column it surfaces, so the claim it files
+   * moves nothing and the road is the terrain's own top block with a different
+   * material on it. It is deliberately the same array the tread law and the
+   * relief test read: one writer, one oracle.
+   */
+  const drape = sovereign ? natural : undefined;
   const owner = new Int32Array(cells).fill(-1);
   /** The level each owned column was given — what a pin reads. */
   const columnY = new Int32Array(cells);
@@ -1868,9 +1947,20 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
       if (owner[spot.idx] !== j) continue;
       // A plaza surfaced itself and keeps its own level; the lane is *on* the
       // green, which is what the dress phase writes there too.
+      //
+      // Item 1: under the drape both arms are the same number, and the pinning
+      // the level phase did above is a profile nothing reads — the graded
+      // `levels` survive only to key the dash phase and the segment's frame.
+      // `stepFlag` goes to zero with it: a step in the profile is the profile
+      // deciding a height, and a sovereign road decides none, so there is no
+      // stepped surfacing to choose (item 3).
       columnY[spot.idx] =
-        paved[spot.idx] === 1 ? (natural[spot.idx] as number) : levels.at(spot.arc);
-      stepFlag[spot.idx] = levels.steps(spot.arc) ? 1 : 0;
+        drape !== undefined
+          ? (drape[spot.idx] as number)
+          : paved[spot.idx] === 1
+            ? (natural[spot.idx] as number)
+            : levels.at(spot.arc);
+      stepFlag[spot.idx] = drape === undefined && levels.steps(spot.arc) ? 1 : 0;
     }
   }
 
@@ -1900,11 +1990,19 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
   // deleted it whole and each measured the deletion back out; this is that
   // replacement for the steep case only, and says so rather than repeating their
   // claim. Full deletion still waits on WP-D0's census of off-face firings.
-  const claimedFace = descentClaimedMask(region, input.descents);
-  const landing = filterClaimed(
-    terminusLandings(region, jobs, owner, columnY, blocked, paved, water),
-    claimedFace,
-  );
+  //
+  // **`ROAD_SOVEREIGN` skips it whole.** The negotiation exists because a
+  // flight's foot and a street's profile are two 1-Lipschitz lines falling in
+  // parallel; under the flag there is no flight and there is no profile, so
+  // there are no two lines. It is exactly a pass that exists only to reconcile
+  // stairs with something else, and item 3 says such a pass does not run.
+  const claimedFace = descentClaimedMask(region, descents);
+  const landing = sovereign
+    ? new Map<number, number>()
+    : filterClaimed(
+        terminusLandings(region, jobs, owner, columnY, blocked, paved, water),
+        claimedFace,
+      );
   for (const [idx, y] of landing) {
     columnY[idx] = y;
     // A yielded column *is* a step, and is painted as one: the mix that dresses
@@ -1946,11 +2044,16 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
     const levels = job.levels;
     const spots = job.spots;
     if (levels === undefined || spots === undefined) continue;
-    const claimed = declareRoute(view, blocked, spots, levels, paved, water, {
-      owner,
-      job: job.order,
-      landing,
-    });
+    const claimed = declareRoute(
+      view,
+      blocked,
+      spots,
+      levels,
+      paved,
+      water,
+      { owner, job: job.order, landing },
+      drape,
+    );
     declaredSegments.push({
       source: `street:${job.rank.id}`,
       subRank: subRankOf.get(job.order) ?? job.order,
@@ -2027,6 +2130,7 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
       // no commit moves, so its timing was never in question.
       reliefOf(region, natural, spots),
       { owner, job: job.order, step: stepFlag, landing },
+      drape,
     );
     if (job.decks) {
       // The same call the arterial loop makes, so a canal bridge gets the same
@@ -2088,18 +2192,37 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
     );
   }
 
-  const declaredShoulders = blendShoulders(
-    region,
-    plan,
-    view,
-    driver,
-    "street#shoulders",
-    road,
-    roadY,
-    blocked,
-    paved,
-    input.seam,
-  );
+  // **The verge, and `ROAD_SOVEREIGN` has none.** The blend exists to feather
+  // the cut face and the fill face a *graded* lane leaves either side of itself
+  // — "what makes a lane read as a shelf bulldozed across a field rather than a
+  // track worn into it". A draped road cuts nothing and fills nothing, so there
+  // is no face to feather and the only thing the blend could still do is move
+  // ground the road never asked to move: item 1's own sentence, read one column
+  // out. So under the flag it does not run, and the street family declares no
+  // `verge` at all.
+  const declaredShoulders = sovereign
+    ? []
+    : blendShoulders(
+        region,
+        plan,
+        view,
+        driver,
+        "street#shoulders",
+        road,
+        roadY,
+        blocked,
+        paved,
+        input.seam,
+      );
+
+  // `ROAD_SOVEREIGN` item 4, laid after every segment of every graph: the
+  // ribbon has to be complete before its outline can be drawn, or a border
+  // painted for one street would be overwritten by the street that crosses it
+  // — which is precisely the "surface beats border" rule, obtained here by
+  // doing the dilation once over the finished mask instead of arbitrating.
+  const border = sovereign
+    ? paintRoadBorder(region, plan, input.stack, road, blocked, paved, water)
+    : undefined;
 
   let surfacedColumns = 0;
   let bridgeColumns = 0;
@@ -2121,6 +2244,7 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
     road,
     bridgeColumns,
     arterialColumns,
+    ...(border === undefined ? {} : { border }),
     ...(broken === undefined ? {} : { broken }),
     ...(streetDiagnostics.length === 0 ? {} : { diagnostics: streetDiagnostics }),
     declaration: { segments: declaredSegments, shoulders: declaredShoulders },
@@ -3861,6 +3985,17 @@ function surfaceRoute(
     /** §5.4's yielded terminal columns, `idx` → the level they stepped down to. */
     readonly landing?: ReadonlyMap<number, number>;
   },
+  /**
+   * `ROAD_SOVEREIGN`'s drape: the ground oracle's own level per column.
+   *
+   * Present only under the flag, and where it is present it is **the** answer —
+   * ahead of the graded profile and ahead of §5.4's landings, both of which are
+   * a road deciding its own height, which is the thing the flag removes. The
+   * road is then a replacement of the terrain's top block at the level the
+   * terrain already chose, which is `docs/COHERENT-SOURCE-v0.md` LAW I's one
+   * sanctioned exception and nothing wider.
+   */
+  drape?: ReadonlyInt32Array,
 ): void {
   // The same lattice `carriagewaySpans` walks, so `lane` and the edge distance
   // below are measured in the coordinate the sweep produced them in.
@@ -3875,7 +4010,14 @@ function surfaceRoute(
     // a column the run yielded to a stepped landing, the level it stepped to.
     // One map, read by the declaration and by the paint, so the ground the
     // resolver was told about and the ground that gets surfaced are one number.
-    const y = ownership?.landing?.get(idx) ?? levels.at(spot.arc);
+    // A **deck keeps its graded level**, under the drape as under the grade:
+    // the one thing a road may legitimately do above the ground is span water,
+    // and the column beneath it is the channel bed. Everywhere else the drape
+    // is the answer (`ROAD_SOVEREIGN` item 1).
+    const y =
+      drape === undefined || water[idx] === 1
+        ? (ownership?.landing?.get(idx) ?? levels.at(spot.arc))
+        : (drape[idx] as number);
     // Whether this segment may move the ground here. Painting is not gated on
     // it: ownership decides geometry and deliberately not material.
     const owned = ownership === undefined || ownership.owner[idx] === ownership.job;
@@ -4006,6 +4148,8 @@ function declareRoute(
     /** §5.4's yielded terminal columns, `idx` → the level they stepped down to. */
     readonly landing?: ReadonlyMap<number, number>;
   },
+  /** `ROAD_SOVEREIGN`'s drape — see {@link surfaceRoute}'s own parameter. */
+  drape?: ReadonlyInt32Array,
 ): { readonly level: GroundClaim[]; readonly bridged: GroundClaim[] } {
   const level: GroundClaim[] = [];
   const bridged: GroundClaim[] = [];
@@ -4019,7 +4163,13 @@ function declareRoute(
     if (blocked[idx] === 1) continue;
     if (paved[idx] === 1) continue;
     if (!owned) continue;
-    level.push({ idx, y: ownership?.landing?.get(idx) ?? levels.at(spot.arc) });
+    level.push({
+      idx,
+      y:
+        drape === undefined
+          ? (ownership?.landing?.get(idx) ?? levels.at(spot.arc))
+          : (drape[idx] as number),
+    });
   }
   return { level, bridged };
 }
@@ -4419,3 +4569,68 @@ function clampInt(v: number, lo: number, hi: number): number {
  * v0.2 §7.10: not yet — `LOAM-W430 DISCONNECTED_ROAD_GRAPH`; an unreachable
  *   anchor is reported per route as `LOAM-T209 ROAD_UNROUTABLE` instead.
  */
+
+/* -------------------------------------------------------------------------- */
+/* ROAD_SOVEREIGN — the drape, and the border                                  */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The stone-brick border, painted **and** returned as a mask.
+ *
+ * `ROAD_SOVEREIGN` item 4: a cross-slice of a sovereign road reads
+ * `stone_bricks | surface | … | surface | stone_bricks`. The border is the
+ * 8-neighbour dilation of the surfaced ribbon *minus the ribbon itself*, which
+ * is the whole of "surface beats border" — a cell another road surfaced is in
+ * the ribbon and is therefore never a border cell, so a border can never sever
+ * a crossing and a junction needs no special case at all.
+ *
+ * It obeys item 1 in the only way a border can: it writes `plan.surface` and
+ * **nothing else**. No claim, no level, no subsurface — the column keeps the
+ * ground its own resolved answer gave it and changes colour, which is the
+ * surface swap LAW I permits. That is also why it may be painted after every
+ * level in the pass is settled: there is no level here to be early or late for.
+ *
+ * Three kinds of column are never bordered: water (a border is not a bridge),
+ * a foreign footprint (`blocked` — no pass paints another's building), and a
+ * plaza (`paved` surfaced itself and a stone rim around every lane crossing the
+ * green is a grid drawn on a square).
+ */
+function paintRoadBorder(
+  region: Region,
+  plan: ColumnPlan,
+  stack: PrismarineStack,
+  road: Uint8Array,
+  blocked: Uint8Array,
+  paved: Uint8Array,
+  water: Uint8Array,
+): Uint8Array {
+  const cells = region.width * region.depth;
+  const border = new Uint8Array(cells);
+  const bricks = stack.blockByName("stone_bricks")?.stateId;
+  if (bricks === undefined) return border;
+  for (let z = region.z0; z < region.z0 + region.depth; z++) {
+    for (let x = region.x0; x < region.x0 + region.width; x++) {
+      const idx = index(region, x, z);
+      if (road[idx] === 1) continue;
+      if (blocked[idx] === 1 || paved[idx] === 1 || water[idx] === 1) continue;
+      if (plan.fluidKind[idx] !== FluidKind.NONE) continue;
+      let touches = false;
+      for (let dz = -1; dz <= 1 && !touches; dz++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          if (dx === 0 && dz === 0) continue;
+          const nx = x + dx;
+          const nz = z + dz;
+          if (!inside(region, nx, nz)) continue;
+          if (road[index(region, nx, nz)] === 1) {
+            touches = true;
+            break;
+          }
+        }
+      }
+      if (!touches) continue;
+      border[idx] = 1;
+      plan.surface[idx] = bricks;
+    }
+  }
+  return border;
+}

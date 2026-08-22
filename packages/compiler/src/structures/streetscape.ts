@@ -64,6 +64,7 @@ import type { Palette } from "../terrain/palette.js";
 
 import type { GroundClaim, GroundView } from "../layout/ground-contract.js";
 import { driverForPlan, type GroundDriver } from "../layout/ground-driver.js";
+import { ROAD_SOVEREIGN } from "../layout/types.js";
 
 import type { StructureBlock } from "./buildings.js";
 import { index, inside, presentsExposedFace, qualifySegmentId } from "./roads.js";
@@ -277,6 +278,11 @@ export interface StreetscapeContext {
    * there is no arc frame to ask, and inventing one would be a second answer.
    */
   readonly levels?: ReadonlyMap<string, SegmentArc>;
+  /**
+   * The switch. Defaults to {@link ROAD_SOVEREIGN}; the parameter exists so a
+   * test may exercise the draped kerb without moving a compile-time constant.
+   */
+  readonly sovereign?: boolean;
   /** Block-name → state-id resolution for prop ops. */
   readonly stack: PrismarineStack;
   /** The district node's seed; every hash stream derives from it. */
@@ -754,11 +760,19 @@ function paveSidewalks(
           if (plan.fluidKind[idx] !== FluidKind.NONE) continue;
           if (touchesFluid(plan, c.x, c.z)) continue;
 
-          const y =
-            arc === undefined
+          const natural = view.ground[idx] as number;
+          // `ROAD_SOVEREIGN` item 1, for the kerb and the band: a sidewalk is a
+          // surfacing, so it replaces the top block at **its own** column's
+          // resolved ground rather than inheriting the flanking carriageway's
+          // arc-station level. Under the flag that carriageway has no level of
+          // its own to inherit — it is draped on the same ground — so taking
+          // the arc here would be the band re-levelling itself off a number
+          // that no longer describes anything.
+          const y = (ctx.sovereign ?? ROAD_SOVEREIGN)
+            ? natural
+            : arc === undefined
               ? centre
               : arc.levels.at(projectToLine({ x: c.x, z: c.z }, arc.frame.line, arc.frame.arcs).arc);
-          const natural = view.ground[idx] as number;
           const curb = k === inner && Math.abs(natural - centre) <= CURB_LEVEL_TOLERANCE;
           const prior = band.get(idx);
           if (prior === undefined) {

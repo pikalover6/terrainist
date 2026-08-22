@@ -1278,3 +1278,44 @@ export const DESCENT_CLIMB_W = 8;
  * as one staircase** (§6.3's first row).
  */
 export const DESCENT_TURN_W = 6;
+
+/* -------------------------------------------------------------------------- */
+/* the sovereign road — `docs/COHERENT-SOURCE-v0.md` LAW I, applied to roads   */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * **The switch: a road is the terrain's top block, re-materialed.**
+ * **Off — `false` is what ships**; the off state is proven byte-identical on
+ * the battery docs, which is what every line below is written to make true.
+ *
+ * `true` — four behaviours, one flag, because they are one idea and any three
+ * of them without the fourth is a worse world than none of them:
+ *
+ * 1. **Roads drape.** No street, arterial or lane declares a graded profile.
+ *    Every surfaced column takes the ground oracle's own answer — `view("C")`,
+ *    the plan's single ground answer as the street family inherits it — so the
+ *    claim it files is numerically the ground that was already there. There is
+ *    no pavement above grade, no built-up road bed, no cut: the road **is** the
+ *    terrain's top block with a different material on it, which is LAW I's one
+ *    sanctioned exception (a surface swap at the surface's own level) and
+ *    nothing else.
+ * 2. **Roads are rank one.** The surfaced ribbon and its border are a mask, and
+ *    at the end of the build no other writer's block may stand in a road
+ *    column's surface position or in the three blocks of headroom above it.
+ *    A retaining course crossing a road severs the road; a bridge that spans it
+ *    with headroom does not, and stays.
+ * 3. **No stairs on the ground.** The descent solve is not run, `deriveSeamStairs`
+ *    is not called, `junction-steps` is not reachable, and the router's `steps`
+ *    and `cart` runs are surfaced as plain draped carriageway rather than by the
+ *    tread law. Building roofs and building-internal stairs are not roads and
+ *    are untouched.
+ * 4. **A stone-brick border.** One column of `stone_bricks` each side of the
+ *    ribbon, itself a replacement of the terrain's top block at its own
+ *    column's ground. Where another road's surface claims a border cell the
+ *    surface wins, so a border can never sever a crossing.
+ *
+ * It does **not** change {@link DESCENT_SOLVE}'s value: `solveDescents` reads
+ * the conjunction, so a fixture that asks for the solve explicitly still gets
+ * it and the descent code stays alive and tested.
+ */
+export const ROAD_SOVEREIGN = false;

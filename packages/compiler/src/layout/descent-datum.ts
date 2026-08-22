@@ -51,7 +51,7 @@ import {
 } from "./descent-solve.js";
 import type { StreetGraph } from "./streets.js";
 import { materialisedGround, type StreetDatum } from "./street-datum.js";
-import { DESCENT_REACH, DESCENT_SOLVE } from "./types.js";
+import { DESCENT_REACH, DESCENT_SOLVE, ROAD_SOVEREIGN } from "./types.js";
 
 /** What {@link solveDescents} needs. Everything, and nothing else (§4.1). */
 export interface DescentDatumInput {
@@ -232,7 +232,13 @@ function dilate1(region: Region, mask: Uint8Array): Uint8Array {
  */
 export function solveDescents(input: DescentDatumInput): DescentDatum {
   const { region, graph, field, datum } = input;
-  if ((input.descentSolve ?? DESCENT_SOLVE) !== true) return noDescents(region);
+  // `ROAD_SOVEREIGN` treats the solve as off without moving `DESCENT_SOLVE`'s
+  // own value (§3 of the flag's own note): a sovereign road never carries a
+  // stair, so recognizing a face the network must descend has nothing to build
+  // and the corridor it would subtract from the plane must not exist either.
+  // Only the *default* is conjoined, so a fixture that names `descentSolve`
+  // explicitly still exercises the solver under either flag.
+  if ((input.descentSolve ?? (DESCENT_SOLVE && !ROAD_SOVEREIGN)) !== true) return noDescents(region);
   const cells = region.width * region.depth;
   const h = materialisedGround(region, field);
   const recognition = recognizeDescents({ region, h, graph, datum });

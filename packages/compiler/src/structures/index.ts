@@ -73,7 +73,7 @@ import {
 import type { GroundDriver } from "../layout/ground-driver.js";
 import { solvedCarriagewayMask } from "../layout/solved-carriageway.js";
 import type { GroundTier } from "../layout/ground-contract.js";
-import { FACE_FINISH, GROUND_V1_FREEZE } from "../layout/types.js";
+import { FACE_FINISH, GROUND_V1_FREEZE, ROAD_SOVEREIGN } from "../layout/types.js";
 import { NO_PLATFORM } from "../layout/levels.js";
 import type { LayoutNodeInput, OccupancyGrid, Placement, ResolvedPort } from "../layout/types.js";
 import { mergeSpanSets } from "../terrain/caves.js";
@@ -405,6 +405,18 @@ export interface BlockSpan {
 /** Elements copied per `push` when a pass's blocks are appended. See `lay`. */
 const LAY_CHUNK = 8192;
 
+/**
+ * `ROAD_SOVEREIGN` item 2 — the clear headroom a road column keeps, in blocks.
+ *
+ * Three: a player is two blocks tall and the third is the block they step up
+ * onto, so a road with three clear blocks above its surface is a road that can
+ * be walked down. Anything a foreign pass puts inside that band across a road
+ * severs it, whatever the pass meant by it; anything above it — a bridge, an
+ * arch, a gatehouse spanning the way — is a structure the road runs under and
+ * is left alone.
+ */
+const ROAD_SOVEREIGN_HEADROOM = 3;
+
 /** What the structure pass produced. */
 export interface StructurePassResult {
   /** Blocks to stamp after the terrain columns are written. */
@@ -522,6 +534,19 @@ export interface StructurePlan {
   /** Grows through the declare half — the farmstead and the precinct add to it. */
   readonly buildingPaths: ReadonlySet<string>;
   readonly precincts: PrecinctPassResult | undefined;
+  /**
+   * `ROAD_SOVEREIGN`'s hand-off across the WP-G5 seam, and **undefined while
+   * the flag is off** so nothing is allocated and nothing is carried.
+   *
+   * `mask` is 1 on every column of road — street ribbon, lane ribbon and both
+   * stone-brick borders. `surface` is what the top block of each of those
+   * columns must be when the build half is finished with the world. Taken at
+   * the moment the road was whole (the declaring half, right after the lane
+   * network) because that is the last moment it is uncontested; enforced at the
+   * very end of the build half, because that is the first moment the claim
+   * "nothing writes over a road" can be true.
+   */
+  readonly sovereign: { readonly mask: Uint8Array; readonly surface: Int32Array } | undefined;
   /** R1's claimed planes, shared by the retaining pass and the cut-face finish. */
   readonly planes: readonly RetainingPlane[];
   readonly themeSeed: Seed256;
@@ -1264,7 +1289,14 @@ export function declareStructures(input: StructurePassInput): StructurePlan {
   // Empty, and allocating nothing, on every quarter whose seams published no
   // landings — which is every quarter until `SEAM_TIERS` flips or a fixture
   // asks one for `tiered: true`.
-  if (retaining.landings.length > 0) {
+  //
+  // **`ROAD_SOVEREIGN` skips S9 whole** (item 3). A derived seam flight is a
+  // staircase cut into the ground by a pass that exists to reconcile a tier
+  // stack with a street; under the flag the street is draped on the ground the
+  // tier stack left, so there is no reconciliation to make and no stair to make
+  // it with. The retaining pass keeps its landings — they are a wall's own
+  // geometry — and nothing derives a flight from them.
+  if (!ROAD_SOVEREIGN && retaining.landings.length > 0) {
     for (const d of districts) {
       const mine = retaining.landings.filter((l) => l.nodePath === d.nodePath);
       if (mine.length === 0) continue;
@@ -1582,6 +1614,56 @@ export function declareStructures(input: StructurePassInput): StructurePlan {
     lay("roads", roads.blocks);
   }
 
+  /* --- ROAD_SOVEREIGN: the mask, taken the moment the road is whole --------- */
+  //
+  // Item 2 needs two things and this is the first moment both exist: **which
+  // columns are road** (the street ribbon, the lane ribbon and both borders)
+  // and **what the road's own top block is**. Every pass that could repaint a
+  // road column runs after this line — the farms, the doorstep cuts, the ground
+  // treatment, the life pass, the sweep — so the material is snapshotted here
+  // and re-asserted at the very end, which is "stamp road surfaces last so they
+  // win" stated as one array rather than as a build-order argument.
+  //
+  // Undefined while the flag is off: not one array is allocated and not one
+  // column is walked.
+  const sovereign = ((): { readonly mask: Uint8Array; readonly surface: Int32Array } | undefined => {
+    if (!ROAD_SOVEREIGN) return undefined;
+    const region = input.plan.region;
+    const cells = region.width * region.depth;
+    const mask = new Uint8Array(cells);
+    const surface = new Int32Array(cells);
+    // The ribbon first, at whatever the surfacers painted it: the wear mix, the
+    // gutter dither, the centre dashes and the break-up are the road's own
+    // material and this is the only copy of it.
+    for (const layer of [streets?.road, roads?.roadColumns]) {
+      if (layer === undefined) continue;
+      for (let k = 0; k < cells; k++) {
+        if (layer[k] !== 1 || mask[k] === 1) continue;
+        mask[k] = 1;
+        surface[k] = input.plan.surface[k] as number;
+      }
+    }
+    // Then the border, at `stone_bricks` **by definition** rather than by
+    // re-reading the plan: the sidewalk band is laid between the surfacer and
+    // this line and covers exactly the columns the border does, so a snapshot
+    // taken here would record the pavement that overwrote it. Item 4 says the
+    // flanks of the ribbon are stone brick; this is that sentence, and the
+    // ribbon's own claim above already won every column the two share (surface
+    // beats border).
+    const bricks = input.stack.blockByName("stone_bricks")?.stateId;
+    if (bricks !== undefined) {
+      for (const layer of [streets?.border, roads?.border]) {
+        if (layer === undefined) continue;
+        for (let k = 0; k < cells; k++) {
+          if (layer[k] !== 1 || mask[k] === 1) continue;
+          mask[k] = 1;
+          surface[k] = bricks;
+        }
+      }
+    }
+    return { mask, surface };
+  })();
+
   // **Tier C** (§6a.3): `sweep.run` — the furrow, the crop circle, the terrace
   // flight. After the streets and the roads, whose tier it shares, and before
   // the holdings: a scar outranks a field and yields to every built thing,
@@ -1878,6 +1960,7 @@ export function declareStructures(input: StructurePassInput): StructurePlan {
     retaining,
     courtyardPass,
     canals,
+    sovereign,
     streets,
     streetMasks,
     streetFurniture,
@@ -1929,6 +2012,7 @@ export function buildStructures(
     // surfacer and the road router — are still in the declaring half. It stays
     // on the plan for the WP-G6 move rather than being a field with no reader.
     precincts,
+    sovereign,
     planes,
     themeSeed,
     theme,
@@ -2070,7 +2154,12 @@ export function buildStructures(
   // accident: there is no legal position for it after the seal. With the flag
   // off every line of it survives untouched, which is what the byte-identity
   // control set pins.
-  if (!GROUND_V1_FREEZE && districts.some((d) => (d.levels?.levelY.length ?? 0) > 1)) {
+  //
+  // `ROAD_SOVEREIGN` names it too (item 3) even though the freeze already
+  // reaches it first: this pass is the definition of "a pass that exists only
+  // to reconcile stairs with something else", and the flag should not depend on
+  // another flag's value to be true about it.
+  if (!GROUND_V1_FREEZE && !ROAD_SOVEREIGN && districts.some((d) => (d.levels?.levelY.length ?? 0) > 1)) {
     const junctions = buildJunctionSteps({
       region: input.plan.region,
       plan: input.plan,
@@ -2619,6 +2708,33 @@ export function buildStructures(
     lay("green-skin", greenSkin.blocks);
   }
 
+  /* --- ROAD_SOVEREIGN: nothing writes over a road ---------------------------- */
+  //
+  // Item 2, and it is deliberately the **last** thing the structure half does,
+  // because "no other writer's block may occupy a road-surface position" is a
+  // statement about the finished build and not about any one pass. Two moves,
+  // in this order:
+  //
+  // 1. **The surface is the road's again.** Every road and border column takes
+  //    back the material the surfacer gave it (item 4's `stone_bricks` for the
+  //    flanks), undoing anything the doorstep cuts, the ground treatment, the
+  //    life pass or the sweep repainted on it. The *level* is untouched: the
+  //    road is draped on the resolved ground and the resolved ground is what
+  //    the emitter will lay it at.
+  // 2. **The headroom is cleared.** A block at the road's own surface position,
+  //    or in the three blocks above it, is dropped — a road column keeps its
+  //    surface and a walker's clearance, which is what stops a retaining course
+  //    or a wall sweep crossing a road from severing it. Three, because that is
+  //    a player plus the block they can step onto.
+  //
+  // Two emitters are exempt and only two: the road passes themselves. Their
+  // blocks *are* the road — a bridge deck, its rails, its piers — and a bridge
+  // is the one structure that may legitimately stand above a road column,
+  // which is exactly why item 2 admits it by name.
+  if (sovereign !== undefined) {
+    enforceRoadSovereignty(input.plan, sovereign, blocks, blockSpans);
+  }
+
   return {
     blocks,
     blockSpans,
@@ -2696,6 +2812,75 @@ export function buildStructures(
       ...life.stats,
     },
   };
+}
+
+/**
+ * `ROAD_SOVEREIGN` item 2 — **nothing writes over a road**, enforced once, last.
+ *
+ * Exported so the law can be tested as the sentence it is rather than through a
+ * whole compile: hand it a plan, a road mask with the material the road must
+ * end up wearing, and the emitted block list with its attribution spans, and
+ * afterwards every masked column's top block is road material with three clear
+ * blocks above it.
+ *
+ * Two moves, in this order.
+ *
+ * 1. **The surface is the road's again.** Every masked column takes back the
+ *    material the surfacer gave it — the carriageway's own wear mix, or item
+ *    4's `stone_bricks` on the flanks — undoing whatever the doorstep cuts, the
+ *    ground treatment, the life pass or the sweep repainted on it. The *level*
+ *    is never touched: the road is draped on the resolved ground and the
+ *    resolved ground is where the emitter will lay it.
+ * 2. **The headroom is cleared.** A foreign block standing in the road's own
+ *    surface position, or in the {@link ROAD_SOVEREIGN_HEADROOM} blocks above
+ *    it, is dropped. That is what stops a retaining course or a wall sweep
+ *    crossing a road from severing it, and it is stated as a band rather than
+ *    as a single block precisely so the severing case — a course *above* the
+ *    pavement — is caught along with the colliding one.
+ *
+ * Two emitters are exempt, and only two: the road passes themselves. Their
+ * blocks **are** the road — a bridge deck, its rails, its piers — and a bridge
+ * is the one structure item 2 admits may legitimately stand above a road.
+ * Anything spanning higher than the headroom band is left alone whoever laid
+ * it, which is the same admission stated for everybody else.
+ *
+ * `blocks` and `blockSpans` are rewritten in place and stay consistent: a span
+ * that loses every block loses its row too, and the survivors' ranges are
+ * recomputed rather than patched.
+ */
+export function enforceRoadSovereignty(
+  plan: ColumnPlan,
+  sovereign: { readonly mask: Uint8Array; readonly surface: Int32Array },
+  blocks: StructureBlock[],
+  blockSpans: BlockSpan[],
+): void {
+  const region = plan.region;
+  const cells = region.width * region.depth;
+  for (let k = 0; k < cells; k++) {
+    if (sovereign.mask[k] === 1) plan.surface[k] = sovereign.surface[k] as number;
+  }
+  const kept: StructureBlock[] = [];
+  const keptSpans: BlockSpan[] = [];
+  for (const span of blockSpans) {
+    const from = kept.length;
+    const mine = span.emitter === "streets" || span.emitter === "roads";
+    for (let i = span.from; i < span.to; i++) {
+      const b = blocks[i] as StructureBlock;
+      if (!mine && inside(region, b.x, b.z)) {
+        const k = index(region, b.x, b.z);
+        if (sovereign.mask[k] === 1) {
+          const top = plan.ground[k] as number;
+          if (b.y >= top && b.y <= top + ROAD_SOVEREIGN_HEADROOM) continue;
+        }
+      }
+      kept.push(b);
+    }
+    if (kept.length > from) keptSpans.push({ emitter: span.emitter, from, to: kept.length });
+  }
+  blocks.length = 0;
+  for (let i = 0; i < kept.length; i += LAY_CHUNK) blocks.push(...kept.slice(i, i + LAY_CHUNK));
+  blockSpans.length = 0;
+  blockSpans.push(...keptSpans);
 }
 
 /**
