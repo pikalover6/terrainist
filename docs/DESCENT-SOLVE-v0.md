@@ -243,3 +243,25 @@ Downstream is unchanged: the fifth resolve arbitrates, the freeze freezes, the t
 **7.4 Solve cost.** Bounded a priori by M2 and capped by `FACE_MAX_COLUMNS`; `descentMs` is recorded beside `electionMs` and `groundMs`, a test asserts the per-face state count never exceeds the bound, and the ground stage's 10 % wall-time envelope (`GROUND-CONTRACT-v1.md:1274`) is the budget. Descents are per **face**, not per column, and there are single digits per world.
 
 **7.5 What this document does not cover.** Recognition is **demand-driven**: if the router drew nothing across a cliff, no descent exists and the cliff stays a cliff. Making the router *want* a crossing it never asked for is a separate design, deliberately not attempted here — all three sightings are cases where the network already went down, and went down badly.
+
+
+## Amended at WP-D3 (measured): recognition is connectivity, not segments
+
+WP-D3 wired every joint (proven on a synthetic cliff) and then measured
+recognition firing on ZERO real documents. Two structural causes, both in
+§1's demand definition, neither in the solve: (a) `gradeStreetDatum` is
+1-Lipschitz along a path, so a carriageway's `columnY` can never present a
+2-riser — the D2 signal is **T12's break-into-steps stations**, which the
+datum already marks, not profile differences; (b) the flights that actually
+race real cliffs are **S9 seam stairs created at pass 5b**, after pass-4
+recognition closes — a demand defined as "an existing steps segment" looks
+for the disease's symptom in the wrong pass. The amendment, in the design's
+own original language ("the set of streets wanting through"): **a D1 demand
+is a face together with opposing network terminals** — street/carriageway
+stations within `DESCENT_REACH` of the face on both sides at datum levels
+differing by the steep test — whether or not any stair yet exists; the
+solver PROVIDES the connection S9 would otherwise improvise, and S9 stays
+scoped off claimed faces. D2 demands read the break stations. The fixture
+orphan classes (1:2.5 cones, zero seeds) are explicitly OUT of the descent
+solver's scope and keep their own S9 ownership — their targets move out of
+this design's acceptance and back to the walkability goldens.
