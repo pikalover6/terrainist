@@ -295,16 +295,17 @@ function ringSites(center, r, count, startAngle, size, archetype, floors) {
 }
 // The palace: a megaron looking down the gate road.
 SITES.push({ x: CITADEL.x - 2, z: CITADEL.z - 18, facing: Math.PI / 2, size: [17, 10, 12], archetype: "megaron", floors: 1 });
-// Citadel houses: two rings between the plaza and the wall.
-ringSites(plaza, 17, 5, 0.55, [10, 8, 8], "peristyle_house", 1);
-ringSites(plaza, 28, 7, 0.15, [10, 9, 8], "townhouse", 2);
+// Citadel houses: two rings between the plaza and the wall, spaced so the
+// overlap rule can keep them, and phased so the gate road passes between.
+ringSites(plaza, 16, 4, 0.6, [10, 8, 8], "peristyle_house", 1);
+ringSites(plaza, 29, 5, 1.55, [10, 9, 8], "townhouse", 2);
 // The lower town: two rings along the bench lane.
-ringSites(BENCH, 14, 6, 0.2, [9, 7, 7], "cottage", 1);
-ringSites({ x: BENCH.x + 4, z: BENCH.z + 2 }, 25, 5, 0.9, [9, 8, 7], "townhouse", 2);
-// The inn outside the gate; sheds at the harbor.
-SITES.push({ x: gate.x + 8, z: gate.z + 10, facing: -Math.PI / 2, size: [12, 9, 9], archetype: "inn", floors: 2 });
-SITES.push({ x: HARBOR.x - 6, z: HARBOR.z - 8, facing: 0, size: [7, 6, 5], archetype: "hut", floors: 1 });
-SITES.push({ x: HARBOR.x + 6, z: HARBOR.z - 2, facing: 0, size: [7, 6, 5], archetype: "hut", floors: 1 });
+ringSites(BENCH, 15, 5, 0.2, [9, 7, 7], "cottage", 1);
+ringSites({ x: BENCH.x + 4, z: BENCH.z + 2 }, 26, 4, 0.95, [9, 8, 7], "townhouse", 2);
+// The inn beside (not astride) the gate road; sheds up from the water line.
+SITES.push({ x: gate.x + 14, z: gate.z - 4, facing: -Math.PI / 2, size: [12, 9, 9], archetype: "inn", floors: 2 });
+SITES.push({ x: HARBOR.x - 9, z: HARBOR.z + 4, facing: 0, size: [7, 6, 5], archetype: "hut", floors: 1 });
+SITES.push({ x: HARBOR.x + 8, z: HARBOR.z + 6, facing: 0, size: [7, 6, 5], archetype: "hut", floors: 1 });
 
 /** Keep sites off roads and out of the water; snap each to its ground. */
 const roadMask = new Uint8Array(N);
@@ -325,8 +326,16 @@ for (const site of SITES) {
   const sx = rotated ? site.size[2] : site.size[0];
   const sz = rotated ? site.size[0] : site.size[2];
   const x0 = Math.round(site.x - sx / 2), z0 = Math.round(site.z - sz / 2);
-  // Reject a site the roads already claimed or the sea owns.
+  // Reject a site the roads already claimed, the sea owns, or — the bug Kai
+  // walked straight into — another building already stands on. Two blocks of
+  // daylight between footprints, always.
   let blocked = false;
+  for (const p of placedSites) {
+    if (x0 - 2 <= p.x0 + p.sx + 1 && x0 + sx + 1 >= p.x0 - 2 && z0 - 2 <= p.z0 + p.sz + 1 && z0 + sz + 1 >= p.z0 - 2) {
+      blocked = true;
+      break;
+    }
+  }
   let acc = 0, n = 0;
   for (let z = z0 - 1; z <= z0 + sz && !blocked; z++) for (let x = x0 - 1; x <= x0 + sx; x++) {
     if (x < REGION.x0 + 4 || z < REGION.z0 + 4 || x >= REGION.x0 + width - 4 || z >= REGION.z0 + depth - 4) { blocked = true; break; }
@@ -381,9 +390,12 @@ const plan = buildColumnPlan({
 /* -------------------------------------------------------------------------- */
 
 const groundAt = (x, z) => {
-  // The plan's final ground level for a column: the field, rounded, is the
-  // terrain contract here — one writer, one answer.
-  return Math.round(field1[idx(x, z)]);
+  // The emitted terrain's OWN ground level — read from the plan, never
+  // re-derived from the field. Kai's first walk found paths standing one
+  // block proud of the grass: my `Math.round(field)` and the plan's rounding
+  // disagreed on some columns, and a surface block placed one above the real
+  // surface is a lip. One writer, one answer, and the answer is the plan's.
+  return plan.ground[idx(x, z)];
 };
 
 const jobs = placedSites.map((s, i) => ({
@@ -443,13 +455,16 @@ const roadBlocks = [];
   const pathState = st("dirt_path");
   const flagState = st("smooth_sandstone");
   const gravelState = st("gravel");
+  // Every surface here REPLACES the plan's own top block at the plan's own
+  // level — the road never adds a block above the ground, so it can never
+  // stand proud of it. A column where the road rises exactly one block gets
+  // its surface block swapped for a stair (a half-step up from the lower
+  // side); everything else gets the path mix at grade.
   const laid = new Set();
+  const stairFixups = [];
   for (const { road } of profiles) {
     for (let i = 0; i < road.length; i++) {
       const cx = xOf(road[i]), cz = zOf(road[i]);
-      // Direction of travel, for stair facing.
-      const nk = road[Math.min(i + 1, road.length - 1)];
-      const dxT = Math.sign(xOf(nk) - cx), dzT = Math.sign(zOf(nk) - cz);
       for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) {
         if (Math.abs(dx) + Math.abs(dz) > 1) continue;
         const x = cx + dx, z = cz + dz;
@@ -459,18 +474,35 @@ const roadBlocks = [];
         laid.add(key);
         const y = groundAt(x, z);
         if (y <= SEA) continue;
-        const ahead = groundAt(clamp(x + dxT, REGION.x0, REGION.x0 + width - 1), clamp(z + dzT, REGION.z0, REGION.z0 + depth - 1));
-        if (ahead === y + 1 && (dxT !== 0) !== (dzT !== 0)) {
-          const facing = dxT === 1 ? "east" : dxT === -1 ? "west" : dzT === 1 ? "south" : "north";
-          const s = stack.blockStateOf("sandstone_stairs", { facing, half: "bottom", shape: "straight", waterlogged: "false" });
-          roadBlocks.push({ x, y: y + 1, z, stateId: typeof s === "object" ? s.stateId : s });
-        } else {
-          const r = positionFloat(streamSeed(SEED, "road-mix"), x, 0, z);
-          roadBlocks.push({ x, y, z, stateId: r < 0.82 ? pathState : gravelState });
-        }
+        const r = positionFloat(streamSeed(SEED, "road-mix"), x, 0, z);
+        roadBlocks.push({ x, y, z, stateId: r < 0.82 ? pathState : gravelState });
+      }
+      // A one-block rise between consecutive centerline columns: the HIGHER
+      // column's surface (and its lane neighbours at the same level) becomes
+      // a stair facing the ascent. Collected now and appended after the path
+      // pass — later blocks stamp over earlier ones, so the stair wins the
+      // higher column's surface slot whichever direction the lane was laid.
+      if (i === 0) continue;
+      const px = xOf(road[i - 1]), pz = zOf(road[i - 1]);
+      const dxT = Math.sign(cx - px), dzT = Math.sign(cz - pz);
+      if ((dxT !== 0) === (dzT !== 0)) continue;
+      const py = groundAt(px, pz), cy = groundAt(cx, cz);
+      if (Math.abs(cy - py) !== 1) continue;
+      const up = cy > py;
+      const hx = up ? cx : px, hz = up ? cz : pz, hy = up ? cy : py;
+      const facing = up
+        ? (dxT === 1 ? "east" : dxT === -1 ? "west" : dzT === 1 ? "south" : "north")
+        : (dxT === 1 ? "west" : dxT === -1 ? "east" : dzT === 1 ? "north" : "south");
+      const s = stack.blockStateOf("sandstone_stairs", { facing, half: "bottom", shape: "straight", waterlogged: "false" });
+      const sid = typeof s === "object" ? s.stateId : s;
+      for (let t = -1; t <= 1; t++) {
+        const x = hx + (dxT === 0 ? t : 0), z = hz + (dzT === 0 ? t : 0);
+        if (x < REGION.x0 || z < REGION.z0 || x >= REGION.x0 + width || z >= REGION.z0 + depth) continue;
+        if (groundAt(x, z) === hy) stairFixups.push({ x, y: hy, z, stateId: sid });
       }
     }
   }
+  roadBlocks.push(...stairFixups);
   // The plaza: a sandstone circle at the summit.
   for (let dz = -plaza.r; dz <= plaza.r; dz++) for (let dx = -plaza.r; dx <= plaza.r; dx++) {
     if (Math.hypot(dx, dz) > plaza.r) continue;
@@ -588,6 +620,7 @@ const summary = await emitTerrain({
 });
 
 console.log(`troy_rootpoc emitted -> ${worldDir}`);
-console.log(`  chunks ${summary.chunkCount ?? "?"}, buildings ${buildingPass.built.length}/${jobs.length}, trees ${scatter.trees.length}`);
+console.log(`  chunks ${summary.chunkCount ?? "?"}, buildings ${buildingPass.built.length}/${jobs.length} (of ${SITES.length} sites), trees ${scatter.trees.length}`);
+console.log(`  placed: ${placedSites.map((s) => s.archetype).join(", ")}`);
 console.log(`  wall ${wallBlocks.length} blocks, roads ${roadBlocks.length} blocks`);
 for (const d of buildingPass.diagnostics) console.log(`  diag ${d.code ?? ""} ${d.message ?? JSON.stringify(d).slice(0, 140)}`);
