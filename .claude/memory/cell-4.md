@@ -4,20 +4,21 @@
 commit-anchored record; prior epoch docs/SESSION-HANDOFF-2026-08-20.md;
 Kai-readable overnight narrative docs/TROY-RUN-2026-08-21.md).
 
-**LIVE — STRATEGIC PIVOT UNDER EVALUATION:** Kai's biggest step back
-(2026-08-22): why do from-scratch generators avoid mangled terrain with
-no solver web? Diagnosis ratified into a POC: our per-block arbitration
-makes seams the generic case; the fix is TERRAIN ABSORBS THE PLAN
-(landform constraints into heightfield synthesis + slope-cost routing).
-**tools/root-poc/troy-poc.mjs** (cbf77d9): ~600 lines, no generator
-rules, reuses neutral plumbing (classify/columnPlan/palette/scatter/
-decorate/emit + building grammar). Installed as **troy_rootpoc** —
-awaiting Kai's walk verdict POC-vs-n5, which decides the successor arc.
-Also live: DESCENT_SOLVE FLIPPED (59d9a4a, freeze/troy-iter-5): west
-cliff solved (switchback (182,-150)@88->(200,-142)@77); the garden-for-
-house trade at (52..65,-84..-69) is a walk-card question. **Troy n5
-installed**, card delivered. **PIRATES STAGED AWAITING GO** (6b52fe3).
-r23 authoring credit-blocked (tiny balance = Gemini vision only).
+**LIVE — THE ALTERNATE PATH IS THE ACTIVE ARC.** Kai walked the POC
+("looks pretty good now") and gave the overnight license: bold spec +
+impressive demo, max ONE opus-5-low at a time. Shipped overnight:
+**docs/COHERENT-SOURCE-v0.md** (LAW I one writer per block; LAW II
+coherence inherited never repaired; pipeline sketch->constrain->route->
+freeze->dress; verify.mjs is the court — 6 probes). Demo at
+tools/root-poc/ (troy-poc core + town.mjs WP-TOWN + environs.mjs
+WP-ENVIRONS): 60 buildings/25 archetypes, 7-high wall + 8 towers +
+gate rampart, war camp + necropolis + olive terraces + grove walls,
+THE HORSE (doc's authored program invoked on frozen ground). Installed
+**troy_rootpoc_v3** (v2 = bugfix deck, v1 = first walk). Awaiting
+Kai's verdict on the demo — it decides whether the main pipeline ports
+onto the two laws. n5 + its card still stand for head-to-head.
+**PIRATES STAGED AWAITING GO** (6b52fe3). DESCENT_SOLVE shipped on
+(59d9a4a, freeze/troy-iter-5). r23 authoring credit-blocked.
 
 **Shipped flags TRUE:** GROUND_V1_{RANKS,SEAMS,FREEZE}, ELECTION_SOLVE,
 TERRACE_BY_TERRAIN(moot), STREET_PLANE_HARMONIZE, FACE_FINISH.
