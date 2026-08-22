@@ -578,6 +578,89 @@ export const GROUND_PLANE_TIE = true;
 export const GROUND_TIE_SPAN = 4;
 
 /* -------------------------------------------------------------------------- */
+/* the +1 road lip — post-election street harmonization                        */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * **The street may agree with the election it made agree with it.**
+ *
+ * The agreement between a carriageway and the ground beside it is, today, one
+ * way round. The street datum is graded on pristine terrain *before* the
+ * election ({@link FRONTAGE_TIE}, `layout/street-datum.ts`); the election then
+ * pays a frontage cost to agree with the datum
+ * (`docs/ELECTION-SOLVE-v0.md` §1.3.3, §5) — but a street never reciprocates,
+ * so where the whole neighbourhood elects one block lower than the natural
+ * grade its street was graded from, the street stands proud of it and the
+ * quarter carries a lip nothing can repair downstream.
+ *
+ * Kai's walked evidence (n3 Troy, station 1): the road through the traced
+ * shape `x 105…116, z −187…−197` sits at its natural grade while the planes
+ * flanking it chose one lower; a building on the north side is `+1` submerged
+ * by the road's own sidewalk and the meeting on the south is a two-block
+ * dropoff. His verified counterfactual is the whole of this flag: *"if that
+ * entire traced shape was one block lower it would look much better."*
+ *
+ * What it gates, precisely (`harmonizeStreetDatum`, `layout/street-datum.ts`,
+ * called from `layDistrict` once the election is finished): a **run of
+ * stations** whose flanking planes on *both* sides elected below the street is
+ * **re-graded** one block lower — never lifted, and never by a raw offset. The
+ * drop is applied to the sampled ground and the datum is graded again through
+ * the same `gradeProfile` machinery, so F9's `STREET_CUT_MAX` floor, the water
+ * floor, the junction pins and the one-block grade cap all still hold, and a
+ * stretch whose neighbours or whose own cut cap will not let it move simply
+ * does not.
+ *
+ * **A station, not a segment**, because the segment is the wrong unit and that
+ * is measured: the citadel's east–west road is one segment 168 stations long
+ * whose flank medians over that length are 0, and Kai's lip is forty stations
+ * of it.
+ *
+ * Bounded on purpose: **one block, downhill, both sides, a run, or nothing.**
+ * It is a measured repair of a named defect, not a second grader.
+ *
+ * `false` is byte-identical: `layDistrict` never calls the harmonizer, no
+ * datum carries a `StreetDatumInput.lower` map, and every world hashes
+ * as it does today.
+ */
+export const STREET_PLANE_HARMONIZE = false;
+
+/**
+ * How many columns beyond the sidewalk's outer lane the harmonizer reads the
+ * elected planes over — the flank band, per side.
+ *
+ * Three, which is `frontageReach`'s neighbourhood without its slack: far
+ * enough that a lot's platform is sampled rather than the verge between it and
+ * the kerb, near enough that the columns read are the ones a walker sees
+ * against the road. Dead while {@link STREET_PLANE_HARMONIZE} is off.
+ */
+export const STREET_PLANE_FLANK_PROBE = 3;
+
+/**
+ * Elected columns one side of one **station** must offer before that side has
+ * an opinion at all.
+ *
+ * A station's flank band is {@link STREET_PLANE_FLANK_PROBE} columns deep, so
+ * two is "most of the band elected something" and one is "a corner of a
+ * platform clipped the probe". A station where either side is under quorum
+ * asks for nothing, which is what makes a junction — where the flank is
+ * another street and not a platform at all — silent rather than wrong. Dead
+ * while {@link STREET_PLANE_HARMONIZE} is off.
+ */
+export const STREET_PLANE_MIN_FLANK = 2;
+
+/**
+ * Consecutive asking stations a stretch needs before the re-grade honours it.
+ *
+ * The lip this repairs is a *stretch* of road standing over its neighbourhood,
+ * tens of stations long; a two-station agreement is noise in the election's
+ * block boundaries, and moving the road for it would trade a lip for a
+ * wobble. Four is the shortest run at which the one-block grade cap can drop
+ * and recover without the drop being nothing but its own ramps. Dead while
+ * {@link STREET_PLANE_HARMONIZE} is off.
+ */
+export const STREET_PLANE_MIN_RUN = 4;
+
+/* -------------------------------------------------------------------------- */
 /* the ground contract v1 flag ladder — `docs/GROUND-CONTRACT-v1.md` §6         */
 /* -------------------------------------------------------------------------- */
 
@@ -950,3 +1033,65 @@ export const COARSE_RING_MAX = 224;
  * `false` restores the r22 behaviour exactly.
  */
 export const QUAY_SHED_OWN_SHORE = true;
+
+/* -------------------------------------------------------------------------- */
+/* the face finish — a coherent treatment for the faces the ground decisions   */
+/* leave behind                                                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * **Every resolved vertical face is finished, not only the ones a quarter
+ * declared.**
+ *
+ * **The walked defect (Kai, n3 Troy, stations S7 and S8):** terrace risers and
+ * fill faces read as *exposed geology* — alternating soil and stone strata
+ * standing as the vertical face of every step, sandstone pavement sitting on a
+ * visible dirt underbelly, and a bluff crown that alternates masonry with bare
+ * soil notches. S7's verdict was "miles better but still has an issue", and the
+ * issue is the faces; S8's was "kinda, I guess".
+ *
+ * The mechanism behind it is that a `ColumnPlan` carries **one** subsurface
+ * state per column, so a column's *face* is whatever its *top* last agreed to
+ * be made of. `finishCutFaces` already states what a cut is made of, but it
+ * only ever looks inside a quarter that declared platform `levels` (or a plane
+ * that declared itself), and it only looks at columns that are on a platform or
+ * on that quarter's own cut ring. The faces the walk complained about are the
+ * ones outside that filter: a bank shoulder, a pad edge two passes later cut
+ * beside a street the quarter never claimed, the underside of a sidewalk that
+ * a street graded flush over ground that fell away.
+ *
+ * With this on, one materials-only painter runs after `finishCutFaces` over the
+ * whole region and finishes **every** face with at least one owned side, in
+ * three clauses (`structures/retaining.ts`' `finishFaces`):
+ *
+ * 1. **Striping** — a raw face of `EXPOSED_FACE_DROP` or more is the hill's own
+ *    rock to its full depth, exactly as `faceCuts` finishes a declared cut. A
+ *    one-block step is a kerb, which the street pass already copes, and is left
+ *    alone.
+ * 2. **The pavement underbelly** — a *paved* face column gets one course of the
+ *    theme's foundation material under the paving instead of the dirt band the
+ *    terrain gave it, and the stone body below that. A pavement that reads as
+ *    laid on a footing rather than floating on soil.
+ * 3. **Crown coherence** — a face column whose top is a lone notch inside a run
+ *    of one other material takes that material, so a dressed crown stops
+ *    alternating with the soil the mix speckled into it. Theme-free by
+ *    construction: the material is read off the run's own ends, never from a
+ *    palette key this pass would have to guess.
+ *
+ * **Materials only.** The pass writes `plan.subsurface`, `plan.soil` and
+ * `plan.surface` and never a level, a fluid or a footprint — the ground freeze
+ * is absolute, and the acceptance for the flip is that `plan.ground` is
+ * byte-identical on and off. `false` restores the r22 behaviour exactly.
+ */
+export const FACE_FINISH = false;
+
+/**
+ * How far {@link FACE_FINISH}'s crown clause looks along a face for the run it
+ * is closing, in columns.
+ *
+ * Three. A notch of one or two columns inside a coherent run is the speckle a
+ * surface *mix* leaves on a crown; a gap longer than that is a place where the
+ * face genuinely changes material, and closing it would be this pass inventing
+ * a run rather than finishing one.
+ */
+export const FACE_CROWN_GAP = 3;

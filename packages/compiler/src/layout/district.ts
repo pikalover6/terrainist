@@ -148,7 +148,13 @@ import {
   type StreetGraph,
   type StreetSegment,
 } from "./streets.js";
-import { gradeStreetDatum, type StreetDatum } from "./street-datum.js";
+import {
+  gradeStreetDatum,
+  harmonizeStreetDatum,
+  type HarmonizedSegment,
+  type StreetDatum,
+  type StreetDatumInput,
+} from "./street-datum.js";
 import {
   CORNER_TOLERANCE,
   ELECTION_SOLVE,
@@ -157,6 +163,10 @@ import {
   GROUND_PLANE_TIE,
   RIM_SEAT_MAX_DROP,
   SEAM_TIERS,
+  STREET_PLANE_FLANK_PROBE,
+  STREET_PLANE_HARMONIZE,
+  STREET_PLANE_MIN_FLANK,
+  STREET_PLANE_MIN_RUN,
   TERRACE_BY_TERRAIN,
   type LayoutNodeInput,
   type PadEdit,
@@ -579,6 +589,31 @@ export interface DistrictStats {
    * the way {@link ProgramNodeStats.sites} is report-only.
    */
   readonly planeTie?: GroundPlaneTieStats;
+  /**
+   * What the post-election street harmonization did on this quarter —
+   * `STREET_PLANE_HARMONIZE`, the +1 road lip.
+   *
+   * Absent while the flag is off, and absent on a quarter where no segment's
+   * flanks asked for a drop, so a report golden only moves where the world
+   * does. Report-only, exactly as {@link DistrictStats.planeTie} is.
+   */
+  readonly streetHarmonize?: StreetHarmonizeStats;
+}
+
+/**
+ * The harmonizer's numbers on one quarter — how many **stations** both flanks
+ * asked to drop, how many the re-grade actually moved, and one record per
+ * segment that had an asked stretch in it.
+ *
+ * `asked − moved` is the interesting number: those are the stations F9's cut
+ * cap, the water floor or a junction pin refused, and a quarter where it is
+ * large is a quarter whose lip is not a datum problem.
+ */
+export interface StreetHarmonizeStats {
+  readonly asked: number;
+  readonly moved: number;
+  /** Every segment the re-grade touched, in graph order. */
+  readonly segments: readonly HarmonizedSegment[];
 }
 
 /**
@@ -1252,9 +1287,14 @@ export function layDistrict(
   // A closure rather than an expression because the leaf cap below may append
   // alleys to the graph, and a lot that fronts an alley has to tie to a datum
   // that graded it. Regraded exactly once, and only for a quarter that was cut.
-  const gradeDatum = (against: StreetGraph): StreetDatum | null =>
+  //
+  // Split in two — the input, then the grading — for one reason: the
+  // post-election harmonization below re-grades this same input with a drop
+  // map, and it must re-grade *this* input rather than a second copy of it
+  // that could drift from it (`STREET_PLANE_HARMONIZE`).
+  const datumInput = (against: StreetGraph): StreetDatumInput | null =>
     FRONTAGE_TIE
-    ? gradeStreetDatum({
+    ? ({
         region: {
           x0: bounds.x0,
           z0: bounds.z0,
@@ -1280,6 +1320,10 @@ export function layDistrict(
         ...(cell?.foundationY === undefined ? {} : { planeY: cell.foundationY }),
       })
     : null;
+  const gradeDatum = (against: StreetGraph): StreetDatum | null => {
+    const base = datumInput(against);
+    return base === null ? null : gradeStreetDatum(base);
+  };
   let datum: StreetDatum | null = gradeDatum(graph);
   const tieReach = frontageReach(sidewalkWidth);
   // F6/T238's counters. Both stay 0 while the flag is off.
@@ -1429,6 +1473,59 @@ export function layDistrict(
     );
   }
   const levels = groundLevelsOf(bounds, election.benches);
+
+  // --- the street harmonization (`STREET_PLANE_HARMONIZE`) -------------------
+  // **The call point, and why it is here.** The datum grades ~200 lines above,
+  // at the moment the graph is drawn (F2), which is a full substage before the
+  // election exists — that is the whole mechanism behind Kai's walked lip: the
+  // election pays a frontage cost to agree with the street
+  // (`docs/ELECTION-SOLVE-v0.md` §1.3.3) and the street never reciprocates. So
+  // the harmonization goes exactly here: after `dissolveTallPairs` has settled
+  // which levels the quarter actually ships (a dissolved pair is not a plane a
+  // street should chase) and `groundLevelsOf` has rasterised them, and *before*
+  // anything reads the datum — the seams below, the lots' frontage tie, and the
+  // product the surfacer re-grades from all come after this line.
+  //
+  // It does **not** re-run the election. The planes are the answer; only the
+  // street moves, by at most one block, downward, and only where both flanks
+  // asked (see `harmonizeStreetDatum`). Running the election again against the
+  // moved street would be the two-grader loop F2 exists to forbid.
+  //
+  // `LOAM-T242`'s residual histogram below then measures the *harmonized*
+  // datum, because that is the datum this quarter ships and the one the columns
+  // it measures will actually stand beside.
+  // A holder rather than a `let`, so the report the closure writes is the
+  // report the product reads: TypeScript narrows a `let` at its use site
+  // without seeing the assignment inside a callback.
+  const harmonizeReport: { value: StreetHarmonizeStats | null } = { value: null };
+  const harmonize = (against: StreetGraph, d: StreetDatum | null): StreetDatum | null => {
+    if (!STREET_PLANE_HARMONIZE || d === null || levels === null) return d;
+    const base = datumInput(against);
+    if (base === null) return d;
+    const out = harmonizeStreetDatum({
+      base,
+      datum: d,
+      // The election's own answer, read as a pure lookup — `NO_PLATFORM` is
+      // "this column elected nothing", which is silence, not a level.
+      planeAt: (x: number, z: number): number | undefined => {
+        const platform = levels.at(x, z);
+        return platform === NO_PLATFORM ? undefined : (levels.levelY[platform] as number);
+      },
+      probe: STREET_PLANE_FLANK_PROBE,
+      minFlank: STREET_PLANE_MIN_FLANK,
+      minRun: STREET_PLANE_MIN_RUN,
+    });
+    // Replaced, never accumulated: the alley re-grade below grades the whole
+    // graph again from pristine ground, so its records supersede the first
+    // pass's rather than adding to them.
+    harmonizeReport.value =
+      out.segments.length === 0 ? null : { asked: out.asked, moved: out.moved, segments: out.segments };
+    return out.datum;
+  };
+  datum = harmonize(graph, datum);
+  /** The datum `LOAM-T242` measures against — harmonized where it moved. */
+  const statsDatum = planeTie ? datum : null;
+
   // --- G3's report (`LOAM-T241`) --------------------------------------------
   // `LOAM-T238 FRONTAGE_UNTIED`'s mirror for the platform, and a note for the
   // same reason: an untied block is a *legal* outcome — the interior of a very
@@ -1463,7 +1560,7 @@ export function layDistrict(
   // quarter that elected no platform at all (`levels === null`), which is a
   // legal outcome and not a hole in the report.
   let planeTieStats: GroundPlaneTieStats | null = null;
-  if (tieDatum !== null) {
+  if (statsDatum !== null) {
     let drift = 0;
     let worst = 0;
     let onLattice = 0;
@@ -1474,7 +1571,7 @@ export function layDistrict(
         for (let x = bounds.x0; x <= bounds.x1; x++) {
           const platform = levels.at(x, z);
           if (platform === NO_PLATFORM) continue;
-          const near = tieDatum.levelNear(x, z, tieReach);
+          const near = statsDatum.levelNear(x, z, tieReach);
           if (near === undefined) continue;
           const residual = (levels.levelY[platform] as number) - near;
           residuals.set(residual, (residuals.get(residual) ?? 0) + 1);
@@ -1598,7 +1695,12 @@ export function layDistrict(
     // The datum is the frontage authority and an alley is frontage; a lot that
     // fronts an ungraded segment is an untied lot (`LOAM-T238`) seated on its
     // own median, which is exactly the drift F2 exists to prevent.
-    datum = gradeDatum(graph);
+    // …and harmonized again, for the same reason it was harmonized above: the
+    // re-grade throws the harmonized datum away and grades the *whole* graph,
+    // alleys included, from pristine ground again. The election has not moved —
+    // `levels` is the same rasterised answer — so this is the same decision
+    // taken over a graph with more segments in it, not a second opinion.
+    datum = harmonize(graph, gradeDatum(graph));
     diagnostics.push(
       note(
         "DISTRICT_BLOCK_ALLEY",
@@ -2323,6 +2425,10 @@ export function layDistrict(
         // `GROUND_PLANE_TIE` is off, because `tieDatum` is `null` then and
         // nothing was measured.
         ...(planeTieStats === null ? {} : { planeTie: planeTieStats }),
+        // The +1 road lip. Absent while `STREET_PLANE_HARMONIZE` is off, and
+        // absent on a quarter where no segment's flanks asked, so no report
+        // golden moves before a world does.
+        ...(harmonizeReport.value === null ? {} : { streetHarmonize: harmonizeReport.value }),
       },
     },
   };
