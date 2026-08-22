@@ -4,16 +4,20 @@
 commit-anchored record; prior epoch docs/SESSION-HANDOFF-2026-08-20.md;
 Kai-readable overnight narrative docs/TROY-RUN-2026-08-21.md).
 
-**LIVE:** WP-D4 LANDED (cbde275) + FLIPPED: west cliff relief-47 SOLVED
-(switchback (182,-150)@88 -> (200,-142)@77, 11 risers, 3 landings; sheer
-14-wall now a graded slope meeting street pavement). Flag-on probe finds:
-the S4 hillside re-solved (445 columns cut/fill), and the mud-brick
-house at (52..65,-84..-69) became a formal GARDEN (path grid) — parcel
-lost ground to the rank-80 corridor; walk-card question for Kai. S5a
-byte-untouched. Deck **Troy n5** + freeze/troy-iter-5. **AWAITING KAI:**
-n4 AND n5 walk verdicts (cards in chat; Minecraft log, /tp-stamped).
-**PIRATES STAGED AWAITING GO** (6b52fe3), troy-first per Kai. r23
-authoring credit-blocked (tiny balance = Gemini vision only).
+**LIVE — STRATEGIC PIVOT UNDER EVALUATION:** Kai's biggest step back
+(2026-08-22): why do from-scratch generators avoid mangled terrain with
+no solver web? Diagnosis ratified into a POC: our per-block arbitration
+makes seams the generic case; the fix is TERRAIN ABSORBS THE PLAN
+(landform constraints into heightfield synthesis + slope-cost routing).
+**tools/root-poc/troy-poc.mjs** (cbf77d9): ~600 lines, no generator
+rules, reuses neutral plumbing (classify/columnPlan/palette/scatter/
+decorate/emit + building grammar). Installed as **troy_rootpoc** —
+awaiting Kai's walk verdict POC-vs-n5, which decides the successor arc.
+Also live: DESCENT_SOLVE FLIPPED (59d9a4a, freeze/troy-iter-5): west
+cliff solved (switchback (182,-150)@88->(200,-142)@77); the garden-for-
+house trade at (52..65,-84..-69) is a walk-card question. **Troy n5
+installed**, card delivered. **PIRATES STAGED AWAITING GO** (6b52fe3).
+r23 authoring credit-blocked (tiny balance = Gemini vision only).
 
 **Shipped flags TRUE:** GROUND_V1_{RANKS,SEAMS,FREEZE}, ELECTION_SOLVE,
 TERRACE_BY_TERRAIN(moot), STREET_PLANE_HARMONIZE, FACE_FINISH.
