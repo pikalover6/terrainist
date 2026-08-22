@@ -61,6 +61,16 @@ git history, `battery/RELEASES.md`, the memory cells).
   them and answers from his phone. Walk decks come with a walk card that
   names exactly what to look for and lists known debts so he doesn't burn
   attention re-discovering them.
+- **The guided walk loop (ratified 2026-08-21):** walk cards are numbered
+  stations — `/tp x y z` plus ONE concrete question each; Kai's verdicts
+  come back through the Minecraft client log (`[CHAT]` lines,
+  `/tp ~ ~ ~`-stamped positions; log path in AGENTS.md's install section's
+  instance). Parse, probe each verdict to its mechanism, consult before
+  fixing. He teaches with traced perimeters and camera cubes; "you could
+  verify that yourself" means build the probe. Every deck: `_nN` channel +
+  `freeze/troy-iter-N` branch; blinded Gemini vision on iso renders where
+  useful (never shown my read first; disagreements resolved by code —
+  beware 1-column ASCII slice misreads).
 - **Battery regeneration** is pre-authorized (~$2/run, installed alongside);
   during an autonomous run regenerate ONCE at the END, never mid-run.
 - **Catalog go-ham rule:** spare capacity goes to growing the structure
