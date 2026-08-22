@@ -34,6 +34,42 @@ type Report = Record<string, unknown>;
 
 const repoFile = (rel: string) => fileURLToPath(new URL(`../../../${rel}`, import.meta.url));
 
+/**
+ * The report's top-level sections, in order.
+ *
+ * Spelled out rather than left to the whole-JSON comparison below: a section
+ * added to the census is a change to a committed artifact three baselines
+ * share, and a list here says *which* section and in what position, instead of
+ * a 40,000-character string mismatch. `floaters` is last, and additive — the
+ * unsupported/floating physics families, wired in for Kai's floating-structure
+ * probe (2026-08-21).
+ */
+const REPORT_KEYS = [
+  "region",
+  "bbox",
+  "ownedColumns",
+  "intents",
+  "columnsWonByClass",
+  "sanity",
+  "writtenVsResolved",
+  "finalPlanVsWritten",
+  "cliffCensus",
+  "buildingSeats",
+  "streetFlank",
+  "clusters",
+  "floaters",
+] as const;
+
+/** Every physics rule the `floaters` section names, in order, zero or not. */
+const FLOATER_RULES = [
+  "unsupported.chain",
+  "unsupported.lantern",
+  "unsupported.ladder",
+  "unsupported.multiface",
+  "floating.stair",
+  "floating.isolated",
+] as const;
+
 const DOCS = [
   { id: "troy", doc: "battery/candidates/troy_r22/trojan_horse_troy.loam.json" },
   { id: "hellenist", doc: "battery/candidates/hellenist_r22/thalassa_polis.loam.json" },
@@ -98,6 +134,19 @@ describe.each(DOCS)("ground probe: $id", ({ id, doc }) => {
       const diffs = diffPaths(report, baseline);
       expect(diffs.join("\n")).toBe("");
       // key order is part of the contract: the baseline is a committed artifact
+      expect(Object.keys(report)).toEqual([...REPORT_KEYS]);
+      expect(Object.keys(baseline)).toEqual([...REPORT_KEYS]);
+      const floaters = report.floaters as {
+        total: number;
+        byRule: { rule: string; n: number; witnesses: unknown[] }[];
+      };
+      // Every rule, zero or not, and never more witnesses than the probe keeps:
+      // a rule that vanishes when it finds nothing looks exactly like a rule
+      // that stopped running.
+      expect(floaters.byRule.map((r) => r.rule)).toEqual([...FLOATER_RULES]);
+      expect(floaters.byRule.reduce((n, r) => n + r.n, 0)).toBe(floaters.total);
+      for (const r of floaters.byRule)
+        expect(r.witnesses.length).toBe(Math.min(r.n, 10));
       expect(JSON.stringify(report)).toBe(JSON.stringify(baseline));
     },
     900_000,

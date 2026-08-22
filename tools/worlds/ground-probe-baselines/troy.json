@@ -92,19 +92,19 @@
       },
       {
         "delta": 0,
-        "n": 91339
+        "n": 91449
       },
       {
         "delta": 1,
-        "n": 828
+        "n": 819
       },
       {
         "delta": 2,
-        "n": 100
+        "n": 87
       },
       {
         "delta": 3,
-        "n": 441
+        "n": 353
       },
       {
         "delta": 4,
@@ -214,7 +214,7 @@
     },
     {
       "pair": "retaining.skirt over verge",
-      "n": 230,
+      "n": 233,
       "avg": 2.9,
       "max": 7
     },
@@ -232,8 +232,8 @@
     },
     {
       "pair": "retaining.skirt over natural",
-      "n": 100,
-      "avg": 4,
+      "n": 103,
+      "avg": 3.9,
       "max": 13
     },
     {
@@ -721,7 +721,7 @@
     }
   ],
   "clusters": {
-    "count": 48,
+    "count": 47,
     "top": [
       {
         "score": 2659,
@@ -824,24 +824,146 @@
         ]
       },
       {
-        "score": 112,
-        "edges": 56,
-        "cx": 238,
-        "cz": -128,
+        "score": 144,
+        "edges": 72,
+        "cx": 173,
+        "cz": -163,
         "topKinds": [
           {
-            "name": "quarter.plane/quarter.plane",
-            "n": 48
+            "name": "retaining.skirt/natural",
+            "n": 47
           },
           {
-            "name": "quarter.plane/retaining.seam",
-            "n": 6
+            "name": "retaining.skirt/verge",
+            "n": 17
           },
           {
-            "name": "quarter.plane/natural",
-            "n": 1
+            "name": "verge/verge",
+            "n": 8
           }
         ]
+      }
+    ]
+  },
+  "floaters": {
+    "total": 14,
+    "byRule": [
+      {
+        "rule": "unsupported.chain",
+        "n": 8,
+        "witnesses": [
+          {
+            "x": -247,
+            "y": 67,
+            "z": -109,
+            "block": "acacia_fence[west=false,waterlogged=false,south=false,north=false,east=false]"
+          },
+          {
+            "x": -247,
+            "y": 68,
+            "z": -109,
+            "block": "acacia_fence[west=false,waterlogged=false,south=false,north=false,east=false]"
+          },
+          {
+            "x": -126,
+            "y": 84,
+            "z": -99,
+            "block": "acacia_fence[west=false,waterlogged=false,south=false,north=false,east=true]"
+          },
+          {
+            "x": -102,
+            "y": 71,
+            "z": -195,
+            "block": "acacia_fence[west=false,waterlogged=false,south=false,north=false,east=false]"
+          },
+          {
+            "x": -102,
+            "y": 72,
+            "z": -195,
+            "block": "acacia_fence[west=false,waterlogged=false,south=false,north=false,east=false]"
+          },
+          {
+            "x": -102,
+            "y": 73,
+            "z": -195,
+            "block": "acacia_fence[west=false,waterlogged=false,south=false,north=false,east=false]"
+          },
+          {
+            "x": -90,
+            "y": 84,
+            "z": -163,
+            "block": "acacia_fence[west=true,waterlogged=false,south=false,north=false,east=false]"
+          },
+          {
+            "x": 234,
+            "y": 81,
+            "z": -45,
+            "block": "acacia_fence[west=false,waterlogged=false,south=false,north=false,east=false]"
+          }
+        ]
+      },
+      {
+        "rule": "unsupported.lantern",
+        "n": 0,
+        "witnesses": []
+      },
+      {
+        "rule": "unsupported.ladder",
+        "n": 4,
+        "witnesses": [
+          {
+            "x": 243,
+            "y": 83,
+            "z": -47,
+            "block": "ladder[waterlogged=false,facing=south]"
+          },
+          {
+            "x": 243,
+            "y": 84,
+            "z": -47,
+            "block": "ladder[waterlogged=false,facing=south]"
+          },
+          {
+            "x": 243,
+            "y": 85,
+            "z": -47,
+            "block": "ladder[waterlogged=false,facing=south]"
+          },
+          {
+            "x": 243,
+            "y": 86,
+            "z": -47,
+            "block": "ladder[waterlogged=false,facing=south]"
+          }
+        ]
+      },
+      {
+        "rule": "unsupported.multiface",
+        "n": 0,
+        "witnesses": []
+      },
+      {
+        "rule": "floating.stair",
+        "n": 2,
+        "witnesses": [
+          {
+            "x": 249,
+            "y": 92,
+            "z": -45,
+            "block": "acacia_stairs[waterlogged=false,shape=straight,half=bottom,facing=west]"
+          },
+          {
+            "x": 252,
+            "y": 95,
+            "z": -45,
+            "block": "acacia_stairs[waterlogged=false,shape=straight,half=bottom,facing=west]"
+          }
+        ]
+      },
+      {
+        "rule": "floating.isolated",
+        "n": 0,
+        "witnesses": []
       }
     ]
   }

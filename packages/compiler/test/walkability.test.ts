@@ -376,7 +376,7 @@ const HILLSIDE: Goldens = {
   // step to the natural ground on its uphill side at a handful of places, and a
   // walker crossing there no longer floods through. Twenty-eight columns of
   // hillside out of 185,000 — the control doing its job, and reporting nothing.
-  groundReachable: 185719, // G6 freeze: 185755 -> 185723, the terrain control, following the frozen ground. flip-debt round (2026-08-21): 185723 -> 185719, four columns, and they are the two extra lamp posts below standing on ground rather than over it — a column with a post on it is not a standable one.
+  groundReachable: 185727, // fragment-dressing gate (2026-08-21): 185719 -> 185727, UP by eight — the open-patch furniture now refuses a sliver, and the eight columns a market stall and a crate heap stood on are standable ground again. G6 freeze: 185755 -> 185723, the terrain control, following the frozen ground. flip-debt round (2026-08-21): 185723 -> 185719, four columns, and they are the two extra lamp posts below standing on ground rather than over it — a column with a post on it is not a standable one.
   groundReachableShare: 0.709, // G6 freeze: unmoved at 0.709.
   // 5 → 3. Same commit: the dangling connectors *were* the dead ends.
   deadEnds: 5, // G6 freeze: 5 -> 5, unmoved.
@@ -449,8 +449,8 @@ const STEEP: Goldens = {
   entranceReachableShare: 0.996, // G6 freeze: 0.999 -> 0.996, DOWN: seventeen of the newly-standable columns are not walked to from the entrance. MUST GO UP.
   // **136343 → 136349** with the archetype-bias wiring (2026-08-11), same
   // cause as the hillside fixture. BY DESIGN.
-  groundReachable: 136414, // G6 freeze: 136386 -> 136408, the control. flip-debt round (2026-08-21): 136408 -> 136414, UP by six — six columns a prop or a post used to stand on from the pristine baseline, released back to the ground now that the re-seat puts each of them where the resolver did.
-  groundReachableShare: 0.754, // G6 freeze: 0.755 -> 0.754.
+  groundReachable: 136456, // fragment-dressing gate (2026-08-21): 136414 -> 136456, UP by forty-two, the same release on the steeper hill, where more of the leftover ground is sliver. G6 freeze: 136386 -> 136408, the control. flip-debt round (2026-08-21): 136408 -> 136414, UP by six — six columns a prop or a post used to stand on from the pristine baseline, released back to the ground now that the re-seat puts each of them where the resolver did.
+  groundReachableShare: 0.755, // fragment-dressing gate (2026-08-21): 0.754 -> 0.755, the forty-two released columns. G6 freeze: 0.755 -> 0.754.
   // 7 → **10**, up, and the same trade as `components`: the refused causeways
   // leave the streets they used to terminate hanging. MUST GO DOWN.
   deadEnds: 15, // G6 freeze: 14 -> 15, UP by one. MUST GO DOWN.

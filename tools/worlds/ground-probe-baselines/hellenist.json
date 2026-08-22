@@ -88,19 +88,19 @@
     "byDelta": [
       {
         "delta": 0,
-        "n": 94270
+        "n": 94459
       },
       {
         "delta": 1,
-        "n": 707
+        "n": 685
       },
       {
         "delta": 2,
-        "n": 412
+        "n": 399
       },
       {
         "delta": 3,
-        "n": 542
+        "n": 388
       },
       {
         "delta": 4,
@@ -338,7 +338,7 @@
     },
     {
       "pair": "retaining.skirt over verge",
-      "n": 114,
+      "n": 115,
       "avg": 5.3,
       "max": 7
     },
@@ -593,7 +593,7 @@
     },
     {
       "name": "natural",
-      "n": 2308,
+      "n": 2310,
       "byDelta": [
         {
           "delta": -5,
@@ -613,7 +613,7 @@
         },
         {
           "delta": 0,
-          "n": 1769
+          "n": 1771
         },
         {
           "delta": 1,
@@ -627,7 +627,7 @@
     },
     {
       "name": "verge",
-      "n": 379,
+      "n": 380,
       "byDelta": [
         {
           "delta": -5,
@@ -655,7 +655,7 @@
         },
         {
           "delta": 1,
-          "n": 153
+          "n": 154
         },
         {
           "delta": 2,
@@ -820,6 +820,182 @@
           {
             "name": "natural/street.network",
             "n": 2
+          }
+        ]
+      }
+    ]
+  },
+  "floaters": {
+    "total": 88,
+    "byRule": [
+      {
+        "rule": "unsupported.chain",
+        "n": 54,
+        "witnesses": [
+          {
+            "x": -79,
+            "y": 54,
+            "z": -94,
+            "block": "sea_lantern"
+          },
+          {
+            "x": -79,
+            "y": 55,
+            "z": -93,
+            "block": "sea_lantern"
+          },
+          {
+            "x": -78,
+            "y": 57,
+            "z": -92,
+            "block": "sea_lantern"
+          },
+          {
+            "x": -77,
+            "y": 52,
+            "z": -95,
+            "block": "sea_lantern"
+          },
+          {
+            "x": -77,
+            "y": 53,
+            "z": -94,
+            "block": "sea_lantern"
+          },
+          {
+            "x": -76,
+            "y": 56,
+            "z": -101,
+            "block": "sea_lantern"
+          },
+          {
+            "x": -75,
+            "y": 52,
+            "z": -91,
+            "block": "sea_lantern"
+          },
+          {
+            "x": -75,
+            "y": 54,
+            "z": -101,
+            "block": "sea_lantern"
+          },
+          {
+            "x": -75,
+            "y": 59,
+            "z": -99,
+            "block": "sea_lantern"
+          },
+          {
+            "x": -74,
+            "y": 60,
+            "z": -99,
+            "block": "sea_lantern"
+          }
+        ]
+      },
+      {
+        "rule": "unsupported.lantern",
+        "n": 31,
+        "witnesses": [
+          {
+            "x": -67,
+            "y": 69,
+            "z": -217,
+            "block": "sea_lantern"
+          },
+          {
+            "x": -67,
+            "y": 71,
+            "z": -215,
+            "block": "sea_lantern"
+          },
+          {
+            "x": -67,
+            "y": 76,
+            "z": -213,
+            "block": "sea_lantern"
+          },
+          {
+            "x": -66,
+            "y": 69,
+            "z": -218,
+            "block": "sea_lantern"
+          },
+          {
+            "x": -66,
+            "y": 78,
+            "z": -212,
+            "block": "sea_lantern"
+          },
+          {
+            "x": -64,
+            "y": 68,
+            "z": -212,
+            "block": "sea_lantern"
+          },
+          {
+            "x": -64,
+            "y": 78,
+            "z": -217,
+            "block": "sea_lantern"
+          },
+          {
+            "x": -62,
+            "y": 69,
+            "z": -222,
+            "block": "sea_lantern"
+          },
+          {
+            "x": -61,
+            "y": 70,
+            "z": -222,
+            "block": "sea_lantern"
+          },
+          {
+            "x": -60,
+            "y": 72,
+            "z": -221,
+            "block": "sea_lantern"
+          }
+        ]
+      },
+      {
+        "rule": "unsupported.ladder",
+        "n": 0,
+        "witnesses": []
+      },
+      {
+        "rule": "unsupported.multiface",
+        "n": 0,
+        "witnesses": []
+      },
+      {
+        "rule": "floating.stair",
+        "n": 0,
+        "witnesses": []
+      },
+      {
+        "rule": "floating.isolated",
+        "n": 3,
+        "witnesses": [
+          {
+            "x": -21,
+            "y": 94,
+            "z": -99,
+            "block": "smooth_quartz"
+          },
+          {
+            "x": -20,
+            "y": 93,
+            "z": -100,
+            "block": "smooth_quartz"
+          },
+          {
+            "x": -14,
+            "y": 115,
+            "z": -93,
+            "block": "gold_block"
           }
         ]
       }

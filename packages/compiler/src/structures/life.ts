@@ -84,7 +84,7 @@ import { note, type LoamDiagnostic } from "@terrainist/spec";
 
 import type { PrismarineStack } from "../emit/prismarine.js";
 import type { Rect } from "../layout/frames.js";
-import type { BlockDressing, DressedBlock } from "../layout/district.js";
+import { DRESSING_MIN_SIDE, type BlockDressing, type DressedBlock } from "../layout/district.js";
 import type { StreetGraph } from "../layout/streets.js";
 import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
 import { detailSeed, hash2, hashInt, hashPick } from "../terrain/detail.js";
@@ -2648,6 +2648,31 @@ function dressOpenGround(
   const alongX = b.x1 - b.x0 >= b.z1 - b.z0;
   const wood = hashPick(seed, b.x0, b.z0, 1, AWNING_WOODS);
   const free = new Set(patch.columns.map((c) => key2(c.x, c.z)));
+  /**
+   * Is the patch a **place** here, or only a sliver of one?
+   *
+   * The flood fill returns one patch for every connected run of unclaimed
+   * ground in a district, and on terraced ground that run snakes: Troy's
+   * quarter at (206…225, −140…−79) is 700 columns inside a 20 × 62 box, and the
+   * furniture below anchors off the box's *centre*, which fell on a two-column
+   * shelf between a house and a retaining wall. What Kai walked there was a
+   * drinking fountain standing alone on a fragment — the layout's own
+   * {@link DRESSING_MIN_SIDE} law ("under nine columns the ground is a verge
+   * rather than a place") stated at the wrong end of the pipeline.
+   *
+   * So every piece of furniture asks the same question the dressing law asks,
+   * locally: a `DRESSING_MIN_SIDE` square of *this patch's* columns, centred on
+   * the anchor. A fragment fails it and receives nothing at all.
+   */
+  const roomy = (x: number, z: number): boolean => {
+    const r = (DRESSING_MIN_SIDE - 1) >> 1;
+    for (let dz = -r; dz <= r; dz++) {
+      for (let dx = -r; dx <= r; dx++) {
+        if (!free.has(key2(x + dx, z + dz))) return false;
+      }
+    }
+    return true;
+  };
 
   if (!patch.public) {
     // A back court: a heap of service clutter near one corner, nothing else.
@@ -2664,6 +2689,9 @@ function dressOpenGround(
       x: number;
       z: number;
     };
+    // …nor is a two-column gap behind a terrace: the heap needs a court to
+    // stand in before it can be the clutter of one.
+    if (!roomy(anchor.x, anchor.z)) return;
     for (let k = 0; k < 5; k++) {
       const x = anchor.x + hashInt(seed, anchor.x + k, anchor.z, 3, -2, 2);
       const z = anchor.z + hashInt(seed, anchor.x, anchor.z + k, 4, -2, 2);
@@ -2684,6 +2712,7 @@ function dressOpenGround(
     const x = alongX ? cx + Math.round(offset) : cx;
     const z = alongX ? cz : cz + Math.round(offset);
     if (!free.has(key2(x, z))) continue;
+    if (!roomy(x, z)) continue;
     const y = world.standY(x, z);
     if (y === undefined) continue;
     planter.place(
@@ -2699,7 +2728,7 @@ function dressOpenGround(
   if (patch.columns.length >= PLAZA_MIN_AREA * 2 && hash2(seed, b.x0, b.z0, 7) < 0.6) {
     const fx = alongX ? cx : cx;
     const fz = alongX ? cz + 8 : cz + 8;
-    if (free.has(key2(fx, fz))) {
+    if (free.has(key2(fx, fz)) && roomy(fx, fz)) {
       const y = world.standY(fx, fz);
       if (y !== undefined) placeCatalog("drinking_fountain", input, planter, fx, y, fz);
     }

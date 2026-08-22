@@ -96,23 +96,23 @@
     "byDelta": [
       {
         "delta": 0,
-        "n": 113510
+        "n": 113659
       },
       {
         "delta": 1,
-        "n": 8356
+        "n": 8376
       },
       {
         "delta": 2,
-        "n": 1365
+        "n": 1353
       },
       {
         "delta": 3,
-        "n": 1191
+        "n": 1037
       },
       {
         "delta": 4,
-        "n": 792
+        "n": 789
       },
       {
         "delta": 5,
@@ -248,7 +248,7 @@
   "cliffCensus": [
     {
       "pair": "natural over natural",
-      "n": 3903,
+      "n": 3904,
       "avg": 2.9,
       "max": 9
     },
@@ -668,6 +668,164 @@
             "n": 27
           }
         ]
+      }
+    ]
+  },
+  "floaters": {
+    "total": 12443,
+    "byRule": [
+      {
+        "rule": "unsupported.chain",
+        "n": 7,
+        "witnesses": [
+          {
+            "x": -224,
+            "y": 74,
+            "z": -135,
+            "block": "lantern[waterlogged=false,hanging=true]"
+          },
+          {
+            "x": -224,
+            "y": 86,
+            "z": -135,
+            "block": "lantern[waterlogged=false,hanging=true]"
+          },
+          {
+            "x": -218,
+            "y": 94,
+            "z": -140,
+            "block": "lantern[waterlogged=false,hanging=false]"
+          },
+          {
+            "x": -218,
+            "y": 94,
+            "z": -130,
+            "block": "lantern[waterlogged=false,hanging=false]"
+          },
+          {
+            "x": -215,
+            "y": 76,
+            "z": -135,
+            "block": "lantern[waterlogged=false,hanging=true]"
+          },
+          {
+            "x": 57,
+            "y": 92,
+            "z": 84,
+            "block": "potted_azure_bluet"
+          },
+          {
+            "x": 195,
+            "y": 105,
+            "z": 217,
+            "block": "sea_lantern"
+          }
+        ]
+      },
+      {
+        "rule": "unsupported.lantern",
+        "n": 3,
+        "witnesses": [
+          {
+            "x": -218,
+            "y": 94,
+            "z": -140,
+            "block": "lantern[waterlogged=false,hanging=false]"
+          },
+          {
+            "x": -218,
+            "y": 94,
+            "z": -130,
+            "block": "lantern[waterlogged=false,hanging=false]"
+          },
+          {
+            "x": 195,
+            "y": 105,
+            "z": 217,
+            "block": "sea_lantern"
+          }
+        ]
+      },
+      {
+        "rule": "unsupported.ladder",
+        "n": 0,
+        "witnesses": []
+      },
+      {
+        "rule": "unsupported.multiface",
+        "n": 12433,
+        "witnesses": [
+          {
+            "x": 37,
+            "y": 91,
+            "z": 156,
+            "block": "glow_lichen[west=false,waterlogged=false,up=false,south=false,north=false,east=false,down=true]"
+          },
+          {
+            "x": 38,
+            "y": 91,
+            "z": 156,
+            "block": "glow_lichen[west=false,waterlogged=false,up=false,south=false,north=false,east=false,down=true]"
+          },
+          {
+            "x": 38,
+            "y": 91,
+            "z": 157,
+            "block": "glow_lichen[west=false,waterlogged=false,up=false,south=false,north=false,east=false,down=true]"
+          },
+          {
+            "x": 38,
+            "y": 91,
+            "z": 158,
+            "block": "glow_lichen[west=false,waterlogged=false,up=false,south=false,north=false,east=false,down=true]"
+          },
+          {
+            "x": 39,
+            "y": 91,
+            "z": 156,
+            "block": "glow_lichen[west=false,waterlogged=false,up=false,south=false,north=false,east=false,down=true]"
+          },
+          {
+            "x": 39,
+            "y": 91,
+            "z": 158,
+            "block": "glow_lichen[west=false,waterlogged=false,up=false,south=false,north=false,east=false,down=true]"
+          },
+          {
+            "x": 39,
+            "y": 91,
+            "z": 159,
+            "block": "glow_lichen[west=false,waterlogged=false,up=false,south=false,north=false,east=false,down=true]"
+          },
+          {
+            "x": 39,
+            "y": 91,
+            "z": 160,
+            "block": "glow_lichen[west=false,waterlogged=false,up=false,south=false,north=false,east=false,down=true]"
+          },
+          {
+            "x": 40,
+            "y": 91,
+            "z": 158,
+            "block": "glow_lichen[west=false,waterlogged=false,up=false,south=false,north=false,east=false,down=true]"
+          },
+          {
+            "x": 40,
+            "y": 91,
+            "z": 159,
+            "block": "glow_lichen[west=false,waterlogged=false,up=false,south=false,north=false,east=false,down=true]"
+          }
+        ]
+      },
+      {
+        "rule": "floating.stair",
+        "n": 0,
+        "witnesses": []
+      },
+      {
+        "rule": "floating.isolated",
+        "n": 0,
+        "witnesses": []
       }
     ]
   }

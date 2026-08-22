@@ -39,6 +39,27 @@ const WATERY = new Set(["water","lava","kelp","kelp_plant","seagrass","tall_seag
 
 const NATURAL = "natural";
 
+/**
+ * The physics rules the `floaters` section reports, in report order.
+ *
+ * The unsupported/floating families and nothing else: these are the rules that
+ * catch a *structure hanging in the air* — the defect a walk finds first and an
+ * aggregate census cannot see, because a chain with no ceiling over it moves no
+ * ground column. Kai's ask (2026-08-21): the standing harness should name them
+ * with coordinates, so a walk verdict has a number to point at.
+ */
+const FLOATER_RULES = Object.freeze([
+  "unsupported.chain",
+  "unsupported.lantern",
+  "unsupported.ladder",
+  "unsupported.multiface",
+  "floating.stair",
+  "floating.isolated",
+]);
+
+/** Witness coordinates kept per rule. */
+const FLOATER_WITNESSES = 10;
+
 /* -------------------------------------------------------------------------- */
 /* 1. context                                                                  */
 /* -------------------------------------------------------------------------- */
@@ -52,7 +73,7 @@ const NATURAL = "natural";
  * @param {{ tmpRoot?: string }} [opts] where a self-emit run writes its world
  */
 export async function buildProbeContext(doc, worldDir, opts = {}) {
-  const { compileTerrain, listChunks, loadPrismarine, EMIT_MINECRAFT_VERSION } =
+  const { compileTerrain, listChunks, loadPrismarine, lintWorldPhysics, EMIT_MINECRAFT_VERSION } =
     await import(distUrl.href);
 
   let artifacts = null;
@@ -157,6 +178,27 @@ export async function buildProbeContext(doc, worldDir, opts = {}) {
   // The anvil caches open file handles; close them before the directory goes,
   // or a later GC turns a dropped FileHandle into an uncatchable process error.
   await anvil.close();
+
+  // ------------------------------------------------------------- floaters
+  // The same `lintWorldPhysics` call the physics tests make, over the same
+  // world this census just read, kept to the unsupported/floating families.
+  // It runs before the temp directory goes: the readback is the world on disk.
+  const structures = res.report?.layout?.structures;
+  const physics = await lintWorldPhysics(readDir, mc, {
+    buildings: structures?.buildings ?? [],
+    roads: structures?.roads?.routes ?? [],
+    props: structures?.props ?? [],
+  });
+  const wanted = new Set(FLOATER_RULES);
+  const floaterFindings = physics.findings
+    .filter((f) => wanted.has(f.rule))
+    .map((f) => ({ rule: f.rule, x: f.x, y: f.y, z: f.z, block: f.block }))
+    .sort(
+      (a, b) =>
+        FLOATER_RULES.indexOf(a.rule) - FLOATER_RULES.indexOf(b.rule) ||
+        a.x - b.x || a.y - b.y || a.z - b.z || (a.block < b.block ? -1 : a.block > b.block ? 1 : 0),
+    );
+
   if (cleanup) fs.rmSync(cleanup, { recursive: true, force: true });
 
   return {
@@ -175,6 +217,7 @@ export async function buildProbeContext(doc, worldDir, opts = {}) {
     fluidKind: Int32Array.from(finalPlan.fluidKind),
     surfY,
     surfName,
+    floaterFindings,
   };
 }
 
@@ -394,7 +437,27 @@ export function censusFromContext(ctx) {
     },
     streetFlank: flankRows,
     clusters: { count: clusters.length, top: clusterRows.slice(0, 6) },
+    floaters: floaterSection(ctx.floaterFindings ?? []),
   };
+}
+
+/**
+ * Counts and witnesses for the unsupported/floating families.
+ *
+ * Every rule in {@link FLOATER_RULES} appears, zero or not, for the reason
+ * `PHYSICS_RULES` lists them all: a rule that vanishes from the report when it
+ * finds nothing is indistinguishable from a rule that stopped running.
+ */
+function floaterSection(findings) {
+  const byRule = FLOATER_RULES.map((rule) => {
+    const own = findings.filter((f) => f.rule === rule);
+    return {
+      rule,
+      n: own.length,
+      witnesses: own.slice(0, FLOATER_WITNESSES).map((f) => ({ x: f.x, y: f.y, z: f.z, block: f.block })),
+    };
+  });
+  return { total: findings.length, byRule };
 }
 
 /** Compile + read + census, in one call. */
@@ -449,6 +512,12 @@ function renderText(ctx, rep, label) {
   console.log(`\n-- ${rep.clusters.count} cliff clusters; top 6 by total drop --`);
   for (const c of rep.clusters.top)
     console.log(`  score ${c.score}  edges ${c.edges}  center (${c.cx},${c.cz})  ${c.topKinds.map((k) => `${k.name}:${k.n}`).join(" ")}`);
+
+  console.log(`\n-- floaters: unsupported/floating physics findings (total ${rep.floaters.total}) --`);
+  for (const r of rep.floaters.byRule) {
+    console.log(`  ${r.rule.padEnd(22)} n=${String(r.n).padStart(4)}`);
+    for (const w of r.witnesses) console.log(`      (${w.x}, ${w.y}, ${w.z})  ${w.block}`);
+  }
 
   const asciiAround = (cx, cz, r = 22) => {
     console.log(`\n  ASCII owner map around (${cx},${cz})  [letters=owner class, .=natural]`);
