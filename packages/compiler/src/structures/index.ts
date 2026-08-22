@@ -73,7 +73,8 @@ import {
 import type { GroundDriver } from "../layout/ground-driver.js";
 import { solvedCarriagewayMask } from "../layout/solved-carriageway.js";
 import type { GroundTier } from "../layout/ground-contract.js";
-import { GROUND_V1_FREEZE } from "../layout/types.js";
+import { FACE_FINISH, GROUND_V1_FREEZE } from "../layout/types.js";
+import { NO_PLATFORM } from "../layout/levels.js";
 import type { LayoutNodeInput, OccupancyGrid, Placement, ResolvedPort } from "../layout/types.js";
 import { mergeSpanSets } from "../terrain/caves.js";
 import type { ColumnPlan } from "../terrain/columns.js";
@@ -113,6 +114,7 @@ import {
 import {
   buildRetainingWalls,
   finishCutFaces,
+  finishFaces,
   finishSeams,
   type RetainingPassResult,
   type RetainingPlane,
@@ -2084,6 +2086,70 @@ export function buildStructures(
     seam: retaining.seam,
   });
   diagnostics.push(...cutFaces.diagnostics);
+
+  // --- the face finish -----------------------------------------------------
+  // Kai's n3 walk, S7 and S8: the faces `finishCutFaces` does *not* reach still
+  // read as exposed geology — a bank shoulder, a pad edge cut beside a street
+  // the quarter never claimed, the dirt underbelly of a sidewalk graded flush
+  // over ground that fell away behind it. `finishCutFaces` asks "did this
+  // quarter declare a cut here"; this asks the question the walker asks, which
+  // is "is there a face here and does the town own either side of it".
+  //
+  // Materials only, exactly as above, and one pass later so that every column
+  // the declared finish already dressed is dressed before this one measures.
+  // Off by default: `FACE_FINISH`.
+  if (FACE_FINISH) {
+    const faceCells = input.plan.region.width * input.plan.region.depth;
+    /** Paved: a walking or driving surface. Also owned, by construction. */
+    const facePaved = new Uint8Array(faceCells);
+    /** Owned: paved, plus every lot ground a quarter or a plane decided. */
+    const faceOwned = new Uint8Array(faceCells);
+    for (const surface of pavedSurfaces) {
+      for (const idx of surface.columns) {
+        if (idx < 0 || idx >= faceCells) continue;
+        facePaved[idx] = 1;
+        faceOwned[idx] = 1;
+      }
+    }
+    for (const district of streetMasks) {
+      for (let idx = 0; idx < faceCells; idx++) {
+        if (district.masks.carriageway[idx] !== 1 && district.masks.sidewalk[idx] !== 1) continue;
+        facePaved[idx] = 1;
+        faceOwned[idx] = 1;
+      }
+    }
+    for (const district of districts) {
+      const levels = district.levels;
+      if (levels === undefined) continue;
+      const b = levels.bounds;
+      for (let z = b.z0; z <= b.z1; z++) {
+        for (let x = b.x0; x <= b.x1; x++) {
+          if (!inside(input.plan.region, x, z)) continue;
+          if (levels.at(x, z) === NO_PLATFORM) continue;
+          faceOwned[index(input.plan.region, x, z)] = 1;
+        }
+      }
+    }
+    for (const plane of planes) {
+      for (const claim of plane.columns) {
+        if (claim.idx < 0 || claim.idx >= faceCells) continue;
+        faceOwned[claim.idx] = 1;
+      }
+    }
+    const faces = finishFaces({
+      plan: input.plan,
+      palette: input.palette,
+      stack: input.stack,
+      owned: faceOwned,
+      paved: facePaved,
+      seam: retaining.seam,
+      // A graded bank is earth on purpose; facing it would undo the grading.
+      bank: retaining.bank,
+      footprints: built.map((b) => b.footprint),
+      nodePath: rootPath,
+    });
+    diagnostics.push(...faces.diagnostics);
+  }
 
   // --- the terminal transition consumer (WP-G4) ----------------------------
   // `docs/GROUND-CONTRACT-v1.md` §3.3, §6/WP-G4. **Derives and reports; builds

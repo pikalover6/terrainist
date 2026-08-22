@@ -96,7 +96,7 @@ import {
   type SeamTreatment,
 } from "../layout/levels.js";
 import type { FormBench, PlannedEdge } from "../layout/forms/types.js";
-import { GROUND_PLANE_TIE, SEAM_TIERS } from "../layout/types.js";
+import { FACE_CROWN_GAP, FACE_FINISH, GROUND_PLANE_TIE, SEAM_TIERS } from "../layout/types.js";
 import type { Palette } from "../terrain/palette.js";
 import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
 import type { PrismarineStack } from "../emit/prismarine.js";
@@ -104,7 +104,7 @@ import type { PrismarineStack } from "../emit/prismarine.js";
 import type { StructureBlock } from "./buildings.js";
 import { RETAINING_PROFILE } from "./profiles.js";
 import type { SweptProfile } from "./sweep.js";
-import { index, inside } from "./roads.js";
+import { EXPOSED_FACE_DROP, index, inside } from "./roads.js";
 import { sweep, sweptColumns, thickenCourse, type Vec2 } from "./sweep.js";
 
 /**
@@ -1793,6 +1793,377 @@ export function finishCutFaces(input: CutFaceFinishInput): CutFaceFinishResult {
           ),
         ];
   return { revetted, diagnostics };
+}
+
+/* -------------------------------------------------------------------------- */
+/* the face finish — every face the ground decisions leave, not only the       */
+/* declared ones                                                               */
+/* -------------------------------------------------------------------------- */
+
+/** Everything {@link finishFaces} reads. */
+export interface FaceFinishInput {
+  /** Mutated — **materials only**: `subsurface`, `soil` and `surface`. */
+  readonly plan: ColumnPlan;
+  readonly palette: Palette;
+  readonly stack: PrismarineStack;
+  /**
+   * The columns the town **owns**, region-indexed.
+   *
+   * Streets, sidewalks, plazas, doorstep landings, every platform of every
+   * quarter that declared `levels`, and every column of every plane. This is
+   * the whole coverage rule: a face is finished when at least one of its two
+   * sides is a column the town decided about. A cliff in the wilderness has
+   * neither side owned and is left as the terrain made it — the pass exists to
+   * finish what the *ground decisions* cut, not to dress the landscape.
+   */
+  readonly owned: Uint8Array;
+  /**
+   * The subset of {@link owned} that is **paved** — a walking or driving
+   * surface rather than a lot's own ground. Drives the underbelly clause.
+   */
+  readonly paved: Uint8Array;
+  /**
+   * {@link RetainingPassResult.seam} — the columns a wall's masonry stands on.
+   *
+   * Protected exactly as `finishCutFaces` protects them: a column a wall holds
+   * already has the wall's material and wants only the depth.
+   */
+  readonly seam?: Uint8Array;
+  /**
+   * {@link RetainingPassResult.bank} — the columns a **graded bank** took.
+   *
+   * Skipped whole. A bank is earth on purpose (§S8): it is not a face, it is
+   * the answer to one, and facing it in rock would undo the grading.
+   */
+  readonly bank?: Uint8Array;
+  /** Footprints of everything built, so the finish never paints under a house. */
+  readonly footprints?: readonly Rect[];
+  /** For the diagnostic. */
+  readonly nodePath?: string;
+  /**
+   * Defaults to {@link FACE_FINISH}, the compile-time flag.
+   *
+   * The field exists for the reason {@link RetainingPlane.tiered} exists: a
+   * test must be able to build the flag-on world without flipping a constant
+   * the whole compiler reads.
+   */
+  readonly enabled?: boolean;
+}
+
+/** What the face finish did. */
+export interface FaceFinishResult {
+  /** Face columns given the hill's own rock to their full drop (clause 1). */
+  readonly striped: number;
+  /** Paved face columns given a footing course under the paving (clause 2). */
+  readonly underbellies: number;
+  /** Crown notches closed into the run around them (clause 3). */
+  readonly crowned: number;
+  readonly diagnostics: readonly LoamDiagnostic[];
+}
+
+/**
+ * The **foundation course** a paved face stands on.
+ *
+ * `street.curb` when the theme carries it — the kerb is already the contrasting
+ * edge course between a carriageway and its pavement, and a pavement seen from
+ * the side is that same edge turned to face you. `ground.plinth` otherwise,
+ * which is the role for "the face of a platform"; and `ROLE_FALLBACKS`' own
+ * `stone_bricks` for a palette built by hand in a unit test.
+ *
+ * **Only keys the theme is proven to carry are read.** `palette.has` is asked
+ * first every time, because a dotted symbol the palette does not hold resolves
+ * to state 0, which is air — the trap `resolveStates` documents and which once
+ * painted the top course of every wall in a quarter with nothing.
+ */
+function footingState(palette: Palette, stack: PrismarineStack): number {
+  if (palette.has("street.curb")) return palette.state("street.curb");
+  if (palette.has("ground.plinth")) return palette.state("ground.plinth");
+  return stack.blockByName(ROLE_FALLBACKS["ground.plinth"] as string)?.stateId ?? 0;
+}
+
+/**
+ * Finish **every** vertical face the ground decisions left, in three clauses.
+ *
+ * > **Walked 2026-08-21 (Kai, n3 Troy, S7 and S8).** *"Miles better but still
+ * > has an issue"* — the issue being that terrace risers and fill faces read as
+ * > **exposed geology**: alternating soil and stone strata standing as the
+ * > vertical face of every step, sandstone pavement sitting on a visible dirt
+ * > underbelly, and a bluff crown alternating masonry posts with bare dirt
+ * > notches.
+ *
+ * `finishCutFaces` answers the same complaint one quarter at a time, and it is
+ * not wrong — it is *narrow*. Its filter is a district that declared platform
+ * `levels` (or a plane that declared itself), and inside that, columns that are
+ * on a platform of that quarter or on its own declared cut ring. Every face the
+ * walk objected to is outside that filter: a bank shoulder, a pad edge a later
+ * pass cut beside a street the quarter never claimed, the underside of a
+ * sidewalk a street graded flush over ground that fell away behind it.
+ *
+ * So this pass asks the question the walker asks, which has nothing to do with
+ * who declared what: **is there a vertical face here, and does the town own
+ * either side of it?** Its coverage rule is exactly that, and its three
+ * treatments are the vocabulary the retaining pass already speaks.
+ *
+ * ## The coverage rule
+ *
+ * A column is a face when all of these hold:
+ *
+ * - it is dry, not under a building, and not a column a graded bank took;
+ * - its tallest 8-neighbour drop is at least {@link EXPOSED_FACE_DROP}. **A
+ *   one-block step is a kerb**, which the street pass already copes and which a
+ *   facing would turn into a wall you trip over — the same number `faceCuts`
+ *   and `presentsExposedFace` use, for the same reason;
+ * - **one of its two sides is owned**: either the column itself, or a column it
+ *   drops onto by that much. One side is enough and both are not required,
+ *   because a terrace's riser is owned above and wild below, while the raw face
+ *   under a sidewalk is owned above and owned below.
+ *
+ * ## The three treatments
+ *
+ * 1. **Striping.** A raw face is the hill's own rock (`ground.stone`) to its
+ *    full drop — `faceCuts`' answer, verbatim, including `deepen`, so a face
+ *    that is four blocks tall is four blocks of rock rather than rock over a
+ *    dirt plinth. A column a wall stands on keeps the wall's masonry and is
+ *    only deepened.
+ * 2. **The pavement underbelly.** A *paved* face column gets one course of
+ *    {@link footingState} under its paving and the stone body below that,
+ *    instead of the terrain's dirt band. `soil` is **set** to one rather than
+ *    deepened, and that is the point: the courses under a footing are the hill,
+ *    not more footing. This is the streetscape's own kerb idiom stood on its
+ *    end — a pavement that reads as laid on something.
+ * 3. **Crown coherence.** S8's defect is a *surface* one: on a face crown, the
+ *    theme's own surface mix speckles single columns of soil into a run of
+ *    dressed material, and seen from below that is a masonry crown with bare
+ *    notches in it. A face column whose top is a lone notch — flanked, within
+ *    {@link FACE_CROWN_GAP} columns each way along {@link crownAxis}, by
+ *    **one and the same** other material, with only its own material in between
+ *    — takes that material. The axis is across the fall and never down it,
+ *    which is what makes the clause close a crown rather than erase one.
+ *
+ *    The material comes off the run's own ends and never off a palette key, so
+ *    this clause cannot land air on a theme that is missing a symbol, and it
+ *    cannot invent a material the crown does not already have. Every read is of
+ *    the surfaces as this pass found them and every write happens after the
+ *    scan, so a closed notch can never seed the closing of its neighbour and
+ *    the result does not depend on scan order.
+ *
+ * ## Materials only
+ *
+ * `plan.subsurface`, `plan.soil` and `plan.surface`, and nothing else. No
+ * level, no fluid, no footprint, no block emitted, no declaration to the ground
+ * driver — the freeze is absolute and the acceptance for the flip is that
+ * `plan.ground` is byte-identical with the flag on and off.
+ */
+export function finishFaces(input: FaceFinishInput): FaceFinishResult {
+  if (!(input.enabled ?? FACE_FINISH)) {
+    return { striped: 0, underbellies: 0, crowned: 0, diagnostics: [] };
+  }
+  const { plan, palette, stack, owned, paved } = input;
+  const region = plan.region;
+  const cells = region.width * region.depth;
+  const states = resolveStates(palette, stack);
+  const footing = footingState(palette, stack);
+  const occupied = occupancyOf(region, input.footprints);
+  const seam = input.seam ?? new Uint8Array(cells);
+  const bank = input.bank ?? new Uint8Array(cells);
+
+  /** The tallest face a column presents to any 8-neighbour. */
+  const drops = new Int32Array(cells).fill(-1);
+  const dropOf = (k: number): number => {
+    const known = drops[k] as number;
+    if (known >= 0) return known;
+    const x = region.x0 + (k % region.width);
+    const z = region.z0 + Math.floor(k / region.width);
+    const top = plan.ground[k] as number;
+    let drop = 0;
+    for (const [dx, dz] of SEAM_NEIGHBOURS) {
+      if (!inside(region, x + dx, z + dz)) continue;
+      const fall = top - (plan.ground[index(region, x + dx, z + dz)] as number);
+      if (fall > drop) drop = fall;
+    }
+    drops[k] = drop;
+    return drop;
+  };
+
+  // --- the coverage rule ---------------------------------------------------
+  const face = new Uint8Array(cells);
+  for (let z = region.z0; z < region.z0 + region.depth; z++) {
+    for (let x = region.x0; x < region.x0 + region.width; x++) {
+      const k = index(region, x, z);
+      if (plan.fluidKind[k] !== FluidKind.NONE) continue;
+      if (occupied[k] === 1) continue;
+      if (bank[k] === 1) continue;
+      if (dropOf(k) < EXPOSED_FACE_DROP) continue;
+      if (owned[k] !== 1) {
+        // The other side: a column this one drops onto, by enough to be a face.
+        const top = plan.ground[k] as number;
+        let ownedBelow = false;
+        for (const [dx, dz] of SEAM_NEIGHBOURS) {
+          if (!inside(region, x + dx, z + dz)) continue;
+          const n = index(region, x + dx, z + dz);
+          if (owned[n] !== 1) continue;
+          if (top - (plan.ground[n] as number) < EXPOSED_FACE_DROP) continue;
+          ownedBelow = true;
+          break;
+        }
+        if (!ownedBelow) continue;
+      }
+      face[k] = 1;
+    }
+  }
+
+  // --- clauses 1 and 2 -----------------------------------------------------
+  let striped = 0;
+  let underbellies = 0;
+  for (let k = 0; k < cells; k++) {
+    if (face[k] !== 1) continue;
+    if (seam[k] === 1) {
+      // A column a wall stands on keeps the wall's own material; all it wants
+      // is the depth, so the wall never sits on a plinth of dirt.
+      deepen(plan, k, dropOf(k));
+      continue;
+    }
+    if (paved[k] === 1) {
+      plan.subsurface[k] = footing;
+      plan.soil[k] = 1;
+      underbellies++;
+      continue;
+    }
+    plan.subsurface[k] = states.rock;
+    deepen(plan, k, dropOf(k));
+    striped++;
+  }
+
+  // --- clause 3: the crown -------------------------------------------------
+  // Read against `before`, committed after the scan.
+  const before = Int32Array.from(plan.surface);
+  /**
+   * The material the run reaches in one direction, or -1 for "no run".
+   *
+   * Walks over columns of the notch's *own* material and stops at the first
+   * column that differs. Reaching {@link FACE_CROWN_GAP} without a change is no
+   * run at all.
+   *
+   * Only the columns walked *through* have to be on the face; the column that
+   * ends the run does not. A crown is one column deep more often than not —
+   * the face below it is the face, and the dressed column at the end of the run
+   * is as likely to be a coping course or a lot's own ground, presenting no
+   * drop of its own. Requiring the end to be a face column too was measured on
+   * Troy at 24 notches map-wide, which is a clause that does not exist; what
+   * keeps the relaxation honest is {@link crownAxis}, not the end's own drop.
+   */
+  const runEnd = (x: number, z: number, mine: number, dx: number, dz: number): number => {
+    for (let step = 1; step <= FACE_CROWN_GAP; step++) {
+      const nx = x + dx * step;
+      const nz = z + dz * step;
+      if (!inside(region, nx, nz)) return -1;
+      const n = index(region, nx, nz);
+      const there = before[n] as number;
+      if (there !== mine) return there;
+      if (face[n] !== 1) return -1;
+    }
+    return -1;
+  };
+  const crown = new Int32Array(cells).fill(-1);
+  for (let z = region.z0; z < region.z0 + region.depth; z++) {
+    for (let x = region.x0; x < region.x0 + region.width; x++) {
+      const k = index(region, x, z);
+      if (face[k] !== 1) continue;
+      if (occupied[k] === 1 || seam[k] === 1 || paved[k] === 1) continue;
+      const mine = before[k] as number;
+      const [dx, dz] = crownAxis(region, plan, x, z);
+      const a = runEnd(x, z, mine, dx, dz);
+      if (a < 0) continue;
+      if (a !== runEnd(x, z, mine, -dx, -dz)) continue;
+      crown[k] = a;
+    }
+  }
+  let crowned = 0;
+  for (let k = 0; k < cells; k++) {
+    const want = crown[k] as number;
+    if (want < 0) continue;
+    plan.surface[k] = want;
+    crowned++;
+  }
+
+  const total = striped + underbellies + crowned;
+  const diagnostics: LoamDiagnostic[] =
+    total === 0
+      ? []
+      : [
+          note(
+            "SWEEP_FEATURES_PLACED",
+            input.nodePath ?? "world",
+            `face finish: ${striped} column(s) striped in the hill's own rock, ` +
+              `${underbellies} paved face(s) footed, ${crowned} crown notch(es) closed`,
+            "No action needed.",
+          ),
+        ];
+  return { striped, underbellies, crowned, diagnostics };
+}
+
+/**
+ * The four axes the crown clause may close a run along.
+ *
+ * One of each opposed pair; `runEnd` is asked for `+d` and `−d` in turn, so
+ * listing the other four would only ask every question twice.
+ */
+const CROWN_AXES: readonly (readonly [number, number])[] = Object.freeze([
+  [1, 0],
+  [0, 1],
+  [1, 1],
+  [1, -1],
+]);
+
+/**
+ * The one axis a column's crown run may lie along: **across the fall, never
+ * down it.**
+ *
+ * A crown is a contour, and a run along a contour runs *perpendicular* to the
+ * face it caps. Letting the clause pick whichever of the four axes agreed at
+ * both ends is what turns it inside out: on a one-column-wide riser dressed in
+ * masonry, the axis pointing **into** the face finds the ordinary ground on
+ * both sides of it, agrees, and paints the dressed crown back to grass —
+ * closing the run the wrong way round. Measured on the riser fixture: all 32
+ * columns of the crown, undressed in one pass.
+ *
+ * The fall direction is the **sum of every 8-neighbour's drop times its own
+ * unit vector**, not the single deepest drop. A deepest-drop read ties three
+ * ways on a straight riser (the neighbour behind and both its diagonals fall
+ * equally), and picking the diagonal by list order picks a diagonal axis on a
+ * face that is not diagonal. The sum has no such tie: three equal falls to the
+ * west sum to due west.
+ *
+ * The axis returned is then the one whose dot product with that fall is
+ * smallest in absolute value — exactly perpendicular where a perpendicular
+ * exists, and the nearest thing to it otherwise, decided in {@link CROWN_AXES}
+ * order so the answer is a function of the ground and nothing else.
+ */
+function crownAxis(
+  region: Region,
+  plan: ColumnPlan,
+  x: number,
+  z: number,
+): readonly [number, number] {
+  const top = plan.ground[index(region, x, z)] as number;
+  let fx = 0;
+  let fz = 0;
+  for (const [dx, dz] of SEAM_NEIGHBOURS) {
+    if (!inside(region, x + dx, z + dz)) continue;
+    const fall = top - (plan.ground[index(region, x + dx, z + dz)] as number);
+    if (fall <= 0) continue;
+    fx += fall * dx;
+    fz += fall * dz;
+  }
+  let best = CROWN_AXES[0] as readonly [number, number];
+  let bestDot = Number.POSITIVE_INFINITY;
+  for (const axis of CROWN_AXES) {
+    const dot = Math.abs((axis[0] as number) * fx + (axis[1] as number) * fz);
+    if (dot >= bestDot) continue;
+    bestDot = dot;
+    best = axis as readonly [number, number];
+  }
+  return best;
 }
 
 /* -------------------------------------------------------------------------- */
