@@ -30,13 +30,15 @@
  */
 
 import path from "node:path";
-import { writeFileSync, mkdirSync } from "node:fs";
+import { writeFileSync, mkdirSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { townSketch, townStructures } from "./town.mjs";
+import { environsSketch, environsStructures } from "./environs.mjs";
 
 const ROOT = fileURLToPath(new URL("../..", import.meta.url));
 const compiler = await import(path.join(ROOT, "packages/compiler/dist/index.js"));
+const { invokeLandmark } = await import(path.join(ROOT, "packages/compiler/dist/programs/invoke.js"));
 const buildings = await import(path.join(ROOT, "packages/compiler/dist/structures/buildings.js"));
 const stdlib = await import(path.join(ROOT, "packages/stdlib/dist/index.js"));
 
@@ -138,6 +140,24 @@ blendPlateau(field1, CITADEL);
 blendPlateau(field1, BENCH);
 blendPlateau(field1, HARBOR);
 
+/** The war camp of the besiegers, soft-flattened on the plain south-west. */
+const CAMP = { x: -70, z: 128, r: 34, band: 24, y: 67, weight: 0.85 };
+/** The horse stands on its own firm pad at the camp's city-facing edge. */
+const HORSE_PAD = { x: -34, z: 96, r: 11, band: 9, y: 68 };
+/** Olive grove terraces on the seaward flank between bench and harbor. */
+const GROVES = [
+  { x: 96, z: 74, r: 19, band: 14, y: 70, weight: 0.6 },
+  { x: 118, z: 92, r: 16, band: 12, y: 67, weight: 0.6 },
+  { x: 82, z: 100, r: 15, band: 12, y: 68, weight: 0.6 },
+];
+/** The necropolis knoll on the approach — raised, not levelled. */
+const KNOLL = { x: -128, z: 24, r: 15, band: 12 };
+
+blendPlateau(field1, CAMP);
+blendPlateau(field1, HORSE_PAD);
+for (const g of GROVES) blendPlateau(field1, g);
+blendPlateau(field1, { ...KNOLL, y: field1[idx(KNOLL.x, KNOLL.z)] + 4, weight: 0.7 });
+
 /* -------------------------------------------------------------------------- */
 /* stage 3 — terrain-aware routing (A* on a slope-cost field)                  */
 /* -------------------------------------------------------------------------- */
@@ -192,7 +212,14 @@ const roadGatePlaza = route(field1, gate.x, gate.z, plaza.x, plaza.z);
 const benchIn = route(field1, gate.x, gate.z, BENCH.x - 18, BENCH.z + 6);
 const benchOut = route(field1, BENCH.x - 18, BENCH.z + 6, BENCH.x + 16, BENCH.z + 14);
 
-const roads = [roadHarborGate, roadGatePlaza, benchIn, benchOut];
+// The environs: the war road out to the camp (branching from the harbor
+// road just outside the gate, so the breach carries no fourth lane), the
+// tombs spur lining the approach, and the grove lane off the bench.
+const roadWar = route(field1, 20, 10, CAMP.x + 12, CAMP.z - 10);
+const roadTombs = route(field1, -20, 55, KNOLL.x + 8, KNOLL.z + 2);
+const roadGrove = route(field1, 78, 60, GROVES[0].x, GROVES[0].z);
+
+const roads = [roadHarborGate, roadGatePlaza, benchIn, benchOut, roadWar, roadTombs, roadGrove];
 
 /* -------------------------------------------------------------------------- */
 /* stage 4 — absorb the roads: each route becomes a landform ribbon            */
@@ -282,8 +309,10 @@ const st = (name, props) => {
  * pads. Rejection (roads, water, overlap) stays HERE: it is the law's, not
  * the town's.
  */
-const anchors = { CITADEL, BENCH, HARBOR, WALL, gate, plaza };
-const { sites: SITES } = townSketch(anchors);
+const anchors = { CITADEL, BENCH, HARBOR, WALL, gate, plaza, CAMP, HORSE_PAD, GROVES, KNOLL };
+const { sites: TOWN_SITES } = townSketch(anchors);
+const { sites: ENVIRON_SITES } = environsSketch(anchors);
+const SITES = [...TOWN_SITES, ...ENVIRON_SITES];
 
 /** Keep sites off roads and out of the water; snap each to its ground. */
 const roadMask = new Uint8Array(N);
@@ -404,6 +433,56 @@ const townPass = townStructures({
   onRoad: (x, z) => x >= REGION.x0 && z >= REGION.z0 && x < REGION.x0 + width && z < REGION.z0 + depth && roadMask[idx(x, z)] === 1,
 });
 const wallBlocks = townPass.blocks;
+const environPass = environsStructures({
+  anchors, groundAt, st, stack, SEA, positionFloat, streamSeed, SEED,
+  onRoad: (x, z) => x >= REGION.x0 && z >= REGION.z0 && x < REGION.x0 + width && z < REGION.z0 + depth && roadMask[idx(x, z)] === 1,
+});
+
+/**
+ * THE HORSE — the doc's own authored landmark program, run against the
+ * frozen ground. The program is data (battery is read-only); its voxels
+ * stamp onto the pad the field already firmed. Air voxels carve the hollow
+ * belly but may never carve the ground (Law II: nothing repairs, nothing
+ * digs). The name→state parse handles `oak_log[axis=z]` forms.
+ */
+const horseBlocks = [];
+{
+  const horseDoc = JSON.parse(readFileSync(path.join(ROOT, "battery/candidates/troy_r22/trojan_horse_troy.loam.json"), "utf8"));
+  const run = invokeLandmark({
+    programId: "trojan_horse",
+    program: horseDoc.programs.trojan_horse,
+    nodePath: "poc.horse",
+    worldSeed: WORLD_SEED,
+    heightAt: () => 0,
+  });
+  if (run.ok) {
+    const stateCache = new Map();
+    const stateOf = (name) => {
+      let sid = stateCache.get(name);
+      if (sid === undefined) {
+        const m = /^([a-z_:0-9]+)(?:\[(.*)\])?$/.exec(name);
+        const props = {};
+        if (m[2]) for (const kv of m[2].split(",")) { const [k, v] = kv.split("="); props[k] = v; }
+        sid = st(m[1], m[2] ? props : undefined);
+        stateCache.set(name, sid);
+      }
+      return sid;
+    };
+    let minLy = Infinity;
+    for (const k of run.voxels.keys()) minLy = Math.min(minLy, Number(k.split(",")[1]));
+    const [ex, , ez] = horseDoc.programs.trojan_horse.envelope;
+    const origin = { x: HORSE_PAD.x - (ex >> 1), z: HORSE_PAD.z - (ez >> 1) };
+    const baseY = groundAt(HORSE_PAD.x, HORSE_PAD.z) + 1 - minLy;
+    for (const [k, name] of run.voxels) {
+      const [lx, ly, lz] = k.split(",").map(Number);
+      const wx = origin.x + lx, wy = baseY + ly, wz = origin.z + lz;
+      if (name === "minecraft:air" && wy <= groundAt(wx, wz)) continue;
+      horseBlocks.push({ x: wx, y: wy, z: wz, stateId: stateOf(name.replace("minecraft:", "")) });
+    }
+  } else {
+    console.log("  horse: program refused; plain stays empty", run.diagnostics.slice(0, 2));
+  }
+}
 
 /** Road surfaces: drape the final ground exactly; stairs where it steps once. */
 const roadBlocks = [];
@@ -467,13 +546,13 @@ const roadBlocks = [];
 /** Settlement clearing: 0 inside the town's ground, feathering to 1 outside. */
 const clearing = new Float32Array(N).fill(1);
 {
-  const soften = (cx, cz, r, feather) => {
+  const soften = (cx, cz, r, feather, floor = 0) => {
     const R = r + feather;
     for (let z = Math.max(REGION.z0, Math.floor(cz - R)); z <= Math.min(REGION.z0 + depth - 1, Math.ceil(cz + R)); z++) {
       for (let x = Math.max(REGION.x0, Math.floor(cx - R)); x <= Math.min(REGION.x0 + width - 1, Math.ceil(cx + R)); x++) {
         const d = Math.hypot(x - cx, z - cz);
         if (d >= R) continue;
-        const w = d <= r ? 0 : smoothstep((d - r) / feather);
+        const w = Math.max(floor, d <= r ? 0 : smoothstep((d - r) / feather));
         const k = idx(x, z);
         if (w < clearing[k]) clearing[k] = w;
       }
@@ -482,8 +561,30 @@ const clearing = new Float32Array(N).fill(1);
   soften(CITADEL.x, CITADEL.z, WALL.r + 6, 18);
   soften(BENCH.x, BENCH.z, BENCH.r + 10, 16);
   soften(HARBOR.x, HARBOR.z, HARBOR.r + 4, 12);
+  soften(CAMP.x, CAMP.z, CAMP.r + 8, 14);
+  soften(HORSE_PAD.x, HORSE_PAD.z, HORSE_PAD.r + 6, 10);
+  soften(KNOLL.x, KNOLL.z, KNOLL.r + 6, 10);
+  // Ambient wilderness thins inside the groves; the orchard nodes own them.
+  for (const g of GROVES) soften(g.x, g.z, g.r + 4, 10, 0.2);
   for (const { road } of profiles) for (const k of road) soften(xOf(k), zOf(k), 4, 7);
 }
+
+// The grove terraces get ORCHARD nodes — tight olive rows on their own
+// discs (area.at is fractional over the region; radius is blocks).
+const frac = (x, z) => [(x - REGION.x0) / width, (z - REGION.z0) / depth];
+const groveNodes = GROVES.map((g, i) => ({
+  id: `poc.grove.${i}`,
+  nodePath: `poc.grove.${i}`,
+  seed: streamSeed(SEED, `grove.${i}`),
+  params: {
+    density: 0.5,
+    spacing: 5,
+    clumping: 0,
+    maxSlope: 30,
+    area: { at: frac(g.x, g.z), radius: g.r },
+    species: [{ id: "olive", shape: "oak_spreading", weight: 1 }],
+  },
+}));
 
 const scatter = scatterForests(
   [{
@@ -500,7 +601,7 @@ const scatter = scatterForests(
         { id: "cypress", shape: "larch_columnar", weight: 2 },
       ],
     },
-  }],
+  }, ...groveNodes],
   plan,
   classification,
   paletteRes.palette,
@@ -519,7 +620,9 @@ const worldDir = path.join(outDir, "troy_rootpoc");
 const structures = [
   ...roadBlocks,
   ...wallBlocks,
+  ...environPass.blocks,
   ...buildingPass.blocks,
+  ...horseBlocks,
 ];
 
 /** Ground cover through the real decoration pass: grass, flowers, shore reeds. */

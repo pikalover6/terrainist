@@ -146,6 +146,20 @@ const note = (probe, msg) => failures.push(`${probe}: ${msg}`);
   else console.log("wall-footing   OK  (every wall cell on solid ground)");
 }
 
+/* --- PROBE 6: two authors never share a column — sites vs the curtain ----- */
+{
+  let hits = 0;
+  for (const [x, z] of manifest.wallRing) {
+    for (const s of manifest.sites) {
+      if (x >= s.x0 && x <= s.x0 + s.sx - 1 && z >= s.z0 && z <= s.z0 + s.sz - 1) {
+        hits++;
+        if (hits <= 5) note("site-vs-wall", `${s.archetype}@(${s.x0},${s.z0}) claims curtain cell (${x},${z})`);
+      }
+    }
+  }
+  if (hits === 0) console.log("site-vs-wall   OK  (no building shares a column with the curtain)");
+}
+
 if (anvil.close) await anvil.close();
 
 if (failures.length > 0) {
