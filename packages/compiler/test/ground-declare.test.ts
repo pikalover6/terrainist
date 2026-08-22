@@ -35,6 +35,7 @@ import {
   type GroundIntent,
 } from "../src/layout/ground-contract.js";
 import { groundLevelsOf, levelSeams } from "../src/layout/levels.js";
+import { ROAD_SOVEREIGN } from "../src/layout/types.js";
 import type { FormBench } from "../src/layout/forms/types.js";
 import type { StreetGraph, StreetSegment } from "../src/layout/streets.js";
 // `levelClaimsByColumn` moved with WP-G3: `structures/ground-declare.ts` was
@@ -279,7 +280,12 @@ describe("the shadow declarers, on a stepped quarter", () => {
     expect(classes.has("street.network")).toBe(true);
     expect(classes.has("street.sidewalk")).toBe(true);
     expect([...classes].some((c) => c.startsWith("retaining."))).toBe(true);
-    expect(classes.has("verge")).toBe(true);
+    // **Flag-aware since the `ROAD_SOVEREIGN` flip.** The verge is the shoulder
+    // a graded carriageway feathers into the ground it cut; a sovereign road is
+    // draped on the resolved ground and cuts nothing, so `blendShoulders` never
+    // runs and the class is simply not declared. Asserted both ways rather than
+    // dropped, so the declarer keeps its test in the off state.
+    expect(classes.has("verge")).toBe(!ROAD_SOVEREIGN);
     // Retaining declares its `preserve` beside its `face`, always — that is the
     // `unsupported.chain` finding, and a face without one is the defect back.
     const faces = run.intents.filter((i) => i.kind === "face");

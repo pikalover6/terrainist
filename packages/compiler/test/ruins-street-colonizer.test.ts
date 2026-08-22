@@ -567,8 +567,15 @@ describe("pane substitution (6e)", () => {
  *    read identically in a shared number.
  */
 const RUINED_GOLDENS = {
-  /** Laid columns that resolved to a cell a player can stand in. */
-  columns: 9053,
+  /**
+   * Laid columns that resolved to a cell a player can stand in.
+   *
+   * **9,053 → 9,055 at the `ROAD_SOVEREIGN` flip**: two columns. A draped
+   * street takes the resolved ground's own level, so two cells the graded
+   * surfacer had dug below their neighbours resolve to a standable cell
+   * instead of a buried one. The denominator, moving by 0.02%.
+   */
+  columns: 9055,
   /**
    * …and those with masonry, rubble or growth standing on them.
    *
@@ -577,8 +584,14 @@ const RUINED_GOLDENS = {
    * eighty trunks in these streets and the horizontal skin mosses the pavement
    * under all of them, and the audit still finds eight buried columns, because
    * the level law substitutes cube for cube and the spine keeps its lane.
+   *
+   * **8 → 6 at the `ROAD_SOVEREIGN` flip**, and it moves for the same reason
+   * `columns` does: two of the eight were columns a graded street had left
+   * under its own dressing, and a draped street lays that dressing at the
+   * ground's own level. The headline is unchanged in kind — six buried columns
+   * on 9,055, at `decline: 0.95`, with eighty trunks standing.
    */
-  buried: 8,
+  buried: 6,
   /**
    * Pieces of the declared paving network. **One**, with the trees standing.
    *

@@ -220,7 +220,17 @@ describe("F8: the surfacer consumes the datum", () => {
     const r = region();
     const graph = oneStreet();
     const datum = datumFor(r, graph, fieldH);
-    const tied = declared(surface(plan(r, groundH), graph, { datums: [datum] }), "s");
+    // `sovereign: false` explicitly. The row above — the *stations* carry the
+    // datum's levels — holds either way; this one is about the surfacer
+    // spending the datum on the **columns**, and a sovereign road spends
+    // nothing: every column takes the resolved ground under it, which on this
+    // fixture is one block above the field the datum was graded from. Dormant
+    // under `ROAD_SOVEREIGN`; kept tested for the flag's off-state and a
+    // possible revert.
+    const tied = declared(
+      surface(plan(r, groundH), graph, { datums: [datum], sovereign: false }),
+      "s",
+    );
     // Every claimed column sits at the level the datum gave the station over it,
     // which is the number the lots were seated against in `layDistrict`.
     for (const column of tied.columns) {
@@ -433,7 +443,14 @@ describe("8G: a datum graded over a hill comes back from the surfacer unchanged"
     const r = region();
     const graph = oneStreet();
     const datum = datumFor(r, graph, hillside);
-    const result = surface(plan(r, hillside), graph, { datums: [datum] });
+    // `sovereign: false` explicitly: F1's "within one step" is a promise the
+    // *graded* surfacer makes — the lots are seated off the datum and the
+    // carriageway is built to the same datum, so the two cannot drift. A
+    // sovereign road is draped on the hillside instead and owes the datum
+    // nothing, so the promise is not broken here, it is not being made.
+    // Dormant under `ROAD_SOVEREIGN`; kept tested for the flag's off-state and
+    // a possible revert.
+    const result = surface(plan(r, hillside), graph, { datums: [datum], sovereign: false });
     const built = new Map(declared(result, "s").columns.map((c) => [c.idx, c.y] as const));
     const reach = frontageReach(graph.sidewalk);
     let seated = 0;

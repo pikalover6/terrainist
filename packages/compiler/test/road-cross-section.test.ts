@@ -108,8 +108,21 @@ function graphOf(segments: StreetSegment[]): StreetGraph {
   return { segments, intersections: [], sidewalk: 2 };
 }
 
+/**
+ * Surface one graph under the **graded** law — `sovereign: false`, explicitly.
+ *
+ * Everything this file measures is a property of a carriageway that decides a
+ * level of its own: level across its width, one station per block of ground, no
+ * wash-boarding where the raster zigzags. A sovereign road decides no level —
+ * it is draped on the resolved ground and inherits whatever the terrain does
+ * across its width — so under `ROAD_SOVEREIGN` these sentences are not false,
+ * they are about a machine that is not running. Named at the call the way
+ * `descent-wiring.test.ts` names `descentSolve`: dormant under
+ * `ROAD_SOVEREIGN`, kept tested for the flag's off-state and a possible revert.
+ */
 function surface(p: ColumnPlan, graph: StreetGraph) {
   return surfaceStreetGraph({
+    sovereign: false,
     graphs: [graph],
     plan: p,
     palette: emptyPalette,
@@ -333,6 +346,12 @@ describe("the streetscape and the surfacer agree on where the street is", () => 
     const result = surface(p, graph);
     const before = Int32Array.from(p.ground);
     dressStreets(graph, {
+      // The same explicit off-state `surface` names, for the same reason: the
+      // sidewalk band re-levels itself off the flanking carriageway's arc only
+      // under the graded law, and that re-levelling is the defect this pair of
+      // rows exists to pin. Dormant under `ROAD_SOVEREIGN`; kept tested for the
+      // flag's off-state and a possible revert.
+      sovereign: false,
       plan: p,
       stack,
       seed: nodeSeed(11n, "world.quarter"),

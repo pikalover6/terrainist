@@ -282,9 +282,18 @@ function plan(r: Region, h: (x: number, z: number) => number): ColumnPlan {
   };
 }
 
-/** The surfacer's arguments, over a plan nothing has written to yet. */
+/**
+ * The surfacer's arguments, over a plan nothing has written to yet.
+ *
+ * `sovereign: false` for the same reason every fixture here names
+ * `descentSolve: true`: a sovereign road carries no stair, so the surfacer
+ * drops the descents it is handed (`ROAD_SOVEREIGN` item 3) and there is
+ * nothing left to measure. Dormant under `ROAD_SOVEREIGN`; kept tested for the
+ * flag's off-state and a possible revert.
+ */
 function surfaceArgs() {
   return {
+    sovereign: false,
     graphs: [graphOf()],
     graphPaths: [QUARTER],
     plan: plan(R, (x) => cliff(x)),

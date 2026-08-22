@@ -417,6 +417,32 @@ const LAY_CHUNK = 8192;
  */
 const ROAD_SOVEREIGN_HEADROOM = 3;
 
+/**
+ * The emitters whose blocks **are** the road, and so are never cleared by it.
+ *
+ * Item 2 exempts "the road passes themselves", and that is a statement about
+ * *authorship*, not about a span's name. Two of the road family's own writers
+ * are laid under names of their own only because the freeze defers them past
+ * pass 5c — `road-lanterns` is the route lamps the road pass planted itself off
+ * the staged path, and `streetscape:furniture` is the kerbside dressing
+ * `dressStreets` held back so that a lamp is sited on the frozen ground rather
+ * than on the view a tier-C declarer gets. Both stand *on* the road family's own
+ * surface, at the level the drape gave that column, so both are inside the
+ * headroom band by construction: leaving them out of the exemption is the mask
+ * eating its own street lamps, which it did — a lamp post's lower mast dropped
+ * and its head left hanging (`unsupported.chain` on six worlds), or the whole
+ * post deleted where the mast was short enough to fit inside the band.
+ *
+ * A wall sweep, a retaining course, a building or a doorstep crossing a road is
+ * a different author and stays subject to the clear.
+ */
+const ROAD_SOVEREIGN_OWN_EMITTERS: ReadonlySet<string> = new Set([
+  "roads",
+  "streets",
+  "road-lanterns",
+  "streetscape:furniture",
+]);
+
 /** What the structure pass produced. */
 export interface StructurePassResult {
   /** Blocks to stamp after the terrain columns are written. */
@@ -2727,10 +2753,12 @@ export function buildStructures(
   //    or a wall sweep crossing a road from severing it. Three, because that is
   //    a player plus the block they can step onto.
   //
-  // Two emitters are exempt and only two: the road passes themselves. Their
-  // blocks *are* the road — a bridge deck, its rails, its piers — and a bridge
-  // is the one structure that may legitimately stand above a road column,
-  // which is exactly why item 2 admits it by name.
+  // The road family is exempt from its own clear — see
+  // {@link ROAD_SOVEREIGN_OWN_EMITTERS}. Its blocks *are* the road: a bridge
+  // deck, its rails, its piers, and the lamps and benches the freeze defers
+  // past pass 5c so they stand on the frozen ground. A bridge is the one
+  // structure that may legitimately stand above a road column, which is exactly
+  // why item 2 admits it by name.
   if (sovereign !== undefined) {
     enforceRoadSovereignty(input.plan, sovereign, blocks, blockSpans);
   }
@@ -2838,11 +2866,14 @@ export function buildStructures(
  *    as a single block precisely so the severing case — a course *above* the
  *    pavement — is caught along with the colliding one.
  *
- * Two emitters are exempt, and only two: the road passes themselves. Their
- * blocks **are** the road — a bridge deck, its rails, its piers — and a bridge
- * is the one structure item 2 admits may legitimately stand above a road.
- * Anything spanning higher than the headroom band is left alone whoever laid
- * it, which is the same admission stated for everybody else.
+ * The road family is exempt from its own clear — {@link
+ * ROAD_SOVEREIGN_OWN_EMITTERS}. Its blocks **are** the road: a bridge deck, its
+ * rails, its piers, and the route lamps and kerbside dressing the freeze defers
+ * past pass 5c. A bridge is the one structure item 2 admits may legitimately
+ * stand above a road. Anything spanning higher than the headroom band across
+ * clear air is left alone whoever laid it, which is the same admission stated
+ * for everybody else — but a foreign stack that is *continuous* out of the band
+ * is taken with it, because half a window box is a flower pot standing on air.
  *
  * `blocks` and `blockSpans` are rewritten in place and stay consistent: a span
  * that loses every block loses its row too, and the survivors' ranges are
@@ -2859,21 +2890,65 @@ export function enforceRoadSovereignty(
   for (let k = 0; k < cells; k++) {
     if (sovereign.mask[k] === 1) plan.surface[k] = sovereign.surface[k] as number;
   }
+
+  // Pass 1 — index every foreign block standing at or above a masked column's
+  // surface, by column and by level, and mark the ones inside the band.
+  const foreign = new Map<number, Map<number, number[]>>();
+  const drop = new Uint8Array(blocks.length);
+  const cleared = new Set<number>();
+  for (const span of blockSpans) {
+    if (ROAD_SOVEREIGN_OWN_EMITTERS.has(span.emitter)) continue;
+    for (let i = span.from; i < span.to; i++) {
+      const b = blocks[i] as StructureBlock;
+      if (!inside(region, b.x, b.z)) continue;
+      const k = index(region, b.x, b.z);
+      if (sovereign.mask[k] !== 1) continue;
+      const top = plan.ground[k] as number;
+      if (b.y < top) continue;
+      let byY = foreign.get(k);
+      if (byY === undefined) {
+        byY = new Map();
+        foreign.set(k, byY);
+      }
+      const row = byY.get(b.y);
+      if (row === undefined) byY.set(b.y, [i]);
+      else row.push(i);
+      if (b.y <= top + ROAD_SOVEREIGN_HEADROOM) {
+        drop[i] = 1;
+        cleared.add(k);
+      }
+    }
+  }
+
+  // Pass 2 — **the clear leaves no stump.** Where the band took a block, it
+  // keeps taking upward for as long as the foreign stack is unbroken. A window
+  // box is a fence course with a flower pot on top of it and a porch lamp is
+  // two fence posts under a lantern; both reach one column into the apron, and
+  // on a build-to-line lot that column is inside the border. Clearing only the
+  // band beheads them — the mast goes, the lantern stays where it was, and the
+  // lint reads exactly what it is: `unsupported.chain`, three findings on the
+  // bridge fixture and the same shape on the hill town. The gap is what admits
+  // the bridge: a deck spanning the road starts above clear air, so the walk
+  // stops at the first empty level and the span is left alone, which is item
+  // 2's own admission stated as a mechanism rather than as a height.
+  for (const k of cleared) {
+    const byY = foreign.get(k);
+    if (byY === undefined) continue;
+    const top = plan.ground[k] as number;
+    for (let y = top + ROAD_SOVEREIGN_HEADROOM + 1; ; y++) {
+      const row = byY.get(y);
+      if (row === undefined) break;
+      for (const i of row) drop[i] = 1;
+    }
+  }
+
   const kept: StructureBlock[] = [];
   const keptSpans: BlockSpan[] = [];
   for (const span of blockSpans) {
     const from = kept.length;
-    const mine = span.emitter === "streets" || span.emitter === "roads";
     for (let i = span.from; i < span.to; i++) {
-      const b = blocks[i] as StructureBlock;
-      if (!mine && inside(region, b.x, b.z)) {
-        const k = index(region, b.x, b.z);
-        if (sovereign.mask[k] === 1) {
-          const top = plan.ground[k] as number;
-          if (b.y >= top && b.y <= top + ROAD_SOVEREIGN_HEADROOM) continue;
-        }
-      }
-      kept.push(b);
+      if (drop[i] === 1) continue;
+      kept.push(blocks[i] as StructureBlock);
     }
     if (kept.length > from) keptSpans.push({ emitter: span.emitter, from, to: kept.length });
   }

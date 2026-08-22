@@ -1318,4 +1318,4 @@ export const DESCENT_TURN_W = 6;
  * the conjunction, so a fixture that asks for the solve explicitly still gets
  * it and the descent code stays alive and tested.
  */
-export const ROAD_SOVEREIGN = false;
+export const ROAD_SOVEREIGN = true;

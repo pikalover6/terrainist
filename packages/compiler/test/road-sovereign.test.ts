@@ -133,27 +133,46 @@ function isStair(stateId: number): boolean {
 /* -------------------------------------------------------------------------- */
 
 describe("the flag's off state", () => {
-  it("ships false", () => {
-    expect(ROAD_SOVEREIGN).toBe(false);
+  it("ships ON since the flip: roads drape, outrank, and wear stone brick", () => {
+    // Re-pinned at the ROAD_SOVEREIGN flip: network ground moved off
+    // baseline 1,454 -> 0 on troy, network stairs 33 -> 0, borders 2,139.
+    expect(ROAD_SOVEREIGN).toBe(true);
   });
 
-  it("is the shipped surfacing, ground for ground and block for block", () => {
+  it("is the graded surfacing: reproducible, borderless, and not the on state", () => {
+    // **Rewritten at the flip.** This row used to compare `sovereign: false`
+    // against the surfacer's *default*, which was the same pass only for as
+    // long as the shipped constant was false — the moment it flipped the row
+    // asserted that on equals off and failed for the right reason at the wrong
+    // place. What it is for survives, stated without reference to the constant:
+    // the off state is a pass of its own, it reproduces exactly, it grows no
+    // stone-brick border, and it is a *different* pass from the on state, which
+    // is what makes every override in this suite and in the sibling test files
+    // mean something.
     const r = region();
     const graph = graphOf([run("ew0", 0, undefined), run("st0", 8, "steps")]);
 
-    const today = plan(r, (x) => terraced(x));
-    const shipped = surface(today, graph);
+    const control = plan(r, (x) => terraced(x));
+    const first = surface(control, graph, false);
 
     const explicit = plan(r, (x) => terraced(x));
     const off = surface(explicit, graph, false);
 
-    expect([...explicit.ground]).toEqual([...today.ground]);
-    expect([...explicit.surface]).toEqual([...today.surface]);
-    expect([...off.road]).toEqual([...shipped.road]);
-    expect(off.blocks).toEqual(shipped.blocks);
+    expect([...explicit.ground]).toEqual([...control.ground]);
+    expect([...explicit.surface]).toEqual([...control.surface]);
+    expect([...off.road]).toEqual([...first.road]);
+    expect(off.blocks).toEqual(first.blocks);
+    expect(off.surfacedColumns).toBe(first.surfacedColumns);
+    // No border off the flag — item 4 is the on state's alone.
     expect(off.border).toBeUndefined();
-    expect(shipped.border).toBeUndefined();
-    expect(off.surfacedColumns).toBe(shipped.surfacedColumns);
+    expect(first.border).toBeUndefined();
+
+    // …and the override reaches the machinery: the on state drapes, so it moves
+    // ground the graded pass moved differently, and it wears item 4's border.
+    const onPlan = plan(r, (x) => terraced(x));
+    const on = surface(onPlan, graph, true);
+    expect([...onPlan.ground]).not.toEqual([...control.ground]);
+    expect(on.border).toBeDefined();
   });
 
   it("still lays the tread law's stepped flight, so the on state has something to remove", () => {

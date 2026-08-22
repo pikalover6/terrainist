@@ -397,16 +397,31 @@ const STEEP_EDGES = {
   // flip itself, so nothing here is a defect being pinned as an expectation —
   // but a hillside with a quarter of the earthwork *reads* differently, and how
   // it reads is Kai's call on a walk, not this file's.
-  derivedBuilt: 34,
-  derivedFaceColumns: 247,
+  //
+  // **Re-pinned at the `ROAD_SOVEREIGN` flip: 34 → 36 built, 247 → 271 columns
+  // of face.** A sovereign road is draped on the resolved ground and blends no
+  // shoulder (`blendShoulders` is off under the flag, since a draped road
+  // leaves no cut face to feather), so the street family eases nothing on its
+  // way across a terrace and the terminal builder meets the terrain's own face
+  // instead of a graded one: two more transitions over twenty-four more columns.
+  // The same twenty-four columns show up as `site-plan-hillside`'s steep
+  // `wallColumns` 279 → 303. The trade — inherited risers, no stairs — is the
+  // ratified one and the walk judges it.
+  derivedBuilt: 36,
+  derivedFaceColumns: 271,
   derivedBankColumns: 498,
   /**
    * Derived transitions the stack served but could not cover (the terminal
-   * builder's per-quarter aggregate). **9 → 10 at the flip**: one more, and the
-   * message names each one's cause — a street, a footprint or water owning the
-   * ground a course needed.
+   * builder's per-quarter aggregate). **9 → 10 at the `GROUND_V1_FREEZE` flip**:
+   * one more, and the message names each one's cause — a street, a footprint or
+   * water owning the ground a course needed.
+   *
+   * **10 → 7 at the `ROAD_SOVEREIGN` flip.** The cause is the same sentence read
+   * the other way: a draped street claims the ground it stands on and no more,
+   * so three of the courses that could not find ground to stand on now can. Not
+   * a fix — the same street, moved.
    */
-  derivedRefusals: 10,
+  derivedRefusals: 7,
 } as const;
 
 describe("the steep fixture's transitions, compiled", () => {

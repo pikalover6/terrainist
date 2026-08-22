@@ -673,8 +673,14 @@ const GOLDEN = {
    * derived transitions. Still an order of magnitude under check 4's 600, and
    * the earthworks number is still the larger one (1,547 columns of graded
    * bank) — this town is terraced, not walled, which is the taste §5 pins.
+   *
+   * **136 → 143 at the `ROAD_SOVEREIGN` flip.** A draped road raises no ground
+   * and blends no shoulder, so the terrace faces the seam builder meets are the
+   * terrain's own rather than the ones a graded carriageway had already eased:
+   * seven more columns of face come back needing a finish. Re-pinned at the
+   * measured flag-on value; the trade itself belongs to the walk.
    */
-  wallColumns: 136,
+  wallColumns: 143,
   /** Rungs of §6.3's ladder walked, and where it landed. */
   replanRounds: 3,
   principalStreets: 2,
@@ -961,7 +967,13 @@ const STEEP = {
   // level and the bank's earth is painted on ground the resolver never raised).
   // The number below pins what the compiler does today; it does not certify the
   // taste.
-  wallColumns: 279,
+  //
+  // **279 → 303 at the `ROAD_SOVEREIGN` flip**, and the same mechanism one
+  // fixture steeper: `blendShoulders` is off under the flag, so the street
+  // family eases nothing and the terminal seam builder finds twenty-four more
+  // columns of raw terrain face to finish. Re-pinned at the measured flag-on
+  // value; the walk judges the trade.
+  wallColumns: 303,
   // 3 → 1: the ladder's **first** rung now clears both gates, where before the
   // causeways' paving pushed it two rungs down.
   replanRounds: 1,
