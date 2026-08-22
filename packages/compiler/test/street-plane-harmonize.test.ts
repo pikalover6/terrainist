@@ -156,7 +156,7 @@ function levelAt(datum: StreetDatum, id: string, x: number, z: number): number {
 
 describe("the flag", () => {
   it("ships off, so every world is byte-identical until it is flipped", () => {
-    expect(STREET_PLANE_HARMONIZE).toBe(false);
+    expect(STREET_PLANE_HARMONIZE).toBe(true); // flipped at the n4 gate (2026-08-21)
   });
 
   it("keeps its constants where the rule can be read off them", () => {

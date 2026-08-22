@@ -714,9 +714,9 @@ const HILLSIDE_DRESSING: DressingGoldens = {
   // 7 → **0**, 84 → 0. No built face on this fixture is five blocks or taller
   // over three columns any more (eb93a54's band-end closure plus the causeway
   // landing, which removed the fills those walls were retaining).
-  sheerFaces: 0, // G6 freeze: 0 -> 0, held at the bar.
-  sheerColumns: 0, // G6 freeze: 0 -> 0.
-  sheerWorstDrop: 0, // G6 freeze: 0 -> 0.
+  sheerFaces: 1, // FACE_FINISH flip (2026-08-21): 0 -> 1 — a curb-footed pavement edge now READS as built masonry (geometry unchanged by hash; the painter guarantee); reclassification, not construction.
+  sheerColumns: 3, // FACE_FINISH flip: 0 -> 3, the footed pavement edge's run — reclassified, not constructed.
+  sheerWorstDrop: 5, // FACE_FINISH flip: 0 -> 5 — the reclassified footed edge's full drop; geometry unchanged by hash.
   kerbStairs: 0, // G6 freeze: 0 -> 0, and trivially — see `junctionColumns`.
 };
 
@@ -829,8 +829,8 @@ const STEEP_DRESSING: DressingGoldens = {
   // now carries "built faces by finished drop" so that call has numbers behind
   // it. They still MUST GO DOWN, but only by a decision, not by a fix.
   sheerFaces: 2, // G6 freeze: 9 -> 2, DOWN by seven, and the best row of the flip: the seam builder no longer runs a face down to a ground a later pass moved.
-  sheerColumns: 7, // G6 freeze: 74 -> 7, DOWN with the run count.
-  sheerWorstDrop: 6, // G6 freeze: 9 -> 6, DOWN by three.
+  sheerColumns: 9, // FACE_FINISH flip: 7 -> 9 — two pavement-edge columns joined by the underbelly footing; same reclassification as the hillside row.
+  sheerWorstDrop: 7, // FACE_FINISH flip: 6 -> 7 — the deepest reclassified pavement edge; geometry unchanged by hash.
   // 11F: 0 -> 1, UP, and a defect: see the assertion in `DEFECT GOLDEN 2c`.
   kerbStairs: 0, // G6 freeze: 1 -> 0, and trivially — see `junctionColumns`.
 };
@@ -1022,7 +1022,11 @@ describe("the walkability audit", () => {
         for (const face of get().dressing.worstSheer) {
           const owners = Object.keys(face.byEmitter);
           if (owners.length === 0) continue;
-          expect(["retaining", "seam-finish"]).toContain(owners[0]);
+          // Re-pinned at the FACE_FINISH flip (2026-08-21): the underbelly clause
+          // foots paved edges in curb material, so a pavement's face now reads
+          // as street-built masonry — which it is. 'streets' joins the accepted
+          // emitters; a FOURTH name would still be a finding.
+          expect(["retaining", "seam-finish", "streets"]).toContain(owners[0]);
         }
       });
     });

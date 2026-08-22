@@ -92,11 +92,11 @@
       },
       {
         "delta": 0,
-        "n": 91449
+        "n": 91457
       },
       {
         "delta": 1,
-        "n": 819
+        "n": 808
       },
       {
         "delta": 2,
@@ -124,27 +124,27 @@
       },
       {
         "delta": 8,
-        "n": 23
+        "n": 24
       },
       {
         "delta": 9,
-        "n": 793
+        "n": 779
       },
       {
         "delta": 10,
-        "n": 2307
+        "n": 2322
       },
       {
         "delta": 11,
-        "n": 1523
+        "n": 1522
       },
       {
         "delta": 12,
-        "n": 690
+        "n": 692
       },
       {
         "delta": 13,
-        "n": 674
+        "n": 673
       },
       {
         "delta": 14,
@@ -156,7 +156,7 @@
       },
       {
         "delta": 16,
-        "n": 78
+        "n": 79
       },
       {
         "delta": 17,
@@ -164,11 +164,11 @@
       },
       {
         "delta": 18,
-        "n": 17
+        "n": 18
       },
       {
         "delta": 19,
-        "n": 19
+        "n": 18
       },
       {
         "delta": 20,
@@ -291,12 +291,6 @@
       "max": 14
     },
     {
-      "pair": "street.sidewalk over quarter.plane",
-      "n": 25,
-      "avg": 2.7,
-      "max": 15
-    },
-    {
       "pair": "street.sidewalk over street.network",
       "n": 24,
       "avg": 4.8,
@@ -317,14 +311,20 @@
     {
       "pair": "retaining.skirt over street.sidewalk",
       "n": 21,
-      "avg": 5.6,
+      "avg": 5.8,
       "max": 9
+    },
+    {
+      "pair": "street.sidewalk over quarter.plane",
+      "n": 18,
+      "avg": 3,
+      "max": 15
     },
     {
       "pair": "natural over verge",
       "n": 16,
-      "avg": 4.3,
-      "max": 8
+      "avg": 4.4,
+      "max": 9
     },
     {
       "pair": "natural over retaining.seam",
@@ -575,11 +575,11 @@
         },
         {
           "delta": -1,
-          "n": 31
+          "n": 29
         },
         {
           "delta": 0,
-          "n": 1921
+          "n": 1923
         },
         {
           "delta": 1,
@@ -625,11 +625,11 @@
         },
         {
           "delta": 0,
-          "n": 71
+          "n": 70
         },
         {
           "delta": 1,
-          "n": 6
+          "n": 7
         }
       ]
     },
@@ -721,7 +721,7 @@
     }
   ],
   "clusters": {
-    "count": 47,
+    "count": 46,
     "top": [
       {
         "score": 2659,
@@ -804,7 +804,7 @@
         ]
       },
       {
-        "score": 261,
+        "score": 265,
         "edges": 54,
         "cx": 153,
         "cz": -120,

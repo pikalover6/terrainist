@@ -129,7 +129,7 @@ describe("finishFaces", () => {
   it("ships off, and off it is byte-identical", () => {
     // The flip's own precondition: a flag that is on in the tree is a flag
     // whose acceptance has already been walked, and this one has not.
-    expect(FACE_FINISH).toBe(false);
+    expect(FACE_FINISH).toBe(true); // flipped at the n4 gate (2026-08-21)
 
     const plan = steppedPlan(stack, 68);
     const before = [

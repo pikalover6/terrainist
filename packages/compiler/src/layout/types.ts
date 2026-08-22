@@ -622,7 +622,7 @@ export const GROUND_TIE_SPAN = 4;
  * datum carries a `StreetDatumInput.lower` map, and every world hashes
  * as it does today.
  */
-export const STREET_PLANE_HARMONIZE = false;
+export const STREET_PLANE_HARMONIZE = true;
 
 /**
  * How many columns beyond the sidewalk's outer lane the harmonizer reads the
@@ -1083,7 +1083,7 @@ export const QUAY_SHED_OWN_SHORE = true;
  * is absolute, and the acceptance for the flip is that `plan.ground` is
  * byte-identical on and off. `false` restores the r22 behaviour exactly.
  */
-export const FACE_FINISH = false;
+export const FACE_FINISH = true;
 
 /**
  * How far {@link FACE_FINISH}'s crown clause looks along a face for the run it
