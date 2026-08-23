@@ -34,11 +34,19 @@ iter-9). Steep-fixture debts scale with the dial: buried 99, plinth
 harness races the file). N10 CANDIDATE TRIPLET IS DEAD — measurably
 identical to n9 (saturation axis has no headroom; Kai may delete the
 three n10_* saves). Kai's verdict on n9: right direction, more still
-→ **n11 triplet installed** (trojan_horse_troy_n11_{weakest,balanced,
-strongest}): entry-point ladder PULL_R_FLAT .20/.16/.12 (uncommitted
-constant states, B 2.2/POW 2/CLOSE 21 fixed), 80/140/172 cols moved
-vs n9 ±1-2, four flat-control stations byte-still on all three.
-Await pick → that value becomes the next retune commit. NAMED DEBTS for the walk:
+→ n11 entry ladder (RF .20/.16/.12, 80-172 cols) → Kai: strongest
+barely beats weakest; moderates were always fine, EXTREME slopes
+under-pulled. DIAGNOSIS RATIFIED BY PROBE: pull=1 there since n9 —
+the 1:1 grade ceiling of the graded profile IS the terrain's shape
+(stairs banned), so pull-field knobs stopped mattering. NEW LEVER
+PULL_TREAD (9f04bb6, neutral 1 byte-identical): committed roads climb
+1 riser per TREAD blocks, float-relax + capped integerize (cap binds
+only pull≥.5 — honest flat steps pass whole). **n12 triplet
+installed** (n12_{weakest,balanced,strongest} = TREAD 2/2.5/3,
+uncommitted states): riser metronome emerges, 289/584/676 cols moved
+vs n9, max div 8-11, risers>1 zero, flats byte-still. TREAD 3
+feasibility bite: cut00 junction end lifted +2 (1:3 margin ~0 on a
+25/78 climb) — expect a junction step. Await pick. NAMED DEBTS for the walk:
 plinth zero-bar broke on audit fixtures (steep 8-col proud run), steep
 fixture reachability .997->.928 (hillside is the win), buried 7->40 on
 flights (unfeathered cuts — blendShoulders still silenced), junction
