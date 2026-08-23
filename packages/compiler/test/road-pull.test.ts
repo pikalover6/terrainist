@@ -245,17 +245,24 @@ describe("flat ground gives the grader nothing", () => {
   it("leaves a gentler-than-R_FLAT fall alone, column for column", () => {
     // One riser per five blocks is gentler than `PULL_R_FLAT`, so whatever
     // residue the smoothing leaves may not move a single block: the on state is
-    // the sovereign drape here, and the whole design says so.
+    // the sovereign drape here, and the whole design says so. The control is an
+    // explicit `pull: false` — a bare `sovereign: true` has defaulted to the
+    // shipped pull since the flip, which would make this row compare the blend
+    // to itself.
     const r = region();
     const graph = graphOf([run("ew0", 0, undefined)]);
 
     const control = plan(r, (x) => gentle(x));
-    const drape = surface(control, graph, { sovereign: true });
+    const drape = surface(control, graph, { sovereign: true, pull: false });
 
     const p = plan(r, (x) => gentle(x));
     const blended = surface(p, graph, { sovereign: true, pull: true });
 
-    expect(Math.max(...fieldOf(blended))).toBeLessThan(0.05);
+    // Re-pinned at the retune: `PULL_PEAK_KEEP` holds the fixture's
+    // sub-threshold residue (~0.09) where the moving average used to dilute it
+    // below 0.05. The field bound is a sanity rail; the block-for-block
+    // equality below it is this row's law, and it is unchanged.
+    expect(Math.max(...fieldOf(blended))).toBeLessThan(0.15);
     expect([...p.ground]).toEqual([...control.ground]);
     expect([...p.surface]).toEqual([...control.surface]);
     expect(blended.blocks).toEqual(drape.blocks);

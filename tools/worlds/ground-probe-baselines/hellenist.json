@@ -330,13 +330,13 @@
     },
     {
       "pair": "street.network over street.network",
-      "n": 140,
-      "avg": 3.1,
+      "n": 142,
+      "avg": 2.9,
       "max": 8
     },
     {
       "pair": "natural over street.network",
-      "n": 110,
+      "n": 113,
       "avg": 5.3,
       "max": 12
     },
@@ -348,8 +348,8 @@
     },
     {
       "pair": "street.network over natural",
-      "n": 25,
-      "avg": 3.5,
+      "n": 33,
+      "avg": 3.2,
       "max": 7
     },
     {
@@ -361,14 +361,14 @@
     {
       "pair": "street.sidewalk over street.network",
       "n": 3,
-      "avg": 2,
-      "max": 2
+      "avg": 2.7,
+      "max": 3
     },
     {
       "pair": "quarter.plane over street.network",
       "n": 2,
-      "avg": 6,
-      "max": 6
+      "avg": 7,
+      "max": 7
     },
     {
       "pair": "verge over natural",
@@ -523,7 +523,11 @@
         },
         {
           "delta": 2,
-          "n": 3
+          "n": 1
+        },
+        {
+          "delta": 3,
+          "n": 2
         }
       ]
     },
@@ -541,11 +545,11 @@
         },
         {
           "delta": -5,
-          "n": 2
+          "n": 1
         },
         {
           "delta": -4,
-          "n": 2
+          "n": 4
         },
         {
           "delta": -3,
@@ -553,27 +557,27 @@
         },
         {
           "delta": -2,
-          "n": 12
+          "n": 19
         },
         {
           "delta": -1,
-          "n": 120
+          "n": 123
         },
         {
           "delta": 0,
-          "n": 1917
+          "n": 1908
         },
         {
           "delta": 1,
-          "n": 536
+          "n": 531
         },
         {
           "delta": 2,
-          "n": 17
+          "n": 15
         },
         {
           "delta": 3,
-          "n": 13
+          "n": 15
         },
         {
           "delta": 4,
@@ -581,19 +585,19 @@
         },
         {
           "delta": 5,
-          "n": 13
+          "n": 16
         },
         {
           "delta": 6,
-          "n": 20
+          "n": 12
         },
         {
           "delta": 7,
-          "n": 14
+          "n": 27
         },
         {
           "delta": 8,
-          "n": 8
+          "n": 3
         },
         {
           "delta": 9,
@@ -622,24 +626,24 @@
           "n": 123
         },
         {
-          "delta": 6,
+          "delta": 7,
           "n": 2
         }
       ]
     }
   ],
   "clusters": {
-    "count": 18,
+    "count": 19,
     "top": [
       {
-        "score": 512,
-        "edges": 91,
+        "score": 476,
+        "edges": 90,
         "cx": -153,
         "cz": 101,
         "topKinds": [
           {
             "name": "street.network/street.network",
-            "n": 38
+            "n": 37
           },
           {
             "name": "natural/street.network",
@@ -700,14 +704,18 @@
         ]
       },
       {
-        "score": 60,
-        "edges": 15,
+        "score": 68,
+        "edges": 16,
         "cx": 125,
         "cz": 4,
         "topKinds": [
           {
             "name": "natural/street.network",
             "n": 15
+          },
+          {
+            "name": "street.network/street.network",
+            "n": 1
           }
         ]
       }

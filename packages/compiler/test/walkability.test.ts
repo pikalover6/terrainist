@@ -339,12 +339,12 @@ const HILLSIDE: Goldens = {
   // surfacer had dug below its neighbours now sits level with them and resolves
   // to a standable cell instead of a buried one. The denominator, moving by
   // 0.03%.
-  columns: 3799, // G6 freeze: 4010 -> 4009, the denominator, one column. ROAD_SOVEREIGN flip: 4009 -> 3832 — draped roads inherit terrain risers; stairs off by ratified directive; the walk judges this trade. ROAD_PULL flip: 3832 -> 3799 — the blend gives cliff roads a graded (still stair-free) profile again; the walk judges this trade.
+  columns: 3781, // G6 freeze: 4010 -> 4009, the denominator, one column. ROAD_SOVEREIGN flip: 4009 -> 3832 — draped roads inherit terrain risers; stairs off by ratified directive; the walk judges this trade. ROAD_PULL flip: 3832 -> 3799 — the blend gives cliff roads a graded (still stair-free) profile again; the walk judges this trade. pull retune (boost/peak-keep/sat, 2026-08-22): 3799 -> 3781 — saturated authority re-levels more cliff columns; the denominator follows.
   // 120 → 19. **The flight-floor fix (eb93a54)** — a flight lies in the ground
   // rather than on it, so the rail no longer stands on its own carriageway
   // anywhere. What is left is nine columns on the spine, the plaza's six, and
   // four on the terrace lanes.
-  buried: 40, // G6 freeze: 21 -> 17, DOWN: the ground is the resolver's, so four columns of coping no longer stand on declared lane. ROAD_SOVEREIGN flip: 17 -> 7 — draped roads inherit terrain risers; stairs off by ratified directive; the walk judges this trade. ROAD_PULL flip: 7 -> 40 — the blend gives cliff roads a graded (still stair-free) profile again; the walk judges this trade.
+  buried: 58, // G6 freeze: 21 -> 17, DOWN: the ground is the resolver's, so four columns of coping no longer stand on declared lane. ROAD_SOVEREIGN flip: 17 -> 7 — draped roads inherit terrain risers; stairs off by ratified directive; the walk judges this trade. ROAD_PULL flip: 7 -> 40 — the blend gives cliff roads a graded (still stair-free) profile again; the walk judges this trade. pull retune (boost/peak-keep/sat, 2026-08-22): 40 -> 58 — full authority cuts deeper; the unfeathered cut faces (the named debt) bury more road edge. MUST COME DOWN when the shoulders return.
   // 15 → 10, and 797 → **9**. **The causeway landing (b90f87a).** This is the
   // lever the old comment on `deadEnds` said had been implemented, measured and
   // reverted because it broke the steep fixture's §5.5 planning; it landed for
@@ -361,7 +361,7 @@ const HILLSIDE: Goldens = {
   // numerator: the one new standable column is reachable like the rest of them,
   // and the share is still 1. The invariant this row is really for — "every
   // laid column but one" — is unchanged.
-  entranceReachable: 3798, // G6 freeze: 4007 -> 4008, the numerator, with the share. ROAD_SOVEREIGN flip: 4008 -> 3831 — draped roads inherit terrain risers; stairs off by ratified directive; the walk judges this trade. ROAD_PULL flip: 3831 -> 3798 — the blend gives cliff roads a graded (still stair-free) profile again; the walk judges this trade.
+  entranceReachable: 3780, // G6 freeze: 4007 -> 4008, the numerator, with the share. ROAD_SOVEREIGN flip: 4008 -> 3831 — draped roads inherit terrain risers; stairs off by ratified directive; the walk judges this trade. ROAD_PULL flip: 3831 -> 3798 — the blend gives cliff roads a graded (still stair-free) profile again; the walk judges this trade. pull retune (boost/peak-keep/sat, 2026-08-22): 3798 -> 3780, following `columns`.
   entranceReachableShare: 1, // G6 freeze: 0.999 -> 1.000, UP, which is this row's direction: every laid column but one is walked to from the entrance again.
   // The terrain control: 71% of the region's standable columns. The remainder
   // is the hill's own cliffs and the ground beyond them — nobody's to serve.
@@ -402,7 +402,7 @@ const HILLSIDE: Goldens = {
   // this is not the town getting emptier, it is 12 fewer courses over a
   // denominator that moved by one column. The numerator is the whole of it.
   junctionDensity: 0.141, // G6 freeze: 0.167 -> 0.170, UP by three thousandths on a denominator that shrank by one column; the junction pass's own dressing is gone, so what is counted here is other passes' courses. MUST GO DOWN. flip-debt round (2026-08-21): 0.170 -> 0.171, one thousandth, the two restored lamp posts being counted as the clutter they are — they were in the world before too, hanging over it where this instrument could not see them. ROAD_SOVEREIGN flip: 0.171 -> 0.139 — draped roads inherit terrain risers; stairs off by ratified directive; the walk judges this trade. ROAD_PULL flip: 0.139 -> 0.141 — the blend gives cliff roads a graded (still stair-free) profile again; the walk judges this trade.
-  soloDensity: 0.038, // G6 freeze: 0.048 -> 0.046, the control, DOWN. flip-debt round (2026-08-21): 0.046 -> 0.047, the two restored posts, counted in the control exactly as they are in the junction number one line above — which is the pair working: both rose together, so this is dressing that came back, not a meeting that got worse. ROAD_SOVEREIGN flip: 0.047 -> 0.04 — draped roads inherit terrain risers; stairs off by ratified directive; the walk judges this trade. ROAD_PULL flip: 0.04 -> 0.038 — the blend gives cliff roads a graded (still stair-free) profile again; the walk judges this trade.
+  soloDensity: 0.039, // G6 freeze: 0.048 -> 0.046, the control, DOWN. flip-debt round (2026-08-21): 0.046 -> 0.047, the two restored posts, counted in the control exactly as they are in the junction number one line above — which is the pair working: both rose together, so this is dressing that came back, not a meeting that got worse. ROAD_SOVEREIGN flip: 0.047 -> 0.04 — draped roads inherit terrain risers; stairs off by ratified directive; the walk judges this trade. ROAD_PULL flip: 0.04 -> 0.038 — the blend gives cliff roads a graded (still stair-free) profile again; the walk judges this trade. pull retune (boost/peak-keep/sat, 2026-08-22): 0.038 -> 0.039, a thousandth on a shrunk denominator.
   // Unmoved at 4 runs, and **0 → 1**: one mid-town face run now goes unearned,
   // at (5, 44) — drop 3 over run 5, earned 1.667 against `EARN_RATIO` 2. It is
   // a *new* row in the wrong direction and it is recorded as such rather than
@@ -449,7 +449,7 @@ const STEEP: Goldens = {
   entranceReachableShare: 0.928, // G6 freeze: 0.999 -> 0.996, DOWN: seventeen of the newly-standable columns are not walked to from the entrance. MUST GO UP. ROAD_SOVEREIGN flip: 0.996 -> 0.997 — draped roads inherit terrain risers; stairs off by ratified directive; the walk judges this trade. ROAD_PULL flip: 0.997 -> 0.928 — the blend rejoins the cliff roads but re-cuts this fixture's `quarter.plane` severings; MUST GO BACK UP, and the walk judges the trade.
   // **136343 → 136349** with the archetype-bias wiring (2026-08-11), same
   // cause as the hillside fixture. BY DESIGN.
-  groundReachable: 136009, // fragment-dressing gate (2026-08-21): 136414 -> 136456, UP by forty-two, the same release on the steeper hill, where more of the leftover ground is sliver. G6 freeze: 136386 -> 136408, the control. flip-debt round (2026-08-21): 136408 -> 136414, UP by six — six columns a prop or a post used to stand on from the pristine baseline, released back to the ground now that the re-seat puts each of them where the resolver did. ROAD_SOVEREIGN flip: 136456 -> 136594 — draped roads inherit terrain risers; stairs off by ratified directive; the walk judges this trade. ROAD_PULL flip: 136594 -> 136009 — the blend gives cliff roads a graded (still stair-free) profile again; the walk judges this trade.
+  groundReachable: 135889, // fragment-dressing gate (2026-08-21): 136414 -> 136456, UP by forty-two, the same release on the steeper hill, where more of the leftover ground is sliver. G6 freeze: 136386 -> 136408, the control. flip-debt round (2026-08-21): 136408 -> 136414, UP by six — six columns a prop or a post used to stand on from the pristine baseline, released back to the ground now that the re-seat puts each of them where the resolver did. ROAD_SOVEREIGN flip: 136456 -> 136594 — draped roads inherit terrain risers; stairs off by ratified directive; the walk judges this trade. ROAD_PULL flip: 136594 -> 136009 — the blend gives cliff roads a graded (still stair-free) profile again; the walk judges this trade. pull retune (boost/peak-keep/sat, 2026-08-22): 136009 -> 135889 — deeper cuts on the steep fixture take back ground half-authority left standable.
   groundReachableShare: 0.752, // fragment-dressing gate (2026-08-21): 0.754 -> 0.755, the forty-two released columns. G6 freeze: 0.755 -> 0.754. ROAD_PULL flip: 0.755 -> 0.752, the control following `groundReachable` above.
   // 7 → **10**, up, and the same trade as `components`: the refused causeways
   // leave the streets they used to terminate hanging. MUST GO DOWN.
@@ -466,7 +466,7 @@ const STEEP: Goldens = {
   // 3 → 4 runs, and 0 unserved still. The extra run is a face the causeway
   // removal exposed; every one of the four is earned.
   faceRuns: 24, // G6 freeze: 19 -> 26, UP by seven: seven mid-town edges the junction pass used to dress now read as bare face runs. A denominator — see `unservedFaces`. ROAD_SOVEREIGN flip: 26 -> 15 — draped roads inherit terrain risers; stairs off by ratified directive; the walk judges this trade. ROAD_PULL flip: 15 -> 24 — the blend gives cliff roads a graded (still stair-free) profile again; the walk judges this trade.
-  unservedFaces: 9, // G6 freeze: 10 -> 6, DOWN by four on a denominator that rose, which is the honest direction: more faces found, fewer of them unearned. ROAD_SOVEREIGN flip: 6 -> 7 — draped roads inherit terrain risers; stairs off by ratified directive; the walk judges this trade. ROAD_PULL flip: 7 -> 9 — the blend gives cliff roads a graded (still stair-free) profile again; the walk judges this trade.
+  unservedFaces: 11, // G6 freeze: 10 -> 6, DOWN by four on a denominator that rose, which is the honest direction: more faces found, fewer of them unearned. ROAD_SOVEREIGN flip: 6 -> 7 — draped roads inherit terrain risers; stairs off by ratified directive; the walk judges this trade. ROAD_PULL flip: 7 -> 9 — the blend gives cliff roads a graded (still stair-free) profile again; the walk judges this trade. pull retune (boost/peak-keep/sat, 2026-08-22): 9 -> 11 — two more cut faces at full authority, no flight to earn them; the shoulder debt again.
 };
 
 /**
@@ -719,7 +719,7 @@ const HILLSIDE_DRESSING: DressingGoldens = {
   // them (§2.4's tie rule) and stays one under the higher. `plinthRuns` is
   // still 0. On `glowcap_vale` itself the same change reads 78 → 20 proud
   // columns, longest run 14 → 2.
-  plinthColumns: 2, // G6 freeze: 34 -> 40, UP by six. The six are isolated (the longest run does not move), so this is junction dressing withdrawing at six places and NOT a carriageway standing up. MUST GO DOWN. ROAD_SOVEREIGN flip: 40 -> 0 — draped roads inherit terrain risers; stairs off by ratified directive; the walk judges this trade. ROAD_PULL flip: 0 -> 2 — the blend gives cliff roads a graded (still stair-free) profile again; the walk judges this trade.
+  plinthColumns: 14, // G6 freeze: 34 -> 40, UP by six. The six are isolated (the longest run does not move), so this is junction dressing withdrawing at six places and NOT a carriageway standing up. MUST GO DOWN. ROAD_SOVEREIGN flip: 40 -> 0 — draped roads inherit terrain risers; stairs off by ratified directive; the walk judges this trade. ROAD_PULL flip: 0 -> 2 — the blend gives cliff roads a graded (still stair-free) profile again; the walk judges this trade. pull retune (boost/peak-keep/sat, 2026-08-22): 2 -> 14 — the grade lifts off the drape more often at full authority; runs stay short. The walk judges whether these read as causeway or as mistake.
   plinthLongestRun: 2, // G6 freeze: 5 -> 5, unmoved, which is the half of this pair that carries the argument above. ROAD_SOVEREIGN flip: 5 -> 0 — draped roads inherit terrain risers; stairs off by ratified directive; the walk judges this trade. ROAD_PULL flip: 0 -> 2 — the blend gives cliff roads a graded (still stair-free) profile again; the walk judges this trade.
   stepPlinthColumns: 0, // G6 freeze: 9 -> 15, UP, same cause on the flights. ROAD_SOVEREIGN flip: 15 -> 0 — draped roads inherit terrain risers; stairs off by ratified directive; the walk judges this trade.
   stepPlinthLongestRun: 0, // G6 freeze: 3 -> 8, UP with it. MUST GO DOWN. ROAD_SOVEREIGN flip: 8 -> 0 — draped roads inherit terrain risers; stairs off by ratified directive; the walk judges this trade.
@@ -818,7 +818,7 @@ const STEEP_DRESSING: DressingGoldens = {
   // `VERGE_FILL_FEATHER`) — see the hillside row for the walked defect and the
   // mechanism. The three-column stretch on `hs0_0` is gone entirely; what is
   // left is five isolated columns, each one beside a road cell that steps.
-  plinthColumns: 11, // G6 freeze: 4 -> 2, DOWN. ROAD_SOVEREIGN flip: 2 -> 0 — draped roads inherit terrain risers; stairs off by ratified directive; the walk judges this trade. ROAD_PULL flip: 0 -> 11 — the blend gives cliff roads a graded (still stair-free) profile again; the walk judges this trade.
+  plinthColumns: 8, // G6 freeze: 4 -> 2, DOWN. ROAD_SOVEREIGN flip: 2 -> 0 — draped roads inherit terrain risers; stairs off by ratified directive; the walk judges this trade. ROAD_PULL flip: 0 -> 11 — the blend gives cliff roads a graded (still stair-free) profile again; the walk judges this trade. pull retune (boost/peak-keep/sat, 2026-08-22): 11 -> 8, DOWN — the saturated backstop levels runs that half-authority left standing proud.
   plinthLongestRun: 8, // G6 freeze: 2 -> 1, DOWN. ROAD_SOVEREIGN flip: 1 -> 0 — draped roads inherit terrain risers; stairs off by ratified directive; the walk judges this trade. ROAD_PULL flip: 0 -> 8 — the blend gives cliff roads a graded (still stair-free) profile again; the walk judges this trade.
   // 8 → **0**, and with it the four-column stair-head plinth that was the only
   // plinth with any length on either fixture. The flight-floor fix (eb93a54).
@@ -1117,7 +1117,11 @@ describe("the walkability audit", () => {
     // ROAD_PULL flip: 11 -> 34 and 22 -> 40 — a road pulled off the drape
     // towards the graded profile stands over more of what the audit declares
     // walkable; re-pinned at the measured flag-on bounds, and the walk judges it.
-    expect(onSteps).toBeLessThanOrEqual(34);
-    expect(hillside.buried).toBeLessThanOrEqual(40);
+    // pull retune (boost/peak-keep/sat, 2026-08-22): 34 -> 52 and 40 -> 58 —
+    // full authority grades harder, and the unfeathered cut faces (the named
+    // shoulder debt) bury more of the audit's walkable edge. MUST COME DOWN
+    // when the shoulders return.
+    expect(onSteps).toBeLessThanOrEqual(52);
+    expect(hillside.buried).toBeLessThanOrEqual(58);
   });
 });

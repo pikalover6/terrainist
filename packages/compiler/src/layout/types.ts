@@ -1417,7 +1417,7 @@ export const PULL_RAMP = 6;
  *
  * `0` is the neutral value: the unboosted `ROAD-PULL-v0` §2 curve, exactly.
  */
-export const PULL_BOOST = 0;
+export const PULL_BOOST = 0.66;
 
 /**
  * Peak-keeping: when `true`, a saturated core survives the smoothing — the
@@ -1427,7 +1427,7 @@ export const PULL_BOOST = 0;
  * eroded from both sides. `false` is the neutral value: movavg + lowering
  * clamp, the pre-retune pipeline exactly.
  */
-export const PULL_PEAK_KEEP = false;
+export const PULL_PEAK_KEEP = true;
 
 /**
  * The backstop saturation point: §3.1's Lipschitz relaxation applies each
@@ -1438,4 +1438,4 @@ export const PULL_PEAK_KEEP = false;
  * is 0 the scale is still exactly 0: the flat quarters stay the drape to the
  * bit. `1` is the neutral value: scaling by `pull` itself, the §3.1 original.
  */
-export const PULL_SAT = 1;
+export const PULL_SAT = 0.7;
