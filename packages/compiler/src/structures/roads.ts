@@ -45,9 +45,12 @@ import type { StreetGraph } from "../layout/streets.js";
 import type { DescentDatum } from "../layout/descent-datum.js";
 import type { StreetDatum } from "../layout/street-datum.js";
 import {
+  PULL_BOOST,
+  PULL_PEAK_KEEP,
   PULL_RAMP,
   PULL_R_CLIFF,
   PULL_R_FLAT,
+  PULL_SAT,
   PULL_SMOOTH,
   PULL_WINDOW,
   ROAD_PULL,
@@ -4848,7 +4851,12 @@ function pullField(region: Region, frame: ArcFrame, drape: ReadonlyInt32Array): 
     const window = scratch.subarray(0, m);
     window.sort();
     const grade = window[Math.round(0.95 * (m - 1))] as number;
-    raw[k] = smoothstep(Math.min(1, Math.max(0, (grade - PULL_R_FLAT) / span)));
+    // The n7 retune's boost: `t · (1 + PULL_BOOST · t)` — quadratic in `t`, so
+    // authority *compounds with steepness*. Flats gain exactly 0, a moderate
+    // slope a few hundredths, and the curve saturates near the grade rate
+    // troy's real cliff faces measure instead of `PULL_R_CLIFF` itself.
+    const t = Math.min(1, Math.max(0, (grade - PULL_R_FLAT) / span));
+    raw[k] = smoothstep(Math.min(1, t * (1 + PULL_BOOST * t)));
   }
   // The moving average, centred and clamped at the ends — a prefix sum so the
   // cost is one pass whatever `PULL_SMOOTH` is.
@@ -4860,6 +4868,20 @@ function pullField(region: Region, frame: ArcFrame, drape: ReadonlyInt32Array): 
     const lo = Math.max(0, k - reach);
     const hi = Math.min(n - 1, k + reach);
     pull[k] = ((prefix[hi + 1] as number) - (prefix[lo] as number)) / (hi - lo + 1);
+  }
+  if (PULL_PEAK_KEEP) {
+    // The n7 retune's peak-keeping: the field is the max of the moving average
+    // and raw's slope-limited *upper* envelope, so a saturated core keeps its
+    // height and gains 1/`PULL_RAMP` shoulders instead of being averaged down
+    // and then eroded from both sides. The final lowering clamp is still safe:
+    // the envelope is exactly Lipschitz, and min-clamping a max of it with
+    // anything can never dip below it — it only repairs the average's jumpy
+    // short-window ends.
+    const env = Float64Array.from(raw);
+    spreadPullRamp(env, spacing);
+    for (let k = 0; k < n; k++) {
+      if ((env[k] as number) > (pull[k] as number)) pull[k] = env[k] as number;
+    }
   }
   limitPullRamp(pull, spacing);
   return pull;
@@ -4942,17 +4964,22 @@ function pullShift(
   // what the backstop was added to remove (measured on troy: two of them).
   const limit = frame.spacing;
   const relaxed = Int32Array.from(blended);
+  // The n7 retune's saturation: each correction is scaled by
+  // `min(1, pull / PULL_SAT)` rather than by `pull` itself, so the riser-killer
+  // works at full strength from `PULL_SAT` up instead of leaving a residue that
+  // rounds back into the very step it exists to remove. At `pull = 0` the scale
+  // is still exactly 0 — the flat quarters stay the drape to the bit.
   for (let k = 1; k < n; k++) {
     const prev = relaxed[k - 1] as number;
     const v = blended[k] as number;
     const target = v > prev + limit ? prev + limit : v < prev - limit ? prev - limit : v;
-    relaxed[k] = Math.round(v + (pull[k] as number) * (target - v));
+    relaxed[k] = Math.round(v + Math.min(1, (pull[k] as number) / PULL_SAT) * (target - v));
   }
   for (let k = n - 2; k >= 0; k--) {
     const next = relaxed[k + 1] as number;
     const v = relaxed[k] as number;
     const target = v > next + limit ? next + limit : v < next - limit ? next - limit : v;
-    relaxed[k] = Math.round(v + (pull[k] as number) * (target - v));
+    relaxed[k] = Math.round(v + Math.min(1, (pull[k] as number) / PULL_SAT) * (target - v));
   }
   const shift = new Int32Array(n);
   for (let k = 0; k < n; k++) shift[k] = (relaxed[k] as number) - (blended[k] as number);

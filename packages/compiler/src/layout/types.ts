@@ -1396,3 +1396,46 @@ export const PULL_SMOOTH = 9;
  * transition and never a pop.
  */
 export const PULL_RAMP = 6;
+
+/*
+ * The n7 walk retune (Kai, 2026-08-22): flats perfect, moderate slopes
+ * basically perfect, very steep still too weak. The probe found two causes —
+ * troy's real cliffs measure a P95 grade rate of ~0.6–0.7, under `PULL_R_CLIFF`,
+ * so smoothstep never commits (the east cliff run held 0.8–0.99 for 22 straight
+ * stations and never reached 1); and the moving average plus a lowering-only
+ * ramp limiter eroded what peaks there were to a few stations' width. The three
+ * levers below are that diagnosis, one mechanism each. Each has a neutral value
+ * that reproduces the pre-retune pass byte for byte.
+ */
+
+/**
+ * The nonlinear boost: `t` becomes `t · (1 + PULL_BOOST · t)` before the
+ * smoothstep, so extra authority *compounds with steepness* instead of lifting
+ * the whole curve. Flats (`t = 0`) gain exactly nothing, a moderate slope
+ * (`t ≈ 0.3`) gains ~0.06, and the curve saturates near grade 0.6 — the rate
+ * troy's cliff faces actually measure — instead of `PULL_R_CLIFF`'s 0.75.
+ *
+ * `0` is the neutral value: the unboosted `ROAD-PULL-v0` §2 curve, exactly.
+ */
+export const PULL_BOOST = 0;
+
+/**
+ * Peak-keeping: when `true`, a saturated core survives the smoothing — the
+ * field is the max of the moving average and raw's slope-limited upper
+ * envelope, so a cliff's `pull = 1` heart keeps its height and gains
+ * 1/`PULL_RAMP` shoulders instead of being averaged down to ~0.8 and then
+ * eroded from both sides. `false` is the neutral value: movavg + lowering
+ * clamp, the pre-retune pipeline exactly.
+ */
+export const PULL_PEAK_KEEP = false;
+
+/**
+ * The backstop saturation point: §3.1's Lipschitz relaxation applies each
+ * correction scaled by `min(1, pull / PULL_SAT)` instead of by `pull`, so the
+ * riser-killer works at FULL strength from `pull = PULL_SAT` up rather than
+ * leaving a 15% terrain residue at `pull = 0.85` — which on a five-block scarp
+ * rounds back into the very steps the backstop exists to remove. Where `pull`
+ * is 0 the scale is still exactly 0: the flat quarters stay the drape to the
+ * bit. `1` is the neutral value: scaling by `pull` itself, the §3.1 original.
+ */
+export const PULL_SAT = 1;
