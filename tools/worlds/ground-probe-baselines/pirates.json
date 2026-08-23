@@ -96,7 +96,7 @@
     "byDelta": [
       {
         "delta": 0,
-        "n": 113873
+        "n": 113869
       },
       {
         "delta": 1,
@@ -116,7 +116,7 @@
       },
       {
         "delta": 5,
-        "n": 344
+        "n": 348
       },
       {
         "delta": 6,
@@ -266,8 +266,8 @@
     },
     {
       "pair": "street.sidewalk over natural",
-      "n": 47,
-      "avg": 6.8,
+      "n": 51,
+      "avg": 6.5,
       "max": 11
     },
     {
@@ -278,8 +278,8 @@
     },
     {
       "pair": "natural over road.network",
-      "n": 21,
-      "avg": 4.3,
+      "n": 22,
+      "avg": 4.2,
       "max": 8
     },
     {
@@ -319,6 +319,12 @@
       "max": 3
     },
     {
+      "pair": "natural over street.sidewalk",
+      "n": 7,
+      "avg": 2,
+      "max": 2
+    },
+    {
       "pair": "street.sidewalk over street.sidewalk",
       "n": 6,
       "avg": 2.5,
@@ -339,12 +345,6 @@
     {
       "pair": "natural over verge",
       "n": 4,
-      "avg": 2,
-      "max": 2
-    },
-    {
-      "pair": "natural over street.sidewalk",
-      "n": 3,
       "avg": 2,
       "max": 2
     },
@@ -515,15 +515,15 @@
         },
         {
           "delta": -1,
-          "n": 24
+          "n": 11
         },
         {
           "delta": 0,
-          "n": 2618
+          "n": 2639
         },
         {
           "delta": 1,
-          "n": 16
+          "n": 8
         },
         {
           "delta": 2,
@@ -623,7 +623,7 @@
     }
   ],
   "clusters": {
-    "count": 20,
+    "count": 25,
     "top": [
       {
         "score": 354,

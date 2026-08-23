@@ -1494,4 +1494,4 @@ export const PULL_TREAD = 1;
  *
  * `false` is the neutral value: the longitudinal-only verdict, exactly.
  */
-export const PULL_CROSS = false;
+export const PULL_CROSS = true;

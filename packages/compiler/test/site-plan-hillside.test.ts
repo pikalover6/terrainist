@@ -978,7 +978,7 @@ const STEEP = {
   // `site-plan-transitions.test.ts` re-pins as 271 → 277: the blend puts road
   // claims at levels between the drape and the graded profile, and the terminal
   // seam builder derives one more transition off them.
-  wallColumns: 441, // n9 retune (tail exponent + closing, 2026-08-23): 309 -> 441 — road claims at the new levels change which seams derive; the terminal builder answers a much longer stretch of face.
+  wallColumns: 559, // n9 retune (tail exponent + closing, 2026-08-23): 309 -> 441 — road claims at the new levels change which seams derive; the terminal builder answers a much longer stretch of face. cross verdict (PULL_CROSS, 2026-08-23): 441 -> 559 — the terminal builder answers a longer stretch of face as the levelled rows cut the tilted shelves flat.
   // 3 → 1: the ladder's **first** rung now clears both gates, where before the
   // causeways' paving pushed it two rungs down.
   replanRounds: 1,

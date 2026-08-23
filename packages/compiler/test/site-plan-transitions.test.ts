@@ -412,8 +412,8 @@ const STEEP_EDGES = {
   // face.** Road claims now sit at blended levels between the drape and the n5
   // graded profile, which changes which seams the resolver derives on this steep
   // fixture — one more transition over six more columns.
-  derivedBuilt: 39, // n9 retune (tail exponent + closing, 2026-08-23): 37 -> 39 — road claims at the new levels change which seams the resolver derives on this steep fixture.
-  derivedFaceColumns: 409, // n9 retune (tail exponent + closing, 2026-08-23): 277 -> 409 — the same census drift, over a much longer stretch of face.
+  derivedBuilt: 42, // n9 retune (tail exponent + closing, 2026-08-23): 37 -> 39 — road claims at the new levels change which seams the resolver derives on this steep fixture. cross verdict (PULL_CROSS, 2026-08-23): 39 -> 42 — cross-fall joins the pull verdict and the side-sloping streets level, so three more seams derive at the new row heights.
+  derivedFaceColumns: 527, // n9 retune (tail exponent + closing, 2026-08-23): 277 -> 409 — the same census drift, over a much longer stretch of face. cross verdict (PULL_CROSS, 2026-08-23): 409 -> 527 — the same census drift, over a longer stretch of face: the re-levelled rows cut the tilted shelves flat and the terminal builder answers the cut.
   derivedBankColumns: 501, // n9 retune (tail exponent + closing, 2026-08-23): 498 -> 501 — the graded-bank side follows.
   /**
    * Derived transitions the stack served but could not cover (the terminal
@@ -426,7 +426,7 @@ const STEEP_EDGES = {
    * so three of the courses that could not find ground to stand on now can. Not
    * a fix — the same street, moved.
    */
-  derivedRefusals: 10, // n9 retune (tail exponent + closing, 2026-08-23): 7 -> 10 — more derived courses find a street, a footprint or water already owning the ground they needed.
+  derivedRefusals: 9, // n9 retune (tail exponent + closing, 2026-08-23): 7 -> 10 — more derived courses find a street, a footprint or water already owning the ground they needed. cross verdict (PULL_CROSS, 2026-08-23): 10 -> 9 — one fewer derived course finds its ground already owned, the levelled rows connecting a little better.
 } as const;
 
 describe("the steep fixture's transitions, compiled", () => {

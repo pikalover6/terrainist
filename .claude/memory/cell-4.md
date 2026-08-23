@@ -42,11 +42,17 @@ the 1:1 grade ceiling of the graded profile IS the terrain's shape
 PULL_TREAD (9f04bb6, neutral 1 byte-identical): committed roads climb
 1 riser per TREAD blocks, float-relax + capped integerize (cap binds
 only pull≥.5 — honest flat steps pass whole). **n12 triplet
-installed** (n12_{weakest,balanced,strongest} = TREAD 2/2.5/3,
-uncommitted states): riser metronome emerges, 289/584/676 cols moved
-vs n9, max div 8-11, risers>1 zero, flats byte-still. TREAD 3
-feasibility bite: cut00 junction end lifted +2 (1:3 margin ~0 on a
-25/78 climb) — expect a junction step. Await pick. NAMED DEBTS for the walk:
+installed** (TREAD 2/2.5/3, uncommitted): riser metronome, 289/584/676
+cols vs n9; TREAD 3 lifts cut00's junction end +2. **TREAD PICK STILL
+AWAITED.** Kai's next report: x=200 z-100..-65 never budged → probed:
+CROSS-SLOPE (7-wide road, 10-block tilt across, longitudinally gentle
+— every instrument measured the wrong axis). Kai ratified via popup:
+**PULL_CROSS** — grade = max(long P95, cross-fall over road width).
+Landed a587cfa neutral byte-identical, flipped: the stretch goes tilt
+10 → 0 at every station (rows dead level, centreline keeps its gentle
+climb), deck at1 193, street/street cliff pairs COLLAPSE 141->26
+(troy), 143->20 (hellenist) — the shelves were the census. Deck
+**trojan_horse_troy_n13** installed. NAMED DEBTS for the walk:
 plinth zero-bar broke on audit fixtures (steep 8-col proud run), steep
 fixture reachability .997->.928 (hillside is the win), buried 7->40 on
 flights (unfeathered cuts — blendShoulders still silenced), junction
