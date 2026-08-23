@@ -48,6 +48,7 @@ import {
   PULL_BOOST,
   PULL_BOOST_POW,
   PULL_CLOSE,
+  PULL_CROSS,
   PULL_PEAK_KEEP,
   PULL_TREAD,
   PULL_RAMP,
@@ -780,7 +781,10 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
     // columns, up to 4 blocks, decided by alphabetical accident.
     const source = `${input.nodePath}#route@${anchor.nodePath}→${hub.nodePath}`;
     const subRank = -declaredRoutes.length;
-    const pull = pulled && drape !== undefined ? routePull(region, frame, drape, levels) : undefined;
+    const pull =
+      pulled && drape !== undefined
+        ? routePull(region, frame, drape, levels, width >> 1)
+        : undefined;
     if (pull !== undefined) pulls.push(pull.pull);
     const claimed = declareRoute(view, blocked, spots, levels, paved, water, undefined, drape, pull);
     // Before the commit: the relief test sees the land this lane is cut into.
@@ -2026,7 +2030,9 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
     // and the columns are written again from the pooled field below; what is
     // written here is what the *pins* of the runs after this one read, which is
     // the same relationship the graded pass has always had.
-    if (pulled && drape !== undefined) job.pull = routePull(region, frame, drape, levels);
+    if (pulled && drape !== undefined) {
+      job.pull = routePull(region, frame, drape, levels, job.width >> 1);
+    }
     for (const spot of job.spots ?? []) {
       if (owner[spot.idx] !== j) continue;
       // A plaza surfaced itself and keeps its own level; the lane is *on* the
@@ -4826,10 +4832,45 @@ function drapeAlong(
  * Deterministic and allocation-light: four typed arrays per run, no map, no
  * sort of anything longer than the window.
  */
-function pullField(region: Region, frame: ArcFrame, drape: ReadonlyInt32Array): Float64Array {
+function pullField(
+  region: Region,
+  frame: ArcFrame,
+  drape: ReadonlyInt32Array,
+  halfWidth = 0,
+): Float64Array {
   const n = frame.stations.length;
   const spacing = frame.spacing;
   const y = drapeAlong(region, frame, drape);
+  // `PULL_CROSS`: the drape's fall across the road's own width, per station —
+  // the other axis of need. A side-sloping contour road is longitudinally
+  // gentle and transversely a cliff; only the max of the two is the truth a
+  // road can be built on. Sampled on the station's perpendicular at integer
+  // offsets over the carriageway's own half-width; rate = rise over the full
+  // width, the same blocks-per-block the longitudinal thresholds are quoted in.
+  const cross = new Float64Array(n);
+  if (PULL_CROSS && halfWidth > 0) {
+    for (let k = 0; k < n; k++) {
+      const a = frame.stations[Math.max(0, k - 1)];
+      const b = frame.stations[Math.min(n - 1, k + 1)];
+      const dx = (b as { x: number }).x - (a as { x: number }).x;
+      const dz = (b as { z: number }).z - (a as { z: number }).z;
+      const len = Math.hypot(dx, dz);
+      if (len === 0) continue;
+      const px = -dz / len;
+      const pz = dx / len;
+      const st = frame.stations[k] as { x: number; z: number };
+      let lo = Infinity;
+      let hi = -Infinity;
+      for (let o = -halfWidth; o <= halfWidth; o++) {
+        const cx = clampX(region, Math.round(st.x + px * o));
+        const cz = clampZ(region, Math.round(st.z + pz * o));
+        const v = drape[index(region, cx, cz)] as number;
+        if (v < lo) lo = v;
+        if (v > hi) hi = v;
+      }
+      cross[k] = (hi - lo) / (2 * halfWidth);
+    }
+  }
   // Half-window in stations: the design's window is 13 *blocks*, which on a
   // diagonal is fewer stations. At least one station each way, or a short run
   // measures nothing.
@@ -4857,7 +4898,9 @@ function pullField(region: Region, frame: ArcFrame, drape: ReadonlyInt32Array): 
     // grade the whole window agrees about.
     const window = scratch.subarray(0, m);
     window.sort();
-    const grade = window[Math.round(0.95 * (m - 1))] as number;
+    const along = window[Math.round(0.95 * (m - 1))] as number;
+    // `PULL_CROSS`: the verdict is the worse of the two axes.
+    const grade = Math.max(along, cross[k] as number);
     // The n7 retune's boost, with the n8 retune's exponent: authority
     // *compounds with steepness* as `t · (1 + PULL_BOOST · t^PULL_BOOST_POW)`.
     // Flats gain exactly 0, a moderate slope a few hundredths, and the higher
@@ -5074,8 +5117,9 @@ function routePull(
   frame: ArcFrame,
   drape: ReadonlyInt32Array,
   levels: ArcLevels,
+  halfWidth = 0,
 ): RoutePull {
-  const pull = pullField(region, frame, drape);
+  const pull = pullField(region, frame, drape, halfWidth);
   return { pull, shift: pullShift(region, frame, drape, levels, pull) };
 }
 

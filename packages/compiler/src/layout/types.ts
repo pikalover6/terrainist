@@ -1480,3 +1480,18 @@ export const PULL_SAT = 0.7;
  * `1` is the neutral value: the 1:1 ceiling, the prior backstop exactly.
  */
 export const PULL_TREAD = 1;
+
+/**
+ * Cross-fall joins the pull verdict (Kai, 2026-08-23, ratified off the n12
+ * probe): the grade a station measures is the max of the longitudinal P95 and
+ * the drape's fall ACROSS the road's own width at that station. The x=200
+ * avenue's south stretch proved the gap — a 7-wide road on a 10-block
+ * side-slope measures longitudinally gentle, takes pull 0.04, and drapes into
+ * a tilted shelf that is paint on a hillside rather than a road. Authority
+ * proportional to need, with need finally measured in both axes: a level
+ * cross-row is what pull = 1 already delivers, so no new blend machinery —
+ * only the measurement grows an axis.
+ *
+ * `false` is the neutral value: the longitudinal-only verdict, exactly.
+ */
+export const PULL_CROSS = false;
