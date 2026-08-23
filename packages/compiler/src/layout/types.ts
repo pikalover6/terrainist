@@ -1417,7 +1417,7 @@ export const PULL_RAMP = 6;
  *
  * `0` is the neutral value: the unboosted `ROAD-PULL-v0` §2 curve, exactly.
  */
-export const PULL_BOOST = 0.66;
+export const PULL_BOOST = 2.2;
 
 /**
  * The n8 walk retune (Kai, 2026-08-23): the x=200 avenue — 25 blocks of climb —
@@ -1429,7 +1429,7 @@ export const PULL_BOOST = 0.66;
  * ~0.59. `1` is the neutral value: with `BOOST = 0.66` it is the n8 curve
  * bit for bit.
  */
-export const PULL_BOOST_POW = 1;
+export const PULL_BOOST_POW = 2;
 
 /**
  * Commitment through the breather (the n8 walk's x=200 avenue): a flat
@@ -1443,7 +1443,7 @@ export const PULL_BOOST_POW = 1;
  *
  * `0` is the neutral value: no closing, the prior pipeline exactly.
  */
-export const PULL_CLOSE = 0;
+export const PULL_CLOSE = 21;
 
 /**
  * Peak-keeping: when `true`, a saturated core survives the smoothing — the

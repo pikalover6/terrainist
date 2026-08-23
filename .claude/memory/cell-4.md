@@ -18,10 +18,18 @@ installed. RETUNE (Kai's n7 verdict "very steep still too weak",
 .66 (t·(1+B·t), authority compounds with steepness), PULL_PEAK_KEEP
 (max(movavg, upper envelope) — cores hold 1), PULL_SAT .7 (backstop
 full-strength from .7). Stations at pull=1: 9->42(boost)->97(full);
-east cliff solid-saturated; flats byte-still; 356 cols moved ±1-2;
-risers>1 at pull≥.5 still 0; street pairs 156->147. Decks
-**trojan_horse_troy_n8** (full) + **_n8b** (boost-only CONTROL,
-uncommitted constants state, documented in card). NAMED DEBTS for the walk:
+flats byte-still; risers>1 at pull≥.5 always 0. Decks n8 + n8b
+(boost-only control). N9 RETUNE (Kai's n8 verdict: x=200 avenue's
+mid-climb bench hands terrain back; "steepen the tail"): PULL_BOOST_POW
+2 + BOOST 2.2 (tail-only steepening, t=.3 unchanged — probe proved
+curve alone CANNOT fix the bench, grade there honestly ~.35) +
+PULL_CLOSE 21 (flat morphological closing; run TWICE — in pullField
+AND phase 1b after junction pooling, because the bench's north wall
+IS the pooled junction plane, absent at field-build time). Street now
+solid-saturated junction->crest; deck at1 97->156; flats' trace
+residue ≤.039, levels byte-still; 202 cols ±1-3. Deck
+**trojan_horse_troy_n9**. Kai's loop: good-or-more-tuning per deck,
+then move on. NAMED DEBTS for the walk:
 plinth zero-bar broke on audit fixtures (steep 8-col proud run), steep
 fixture reachability .997->.928 (hillside is the win), buried 7->40 on
 flights (unfeathered cuts — blendShoulders still silenced), junction

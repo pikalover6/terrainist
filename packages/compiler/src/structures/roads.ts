@@ -2087,6 +2087,10 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
         if (v > (pooled[k] as number)) pooled[k] = v;
       }
       spreadPullRamp(pooled, frame.spacing);
+      // The second closing — see {@link closePull}: pooling just raised the
+      // junction planes, so a run's breather may now stand between its own
+      // core and a junction wall that did not exist when its field was built.
+      closePull(pooled, frame.spacing);
       job.pull = { pull: pooled, shift: pullShift(region, frame, drape, levels, pooled) };
       for (const spot of job.spots ?? []) {
         if (owner[spot.idx] !== job.order) continue;
@@ -4886,34 +4890,44 @@ function pullField(region: Region, frame: ArcFrame, drape: ReadonlyInt32Array): 
       if ((env[k] as number) > (pull[k] as number)) pull[k] = env[k] as number;
     }
   }
-  if (PULL_CLOSE > 0) {
-    // Commitment through the breather: a flat closing (running max, then
-    // running min over the same window) fills any dip narrower than
-    // `PULL_CLOSE` blocks *between two higher walls* up to the lower wall,
-    // and — the defining property of a closing — changes nothing anywhere
-    // else: the fill can never exceed the walls, and outside them the erosion
-    // gives every column its own value back. This is what lets a 25-block
-    // climb keep its verdict across a local bench the grade window honestly
-    // reads as moderate.
-    const half = Math.max(1, Math.round(PULL_CLOSE / spacing / 2));
-    const dil = new Float64Array(n);
-    for (let k = 0; k < n; k++) {
-      let m = 0;
-      for (let j = Math.max(0, k - half); j <= Math.min(n - 1, k + half); j++) {
-        if ((pull[j] as number) > m) m = pull[j] as number;
-      }
-      dil[k] = m;
-    }
-    for (let k = 0; k < n; k++) {
-      let m = 1;
-      for (let j = Math.max(0, k - half); j <= Math.min(n - 1, k + half); j++) {
-        if ((dil[j] as number) < m) m = dil[j] as number;
-      }
-      if (m > (pull[k] as number)) pull[k] = m;
-    }
-  }
+  closePull(pull, spacing);
   limitPullRamp(pull, spacing);
   return pull;
+}
+
+/**
+ * Commitment through the breather: a flat morphological closing (running max,
+ * then running min over the same window) fills any dip narrower than
+ * `PULL_CLOSE` blocks *between two higher walls* up to the lower wall, and —
+ * the defining property of a closing — changes nothing anywhere else: the fill
+ * can never exceed the walls, and outside them the erosion gives every station
+ * its own value back. This is what lets a 25-block climb keep its verdict
+ * across a local bench the grade window honestly reads as moderate.
+ *
+ * Called twice on the street path: once on a run's own field, and again in
+ * phase 1b after junction pooling — a wall can be the *junction's* (the x=200
+ * avenue's bench sits between its own climb core and a pooled junction plane,
+ * and at field-build time that second wall does not exist yet).
+ */
+function closePull(pull: Float64Array, spacing: number): void {
+  if (PULL_CLOSE <= 0) return;
+  const n = pull.length;
+  const half = Math.max(1, Math.round(PULL_CLOSE / spacing / 2));
+  const dil = new Float64Array(n);
+  for (let k = 0; k < n; k++) {
+    let m = 0;
+    for (let j = Math.max(0, k - half); j <= Math.min(n - 1, k + half); j++) {
+      if ((pull[j] as number) > m) m = pull[j] as number;
+    }
+    dil[k] = m;
+  }
+  for (let k = 0; k < n; k++) {
+    let m = 1;
+    for (let j = Math.max(0, k - half); j <= Math.min(n - 1, k + half); j++) {
+      if ((dil[j] as number) < m) m = dil[j] as number;
+    }
+    if (m > (pull[k] as number)) pull[k] = m;
+  }
 }
 
 /**

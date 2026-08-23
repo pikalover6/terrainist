@@ -412,9 +412,9 @@ const STEEP_EDGES = {
   // face.** Road claims now sit at blended levels between the drape and the n5
   // graded profile, which changes which seams the resolver derives on this steep
   // fixture — one more transition over six more columns.
-  derivedBuilt: 37,
-  derivedFaceColumns: 277,
-  derivedBankColumns: 498,
+  derivedBuilt: 39, // n9 retune (tail exponent + closing, 2026-08-23): 37 -> 39 — road claims at the new levels change which seams the resolver derives on this steep fixture.
+  derivedFaceColumns: 409, // n9 retune (tail exponent + closing, 2026-08-23): 277 -> 409 — the same census drift, over a much longer stretch of face.
+  derivedBankColumns: 501, // n9 retune (tail exponent + closing, 2026-08-23): 498 -> 501 — the graded-bank side follows.
   /**
    * Derived transitions the stack served but could not cover (the terminal
    * builder's per-quarter aggregate). **9 → 10 at the `GROUND_V1_FREEZE` flip**:
@@ -426,7 +426,7 @@ const STEEP_EDGES = {
    * so three of the courses that could not find ground to stand on now can. Not
    * a fix — the same street, moved.
    */
-  derivedRefusals: 7,
+  derivedRefusals: 10, // n9 retune (tail exponent + closing, 2026-08-23): 7 -> 10 — more derived courses find a street, a footprint or water already owning the ground they needed.
 } as const;
 
 describe("the steep fixture's transitions, compiled", () => {
