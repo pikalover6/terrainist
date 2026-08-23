@@ -26,10 +26,19 @@ curve alone CANNOT fix the bench, grade there honestly ~.35) +
 PULL_CLOSE 21 (flat morphological closing; run TWICE — in pullField
 AND phase 1b after junction pooling, because the bench's north wall
 IS the pooled junction plane, absent at field-build time). Street now
-solid-saturated junction->crest; deck at1 97->156; flats' trace
-residue ≤.039, levels byte-still; 202 cols ±1-3. Deck
-**trojan_horse_troy_n9**. Kai's loop: good-or-more-tuning per deck,
-then move on. NAMED DEBTS for the walk:
+solid-saturated junction->crest; deck at1 97->156; flats byte-still;
+202 cols ±1-3. Deck **trojan_horse_troy_n9** (commit 60d6626,
+iter-9). Steep-fixture debts scale with the dial: buried 99, plinth
+34, one 25-deep sheer face; troy shows class only as ~5 flank cols at
+7-11. LAW: never run baseline regen + FULL suite concurrently (the
+harness races the file). N10 CANDIDATE TRIPLET IS DEAD — measurably
+identical to n9 (saturation axis has no headroom; Kai may delete the
+three n10_* saves). Kai's verdict on n9: right direction, more still
+→ **n11 triplet installed** (trojan_horse_troy_n11_{weakest,balanced,
+strongest}): entry-point ladder PULL_R_FLAT .20/.16/.12 (uncommitted
+constant states, B 2.2/POW 2/CLOSE 21 fixed), 80/140/172 cols moved
+vs n9 ±1-2, four flat-control stations byte-still on all three.
+Await pick → that value becomes the next retune commit. NAMED DEBTS for the walk:
 plinth zero-bar broke on audit fixtures (steep 8-col proud run), steep
 fixture reachability .997->.928 (hillside is the win), buried 7->40 on
 flights (unfeathered cuts — blendShoulders still silenced), junction
