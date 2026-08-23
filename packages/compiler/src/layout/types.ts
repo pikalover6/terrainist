@@ -1432,6 +1432,20 @@ export const PULL_BOOST = 0.66;
 export const PULL_BOOST_POW = 1;
 
 /**
+ * Commitment through the breather (the n8 walk's x=200 avenue): a flat
+ * morphological closing along the run, in blocks. An authority dip *between
+ * two high-pull walls* narrower than this fills to the lower wall, so a
+ * ludicrous climb's local bench cannot hand the terrain back mid-ascent —
+ * the 13-block grade window standing on the bench honestly reads "moderate",
+ * and this is the instrument that sees the climb through it. Outer
+ * transitions are untouched by construction (a closing never raises anything
+ * outside the walls), and a flat quarter has no walls to close between.
+ *
+ * `0` is the neutral value: no closing, the prior pipeline exactly.
+ */
+export const PULL_CLOSE = 0;
+
+/**
  * Peak-keeping: when `true`, a saturated core survives the smoothing — the
  * field is the max of the moving average and raw's slope-limited upper
  * envelope, so a cliff's `pull = 1` heart keeps its height and gains

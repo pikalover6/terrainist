@@ -47,6 +47,7 @@ import type { StreetDatum } from "../layout/street-datum.js";
 import {
   PULL_BOOST,
   PULL_BOOST_POW,
+  PULL_CLOSE,
   PULL_PEAK_KEEP,
   PULL_RAMP,
   PULL_R_CLIFF,
@@ -4883,6 +4884,32 @@ function pullField(region: Region, frame: ArcFrame, drape: ReadonlyInt32Array): 
     spreadPullRamp(env, spacing);
     for (let k = 0; k < n; k++) {
       if ((env[k] as number) > (pull[k] as number)) pull[k] = env[k] as number;
+    }
+  }
+  if (PULL_CLOSE > 0) {
+    // Commitment through the breather: a flat closing (running max, then
+    // running min over the same window) fills any dip narrower than
+    // `PULL_CLOSE` blocks *between two higher walls* up to the lower wall,
+    // and — the defining property of a closing — changes nothing anywhere
+    // else: the fill can never exceed the walls, and outside them the erosion
+    // gives every column its own value back. This is what lets a 25-block
+    // climb keep its verdict across a local bench the grade window honestly
+    // reads as moderate.
+    const half = Math.max(1, Math.round(PULL_CLOSE / spacing / 2));
+    const dil = new Float64Array(n);
+    for (let k = 0; k < n; k++) {
+      let m = 0;
+      for (let j = Math.max(0, k - half); j <= Math.min(n - 1, k + half); j++) {
+        if ((pull[j] as number) > m) m = pull[j] as number;
+      }
+      dil[k] = m;
+    }
+    for (let k = 0; k < n; k++) {
+      let m = 1;
+      for (let j = Math.max(0, k - half); j <= Math.min(n - 1, k + half); j++) {
+        if ((dil[j] as number) < m) m = dil[j] as number;
+      }
+      if (m > (pull[k] as number)) pull[k] = m;
     }
   }
   limitPullRamp(pull, spacing);
