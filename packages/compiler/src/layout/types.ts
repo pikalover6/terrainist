@@ -1319,3 +1319,80 @@ export const DESCENT_TURN_W = 6;
  * it and the descent code stays alive and tested.
  */
 export const ROAD_SOVEREIGN = true;
+
+/* -------------------------------------------------------------------------- */
+/* the pulled road — `docs/ROAD-PULL-v0.md`, authority proportional to need    */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * **The switch: the grader's authority is the terrain's own verdict.**
+ * **Off — `false` is what ships**; the off state is proven byte-identical on
+ * the battery docs, which is what every line below is written to make true.
+ *
+ * `true` **implies {@link ROAD_SOVEREIGN}** — every consumer reads the
+ * conjunction, so a fixture that forces `sovereign: false` still gets the
+ * graded pass whole and this flag is a no-op on it. That is the
+ * {@link DESCENT_SOLVE} ladder pattern, one rung higher.
+ *
+ * The law, per station `s` of a run and per column `col` of its cross-section:
+ *
+ * ```
+ * y(col) = round( y_drape(col) + pull(s) · ( y_n5(s) − y_drape(col) ) )
+ * ```
+ *
+ * — the homotopy between the two shipped laws. `y_drape` is `ROAD_SOVEREIGN`
+ * item 1's oracle, the ground's own answer at the column; `y_n5` is the graded
+ * arc level the surfacer consumed before the sovereign flip, which is still
+ * computed and which the flip merely stopped reading. At `pull = 0` the row is
+ * the drape verbatim, byte for byte; at `pull = 1` it is the graded profile
+ * verbatim — level across its width and 1-Lipschitz along the run, with the
+ * stairs still off.
+ *
+ * Kai's ratification, off the n6 walk: *"as long as the terrain was relatively
+ * flat, roads looked fine. Generators on this type of terrain should have zero
+ * influence on the final position. For steep cliffs they need a ton of
+ * authority, essentially to the point of being able to fully decide."*
+ *
+ * Nothing upstream moves: the street datum, the election and every claim rank
+ * are untouched, `ROAD_SOVEREIGN` items 2–4 (the supremacy mask, the headroom,
+ * the stone-brick border) ride the blended levels, and the stairs stay off.
+ */
+export const ROAD_PULL = false;
+
+/**
+ * `ROAD-PULL-v0` §2 — the grade at which the grader's authority is still
+ * exactly zero, in blocks of rise per block of ground.
+ *
+ * One riser per four blocks or gentler is the flat quarter the n6 walk called
+ * fine, and on it the road is the drape and nothing else.
+ */
+export const PULL_R_FLAT = 0.25;
+
+/**
+ * `ROAD-PULL-v0` §2 — the grade at which the grader decides outright.
+ *
+ * Three risers per four blocks or steeper is a cliff face, and there the road
+ * is the n5 profile verbatim.
+ */
+export const PULL_R_CLIFF = 0.75;
+
+/**
+ * `ROAD-PULL-v0` §2 — the window, in blocks along the run, the grade is
+ * measured over, centred on the station and clamped at the run's ends.
+ *
+ * Thirteen with a P95 rather than a max: one noisy pit inside the window does
+ * not summon the grader, and a real cliff fills the window and does.
+ */
+export const PULL_WINDOW = 13;
+
+/** `ROAD-PULL-v0` §2 — the moving average, in stations, applied to `raw`. */
+export const PULL_SMOOTH = 9;
+
+/**
+ * `ROAD-PULL-v0` §2 — the ramp limit: `1 / PULL_RAMP` is the most `pull` may
+ * change per block of ground.
+ *
+ * Six, so authority fades in over at least six blocks: a regime change is a
+ * transition and never a pop.
+ */
+export const PULL_RAMP = 6;

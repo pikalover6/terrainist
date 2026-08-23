@@ -67,7 +67,14 @@ import { driverForPlan, type GroundDriver } from "../layout/ground-driver.js";
 import { ROAD_SOVEREIGN } from "../layout/types.js";
 
 import type { StructureBlock } from "./buildings.js";
-import { index, inside, presentsExposedFace, qualifySegmentId } from "./roads.js";
+import {
+  index,
+  inside,
+  presentsExposedFace,
+  pulledLevel,
+  qualifySegmentId,
+  type RoutePull,
+} from "./roads.js";
 import { projectToLine, thickenCourse, type ArcFrame, type ArcLevels } from "./sweep.js";
 
 /**
@@ -77,6 +84,15 @@ import { projectToLine, thickenCourse, type ArcFrame, type ArcLevels } from "./s
 export interface SegmentArc {
   readonly frame: ArcFrame;
   readonly levels: ArcLevels;
+  /**
+   * `ROAD_PULL`'s authority field for the run, absent while the flag is off.
+   *
+   * The band blends at its own column exactly as the carriageway does, off the
+   * **flanking station's** pull — so a kerb beside a draped stretch drapes and a
+   * kerb beside a graded cliff run is graded with it, and the two never come
+   * apart mid-street.
+   */
+  readonly pull?: RoutePull;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -768,8 +784,23 @@ function paveSidewalks(
           // its own to inherit — it is draped on the same ground — so taking
           // the arc here would be the band re-levelling itself off a number
           // that no longer describes anything.
+          //
+          // **And under `ROAD_PULL` it blends, the same way and at the same
+          // column.** The band's own drape is `natural`; the graded answer is
+          // the flanking run's arc level at this column's projection; the mix
+          // is that station's pull. Where the pull is 0 this is `natural` to
+          // the bit — the sovereign line above, unmoved — and where it is 1 the
+          // band arrives level with a graded carriageway instead of hanging off
+          // the cliff the carriageway just stopped following.
           const y = (ctx.sovereign ?? ROAD_SOVEREIGN)
-            ? natural
+            ? arc?.pull === undefined
+              ? natural
+              : pulledLevel(
+                  arc.pull,
+                  arc.levels,
+                  natural,
+                  projectToLine({ x: c.x, z: c.z }, arc.frame.line, arc.frame.arcs).arc,
+                )
             : arc === undefined
               ? centre
               : arc.levels.at(projectToLine({ x: c.x, z: c.z }, arc.frame.line, arc.frame.arcs).arc);

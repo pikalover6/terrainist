@@ -44,7 +44,15 @@ import type { StreetGraph } from "../layout/streets.js";
 // back the other way would close a runtime cycle. A type import erases.
 import type { DescentDatum } from "../layout/descent-datum.js";
 import type { StreetDatum } from "../layout/street-datum.js";
-import { ROAD_SOVEREIGN } from "../layout/types.js";
+import {
+  PULL_RAMP,
+  PULL_R_CLIFF,
+  PULL_R_FLAT,
+  PULL_SMOOTH,
+  PULL_WINDOW,
+  ROAD_PULL,
+  ROAD_SOVEREIGN,
+} from "../layout/types.js";
 import type { OccupancyGrid, Placement, ResolvedPort } from "../layout/types.js";
 import type {
   GroundClaim,
@@ -447,6 +455,8 @@ export interface RoadNetworkInput {
   readonly corridor?: Uint8Array;
   /** The switch — see `StreetSurfaceInput.sovereign`. Defaults to {@link ROAD_SOVEREIGN}. */
   readonly sovereign?: boolean;
+  /** The switch — see `StreetSurfaceInput.pull`. Defaults to {@link ROAD_PULL}. */
+  readonly pull?: boolean;
 }
 
 /**
@@ -503,6 +513,15 @@ export interface RoadNetworkResult {
    * laid one step outside the lane. Absent while the flag is off.
    */
   readonly border?: Uint8Array;
+  /**
+   * `ROAD_PULL`'s authority field, one entry per {@link RoadNetworkResult.routes}
+   * in the same order, station-indexed against that route's arc frame.
+   * **Absent while the flag is off**, so its off state costs no allocation.
+   *
+   * Cheap data, handed out so a probe can render an authority map of a deck
+   * before anyone walks it (`docs/ROAD-PULL-v0.md` §4).
+   */
+  readonly pull?: readonly Float64Array[];
   /**
    * **The route lamps, held back for the building half** — present only on the
    * staged path (`GroundDriver.staged`), and then absent from
@@ -582,6 +601,17 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
    * inherit.
    */
   const drape = (input.sovereign ?? ROAD_SOVEREIGN) ? Int32Array.from(view.ground) : undefined;
+  /**
+   * `ROAD_PULL`, read as **the conjunction** with the drape — the ladder.
+   *
+   * A lane's authority field is computed per route, from the drape along its own
+   * centre line, and there is nothing to pool across routes here: this pass
+   * declares and surfaces one route at a time, so a route's cross-section is its
+   * own plane and §3.2's max over a footprint is the station's own pull.
+   */
+  const pulled = drape !== undefined && (input.pull ?? ROAD_PULL);
+  /** One per entry of `routes`, in the same order. Absent while the flag is off. */
+  const pulls: Float64Array[] = [];
 
   const width = clampInt(Math.round(input.params.width ?? 3), ROAD_MIN_WIDTH, ROAD_MAX_WIDTH);
   const spacing = Math.max(4, Math.round(input.params.lanternSpacing ?? ROAD_LANTERN_SPACING));
@@ -744,12 +774,14 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
     // columns, up to 4 blocks, decided by alphabetical accident.
     const source = `${input.nodePath}#route@${anchor.nodePath}→${hub.nodePath}`;
     const subRank = -declaredRoutes.length;
-    const claimed = declareRoute(view, blocked, spots, levels, paved, water, undefined, drape);
+    const pull = pulled && drape !== undefined ? routePull(region, frame, drape, levels) : undefined;
+    if (pull !== undefined) pulls.push(pull.pull);
+    const claimed = declareRoute(view, blocked, spots, levels, paved, water, undefined, drape, pull);
     // Before the commit: the relief test sees the land this lane is cut into.
     const steep = reliefOf(region, view.ground, spots);
     driver.commit(routeIntents(source, subRank, claimed));
     declaredRoutes.push({ source, columns: claimed.level, bridged: claimed.bridged });
-    surfaceRoute(region, plan, blocked, road, roadY, spots, width, levels, states, occupancy, paved, water, bridged, steep, undefined, drape);
+    surfaceRoute(region, plan, blocked, road, roadY, spots, width, levels, states, occupancy, paved, water, bridged, steep, undefined, drape, pull);
     blocks.push(
       ...buildBridgeKit(
         region,
@@ -859,6 +891,7 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
     unrouted,
     declaration: { routes: declaredRoutes, shoulders: declaredShoulders },
     ...(border === undefined ? {} : { border }),
+    ...(pulled ? { pull: pulls } : {}),
     ...(lanterns === undefined ? {} : { lanterns }),
   };
 }
@@ -1108,6 +1141,14 @@ export interface StreetSurfaceInput {
    */
   readonly sovereign?: boolean;
   /**
+   * The switch. Defaults to {@link ROAD_PULL}, and is read as **the conjunction
+   * with {@link StreetSurfaceInput.sovereign}** — the ladder: a run that is not
+   * draped has nothing to blend the grade against, so `pull: true` on the graded
+   * pass is a no-op by construction rather than by a guard someone must
+   * remember. Same shape as `sovereign`, and for the same reason.
+   */
+  readonly pull?: boolean;
+  /**
    * The street break-up (RUINS-PLAN-v0 §7.3), or absent when nothing broke.
    *
    * Above `decline ≥ 0.8` a share of carriageway columns goes past *worn* to
@@ -1170,6 +1211,16 @@ export interface StreetSurfaceResult {
    */
   readonly border?: Uint8Array;
   /**
+   * `ROAD_PULL`'s authority field per surfaced run, keyed by the same source id
+   * {@link StreetDeclaration} uses (`street:<id>`) and station-indexed against
+   * that run's arc frame. **Absent while the flag is off**, so its off state
+   * costs not one allocation.
+   *
+   * Cheap data, handed out so a probe can render an authority map of a deck
+   * before anyone walks it (`docs/ROAD-PULL-v0.md` §4).
+   */
+  readonly pull?: ReadonlyMap<string, Float64Array>;
+  /**
    * 1 on every carriageway column §7.3's break-up took back to soil.
    *
    * Absent when the document asked for no break-up, which is every document
@@ -1226,6 +1277,12 @@ export interface StreetSegmentDeclaration {
   /** The run's arc frame and levels, for the sidewalk's declarer. Steps carry none. */
   readonly frame?: ArcFrame;
   readonly levels?: ArcLevels;
+  /**
+   * `ROAD_PULL`'s authority field for this run, for the sidewalk's declarer —
+   * a band blends at its own column off the flanking station's pull, which it
+   * cannot do without the field. **Absent while the flag is off.**
+   */
+  readonly pull?: RoutePull;
 }
 
 /**
@@ -1299,6 +1356,12 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
    * somewhere coherent.
    */
   const sovereign = input.sovereign ?? ROAD_SOVEREIGN;
+  /**
+   * `ROAD_PULL`, read as the conjunction with the drape — `ROAD-PULL-v0` §4's
+   * ladder. Off, not one `Float64Array` is allocated and every level below is
+   * the number it was.
+   */
+  const pulled = sovereign && (input.pull ?? ROAD_PULL);
   const descents = sovereign ? undefined : input.descents;
 
   const water = buildBridgeableMask(plan);
@@ -1407,6 +1470,14 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
     geometry?: StreetStairGeometry;
     /** Set by the level phase: one level per station of {@link frame}. */
     levels?: ArcLevels;
+    /**
+     * `ROAD_PULL`'s authority field, one entry per station of {@link frame}.
+     *
+     * Set by the level phase and re-pooled by §3.2's pass before anything is
+     * declared, so the claim, the paint and the sidewalk beside them all read
+     * one field. Absent while the flag is off, and on a tread job always.
+     */
+    pull?: RoutePull;
     stairs?: StreetStairLevels;
     /**
      * §5.1 — the descent already decided this flight's levels, in **stand**
@@ -1943,6 +2014,13 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
     }
     const levels = arcLevels(frame, profile);
     job.levels = levels;
+    // `ROAD-PULL-v0` §2, from the drape along this run's own centre line and
+    // nothing else — the terrain's verdict, taken before the blend needs it.
+    // §3.2's pooling then raises it where a junction plane demands one number,
+    // and the columns are written again from the pooled field below; what is
+    // written here is what the *pins* of the runs after this one read, which is
+    // the same relationship the graded pass has always had.
+    if (pulled && drape !== undefined) job.pull = routePull(region, frame, drape, levels);
     for (const spot of job.spots ?? []) {
       if (owner[spot.idx] !== j) continue;
       // A plaza surfaced itself and keeps its own level; the lane is *on* the
@@ -1956,11 +2034,64 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
       // stepped surfacing to choose (item 3).
       columnY[spot.idx] =
         drape !== undefined
-          ? (drape[spot.idx] as number)
+          ? job.pull === undefined
+            ? (drape[spot.idx] as number)
+            : pulledLevel(job.pull, levels, drape[spot.idx] as number, spot.arc)
           : paved[spot.idx] === 1
             ? (natural[spot.idx] as number)
             : levels.at(spot.arc);
       stepFlag[spot.idx] = drape === undefined && levels.steps(spot.arc) ? 1 : 0;
+    }
+  }
+
+  /* --- phase 1b: one pull per plane (`ROAD-PULL-v0` §3.2) ------------------ */
+  //
+  // A junction is a *place*: two runs' cross-sections cover one set of columns,
+  // and if the two stations that cover it disagree about how much authority the
+  // grader has, the plane half-tilts — one arm draped and the other graded,
+  // through the same four blocks of pavement. So the plane takes **one** pull,
+  // the max over its footprint, pooled through the columns the two runs share.
+  //
+  // Three sub-passes, all deterministic and none of them order-dependent:
+  // the per-column max over every run that covers it, the per-station max back
+  // over each run's own footprint, and then {@link spreadPullRamp} — the ramp
+  // limit run the *raising* way, so a pooled maximum survives its own limiter.
+  // The levels are then written again from the pooled field, which is the field
+  // the declaration and the paint will read.
+  if (pulled && drape !== undefined) {
+    const cellPull = new Float64Array(cells);
+    for (const job of jobs) {
+      const pull = job.pull;
+      const levels = job.levels;
+      if (pull === undefined || levels === undefined) continue;
+      for (const spot of job.spots ?? []) {
+        const k = Math.min(pull.pull.length - 1, levels.frame.station(spot.arc));
+        const v = pull.pull[k] as number;
+        if (v > (cellPull[spot.idx] as number)) cellPull[spot.idx] = v;
+      }
+    }
+    for (const job of jobs) {
+      const pull = job.pull;
+      const levels = job.levels;
+      const frame = job.frame;
+      if (pull === undefined || levels === undefined || frame === undefined) continue;
+      const pooled = Float64Array.from(pull.pull);
+      for (const spot of job.spots ?? []) {
+        const k = Math.min(pooled.length - 1, levels.frame.station(spot.arc));
+        const v = cellPull[spot.idx] as number;
+        if (v > (pooled[k] as number)) pooled[k] = v;
+      }
+      spreadPullRamp(pooled, frame.spacing);
+      job.pull = { pull: pooled, shift: pullShift(region, frame, drape, levels, pooled) };
+      for (const spot of job.spots ?? []) {
+        if (owner[spot.idx] !== job.order) continue;
+        columnY[spot.idx] = pulledLevel(
+          job.pull,
+          levels,
+          drape[spot.idx] as number,
+          spot.arc,
+        );
+      }
     }
   }
 
@@ -2053,6 +2184,7 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
       water,
       { owner, job: job.order, landing },
       drape,
+      job.pull,
     );
     declaredSegments.push({
       source: `street:${job.rank.id}`,
@@ -2065,6 +2197,7 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
       preserve: claimed.bridged.length > 0,
       frame: levels.frame,
       levels,
+      ...(job.pull === undefined ? {} : { pull: job.pull }),
     });
   }
 
@@ -2131,6 +2264,7 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
       reliefOf(region, natural, spots),
       { owner, job: job.order, step: stepFlag, landing },
       drape,
+      job.pull,
     );
     if (job.decks) {
       // The same call the arterial loop makes, so a canal bridge gets the same
@@ -2245,6 +2379,15 @@ export function surfaceStreetGraph(input: StreetSurfaceInput): StreetSurfaceResu
     bridgeColumns,
     arterialColumns,
     ...(border === undefined ? {} : { border }),
+    ...(pulled
+      ? {
+          pull: new Map<string, Float64Array>(
+            declaredSegments
+              .filter((s) => s.pull !== undefined)
+              .map((s) => [s.source, (s.pull as RoutePull).pull]),
+          ),
+        }
+      : {}),
     ...(broken === undefined ? {} : { broken }),
     ...(streetDiagnostics.length === 0 ? {} : { diagnostics: streetDiagnostics }),
     declaration: { segments: declaredSegments, shoulders: declaredShoulders },
@@ -3996,6 +4139,14 @@ function surfaceRoute(
    * sanctioned exception and nothing wider.
    */
   drape?: ReadonlyInt32Array,
+  /**
+   * `ROAD_PULL`'s authority field, present only under that flag (which implies
+   * the drape). Where it is present the level is the **blend** of the two —
+   * `docs/ROAD-PULL-v0.md` §1 — rather than either law's answer alone, and it
+   * is exactly the same call `declareRoute` made, so the claim and the paint
+   * are one number.
+   */
+  pull?: RoutePull,
 ): void {
   // The same lattice `carriagewaySpans` walks, so `lane` and the edge distance
   // below are measured in the coordinate the sweep produced them in.
@@ -4017,7 +4168,9 @@ function surfaceRoute(
     const y =
       drape === undefined || water[idx] === 1
         ? (ownership?.landing?.get(idx) ?? levels.at(spot.arc))
-        : (drape[idx] as number);
+        : pull === undefined
+          ? (drape[idx] as number)
+          : pulledLevel(pull, levels, drape[idx] as number, spot.arc);
     // Whether this segment may move the ground here. Painting is not gated on
     // it: ownership decides geometry and deliberately not material.
     const owned = ownership === undefined || ownership.owner[idx] === ownership.job;
@@ -4150,6 +4303,8 @@ function declareRoute(
   },
   /** `ROAD_SOVEREIGN`'s drape — see {@link surfaceRoute}'s own parameter. */
   drape?: ReadonlyInt32Array,
+  /** `ROAD_PULL`'s authority field — see {@link surfaceRoute}'s own parameter. */
+  pull?: RoutePull,
 ): { readonly level: GroundClaim[]; readonly bridged: GroundClaim[] } {
   const level: GroundClaim[] = [];
   const bridged: GroundClaim[] = [];
@@ -4168,7 +4323,9 @@ function declareRoute(
       y:
         drape === undefined
           ? (ownership?.landing?.get(idx) ?? levels.at(spot.arc))
-          : (drape[idx] as number),
+          : pull === undefined
+            ? (drape[idx] as number)
+            : pulledLevel(pull, levels, drape[idx] as number, spot.arc),
     });
   }
   return { level, bridged };
@@ -4569,6 +4726,267 @@ function clampInt(v: number, lo: number, hi: number): number {
  * v0.2 §7.10: not yet — `LOAM-W430 DISCONNECTED_ROAD_GRAPH`; an unreachable
  *   anchor is reported per route as `LOAM-T209 ROAD_UNROUTABLE` instead.
  */
+
+/* -------------------------------------------------------------------------- */
+/* ROAD_PULL — the terrain's verdict on how much authority the grader gets     */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * One run's authority field: `docs/ROAD-PULL-v0.md` §2 and §3.1, per station.
+ *
+ * Two arrays, both station-indexed against the run's own {@link ArcFrame} and
+ * both read by every consumer of the run's levels — the declaration, the paint,
+ * and the sidewalk band beside it — so the claim, the block laid on it and the
+ * kerb next to it can never be three different numbers.
+ */
+export interface RoutePull {
+  /** §2's `pull(s)` ∈ [0,1]: 0 is the drape verbatim, 1 the graded profile. */
+  readonly pull: Float64Array;
+  /**
+   * §3.1's messy-middle backstop, as a per-station offset in blocks.
+   *
+   * The blended centre line is relaxed toward 1-Lipschitz with each correction
+   * scaled by `pull`, and this is what that relaxation moved. It is applied to
+   * the whole cross-section, so a station keeps whatever cross-slope the drape
+   * gave it and the run as a whole stops stepping — and where `pull` is 0 every
+   * correction is scaled to nothing, so the offset is exactly 0 and the column
+   * is bit-identical to the pure drape.
+   */
+  readonly shift: Int32Array;
+}
+
+/** Hermite smoothstep on an already-clamped `t`. */
+function smoothstep(t: number): number {
+  return t * t * (3 - 2 * t);
+}
+
+/**
+ * The drape, sampled at each station of a run's centre line.
+ *
+ * The stations are the true line rounded to the lattice ({@link clampX}), which
+ * is the same read every other station-indexed quantity in this file takes.
+ */
+function drapeAlong(
+  region: Region,
+  frame: ArcFrame,
+  drape: ReadonlyInt32Array,
+): Float64Array {
+  const out = new Float64Array(frame.stations.length);
+  for (const [k, p] of frame.stations.entries()) {
+    out[k] = drape[index(region, clampX(region, p.x), clampZ(region, p.z))] as number;
+  }
+  return out;
+}
+
+/**
+ * `ROAD-PULL-v0` §2 — the pull field of one run, from the terrain alone.
+ *
+ * ```
+ * grade(s) = P95 of |Δy_drape| per block over a PULL_WINDOW-block window at s
+ * raw(s)   = smoothstep( clamp( (grade − PULL_R_FLAT)/(PULL_R_CLIFF − PULL_R_FLAT) ) )
+ * pull(s)  = movavg(raw, PULL_SMOOTH), then |Δpull| ≤ 1/PULL_RAMP per block
+ * ```
+ *
+ * Four details the sentence hides and the code must not:
+ *
+ * - **"|Δy| per block" is a rate, not a first difference.** The design's own
+ *   gloss on its constants settles it: `PULL_R_FLAT` is *"one riser per four
+ *   blocks or gentler"* and `PULL_R_CLIFF` *"three per four or steeper"*. A
+ *   first difference between adjacent columns is an integer, and against an
+ *   integer those two constants would be the same threshold — any single riser
+ *   at all would clear both. So the sample is the fall from the station to
+ *   another station in the window, **divided by the ground between them**,
+ *   which is the quantity 0.25 and 0.75 are quoted in.
+ * - **No baseline shorter than a quarter of the window.** A lone riser measured
+ *   over its own one block reads as a 1.0 grade — the corridor-edge lip the n6
+ *   walk found on flat ground, which `ROAD-PULL-v0` §5 puts explicitly out of
+ *   scope. Dividing by at least `PULL_WINDOW / 4` blocks — `PULL_R_FLAT`'s own
+ *   scale — reads that riser as the rate it actually is, and leaves a real fall
+ *   untouched because a real fall keeps falling over the longer baseline too.
+ *   That is also the whole of "a real cliff fills the window": a pit comes back,
+ *   so its long baselines are flat; a scarp does not.
+ * - **Per block of ground, not per station.** A diagonal run's stations are
+ *   `spacing` ≈ 1.41 blocks apart (see {@link ArcFrame}), so every rate here —
+ *   the grade, the ramp limit — is divided by the spacing. This is the same
+ *   correction the grade cap itself takes, and for the same reason.
+ * - **The ramp limiter only ever lowers.** It is the two-pass min-clamp, so the
+ *   result is `min_j( raw'[j] + L·|s − j| )` — 1/`PULL_RAMP`-Lipschitz by
+ *   construction, and never above the smoothed field it limits.
+ *
+ * Deterministic and allocation-light: four typed arrays per run, no map, no
+ * sort of anything longer than the window.
+ */
+function pullField(region: Region, frame: ArcFrame, drape: ReadonlyInt32Array): Float64Array {
+  const n = frame.stations.length;
+  const spacing = frame.spacing;
+  const y = drapeAlong(region, frame, drape);
+  // Half-window in stations: the design's window is 13 *blocks*, which on a
+  // diagonal is fewer stations. At least one station each way, or a short run
+  // measures nothing.
+  const half = Math.max(1, Math.round((PULL_WINDOW - 1) / 2 / spacing));
+  // The shortest baseline a rate may be measured over, in blocks of ground.
+  const floorSpan = PULL_WINDOW / 4;
+  const raw = new Float64Array(n);
+  const scratch = new Float64Array(2 * half);
+  const span = PULL_R_CLIFF - PULL_R_FLAT;
+  for (let k = 0; k < n; k++) {
+    let m = 0;
+    for (let d = 1; d <= half; d++) {
+      const base = Math.max(d * spacing, floorSpan);
+      const lo = k - d;
+      const hi = k + d;
+      if (lo >= 0) scratch[m++] = Math.abs((y[k] as number) - (y[lo] as number)) / base;
+      if (hi < n) scratch[m++] = Math.abs((y[hi] as number) - (y[k] as number)) / base;
+    }
+    if (m === 0) {
+      raw[k] = 0;
+      continue;
+    }
+    // P95 by nearest rank on `m − 1`: on a full window that drops exactly the
+    // largest sample, which is the difference between one noisy reading and a
+    // grade the whole window agrees about.
+    const window = scratch.subarray(0, m);
+    window.sort();
+    const grade = window[Math.round(0.95 * (m - 1))] as number;
+    raw[k] = smoothstep(Math.min(1, Math.max(0, (grade - PULL_R_FLAT) / span)));
+  }
+  // The moving average, centred and clamped at the ends — a prefix sum so the
+  // cost is one pass whatever `PULL_SMOOTH` is.
+  const prefix = new Float64Array(n + 1);
+  for (let k = 0; k < n; k++) prefix[k + 1] = (prefix[k] as number) + (raw[k] as number);
+  const reach = Math.max(0, Math.round((PULL_SMOOTH - 1) / 2 / spacing));
+  const pull = new Float64Array(n);
+  for (let k = 0; k < n; k++) {
+    const lo = Math.max(0, k - reach);
+    const hi = Math.min(n - 1, k + reach);
+    pull[k] = ((prefix[hi + 1] as number) - (prefix[lo] as number)) / (hi - lo + 1);
+  }
+  limitPullRamp(pull, spacing);
+  return pull;
+}
+
+/**
+ * §2's ramp limit, in place: `|Δpull| ≤ 1/PULL_RAMP` per block of ground.
+ *
+ * The two-pass min-clamp — forward then backward — which computes exactly
+ * `min_j( p[j] + L·|k − j| )` and is therefore order-independent and idempotent.
+ */
+function limitPullRamp(pull: Float64Array, spacing: number): void {
+  const limit = spacing / PULL_RAMP;
+  for (let k = 1; k < pull.length; k++) {
+    const cap = (pull[k - 1] as number) + limit;
+    if ((pull[k] as number) > cap) pull[k] = cap;
+  }
+  for (let k = pull.length - 2; k >= 0; k--) {
+    const cap = (pull[k + 1] as number) + limit;
+    if ((pull[k] as number) > cap) pull[k] = cap;
+  }
+}
+
+/**
+ * The same limit run the other way: raise a neighbour rather than lower a peak.
+ *
+ * §3.2's pooling takes a **max** over a junction's footprint, and a max the
+ * lowering limiter then clamped back down would be a plane that half-tilts
+ * after all. So the pooled field is made Lipschitz by lifting its neighbours,
+ * which preserves every pooled maximum and still leaves `|Δpull| ≤ 1/PULL_RAMP`.
+ */
+function spreadPullRamp(pull: Float64Array, spacing: number): void {
+  const limit = spacing / PULL_RAMP;
+  for (let k = 1; k < pull.length; k++) {
+    const floor = (pull[k - 1] as number) - limit;
+    if ((pull[k] as number) < floor) pull[k] = floor;
+  }
+  for (let k = pull.length - 2; k >= 0; k--) {
+    const floor = (pull[k + 1] as number) - limit;
+    if ((pull[k] as number) < floor) pull[k] = floor;
+  }
+}
+
+/**
+ * §3.1's backstop: the blended centre line, relaxed toward 1-Lipschitz with
+ * strength `pull`, expressed as the per-station offset that relaxation moved.
+ *
+ * At pull ≈ 0.5 a four-block terrain step blends to a two-block road step —
+ * neither law's output, and the one shape this design could invent that neither
+ * of its parents would. So after the blend the centre line takes the standard
+ * forward/backward Lipschitz clamp with **each correction scaled by `pull`**:
+ * untouched where the terrain is honest, fully smooth on the cliff, bounded in
+ * between. Where `pull` is 0 the scale is 0, the offset is 0, and the column is
+ * the drape to the bit.
+ */
+function pullShift(
+  region: Region,
+  frame: ArcFrame,
+  drape: ReadonlyInt32Array,
+  levels: ArcLevels,
+  pull: Float64Array,
+): Int32Array {
+  const n = frame.stations.length;
+  const y = drapeAlong(region, frame, drape);
+  const last = Math.max(0, levels.y.length - 1);
+  const blended = new Int32Array(n);
+  for (let k = 0; k < n; k++) {
+    const d = y[k] as number;
+    const graded = levels.y[Math.min(last, k)] as number;
+    blended[k] = Math.round(d + (pull[k] as number) * (graded - d));
+  }
+  // One block of rise per block of ground travelled, which on a diagonal is
+  // `spacing` per station — the grade law's own sentence.
+  //
+  // **The relaxation is sequential over the rounded profile**, not over floats
+  // rounded at the end. A road level is an integer, so the clamp has to see the
+  // integer its predecessor actually took: relaxing in floats and rounding
+  // afterwards leaves a 1.6-block correction landing as a 2-block riser purely
+  // because the two ends of it rounded opposite ways, and that riser is exactly
+  // what the backstop was added to remove (measured on troy: two of them).
+  const limit = frame.spacing;
+  const relaxed = Int32Array.from(blended);
+  for (let k = 1; k < n; k++) {
+    const prev = relaxed[k - 1] as number;
+    const v = blended[k] as number;
+    const target = v > prev + limit ? prev + limit : v < prev - limit ? prev - limit : v;
+    relaxed[k] = Math.round(v + (pull[k] as number) * (target - v));
+  }
+  for (let k = n - 2; k >= 0; k--) {
+    const next = relaxed[k + 1] as number;
+    const v = relaxed[k] as number;
+    const target = v > next + limit ? next + limit : v < next - limit ? next - limit : v;
+    relaxed[k] = Math.round(v + (pull[k] as number) * (target - v));
+  }
+  const shift = new Int32Array(n);
+  for (let k = 0; k < n; k++) shift[k] = (relaxed[k] as number) - (blended[k] as number);
+  return shift;
+}
+
+/** Build a run's whole {@link RoutePull} — §2's field plus §3.1's backstop. */
+function routePull(
+  region: Region,
+  frame: ArcFrame,
+  drape: ReadonlyInt32Array,
+  levels: ArcLevels,
+): RoutePull {
+  const pull = pullField(region, frame, drape);
+  return { pull, shift: pullShift(region, frame, drape, levels, pull) };
+}
+
+/**
+ * `ROAD-PULL-v0` §1, at one column: the homotopy between the two shipped laws.
+ *
+ * `round( y_drape + pull·(y_n5 − y_drape) ) + shift`. Exported because the
+ * sidewalk band blends the same way at its own column, off the flanking
+ * station's pull — see `streetscape.ts`.
+ */
+export function pulledLevel(
+  pull: RoutePull,
+  levels: ArcLevels,
+  drapeY: number,
+  arc: number,
+): number {
+  const k = Math.min(pull.pull.length - 1, levels.frame.station(arc));
+  const p = pull.pull[k] as number;
+  return Math.round(drapeY + p * (levels.at(arc) - drapeY)) + (pull.shift[k] as number);
+}
 
 /* -------------------------------------------------------------------------- */
 /* ROAD_SOVEREIGN — the drape, and the border                                  */

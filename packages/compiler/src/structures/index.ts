@@ -1514,7 +1514,14 @@ export function declareStructures(input: StructurePassInput): StructurePlan {
     const segmentArcs = new Map<string, SegmentArc>();
     for (const segment of streets.declaration.segments) {
       if (segment.frame === undefined || segment.levels === undefined) continue;
-      segmentArcs.set(segment.source, { frame: segment.frame, levels: segment.levels });
+      // `ROAD_PULL`'s field rides along when it exists: the band blends at its
+      // own column off the flanking station's pull, which is the same sentence
+      // the carriageway's own level is.
+      segmentArcs.set(segment.source, {
+        frame: segment.frame,
+        levels: segment.levels,
+        ...(segment.pull === undefined ? {} : { pull: segment.pull }),
+      });
     }
     // The F4 seam, filled: curbs, sidewalk paving, lamps, crossings and the
     // district's furniture. The kit is read off the contract itself — a
