@@ -1465,3 +1465,18 @@ export const PULL_PEAK_KEEP = true;
  * bit. `1` is the neutral value: scaling by `pull` itself, the §3.1 original.
  */
 export const PULL_SAT = 0.7;
+
+/**
+ * The committed road's grade ceiling: one riser per `PULL_TREAD` blocks of
+ * ground. The n9/n11 walks proved the pull *field* was no longer the
+ * bottleneck on extreme slopes — pull is already 1 there, and at 1 the graded
+ * profile's own ceiling was 1:1, which is the terrain's shape too: a riser
+ * chain, indistinguishable from the drape with the stairs banned. This is the
+ * lever that makes a fully-pulled climb an engineered ramp instead — landings
+ * between risers, the divergence absorbed as cut and fill. Feasibility is the
+ * bound: a run must still span its climb, so `total rise / run length` puts a
+ * hard floor under `1 / PULL_TREAD` for any given street.
+ *
+ * `1` is the neutral value: the 1:1 ceiling, the prior backstop exactly.
+ */
+export const PULL_TREAD = 1;

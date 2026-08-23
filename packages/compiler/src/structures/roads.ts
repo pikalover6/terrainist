@@ -49,6 +49,7 @@ import {
   PULL_BOOST_POW,
   PULL_CLOSE,
   PULL_PEAK_KEEP,
+  PULL_TREAD,
   PULL_RAMP,
   PULL_R_CLIFF,
   PULL_R_FLAT,
@@ -5006,12 +5007,50 @@ function pullShift(
   // because the two ends of it rounded opposite ways, and that riser is exactly
   // what the backstop was added to remove (measured on troy: two of them).
   const limit = frame.spacing;
-  const relaxed = Int32Array.from(blended);
   // The n7 retune's saturation: each correction is scaled by
   // `min(1, pull / PULL_SAT)` rather than by `pull` itself, so the riser-killer
   // works at full strength from `PULL_SAT` up instead of leaving a residue that
   // rounds back into the very step it exists to remove. At `pull = 0` the scale
   // is still exactly 0 — the flat quarters stay the drape to the bit.
+  if (PULL_TREAD > 1) {
+    // The tread ceiling: a committed road climbs one riser per `PULL_TREAD`
+    // blocks, so a fully-pulled cliff run is an engineered ramp with landings
+    // rather than the terrain's own 1:1 riser chain wearing road material. The
+    // relaxation runs in floats against the fractional limit, and the walk to
+    // integers re-caps each step at one block, tracking the float path so a
+    // rounding seam can never mint the double riser the integer form was
+    // originally built to prevent.
+    const gentle = limit / PULL_TREAD;
+    const rf = Float64Array.from(blended);
+    for (let k = 1; k < n; k++) {
+      const prev = rf[k - 1] as number;
+      const v = blended[k] as number;
+      const target = v > prev + gentle ? prev + gentle : v < prev - gentle ? prev - gentle : v;
+      rf[k] = v + Math.min(1, (pull[k] as number) / PULL_SAT) * (target - v);
+    }
+    for (let k = n - 2; k >= 0; k--) {
+      const next = rf[k + 1] as number;
+      const v = rf[k] as number;
+      const target = v > next + gentle ? next + gentle : v < next - gentle ? next - gentle : v;
+      rf[k] = v + Math.min(1, (pull[k] as number) / PULL_SAT) * (target - v);
+    }
+    const shift = new Int32Array(n);
+    let prev = Math.round(rf[0] as number);
+    shift[0] = prev - (blended[0] as number);
+    for (let k = 1; k < n; k++) {
+      // The one-block cap binds only in committed ground (the riser law's own
+      // clause, pull >= 0.5). Where the road is the drape, an honest terrain
+      // step must pass through whole — capping it would flatten the very
+      // steps the flat law promises never to touch.
+      const rounded = Math.round(rf[k] as number);
+      const out =
+        (pull[k] as number) >= 0.5 ? clampInt(rounded, prev - 1, prev + 1) : rounded;
+      shift[k] = out - (blended[k] as number);
+      prev = out;
+    }
+    return shift;
+  }
+  const relaxed = Int32Array.from(blended);
   for (let k = 1; k < n; k++) {
     const prev = relaxed[k - 1] as number;
     const v = blended[k] as number;
