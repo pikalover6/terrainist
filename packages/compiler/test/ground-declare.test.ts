@@ -224,7 +224,14 @@ function runPipeline(stack: PrismarineStack, palette: Palette, flat: boolean): R
   const segmentArcs = new Map<string, SegmentArc>();
   for (const segment of streets.declaration.segments) {
     if (segment.frame === undefined || segment.levels === undefined) continue;
-    segmentArcs.set(segment.source, { frame: segment.frame, levels: segment.levels });
+    // As `buildStructures` does (§3.8b): `ROAD_PULL`'s field rides along when
+    // it exists, so the band blends exactly as the carriageway declared.
+    // Dropping it here re-opens the WP-2 gap this file's I6 test measures.
+    segmentArcs.set(segment.source, {
+      frame: segment.frame,
+      levels: segment.levels,
+      ...(segment.pull === undefined ? {} : { pull: segment.pull }),
+    });
   }
   const dressed = dressStreets(graph, {
     plan,

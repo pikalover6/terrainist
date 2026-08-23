@@ -973,7 +973,12 @@ const STEEP = {
   // family eases nothing and the terminal seam builder finds twenty-four more
   // columns of raw terrain face to finish. Re-pinned at the measured flag-on
   // value; the walk judges the trade.
-  wallColumns: 303,
+  //
+  // **303 → 309 at the `ROAD_PULL` flip.** Same six columns of face that
+  // `site-plan-transitions.test.ts` re-pins as 271 → 277: the blend puts road
+  // claims at levels between the drape and the graded profile, and the terminal
+  // seam builder derives one more transition off them.
+  wallColumns: 309,
   // 3 → 1: the ladder's **first** rung now clears both gates, where before the
   // causeways' paving pushed it two rungs down.
   replanRounds: 1,

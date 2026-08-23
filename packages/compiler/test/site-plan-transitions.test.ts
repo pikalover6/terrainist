@@ -407,8 +407,13 @@ const STEEP_EDGES = {
   // The same twenty-four columns show up as `site-plan-hillside`'s steep
   // `wallColumns` 279 → 303. The trade — inherited risers, no stairs — is the
   // ratified one and the walk judges it.
-  derivedBuilt: 36,
-  derivedFaceColumns: 271,
+  //
+  // **Re-pinned at the `ROAD_PULL` flip: 36 → 37 built, 271 → 277 columns of
+  // face.** Road claims now sit at blended levels between the drape and the n5
+  // graded profile, which changes which seams the resolver derives on this steep
+  // fixture — one more transition over six more columns.
+  derivedBuilt: 37,
+  derivedFaceColumns: 277,
   derivedBankColumns: 498,
   /**
    * Derived transitions the stack served but could not cover (the terminal

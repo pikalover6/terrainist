@@ -163,8 +163,12 @@ function centreline(r: Region, p: ColumnPlan, z: number): number[] {
 /* -------------------------------------------------------------------------- */
 
 describe("the flag", () => {
-  it("ships false", () => {
-    expect(ROAD_PULL).toBe(false);
+  it("ships ON since the flip: the terrain holds the grader's dial", () => {
+    // Re-pinned at the ROAD_PULL flip (2026-08-22). Measured on troy at the
+    // flip: street-over-street cliff pairs 328 -> 156, hillside walkability
+    // orphans 2,591 -> 9 (the design's own report card, ROAD-PULL-v0 §5),
+    // network stairs still 0, borders identical.
+    expect(ROAD_PULL).toBe(true);
   });
 
   it("is a rung above ROAD_SOVEREIGN — the ladder", () => {
@@ -180,11 +184,17 @@ describe("the flag", () => {
   });
 
   it("is inert while it is off: the sovereign pass, unmoved", () => {
+    // **Rewritten at the flip**, the same lesson `road-sovereign.test.ts`'s
+    // off-state row learned at its own: the control used to be a bare
+    // `{ sovereign: true }`, which was the pure sovereign pass only for as long
+    // as the shipped constant was false. Both sides are explicit now — the off
+    // state is a pass of its own, it reproduces exactly, it allocates no field,
+    // and it is a *different* pass from the on state.
     const r = region();
     const graph = graphOf([run("ew0", 0, undefined), run("st0", 8, "steps")]);
 
     const control = plan(r, (x) => terraced(x));
-    const sovereign = surface(control, graph, { sovereign: true });
+    const sovereign = surface(control, graph, { sovereign: true, pull: false });
 
     const explicit = plan(r, (x) => terraced(x));
     const off = surface(explicit, graph, { sovereign: true, pull: false });

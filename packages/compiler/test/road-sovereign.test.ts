@@ -109,7 +109,7 @@ function run(
   };
 }
 
-function surface(p: ColumnPlan, graph: StreetGraph, sovereign?: boolean) {
+function surface(p: ColumnPlan, graph: StreetGraph, sovereign?: boolean, pull?: boolean) {
   return surfaceStreetGraph({
     graphs: [graph],
     plan: p,
@@ -120,6 +120,7 @@ function surface(p: ColumnPlan, graph: StreetGraph, sovereign?: boolean) {
     seed: nodeSeed(11n, "world.quarter"),
     theme: "medieval_village",
     ...(sovereign === undefined ? {} : { sovereign }),
+    ...(pull === undefined ? {} : { pull }),
   });
 }
 
@@ -197,7 +198,10 @@ describe("item 1 — a road never places a block above the terrain", () => {
     const r = region();
     const p = plan(r, (x) => terraced(x));
     const before = Int32Array.from(p.ground);
-    const out = surface(p, graphOf([run("ew0", 0, undefined)]), true);
+    // `pull: false` since the ROAD_PULL flip: item 1's pure-drape law is this
+    // suite's to pin, and on this terraced fixture the shipped blend now grades
+    // on purpose — the blend's own laws live in `road-pull.test.ts`.
+    const out = surface(p, graphOf([run("ew0", 0, undefined)]), true, false);
 
     expect(out.surfacedColumns).toBeGreaterThan(0);
     // (a) Every surfaced column stands at the ground oracle's own level: the
@@ -243,7 +247,10 @@ describe("item 3 — all ground stair generation is off", () => {
     const r = region();
     const p = plan(r, (x) => terraced(x));
     const before = Int32Array.from(p.ground);
-    const out = surface(p, graphOf([run("st0", 8, "steps"), run("ca0", 16, "cart")]), true);
+    // `pull: false` since the ROAD_PULL flip — see item 1's note: this row pins
+    // "drapes like every other road", and under the blend a steps-steep fixture
+    // grades by design. The no-stairs half is pull-invariant either way.
+    const out = surface(p, graphOf([run("st0", 8, "steps"), run("ca0", 16, "cart")]), true, false);
 
     // (b) Not one stair block anywhere the street network laid.
     expect(out.blocks.filter((b) => isStair(b.stateId))).toEqual([]);

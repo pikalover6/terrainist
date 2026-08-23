@@ -1326,8 +1326,8 @@ export const ROAD_SOVEREIGN = true;
 
 /**
  * **The switch: the grader's authority is the terrain's own verdict.**
- * **Off — `false` is what ships**; the off state is proven byte-identical on
- * the battery docs, which is what every line below is written to make true.
+ * **On — `true` is what ships** (flipped 2026-08-22, landed off at the prior
+ * commit with the off state proven byte-identical on the battery docs).
  *
  * `true` **implies {@link ROAD_SOVEREIGN}** — every consumer reads the
  * conjunction, so a fixture that forces `sovereign: false` still gets the
@@ -1357,7 +1357,7 @@ export const ROAD_SOVEREIGN = true;
  * are untouched, `ROAD_SOVEREIGN` items 2–4 (the supremacy mask, the headroom,
  * the stone-brick border) ride the blended levels, and the stairs stay off.
  */
-export const ROAD_PULL = false;
+export const ROAD_PULL = true;
 
 /**
  * `ROAD-PULL-v0` §2 — the grade at which the grader's authority is still

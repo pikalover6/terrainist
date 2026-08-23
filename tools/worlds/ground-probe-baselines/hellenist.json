@@ -116,15 +116,15 @@
       },
       {
         "delta": 9,
-        "n": 193
+        "n": 192
       },
       {
         "delta": 10,
-        "n": 1292
+        "n": 1287
       },
       {
         "delta": 11,
-        "n": 786
+        "n": 792
       },
       {
         "delta": 12,
@@ -330,15 +330,15 @@
     },
     {
       "pair": "street.network over street.network",
-      "n": 293,
-      "avg": 3,
+      "n": 140,
+      "avg": 3.1,
       "max": 8
     },
     {
       "pair": "natural over street.network",
-      "n": 50,
-      "avg": 4,
-      "max": 8
+      "n": 110,
+      "avg": 5.3,
+      "max": 12
     },
     {
       "pair": "quarter.plane over natural",
@@ -348,8 +348,8 @@
     },
     {
       "pair": "street.network over natural",
-      "n": 12,
-      "avg": 4.8,
+      "n": 25,
+      "avg": 3.5,
       "max": 7
     },
     {
@@ -357,6 +357,18 @@
       "n": 3,
       "avg": 3,
       "max": 3
+    },
+    {
+      "pair": "street.sidewalk over street.network",
+      "n": 3,
+      "avg": 2,
+      "max": 2
+    },
+    {
+      "pair": "quarter.plane over street.network",
+      "n": 2,
+      "avg": 6,
+      "max": 6
     },
     {
       "pair": "verge over natural",
@@ -507,7 +519,11 @@
         },
         {
           "delta": 1,
-          "n": 60
+          "n": 57
+        },
+        {
+          "delta": 2,
+          "n": 3
         }
       ]
     },
@@ -517,59 +533,83 @@
       "byDelta": [
         {
           "delta": -7,
-          "n": 5
+          "n": 3
         },
         {
           "delta": -6,
           "n": 2
         },
         {
+          "delta": -5,
+          "n": 2
+        },
+        {
+          "delta": -4,
+          "n": 2
+        },
+        {
           "delta": -3,
-          "n": 1
+          "n": 4
         },
         {
           "delta": -2,
-          "n": 4
+          "n": 12
         },
         {
           "delta": -1,
-          "n": 114
+          "n": 120
         },
         {
           "delta": 0,
-          "n": 1979
+          "n": 1917
         },
         {
           "delta": 1,
-          "n": 553
+          "n": 536
         },
         {
           "delta": 2,
-          "n": 20
+          "n": 17
         },
         {
           "delta": 3,
-          "n": 4
+          "n": 13
         },
         {
           "delta": 4,
-          "n": 6
+          "n": 15
         },
         {
           "delta": 5,
-          "n": 8
+          "n": 13
         },
         {
           "delta": 6,
-          "n": 4
+          "n": 20
         },
         {
           "delta": 7,
-          "n": 3
+          "n": 14
         },
         {
           "delta": 8,
-          "n": 5
+          "n": 8
+        },
+        {
+          "delta": 9,
+          "n": 3
+        },
+        {
+          "delta": 10,
+          "n": 3
+        },
+        {
+          "delta": 11,
+          "n": 2
+        },
+        {
+          "delta": 12,
+          "n": 2
         }
       ]
     },
@@ -579,27 +619,31 @@
       "byDelta": [
         {
           "delta": 0,
-          "n": 125
+          "n": 123
+        },
+        {
+          "delta": 6,
+          "n": 2
         }
       ]
     }
   ],
   "clusters": {
-    "count": 12,
+    "count": 18,
     "top": [
       {
-        "score": 667,
-        "edges": 120,
-        "cx": -150,
-        "cz": 103,
+        "score": 512,
+        "edges": 91,
+        "cx": -153,
+        "cz": 101,
         "topKinds": [
           {
             "name": "street.network/street.network",
-            "n": 80
+            "n": 38
           },
           {
             "name": "natural/street.network",
-            "n": 16
+            "n": 27
           },
           {
             "name": "quarter.plane/natural",
@@ -620,62 +664,50 @@
         ]
       },
       {
-        "score": 188,
-        "edges": 94,
-        "cx": 150,
-        "cz": -25,
+        "score": 187,
+        "edges": 27,
+        "cx": 152,
+        "cz": -27,
         "topKinds": [
           {
-            "name": "street.network/street.network",
-            "n": 85
-          },
+            "name": "natural/street.network",
+            "n": 27
+          }
+        ]
+      },
+      {
+        "score": 74,
+        "edges": 13,
+        "cx": -132,
+        "cz": 155,
+        "topKinds": [
           {
             "name": "natural/street.network",
-            "n": 9
+            "n": 13
           }
         ]
       },
       {
         "score": 72,
-        "edges": 31,
-        "cx": -135,
-        "cz": 150,
+        "edges": 15,
+        "cx": 155,
+        "cz": -1,
         "topKinds": [
-          {
-            "name": "street.network/street.network",
-            "n": 27
-          },
-          {
-            "name": "street.network/natural",
-            "n": 3
-          },
           {
             "name": "natural/street.network",
-            "n": 1
+            "n": 15
           }
         ]
       },
       {
-        "score": 58,
-        "edges": 14,
-        "cx": 155,
-        "cz": 105,
-        "topKinds": [
-          {
-            "name": "quarter.plane/natural",
-            "n": 14
-          }
-        ]
-      },
-      {
-        "score": 53,
-        "edges": 13,
-        "cx": 126,
+        "score": 60,
+        "edges": 15,
+        "cx": 125,
         "cz": 4,
         "topKinds": [
           {
             "name": "natural/street.network",
-            "n": 13
+            "n": 15
           }
         ]
       }

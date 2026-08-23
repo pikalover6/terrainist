@@ -11,9 +11,9 @@
     "z0": -210,
     "z1": 248
   },
-  "ownedColumns": 43736,
+  "ownedColumns": 43761,
   "intents": {
-    "total": 1114,
+    "total": 1117,
     "byClass": [
       {
         "name": "quarter.plane",
@@ -36,15 +36,15 @@
         "n": 7
       },
       {
+        "name": "verge",
+        "n": 5
+      },
+      {
         "name": "road.network",
         "n": 4
       },
       {
         "name": "street.sidewalk",
-        "n": 2
-      },
-      {
-        "name": "verge",
         "n": 2
       },
       {
@@ -83,12 +83,12 @@
       "n": 108
     },
     {
-      "name": "retaining.skirt",
-      "n": 72
+      "name": "verge",
+      "n": 74
     },
     {
-      "name": "verge",
-      "n": 49
+      "name": "retaining.skirt",
+      "n": 72
     }
   ],
   "sanity": {
@@ -248,7 +248,7 @@
   "cliffCensus": [
     {
       "pair": "natural over natural",
-      "n": 4007,
+      "n": 3988,
       "avg": 2.9,
       "max": 10
     },
@@ -265,16 +265,22 @@
       "max": 8
     },
     {
+      "pair": "street.sidewalk over natural",
+      "n": 45,
+      "avg": 3.9,
+      "max": 7
+    },
+    {
       "pair": "retaining.seam over retaining.seam",
       "n": 40,
       "avg": 3,
       "max": 3
     },
     {
-      "pair": "road.network over road.network",
-      "n": 30,
-      "avg": 2.3,
-      "max": 3
+      "pair": "natural over road.network",
+      "n": 19,
+      "avg": 5.1,
+      "max": 9
     },
     {
       "pair": "quarter.plane over natural",
@@ -283,22 +289,28 @@
       "max": 11
     },
     {
+      "pair": "street.network over natural",
+      "n": 15,
+      "avg": 3,
+      "max": 6
+    },
+    {
+      "pair": "street.sidewalk over street.sidewalk",
+      "n": 15,
+      "avg": 2.2,
+      "max": 3
+    },
+    {
       "pair": "retaining.skirt over retaining.skirt",
       "n": 11,
       "avg": 3.1,
       "max": 4
     },
     {
-      "pair": "road.network over natural",
+      "pair": "street.network over street.network",
       "n": 10,
-      "avg": 2.6,
+      "avg": 2.1,
       "max": 3
-    },
-    {
-      "pair": "natural over street.network",
-      "n": 9,
-      "avg": 5.8,
-      "max": 8
     },
     {
       "pair": "quarter.plane over quarter.plane",
@@ -307,16 +319,64 @@
       "max": 3
     },
     {
-      "pair": "natural over road.network",
+      "pair": "natural over verge",
       "n": 7,
-      "avg": 2.3,
+      "avg": 3.4,
+      "max": 7
+    },
+    {
+      "pair": "road.network over natural",
+      "n": 6,
+      "avg": 2.5,
       "max": 3
     },
     {
-      "pair": "street.network over natural",
+      "pair": "street.network over verge",
+      "n": 6,
+      "avg": 2.2,
+      "max": 3
+    },
+    {
+      "pair": "road.network over road.network",
       "n": 5,
       "avg": 2,
       "max": 2
+    },
+    {
+      "pair": "street.network over street.sidewalk",
+      "n": 5,
+      "avg": 2.4,
+      "max": 4
+    },
+    {
+      "pair": "street.sidewalk over street.network",
+      "n": 5,
+      "avg": 2.2,
+      "max": 3
+    },
+    {
+      "pair": "street.sidewalk over verge",
+      "n": 5,
+      "avg": 2.4,
+      "max": 3
+    },
+    {
+      "pair": "natural over street.network",
+      "n": 4,
+      "avg": 2.8,
+      "max": 5
+    },
+    {
+      "pair": "natural over street.sidewalk",
+      "n": 3,
+      "avg": 2,
+      "max": 2
+    },
+    {
+      "pair": "verge over natural",
+      "n": 3,
+      "avg": 4,
+      "max": 5
     },
     {
       "pair": "natural over retaining.seam",
@@ -325,22 +385,10 @@
       "max": 3
     },
     {
-      "pair": "natural over street.sidewalk",
-      "n": 2,
-      "avg": 2,
-      "max": 2
-    },
-    {
       "pair": "quarter.plane over retaining.skirt",
       "n": 2,
       "avg": 3.5,
       "max": 4
-    },
-    {
-      "pair": "street.sidewalk over natural",
-      "n": 2,
-      "avg": 2,
-      "max": 2
     }
   ],
   "buildingSeats": {
@@ -468,57 +516,73 @@
       "n": 2661,
       "byDelta": [
         {
+          "delta": -4,
+          "n": 1
+        },
+        {
+          "delta": -2,
+          "n": 4
+        },
+        {
           "delta": -1,
-          "n": 40
+          "n": 31
         },
         {
           "delta": 0,
-          "n": 2587
+          "n": 2599
         },
         {
           "delta": 1,
-          "n": 34
+          "n": 21
+        },
+        {
+          "delta": 2,
+          "n": 4
+        },
+        {
+          "delta": 3,
+          "n": 1
         }
       ]
     },
     {
       "name": "natural",
-      "n": 292,
+      "n": 273,
       "byDelta": [
         {
+          "delta": -6,
+          "n": 2
+        },
+        {
+          "delta": -4,
+          "n": 3
+        },
+        {
+          "delta": -3,
+          "n": 1
+        },
+        {
           "delta": -2,
-          "n": 5
+          "n": 9
         },
         {
           "delta": -1,
-          "n": 7
+          "n": 5
         },
         {
           "delta": 0,
-          "n": 258
+          "n": 245
         },
         {
           "delta": 1,
-          "n": 13
+          "n": 4
         },
         {
           "delta": 2,
-          "n": 1
+          "n": 3
         },
         {
           "delta": 5,
-          "n": 3
-        },
-        {
-          "delta": 6,
-          "n": 1
-        },
-        {
-          "delta": 7,
-          "n": 3
-        },
-        {
-          "delta": 8,
           "n": 1
         }
       ]
@@ -534,6 +598,32 @@
       ]
     },
     {
+      "name": "verge",
+      "n": 19,
+      "byDelta": [
+        {
+          "delta": -3,
+          "n": 1
+        },
+        {
+          "delta": -2,
+          "n": 5
+        },
+        {
+          "delta": -1,
+          "n": 7
+        },
+        {
+          "delta": 0,
+          "n": 4
+        },
+        {
+          "delta": 1,
+          "n": 2
+        }
+      ]
+    },
+    {
       "name": "road.network",
       "n": 2,
       "byDelta": [
@@ -545,7 +635,7 @@
     }
   ],
   "clusters": {
-    "count": 16,
+    "count": 20,
     "top": [
       {
         "score": 302,
@@ -556,6 +646,26 @@
           {
             "name": "natural/precinct.ground",
             "n": 56
+          }
+        ]
+      },
+      {
+        "score": 285,
+        "edges": 82,
+        "cx": -84,
+        "cz": -66,
+        "topKinds": [
+          {
+            "name": "street.sidewalk/natural",
+            "n": 40
+          },
+          {
+            "name": "street.network/street.network",
+            "n": 9
+          },
+          {
+            "name": "street.network/natural",
+            "n": 8
           }
         ]
       },
@@ -616,26 +726,6 @@
           {
             "name": "natural/precinct.ground",
             "n": 27
-          }
-        ]
-      },
-      {
-        "score": 110,
-        "edges": 47,
-        "cx": 45,
-        "cz": 211,
-        "topKinds": [
-          {
-            "name": "road.network/road.network",
-            "n": 30
-          },
-          {
-            "name": "road.network/natural",
-            "n": 10
-          },
-          {
-            "name": "natural/road.network",
-            "n": 7
           }
         ]
       }
