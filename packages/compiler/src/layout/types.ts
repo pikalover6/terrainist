@@ -1409,15 +1409,27 @@ export const PULL_RAMP = 6;
  */
 
 /**
- * The nonlinear boost: `t` becomes `t · (1 + PULL_BOOST · t)` before the
- * smoothstep, so extra authority *compounds with steepness* instead of lifting
- * the whole curve. Flats (`t = 0`) gain exactly nothing, a moderate slope
- * (`t ≈ 0.3`) gains ~0.06, and the curve saturates near grade 0.6 — the rate
- * troy's cliff faces actually measure — instead of `PULL_R_CLIFF`'s 0.75.
+ * The nonlinear boost: `t` becomes `t · (1 + PULL_BOOST · t^PULL_BOOST_POW)`
+ * before the smoothstep, so extra authority *compounds with steepness* instead
+ * of lifting the whole curve. Flats (`t = 0`) gain exactly nothing, a moderate
+ * slope barely moves, and the curve saturates near the grade rate troy's cliff
+ * faces actually measure instead of `PULL_R_CLIFF`'s 0.75.
  *
  * `0` is the neutral value: the unboosted `ROAD-PULL-v0` §2 curve, exactly.
  */
 export const PULL_BOOST = 0.66;
+
+/**
+ * The n8 walk retune (Kai, 2026-08-23): the x=200 avenue — 25 blocks of climb —
+ * proved the tail too shallow: a mid-climb bench read as moderate and took
+ * authority back mid-ascent. Raising the boost's *exponent* steepens exactly
+ * the tail: with `POW = 2, BOOST = 2.2` the moderate reference (`t = 0.3`) is
+ * today's value to three decimals and everything below it moves ±0.01, while
+ * grade 0.5 goes 0.74 → 0.87 and saturation arrives at grade ~0.54 instead of
+ * ~0.59. `1` is the neutral value: with `BOOST = 0.66` it is the n8 curve
+ * bit for bit.
+ */
+export const PULL_BOOST_POW = 1;
 
 /**
  * Peak-keeping: when `true`, a saturated core survives the smoothing — the

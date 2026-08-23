@@ -46,6 +46,7 @@ import type { DescentDatum } from "../layout/descent-datum.js";
 import type { StreetDatum } from "../layout/street-datum.js";
 import {
   PULL_BOOST,
+  PULL_BOOST_POW,
   PULL_PEAK_KEEP,
   PULL_RAMP,
   PULL_R_CLIFF,
@@ -4851,12 +4852,13 @@ function pullField(region: Region, frame: ArcFrame, drape: ReadonlyInt32Array): 
     const window = scratch.subarray(0, m);
     window.sort();
     const grade = window[Math.round(0.95 * (m - 1))] as number;
-    // The n7 retune's boost: `t · (1 + PULL_BOOST · t)` — quadratic in `t`, so
-    // authority *compounds with steepness*. Flats gain exactly 0, a moderate
-    // slope a few hundredths, and the curve saturates near the grade rate
-    // troy's real cliff faces measure instead of `PULL_R_CLIFF` itself.
+    // The n7 retune's boost, with the n8 retune's exponent: authority
+    // *compounds with steepness* as `t · (1 + PULL_BOOST · t^PULL_BOOST_POW)`.
+    // Flats gain exactly 0, a moderate slope a few hundredths, and the higher
+    // the exponent the more the extra strength lives in the tail alone — the
+    // x=200 avenue's mid-climb bench is why the tail got steeper.
     const t = Math.min(1, Math.max(0, (grade - PULL_R_FLAT) / span));
-    raw[k] = smoothstep(Math.min(1, t * (1 + PULL_BOOST * t)));
+    raw[k] = smoothstep(Math.min(1, t * (1 + PULL_BOOST * t ** PULL_BOOST_POW)));
   }
   // The moving average, centred and clamped at the ends — a prefix sum so the
   // cost is one pass whatever `PULL_SMOOTH` is.
