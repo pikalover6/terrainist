@@ -1,5 +1,14 @@
 # THE COHERENT SOURCE v0 — the one-writer world
 
+> **STATUS: HISTORICAL (retired by Kai, 2026-08-23).** The alternate path
+> is dead; `tools/root-poc/` and the `troy_rootpoc*` decks have no current
+> use. What this document proved was absorbed into the main generator:
+> one ground author became ROAD_SOVEREIGN's drape oracle, coherence-at-
+> the-source became the ROAD_PULL verdict, and the verify court became
+> the probe discipline. The n13 generator (ROAD-PULL-v0 + its retune
+> levers, `docs/SESSION-HANDOFF-2026-08-23.md`) is the ratified line.
+> Kept in-tree as the record of the road not taken.
+
 Ratified in spirit by Kai, 2026-08-22, after walking `troy_rootpoc`: *"every
 time more than one function tries to claim an individual block is a negative,
 and terrain that is generated incoherently at the source is always going to

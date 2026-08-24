@@ -1,98 +1,70 @@
-# Cell 4 — current state (2026-08-22, walk loop live)
+# Cell 4 — n13 RATIFIED, consolidation pause (2026-08-23)
 
-**READ FIRST: docs/SESSION-HANDOFF-2026-08-22.md** (this epoch's full
-commit-anchored record; prior epoch docs/SESSION-HANDOFF-2026-08-20.md;
-Kai-readable overnight narrative docs/TROY-RUN-2026-08-21.md).
+**READ FIRST: docs/SESSION-HANDOFF-2026-08-23.md** (the pull saga's full
+commit-anchored record; prior epoch docs/SESSION-HANDOFF-2026-08-22.md).
 
-**LIVE — ROAD_PULL SHIPPED** (Kai's ratified blend off the n6 walk,
-2026-08-22, docs/ROAD-PULL-v0.md): y = round(drape + pull·(n5 − drape)),
-pull = the terrain's own verdict (P95 grade rate, 13-block window,
-smoothstep 0.25..0.75, movavg9, ramp 1/6/block), pull-weighted Lipschitz
-backstop, one pooled pull per junction plane, sidewalk blends at its own
-column. Implies ROAD_SOVEREIGN (drape oracle, supremacy mask, borders,
-NO stairs — all ride the blended levels). Landing 3db7da8 byte-identical.
-REPORT CARD MEASURED: hillside orphans 2,591->9, street cliff pairs
-328->156, kerb tails 94->48, stairs 0. Deck **trojan_horse_troy_n7**
-installed. RETUNE (Kai's n7 verdict "very steep still too weak",
-2026-08-22): three levers, neutral-landed then flipped — PULL_BOOST
-.66 (t·(1+B·t), authority compounds with steepness), PULL_PEAK_KEEP
-(max(movavg, upper envelope) — cores hold 1), PULL_SAT .7 (backstop
-full-strength from .7). Stations at pull=1: 9->42(boost)->97(full);
-flats byte-still; risers>1 at pull≥.5 always 0. Decks n8 + n8b
-(boost-only control). N9 RETUNE (Kai's n8 verdict: x=200 avenue's
-mid-climb bench hands terrain back; "steepen the tail"): PULL_BOOST_POW
-2 + BOOST 2.2 (tail-only steepening, t=.3 unchanged — probe proved
-curve alone CANNOT fix the bench, grade there honestly ~.35) +
-PULL_CLOSE 21 (flat morphological closing; run TWICE — in pullField
-AND phase 1b after junction pooling, because the bench's north wall
-IS the pooled junction plane, absent at field-build time). Street now
-solid-saturated junction->crest; deck at1 97->156; flats byte-still;
-202 cols ±1-3. Deck **trojan_horse_troy_n9** (commit 60d6626,
-iter-9). Steep-fixture debts scale with the dial: buried 99, plinth
-34, one 25-deep sheer face; troy shows class only as ~5 flank cols at
-7-11. LAW: never run baseline regen + FULL suite concurrently (the
-harness races the file). N10 CANDIDATE TRIPLET IS DEAD — measurably
-identical to n9 (saturation axis has no headroom; Kai may delete the
-three n10_* saves). Kai's verdict on n9: right direction, more still
-→ n11 entry ladder (RF .20/.16/.12, 80-172 cols) → Kai: strongest
-barely beats weakest; moderates were always fine, EXTREME slopes
-under-pulled. DIAGNOSIS RATIFIED BY PROBE: pull=1 there since n9 —
-the 1:1 grade ceiling of the graded profile IS the terrain's shape
-(stairs banned), so pull-field knobs stopped mattering. NEW LEVER
-PULL_TREAD (9f04bb6, neutral 1 byte-identical): committed roads climb
-1 riser per TREAD blocks, float-relax + capped integerize (cap binds
-only pull≥.5 — honest flat steps pass whole). **n12 triplet
-installed** (TREAD 2/2.5/3, uncommitted): riser metronome, 289/584/676
-cols vs n9; TREAD 3 lifts cut00's junction end +2. **TREAD PICK STILL
-AWAITED.** Kai's next report: x=200 z-100..-65 never budged → probed:
-CROSS-SLOPE (7-wide road, 10-block tilt across, longitudinally gentle
-— every instrument measured the wrong axis). Kai ratified via popup:
-**PULL_CROSS** — grade = max(long P95, cross-fall over road width).
-Landed a587cfa neutral byte-identical, flipped: the stretch goes tilt
-10 → 0 at every station (rows dead level, centreline keeps its gentle
-climb), deck at1 193, street/street cliff pairs COLLAPSE 141->26
-(troy), 143->20 (hellenist) — the shelves were the census. Deck
-**trojan_horse_troy_n13** installed. NAMED DEBTS for the walk:
-plinth zero-bar broke on audit fixtures (steep 8-col proud run), steep
-fixture reachability .997->.928 (hillside is the win), buried 7->40 on
-flights (unfeathered cuts — blendShoulders still silenced), junction
-ownership step (1 riser-2 on troy), election lip at (108,89,-194)
-unchanged/out-of-scope. Sovereign arc: a16276f/1c479b3, iter-6. Prior:
-DESCENT_SOLVE on 59d9a4a, iter-5. Coherent-source path stands:
-rootpoc_v3, COHERENT-SOURCE-v0, verify court. **PIRATES STAGED
-AWAITING GO** (6b52fe3). r23 authoring credit-blocked (Gemini only).
+**THE RATIFIED STATE** (Kai, 2026-08-23: "that essentially just solved
+it… the most coherent troy generation ever"): the n13 generator IS the
+cutting-edge line. y = round(drape + pull·(n5_arc − drape));
+**grade = max(longitudinal P95 over 13, cross-fall across the road's own
+width)** (PULL_CROSS — the axis three curve ladders missed; probe found
+a 7-wide road with 10-block cross-tilt at pull 0.04); raw =
+smoothstep(t·(1+BOOST 2.2·t^POW 2)); field = max(movavg9, upper
+envelope) [PEAK_KEEP] + flat closing over 21 [CLOSE, run in pullField
+AND phase 1b after junction pooling] + 1/6 ramp; backstop scaled
+min(1, pull/SAT .7); TREAD 1 shipped (n12 decks hold 2/2.5/3, **pick
+open**); one pooled pull per junction plane; sidewalks blend at own
+column; sovereign items (drape oracle, mask+headroom, borders, NO
+stairs) ride the blend. Ladder: n7 f5ef2a3 (orphans 2,591→9) → n8
+b0d2e14 → n9 60d6626 (the closing) → n13 a063804 (cross; street cliff
+census 141→26 troy / 143→20 hellenist — the shelves WERE the census).
+freeze/troy-iter-{7,8,9,13}. Suite 5,566/0 at every flip; flats
+byte-still throughout; riser law 0 violations always.
+
+**Decks:** trojan_horse_troy_n13 = THE deck. n7-n9, n8b, n11_*, n12_*
+comparative; n10_* dead (deletable). POC decks (troy_rootpoc*) dead.
+
+**THE POC IS DEAD** (ratified 08-23): tools/root-poc +
+COHERENT-SOURCE-v0 historical only (status header on the doc); ideas
+absorbed (one ground author = drape oracle; coherence at source = the
+verdict; verify court = probe discipline).
+
+**LAST-LEG QUEUE (consult after compaction):**
+1. Entry-grade residue, minor: flat/medium very slightly regressed, no
+   benefit. Shipped R_FLAT never moved (.25; n11 ladder uncommitted) —
+   the residue is the boost's moderate creep + closing's trace fills
+   (139 stations 0→≤.039). Trim those, don't raise R_FLAT blindly.
+2. Landmark-border rule (queued 08-22, DO NOT build without consult):
+   no bespoke artifact within 10% of world size (side-to-side) of the
+   border; the horse needs full re-siting logic.
+3. Stairs need a lot of work (all silenced under sovereign; descent
+   solver alive under its flag).
+4. Shoulder/verge revival — pays every raw cut face the saga minted
+   (stress fixture ledger: buried 106, plinth 17/34, sheer 163@≤25).
+5. n12 tread pick. 6. Pirates staged awaiting GO (6b52fe3); catalog
+   go-ham on side branches; r23 credit-blocked (Gemini vision only).
 
 **Shipped flags TRUE:** GROUND_V1_{RANKS,SEAMS,FREEZE}, ELECTION_SOLVE,
 TERRACE_BY_TERRAIN(moot), STREET_PLANE_HARMONIZE, FACE_FINISH,
-DESCENT_SOLVE (bypassed under sovereign), ROAD_SOVEREIGN, ROAD_PULL.
-The rewrite's end state holds: resolves=5, written-vs-resolved 0,
-equivalence at ZERO allowances, Kai's verdict "for the first time,
-roads and buildings are (mostly) integrated with terrain."
+DESCENT_SOLVE (bypassed under sovereign), ROAD_SOVEREIGN, ROAD_PULL,
+PULL_CROSS; PULL_* levers per handoff §1.
 
-**The loop:** deep-probe latest deck → station walk card → chat-log
-parse → targeted probes → popup consult → ratify → capped agents →
-FULL-suite gate → flip commit → deck _nN + freeze/troy-iter-N branch.
-Massively-overdo-analysis is doctrine; blinded Gemini on iso renders;
-beware 1-column ASCII slice misreads (twice).
+**The loop:** deep-probe deck → walk card → chat-log parse → probe to
+mechanism → popup consult → ratify → neutral-land byte-identical → flip
+→ FULL gate + re-pin triage (movers to one opus-5-low) → regen
+baselines (NEVER concurrent with the suite — harness races the file) →
+deck _nN + freeze/troy-iter-N. Candidate triplets: probe for real
+spread BEFORE install (n10 died on the bench).
 
-**QUEUED BY KAI (2026-08-22, next/later generation — DO NOT build yet):**
-ban bespoke artifacts (authored landmarks, e.g. the horse) within 10% of
-world size (side-to-side measure) of the world border; the horse sits at
-the edge today, so the placer needs logic to find an entirely new spot
-far away.
-
-**Ladder debt:** chunk-2 internals (preflip-g6/README) → G7 (apron
-deletion + natural-blend, ratified, walk-gated) → G8 collapse. Open:
-troy W413 7-8 geometry-residual, quay 118, S8 crown (builder-side),
-levelNear §7.1, glow-lichen lint gap, side branches (packs d3d4193,
-freerect 24cb2c1) unmerged, §15.1 + W337 + dev-app, funnel compression
-debt (cells over budget — distill on next quiet pause).
+**Ladder debt:** chunk-2 internals → G7 (walk-gated) → G8 collapse;
+troy W413, quay 118, S8 crown, levelNear §7.1, glow-lichen lint, side
+branches (packs d3d4193, freerect 24cb2c1), §15.1 + W337 + dev-app.
+Funnel compression: paid 08-23 (cell-4 distilled into cell-3).
 
 **STANDING:** caps 4/≤2med/≤1high; delegation economics; implementers
-opus-5-low default; orchestrator commits, single-sentence subjects;
-probe-first; byte-identity staging + flip triage; screening install-
-anyway; popups liberally; NEVER-WAIT; never --replace (--channel/
---series to the Prism saves path in AGENTS.md); battery/ read-only;
-one vitest --maxWorkers=4 heap-flagged, FULL suite at gates; regen
-baselines on the merged tree; agents never spawn agents; walk-taste
-lands only on Kai's verdicts.
+opus-5-low; orchestrator commits, single-sentence subjects; probe-first;
+byte-identity staging; screening install-anyway; popups liberally;
+NEVER-WAIT; never --replace; battery/ read-only; one vitest
+--maxWorkers=4 heap-flagged, FULL at gates; agents never spawn agents;
+walk-taste lands only on Kai's verdicts; zsh does not word-split
+unquoted vars.

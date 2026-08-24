@@ -1,6 +1,25 @@
-# Cell 3 — Gemini era → verdict wave (2026-08-14 → 08-18)
+# Cell 3 — Gemini era → the ground saga's first half (2026-08-14 → 08-22)
 
 (The Gemini head-to-head/harness-reshape arc is compressed in cell 2.)
+
+## The ground saga, first half (08-19 → 08-22) — compressed from cell 4
+
+Full record: docs/SESSION-HANDOFF-2026-08-22.md. The ground rewrite
+landed its end state (resolves=5, written-vs-resolved 0, equivalence at
+ZERO allowances; Kai: "for the first time, roads and buildings are
+(mostly) integrated"). DESCENT_SOLVE flipped (59d9a4a, iter-5, deck n5).
+Kai's biggest step-back ("countless generators manage without a web of
+solvers") → the root-fix POC (tools/root-poc, two walk-bug fixes:
+plan.ground as the one oracle; site daylight) → COHERENT-SOURCE-v0 +
+troy_rootpoc_v3 overnight demo — **path later ratified DEAD 08-23,
+historical only; its ideas were absorbed by the main line**. Then Kai's
+n5-revival directive → ROAD_SOVEREIGN (a16276f landing, 1c479b3
+flip+triage, iter-6, deck n6): roads drape the resolved ground, outrank
+every writer, stone-brick borders, ALL stairs silenced; the trade said
+out loud — hillside orphans 271→2,591 — and the n6 ablation walk taught
+the lesson that became ROAD_PULL: grader heroic on cliffs, noise on
+flats. Rule-web artifact published (2a3ce715). The residual-lip probe at
+(108,89,-194) — the election's step, not the road's — seeded the blend.
 
 ## The padfix era and the verdict wave (2026-08-17/18) — compressed from cell 4
 
