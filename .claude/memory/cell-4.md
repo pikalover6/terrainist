@@ -29,6 +29,24 @@ COHERENT-SOURCE-v0 historical only (status header on the doc); ideas
 absorbed (one ground author = drape oracle; coherence at source = the
 verdict; verify court = probe discipline).
 
+**STAIR SAGA (2026-08-24, gate open):** Kai: dressing-pass demo GATES the
+flight-object mini-project; old stair corpus = flag-alive fallback.
+STAIR_DRESS shipped (a5e4573 neutral, 26637a4 flip, 3c78232 cull fix):
+road-risers.ts swaps every honest 1-riser top course for a stair facing the
+rise; ledge/crest/flooded/occupied refuse. LESSON: enforceRoadSovereignty
+ate all 818 stairs (not in ROAD_SOVEREIGN_OWN_EMITTERS — the street-lamp
+scar relearnt); n14 deck shipped STAIRLESS (Kai walked it), **n14b = the
+real demonstration deck** (freeze/troy-iter-14b). undressedCutoffs 88→70,
+first DOWN since G6 freeze. **Box (72,88,-95) diagnosis (probed+blinded
+Gemini concur):** (1) cut08 descends 1:1 then falls 5-6 blocks into the
+cut07 junction plane — junctions pool PULL not LEVELS, two lawful arcs
+cross at different heights = the residual cliff census class; (2) cut07's
+bend: rotating swept cross-sections quantize 2-4 block inter-tread cliffs
+on the raster at max grade; (3) terrace_steps NOT in box — missited at
+region edge (209,-255), 41/95 no-stand OFF-EDGE (border-rule cousin).
+**E2E control:** trojan_horse_in_troy_e2e1 (fresh Gemini spec + seed 1184,
+$0.34, credits UNBLOCKED) installed side-by-side vs r22 overfit worry.
+
 **LAST-LEG QUEUE (consult after compaction):**
 1. Entry-grade residue, minor: flat/medium very slightly regressed, no
    benefit. Shipped R_FLAT never moved (.25; n11 ladder uncommitted) —
