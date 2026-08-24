@@ -1495,3 +1495,22 @@ export const PULL_TREAD = 1;
  * `false` is the neutral value: the longitudinal-only verdict, exactly.
  */
 export const PULL_CROSS = true;
+
+/**
+ * The stair dressing (Kai, 2026-08-23) — the gate of the stair saga: the
+ * flight-object mini-project proceeds only if this demonstration walks well.
+ *
+ * Every street or road column that stands exactly one block above a paved
+ * neighbour it faces gets its **top course swapped for a stair block facing
+ * the rise** — `structures/road-risers.ts`. The pass moves NO level, claims
+ * NO column and lifts NOTHING: the pull field already chose every riser
+ * (`ROAD-PULL-v0`, riser law: never more than one riser per block where the
+ * blend holds), so this is `COHERENT-SOURCE-v0` LAW I's one sanctioned
+ * exception — a surface swap at the surface's own level — and deliberately
+ * not a revival of `junction-steps.ts`, whose lifting is what made it a
+ * grader and got it retired. A two-block face stays bare and honest, the
+ * class the street cliff census counts (26 on troy at n13).
+ *
+ * `false` is the neutral value: bare full-block risers, exactly the n13 pass.
+ */
+export const STAIR_DRESS = false;

@@ -73,7 +73,7 @@ import {
 import type { GroundDriver } from "../layout/ground-driver.js";
 import { solvedCarriagewayMask } from "../layout/solved-carriageway.js";
 import type { GroundTier } from "../layout/ground-contract.js";
-import { FACE_FINISH, GROUND_V1_FREEZE, ROAD_SOVEREIGN } from "../layout/types.js";
+import { FACE_FINISH, GROUND_V1_FREEZE, ROAD_SOVEREIGN, STAIR_DRESS } from "../layout/types.js";
 import { NO_PLATFORM } from "../layout/levels.js";
 import type { LayoutNodeInput, OccupancyGrid, Placement, ResolvedPort } from "../layout/types.js";
 import { mergeSpanSets } from "../terrain/caves.js";
@@ -123,6 +123,7 @@ import { furnishCourtyards, type CourtyardPassResult } from "./courtyards.js";
 import { buildDoorsteps, paintDoorsteps, type DoorstepResult } from "./doorsteps.js";
 import { buildGrounds, softSurfaceStates, type GroundPassResult } from "./grounds.js";
 import { buildJunctionSteps, type PavedSurface } from "./junction-steps.js";
+import { dressRoadRisers } from "./road-risers.js";
 import { buildRuinField, type RuinField } from "./ruin-field.js";
 import { growGreenSkin, type GreenSkinResult } from "./green-skin.js";
 import { resolveReclaimSpecies } from "./reclaim-species.js";
@@ -2207,6 +2208,32 @@ export function buildStructures(
       blocks,
     });
     lay("junction-steps", junctions.blocks);
+  }
+
+  // --- the stair dressing (`STAIR_DRESS`) ----------------------------------
+  // The same slot, because the precondition is the same — every paved surface
+  // exists — and nothing else about the two passes is shared: this one moves
+  // no level, lifts no column and claims nothing. It swaps the top course of
+  // every honest one-block riser for a stair facing the rise, which is the
+  // pull field's own geometry made walkable. See `structures/road-risers.ts`.
+  if (STAIR_DRESS) {
+    const deckColumns = new Set<number>();
+    for (const segment of streets?.declaration.segments ?? []) {
+      for (const claim of segment.bridged) deckColumns.add(claim.idx);
+    }
+    for (const route of roads?.declaration.routes ?? []) {
+      for (const claim of route.bridged) deckColumns.add(claim.idx);
+    }
+    const risers = dressRoadRisers({
+      region: input.plan.region,
+      plan: input.plan,
+      stack: input.stack,
+      palette: input.palette,
+      paved: pavedSurfaces,
+      bridged: deckColumns,
+      blocks,
+    });
+    lay("stair-dress", risers.blocks);
   }
 
 
