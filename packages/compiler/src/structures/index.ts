@@ -442,6 +442,12 @@ const ROAD_SOVEREIGN_OWN_EMITTERS: ReadonlySet<string> = new Set([
   "streets",
   "road-lanterns",
   "streetscape:furniture",
+  // The riser dressing is the road family's own surface: a stair laid into
+  // the top course at the level the blend gave that column (`STAIR_DRESS`,
+  // `structures/road-risers.ts`). Leaving it out was the mask eating its own
+  // stairs — the street-lamp lesson above, relearnt verbatim: the n14 deck
+  // shipped with all 818 of troy's dressed risers silently culled.
+  "stair-dress",
 ]);
 
 /** What the structure pass produced. */
