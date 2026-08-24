@@ -101,8 +101,10 @@ function snapshot(p: ColumnPlan): string {
 /* -------------------------------------------------------------------------- */
 
 describe("STAIR_DRESS", () => {
-  it("is landed neutral: the flag ships false until the flip commit", () => {
-    expect(STAIR_DRESS).toBe(false);
+  // STAIR_DRESS flip (2026-08-23): the dressing demonstration ships — Kai's
+  // gate for the flight-object mini-project. Landed false in a5e4573.
+  it("is flipped on: stepped streets are the shipping state", () => {
+    expect(STAIR_DRESS).toBe(true);
   });
 
   it("dresses a stepped street's risers with stairs facing the rise, and moves no level", () => {

@@ -1513,4 +1513,4 @@ export const PULL_CROSS = true;
  *
  * `false` is the neutral value: bare full-block risers, exactly the n13 pass.
  */
-export const STAIR_DRESS = false;
+export const STAIR_DRESS = true;
