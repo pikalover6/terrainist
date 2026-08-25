@@ -1,0 +1,844 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "tin_coast_camp",
+    "worldSeed": "903",
+    "prompt": "A Bronze Age tin-mining camp on a frozen tundra coast in midwinter: pit heads, smelting fires, hide tents and a beached trading ship.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": "minecraft:snow_block",
+      "ground.subsurface": "minecraft:coarse_dirt",
+      "ground.cliff": "minecraft:stone",
+      "ground.beach": {
+        "mix": [
+          [
+            "minecraft:gravel",
+            3
+          ],
+          [
+            "minecraft:packed_ice",
+            2
+          ],
+          [
+            "minecraft:stone",
+            1
+          ]
+        ]
+      },
+      "road.surface": {
+        "mix": [
+          [
+            "minecraft:coarse_dirt",
+            3
+          ],
+          [
+            "minecraft:packed_ice",
+            2
+          ],
+          [
+            "minecraft:gravel",
+            2
+          ]
+        ]
+      },
+      "road.shoulder": "minecraft:snow_block",
+      "plaza.path": {
+        "mix": [
+          [
+            "minecraft:gravel",
+            3
+          ],
+          [
+            "minecraft:coarse_dirt",
+            2
+          ],
+          [
+            "minecraft:cobblestone",
+            1
+          ]
+        ]
+      }
+    }
+  },
+  "intent": {
+    "era": "primitive",
+    "wealth": 0.35,
+    "decline": 0.15,
+    "formality": 0.1,
+    "climate": {
+      "biome": "minecraft:snowy_plains",
+      "temperature": -0.9,
+      "humidity": -0.3,
+      "snow": "always"
+    },
+    "character": {
+      "label": "bronze age tin-mining camp",
+      "materialTheme": "boreal_pine",
+      "formPacks": [
+        "wilds_camps",
+        "nordic_viking"
+      ],
+      "urbanForm": "grown",
+      "motifs": {
+        "roofType": "shed",
+        "massing": "sprawling",
+        "ornamentDensity": 0.05
+      },
+      "archetypes": {
+        "prefer": [
+          "mine_head",
+          "foundry",
+          "charcoal_burner",
+          "hut",
+          "shepherds_bothy"
+        ],
+        "forbid": [
+          "skyscraper",
+          "office",
+          "apartment_block",
+          "townhouse",
+          "shop_row"
+        ]
+      },
+      "props": {
+        "prefer": [
+          "tent",
+          "campsite",
+          "cairn",
+          "log_pile",
+          "cart",
+          "yurt"
+        ]
+      },
+      "programs": [
+        {
+          "id": "beached_trader",
+          "mode": "landmark",
+          "brief": "A Bronze Age wooden coastal trading vessel with ribbed clinker hull, mast, and steerboard, beached high in the frozen shoreline ice and gravel with ballast stones and supply casks around the keel.",
+          "envelope": [
+            26,
+            12,
+            10
+          ]
+        },
+        {
+          "id": "tin_ore_pit",
+          "mode": "landmark",
+          "brief": "An open-cast Bronze Age tin ore trench cut into the frozen ground with timber shoring, gravel spoil mounds, ore washing channels, and log ladders.",
+          "envelope": [
+            20,
+            10,
+            20
+          ]
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "a frozen tundra coast with snowbound cliffs and an icy beach meeting open cold sea",
+      "icons": "open tin-mining pit heads, charcoal burning pits, bronze smelting hearths, hide-and-timber tents, ore slag heaps, and a beached coastal trading vessel on the icy shore",
+      "infra": "cart_track through the snow from the pit heads to the smelting hearths; log skids down to the beached ship on the shoreline"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Frozen Tundra Tin-Mining Camp",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "coastal tundra lowlands sloping down to an icy sea",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 68,
+          "amplitude": 36,
+          "octaves": 5,
+          "frequency": 0.0032,
+          "gain": 0.52,
+          "warp": {
+            "amount": 28,
+            "frequency": 0.0035
+          },
+          "erosionPasses": 2,
+          "continentalness": {
+            "frequency": 0.0011,
+            "seaFraction": 0.38
+          },
+          "cliffThreshold": 48,
+          "soilDepth": 3,
+          "beachWidth": 6,
+          "snowLineFraction": 0.1
+        },
+        "children": [
+          {
+            "id": "tundra_bay",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "frozen coastal inlet in the north",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.52,
+                  0.44
+                ],
+                [
+                  0.48,
+                  0.28
+                ],
+                [
+                  0.42,
+                  0.14
+                ],
+                "coast"
+              ],
+              "width": 64,
+              "depth": 16,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "tin_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "rocky tin-bearing upland ridge in the southeast",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.35,
+                  0.78
+                ],
+                [
+                  0.62,
+                  0.68
+                ],
+                [
+                  0.88,
+                  0.74
+                ]
+              ],
+              "width": 84,
+              "height": 38,
+              "profile": "sharp"
+            }
+          },
+          {
+            "id": "camp_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "sheltered shelf above the beach for the mining camp",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.48,
+                0.5
+              ],
+              "radius": 90,
+              "height": 6,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "headland_bluff",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "windswept coastal bluff overlooking the frozen bay",
+            "params": {
+              "verb": "peak",
+              "at": [
+                0.22,
+                0.3
+              ],
+              "radius": 58,
+              "height": 26,
+              "profile": "sharp"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "boreal",
+          "temperatureFrequency": 0.0015,
+          "humidityFrequency": 0.0018,
+          "latitudeGradient": -0.4
+        }
+      },
+      {
+        "id": "ridge_taiga",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "wind-stunted taiga conifers along the rocky slopes",
+        "params": {
+          "area": {
+            "at": [
+              0.65,
+              0.7
+            ],
+            "radius": 140
+          },
+          "density": 0.05,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 32,
+          "elevation": [
+            2,
+            80
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.12,
+            "flowers": 0,
+            "deadwood": 0.16
+          },
+          "species": [
+            {
+              "id": "scrub_spruce",
+              "weight": 3,
+              "shape": "spruce_squat"
+            },
+            {
+              "id": "tall_spruce",
+              "weight": 1,
+              "shape": "spruce_tall"
+            }
+          ]
+        }
+      },
+      {
+        "id": "tundra_scrub",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse knee-high scrub over the frozen tundra floor",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 5,
+          "clumping": 0.3,
+          "maxSlope": 30,
+          "elevation": [
+            1,
+            90
+          ],
+          "edgeFalloff": 10,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.08,
+            "flowers": 0,
+            "deadwood": 0.12
+          },
+          "species": [
+            {
+              "id": "tundra_juniper",
+              "weight": 3,
+              "shape": "juniper_scrub"
+            },
+            {
+              "id": "stunted_spruce",
+              "weight": 1,
+              "shape": "spruce_squat"
+            }
+          ]
+        }
+      },
+      {
+        "id": "camp_hearth",
+        "kind": "primitive",
+        "label": "the central snow-cleared hearth and work ground",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            22,
+            22
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.48,
+              0.5
+            ]
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "pithead_upper",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the timbered headframe and winch house over the main shaft",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            12,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "mine_head",
+          "floors": 1,
+          "roof": "gable",
+          "basement": {
+            "depth": 5,
+            "style": "mine"
+          }
+        },
+        "constraints": [
+          {
+            "distance": "camp_hearth",
+            "min": 14,
+            "max": 42,
+            "strength": "soft"
+          },
+          {
+            "facing": "camp_hearth"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "mine_head",
+          "craft"
+        ]
+      },
+      {
+        "id": "open_mine_working",
+        "kind": "generator",
+        "generator": "authored:tin_ore_pit",
+        "label": "the open-cast tin trench with timber shoring and spoil heaps",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            20,
+            10,
+            20
+          ]
+        },
+        "params": {
+          "seat": "embed",
+          "embedDepth": 3
+        },
+        "constraints": [
+          {
+            "distance": "pithead_upper",
+            "min": 8,
+            "max": 26,
+            "strength": "soft"
+          },
+          {
+            "distance": "camp_hearth",
+            "min": 18,
+            "max": 54,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "landmark",
+          "mine"
+        ]
+      },
+      {
+        "id": "tin_smelter",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the smelting hearth where cassiterite ore is reduced to bronze",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            15
+          ]
+        },
+        "params": {
+          "archetype": "foundry",
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "distance": "camp_hearth",
+            "min": 8,
+            "max": 32,
+            "strength": "soft"
+          },
+          {
+            "facing": "camp_hearth"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "foundry",
+          "craft"
+        ]
+      },
+      {
+        "id": "charcoal_kiln",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "covered charcoal burning mound for fueling the smelter fires",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "archetype": "charcoal_burner",
+          "floors": 1,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "distance": "tin_smelter",
+            "min": 8,
+            "max": 28,
+            "strength": "soft"
+          },
+          {
+            "facing": "camp_hearth"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "craft"
+        ]
+      },
+      {
+        "id": "miners_shelter_west",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "rough turf-and-timber bunk hut on the western flank",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            11,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "hut",
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "camp_hearth",
+            "gap": [
+              2,
+              8
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "camp_hearth"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "miners_shelter_east",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "low drystone shelter for the smelting crew",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            11,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "shepherds_bothy",
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "camp_hearth",
+            "gap": [
+              2,
+              8
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "camp_hearth"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "beached_ship",
+        "kind": "generator",
+        "generator": "authored:beached_trader",
+        "label": "the trading vessel beached in ice and gravel on the northern shore",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            26,
+            12,
+            10
+          ]
+        },
+        "params": {
+          "seat": "embed",
+          "embedDepth": 2,
+          "face": {
+            "toward": "camp_hearth"
+          }
+        },
+        "constraints": [
+          {
+            "on": "@terrain:coastline",
+            "band": 20
+          },
+          {
+            "distance": "camp_hearth",
+            "min": 35,
+            "max": 90,
+            "strength": "soft"
+          }
+        ],
+        "tags": [
+          "landmark",
+          "ship"
+        ]
+      },
+      {
+        "id": "hide_tents_north",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "cluster of hide tents around an open fire ring",
+        "params": {
+          "prop": "campsite",
+          "zone": "center",
+          "jitter": 0.1
+        }
+      },
+      {
+        "id": "hide_tent_a",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "conical hide yurt for the ore-traders",
+        "params": {
+          "prop": "yurt",
+          "zone": "center",
+          "jitter": 0.18
+        }
+      },
+      {
+        "id": "hide_tent_b",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "lean-to skin tent by the fuel stores",
+        "params": {
+          "prop": "tent",
+          "zone": "center",
+          "jitter": 0.22
+        }
+      },
+      {
+        "id": "firewood_pile",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "stacked birch and pine cordwood for smelting fuel",
+        "params": {
+          "prop": "log_pile",
+          "zone": "center",
+          "jitter": 0.12
+        }
+      },
+      {
+        "id": "ore_sled",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "timber cart for hauling heavy cassiterite stones",
+        "params": {
+          "prop": "cart",
+          "zone": "center",
+          "jitter": 0.16
+        }
+      },
+      {
+        "id": "shore_cairn",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "stone guide cairn marking the landing approach on the frozen shore",
+        "params": {
+          "prop": "cairn",
+          "zone": "north",
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "camp_tracks",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "packed snow paths joining the pit heads, smelter, hearth and beached vessel",
+        "params": {
+          "anchors": [
+            "camp_hearth",
+            "#tag:house",
+            "pithead_upper",
+            "tin_smelter",
+            "beached_ship"
+          ],
+          "pattern": "organic",
+          "width": 2,
+          "lanterns": false
+        }
+      }
+    ]
+  },
+  "programs": {
+    "beached_trader": {
+      "mode": "landmark",
+      "envelope": [
+        11,
+        16,
+        27
+      ],
+      "sourceHash": "b3:1bbf5ccfafa0257128c8465e308c99a9c8f59e4d4118e8be579cb07fd9199f71",
+      "outputHash": "b3:0c378ea4468cd332ac10857a85f8c6e2c63095d0f836effda4e72c6577415daa",
+      "conforms": false,
+      "conformHash": "b3:d94f9f8dd6acd93490f4e08a4d05af571243242c2706da8668c230c656aec3e8",
+      "source": "export const envelope = [11, 16, 27];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n\n  // Theme palettes with safe fallbacks\n  const wp = api.theme.wood?.planks || \"minecraft:spruce_planks\";\n  const wl = api.theme.wood?.log || \"minecraft:spruce_log\";\n  const ws = api.theme.wood?.stripped || \"minecraft:stripped_spruce_log\";\n  const wst = api.theme.wood?.stairs || \"minecraft:spruce_stairs\";\n  const wsl = api.theme.wood?.slab || \"minecraft:spruce_slab\";\n  const wf = api.theme.wood?.fence || \"minecraft:spruce_fence\";\n  const wt = api.theme.wood?.trapdoor || \"minecraft:spruce_trapdoor\";\n\n  const sp = api.theme.stone?.primary || \"minecraft:stone\";\n  const sa = api.theme.stone?.accent || \"minecraft:cobblestone\";\n  const sw = api.theme.stone?.wall || \"minecraft:cobblestone_wall\";\n  const ssl = api.theme.stone?.slab || \"minecraft:cobblestone_slab\";\n\n  const gp = api.theme.ground?.pavement || \"minecraft:gravel\";\n  const gsc = api.theme.ground?.scree || \"minecraft:coarse_dirt\";\n  const gpl = api.theme.ground?.plinth || \"minecraft:andesite\";\n\n  function withState(blockStr, stateStr) {\n    if (!blockStr) return \"minecraft:spruce_log\";\n    if (blockStr.includes(\"[\")) return blockStr;\n    return `${blockStr}[${stateStr}]`;\n  }\n\n  const wlX = withState(wl, \"axis=x\");\n  const wlY = withState(wl, \"axis=y\");\n  const wlZ = withState(wl, \"axis=z\");\n  const wsX = withState(ws, \"axis=x\");\n  const wsY = withState(ws, \"axis=y\");\n  const wsZ = withState(ws, \"axis=z\");\n\n  // Local grid to construct ship before flushing\n  const grid = Array.from({ length: W }, () =>\n    Array.from({ length: H }, () =>\n      Array.from({ length: D }, () => null)\n    )\n  );\n\n  function setB(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      grid[x][y][z] = block;\n    }\n  }\n\n  // Hull profile curves\n  function getKeelY(z) {\n    if (z <= 1) return 6;\n    if (z === 2) return 4;\n    if (z === 3) return 3;\n    if (z >= 25) return 6;\n    if (z === 24) return 4;\n    if (z === 23) return 3;\n    return 2;\n  }\n\n  function getGunwaleY(z) {\n    if (z <= 1) return 8;\n    if (z === 2) return 7;\n    if (z === 3) return 6;\n    if (z >= 25) return 7;\n    if (z === 24) return 6;\n    return 5;\n  }\n\n  function getHalfWidth(z) {\n    if (z <= 0 || z >= 26) return 0;\n    if (z === 1 || z === 25) return 0.6;\n    if (z === 2 || z === 24) return 1.3;\n    if (z === 3 || z === 23) return 2.1;\n    if (z === 4 || z === 22) return 2.8;\n    if (z === 5 || z === 21) return 3.3;\n    const t = (z - 5) / 16;\n    return 3.5 + Math.sin(t * Math.PI) * 0.4;\n  }\n\n  // 1. Keel & Hull Shell\n  for (let z = 1; z <= 25; z++) {\n    const ky = getKeelY(z);\n    const gy = getGunwaleY(z);\n    const hw = getHalfWidth(z);\n\n    // Keel spine\n    setB(5, ky, z, wlZ);\n\n    for (let y = ky; y <= gy; y++) {\n      const nh = (y - ky) / Math.max(1, gy - ky);\n      const rx = hw * Math.pow(nh, 0.45);\n      const minX = Math.round(5 - rx);\n      const maxX = Math.round(5 + rx);\n\n      if (y === ky) {\n        for (let x = minX; x <= maxX; x++) {\n          setB(x, y, z, wp);\n        }\n      } else if (y === gy) {\n        setB(minX, y, z, wsZ);\n        setB(maxX, y, z, wsZ);\n      } else {\n        setB(minX, y, z, wp);\n        setB(maxX, y, z, wp);\n        if (y === ky + 1 && rx >= 1.8) {\n          setB(minX + 1, y, z, wp);\n          setB(maxX - 1, y, z, wp);\n        }\n      }\n    }\n  }\n\n  // 2. Stem Post (Bow / North) & Stern Post (Aft / South)\n  setB(5, 7, 0, wsZ);\n  setB(5, 8, 0, withState(wt, \"facing=north,half=bottom,open=false\"));\n  for (let y = 3; y <= 8; y++) setB(5, y, 1, wsY);\n  for (let y = 2; y <= 5; y++) setB(5, y, 2, wlZ);\n\n  for (let y = 3; y <= 7; y++) setB(5, y, 25, wsY);\n  setB(5, 6, 26, wsZ);\n  setB(5, 7, 26, withState(wt, \"facing=south,half=bottom,open=false\"));\n  for (let y = 2; y <= 5; y++) setB(5, y, 24, wlZ);\n\n  // 3. Internal Frames / Ribs & Keelson\n  for (let z = 3; z <= 23; z++) {\n    const ky = getKeelY(z);\n    setB(5, ky + 1, z, wlZ);\n  }\n\n  const ribZ = [4, 7, 10, 13, 16, 19, 22];\n  for (const rz of ribZ) {\n    const ky = getKeelY(rz);\n    const gy = getGunwaleY(rz);\n    const hw = getHalfWidth(rz);\n    const rx = Math.round(hw);\n\n    setB(5 - rx + 1, ky + 1, rz, wsX);\n    setB(5 + rx - 1, ky + 1, rz, wsX);\n\n    // Thwart (cross beam)\n    for (let x = 5 - rx + 1; x <= 5 + rx - 1; x++) {\n      setB(x, gy - 1, rz, wsX);\n    }\n  }\n\n  // 4. Decks\n  // Foredeck (Z=3..6)\n  for (let z = 3; z <= 6; z++) {\n    const gy = getGunwaleY(z);\n    const rx = Math.round(getHalfWidth(z));\n    for (let x = 5 - rx + 1; x <= 5 + rx - 1; x++) {\n      setB(x, gy - 1, z, wp);\n    }\n  }\n\n  // Aftdeck (Z=20..23)\n  for (let z = 20; z <= 23; z++) {\n    const gy = getGunwaleY(z);\n    const rx = Math.round(getHalfWidth(z));\n    for (let x = 5 - rx + 1; x <= 5 + rx - 1; x++) {\n      setB(x, gy - 1, z, wp);\n    }\n  }\n\n  // Catwalk in open hold (Z=7..11, 17..19)\n  for (let z = 7; z <= 11; z++) setB(5, 3, z, wp);\n  for (let z = 17; z <= 19; z++) setB(5, 3, z, wp);\n\n  // 5. Cargo & Ballast in Hold\n  // Tin ore & raw smelt piles (Z=8..9)\n  setB(4, 3, 8, \"minecraft:raw_copper_block\");\n  setB(6, 3, 8, \"minecraft:granite\");\n  setB(4, 3, 9, \"minecraft:raw_iron_block\");\n  setB(6, 3, 9, \"minecraft:dripstone_block\");\n\n  // Ballast stones in bilge (Z=10)\n  setB(4, 3, 10, sa);\n  setB(6, 3, 10, gpl);\n\n  // Cargo trade bundles & casks (Z=17..18)\n  setB(4, 3, 17, \"minecraft:brown_wool\");\n  setB(6, 3, 17, \"minecraft:white_wool\");\n  setB(4, 3, 18, sa);\n  setB(6, 3, 18, ssl);\n\n  // 6. Mast, Lowered Yardarm & Rigging\n  for (let y = 3; y <= 13; y++) {\n    setB(5, y, 11, wsY);\n  }\n  setB(5, 14, 11, withState(wt, \"facing=north,half=bottom,open=false\"));\n\n  // Winter-beached lowered yardarm & furled sail (Y=8, Z=11)\n  for (let x = 2; x <= 8; x++) {\n    setB(x, 8, 11, wsX);\n  }\n  for (let x = 3; x <= 7; x++) {\n    setB(x, 7, 11, \"minecraft:light_gray_wool\");\n    setB(x, 6, 11, withState(wt, \"facing=south,half=top,open=false\"));\n  }\n\n  // Shrouds and Stays\n  setB(5, 10, 10, wf);\n  setB(5, 9, 9, wf);\n  setB(5, 8, 7, wf);\n  setB(5, 7, 5, wf);\n\n  setB(5, 10, 12, wf);\n  setB(5, 9, 14, wf);\n  setB(5, 8, 17, wf);\n  setB(5, 7, 19, wf);\n\n  setB(4, 9, 11, wf);\n  setB(3, 8, 11, wf);\n  setB(2, 7, 11, wf);\n  setB(2, 6, 11, wf);\n\n  setB(6, 9, 11, wf);\n  setB(7, 8, 11, wf);\n  setB(8, 7, 11, wf);\n  setB(8, 6, 11, wf);\n\n  // 7. Steerboard (Starboard Quarter Rudder)\n  setB(8, 5, 21, wf);\n  setB(9, 5, 21, wsY);\n  setB(9, 4, 22, wsY);\n  setB(9, 3, 23, wsY);\n  setB(9, 2, 23, wsY);\n  setB(9, 1, 24, wsY);\n  setB(9, 0, 24, wsY);\n\n  // Tiller bar\n  setB(8, 6, 21, wsX);\n  setB(7, 6, 21, wsX);\n  setB(6, 6, 21, wsX);\n\n  // 8. Beaching Log Skids under Keel\n  const skidZ = [5, 9, 13, 17, 21];\n  for (const sz of skidZ) {\n    for (let x = 3; x <= 7; x++) {\n      setB(x, 1, sz, wlX);\n    }\n  }\n\n  // 9. Hull Timber Props (Shores)\n  // Starboard shores\n  const sbShores = [8, 16];\n  for (const pz of sbShores) {\n    setB(8, 4, pz, wsY);\n    setB(9, 3, pz, wsY);\n    setB(9, 2, pz, wsY);\n    setB(10, 1, pz, wsY);\n  }\n\n  // Port shores\n  const ptShores = [8, 16];\n  for (const pz of ptShores) {\n    setB(2, 4, pz, wsY);\n    setB(1, 3, pz, wsY);\n    setB(1, 2, pz, wsY);\n    setB(0, 1, pz, wsY);\n  }\n\n  // 10. Beach Unloading Station & Ballast Dumps\n  // Port staging area (Z=12..14)\n  setB(1, 1, 12, wp);\n  setB(1, 1, 13, wp);\n  setB(1, 1, 14, wp);\n  setB(0, 1, 13, wlZ);\n  setB(1, 2, 13, \"minecraft:barrel[facing=up]\");\n  setB(1, 2, 12, wp);\n\n  // Starboard ballast dump (Z=13..15)\n  setB(9, 1, 13, sa);\n  setB(9, 1, 14, gpl);\n  setB(10, 1, 13, gp);\n  setB(10, 1, 14, sa);\n  setB(9, 2, 13, ssl);\n\n  // 11. Ground Conformance: Project all supports & skids down to real terrain\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const h = Math.round(api.heightAt(x, z));\n\n      // Find lowest placed voxel in this column\n      let lowestY = -1;\n      let lowestBlock = null;\n      for (let y = 0; y < H; y++) {\n        if (grid[x][y][z] !== null) {\n          lowestY = y;\n          lowestBlock = grid[x][y][z];\n          break;\n        }\n      }\n\n      if (lowestY !== -1) {\n        // If column floats above terrain, extend continuous foundations down to h\n        const targetMinY = Math.max(0, h);\n        if (lowestY > targetMinY) {\n          for (let y = lowestY - 1; y >= targetMinY; y--) {\n            if (lowestBlock.includes(\"log\") || lowestBlock.includes(\"stripped\")) {\n              grid[x][y][z] = y <= 0 ? sa : wlY;\n            } else if (lowestBlock.includes(\"wool\") || lowestBlock.includes(\"barrel\")) {\n              grid[x][y][z] = gp;\n            } else {\n              grid[x][y][z] = y <= 0 ? gsc : sa;\n            }\n          }\n        }\n      } else {\n        // Build beach shingle collar around the grounded vessel\n        const distToCenter = Math.abs(x - 5);\n        if (distToCenter <= 4 && z >= 2 && z <= 24 && h >= 0 && h < 3) {\n          const r = api.random();\n          if (r < 0.4) {\n            grid[x][h][z] = r < 0.2 ? gp : gsc;\n          }\n        }\n      }\n    }\n  }\n\n  // 12. Midwinter Frost & Snow Layers on Exposed Surfaces\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      for (let y = H - 2; y >= 0; y--) {\n        const blk = grid[x][y][z];\n        const above = grid[x][y + 1][z];\n        if (blk !== null && above === null) {\n          if (!blk.includes(\"fence\") && !blk.includes(\"trapdoor\") && !blk.includes(\"stairs\")) {\n            if (api.random() < 0.35) {\n              grid[x][y + 1][z] = \"minecraft:snow[layers=1]\";\n            }\n          }\n          break;\n        }\n      }\n    }\n  }\n\n  // 13. Flush Grid to World\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        if (grid[x][y][z] !== null) {\n          api.set(x, y, z, grid[x][y][z]);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"beached_trader\",\n    seatY: 0,\n    anchors: {\n      front: [5, 7, 0],\n      gangway: [1, 2, 13]\n    },\n    interiors: [\n      {\n        min: [4, 3, 12],\n        max: [6, 5, 16],\n        kind: \"hold\"\n      }\n    ]\n  };\n}"
+    },
+    "tin_ore_pit": {
+      "mode": "landmark",
+      "envelope": [
+        22,
+        13,
+        22
+      ],
+      "sourceHash": "b3:c62bbffe28843cc10192d6971c0278524fff83f734d552f962983c312de3f379",
+      "outputHash": "b3:df837514d3a7e4dbe719bf0f60185225cab6035b6b51a91e1056f619a5736456",
+      "conforms": false,
+      "conformHash": "b3:cc34522d4a671eb08bcb018372c3238369b387366c64e1fc697ca787e0629328",
+      "source": "export const envelope = [22, 13, 22];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const seatY = 4;\n\n  // --- Theme Extraction & Safe Helpers ---\n  const rawWoodPlanks = api.theme?.wood?.planks || \"minecraft:spruce_planks\";\n  const rawWoodLog = api.theme?.wood?.log || \"minecraft:spruce_log\";\n  const rawWoodStripped = api.theme?.wood?.stripped || \"minecraft:stripped_spruce_log\";\n  const rawWoodStairs = api.theme?.wood?.stairs || \"minecraft:spruce_stairs\";\n  const rawWoodSlab = api.theme?.wood?.slab || \"minecraft:spruce_slab\";\n  const rawWoodFence = api.theme?.wood?.fence || \"minecraft:spruce_fence\";\n  const rawWoodTrapdoor = api.theme?.wood?.trapdoor || \"minecraft:spruce_trapdoor\";\n\n  const rawStonePrimary = api.theme?.stone?.primary || \"minecraft:cobblestone\";\n  const rawStoneAccent = api.theme?.stone?.accent || \"minecraft:stone_bricks\";\n  const rawStoneStairs = api.theme?.stone?.stairs || \"minecraft:stone_brick_stairs\";\n  const rawStoneSlab = api.theme?.stone?.slab || \"minecraft:stone_brick_slab\";\n  const rawStoneWall = api.theme?.stone?.wall || \"minecraft:cobblestone_wall\";\n\n  const rawGroundScree = api.theme?.ground?.scree || \"minecraft:gravel\";\n  const rawGroundBank = api.theme?.ground?.bank || \"minecraft:coarse_dirt\";\n  const rawGroundPlinth = api.theme?.ground?.plinth || \"minecraft:stone\";\n  const rawGroundPavement = api.theme?.ground?.pavement || \"minecraft:cobblestone\";\n\n  const rawRoofSolid = api.theme?.roof?.solid || rawWoodPlanks;\n  const rawRoofSlab = api.theme?.roof?.slab || rawWoodSlab;\n  const rawRoofStairs = api.theme?.roof?.stairs || rawWoodStairs;\n\n  function cleanId(blockStr) {\n    return blockStr.split(\"[\")[0];\n  }\n\n  function logBlock(baseId, axis = \"y\") {\n    return `${cleanId(baseId)}[axis=${axis}]`;\n  }\n\n  function stairsBlock(baseId, facing = \"north\", half = \"bottom\") {\n    return `${cleanId(baseId)}[facing=${facing},half=${half}]`;\n  }\n\n  function slabBlock(baseId, type = \"bottom\") {\n    return `${cleanId(baseId)}[type=${type}]`;\n  }\n\n  function trapdoorBlock(baseId, facing = \"north\", half = \"bottom\", open = false) {\n    return `${cleanId(baseId)}[facing=${facing},half=${half},open=${open}]`;\n  }\n\n  // 3D Voxel Grid\n  const grid = new Array(W);\n  for (let x = 0; x < W; x++) {\n    grid[x] = new Array(H);\n    for (let y = 0; y < H; y++) {\n      grid[x][y] = new Array(D).fill(null);\n    }\n  }\n\n  function set(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      grid[x][y][z] = block;\n    }\n  }\n\n  function get(x, y, z) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      return grid[x][y][z];\n    }\n    return null;\n  }\n\n  // --- 1. Terrain Height Map & Conforming Bedrock Foundation ---\n  const groundHeights = new Array(W);\n  for (let x = 0; x < W; x++) {\n    groundHeights[x] = new Array(D);\n    for (let z = 0; z < D; z++) {\n      const hLocal = api.heightAt(x, z);\n      const gy = Math.max(1, Math.min(8, Math.round(seatY + hLocal)));\n      groundHeights[x][z] = gy;\n\n      // Fill base foundation below ground\n      for (let y = 0; y <= gy; y++) {\n        let b = rawGroundPlinth;\n        const r = api.random();\n        if (y === gy) {\n          b = r < 0.45 ? rawGroundBank : (r < 0.8 ? \"minecraft:coarse_dirt\" : rawStonePrimary);\n        } else if (y >= gy - 2) {\n          b = r < 0.5 ? rawStonePrimary : (r < 0.8 ? \"minecraft:granite\" : rawGroundPlinth);\n        } else {\n          b = r < 0.4 ? rawGroundPlinth : (r < 0.7 ? \"minecraft:tuff\" : \"minecraft:granite\");\n        }\n        set(x, y, z, b);\n      }\n    }\n  }\n\n  // --- 2. Excavate the Open-Cast Tin Trench ---\n  function getTrenchTargetHeight(x, z, gy) {\n    const dx = (x - 12) / 6.2;\n    const dz = (z - 12) / 6.2;\n    const angle = Math.atan2(dz, dx);\n    const wobble = 0.12 * Math.sin(angle * 3) + 0.08 * Math.cos(angle * 4);\n    const r = Math.sqrt(dx * dx + dz * dz) + wobble;\n\n    if (r > 1.05) {\n      return gy; // Outside trench rim\n    } else if (r > 0.72) {\n      return Math.min(gy, 3); // Upper excavation terrace\n    } else if (r > 0.42) {\n      return Math.min(gy, 2); // Middle working bench\n    } else {\n      return 1; // Deep cassiterite ore sump\n    }\n  }\n\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const gy = groundHeights[x][z];\n      const targetH = getTrenchTargetHeight(x, z, gy);\n\n      if (targetH < gy) {\n        // Hollow out air above trench floor\n        for (let y = targetH + 1; y < H; y++) {\n          set(x, y, z, \"minecraft:air\");\n        }\n        // Texture quarry floor and exposed ore\n        for (let y = 0; y <= targetH; y++) {\n          let b = rawGroundPlinth;\n          const r = api.random();\n          if (y === targetH) {\n            if (r < 0.28) b = \"minecraft:granite\";\n            else if (r < 0.50) b = rawStonePrimary;\n            else if (r < 0.70) b = \"minecraft:coarse_dirt\";\n            else if (r < 0.85) b = \"minecraft:raw_copper_block\"; // Cassiterite / tin ore\n            else b = \"minecraft:raw_iron_block\";\n          } else {\n            b = r < 0.4 ? rawGroundPlinth : (r < 0.7 ? \"minecraft:granite\" : rawStonePrimary);\n          }\n          set(x, y, z, b);\n        }\n      }\n    }\n  }\n\n  // --- 3. Timber Shoring & Wall Revetments ---\n  const shoringPostPositions = [\n    [7, 7], [10, 7], [13, 7], [16, 7],\n    [7, 10], [7, 13], [7, 16],\n    [10, 17], [13, 17], [16, 17],\n    [17, 10], [17, 13], [17, 16]\n  ];\n\n  for (const [px, pz] of shoringPostPositions) {\n    const gy = groundHeights[px][pz];\n    const floorY = getTrenchTargetHeight(px, pz, gy);\n    const postTop = Math.max(5, gy + 1);\n    for (let y = Math.max(1, floorY); y <= postTop; y++) {\n      set(px, y, pz, logBlock(rawWoodLog, \"y\"));\n    }\n  }\n\n  // Horizontal waler beams bracing the shoring posts\n  for (let x = 7; x <= 16; x++) {\n    set(x, 3, 7, logBlock(rawWoodStripped, \"x\"));\n    set(x, 4, 7, logBlock(rawWoodStripped, \"x\"));\n    set(x, 3, 17, logBlock(rawWoodStripped, \"x\"));\n    set(x, 4, 17, logBlock(rawWoodStripped, \"x\"));\n  }\n  for (let z = 7; z <= 17; z++) {\n    set(7, 3, z, logBlock(rawWoodStripped, \"z\"));\n    set(7, 4, z, logBlock(rawWoodStripped, \"z\"));\n    set(17, 3, z, logBlock(rawWoodStripped, \"z\"));\n    set(17, 4, z, logBlock(rawWoodStripped, \"z\"));\n  }\n\n  // Timber plank revetments behind the shoring posts\n  for (let x = 8; x <= 15; x++) {\n    for (let y = 2; y <= 4; y++) {\n      if (get(x, y, 6) === \"minecraft:air\" || get(x, y, 6) === null) {\n        set(x, y, 6, (x % 2 === 0) ? rawWoodPlanks : slabBlock(rawWoodSlab, \"double\"));\n      }\n      if (get(x, y, 18) === \"minecraft:air\" || get(x, y, 18) === null) {\n        set(x, y, 18, (x % 2 === 0) ? rawWoodPlanks : rawStoneWall);\n      }\n    }\n  }\n  for (let z = 8; z <= 15; z++) {\n    for (let y = 2; y <= 4; y++) {\n      if (get(6, y, z) === \"minecraft:air\" || get(6, y, z) === null) {\n        set(6, y, z, (z % 2 === 0) ? rawWoodPlanks : slabBlock(rawWoodSlab, \"double\"));\n      }\n      if (get(18, y, z) === \"minecraft:air\" || get(18, y, z) === null) {\n        set(18, y, z, (z % 2 === 0) ? rawWoodPlanks : rawStoneWall);\n      }\n    }\n  }\n\n  // Diagonal raking props bracing the cut walls\n  set(9, 2, 9, rawStonePrimary);\n  set(8, 3, 8, rawWoodFence);\n  set(15, 2, 9, rawStonePrimary);\n  set(15, 3, 8, rawWoodFence);\n  set(9, 2, 15, rawStonePrimary);\n  set(8, 3, 16, rawWoodFence);\n  set(15, 2, 15, rawStonePrimary);\n  set(16, 3, 16, rawWoodFence);\n\n  // --- 4. Gravel Spoil Mounds (Waste Tailings Heaps) ---\n  // East Spoil Mound\n  for (let x = 15; x <= 21; x++) {\n    for (let z = 5; z <= 14; z++) {\n      const dEast = Math.hypot((x - 19) / 3.8, (z - 9) / 4.2);\n      if (dEast <= 1.0) {\n        const moundH = Math.min(9, Math.round(9 - dEast * 5 + (api.random() * 0.6 - 0.3)));\n        const gy = groundHeights[x][z];\n        const startY = Math.max(1, Math.min(moundH, gy));\n        for (let y = startY; y <= moundH; y++) {\n          if (y < moundH - 1) {\n            set(x, y, z, rawStonePrimary);\n          } else if (y === moundH - 1) {\n            const r = api.random();\n            set(x, y, z, r < 0.5 ? rawStonePrimary : \"minecraft:coarse_dirt\");\n          } else {\n            const r = api.random();\n            set(x, y, z, r < 0.5 ? rawGroundScree : (r < 0.8 ? \"minecraft:coarse_dirt\" : \"minecraft:granite\"));\n          }\n        }\n      }\n    }\n  }\n\n  // Northwest Spoil Mound\n  for (let x = 1; x <= 6; x++) {\n    for (let z = 1; z <= 5; z++) {\n      const dNW = Math.hypot((x - 4) / 3.0, (z - 3) / 2.6);\n      if (dNW <= 1.0) {\n        const moundH = Math.min(7, Math.round(7 - dNW * 3.5 + (api.random() * 0.5 - 0.2)));\n        const gy = groundHeights[x][z];\n        const startY = Math.max(1, Math.min(moundH, gy));\n        for (let y = startY; y <= moundH; y++) {\n          if (y < moundH - 1) {\n            set(x, y, z, rawStonePrimary);\n          } else {\n            const r = api.random();\n            set(x, y, z, r < 0.55 ? rawGroundScree : \"minecraft:coarse_dirt\");\n          }\n        }\n      }\n    }\n  }\n\n  // --- 5. Ore Washing Sluice (Stream Tin Flume) ---\n  const sluicePath = [\n    { x: 4, z: 6, y: 5 }, { x: 4, z: 7, y: 5 }, { x: 4, z: 8, y: 5 },\n    { x: 5, z: 9, y: 4 }, { x: 5, z: 10, y: 4 }, { x: 5, z: 11, y: 4 },\n    { x: 6, z: 12, y: 3 }, { x: 6, z: 13, y: 3 }, { x: 6, z: 14, y: 3 }\n  ];\n\n  for (const seg of sluicePath) {\n    // Trestle legs to ground\n    const gy = groundHeights[seg.x][seg.z];\n    const targetH = getTrenchTargetHeight(seg.x, seg.z, gy);\n    for (let y = Math.max(1, targetH); y < seg.y; y++) {\n      set(seg.x, y, seg.z, rawWoodFence);\n    }\n\n    // Flume bottom\n    set(seg.x, seg.y, seg.z, rawWoodPlanks);\n\n    // Channel wash contents (frozen stream ice, gravel & raw tin ore)\n    const r = api.random();\n    const washBlock = r < 0.4 ? \"minecraft:packed_ice\" : (r < 0.7 ? \"minecraft:gravel\" : \"minecraft:raw_copper_block\");\n    set(seg.x, seg.y + 1, seg.z, washBlock);\n\n    // Flume wooden sides\n    set(seg.x - 1, seg.y + 1, seg.z, trapdoorBlock(rawWoodTrapdoor, \"east\", \"bottom\", true));\n    set(seg.x + 1, seg.y + 1, seg.z, trapdoorBlock(rawWoodTrapdoor, \"west\", \"bottom\", true));\n  }\n\n  // Sluice settling vat / buddle basin at the flume discharge\n  set(6, 1, 15, rawStonePrimary);\n  set(6, 2, 15, \"minecraft:cauldron\");\n  set(5, 2, 15, rawStoneWall);\n  set(7, 2, 15, rawStoneWall);\n  set(6, 2, 16, slabBlock(rawStoneSlab, \"bottom\"));\n\n  // --- 6. Bronze Age Pithead Hoist / Tripod Derrick ---\n  // Tripod Apex at (12, 10, 13)\n  set(12, 10, 13, logBlock(rawWoodLog, \"y\"));\n\n  // Leg 1 (North-West)\n  const leg1Coords = [\n    [10, 2, 11], [10, 3, 11], [11, 4, 12], [11, 5, 12],\n    [11, 6, 12], [11, 7, 12], [12, 8, 13], [12, 9, 13]\n  ];\n  for (const [lx, ly, lz] of leg1Coords) {\n    set(lx, ly, lz, rawWoodFence);\n  }\n  set(10, 1, 11, rawStonePrimary);\n\n  // Leg 2 (North-East)\n  const leg2Coords = [\n    [14, 2, 11], [14, 3, 11], [13, 4, 12], [13, 5, 12],\n    [13, 6, 12], [13, 7, 12], [12, 8, 13], [12, 9, 13]\n  ];\n  for (const [lx, ly, lz] of leg2Coords) {\n    set(lx, ly, lz, rawWoodFence);\n  }\n  set(14, 1, 11, rawStonePrimary);\n\n  // Leg 3 (South)\n  const leg3Coords = [\n    [12, 2, 16], [12, 3, 16], [12, 4, 15], [12, 5, 15],\n    [12, 6, 14], [12, 7, 14], [12, 8, 13], [12, 9, 13]\n  ];\n  for (const [lx, ly, lz] of leg3Coords) {\n    set(lx, ly, lz, rawWoodFence);\n  }\n  set(12, 1, 16, rawStonePrimary);\n\n  // Cross lashings\n  set(11, 5, 12, logBlock(rawWoodStripped, \"x\"));\n  set(12, 5, 12, logBlock(rawWoodStripped, \"x\"));\n  set(13, 5, 12, logBlock(rawWoodStripped, \"x\"));\n  set(12, 5, 13, rawWoodFence);\n  set(12, 5, 14, rawWoodFence);\n\n  // Hanging chain & suspended ore basket\n  for (let y = 5; y <= 9; y++) {\n    set(12, y, 13, \"minecraft:chain[axis=y]\");\n  }\n  set(12, 4, 13, \"minecraft:cauldron\");\n\n  // Winch windlass on the bench\n  set(10, 3, 12, logBlock(rawWoodStripped, \"z\"));\n  set(9, 3, 12, rawWoodFence);\n\n  // --- 7. Miners' Lean-To Tool Shelter & Warming Hearth ---\n  // Floor at y = 4 (for x in 8..14, z in 1..5)\n  for (let x = 8; x <= 14; x++) {\n    for (let z = 1; z <= 5; z++) {\n      for (let y = 0; y <= 4; y++) {\n        const r = api.random();\n        set(x, y, z, r < 0.5 ? rawWoodPlanks : rawStonePrimary);\n      }\n      // Clear interior space\n      for (let y = 5; y <= 7; y++) {\n        set(x, y, z, \"minecraft:air\");\n      }\n    }\n  }\n\n  // Shelter upright posts\n  for (let y = 4; y <= 8; y++) {\n    set(8, y, 1, logBlock(rawWoodLog, \"y\"));\n    set(14, y, 1, logBlock(rawWoodLog, \"y\"));\n  }\n  for (let y = 4; y <= 6; y++) {\n    set(8, y, 5, logBlock(rawWoodLog, \"y\"));\n    set(14, y, 5, logBlock(rawWoodLog, \"y\"));\n  }\n\n  // Shelter roof beams\n  for (let x = 8; x <= 14; x++) {\n    set(x, 8, 1, logBlock(rawWoodLog, \"x\"));\n    set(x, 6, 5, logBlock(rawWoodLog, \"x\"));\n  }\n  for (let z = 1; z <= 5; z++) {\n    const beamY = Math.round(8 - ((z - 1) / 4) * 2);\n    set(8, beamY, z, rawWoodFence);\n    set(14, beamY, z, rawWoodFence);\n  }\n\n  // Shed roof covering (sloping from y=8 down to y=6)\n  for (let x = 7; x <= 15; x++) {\n    set(x, 8, 0, slabBlock(rawRoofSlab, \"top\"));\n    set(x, 8, 1, rawRoofSolid);\n    set(x, 8, 2, stairsBlock(rawRoofStairs, \"south\", \"bottom\"));\n    set(x, 7, 3, rawRoofSolid);\n    set(x, 7, 4, stairsBlock(rawRoofStairs, \"south\", \"bottom\"));\n    set(x, 6, 5, rawRoofSolid);\n    set(x, 6, 6, slabBlock(rawRoofSlab, \"bottom\"));\n  }\n\n  // Back wall\n  for (let x = 9; x <= 13; x++) {\n    for (let y = 5; y <= 7; y++) {\n      set(x, y, 1, rawWoodPlanks);\n    }\n  }\n\n  // Warming Hearth for thawing frozen ground\n  set(12, 4, 2, rawStonePrimary);\n  set(12, 5, 2, \"minecraft:campfire[lit=true]\");\n  set(11, 5, 2, rawStoneWall);\n  set(13, 5, 2, rawStoneWall);\n  set(12, 5, 1, rawStoneWall);\n\n  // Miners' tool bench & ore storage bins\n  set(9, 5, 2, rawStonePrimary);\n  set(9, 6, 2, slabBlock(rawStoneSlab, \"bottom\"));\n  set(10, 5, 2, \"minecraft:raw_copper_block\");\n  set(10, 5, 3, \"minecraft:raw_iron_block\");\n  set(9, 5, 4, rawWoodPlanks);\n\n  // Hanging lantern under ridge beam\n  set(11, 7, 3, \"minecraft:lantern[hanging=true]\");\n\n  // --- 8. Ladders & Log Haulage Skid Ramp ---\n  // Sump ladder (from y=2 to y=4 at shoring post 7, y, 10)\n  for (let y = 2; y <= 4; y++) {\n    set(7, y, 10, logBlock(rawWoodLog, \"y\"));\n    set(8, y, 10, \"minecraft:ladder[facing=east]\");\n  }\n\n  // Terrace ladder (from y=3 to y=5 at shoring post 11, y, 17)\n  for (let y = 3; y <= 5; y++) {\n    set(11, y, 17, logBlock(rawWoodLog, \"y\"));\n    set(11, y, 16, \"minecraft:ladder[facing=north]\");\n  }\n\n  // Timber haulage skid ramp along southeast slope\n  set(14, 1, 15, rawStonePrimary);\n  set(14, 2, 15, logBlock(rawWoodStripped, \"x\"));\n  set(15, 2, 16, rawStonePrimary);\n  set(15, 3, 16, logBlock(rawWoodStripped, \"x\"));\n  set(16, 3, 17, rawStonePrimary);\n  set(16, 4, 17, logBlock(rawWoodStripped, \"x\"));\n  set(17, 4, 18, rawStonePrimary);\n  set(17, 5, 18, logBlock(rawWoodStripped, \"x\"));\n\n  // Skid guide fences\n  set(13, 3, 15, rawWoodFence);\n  set(14, 4, 16, rawWoodFence);\n  set(15, 5, 17, rawWoodFence);\n\n  // --- 9. Rich Tin Ore Lodes & Drainage Sump ---\n  // Exposed cassiterite nuggets in pit floor\n  set(12, 1, 12, \"minecraft:raw_copper_block\");\n  set(13, 1, 12, \"minecraft:raw_copper_block\");\n  set(13, 1, 13, \"minecraft:raw_iron_block\");\n  set(14, 1, 14, \"minecraft:granite\");\n  set(11, 1, 14, \"minecraft:granite\");\n\n  // Frozen drainage water pool in lowest corner\n  set(14, 1, 15, \"minecraft:packed_ice\");\n  set(15, 1, 15, \"minecraft:packed_ice\");\n  set(15, 1, 14, \"minecraft:packed_ice\");\n\n  // --- 10. Midwinter Tundra Snow Layering Pass ---\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      // Find top solid block\n      let topY = -1;\n      for (let y = H - 1; y >= 0; y--) {\n        const b = get(x, y, z);\n        if (b !== null && b !== \"minecraft:air\") {\n          topY = y;\n          break;\n        }\n      }\n\n      if (topY >= 1 && topY < H - 1) {\n        const topBlock = get(x, topY, z);\n        const isSheltered = (x >= 8 && x <= 14 && z >= 1 && z <= 5 && topY < 8);\n        const isNearHearth = Math.hypot(x - 12, z - 2) <= 2.2;\n        const isDeepPitFloor = (topY <= 2 && x >= 11 && x <= 15 && z >= 11 && z <= 15);\n\n        // Place snow if top block is solid and exposed\n        const isSolidBase = !topBlock.includes(\"fence\") &&\n                            !topBlock.includes(\"ladder\") &&\n                            !topBlock.includes(\"lantern\") &&\n                            !topBlock.includes(\"campfire\") &&\n                            !topBlock.includes(\"chain\") &&\n                            !topBlock.includes(\"cauldron\");\n\n        if (!isSheltered && !isNearHearth && !isDeepPitFloor && isSolidBase) {\n          if (topY >= 7 && (x >= 16 || x <= 5)) {\n            set(x, topY + 1, z, \"minecraft:snow[layers=2]\");\n          } else {\n            set(x, topY + 1, z, \"minecraft:snow[layers=1]\");\n          }\n        }\n      }\n    }\n  }\n\n  // --- 11. Physics Lint Pass (No Floating Gravity Blocks) ---\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      for (let y = 1; y < H; y++) {\n        const b = get(x, y, z);\n        if (b === rawGroundScree || b === \"minecraft:gravel\") {\n          const below = get(x, y - 1, z);\n          if (below === null || below === \"minecraft:air\") {\n            set(x, y - 1, z, rawStonePrimary);\n          }\n        }\n      }\n    }\n  }\n\n  // --- 12. Deterministic Output Emission ---\n  for (let y = 0; y < H; y++) {\n    for (let z = 0; z < D; z++) {\n      for (let x = 0; x < W; x++) {\n        const b = grid[x][y][z];\n        if (b !== null && b !== \"minecraft:air\") {\n          api.set(x, y, z, b);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"tin_ore_pit\",\n    seatY: seatY,\n    anchors: {\n      front: [11, seatY, 0],\n      door: [11, seatY, 0]\n    },\n    interiors: [\n      {\n        min: [9, 5, 2],\n        max: [13, 7, 4],\n        kind: \"quarters\"\n      }\n    ]\n  };\n}"
+    }
+  }
+}

@@ -1,0 +1,699 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "yamazato_bonsho",
+    "worldSeed": "905",
+    "prompt": "A feudal Japanese hill village of terraced paddies, with a great bronze temple bell in its own pavilion on the ridge above, rung at dusk.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.4,
+    "decline": 0.1,
+    "formality": 0.2,
+    "climate": {
+      "temperature": 0.2,
+      "humidity": 0.5,
+      "snow": "auto"
+    },
+    "character": {
+      "label": "feudal Japanese terraced hill village",
+      "materialTheme": "temperate_timber",
+      "formPacks": [
+        "feudal_japanese"
+      ],
+      "archetypes": {
+        "prefer": [
+          "cottage",
+          "shrine",
+          "rice_store",
+          "tea_room",
+          "watchtower"
+        ],
+        "forbid": [
+          "townhouse",
+          "terraced_row",
+          "shop_row",
+          "office",
+          "apartment_block"
+        ]
+      },
+      "urbanForm": "hillside",
+      "ground": "stepped",
+      "motifs": {
+        "roofType": "hip",
+        "massing": "stepped"
+      },
+      "programs": [
+        {
+          "id": "bell_pavilion",
+          "mode": "landmark",
+          "brief": "A monumental open-sided Japanese temple bell pavilion (shōrō) on a stepped stone plinth, with massive dark cedar corner columns, intricate bracket complexes (dougong), and a sweeping hipped tile roof with flared eaves. Suspended from the heavy central beam is a massive cast bronze temple bell (bonshō) with lotus reliefs and a horizontal suspended log striker (shumoku) hung on ropes beside it.",
+          "envelope": [
+            17,
+            18,
+            17
+          ]
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "a steep terraced hillside rising from a valley to a high ridge above",
+      "icons": "a great bronze temple bell housed in an open-sided timber pavilion on the high ridge overlooking the village; flooded stepped rice paddies with stone and clay retaining bunds stepped down the slope",
+      "infra": "paddy_bunds terraced down the slopes around the settlement; stone_stairway climbing the hillside to the ridge bell pavilion"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:dirt_path",
+      "road.shoulder": "minecraft:gravel"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "hillside terrain sloping from high northern ridges down to a southern valley",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 74,
+          "amplitude": 36,
+          "octaves": 5,
+          "frequency": 0.0035,
+          "gain": 0.5,
+          "erosionPasses": 2,
+          "cliffThreshold": 55,
+          "soilDepth": 4,
+          "beachWidth": 4,
+          "snowLineFraction": 0.92
+        },
+        "children": [
+          {
+            "id": "high_temple_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the high mountain ridge overlooking the settlement from the north",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.12,
+                  0.18
+                ],
+                [
+                  0.48,
+                  0.15
+                ],
+                [
+                  0.88,
+                  0.2
+                ]
+              ],
+              "width": 75,
+              "height": 48,
+              "profile": "rounded",
+              "meander": 0.35
+            }
+          },
+          {
+            "id": "bell_promontory",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the spur on the ridge where the bell pavilion stands",
+            "params": {
+              "verb": "peak",
+              "at": [
+                0.5,
+                0.22
+              ],
+              "radius": 46,
+              "height": 28,
+              "profile": "rounded",
+              "irregularity": 0.15
+            }
+          },
+          {
+            "id": "village_hill_slope",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the broad terrace shelf supporting the hillside village",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.48
+              ],
+              "radius": 110,
+              "height": 14,
+              "rim": 6,
+              "profile": "rounded",
+              "irregularity": 0.2
+            }
+          },
+          {
+            "id": "lower_paddy_valley",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the gentle valley bottom in the south for agricultural paddies",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.1,
+                  0.8
+                ],
+                [
+                  0.5,
+                  0.84
+                ],
+                [
+                  0.9,
+                  0.78
+                ]
+              ],
+              "width": 64,
+              "depth": 14,
+              "profile": "rounded",
+              "meander": 0.45,
+              "flooded": "never"
+            }
+          },
+          {
+            "id": "valley_brook",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the mountain stream gully descending to the lower paddies",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.22,
+                  0.3
+                ],
+                [
+                  0.32,
+                  0.54
+                ],
+                [
+                  0.48,
+                  0.82
+                ]
+              ],
+              "width": 8,
+              "depth": 4,
+              "profile": "rounded",
+              "meander": 0.5,
+              "flooded": "never"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0014,
+          "humidityFrequency": 0.0016
+        }
+      },
+      {
+        "id": "village_district",
+        "kind": "district",
+        "label": "the terraced feudal Japanese hillside village",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            160,
+            140
+          ]
+        },
+        "params": {
+          "fabric": "hillside",
+          "density": "medium",
+          "mix": [
+            "machiya",
+            "tea_house",
+            "cottage",
+            "granary",
+            "smithy",
+            "bathhouse"
+          ],
+          "ground": "stepped",
+          "courtyards": 0.3,
+          "blockSize": 36
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          }
+        ],
+        "tags": [
+          "village",
+          "settlement"
+        ],
+        "children": [
+          {
+            "id": "village_pagoda",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the tiered pagoda above the village lanes",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                11,
+                18,
+                11
+              ]
+            },
+            "params": {
+              "archetype": "pagoda",
+              "floors": 2
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "temple"
+            ]
+          },
+          {
+            "id": "prominent_teahouse",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the tea house overlooking the valley paddies",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                11,
+                13
+              ]
+            },
+            "params": {
+              "archetype": "tea_house",
+              "floors": 1
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "trade",
+              "landmark"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "temple_bell_pavilion",
+        "kind": "generator",
+        "generator": "authored:bell_pavilion",
+        "label": "the great bronze temple bell in its timber pavilion on the high ridge",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            17,
+            18,
+            17
+          ]
+        },
+        "params": {
+          "seat": "pad",
+          "face": {
+            "toward": "village_district"
+          }
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "distance": "village_district",
+            "min": 24,
+            "max": 80,
+            "strength": "soft"
+          }
+        ],
+        "tags": [
+          "landmark",
+          "temple",
+          "monument"
+        ]
+      },
+      {
+        "id": "paddy_holding_west",
+        "kind": "generator",
+        "generator": "precinct.farm@0",
+        "label": "the terraced rice paddies to the southwest",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            112,
+            96
+          ]
+        },
+        "params": {
+          "parcels": 6,
+          "parcelSize": 16,
+          "crops": [
+            "wheat",
+            "pasture"
+          ],
+          "edge": "wall"
+        },
+        "constraints": [
+          {
+            "zone": "southwest"
+          },
+          {
+            "distance": "village_district",
+            "min": 8,
+            "max": 44,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "gate": {
+            "type": "road_stub",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "farm",
+          "precinct",
+          "rural"
+        ]
+      },
+      {
+        "id": "paddy_holding_east",
+        "kind": "generator",
+        "generator": "precinct.farm@0",
+        "label": "the terraced rice paddies to the southeast",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            112,
+            96
+          ]
+        },
+        "params": {
+          "parcels": 6,
+          "parcelSize": 16,
+          "crops": [
+            "wheat",
+            "pasture"
+          ],
+          "edge": "wall"
+        },
+        "constraints": [
+          {
+            "zone": "southeast"
+          },
+          {
+            "distance": "village_district",
+            "min": 8,
+            "max": 44,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "gate": {
+            "type": "road_stub",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "farm",
+          "precinct",
+          "rural"
+        ]
+      },
+      {
+        "id": "lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "mountain paths and stone stairways connecting the village, paddies, and ridge bell pavilion",
+        "params": {
+          "anchors": [
+            "village_district",
+            "temple_bell_pavilion",
+            "paddy_holding_west",
+            "paddy_holding_east",
+            "#tag:temple"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 14
+        }
+      },
+      {
+        "id": "west_paddy_bund",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "dry stone retaining wall bounding the western terrace holding",
+        "params": {
+          "entry": "dry_stone_wall",
+          "route": {
+            "ring": "paddy_holding_west",
+            "margin": 4
+          }
+        }
+      },
+      {
+        "id": "east_paddy_bund",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "dry stone retaining wall bounding the eastern terrace holding",
+        "params": {
+          "entry": "dry_stone_wall",
+          "route": {
+            "ring": "paddy_holding_east",
+            "margin": 4
+          }
+        }
+      },
+      {
+        "id": "village_cart_track",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "rutted cart track worn into the slope alongside the lower way",
+        "params": {
+          "entry": "cart_track",
+          "route": {
+            "along": "lanes",
+            "offset": 2,
+            "side": "left"
+          }
+        }
+      },
+      {
+        "id": "ridge_path_cairn",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a wayside stone cairn marking the ascent to the temple bell",
+        "params": {
+          "prop": "cairn",
+          "zone": "north",
+          "jitter": 0.15
+        }
+      },
+      {
+        "id": "village_well",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a communal covered well on the village terrace",
+        "params": {
+          "prop": "well_head",
+          "zone": "center",
+          "jitter": 0.12
+        }
+      },
+      {
+        "id": "ridge_view_bench",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a resting bench overlooking the valley from the ridge",
+        "params": {
+          "prop": "bench",
+          "zone": "north",
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "paddy_scarecrow",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a scarecrow guarding the terraced paddies",
+        "params": {
+          "prop": "scarecrow",
+          "zone": "south",
+          "jitter": 0.25
+        }
+      },
+      {
+        "id": "slope_cedars_cherries",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "dense Japanese cedars, ancient pines, and cherry blossom groves across the mountain slopes",
+        "params": {
+          "area": {
+            "at": [
+              0.5,
+              0.35
+            ],
+            "radius": 190
+          },
+          "density": 0.16,
+          "spacing": 3,
+          "clumping": 0.5,
+          "maxSlope": 34,
+          "elevation": [
+            4,
+            110
+          ],
+          "edgeFalloff": 18,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "undergrowth": {
+            "grass": 0.4,
+            "flowers": 0.08,
+            "deadwood": 0.03
+          },
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "ancient_pine",
+                  "shape": "spruce_ancient"
+                }
+              ]
+            },
+            "understory": {
+              "species": [
+                {
+                  "id": "hazel",
+                  "shape": "hazel_shrub"
+                },
+                {
+                  "id": "juniper",
+                  "shape": "juniper_scrub"
+                }
+              ],
+              "density": 0.08
+            },
+            "floor": "default"
+          },
+          "species": [
+            {
+              "id": "mountain_cedar",
+              "shape": "spruce_tall",
+              "weight": 3
+            },
+            {
+              "id": "cherry_blossom",
+              "shape": "cherry_blossom",
+              "weight": 2
+            },
+            {
+              "id": "valley_willow",
+              "shape": "willow_weeping",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "wilderness_cover",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse background mountain timber across the wider highlands",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 4,
+          "clumping": 0.4,
+          "maxSlope": 38,
+          "elevation": [
+            2,
+            120
+          ],
+          "edgeFalloff": 12,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "species": [
+            {
+              "id": "wild_pine",
+              "shape": "spruce_tall",
+              "weight": 2
+            },
+            {
+              "id": "wild_oak",
+              "shape": "oak_round",
+              "weight": 1
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "programs": {
+    "bell_pavilion": {
+      "mode": "landmark",
+      "envelope": [
+        19,
+        18,
+        19
+      ],
+      "sourceHash": "b3:a68992e9318b070e182728fb9aa1bde3dea3d72ad8df26182783bf6b8ac1b1da",
+      "outputHash": "b3:9152beffe261a8a543af87565eda9bbfccd3e72cd8524bec7e1cc4b56de429a8",
+      "conforms": false,
+      "conformHash": "b3:115cfd1ad7f2e5146fd6c4edf0a744a3b451eca73f518032b8ba0f2d43a19d92",
+      "source": "export const envelope = [19, 18, 19];\n\nexport default function build(api) {\n  // Helper to strip existing block states\n  function getBase(blockStr) {\n    if (!blockStr) return \"minecraft:stone\";\n    const idx = blockStr.indexOf(\"[\");\n    return idx === -1 ? blockStr : blockStr.substring(0, idx);\n  }\n\n  // Safe theme extraction with thematic Japanese timber temple fallbacks\n  const woodPlanks = api.theme?.wood?.planks || \"minecraft:dark_oak_planks\";\n  const woodLog = api.theme?.wood?.log || \"minecraft:dark_oak_log\";\n  const woodStripped = api.theme?.wood?.stripped || \"minecraft:stripped_dark_oak_log\";\n  const woodStairs = api.theme?.wood?.stairs || \"minecraft:dark_oak_stairs\";\n  const woodSlab = api.theme?.wood?.slab || \"minecraft:dark_oak_slab\";\n  const woodFence = api.theme?.wood?.fence || \"minecraft:dark_oak_fence\";\n  const woodTrapdoor = api.theme?.wood?.trapdoor || \"minecraft:dark_oak_trapdoor\";\n\n  const stonePrimary = api.theme?.stone?.primary || \"minecraft:stone_bricks\";\n  const stoneAccent = api.theme?.stone?.accent || \"minecraft:mossy_stone_bricks\";\n  const stoneStairs = api.theme?.stone?.stairs || \"minecraft:stone_brick_stairs\";\n  const stoneSlab = api.theme?.stone?.slab || \"minecraft:stone_brick_slab\";\n  const stoneWall = api.theme?.stone?.wall || \"minecraft:stone_brick_wall\";\n\n  const roofSolid = api.theme?.roof?.solid || \"minecraft:deepslate_tiles\";\n  const roofStairs = api.theme?.roof?.stairs || \"minecraft:deepslate_tile_stairs\";\n  const roofSlab = api.theme?.roof?.slab || \"minecraft:deepslate_tile_slab\";\n\n  // Block builders\n  function stair(baseStr, facing, half = \"bottom\", shape = null) {\n    const base = getBase(baseStr);\n    let state = `facing=${facing},half=${half}`;\n    if (shape) state += `,shape=${shape}`;\n    return `${base}[${state}]`;\n  }\n\n  function slab(baseStr, type = \"bottom\") {\n    const base = getBase(baseStr);\n    return `${base}[type=${type}]`;\n  }\n\n  function log(baseStr, axis = \"y\") {\n    const base = getBase(baseStr);\n    return `${base}[axis=${axis}]`;\n  }\n\n  function trapdoor(baseStr, facing = \"north\", half = \"bottom\", open = false) {\n    const base = getBase(baseStr);\n    return `${base}[facing=${facing},half=${half},open=${open}]`;\n  }\n\n  function fence(baseStr) {\n    return getBase(baseStr);\n  }\n\n  // --- 1. GROUND CONFORMANCE & FOUNDATION PLINTH (Rule 6) ---\n  for (let x = 0; x < 19; x++) {\n    for (let z = 0; z < 19; z++) {\n      const isPlinth = x >= 3 && x <= 15 && z >= 3 && z <= 15;\n      const isSteps = x >= 8 && x <= 10 && z >= 1 && z <= 2;\n      const isApron = x >= 2 && x <= 16 && z >= 2 && z <= 16 && !isPlinth && !isSteps;\n\n      const groundY = Math.round(api.heightAt(x, z));\n\n      if (isPlinth) {\n        const minY = Math.min(0, groundY);\n        for (let y = minY; y <= 0; y++) {\n          const mat = api.random() < 0.2 ? stoneAccent : stonePrimary;\n          api.set(x, y, z, mat);\n        }\n      } else if (isSteps) {\n        const minY = Math.min(0, groundY);\n        for (let y = minY; y <= 0; y++) {\n          api.set(x, y, z, stonePrimary);\n        }\n      } else if (isApron && groundY < 0) {\n        for (let y = groundY; y <= 0; y++) {\n          api.set(x, y, z, stonePrimary);\n        }\n      }\n    }\n  }\n\n  // --- 2. STEPPED STONE BASE (Kidan) ---\n  // Level 0: Outer perimeter of main plinth (x: 3..15, z: 3..15)\n  for (let x = 3; x <= 15; x++) {\n    for (let z = 3; z <= 15; z++) {\n      if (z === 3 && (x < 8 || x > 10)) {\n        api.set(x, 0, z, stair(stoneStairs, \"north\"));\n      } else if (z === 15) {\n        api.set(x, 0, z, stair(stoneStairs, \"south\"));\n      } else if (x === 3) {\n        api.set(x, 0, z, stair(stoneStairs, \"west\"));\n      } else if (x === 15) {\n        api.set(x, 0, z, stair(stoneStairs, \"east\"));\n      } else {\n        api.set(x, 0, z, (x + z) % 5 === 0 ? stoneAccent : stonePrimary);\n      }\n    }\n  }\n  // North entrance steps at y = 0\n  for (let x = 8; x <= 10; x++) {\n    api.set(x, 0, 1, stair(stoneStairs, \"north\"));\n    api.set(x, 0, 2, stonePrimary);\n  }\n\n  // Level 1: Middle stone tier (x: 4..14, z: 4..14)\n  for (let x = 4; x <= 14; x++) {\n    for (let z = 4; z <= 14; z++) {\n      if (z === 4 && (x < 8 || x > 10)) {\n        api.set(x, 1, z, stair(stoneStairs, \"north\"));\n      } else if (z === 14) {\n        api.set(x, 1, z, stair(stoneStairs, \"south\"));\n      } else if (x === 4) {\n        api.set(x, 1, z, stair(stoneStairs, \"west\"));\n      } else if (x === 14) {\n        api.set(x, 1, z, stair(stoneStairs, \"east\"));\n      } else {\n        api.set(x, 1, z, stonePrimary);\n      }\n    }\n  }\n  // North entrance steps at y = 1\n  for (let x = 8; x <= 10; x++) {\n    api.set(x, 1, 2, stair(stoneStairs, \"north\"));\n    api.set(x, 1, 3, stonePrimary);\n  }\n\n  // Standing stone lanterns at entrance (x=6, z=2 and x=12, z=2)\n  for (const lx of [6, 12]) {\n    api.set(lx, 1, 2, stoneWall);\n    api.set(lx, 2, 2, \"minecraft:lantern[hanging=false]\");\n    api.set(lx, 3, 2, slab(stoneSlab, \"bottom\"));\n  }\n\n  // --- 3. TIMBER PLATFORM & FLOORING (y = 2) ---\n  for (let x = 5; x <= 13; x++) {\n    for (let z = 5; z <= 13; z++) {\n      const isPerimeter = x === 5 || x === 13 || z === 5 || z === 13;\n      if (isPerimeter) {\n        if (z === 5 && x >= 8 && x <= 10) {\n          api.set(x, 2, z, stair(woodStairs, \"north\"));\n        } else {\n          api.set(x, 2, z, log(woodLog, x === 5 || x === 13 ? \"z\" : \"x\"));\n        }\n      } else {\n        // Polished parquet floor\n        const axis = Math.floor(x / 2) % 2 === 0 ? \"x\" : \"z\";\n        api.set(x, 2, z, log(woodStripped, axis));\n      }\n    }\n  }\n\n  // Column plinth stones (Hashira-ishi) at y = 2\n  const pillars = [\n    [6, 6],\n    [12, 6],\n    [6, 12],\n    [12, 12],\n  ];\n  for (const [px, pz] of pillars) {\n    api.set(px, 2, pz, \"minecraft:chiseled_stone_bricks\");\n  }\n\n  // --- 4. CORNER PILLARS & BALUSTRADE (y = 3..8) ---\n  // Massive cedar corner posts\n  for (const [px, pz] of pillars) {\n    for (let y = 3; y <= 8; y++) {\n      api.set(px, y, pz, log(woodLog, \"y\"));\n    }\n  }\n\n  // Flared pillar bases at y = 3\n  api.set(5, 3, 6, stair(woodStairs, \"east\"));\n  api.set(7, 3, 6, stair(woodStairs, \"west\"));\n  api.set(6, 3, 7, stair(woodStairs, \"north\"));\n  api.set(11, 3, 6, stair(woodStairs, \"east\"));\n  api.set(13, 3, 6, stair(woodStairs, \"west\"));\n  api.set(12, 3, 7, stair(woodStairs, \"north\"));\n  api.set(5, 3, 12, stair(woodStairs, \"east\"));\n  api.set(7, 3, 12, stair(woodStairs, \"west\"));\n  api.set(6, 3, 11, stair(woodStairs, \"south\"));\n  api.set(11, 3, 12, stair(woodStairs, \"east\"));\n  api.set(13, 3, 12, stair(woodStairs, \"west\"));\n  api.set(12, 3, 11, stair(woodStairs, \"south\"));\n\n  // Low perimeter railing (Kouran) at y = 3\n  for (let z = 6; z <= 12; z++) {\n    api.set(5, 3, z, fence(woodFence));\n    api.set(13, 3, z, fence(woodFence));\n  }\n  for (let x = 6; x <= 12; x++) {\n    api.set(x, 3, 13, fence(woodFence));\n  }\n  api.set(5, 3, 5, fence(woodFence));\n  api.set(6, 3, 5, fence(woodFence));\n  api.set(7, 3, 5, fence(woodFence));\n  api.set(11, 3, 5, fence(woodFence));\n  api.set(12, 3, 5, fence(woodFence));\n  api.set(13, 3, 5, fence(woodFence));\n\n  // Mid-height Tie-Beams (Nuki) at y = 5\n  for (let x = 7; x <= 11; x++) {\n    api.set(x, 5, 6, log(woodStripped, \"x\"));\n    api.set(x, 5, 12, log(woodStripped, \"x\"));\n  }\n  for (let z = 7; z <= 11; z++) {\n    api.set(6, 5, z, log(woodStripped, \"z\"));\n    api.set(12, 5, z, log(woodStripped, \"z\"));\n  }\n  // Decorative brackets under mid-beams at y = 4\n  api.set(7, 4, 6, stair(woodStairs, \"west\", \"top\"));\n  api.set(11, 4, 6, stair(woodStairs, \"east\", \"top\"));\n  api.set(7, 4, 12, stair(woodStairs, \"west\", \"top\"));\n  api.set(11, 4, 12, stair(woodStairs, \"east\", \"top\"));\n  api.set(6, 4, 7, stair(woodStairs, \"north\", \"top\"));\n  api.set(6, 4, 11, stair(woodStairs, \"south\", \"top\"));\n  api.set(12, 4, 7, stair(woodStairs, \"north\", \"top\"));\n  api.set(12, 4, 11, stair(woodStairs, \"south\", \"top\"));\n\n  // --- 5. UPPER BEAMS & CENTRAL SUSPENSION FRAME (y = 8) ---\n  // Perimeter header beams with extended carved kibana ends (x: 5..13, z: 5..13)\n  for (let x = 5; x <= 13; x++) {\n    api.set(x, 8, 6, log(woodLog, \"x\"));\n    api.set(x, 8, 12, log(woodLog, \"x\"));\n  }\n  for (let z = 5; z <= 13; z++) {\n    api.set(6, 8, z, log(woodLog, \"z\"));\n    api.set(12, 8, z, log(woodLog, \"z\"));\n  }\n\n  // Central cruciform bell-bearing girder at y = 8\n  for (let x = 7; x <= 11; x++) {\n    api.set(x, 8, 9, log(woodLog, \"x\"));\n  }\n  for (let z = 7; z <= 11; z++) {\n    api.set(9, 8, z, log(woodLog, \"z\"));\n  }\n\n  // Support brackets under beam overhangs at y = 7\n  api.set(5, 7, 6, stair(woodStairs, \"east\", \"top\"));\n  api.set(13, 7, 6, stair(woodStairs, \"west\", \"top\"));\n  api.set(5, 7, 12, stair(woodStairs, \"east\", \"top\"));\n  api.set(13, 7, 12, stair(woodStairs, \"west\", \"top\"));\n  api.set(6, 7, 5, stair(woodStairs, \"south\", \"top\"));\n  api.set(6, 7, 13, stair(woodStairs, \"north\", \"top\"));\n  api.set(12, 7, 5, stair(woodStairs, \"south\", \"top\"));\n  api.set(12, 7, 13, stair(woodStairs, \"north\", \"top\"));\n\n  // --- 6. THE GREAT BRONZE TEMPLE BELL (Bonshō) ---\n  // Center is at (9, y, 9)\n  // Ryūzu (Dragon Crown / Hanging Eye) at y = 7\n  api.set(9, 7, 9, \"minecraft:chain[axis=y]\");\n  api.set(9, 7, 8, \"minecraft:exposed_cut_copper_stairs[facing=south,half=top]\");\n  api.set(9, 7, 10, \"minecraft:exposed_cut_copper_stairs[facing=north,half=top]\");\n\n  // Kasagata (Upper Rounded Bell Dome) at y = 6\n  api.set(9, 6, 9, \"minecraft:weathered_cut_copper\");\n  api.set(9, 6, 8, \"minecraft:weathered_cut_copper_stairs[facing=north,half=bottom]\");\n  api.set(9, 6, 10, \"minecraft:weathered_cut_copper_stairs[facing=south,half=bottom]\");\n  api.set(8, 6, 9, \"minecraft:weathered_cut_copper_stairs[facing=west,half=bottom]\");\n  api.set(10, 6, 9, \"minecraft:weathered_cut_copper_stairs[facing=east,half=bottom]\");\n  api.set(8, 6, 8, \"minecraft:weathered_cut_copper_slab[type=bottom]\");\n  api.set(10, 6, 8, \"minecraft:weathered_cut_copper_slab[type=bottom]\");\n  api.set(8, 6, 10, \"minecraft:weathered_cut_copper_slab[type=bottom]\");\n  api.set(10, 6, 10, \"minecraft:weathered_cut_copper_slab[type=bottom]\");\n\n  // Nyū (Upper Barrel with Lotus Boss Relieves) at y = 5\n  api.set(9, 5, 9, \"minecraft:weathered_cut_copper\");\n  api.set(9, 5, 8, \"minecraft:exposed_cut_copper\");\n  api.set(9, 5, 10, \"minecraft:exposed_cut_copper\");\n  api.set(8, 5, 9, \"minecraft:exposed_cut_copper\");\n  api.set(10, 5, 9, \"minecraft:exposed_cut_copper\");\n  api.set(8, 5, 8, \"minecraft:weathered_cut_copper\");\n  api.set(10, 5, 8, \"minecraft:weathered_cut_copper\");\n  api.set(8, 5, 10, \"minecraft:weathered_cut_copper\");\n  api.set(10, 5, 10, \"minecraft:weathered_cut_copper\");\n\n  // Middle Barrel & Tsukiza (Striking Medallion) at y = 4\n  api.set(9, 4, 9, \"minecraft:weathered_cut_copper\");\n  api.set(9, 4, 8, \"minecraft:oxidized_cut_copper\");\n  api.set(9, 4, 10, \"minecraft:oxidized_cut_copper\");\n  api.set(8, 4, 9, \"minecraft:oxidized_cut_copper\");\n  api.set(10, 4, 9, \"minecraft:chiseled_copper\"); // Medallion facing the striker!\n  api.set(8, 4, 8, \"minecraft:weathered_cut_copper\");\n  api.set(10, 4, 8, \"minecraft:weathered_cut_copper\");\n  api.set(8, 4, 10, \"minecraft:weathered_cut_copper\");\n  api.set(10, 4, 10, \"minecraft:weathered_cut_copper\");\n\n  // Koma-no-tsume (Flared Rim & Resonant Mouth) at y = 3\n  api.set(9, 3, 9, \"minecraft:bell[attachment=ceiling,facing=north]\");\n  api.set(9, 3, 8, \"minecraft:weathered_cut_copper_stairs[facing=south,half=top]\");\n  api.set(9, 3, 10, \"minecraft:weathered_cut_copper_stairs[facing=north,half=top]\");\n  api.set(8, 3, 9, \"minecraft:weathered_cut_copper_stairs[facing=east,half=top]\");\n  api.set(10, 3, 9, \"minecraft:weathered_cut_copper_stairs[facing=west,half=top]\");\n  api.set(8, 3, 8, \"minecraft:weathered_cut_copper_slab[type=top]\");\n  api.set(10, 3, 8, \"minecraft:weathered_cut_copper_slab[type=top]\");\n  api.set(8, 3, 10, \"minecraft:weathered_cut_copper_slab[type=top]\");\n  api.set(10, 3, 10, \"minecraft:weathered_cut_copper_slab[type=top]\");\n\n  // --- 7. SUSPENDED LOG STRIKER (Shumoku) ---\n  // Horizontal striker log hung parallel at x = 11, y = 4, aiming at the bell's striking point\n  api.set(11, 4, 7, \"minecraft:dark_oak_fence_gate[facing=north,in_wall=false,open=false]\");\n  api.set(11, 4, 8, \"minecraft:stripped_dark_oak_log[axis=z]\");\n  api.set(11, 4, 9, \"minecraft:stripped_dark_oak_log[axis=z]\");\n  api.set(11, 4, 10, \"minecraft:stripped_dark_oak_log[axis=z]\");\n\n  // Suspension ropes (chains) from ceiling beam at y = 8 down to striker at y = 4\n  for (let y = 5; y <= 7; y++) {\n    api.set(11, y, 8, \"minecraft:chain[axis=y]\");\n    api.set(11, y, 10, \"minecraft:chain[axis=y]\");\n  }\n  // Ringing lanyard / pull rope hanging down from the rear of the striker\n  api.set(11, 3, 10, \"minecraft:chain[axis=y]\");\n  api.set(11, 3, 9, trapdoor(woodTrapdoor, \"east\", \"top\"));\n\n  // --- 8. BRACKET COMPLEXES (Dougong / Tokyō) (y = 9..10) ---\n  // Bracket blocks and arms at y = 9\n  for (const [px, pz] of pillars) {\n    api.set(px, 9, pz, woodPlanks);\n    api.set(px - 1, 9, pz, stair(woodStairs, \"west\", \"top\"));\n    api.set(px + 1, 9, pz, stair(woodStairs, \"east\", \"top\"));\n    api.set(px, 9, pz - 1, stair(woodStairs, \"north\", \"top\"));\n    api.set(px, 9, pz + 1, stair(woodStairs, \"south\", \"top\"));\n  }\n  // Mid-span bracket blocks at y = 9\n  const midBrackets = [\n    [9, 6],\n    [9, 12],\n    [6, 9],\n    [12, 9],\n  ];\n  for (const [mx, mz] of midBrackets) {\n    api.set(mx, 9, mz, woodPlanks);\n    if (mx === 9) {\n      api.set(mx - 1, 9, mz, stair(woodStairs, \"west\", \"top\"));\n      api.set(mx + 1, 9, mz, stair(woodStairs, \"east\", \"top\"));\n      api.set(mx, 9, mz === 6 ? 5 : 13, stair(woodStairs, mz === 6 ? \"north\" : \"south\", \"top\"));\n    } else {\n      api.set(mx, 9, mz - 1, stair(woodStairs, \"north\", \"top\"));\n      api.set(mx, 9, mz + 1, stair(woodStairs, \"south\", \"top\"));\n      api.set(mx === 6 ? 5 : 13, 9, mz, stair(woodStairs, mx === 6 ? \"west\" : \"east\", \"top\"));\n    }\n  }\n\n  // Hanging copper lanterns from the 4 bracket corners\n  const lanternCorners = [\n    [5, 5],\n    [13, 5],\n    [5, 13],\n    [13, 13],\n  ];\n  for (const [cx, cz] of lanternCorners) {\n    api.set(cx, 9, cz, woodPlanks);\n    api.set(cx, 8, cz, \"minecraft:chain[axis=y]\");\n    api.set(cx, 7, cz, \"minecraft:chain[axis=y]\");\n    api.set(cx, 6, cz, \"minecraft:lantern[hanging=true]\");\n  }\n\n  // Outer purlin ring beam (Keta) at y = 10 (x: 4..14, z: 4..14)\n  for (let x = 4; x <= 14; x++) {\n    api.set(x, 10, 4, log(woodLog, \"x\"));\n    api.set(x, 10, 14, log(woodLog, \"x\"));\n  }\n  for (let z = 4; z <= 14; z++) {\n    api.set(4, 10, z, log(woodLog, \"z\"));\n    api.set(14, 10, z, log(woodLog, \"z\"));\n  }\n  // Cantilever arms under purlin ring at y = 10\n  for (let x = 5; x <= 13; x += 2) {\n    api.set(x, 10, 5, woodPlanks);\n    api.set(x, 10, 13, woodPlanks);\n  }\n  for (let z = 5; z <= 13; z += 2) {\n    api.set(5, 10, z, woodPlanks);\n    api.set(13, 10, z, woodPlanks);\n  }\n\n  // Exposed under-eave rafters (Taruki) at y = 11 (x: 2..16, z: 2..16)\n  for (let x = 3; x <= 15; x++) {\n    api.set(x, 11, 3, stair(woodStairs, \"south\", \"top\"));\n    api.set(x, 11, 15, stair(woodStairs, \"north\", \"top\"));\n  }\n  for (let z = 3; z <= 15; z++) {\n    api.set(3, 11, z, stair(woodStairs, \"east\", \"top\"));\n    api.set(15, 11, z, stair(woodStairs, \"west\", \"top\"));\n  }\n\n  // --- 9. SWEEPING HIPPED TILE ROOF (Irimoya-yane) (y = 12..17) ---\n  // Tier 0: Flared Outer Eaves (y = 12, with swept corners at y = 13)\n  // Boundary x in 1..17, z in 1..17\n  for (let x = 1; x <= 17; x++) {\n    for (let z = 1; z <= 17; z++) {\n      const isOuterEdge = x === 1 || x === 17 || z === 1 || z === 17;\n      if (!isOuterEdge) continue;\n\n      const isExtremeCorner =\n        (x <= 2 && z <= 2) ||\n        (x >= 16 && z <= 2) ||\n        (x <= 2 && z >= 16) ||\n        (x >= 16 && z >= 16);\n\n      if (isExtremeCorner) {\n        // Dramatic flared corner tip (Nokisaki-sori)\n        api.set(x, 12, z, roofSolid);\n        if (\n          (x === 1 && z === 1) ||\n          (x === 17 && z === 1) ||\n          (x === 1 && z === 17) ||\n          (x === 17 && z === 17)\n        ) {\n          api.set(x, 13, z, slab(roofSlab, \"bottom\"));\n        } else {\n          api.set(x, 13, z, slab(roofSlab, \"bottom\"));\n        }\n      } else {\n        // Straight eave edges\n        if (z === 1) api.set(x, 12, z, stair(roofStairs, \"north\"));\n        else if (z === 17) api.set(x, 12, z, stair(roofStairs, \"south\"));\n        else if (x === 1) api.set(x, 12, z, stair(roofStairs, \"west\"));\n        else if (x === 17) api.set(x, 12, z, stair(roofStairs, \"east\"));\n      }\n    }\n  }\n\n  // Tier 1: Second Eave Ring (y = 13, x: 2..16, z: 2..16)\n  for (let x = 2; x <= 16; x++) {\n    for (let z = 2; z <= 16; z++) {\n      const isEdge = x === 2 || x === 16 || z === 2 || z === 16;\n      if (!isEdge) continue;\n\n      const isCorner =\n        (x <= 3 && z <= 3) ||\n        (x >= 15 && z <= 3) ||\n        (x <= 3 && z >= 15) ||\n        (x >= 15 && z >= 15);\n\n      if (isCorner) {\n        api.set(x, 13, z, roofSolid);\n      } else {\n        if (z === 2) api.set(x, 13, z, stair(roofStairs, \"north\"));\n        else if (z === 16) api.set(x, 13, z, stair(roofStairs, \"south\"));\n        else if (x === 2) api.set(x, 13, z, stair(roofStairs, \"west\"));\n        else if (x === 16) api.set(x, 13, z, stair(roofStairs, \"east\"));\n      }\n    }\n  }\n\n  // Tier 2: Mid Slope (y = 14, x: 4..14, z: 4..14)\n  for (let x = 4; x <= 14; x++) {\n    for (let z = 4; z <= 14; z++) {\n      const isEdge = x === 4 || x === 14 || z === 4 || z === 14;\n      if (isEdge) {\n        if (z === 4 && x > 4 && x < 14) api.set(x, 14, z, stair(roofStairs, \"north\"));\n        else if (z === 14 && x > 4 && x < 14) api.set(x, 14, z, stair(roofStairs, \"south\"));\n        else if (x === 4 && z > 4 && z < 14) api.set(x, 14, z, stair(roofStairs, \"west\"));\n        else if (x === 14 && z > 4 && z < 14) api.set(x, 14, z, stair(roofStairs, \"east\"));\n        else api.set(x, 14, z, roofSolid);\n      } else {\n        api.set(x, 13, z, roofSolid); // Solid backing\n      }\n    }\n  }\n\n  // Tier 3: Upper Slope (y = 15, x: 6..12, z: 6..12)\n  for (let x = 6; x <= 12; x++) {\n    for (let z = 6; z <= 12; z++) {\n      const isEdge = x === 6 || x === 12 || z === 6 || z === 12;\n      if (isEdge) {\n        if (z === 6 && x > 6 && x < 12) api.set(x, 15, z, stair(roofStairs, \"north\"));\n        else if (z === 12 && x > 6 && x < 12) api.set(x, 15, z, stair(roofStairs, \"south\"));\n        else if (x === 6 && z > 6 && z < 12) api.set(x, 15, z, stair(roofStairs, \"west\"));\n        else if (x === 12 && z > 6 && z < 12) api.set(x, 15, z, stair(roofStairs, \"east\"));\n        else api.set(x, 15, z, roofSolid);\n      } else {\n        api.set(x, 14, z, roofSolid);\n      }\n    }\n  }\n\n  // Tier 4: Crown & Main Ridge (Mune) at y = 16..17\n  // y = 16: Ridge base and apex slopes\n  for (let x = 7; x <= 11; x++) {\n    api.set(x, 16, 7, stair(roofStairs, \"north\"));\n    api.set(x, 16, 8, roofSolid);\n    api.set(x, 16, 9, roofSolid);\n    api.set(x, 16, 10, roofSolid);\n    api.set(x, 16, 11, stair(roofStairs, \"south\"));\n  }\n  api.set(7, 16, 8, stair(roofStairs, \"west\"));\n  api.set(7, 16, 9, stair(roofStairs, \"west\"));\n  api.set(7, 16, 10, stair(roofStairs, \"west\"));\n  api.set(11, 16, 8, stair(roofStairs, \"east\"));\n  api.set(11, 16, 9, stair(roofStairs, \"east\"));\n  api.set(11, 16, 10, stair(roofStairs, \"east\"));\n\n  // y = 17: Ridge Crest (Mune) & Onigawara End Finials\n  for (let x = 8; x <= 10; x++) {\n    api.set(x, 17, 9, slab(roofSlab, \"bottom\"));\n  }\n  // West onigawara finial\n  api.set(7, 17, 9, stair(roofStairs, \"east\", \"top\"));\n  // East onigawara finial\n  api.set(11, 17, 9, stair(roofStairs, \"west\", \"top\"));\n\n  return {\n    name: \"Great Temple Bell Pavilion (Shōrō)\",\n    seatY: 0,\n    anchors: {\n      front: [9, 0, 0],\n      door: [9, 2, 5],\n      bell: [9, 4, 9],\n    },\n  };\n}"
+    }
+  }
+}

@@ -3049,6 +3049,18 @@ does not carry) **a bespoke program**. Examples of the register:
   engines, scorch and palisades **facing the enemy**, so the aggression
   has a direction.
 
+**The centerpiece dominates.** Before the saturation, one icon: the thing
+the prompt *names* — the horse, the bell in its pavilion, the ferry across
+the fjord, the mine, the skeleton the town lives in. That one is a
+**landmark built to tower over the ordinary buildings**: its envelope at
+least 1.5× their height and 2× their footprint, or standing *above* them
+on a ridge, a cliff or a mast, and its brief says so ("colossal", "towers
+over the roofs", "the skull is the size of a temple"). A bell pavilion the
+height of a house, a ferry rig lower than a shed, a pit head that is a hut
+— each was present, and none was the thing a stranger would name. Write
+the centerpiece's `envelope` for what it must dominate, not for what it
+would cost; the compiler measures it against the buildings beside it.
+
 **An icon is a cheap plugin program.** A flag mast is two hundred blocks;
 a chest cluster fifty; a stone circle three hundred. Small envelopes,
 double-digit counts where the theme wants repetition — spend the plugin
@@ -3205,7 +3217,7 @@ belongs to that region only.
 | `id` | snake_case; becomes the `authored:<id>` generator name |
 | `mode` | `"landmark"` — built **once**, a singular monument; `"plugin"` — built **many** times with per-instance variation |
 | `brief` | one or two sentences: what it is, what it should read as, what matters about it. This is the only creative direction the program author gets besides the world's intent, so make it carry |
-| `envelope` | `[width, height, depth]` in blocks, node-local. A suggestion; the program may declare its own if the structure needs it |
+| `envelope` | `[width, height, depth]` in blocks, node-local. A suggestion; the program may declare its own if the structure needs it. **For the centerpiece icon, size it to dominate** — at least 1.5× the ordinary buildings' height and 2× their footprint, or on ground that stands above them |
 | `count` | plugin mode only: roughly how many instances the world wants |
 
 ### Budgets

@@ -1,0 +1,384 @@
+{
+  "loam": "0.1",
+  "profile": "terrain",
+  "meta": {
+    "name": "pine_fjord",
+    "worldSeed": 314,
+    "prompt": "A deep fjord cutting inland between pine ridges, its water open to the sea.",
+    "spawn": {
+      "at": [
+        0.15,
+        0.5
+      ]
+    }
+  },
+  "intent": {
+    "climate": {
+      "biome": "minecraft:old_growth_pine_taiga",
+      "temperature": -0.3,
+      "humidity": 0.5
+    },
+    "character": {
+      "label": "pine fjord",
+      "materialTheme": "boreal_pine",
+      "flora": {
+        "prefer": [
+          "spruce_tall",
+          "conifer",
+          "old_growth"
+        ]
+      }
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.beach": {
+        "mix": [
+          [
+            "minecraft:gravel",
+            3
+          ],
+          [
+            "minecraft:stone",
+            1
+          ],
+          [
+            "minecraft:coarse_dirt",
+            1
+          ]
+        ]
+      },
+      "ground.cliff": {
+        "mix": [
+          [
+            "minecraft:stone",
+            4
+          ],
+          [
+            "minecraft:andesite",
+            2
+          ],
+          [
+            "minecraft:cobblestone",
+            1
+          ]
+        ]
+      }
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Pine Fjord",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 68,
+          "amplitude": 54,
+          "octaves": 5,
+          "frequency": 0.0035,
+          "gain": 0.55,
+          "ridged": true,
+          "warp": {
+            "amount": 26,
+            "frequency": 0.0035
+          },
+          "erosionPasses": 2,
+          "continentalness": {
+            "frequency": 0.0012,
+            "seaFraction": 0.32
+          },
+          "cliffThreshold": 48,
+          "soilDepth": 3,
+          "beachWidth": 3,
+          "snowLineFraction": 0.88
+        },
+        "children": [
+          {
+            "id": "fjord_inlet",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the deep sea inlet cutting inland",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0,
+                  0.5
+                ],
+                [
+                  0.32,
+                  0.52
+                ],
+                [
+                  0.62,
+                  0.48
+                ],
+                [
+                  0.86,
+                  0.5
+                ]
+              ],
+              "width": 72,
+              "depth": 75,
+              "profile": "sharp",
+              "meander": 0.4
+            }
+          },
+          {
+            "id": "north_pine_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "northern high ridge flanking the fjord",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.05,
+                  0.28
+                ],
+                [
+                  0.45,
+                  0.26
+                ],
+                [
+                  0.85,
+                  0.3
+                ]
+              ],
+              "width": 85,
+              "height": 65,
+              "profile": "sharp",
+              "meander": 0.45
+            }
+          },
+          {
+            "id": "south_pine_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "southern high ridge flanking the fjord",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.05,
+                  0.72
+                ],
+                [
+                  0.48,
+                  0.74
+                ],
+                [
+                  0.88,
+                  0.7
+                ]
+              ],
+              "width": 85,
+              "height": 65,
+              "profile": "sharp",
+              "meander": 0.45
+            }
+          },
+          {
+            "id": "headwall_peak",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "steep massif at the head of the fjord",
+            "params": {
+              "verb": "peak",
+              "at": [
+                0.92,
+                0.5
+              ],
+              "radius": 75,
+              "height": 80,
+              "profile": "sharp"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "boreal",
+          "latitudeGradient": -0.2
+        }
+      },
+      {
+        "id": "north_ridge_forest",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "dense old-growth pine woods on the northern ridge",
+        "params": {
+          "area": {
+            "at": [
+              0.45,
+              0.28
+            ],
+            "radius": 170
+          },
+          "density": 0.22,
+          "spacing": 3,
+          "clumping": 0.5,
+          "maxSlope": 42,
+          "elevation": [
+            2,
+            105
+          ],
+          "edgeFalloff": 20,
+          "undergrowth": {
+            "grass": 0.4,
+            "flowers": 0.02,
+            "deadwood": 0.08
+          },
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "ancient_pine",
+                  "shape": "spruce_ancient"
+                }
+              ]
+            },
+            "understory": {
+              "species": [
+                {
+                  "id": "juniper",
+                  "shape": "juniper_scrub"
+                }
+              ],
+              "density": 0.08
+            }
+          },
+          "species": [
+            {
+              "id": "tall_pine",
+              "shape": "spruce_tall",
+              "weight": 5
+            },
+            {
+              "id": "mountain_larch",
+              "shape": "larch_columnar",
+              "weight": 2
+            },
+            {
+              "id": "scrub_pine",
+              "shape": "spruce_squat",
+              "weight": 2
+            }
+          ]
+        }
+      },
+      {
+        "id": "south_ridge_forest",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "dense old-growth pine woods on the southern ridge",
+        "params": {
+          "area": {
+            "at": [
+              0.48,
+              0.72
+            ],
+            "radius": 170
+          },
+          "density": 0.22,
+          "spacing": 3,
+          "clumping": 0.5,
+          "maxSlope": 42,
+          "elevation": [
+            2,
+            105
+          ],
+          "edgeFalloff": 20,
+          "undergrowth": {
+            "grass": 0.4,
+            "flowers": 0.02,
+            "deadwood": 0.08
+          },
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "ancient_pine",
+                  "shape": "spruce_ancient"
+                }
+              ]
+            },
+            "understory": {
+              "species": [
+                {
+                  "id": "juniper",
+                  "shape": "juniper_scrub"
+                }
+              ],
+              "density": 0.08
+            }
+          },
+          "species": [
+            {
+              "id": "tall_pine",
+              "shape": "spruce_tall",
+              "weight": 5
+            },
+            {
+              "id": "mountain_larch",
+              "shape": "larch_columnar",
+              "weight": 2
+            },
+            {
+              "id": "scrub_pine",
+              "shape": "spruce_squat",
+              "weight": 2
+            }
+          ]
+        }
+      },
+      {
+        "id": "wilderness_pines",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse pine scatter over the wider landscape",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 4,
+          "clumping": 0.6,
+          "maxSlope": 40,
+          "elevation": [
+            2,
+            90
+          ],
+          "edgeFalloff": 12,
+          "species": [
+            {
+              "id": "wind_pine",
+              "shape": "spruce_squat",
+              "weight": 2
+            },
+            {
+              "id": "solitary_pine",
+              "shape": "spruce_tall",
+              "weight": 1
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

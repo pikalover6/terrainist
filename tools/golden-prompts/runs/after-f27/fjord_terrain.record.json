@@ -1,0 +1,95 @@
+{
+  "id": "fjord_terrain",
+  "family": "new/terrain-only",
+  "kit": "terrain",
+  "prompt": "A deep fjord cutting inland between pine ridges, its water open to the sea.",
+  "seed": 314,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "cache",
+    "value": {
+      "climate": {
+        "biome": "minecraft:old_growth_pine_taiga",
+        "temperature": -0.3,
+        "humidity": 0.5
+      },
+      "character": {
+        "label": "pine fjord",
+        "materialTheme": "boreal_pine",
+        "flora": {
+          "prefer": [
+            "spruce_tall",
+            "conifer",
+            "old_growth"
+          ]
+        }
+      },
+      "tokens": {
+        "terrain": "a deep fjord cutting inland between steep pine-covered ridges, opening to the open sea"
+      }
+    }
+  },
+  "intentUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "reasoningTokens": 0,
+    "cost": 0,
+    "cached": true
+  },
+  "menu": {
+    "injected": false,
+    "reason": "flag off"
+  },
+  "attempts": 1,
+  "diagnostics": [
+    []
+  ],
+  "usage": {
+    "promptTokens": 13488,
+    "completionTokens": 6271,
+    "reasoningTokens": 3875,
+    "cost": 0.016816125
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 10,
+    "maxDepth": 2,
+    "generators": [
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [],
+    "archetypesInCatalog": 0,
+    "formPacks": [],
+    "props": [],
+    "species": [
+      "mountain_larch",
+      "scrub_pine",
+      "solitary_pine",
+      "tall_pine",
+      "wind_pine"
+    ],
+    "envelopes": [
+      "512x512"
+    ],
+    "constraints": 0,
+    "constraintKinds": [],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 3,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 0,
+    "programReferences": 0,
+    "conformsTrue": 0,
+    "labels": 8,
+    "eras": [],
+    "bytes": 3965
+  },
+  "wallMs": 29876
+}

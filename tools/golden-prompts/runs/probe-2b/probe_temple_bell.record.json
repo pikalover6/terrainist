@@ -1,0 +1,170 @@
+{
+  "id": "probe_temple_bell",
+  "family": "probe",
+  "kit": "settlement",
+  "prompt": "A feudal Japanese hill village of terraced paddies, with a great bronze temple bell in its own pavilion on the ridge above, rung at dusk.",
+  "seed": 905,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.4,
+    "decline": 0.1,
+    "formality": 0.2,
+    "climate": {
+      "temperature": 0.2,
+      "humidity": 0.5,
+      "snow": "auto"
+    },
+    "character": {
+      "label": "feudal Japanese terraced hill village",
+      "materialTheme": "temperate_timber",
+      "formPacks": [
+        "feudal_japanese"
+      ],
+      "archetypes": {
+        "prefer": [
+          "cottage",
+          "shrine",
+          "rice_store",
+          "tea_room",
+          "watchtower"
+        ],
+        "forbid": [
+          "townhouse",
+          "terraced_row",
+          "shop_row",
+          "office",
+          "apartment_block"
+        ]
+      },
+      "urbanForm": "hillside",
+      "ground": "stepped",
+      "motifs": {
+        "roofType": "hip",
+        "massing": "stepped"
+      }
+    },
+    "tokens": {
+      "terrain": "a steep terraced hillside rising from a valley to a high ridge above",
+      "icons": "a great bronze temple bell housed in an open-sided timber pavilion on the high ridge overlooking the village; flooded stepped rice paddies with stone and clay retaining bunds stepped down the slope",
+      "infra": "paddy_bunds terraced down the slopes around the settlement; stone_stairway climbing the hillside to the ridge bell pavilion"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 180636,
+    "completionTokens": 24922,
+    "cost": 0.1145
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 24,
+    "maxDepth": 2,
+    "generators": [
+      "authored:bell_pavilion",
+      "building.grammar@0",
+      "infra.entry@0",
+      "precinct.farm@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "bathhouse",
+      "church",
+      "cottage",
+      "granary",
+      "inn",
+      "machiya",
+      "pagoda",
+      "smithy",
+      "tea_house",
+      "temple"
+    ],
+    "archetypesInCatalog": 10,
+    "formPacks": [
+      "feudal_japanese"
+    ],
+    "props": [
+      "bench",
+      "cairn",
+      "scarecrow",
+      "well_head"
+    ],
+    "species": [
+      "cherry_blossom",
+      "mountain_cedar",
+      "valley_willow",
+      "wild_oak",
+      "wild_pine"
+    ],
+    "envelopes": [
+      "512x512",
+      "160x140",
+      "11x18x11",
+      "13x11x13",
+      "17x18x17",
+      "112x96",
+      "112x96"
+    ],
+    "constraints": 7,
+    "constraintKinds": [
+      "distance",
+      "max",
+      "min",
+      "zone"
+    ],
+    "constraintsWithStrength": 3,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 2,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 22,
+    "eras": [
+      "medieval"
+    ],
+    "bytes": 30280
+  },
+  "wallMs": 337000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 2,
+    "feedbackRounds": 1,
+    "programs": [
+      "ok bell_pavilion [landmark] 2 attempt(s), 61399 tokens ($0.0790), 11 warning(s)"
+    ],
+    "programCost": 0.079,
+    "totalCost": 0.1935,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/f27/gen/probe_temple_bell/out/yamazato_bonsho",
+    "finalDiagnostics": {
+      "LOAM-W330": 1,
+      "LOAM-T208": 1,
+      "LOAM-T222": 1,
+      "LOAM-T242": 1,
+      "LOAM-I512": 1,
+      "LOAM-T224": 1,
+      "LOAM-W483": 1,
+      "LOAM-I412": 1,
+      "LOAM-I463": 5,
+      "LOAM-I504": 2,
+      "LOAM-I497": 1,
+      "LOAM-T232": 1,
+      "LOAM-T233": 1,
+      "LOAM-T341": 1,
+      "LOAM-W470": 1
+    },
+    "crash": [],
+    "docName": "yamazato_bonsho.loam.json"
+  }
+}

@@ -1,0 +1,155 @@
+{
+  "id": "probe_bronze_tundra",
+  "family": "probe",
+  "kit": "settlement",
+  "prompt": "A Bronze Age tin-mining camp on a frozen tundra coast in midwinter: pit heads, smelting fires, hide tents and a beached trading ship.",
+  "seed": 903,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "era": "bronze_age",
+    "wealth": 0.35,
+    "decline": 0.15,
+    "formality": 0.1,
+    "climate": {
+      "biome": "minecraft:snowy_plains",
+      "temperature": -0.9,
+      "humidity": -0.3,
+      "snow": "always"
+    },
+    "character": {
+      "label": "bronze age tin-mining camp",
+      "materialTheme": "boreal_pine",
+      "formPacks": [
+        "wilds_camps"
+      ],
+      "urbanForm": "grown",
+      "motifs": {
+        "roofType": "shed",
+        "massing": "sprawling",
+        "ornamentDensity": 0.05
+      }
+    },
+    "tokens": {
+      "terrain": "a frozen tundra coast with snowbound cliffs and an icy beach meeting open cold sea",
+      "icons": "open tin-mining pit heads, charcoal burning pits, bronze smelting hearths, hide-and-timber tents, ore slag heaps, and a beached coastal trading vessel on the icy shore",
+      "infra": "cart_track through the snow from the pit heads to the smelting hearths; log skids down to the beached ship on the shoreline"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 84124,
+    "completionTokens": 12293,
+    "cost": 0.0546
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 24,
+    "maxDepth": 2,
+    "generators": [
+      "authored:beached_trader",
+      "authored:tin_ore_pit",
+      "building.grammar@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "charcoal_burner",
+      "cottage",
+      "foundry",
+      "hut",
+      "mine_head",
+      "shepherds_bothy",
+      "smithy"
+    ],
+    "archetypesInCatalog": 7,
+    "formPacks": [
+      "nordic_viking",
+      "wilds_camps"
+    ],
+    "props": [
+      "cairn",
+      "campsite",
+      "cart",
+      "log_pile",
+      "tent",
+      "yurt"
+    ],
+    "species": [
+      "scrub_spruce",
+      "stunted_spruce",
+      "tall_spruce",
+      "tundra_juniper"
+    ],
+    "envelopes": [
+      "512x512",
+      "22x22",
+      "9x12x9",
+      "20x10x20",
+      "13x12x15",
+      "13x11x13",
+      "9x11x9",
+      "9x11x9",
+      "26x12x10"
+    ],
+    "constraints": 23,
+    "constraintKinds": [
+      "adjacent_to",
+      "at",
+      "band",
+      "blend",
+      "distance",
+      "facing",
+      "gap",
+      "max",
+      "min",
+      "on",
+      "reference",
+      "terrain_conform"
+    ],
+    "constraintsWithStrength": 9,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 5,
+    "programReferences": 2,
+    "conformsTrue": 0,
+    "labels": 23,
+    "eras": [
+      "primitive"
+    ],
+    "bytes": 39945
+  },
+  "wallMs": 350000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 1,
+    "feedbackRounds": 0,
+    "programs": [
+      "ok beached_trader [landmark] 1 attempt(s), 21720 tokens ($0.0357), 9 warning(s)",
+      "ok tin_ore_pit [landmark] 1 attempt(s), 28733 tokens ($0.0489), 10 warning(s)"
+    ],
+    "programCost": 0.0846,
+    "totalCost": 0.1392,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/f27/gen/probe_bronze_tundra/out/tin_coast_camp",
+    "finalDiagnostics": {
+      "LOAM-W330": 2,
+      "LOAM-T208": 1,
+      "LOAM-W517": 1,
+      "LOAM-I463": 1,
+      "LOAM-I497": 1,
+      "LOAM-W470": 1
+    },
+    "crash": [],
+    "docName": "tin_coast_camp.loam.json"
+  }
+}

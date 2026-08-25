@@ -1,0 +1,180 @@
+{
+  "id": "probe_monastery",
+  "family": "probe",
+  "kit": "settlement",
+  "prompt": "A Himalayan monastery clinging to a cliff face above a glacier, prayer flags strung across the gorge, a village of yak herders on the moraine below.",
+  "seed": 901,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.45,
+    "decline": 0.1,
+    "formality": 0.5,
+    "climate": {
+      "biome": "minecraft:frozen_peaks",
+      "temperature": -0.8,
+      "humidity": -0.2,
+      "snow": "always"
+    },
+    "character": {
+      "label": "cliffside Himalayan monastery and moraine herder settlement",
+      "materialTheme": "white_quartz",
+      "formPacks": [
+        "himalayan_monastery"
+      ],
+      "archetypes": {
+        "prefer": [
+          "assembly_hall",
+          "monks_cells",
+          "scripture_library",
+          "yak_byre",
+          "hermit_retreat",
+          "granary"
+        ],
+        "forbid": [
+          "townhouse",
+          "terraced_row",
+          "shop_row",
+          "office",
+          "apartment_block"
+        ]
+      },
+      "urbanForm": "hillside",
+      "ground": "stepped",
+      "motifs": {
+        "roofType": "flat",
+        "massing": "stepped",
+        "ornamentDensity": 0.5
+      }
+    },
+    "tokens": {
+      "terrain": "a sheer cliff face and deep gorge above a glacier, with a rocky moraine valley floor below",
+      "infra": "prayer_flag_lines strung across the gorge; stone_retaining_wall under the monastery terraces; yak_enclosure dry stone walls on the moraine",
+      "icons": "whitewashed dzong assembly hall with dark timber banding clinging to the rock; prayer wheel gallery; chortens and mani stone cairns along the approach paths; yak herder stone huts and yak byres below on the moraine"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 438727,
+    "completionTokens": 80618,
+    "cost": 0.3157
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 25,
+    "maxDepth": 2,
+    "generators": [
+      "authored:cliffside_dzong",
+      "building.grammar@0",
+      "infra.entry@0",
+      "precinct.farm@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "barn",
+      "bell_tower",
+      "cottage",
+      "farmhouse",
+      "hermitage",
+      "library",
+      "monastery",
+      "root_cellar_mound",
+      "shepherds_bothy",
+      "sod_house",
+      "stable",
+      "stupa"
+    ],
+    "archetypesInCatalog": 12,
+    "formPacks": [
+      "agrarian",
+      "himalayan_monastery"
+    ],
+    "props": [
+      "cairn",
+      "horse_trough"
+    ],
+    "species": [
+      "alpine_juniper",
+      "highland_spruce",
+      "stunted_spruce"
+    ],
+    "envelopes": [
+      "512x512",
+      "120x120",
+      "11x14x11",
+      "130x130",
+      "11x11x11",
+      "11x12x13",
+      "56x56"
+    ],
+    "constraints": 12,
+    "constraintKinds": [
+      "adjacent_to",
+      "at",
+      "blend",
+      "distance",
+      "gap",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform"
+    ],
+    "constraintsWithStrength": 5,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 3,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 24,
+    "eras": [
+      "medieval"
+    ],
+    "bytes": 50847
+  },
+  "wallMs": 754000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 3,
+    "feedbackRounds": 2,
+    "programs": [
+      "ok cliffside_dzong [landmark] 1 attempt(s), 31030 tokens ($0.0530), 19 warning(s)",
+      "ok prayer_flag_mast [plugin] 1 attempt(s), 27729 tokens ($0.0469), 1 warning(s)"
+    ],
+    "programCost": 0.0999,
+    "totalCost": 0.4156,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/f27/gen/probe_monastery/out/himalayan_monastery",
+    "finalDiagnostics": {
+      "LOAM-T208": 1,
+      "LOAM-W520": 1,
+      "LOAM-E406": 1,
+      "LOAM-T242": 2,
+      "LOAM-I499": 2,
+      "LOAM-I512": 2,
+      "LOAM-W483": 1,
+      "LOAM-I412": 2,
+      "LOAM-I463": 5,
+      "LOAM-T237": 3,
+      "LOAM-W503": 1,
+      "LOAM-I497": 1,
+      "LOAM-W413": 1,
+      "LOAM-W337": 1,
+      "LOAM-T342": 2,
+      "LOAM-W470": 1
+    },
+    "crash": [],
+    "docName": "himalayan_monastery.loam.json"
+  }
+}

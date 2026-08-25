@@ -1,0 +1,739 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "black_canal_junction",
+    "worldSeed": 312,
+    "prompt": "A soot-blackened industrial town where the railway meets the canal.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:cobblestone",
+      "road.shoulder": "minecraft:gravel",
+      "plaza.cobble": "minecraft:deepslate_bricks",
+      "ground.cliff": "minecraft:deepslate",
+      "ground.surface": {
+        "mix": [
+          [
+            "minecraft:grass_block",
+            3
+          ],
+          [
+            "minecraft:coarse_dirt",
+            3
+          ],
+          [
+            "minecraft:mud",
+            1
+          ]
+        ]
+      }
+    }
+  },
+  "intent": {
+    "era": "industrial",
+    "wealth": 0.35,
+    "decline": 0.25,
+    "formality": 0.5,
+    "character": {
+      "label": "soot-blackened canal and rail town",
+      "materialTheme": "temperate_timber",
+      "urbanForm": "canal",
+      "archetypes": {
+        "prefer": [
+          "train_station",
+          "warehouse",
+          "factory_hall",
+          "blast_furnace_works",
+          "coal_tipple",
+          "foundry",
+          "gasworks",
+          "tavern",
+          "townhouse"
+        ],
+        "forbid": [
+          "pyramid",
+          "pagoda",
+          "stupa",
+          "ziggurat"
+        ]
+      },
+      "props": {
+        "prefer": [
+          "locomotive",
+          "barge",
+          "freight_car",
+          "rail_line",
+          "bollard_row",
+          "lamp_post",
+          "notice_board",
+          "log_pile"
+        ]
+      },
+      "motifs": {
+        "roofType": "gable",
+        "massing": "blocky",
+        "windowRhythm": "regular",
+        "ornamentDensity": 0.2
+      },
+      "programs": [
+        {
+          "id": "canal_lift_bridge",
+          "mode": "landmark",
+          "brief": "A heavy dark-iron truss railway lift-bridge spanning the canal basin, flanked by towering structural gantries with counterweight cables and industrial signal lanterns.",
+          "envelope": [
+            24,
+            30,
+            18
+          ]
+        },
+        {
+          "id": "factory_smokestack",
+          "mode": "plugin",
+          "brief": "A tall circular soot-stained brick factory chimney with iron reinforcement bands and a corbelled crown emitting dark plumes.",
+          "envelope": [
+            5,
+            26,
+            5
+          ],
+          "count": 6
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "a commercial canal network intersecting a railway corridor and freight rail lines",
+      "icons": "soot-stained brick warehouses, smoking factory chimneys, iron rail bridges over the canal, barge docks, coal yards and rail depots"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Black Canal Junction, where coal rail meets the deep cut",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "a low river plain cut by commercial waterways",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 68,
+          "amplitude": 24,
+          "octaves": 5,
+          "frequency": 0.003,
+          "gain": 0.5,
+          "erosionPasses": 2,
+          "continentalness": {
+            "frequency": 0.0009,
+            "seaFraction": 0.3
+          },
+          "cliffThreshold": 55,
+          "soilDepth": 4,
+          "beachWidth": 4,
+          "snowLineFraction": 0.9
+        },
+        "children": [
+          {
+            "id": "canal_waterway",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the main commercial navigation canal",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.08,
+                  0.48
+                ],
+                [
+                  0.36,
+                  0.5
+                ],
+                [
+                  0.68,
+                  0.52
+                ],
+                "coast"
+              ],
+              "width": 20,
+              "depth": 8,
+              "profile": "sharp"
+            }
+          },
+          {
+            "id": "basin_plateau",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "level terrace for the goods yards and town fabric",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 150,
+              "height": 6,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "coal_hollow",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "rail approach cutting through the upland",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.88,
+                  0.22
+                ],
+                [
+                  0.68,
+                  0.36
+                ],
+                [
+                  0.54,
+                  0.44
+                ]
+              ],
+              "width": 32,
+              "depth": 12,
+              "profile": "sharp"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0015
+        }
+      },
+      {
+        "id": "industrial_district",
+        "kind": "district",
+        "label": "the canal-side quarter of mills, brick tenements and goods stores",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            240,
+            220
+          ]
+        },
+        "params": {
+          "fabric": "canal",
+          "density": "high",
+          "blockSize": 40,
+          "courtyards": 0.3,
+          "ground": "stepped",
+          "mix": [
+            "warehouse",
+            "factory_hall",
+            "foundry",
+            "machine_shop",
+            "textile_mill",
+            "townhouse",
+            "shop_row",
+            "tavern",
+            "brewery"
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6
+          }
+        ],
+        "tags": [
+          "district",
+          "industrial",
+          "urban"
+        ],
+        "children": [
+          {
+            "id": "central_station",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the terminal passenger and freight station",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                15,
+                13,
+                21
+              ]
+            },
+            "params": {
+              "archetype": "train_station",
+              "floors": 2
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "station"
+            ]
+          },
+          {
+            "id": "freight_depot",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "railhead bonded goods store",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                11,
+                19
+              ]
+            },
+            "params": {
+              "archetype": "warehouse",
+              "floors": 2
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "north",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "warehouse"
+            ]
+          },
+          {
+            "id": "iron_foundry",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "canal-bank iron casting works",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                12,
+                17
+              ]
+            },
+            "params": {
+              "archetype": "foundry",
+              "floors": 2
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "east",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "foundry"
+            ]
+          },
+          {
+            "id": "gasometer_plant",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "town retort and gasholder house",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                15,
+                15,
+                15
+              ]
+            },
+            "params": {
+              "archetype": "gasworks",
+              "floors": 1
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "west",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "gasworks"
+            ]
+          },
+          {
+            "id": "locomotive_shed",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "engine maintenance roundhouse",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                15,
+                14,
+                21
+              ]
+            },
+            "params": {
+              "archetype": "roundhouse",
+              "floors": 2
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "roundhouse"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "rail_coal_tipple",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "gravity coal tipple over the sidings",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            14,
+            17
+          ]
+        },
+        "params": {
+          "archetype": "coal_tipple",
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "distance": "central_station",
+            "min": 16,
+            "max": 52,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "coal_tipple",
+          "industry"
+        ]
+      },
+      {
+        "id": "junction_signal_box",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "elevated switch and signal cabin",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            13,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "signal_box",
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "distance": "central_station",
+            "min": 12,
+            "max": 36,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "signal_box"
+        ]
+      },
+      {
+        "id": "rail_lift_bridge",
+        "kind": "generator",
+        "generator": "authored:canal_lift_bridge",
+        "label": "the heavy iron lift bridge carrying rails over the canal",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            24,
+            30,
+            18
+          ]
+        },
+        "constraints": [
+          {
+            "distance": "industrial_district",
+            "min": 10,
+            "max": 28
+          },
+          {
+            "at": [
+              0.38,
+              0.5
+            ]
+          }
+        ],
+        "params": {
+          "face": {
+            "toward": "industrial_district"
+          }
+        },
+        "tags": [
+          "landmark",
+          "bridge"
+        ]
+      },
+      {
+        "id": "factory_stacks",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "soot-stained brick chimneys across the industrial zone",
+        "params": {
+          "program": "factory_smokestack",
+          "count": 6,
+          "area": {
+            "at": [
+              0.5,
+              0.5
+            ],
+            "radius": 0.25
+          },
+          "spacing": 32,
+          "maxSlope": 20,
+          "avoidTags": [
+            "road"
+          ]
+        }
+      },
+      {
+        "id": "basin_lock",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "lock gates regulating the canal basin",
+        "params": {
+          "entry": "canal_lock",
+          "route": {
+            "across": "industrial_district"
+          }
+        }
+      },
+      {
+        "id": "rail_telegraph",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "communications wire running between stations",
+        "params": {
+          "entry": "telegraph_line",
+          "route": {
+            "between": [
+              "central_station",
+              "junction_signal_box"
+            ]
+          }
+        }
+      },
+      {
+        "id": "loco_engine",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "shunting locomotive in the yard",
+        "params": {
+          "prop": "locomotive",
+          "zone": "center",
+          "jitter": 0.1
+        }
+      },
+      {
+        "id": "freight_consist",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "open freight cars with coal lading",
+        "params": {
+          "prop": "freight_car",
+          "zone": "center",
+          "jitter": 0.15
+        }
+      },
+      {
+        "id": "caboose_end",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "brake van on the goods siding",
+        "params": {
+          "prop": "caboose",
+          "zone": "center",
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "coal_barge_1",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "heavy timber coal barge in the basin",
+        "params": {
+          "prop": "barge",
+          "on": "water",
+          "zone": "center",
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "coal_barge_2",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "laden cargo barge moored along the wharf",
+        "params": {
+          "prop": "barge",
+          "on": "water",
+          "zone": "west",
+          "jitter": 0.25
+        }
+      },
+      {
+        "id": "coal_stacks",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "fuel depot log and timber stores",
+        "params": {
+          "prop": "log_pile",
+          "zone": "center",
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "town_notice",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "freight tariff and timetable board",
+        "params": {
+          "prop": "notice_board",
+          "zone": "center",
+          "jitter": 0.05
+        }
+      },
+      {
+        "id": "rail_and_wharf_lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "paved access lanes connecting rail terminals and quays",
+        "params": {
+          "anchors": [
+            "industrial_district",
+            "central_station",
+            "rail_coal_tipple",
+            "junction_signal_box",
+            "rail_lift_bridge"
+          ],
+          "pattern": "grid",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 14
+        }
+      },
+      {
+        "id": "industrial_scrub",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "scruffy weed trees and sparse oaks on the outskirts",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 30,
+          "elevation": [
+            2,
+            80
+          ],
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct",
+            "district"
+          ],
+          "undergrowth": {
+            "grass": 0.3,
+            "flowers": 0.02,
+            "deadwood": 0.08
+          },
+          "species": [
+            {
+              "id": "pollarded_oak",
+              "weight": 2,
+              "shape": "oak_round"
+            },
+            {
+              "id": "scrub_birch",
+              "weight": 1,
+              "shape": "birch_slim"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

@@ -7,12 +7,11 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 30 (probe pass 2 through the program stage;
-  six of six generated one-shot, every icon program placed, the sky-whale dominant and read as such, the caldera a pass by read, and four fails with two causes: the fjord carved between the villages stayed dry with no diagnostic (F26, fixed here as `LOAM-I502`), and the bell, the ferry, the monastery and the pit heads authored at building scale (F27, kit-teaching) — G4 not met) is committed.
-- **Next unit:** unit 31 — **F27 in the kit**: the program and landmark sections teach that an icon is built to dominate (T1: scale, height, prominence over the ordinary buildings — the whale at ×2.8/×6.8 is the example, the bell at ×1.27 the counter-example), gated by the golden harness (`run.mjs --label after-f27` + `score.mjs --gate` against `runs/probe-1`/the before-sample, ≈ $0.64); then probe pass 3 — six *new* probes (G4 needs six with no new class), pre-registered, through the program stage (≈ $1.70). Then F17, census 1.21, P5/P6/P7; the remaining verdict stations, G2, the final deck and closing report.
-- **Last commit:** 402e603 (unit 29). Convention: this line names the
+- **In flight:** nothing — unit 31 (F27 in the kit; the golden gate green (11 of 11, 10 one-shot, no golden icon lost, `railway_town` FIXED), the kit paragraph shipped; of the four probes re-run through the program stage, the two villages have their fjord and its ferry and the monastery perches on its peak — two of four read as their prompts, none by the metric, which refuses span and elevation (F28)) is committed.
+- **Next unit:** unit 32 — **F28, the metric's prominence rule** (law 7): `icon-metric.mjs` scores a dominant icon by height ≥ 1.5× *and* footprint ≥ 2×; add prominence — the icon's base elevation above the ordinary buildings' median base — and span, so a ferry across a fjord, a monastery on a peak and a mine working can be what the eye says they are; re-score `runs/probe-2b`, `runs/probe-2` and the before-sample without re-authoring ($0) and pin the four reads as the rule's evidence; retire nothing that still agrees. Then probe pass 3 — six *new* prompts, pre-registered, through the program stage (≈ $1.70) for G4. Then F17, census 1.21, P5/P6/P7; the remaining verdict stations, G2, the final deck and closing report.
+- **Last commit:** 108b305 (unit 30). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
-- **Spend:** $10.22 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
+- **Spend:** $11.77 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
 - **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19, D25,
   D32.)
 - **Findings queue (law 1: bugs before anything else):**
@@ -35,6 +34,11 @@ running state. The NOW block is rewritten at the end of every turn.
     column): the two-villages fjord, 14 % of its floor wet, up to 31 blocks
     dry. Fixed (unit 30): `LOAM-I502 CARVE_MOSTLY_DRY`, measured along the
     floor samples, below half wet.
+  - F28 — **the icon metric's dominance rule cannot see span or elevation**:
+    height ≥ 1.5× and footprint ≥ 2× both required; after F27 the ferry
+    (×8 footprint), the mine working (×6), the bell (×3) and the monastery
+    on its peak all fail it while two of them read as their prompts. Four
+    reads against the rule on the same worlds — law 7. Unit 32.
   - F27 — **the icon is authored at house scale**: the bell pavilion ×1.27,
     the ferry rig ×0.93, the pit heads as huts, the monastery ×1.7 on a
     200× mountain; the whale (×2.8, ×6.8) proves the model can. Nothing in
@@ -510,6 +514,19 @@ running state. The NOW block is rewritten at the end of every turn.
   threshold question would matter, and it is moot while the mountain is
   the icon. G4 is not met by this pass; six new probes follow F27. Undo:
   n/a.
+- **D69 (unit 31):** the kit change ships on the harness's own gate and the
+  presence count, not on dominance: the before-sample is a full generation
+  and the after-run is authoring-only, so their dominance columns (4 of 8
+  vs 0 of 8) measure different things (F24); comparing them would have
+  read a method gap as a regression. The comparable numbers — 11 of 11,
+  10 one-shot, 28 of 28 icons present, `gate: pass` — are green. Undo:
+  revert the two kit paragraphs and regenerate the copies.
+- **D70 (unit 31):** the four probes' verdicts are the renders', not the
+  metric's: the fjord and its ferry and the monastery on its peak are what
+  their prompts asked for, and the metric refuses both because it has no
+  rule for span or elevation. That is the evidence law 7 asks for before a
+  metric is changed, and it is now in hand (F28); the metric is not
+  changed in the same unit that produced the evidence. Undo: n/a.
 
 ## SPEND
 
@@ -545,6 +562,7 @@ running state. The NOW block is rewritten at the end of every turn.
 | 28 | F23 attributed — three lint passes, three baseline re-pins, one bi14 run, the FULL suite | 0.00 | 8.19 |
 | 29 | probe pass 1 — six prompts authored (`runs/probe-1`), the icon metric | 0.36 | 8.55 |
 | 30 | probe pass 2 — six worlds generated end to end (`runs/probe-2`), the icon metric | 1.67 | 10.22 |
+| 31 | F27 in the kit — the golden gate (`runs/after-f27`) and four probes re-run (`runs/probe-2b`) | 1.55 | 11.77 |
 
 ## VERDICTS
 
@@ -614,6 +632,37 @@ toward G4 only from this pass.
 | `probe_temple_bell` | icon in a prop pack | the pavilion placed | not dominant h ×1.27, a ×2.78; the read agrees | F27 | after F27 |
 | `probe_two_villages` | two places | the ferry placed; 12 of 14 racks | ferry joins nothing: **no fjord** | the valley carved between the villages stayed dry with no diagnostic (F26 — fixed, `LOAM-I502`) | after F26 + F27 |
 | `probe_bronze_tundra` | unusual era/climate | the ship, 4 hearths | the mine is ordinary huts | F27; `W517` pack-era once more | after F27 |
+
+**F27 kit change — pre-registered (unit 31, 2026-08-25), before any
+spend.** The kit's icon register (`settlement-author.md` §9e) gains "the
+centerpiece dominates": the one icon the prompt names as *the thing* is a
+landmark built to tower over the ordinary buildings — envelope ≥ 1.5× their
+height and ≥ 2× their footprint, or standing above them on a ridge, a cliff
+or a mast — and its brief and `envelope` say so; the saturation rule stays
+for the streets. Gate (law 3, the golden harness): `run.mjs --label
+after-f27` (the eleven golden prompts, authoring-only, ≈ $0.64) scored
+`score.mjs runs/before-sample runs/after-f27 --gate` and by the icon
+metric; then the four probes F27 failed (`probe_temple_bell`,
+`probe_two_villages`, `probe_monastery`, `probe_bronze_tundra`) through the
+program stage again (≈ $1.20). Cap for the unit $3.00. **Prediction:** the
+golden gate passes with no icon lost and no one-shot lost (11 of 11 author;
+≥ 9 one-shot as before); at least two of the four probes' dominant icons
+read dominant (the bell and the ferry the likely two; the monastery stays
+under its mountain; the mine may stay huts). **Decision rule:** the kit
+change ships only if the golden gate is green and no golden icon regresses;
+a probe that now passes stays one-off (its cause fixed); one that still
+fails is F27's remainder, named.
+
+**Pass 2b — the four F27 probes re-run through the program stage (unit 31, $1.01):**
+
+| probe | metric after F27 | the read | verdict |
+|---|---|---|---|
+| `probe_two_villages` | ferry h ×1.07, a ×8.0 | the fjord is there (`I502` landed in the feedback rounds); the ferry spans it | pass by read; F28 |
+| `probe_monastery` | h ×1.08, a ×1 | the gompa on a peak, flags on the summits — named by a stranger | pass by read; F28 |
+| `probe_temple_bell` | h ×1.2, a ×3.0 | no pavilion you would point to | fail — F27 remainder |
+| `probe_bronze_tundra` | h ×0.93, a ×6.0 | a low dark working among huts | fail — F27 remainder |
+
+Golden gate `runs/after-f27`: 11 of 11, 10 one-shot, `gate: pass`, 28 of 28 icons present, `railway_town` FIXED; dominance not comparable (F24).
 
 ## PROPOSALS
 
@@ -1099,3 +1148,11 @@ toward G4 only from this pass.
   edits/index.ts`, `compile.ts`, the registry, the test, the two tools,
   `runs/probe-2`, `docs/decks/probes/PROBE-PASS-2-2026-08-25.md`, the
   ledger. Spend $1.67.
+- **unit 31 — F27 in the kit (2026-08-25):** `settlement-author.md` §9e
+  gains "the centerpiece dominates" (and the `envelope` row says so);
+  `settlement-core.md` and the modules regenerated by `split-kit.mjs`.
+  Gate: the eleven golden prompts re-authored (`runs/after-f27`) and
+  scored against the before-sample; the four probes F27 failed re-run
+  through the program stage (`runs/probe-2b`). the golden gate green (11 of 11, 10 one-shot, no golden icon lost, `railway_town` FIXED), the kit paragraph shipped; of the four probes re-run through the program stage, the two villages have their fjord and its ferry and the monastery perches on its peak — two of four read as their prompts, none by the metric, which refuses span and elevation (F28) Tests: FULL suite
+  COUNTS kit suites 13 files / 267 tests (kit-assembly, spec kit, agents); the golden harness is the kit gate (spec §9) and passed; no compiler code moved. Files: the kit and its generated copies, the two runs,
+  `docs/decks/probes/F27-2026-08-25.md`, the ledger. Spend $1.55.
