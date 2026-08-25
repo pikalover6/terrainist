@@ -130,9 +130,21 @@ of wall; full report: scratchpad perf/REPORT.md + battery of scripts).
     varied the authoring is. Next rung (Kai: run-fill only, deflate pool
     shown before built): first block of each section slice through the
     public setter, stable-container bit-packed remainder, shape-check +
-    silent fallback; expected ~2× on the fill. `terrain/emit.ts` is emit
-    code by role and was granted to the session as one file; the string
-    chunk-key maps in structures/** are parked as a later orchestrator rung.
+    silent fallback. **LANDED (`c18c9fe`, gate 5,573/0):** emit −20 to
+    −30 % (troy 1606 → 1286 ms, pirates 1602 → 1128); cumulative both rungs
+    vs the 5.4 s start: **troy 3.9 s (−22 %), thalassa 8.5 s (−9 %), pirates
+    4.7 s (−31 %)**. Proof: 3,600 randomised full-chunk comparisons against
+    real prismarine-chunk (every block state, palette insertion order,
+    bitsPerValue, solidBlockCount), 100 % fast-path hit rate on a real troy
+    (2.58 M slices, 0 fallbacks), a mutation-checked replay test, per-file
+    shasums ×3 docs, in-situ troy identical after the main-tree rebuild.
+    Kai's guard verdict: a test asserts zero fallbacks, so a prismarine-chunk
+    bump fails CI loudly while production keeps the silent fallback.
+    `terrain/emit.ts` is emit code by role and was granted to the session as
+    one file (bucketTrees' keys next, on Kai's go); the string chunk-key maps
+    in structures/** are parked as a later orchestrator rung; thalassa's
+    unmoved 4.6 s of structures is the biggest single item left and gets a
+    read-only profile.
 
 ## WS-F — Architectural inventory (the "glaring stuff" census)
 

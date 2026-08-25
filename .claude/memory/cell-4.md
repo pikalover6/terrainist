@@ -63,7 +63,10 @@ contracts teaching. The campaign window (caps) is Kai's to design.
 compression position hash 4.6×, scatter 3.8×, compile −15/−6/−21 %; troy
 NOT representative (thalassa 9.4 s structures-bound, pirates scatter-
 bound); emit cost = prismarine's linear palette scan (couples to authoring
-richness); next rung run-fill only. Menus design ratified by Kai: two
+richness). Rung 3 run-fill LANDED c18c9fe (gate 5,573/0): emit −20-30 %;
+cumulative troy 3.9 s / thalassa 8.5 / pirates 4.7; Kai: zero-fallback
+test guards the silent fallback. Next: bucketTrees keys, thalassa
+structures profile (read-only), deflate pool designed in front of Kai. Menus design ratified by Kai: two
 tiers (named packs whole, era-affine round-robin), ~60 entries/2.1k
 tokens, statuses=[implemented], empty menu ⇒ no message.
 
