@@ -135,6 +135,29 @@ analysis harness over it:
   menu (troy_horse, alien_farm, redwood_camp, glowcap_vale — four of the six
   zero-reach packs plus the citadel), ~$0.23, against the after-units-v2
   baseline at the same kit sha.
+- **MEASURED (Kai bought the complete 11×11 pair, $1.29, at the frozen
+  kit; menus, 2026-08-24):** the menu does NOT move catalog reach at n=1 —
+  archetypes 62 → 64 and reach 14.5 → 15.0 % within noise, formPacks 7 → 7,
+  props 23 → 23, cost +2 %; the audit's "toward pack-complete and cheaper"
+  is falsified on both halves. The floor-proof signal: **pack-member uses
+  5 → 16**, 15 of them classical_mediterranean — the one pack the kit
+  fences — with three corpus-firsts (column_drums, votive_column,
+  sandbag_emplacement; churn cannot mint ids the corpus never wrote), and
+  troy dropped castle + church. **Five menu-bearing prompts adopted
+  nothing and wrote the familiar generic id over the specific pack id in
+  hand** (witch_hut over witch_stilt_hut; sawmill over sawpit) — all
+  implemented, all reachable by tag, so spelling was not the barrier.
+  **Retrieval is necessary but not sufficient: the fenced example supplies
+  the binding; the menu amplifies only where binding exists.** That is
+  A3's design input: the next lever is teaching preference, not showing
+  more ids. Side effects: params.archetype vanished under the menu (7 → 0;
+  the :1464 prohibition beat the compiler, the fences and the menu) and
+  kit-literal envelopes rose 34 → 43 % (+9, floor 7.7) — a reference
+  message appears to deepen retrieve-and-copy mode. Controls held (empty-
+  menu prompts identical; pirate's 15 → 13 is a live floor reading).
+  **Recommendation on record: flag stays OFF; re-measure ON-only (~$0.64)
+  after cluster 3 removes the prohibition and fences a pack that spends
+  menu ids.** Machinery committed and free while off.
 
 ## WS-D — Price optimization
 
