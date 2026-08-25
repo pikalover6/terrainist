@@ -95,6 +95,13 @@ term, is not convex, and would forfeit §3.4's exactness while double-pricing wh
 edge already prices. Standing rule: **no cost term may be added that is not convex in
 its argument** — a non-convex term is a design change, not a tuning.
 
+> **Amended by the Stocktake Run, 2026-08-25.** The rule stands for the
+> objective. What changed is downstream: a kerb seam (`EDGE(1)`) no longer
+> bounds a block for subdivision (`SEAM_BLOCK_MIN_DROP = 2` in
+> `layout/district.ts`) — the election still prices it, the fabric no longer
+> treats it as a boundary, and the r5 metropolis regained ten of its
+> twenty-three lost terraces (`docs/decks/anchors/METROPOLIS-R5-BISECTION-2026-08-25.md`).
+
 ### 1.3.3 Frontage — per column, against that column's own street
 
 `FRONT_LOW(g)` prices a plane `g` **below** its street, `FRONT_LIP·h` a plane `h`

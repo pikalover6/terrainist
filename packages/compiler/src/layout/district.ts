@@ -3225,6 +3225,14 @@ function alleyThrough(
  * A named constant rather than a silent edit because it is the kind of change
  * that wants one line to undo — the same shape `FRONTAGE_TIE` and `SEAM_TIERS`
  * have. `false` restores the `terraced`-only gate exactly.
+ *
+ * **Correction (the Stocktake Run, 2026-08-25).** "A grid quarter cannot move"
+ * held for the two fixtures and not in general: the bounding-box argument
+ * assumes a seamless component, and a grid quarter on a shelf has its blocks
+ * cut by platform seams into L-shapes, whose second rectangles this flag
+ * finds; and `multiRect` also drives `cutDeepBlocks`. The r5 metropolis, a
+ * pitch-laid grid, moved 68 → 66 terraces at this commit
+ * (`docs/decks/anchors/METROPOLIS-R5-BISECTION-2026-08-25.md`).
  */
 export const BLOCK_MULTI_RECT = true;
 
@@ -3282,7 +3290,7 @@ export function boundingSeams(seams: readonly LevelSeam[]): readonly LevelSeam[]
  * columns) in a strip only 19 deep; and every column it grew is then marked
  * `taken`. So the parcel runs *along* the strip, eats the stations of the
  * lot after it, and that lot arrives at fewer than 25 columns and a 1 × 1
- * rectangle. Measured (2026-08-25, `scratchpad/lot-probe/LOT-PROBE.md`):
+ * rectangle. Measured (2026-08-25, `docs/decks/anchors/MONTFORT-HILLSIDE-2026-08-25.md` §G):
  * 47 of 49 drops on montfort_hill and 55 of 58 on the fresh walled city are
  * the rectangle test, and about 70 % of those are this starvation — 30 of the
  * walled city's 43 starved lots sit immediately after a built one. §4.2 step
@@ -3340,8 +3348,8 @@ export const PLANNED_SITE_WHOLE_STRIP = true;
  * the side the district edge when that one column finds no carriageway. In a
  * city cell rotated 45° (`city.ts` `orientationOf`) the blocks are
  * axis-aligned chords of diamonds and the carriageway runs diagonally past
- * the midpoint probe: measured 2026-08-25 (`scratchpad/block-probe/
- * BLOCK-PROBE.md`), 20 of hellenist_sea_siege_k1's 46 blocks — 68 % of the
+ * the midpoint probe: measured 2026-08-25 (`docs/decks/anchors/
+ * HELLENIST-DENSITY-2026-08-25.md` §E), 20 of hellenist_sea_siege_k1's 46 blocks — 68 % of the
  * block land it cut — front nothing by this probe and yield no lot, all in
  * the 45° cells, none in the 0° cells. On, the probe walks the side's
  * columns middle-out and returns the first street any of them reaches, so a

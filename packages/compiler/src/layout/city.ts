@@ -259,8 +259,8 @@ export const PARK_MAX_SHARE = 0.34;
  * cells is inside that budget — and on the fresh Hellenist city those two
  * cells are 43,385 of 66,750 cell columns, **65 % of the city's own land**,
  * which is the whole of why it reads 4.7 lots per 10k envelope cells against
- * the metropolis control's 23.7 (2026-08-25, `scratchpad/block-probe/
- * BLOCK-PROBE.md`; T7). On, the same rules run in the same order but the
+ * the metropolis control's 23.7 (2026-08-25, `docs/decks/anchors/
+ * HELLENIST-DENSITY-2026-08-25.md` §E; T7). On, the same rules run in the same order but the
  * budget is `PARK_MAX_SHARE` of the cells' total area: a steep or wedge cell
  * becomes a park while the parks' land stays under that share, and a cell
  * that would push it over is skipped for the next candidate rather than

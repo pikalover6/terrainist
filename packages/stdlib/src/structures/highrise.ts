@@ -92,7 +92,7 @@ export const HIGHRISE_ARCHETYPES = ["skyscraper", "office", "hotel", "apartment_
  * it was the one cell the rule left unwritten whenever `storyHeight > 3` put
  * the storey's head band above it (at `storyHeight === 3` the band itself
  * happened to fill it). Measured 2026-08-25 on `examples/c1-harbourtown`
- * (`scratchpad/voxel-trace/VOXEL-TRACE.md`): an `office` with `storyHeight
+ * (`docs/decks/anchors/HELLENIST-DENSITY-2026-08-25.md` §H): an `office` with `storyHeight
  * 4` had air at both door-head cells, and once road sovereignty took one of
  * its two canopy slabs the other had air on six sides — `floating.slab`, the
  * physics gate. `false` is the old guard (`y > 3`), kept so the world it made

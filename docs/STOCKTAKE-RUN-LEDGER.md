@@ -7,31 +7,29 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 15 (the fluid switches flipped) is
-  committed.
-- **Next unit:** unit 16 — **the slop census, classes 1–3** (gate G5): write
-  `docs/STOCKTAKE-SLOP-CENSUS.md` listing every finding by class with a
-  disposition (delete / fix / rewrite / keep-with-note / proposal), seeded
-  from what the Run has already established — class 1 belief vs behaviour
-  (`BLOCK_MULTI_RECT`'s "grid worlds untouched", `W527` blind on the planned
-  path, `SITE_STRIP_DISSOLVED` absent, the highrise head course, `held` as
-  frontage, the ocean fill's `never` repair, `mostlyWater`'s majority vote,
-  `TERRACE_BY_TERRAIN` "nothing consults this value" — verify), class 2
-  abandoned seams (the spec's list: declare/build split, report `blockSpans`
-  vs emit, driver write-through, the two kit files vs the compiler
-  registries), class 3 duplicated authorities (heights, placement,
-  palettes) — probing each with a bounded read or a compile, then executing
-  the small class-1–3 items code-first under law 5 and writing the rest up.
-  Budget the unit at one turn; carry the remainder in the census document.
+- **In flight:** nothing — unit 16 (the slop census, classes 1–3 opened and
+  the small items executed) is committed.
+- **Next unit:** unit 17 — **the census's executable S items, batch one**
+  (`docs/STOCKTAKE-SLOP-CENSUS.md` §8's lists): 1.17 the walled `city`'s
+  cells reach `W527` (carry the parent's wall into the guard, not the cell's
+  params; diagnostics only); 1.18 a note when a `never` column was flooded
+  anyway (`overriddenNoFlood` gets its reader — a new diagnostic code from
+  the registry's free numbers); class-2 S4 drop `"pad.record"` from
+  `BLOCKING_CLASSES` once no intent carries it (verify by payload sha);
+  class-3 M4 one `materialKey()` for the four inlined literals, P2 one
+  `makePlacement()` for the seven mints, M2 exempt `street.curb` from the
+  `scoped` palette skip (byte-moving — switch + attribution), D4/M5 the
+  stale "`FRONTAGE_TIE` is off" and "`style.palettes` is the last word"
+  docblocks. Payload identity on the fourteen for every diagnostics-only or
+  refactor item; law 5 for anything that moves a block; FULL suite once.
   Then F10, F4, F14, F17; §10.5 probe prompts; the remaining stations.
-- **Last commit:** 5809500 (unit 14). Convention: this line names the
+- **Last commit:** e12df60 (unit 15). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
 - **Spend:** $8.19 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
 - **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19, D25,
   D32.)
 - **Findings queue (law 1: bugs before anything else):**
-  - F1 — T110: **fixed for four of five** (units 14–15); open on #5 only
-    (a pad graded into a lake, proposal P4).
+  - F1 — T110: fixed for four of five; open on #5 (P4).
   - F2 — anchors at HEAD: all four attributed (units 4, 8).
   - F3 — metropolis authoring regression, lost 3-of-3; E2.
   - F4 — `LOAM-I512` "ruined shells" vs intact boxes — street-level probe.
@@ -46,6 +44,14 @@ running state. The NOW block is rewritten at the end of every turn.
     the redwoods' measure, the farm town's hull density; the rail gantry).
   - F16 — the kit's core is 88 % of the kit; a smaller kit is a prose job.
   - F17 — the walled city's keep authored in 1 of 3 kit rolls; kit-teaching.
+  - F18 — **the kit never names 175 of 428 building archetypes (41 %) and
+    253 of 654 catalog entries (39 %)**; zero the other way. E7's "is the
+    model drowning?" is answered from the other side: the kit under-names
+    (census 2.4; a table fill is M, a generator is a proposal).
+  - F19 — **79 % of structure blocks are emitted at absolute y before the
+    ground freezes** (`enterTier` has no caller; the declare/build split is
+    a statement-order cut) — the GROUND-CONTRACT migration's undone half;
+    proposal (L) with the pads' double authority (census 3.1).
 ## DECISIONS
 
 (every fork taken: the reversible default chosen, why, and how to undo it)
@@ -262,6 +268,18 @@ running state. The NOW block is rewritten at the end of every turn.
   a lake) is a ground-contract subsystem — no wet-neighbour constraint
   exists anywhere — and goes to proposal P4 rather than a patch that would
   argue with the election's water floor. Undo: delete the constants.
+- **D35 (unit 16):** the census is a document with dispositions
+  (`docs/STOCKTAKE-SLOP-CENSUS.md`), its three probes kept verbatim; the
+  class-1–3 items the Run had already fixed are entered as done, the S
+  items that are comments, citations and doc amendments are executed in the
+  same unit (byte-identical, FULL suite), and the S items that touch code
+  or bytes are the next unit's batch — so G5's "executed, not just listed"
+  is met unit by unit, not by a single sweep. Undo: n/a.
+- **D36 (unit 16):** the settlement kit's own bytes are not touched for a
+  header note (class-2 S7): the kit sha is every harness run's anchor and a
+  comment line would make every later run read as a kit change; the
+  generated `settlement-core.md`/`modules/` are named in the harness README
+  instead. Undo: n/a.
 
 ## SPEND
 
@@ -282,6 +300,7 @@ running state. The NOW block is rewritten at the end of every turn.
 | 13 | E1: 9 authoring passes (3 arms × 3 repeats) + one resumed pass; compiles free | 5.90 | 8.19 |
 | 14 | T110 attributed — probe, two switches off, trials, the FULL suite | 0.00 | 8.19 |
 | 15 | the fluid flip — compiles, re-score, the FULL suite | 0.00 | 8.19 |
+| 16 | the slop census, classes 1–3 — three probes, comment fixes, the FULL suite | 0.00 | 8.19 |
 
 ## VERDICTS
 
@@ -549,3 +568,20 @@ running state. The NOW block is rewritten at the end of every turn.
   `fluid-stability-fixes 5 passed`. Files: the two sources, the test, the
   T110 record §D, `runs/before-sample/icon-metric.json`, the deck README.
   Spend $0.
+- **unit 16 — the slop census, classes 1–3 (2026-08-25):**
+  `docs/STOCKTAKE-SLOP-CENSUS.md` opened with every class-1–7 finding the
+  Run has established, each with a disposition and status; three probes
+  (opus-5-medium ×2, opus-5-low; verbatim in §8): class 1 verified eight
+  claims (five stale, three true), class 2 the spec's four seams measured
+  (blockSpans match the world 120/120 — attribution is the divergence; the
+  declare/build split is a statement-order cut with 79 % of blocks emitted
+  pre-freeze; the driver write-through dead; the kit under-names 41 % of
+  archetypes), class 3 the three authorities counted (19 height deciders,
+  10 placement, 15 palette) with their duplicates named and sized. Executed
+  now: the `BLOCK_MULTI_RECT` and `computeOceanMask` claims corrected, the
+  `blockSpans` and `view()` comments inverted back, six source citations
+  pointed at the committed records, ELECTION-SOLVE §1.3.2 amended. F18, F19
+  logged (D35, D36). Payload-identical on all fourteen. Tests: FULL suite
+  COUNTS `Test Files 341 passed | 1 skipped (342)`, `Tests 5664 passed | 31
+  skipped (5695)`. Files: the census, six source files (comments), two
+  docs. Spend $0.

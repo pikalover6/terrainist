@@ -1191,7 +1191,16 @@ export function declareStructures(input: StructurePassInput): StructurePlan {
     ),
   );
   const blocks: StructureBlock[] = [];
-  /** See {@link BlockSpan}. A return value only; nothing downstream reads it. */
+  /**
+   * See {@link BlockSpan}. Read downstream by `emit/walkability.ts` and carried
+   * into the compile report (`layout.structures.blockSpans`) — not "a return
+   * value only" as this once said. It is the **first-writer** attribution of
+   * each pass's range in the block list, not the emitted world: on troy_k1
+   * 363 positions are double-written by later passes (14 of them changing
+   * block) and 1,185 program blocks lie outside every span (the Stocktake
+   * Run's census, class 2.2, 2026-08-25). A reader wanting the world reads
+   * the world.
+   */
   const blockSpans: BlockSpan[] = [];
   /**
    * Append a pass's blocks and record the range they landed in.

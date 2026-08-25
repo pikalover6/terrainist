@@ -798,7 +798,7 @@ export function stoneBandState(
  * railway town: a `basin` at y 54 over the demoted pond of a sealess `river` at
  * y 51) the one settled second overwrites the first *downward*, and every
  * neighbour still at the higher surface has an exposed face — 71 blocks of
- * `LOAM-T110 UNSTABLE_FLUID` (`scratchpad/t110/T110-PROBE.md`, 2026-08-25).
+ * `LOAM-T110 UNSTABLE_FLUID` (`docs/decks/anchors/T110-2026-08-25.md`, 2026-08-25).
  * On, a column already holding the same fluid above the new level keeps its
  * surface. Pools that do not overlap are byte-identical. Staged under the
  * Run's law 5: landed `false`; **`true` ships** (2026-08-25, unit 15) — no

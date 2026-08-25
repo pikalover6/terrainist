@@ -123,7 +123,7 @@ export const TERRACE_RISE = RETAIN_MAX;
  * `minStripRun` to dissolve a strip and handed to `allocateFrontage` to cut
  * its lots — is then the frontage divided by two or three, not "the frontage
  * it actually holds" that the compaction comment promises. Measured on
- * montfort_hill_k1 (2026-08-25, `scratchpad/hillside-probe/HILLSIDE-PROBE.md`):
+ * montfort_hill_k1 (2026-08-25, `docs/decks/anchors/MONTFORT-HILLSIDE-2026-08-25.md` §E):
  * 66 % of the refused stations had cleared the depth floor and were refused
  * for this alone; four of five strips dissolved, one on 29 stations against a
  * minimum of 30, and the walled town came out as a keep and a handful of

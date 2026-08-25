@@ -409,10 +409,12 @@ class AccumulatingDriver implements GroundDriver {
     if (!this.staged) return this.handed;
     // Past the freeze the plan's three arrays *are* the fifth resolve's arrays
     // (§1.6 pass 5c), so a build-half reader asking for "the ground" gets the
-    // ground. Before it, a caller that named no tier is answered at the tier the
-    // stage is currently declaring — which is what makes an un-migrated helper
-    // deep inside a pass read its own pass's legal prefix rather than a stale
-    // baseline.
+    // ground. Before it, a caller that named no tier is answered at
+    // `currentTier` — which, today, is always the first tier: `enterTier` has
+    // no caller, so the stage never advances and a bare pre-freeze `view()`
+    // is the baseline, not "its own pass's legal prefix" as this once claimed
+    // (the Stocktake Run's census, class 2.1, 2026-08-25). Calling `enterTier`
+    // at each tier is the M-sized half of the declare/build migration.
     if (tier === undefined) return this.frozen ? this.handed : this.prefixFor(this.currentTier);
     return this.prefixFor(tierIndex(tier));
   }

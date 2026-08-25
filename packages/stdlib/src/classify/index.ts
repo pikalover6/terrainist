@@ -100,7 +100,10 @@ export interface OceanMask {
  * alone would be unsound, though: a dry below-sea column touching ocean water
  * would leave that water with an exposed air face. So after the fill, any
  * blocked column adjacent to water is flooded regardless, to a fixed point, and
- * counted — `never` is honoured exactly as far as physics allows.
+ * counted — `never` is honoured exactly as far as physics allows — and, since
+ * {@link OCEAN_FILL_CONTINUES}, the sea that crossed such a column keeps going
+ * past it. `overriddenNoFlood` is counted and, today, read by nobody: no
+ * diagnostic tells the author their `never` was overridden (census 1.9).
  */
 /**
  * **The ocean fill continues past a flooded `never` column it had to flood.**
@@ -110,7 +113,7 @@ export interface OceanMask {
  * outward from that column, so an *unblocked* below-sea column on its far side
  * stays dry against the sea, with the sea's surface one block above its
  * ground — exactly the exposed face `LOAM-T110 UNSTABLE_FLUID` refuses the
- * emit for. Measured 2026-08-25 (`scratchpad/t110/T110-PROBE.md`): three of
+ * emit for. Measured 2026-08-25 (`docs/decks/anchors/T110-2026-08-25.md`): three of
  * the Stocktake Run's five refused documents, each with a `flooded: "never"`
  * carve at the shore. On, a repaired column joins the same queue the fill
  * uses, and the fill drains from it under the same rules (blocked columns
