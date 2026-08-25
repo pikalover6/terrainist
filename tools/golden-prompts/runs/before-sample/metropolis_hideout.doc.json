@@ -1,0 +1,711 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "overgrown_metro_hideout",
+    "worldSeed": "304",
+    "prompt": "A high-tech apocalyptic hideout in the massively overgrown ruins of a metropolis.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:cracked_stone_bricks",
+      "road.shoulder": "minecraft:mossy_cobblestone",
+      "plaza.path": "minecraft:gray_concrete",
+      "plaza.border": "minecraft:moss_block"
+    }
+  },
+  "intent": {
+    "era": "far_future",
+    "wealth": 0.5,
+    "decline": 0.85,
+    "formality": 0.6,
+    "climate": {
+      "humidity": 0.5,
+      "temperature": 0.2
+    },
+    "character": {
+      "label": "overgrown ruined metropolis hideout",
+      "materialTheme": "modern_city",
+      "urbanForm": "grid",
+      "flora": {
+        "prefer": [
+          "oak_round",
+          "spruce_tall"
+        ]
+      },
+      "archetypes": {
+        "prefer": [
+          "bunker_complex",
+          "laboratory",
+          "field_station"
+        ]
+      },
+      "motifs": {
+        "roofType": "flat",
+        "massing": "towered"
+      },
+      "programs": [
+        {
+          "id": "comm_array_tower",
+          "mode": "landmark",
+          "brief": "A scavenged high-tech satellite communications dish and sensor spire erected atop reinforced concrete scaffolding, wired into the bunker below.",
+          "envelope": [
+            15,
+            24,
+            15
+          ]
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "a sprawling grid of ruined skyscrapers heavily overgrown with dense jungle and massive root systems",
+      "fittings": "blast_door on the bunker_complex; airlock_vestibule on the laboratory",
+      "infra": "barricade_line across the ruined avenue leading to the hideout; surveillance_perimeter around the fortified shelter",
+      "icons": "shattered skyscrapers smothered in vines and canopy trees; a heavily fortified high-tech shelter concealed within the concrete ruins; solar arrays and communication dishes hidden among overgrowth"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "The Overgrown Ruins of the Metropolis",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "metro_terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "fractured urban bedrock and overgrown lowlands",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 68,
+          "amplitude": 22,
+          "octaves": 5,
+          "frequency": 0.003,
+          "lacunarity": 2,
+          "gain": 0.5,
+          "erosionPasses": 2,
+          "warp": {
+            "amount": 20,
+            "frequency": 0.004
+          },
+          "cliffThreshold": 55,
+          "soilDepth": 4
+        },
+        "children": [
+          {
+            "id": "urban_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the elevated foundation shelf under the metropolis",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 200,
+              "height": 6,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "collapsed_highway",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "sunken transit canyon cut through the district",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.12,
+                  0.32
+                ],
+                [
+                  0.48,
+                  0.45
+                ],
+                [
+                  0.88,
+                  0.62
+                ]
+              ],
+              "width": 28,
+              "depth": 10,
+              "profile": "sharp",
+              "flooded": "never"
+            }
+          },
+          {
+            "id": "central_impact_crater",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "a flooded blast crater in the downtown sector",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.32,
+                0.68
+              ],
+              "radius": 44,
+              "depth": 12,
+              "water": true,
+              "profile": "sharp"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0015
+        }
+      },
+      {
+        "id": "metro_overgrowth",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "massive jungle canopy and creeping vines burying the concrete",
+        "params": {
+          "area": {
+            "at": [
+              0.5,
+              0.5
+            ],
+            "radius": 240
+          },
+          "density": 0.18,
+          "spacing": 3,
+          "clumping": 0.45,
+          "maxSlope": 35,
+          "elevation": [
+            1,
+            90
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.55,
+            "flowers": 0.12,
+            "deadwood": 0.08
+          },
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "giant_kapok",
+                  "shape": "kapok_emergent"
+                },
+                {
+                  "id": "ancient_spruce",
+                  "shape": "spruce_ancient"
+                }
+              ]
+            },
+            "understory": {
+              "species": [
+                {
+                  "id": "tree_fern_shrub",
+                  "shape": "tree_fern"
+                },
+                {
+                  "id": "hazel_understory",
+                  "shape": "hazel_shrub"
+                }
+              ],
+              "density": 0.1
+            },
+            "floor": "default"
+          },
+          "species": [
+            {
+              "id": "broadleaf_canopy",
+              "shape": "jungle_broadleaf",
+              "weight": 3
+            },
+            {
+              "id": "creeping_oak",
+              "shape": "oak_spreading",
+              "weight": 2
+            },
+            {
+              "id": "river_willow",
+              "shape": "willow_weeping",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "wilderness_scatter",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "ambient wilderness fill",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 4,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "species": [
+            {
+              "id": "wild_oak",
+              "shape": "oak_round",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "ruined_metropolis",
+        "kind": "district",
+        "label": "the ruined metropolis, shattered concrete towers overtaken by nature",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            280,
+            260
+          ]
+        },
+        "intent": {
+          "decline": 0.88,
+          "wealth": 0.3,
+          "character": {
+            "label": "crumbling metropolis quarter",
+            "materialTheme": "modern_city",
+            "urbanForm": "grid",
+            "motifs": {
+              "roofType": "flat",
+              "massing": "towered"
+            }
+          }
+        },
+        "params": {
+          "fabric": "grid",
+          "density": "high",
+          "mix": [
+            "skyscraper",
+            "office",
+            "apartment_block",
+            "department_store",
+            "data_center",
+            "parking_garage",
+            "brutalist_block",
+            "convenience_store"
+          ],
+          "blockSize": 44,
+          "plaza": true
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 8
+          }
+        ],
+        "tags": [
+          "district",
+          "ruins",
+          "metropolis"
+        ],
+        "children": [
+          {
+            "id": "shattered_tower_prime",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "a cracked 16-storey skyscraper shell draped in vines",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                21,
+                68,
+                19
+              ]
+            },
+            "params": {
+              "archetype": "skyscraper",
+              "floors": 16,
+              "roof": "flat",
+              "windowRhythm": "dense",
+              "decay": 0.85
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "skyscraper"
+            ]
+          },
+          {
+            "id": "decayed_corporate_center",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "a fractured high-rise office block with blown-out windows",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                19,
+                52,
+                17
+              ]
+            },
+            "params": {
+              "archetype": "office",
+              "floors": 12,
+              "roof": "flat",
+              "windowRhythm": "dense",
+              "decay": 0.8
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "north",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "office"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "bunker_shelter",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the reinforced high-tech bunker hidden beneath overgrown wreckage",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "archetype": "bunker_complex",
+          "floors": 1,
+          "entrance": {
+            "treatment": "blast_door"
+          },
+          "basement": {
+            "depth": 5,
+            "style": "bunker_hold"
+          }
+        },
+        "constraints": [
+          {
+            "distance": "ruined_metropolis",
+            "min": 10,
+            "max": 32
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "bunker",
+          "house",
+          "hideout"
+        ]
+      },
+      {
+        "id": "bio_synth_lab",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a sealed high-tech laboratory with airlock vestibule",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            17
+          ]
+        },
+        "params": {
+          "archetype": "laboratory",
+          "floors": 1,
+          "entrance": {
+            "treatment": "airlock_vestibule"
+          },
+          "basement": {
+            "depth": 4,
+            "style": "vault"
+          }
+        },
+        "constraints": [
+          {
+            "distance": "bunker_shelter",
+            "min": 6,
+            "max": 22,
+            "strength": "soft"
+          },
+          {
+            "facing": "bunker_shelter"
+          },
+          {
+            "connected": "bunker_shelter",
+            "via": "tunnel",
+            "style": "dressed"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "laboratory",
+          "tech",
+          "house"
+        ]
+      },
+      {
+        "id": "scout_field_station",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "forward reconnaissance and surveillance post",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "archetype": "field_station",
+          "floors": 1,
+          "entrance": {
+            "treatment": "airlock_vestibule"
+          }
+        },
+        "constraints": [
+          {
+            "distance": "bunker_shelter",
+            "min": 8,
+            "max": 28,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "field_station",
+          "tech"
+        ]
+      },
+      {
+        "id": "hideout_power_hub",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the auxiliary power hub and battery storage shed",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            15
+          ]
+        },
+        "params": {
+          "archetype": "battery_shed",
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "distance": "bunker_shelter",
+            "min": 8,
+            "max": 30,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "battery_shed",
+          "power"
+        ]
+      },
+      {
+        "id": "satellite_uplink",
+        "kind": "generator",
+        "generator": "authored:comm_array_tower",
+        "label": "the scavenged high-tech satellite communications dish and sensor spire",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            24,
+            15
+          ]
+        },
+        "params": {
+          "seat": "pad"
+        },
+        "constraints": [
+          {
+            "distance": "bunker_shelter",
+            "min": 10,
+            "max": 34
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "landmark",
+          "comms"
+        ]
+      },
+      {
+        "id": "solar_grid",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "camouflaged solar panel array powering the shelter",
+        "params": {
+          "prop": "solar_array",
+          "zone": "center",
+          "jitter": 0.1
+        }
+      },
+      {
+        "id": "evac_pad",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a marked concrete helipad for rapid exfiltration",
+        "params": {
+          "prop": "helipad",
+          "zone": "center",
+          "jitter": 0.15
+        }
+      },
+      {
+        "id": "approach_barricade",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "a reinforced barricade blocking the main ruined boulevard",
+        "params": {
+          "entry": "barricade_line",
+          "route": {
+            "across": "ruined_metropolis"
+          }
+        }
+      },
+      {
+        "id": "service_conduits",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "overgrown access routes connecting the hideout modules",
+        "params": {
+          "anchors": [
+            "bunker_shelter",
+            "bio_synth_lab",
+            "scout_field_station",
+            "satellite_uplink",
+            "#tag:house"
+          ],
+          "pattern": "grid",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 16
+        }
+      }
+    ]
+  },
+  "programs": {
+    "comm_array_tower": {
+      "mode": "landmark",
+      "envelope": [
+        15,
+        26,
+        15
+      ],
+      "sourceHash": "b3:947ac8152a85433fb17fe0c104dc6aaebc2ca0b196585fe0da90d363709c51c3",
+      "outputHash": "b3:9e23dbbd7966f43b102dd42e5cd5f87375473049448ab1056924b5dad56a4244",
+      "conforms": false,
+      "conformHash": "b3:a39454428ae3fc385c6768fb92d722be9ea924658765ac8ef63ad67b6054cb34",
+      "source": "export const envelope = [15, 26, 15];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n\n  // Safe block placement helper confined to envelope\n  function setBlock(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      api.set(Math.floor(x), Math.floor(y), Math.floor(z), block);\n    }\n  }\n\n  // Theme palette extraction with resilient fallbacks\n  const theme = api.theme;\n  const stonePrimary = theme.stone?.primary || \"minecraft:stone_bricks\";\n  const stoneAccent = theme.stone?.accent || \"minecraft:chiseled_stone_bricks\";\n  const stoneSlab = theme.stone?.slab || \"minecraft:stone_brick_slab\";\n  const stoneWall = theme.stone?.wall || \"minecraft:stone_brick_wall\";\n  const groundPlinth = theme.ground?.plinth || \"minecraft:smooth_stone\";\n  const groundPavement = theme.ground?.pavement || \"minecraft:polished_andesite\";\n  const roofSolid = theme.roof?.solid || \"minecraft:stone_bricks\";\n  const woodFence = theme.wood?.fence || \"minecraft:iron_bars\";\n\n  // Weathered masonry picker\n  function weatheredStone() {\n    const r = api.random();\n    if (r < 0.25) return \"minecraft:mossy_stone_bricks\";\n    if (r < 0.50) return \"minecraft:cracked_stone_bricks\";\n    return stonePrimary;\n  }\n\n  // Record all base footprint columns to conform to real ground\n  const groundFootprint = new Set();\n  function registerGround(x, z) {\n    groundFootprint.add(`${x},${z}`);\n  }\n\n  // 1. Mark foundation footprints\n  // 4 Corner Pylons\n  for (let dx = 2; dx <= 4; dx++) {\n    for (let dz = 2; dz <= 4; dz++) {\n      registerGround(dx, dz);\n      registerGround(W - 1 - dx, dz);\n      registerGround(dx, D - 1 - dz);\n      registerGround(W - 1 - dx, D - 1 - dz);\n    }\n  }\n  // Central Bunker\n  for (let x = 5; x <= 9; x++) {\n    for (let z = 5; z <= 9; z++) {\n      registerGround(x, z);\n    }\n  }\n  // Conduit trenches\n  for (let x = 3; x <= 11; x++) {\n    registerGround(x, 7);\n  }\n  for (let z = 3; z <= 11; z++) {\n    registerGround(7, z);\n  }\n\n  // 2. Conform Foundation Down to Terrain (seatY = 0)\n  for (const entry of groundFootprint) {\n    const [sx, sz] = entry.split(\",\").map(Number);\n    const h = api.heightAt(sx, sz);\n    const minY = Math.min(0, h);\n    const maxY = Math.max(0, h);\n\n    for (let y = minY; y <= maxY; y++) {\n      const block = (y < 0) ? groundPlinth : weatheredStone();\n      setBlock(sx, y, sz, block);\n    }\n  }\n\n  // 3. Central Bunker & Equipment Shelter (y = 0 to 4)\n  // Floor at y=0\n  for (let x = 5; x <= 9; x++) {\n    for (let z = 5; z <= 9; z++) {\n      setBlock(x, 0, z, groundPavement);\n    }\n  }\n\n  // Bunker Walls (y = 1 to 3)\n  for (let y = 1; y <= 3; y++) {\n    for (let x = 5; x <= 9; x++) {\n      for (let z = 5; z <= 9; z++) {\n        const isWallX = (x === 5 || x === 9);\n        const isWallZ = (z === 5 || z === 9);\n\n        if (isWallX || isWallZ) {\n          // North Doorway Opening at x=7, z=5\n          if (z === 5 && x === 7 && (y === 1 || y === 2)) {\n            // Keep doorway clear for entrance\n            continue;\n          }\n          // Door Frame / Accent\n          if (z === 5 && (x === 6 || x === 8)) {\n            setBlock(x, y, z, stoneAccent);\n          } else if (z === 5 && x === 7 && y === 3) {\n            setBlock(x, y, z, stoneAccent);\n          } else if (y === 2 && ((x === 5 && z === 7) || (x === 9 && z === 7) || (z === 9 && x === 7))) {\n            // Ventilation / sensor slit\n            setBlock(x, y, z, \"minecraft:iron_bars\");\n          } else {\n            setBlock(x, y, z, weatheredStone());\n          }\n        }\n      }\n    }\n  }\n\n  // Bunker Roof (y = 4)\n  for (let x = 5; x <= 9; x++) {\n    for (let z = 5; z <= 9; z++) {\n      if (x === 7 && z === 7) {\n        // High-voltage conduit hub through bunker roof\n        setBlock(x, 4, z, \"minecraft:polished_blackstone\");\n      } else {\n        setBlock(x, 4, z, roofSolid);\n      }\n    }\n  }\n\n  // 4. Heavy Reinforced Scaffolding & Pylons (y = 0 to 14)\n  const cornerCoords = [\n    [2, 2], [11, 2], [2, 11], [11, 11]\n  ];\n\n  // Rise lower pillars to mid-deck (y = 0 to 8)\n  for (let y = 1; y <= 8; y++) {\n    for (const [cx, cz] of cornerCoords) {\n      const x0 = (cx === 2) ? 2 : 11;\n      const x1 = (cx === 2) ? 3 : 12;\n      const z0 = (cz === 2) ? 2 : 11;\n      const z1 = (cz === 2) ? 3 : 12;\n\n      for (let x = x0; x <= x1; x++) {\n        for (let z = z0; z <= z1; z++) {\n          setBlock(x, y, z, weatheredStone());\n        }\n      }\n\n      // Exterior structural corner walls\n      setBlock(cx, y, cz, stoneWall);\n    }\n  }\n\n  // Horizontal Scaffolding Beams at y = 4\n  for (let x = 2; x <= 12; x++) {\n    setBlock(x, 4, 3, \"minecraft:polished_andesite\");\n    setBlock(x, 4, 11, \"minecraft:polished_andesite\");\n  }\n  for (let z = 2; z <= 12; z++) {\n    setBlock(3, 4, z, \"minecraft:polished_andesite\");\n    setBlock(11, 4, z, \"minecraft:polished_andesite\");\n  }\n\n  // Cross-bracing trusses between y = 4 and 8\n  for (let i = 4; i <= 10; i++) {\n    setBlock(i, 6, 3, \"minecraft:iron_bars\");\n    setBlock(i, 6, 11, \"minecraft:iron_bars\");\n    setBlock(3, 6, i, \"minecraft:iron_bars\");\n    setBlock(11, 6, i, \"minecraft:iron_bars\");\n  }\n\n  // Mid-Level Maintenance Catwalk (y = 8)\n  for (let x = 2; x <= 12; x++) {\n    for (let z = 2; z <= 12; z++) {\n      const isOuterRing = (x <= 4 || x >= 10 || z <= 4 || z >= 10);\n      if (isOuterRing) {\n        setBlock(x, 8, z, stoneSlab);\n      }\n    }\n  }\n\n  // Catwalk Perimeter Railing (y = 9)\n  for (let i = 2; i <= 12; i++) {\n    setBlock(i, 9, 2, \"minecraft:iron_bars\");\n    setBlock(i, 9, 12, \"minecraft:iron_bars\");\n    setBlock(2, 9, i, \"minecraft:iron_bars\");\n    setBlock(12, 9, i, \"minecraft:iron_bars\");\n  }\n\n  // Auxiliary Tech Gear on Catwalk\n  setBlock(3, 9, 7, \"minecraft:iron_block\");\n  setBlock(3, 10, 7, \"minecraft:daylight_detector\");\n  setBlock(11, 9, 7, \"minecraft:lodestone\");\n\n  // Upper Scaffolding Taper (y = 9 to 14)\n  for (let y = 9; y <= 13; y++) {\n    // Inward angled pylon columns\n    const offset = (y >= 11) ? 4 : 3;\n    setBlock(offset, y, offset, \"minecraft:polished_andesite\");\n    setBlock(W - 1 - offset, y, offset, \"minecraft:polished_andesite\");\n    setBlock(offset, y, D - 1 - offset, \"minecraft:polished_andesite\");\n    setBlock(W - 1 - offset, y, D - 1 - offset, \"minecraft:polished_andesite\");\n\n    // Diagonal iron bracing\n    setBlock(offset + 1, y, offset + 1, \"minecraft:iron_bars\");\n    setBlock(W - 2 - offset, y, offset + 1, \"minecraft:iron_bars\");\n    setBlock(offset + 1, y, D - 2 - offset, \"minecraft:iron_bars\");\n    setBlock(W - 2 - offset, y, D - 2 - offset, \"minecraft:iron_bars\");\n  }\n\n  // Central Cable Conduit & Access Ladder (y = 4 to 14)\n  for (let y = 4; y <= 14; y++) {\n    // Central core conduit\n    setBlock(7, y, 7, \"minecraft:polished_blackstone\");\n    // Climbing ladder on south face of the mast\n    setBlock(7, y, 8, \"minecraft:ladder[facing=south]\");\n  }\n\n  // 5. Main Array Turret Deck & Gimbal (y = 14 to 16)\n  // Gantry Deck Platform at y = 14\n  for (let x = 4; x <= 10; x++) {\n    for (let z = 4; z <= 10; z++) {\n      // Octagonal chamfered corners\n      const isCorner = (x === 4 && z === 4) || (x === 10 && z === 4) ||\n                       (x === 4 && z === 10) || (x === 10 && z === 10);\n      if (!isCorner) {\n        setBlock(x, 14, z, \"minecraft:polished_andesite\");\n      }\n    }\n  }\n\n  // Gantry Deck Railing (y = 15)\n  for (let i = 5; i <= 9; i++) {\n    setBlock(i, 15, 4, \"minecraft:iron_bars\");\n    setBlock(i, 15, 10, \"minecraft:iron_bars\");\n    setBlock(4, 15, i, \"minecraft:iron_bars\");\n    setBlock(10, 15, i, \"minecraft:iron_bars\");\n  }\n\n  // Heavy Gimbal Turret & Elevation Drive (y = 15 to 16)\n  for (let x = 6; x <= 8; x++) {\n    for (let z = 6; z <= 8; z++) {\n      setBlock(x, 15, z, \"minecraft:polished_blackstone\");\n    }\n  }\n  setBlock(7, 16, 7, \"minecraft:lodestone\");\n  setBlock(7, 16, 8, \"minecraft:polished_blackstone\");\n  setBlock(6, 16, 7, \"minecraft:polished_andesite\");\n  setBlock(8, 16, 7, \"minecraft:polished_andesite\");\n  setBlock(5, 16, 7, \"minecraft:iron_block\");\n  setBlock(9, 16, 7, \"minecraft:iron_block\");\n\n  // Hydraulic Actuators\n  setBlock(5, 15, 8, \"minecraft:polished_andesite\");\n  setBlock(9, 15, 8, \"minecraft:polished_andesite\");\n  setBlock(7, 15, 9, \"minecraft:iron_block\");\n\n  // 6. Scavenged Parabolic Satellite Dish (y = 15 to 23)\n  // Geometrical paraboloid facing North (-Z) and angled upward at theta = 35 deg\n  const dishApexX = 7;\n  const dishApexY = 17;\n  const dishApexZ = 8;\n  const theta = 35 * Math.PI / 180;\n  const sinT = Math.sin(theta);\n  const cosT = Math.cos(theta);\n  const focalLen = 3.2;\n  const kParam = 1 / (4 * focalLen);\n  const maxRadius = 4.3;\n\n  for (let x = 2; x <= 12; x++) {\n    for (let y = 14; y <= 23; y++) {\n      for (let z = 4; z <= 12; z++) {\n        const dx = x - dishApexX;\n        const dy = y - dishApexY;\n        const dz = z - dishApexZ;\n\n        // Normal component (along dish beam direction: North & Up)\n        const vNorm = dy * sinT - dz * cosT;\n        // In-plane vertical component\n        const uVert = dy * cosT + dz * sinT;\n        // Radial distance from dish axis\n        const rad = Math.sqrt(dx * dx + uVert * uVert);\n\n        if (rad <= maxRadius) {\n          const vSurf = kParam * rad * rad;\n          const distToShell = Math.abs(vNorm - vSurf);\n\n          if (distToShell <= 0.58) {\n            if (rad >= 3.6) {\n              // Reinforced Perimeter Rim\n              setBlock(x, y, z, \"minecraft:iron_block\");\n            } else if (vNorm >= vSurf - 0.1) {\n              // Inner Reflective Dish Surface (Smooth Quartz)\n              setBlock(x, y, z, \"minecraft:smooth_quartz\");\n            } else {\n              // Backing Ribs / Scavenged Solar Backplate\n              setBlock(x, y, z, \"minecraft:polished_andesite\");\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // Central Dish Hub Structural Anchor (ensuring continuous solid connectivity)\n  setBlock(7, 17, 8, \"minecraft:lodestone\");\n  setBlock(6, 17, 8, \"minecraft:iron_block\");\n  setBlock(8, 17, 8, \"minecraft:iron_block\");\n  setBlock(7, 18, 8, \"minecraft:smooth_quartz\");\n  setBlock(7, 17, 7, \"minecraft:smooth_quartz\");\n\n  // High-Tech Feed Horn / Transceiver Sensor Assembly\n  // Focal Point at [7, 19, 5]\n  setBlock(7, 19, 5, \"minecraft:observer[facing=south]\");\n  setBlock(7, 19, 4, \"minecraft:lightning_rod[facing=north]\");\n  setBlock(7, 19, 6, \"minecraft:end_rod[facing=south]\");\n\n  // Quadpod Feed Support Struts (connecting dish rim firmly to focal transceiver)\n  // Top Strut\n  setBlock(7, 21, 7, \"minecraft:iron_bars\");\n  setBlock(7, 20, 6, \"minecraft:iron_bars\");\n  setBlock(7, 19, 5, \"minecraft:observer[facing=south]\");\n\n  // Bottom Strut\n  setBlock(7, 16, 7, \"minecraft:iron_bars\");\n  setBlock(7, 17, 6, \"minecraft:iron_bars\");\n  setBlock(7, 18, 5, \"minecraft:iron_bars\");\n\n  // West Strut\n  setBlock(4, 18, 7, \"minecraft:iron_bars\");\n  setBlock(5, 18, 6, \"minecraft:iron_bars\");\n  setBlock(6, 19, 5, \"minecraft:iron_bars\");\n\n  // East Strut\n  setBlock(10, 18, 7, \"minecraft:iron_bars\");\n  setBlock(9, 18, 6, \"minecraft:iron_bars\");\n  setBlock(8, 19, 5, \"minecraft:iron_bars\");\n\n  // 7. High-Tech Sensor Spire & Mast (y = 14 to 25)\n  // Vertical mast structure at x = 7, z = 9\n  for (let y = 14; y <= 18; y++) {\n    setBlock(7, y, 9, \"minecraft:polished_andesite\");\n  }\n  setBlock(7, 19, 9, \"minecraft:iron_block\");\n  setBlock(7, 20, 9, \"minecraft:lodestone\");\n  setBlock(7, 21, 9, \"minecraft:observer[facing=north]\");\n  setBlock(7, 22, 9, \"minecraft:iron_block\");\n\n  // Horizontal Dipole Antenna Crossbar at y = 22\n  for (let x = 5; x <= 9; x++) {\n    if (x !== 7) {\n      setBlock(x, 22, 9, \"minecraft:iron_bars\");\n    }\n  }\n  setBlock(5, 23, 9, \"minecraft:end_rod[facing=up]\");\n  setBlock(9, 23, 9, \"minecraft:end_rod[facing=up]\");\n\n  // Sensor array pods\n  setBlock(7, 20, 10, \"minecraft:daylight_detector\");\n  setBlock(7, 23, 9, \"minecraft:chain[axis=y]\");\n\n  // Omnidirectional Beacon Light (y = 24) & Sensor Spike (y = 25)\n  setBlock(7, 24, 9, \"minecraft:sea_lantern\");\n  setBlock(7, 25, 9, \"minecraft:lightning_rod[facing=up]\");\n\n  // 8. Apocalyptic Overgrowth & Weathered Foliage\n  // Creeping vines on tower base legs\n  for (let y = 1; y <= 6; y++) {\n    if (api.random() < 0.7) setBlock(1, y, 2, \"minecraft:vine[east=true]\");\n    if (api.random() < 0.7) setBlock(1, y, 12, \"minecraft:vine[east=true]\");\n    if (api.random() < 0.7) setBlock(13, y, 2, \"minecraft:vine[west=true]\");\n    if (api.random() < 0.7) setBlock(13, y, 12, \"minecraft:vine[west=true]\");\n    if (api.random() < 0.7) setBlock(2, y, 1, \"minecraft:vine[south=true]\");\n    if (api.random() < 0.7) setBlock(12, y, 1, \"minecraft:vine[south=true]\");\n    if (api.random() < 0.7) setBlock(2, y, 13, \"minecraft:vine[north=true]\");\n    if (api.random() < 0.7) setBlock(12, y, 13, \"minecraft:vine[north=true]\");\n  }\n\n  // Overgrown leaf clusters clinging to reinforced concrete footings\n  const leafClusters = [\n    [2, 1, 4], [4, 1, 2], [10, 1, 2], [12, 1, 4],\n    [2, 1, 10], [4, 1, 12], [10, 1, 12], [12, 1, 10],\n    [3, 5, 2], [11, 5, 2], [3, 5, 12], [11, 5, 12],\n    [2, 8, 5], [12, 8, 5], [2, 8, 9], [12, 8, 9]\n  ];\n\n  for (const [lx, ly, lz] of leafClusters) {\n    const leafType = (api.random() < 0.4)\n      ? \"minecraft:azalea_leaves[persistent=true]\"\n      : \"minecraft:oak_leaves[persistent=true]\";\n    setBlock(lx, ly, lz, leafType);\n  }\n\n  // Dangling conduit cables under the mid-deck\n  setBlock(4, 7, 3, \"minecraft:chain[axis=y]\");\n  setBlock(10, 7, 3, \"minecraft:chain[axis=y]\");\n  setBlock(4, 7, 11, \"minecraft:chain[axis=y]\");\n  setBlock(10, 7, 11, \"minecraft:chain[axis=y]\");\n\n  return {\n    name: \"comm_array_tower\",\n    seatY: 0,\n    anchors: {\n      front: [7, 1, 0],\n      door: [7, 1, 5]\n    },\n    interiors: [\n      {\n        min: [6, 1, 6],\n        max: [8, 3, 8],\n        kind: \"laboratory\"\n      }\n    ]\n  };\n}"
+    }
+  }
+}

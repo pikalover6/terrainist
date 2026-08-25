@@ -1,0 +1,679 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "trojan_horse_troy",
+    "worldSeed": "303",
+    "prompt": "The Trojan horse in Troy, right before the soldiers emerge.",
+    "spawn": {
+      "at": [
+        0.28,
+        0.52
+      ]
+    }
+  },
+  "intent": {
+    "era": "ancient",
+    "wealth": 0.7,
+    "decline": 0.1,
+    "formality": 0.65,
+    "event": {
+      "kind": "siege",
+      "severity": 0.85,
+      "recency": 0
+    },
+    "climate": {
+      "temperature": 0.7,
+      "humidity": -0.3,
+      "snow": "never"
+    },
+    "character": {
+      "label": "walled citadel of Troy",
+      "materialTheme": "sun_clay",
+      "fortification": "walled",
+      "formPacks": [
+        "classical_mediterranean"
+      ],
+      "archetypes": {
+        "prefer": [
+          "peristyle_house",
+          "megaron",
+          "stoa",
+          "peripteral_temple",
+          "palaestra",
+          "olive_press",
+          "sanctuary_treasury",
+          "propylaea"
+        ],
+        "forbid": [
+          "townhouse",
+          "terraced_row",
+          "shop_row",
+          "office",
+          "apartment_block"
+        ]
+      },
+      "motifs": {
+        "roofType": "flat",
+        "massing": "blocky",
+        "ornamentDensity": 0.5
+      },
+      "urbanForm": "grown",
+      "courtyards": 0.6,
+      "ground": "stepped",
+      "programs": [
+        {
+          "id": "trojan_horse",
+          "mode": "landmark",
+          "brief": "The colossal hollow wooden horse carpentered from pine and ship timber, set on a heavy wheeled timber base. Features discreet belly trapdoor seams, subtle access ladder rungs along the flank, and horse-head prow styling.",
+          "envelope": [
+            15,
+            22,
+            19
+          ]
+        },
+        {
+          "id": "abandoned_siege_engine",
+          "mode": "plugin",
+          "brief": "An abandoned Greek siege machine: a timber trestle battering ram or mantlet screen draped in dried ox-hides, left discarded outside the city walls.",
+          "envelope": [
+            9,
+            10,
+            9
+          ],
+          "count": 4
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "a walled city on a rise above a sandy plain; the Aegean shore in view",
+      "icons": "the colossal wooden horse inside the city walls near the Scaean gate; high stone ramparts and watchtowers; royal megaron palace at the acropolis crest; abandoned Greek siege camp and distant beached galleys",
+      "event_context": "deep night after drunken victory celebrations; armed Mycenaean soldiers quietly waiting to unbolt the wooden horse's trapdoor inside the quiet courtyard"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:dirt_path",
+      "ground.beach": "minecraft:sand"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Troy and the Trojan Plain",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "coastal plain rising to the acropolis mound of Hisarlik",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 68,
+          "amplitude": 26,
+          "octaves": 5,
+          "frequency": 0.0035,
+          "erosionPasses": 2,
+          "continentalness": {
+            "frequency": 0.0012,
+            "seaFraction": 0.28
+          },
+          "cliffThreshold": 55,
+          "soilDepth": 3,
+          "beachWidth": 5,
+          "snowLineFraction": 0.95
+        },
+        "children": [
+          {
+            "id": "acropolis_plateau",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the prominent acropolis mound of Troy",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.55,
+                0.52
+              ],
+              "radius": 140,
+              "height": 16,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "scamander_river",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the Scamander river winding past Troy to the Aegean",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.88,
+                  0.82
+                ],
+                [
+                  0.65,
+                  0.76
+                ],
+                [
+                  0.38,
+                  0.62
+                ],
+                [
+                  0.18,
+                  0.42
+                ],
+                "coast"
+              ],
+              "width": 14,
+              "depth": 7,
+              "meander": 0.5
+            }
+          },
+          {
+            "id": "coastal_inlet",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the sheltered Aegean bay where the Achaean fleet landed",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.22,
+                  0.18
+                ],
+                [
+                  0.12,
+                  0.12
+                ],
+                "coast"
+              ],
+              "width": 48,
+              "depth": 18,
+              "flooded": "auto"
+            }
+          },
+          {
+            "id": "aegean_beach_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the sandy shore where the Greek camp stood",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.18,
+                0.22
+              ],
+              "radius": 70,
+              "height": 4,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "label": "warm Aegean coastal climate",
+        "params": {
+          "forceTheme": "arid",
+          "latitudeGradient": -0.2
+        }
+      },
+      {
+        "id": "troy_citadel",
+        "kind": "district",
+        "label": "the fortified citadel of Troy behind its great walls",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            210,
+            190
+          ]
+        },
+        "params": {
+          "fabric": "grown",
+          "density": "medium",
+          "mix": [
+            "megaron",
+            "peristyle_house",
+            "courtyard_house",
+            "stoa",
+            "peripteral_temple",
+            "olive_press",
+            "sanctuary_treasury",
+            "granary",
+            "smithy"
+          ],
+          "blockSize": 36,
+          "courtyards": 0.6,
+          "ground": "stepped",
+          "walls": {
+            "style": "masonry",
+            "margin": 10,
+            "towerPitch": 34,
+            "height": 8,
+            "gates": true
+          }
+        },
+        "constraints": [
+          {
+            "at": [
+              0.55,
+              0.52
+            ]
+          }
+        ],
+        "tags": [
+          "citadel",
+          "urban",
+          "troy"
+        ],
+        "children": [
+          {
+            "id": "priam_megaron",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "King Priam's royal megaron at the acropolis crest",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                17,
+                14,
+                21
+              ]
+            },
+            "params": {
+              "archetype": "megaron",
+              "floors": 1,
+              "roof": "flat"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "hall"
+            ]
+          },
+          {
+            "id": "temple_of_apollo",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the peripteral temple of Apollo Thymbraios",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                15,
+                14,
+                21
+              ]
+            },
+            "params": {
+              "archetype": "peripteral_temple",
+              "floors": 1,
+              "roof": "flat"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "east",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "church"
+            ]
+          },
+          {
+            "id": "scaean_barracks",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "guard garrison by the western wall",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                11,
+                15
+              ]
+            },
+            "params": {
+              "archetype": "barracks",
+              "floors": 2,
+              "roof": "flat"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "west",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "barracks"
+            ]
+          },
+          {
+            "id": "sanctuary_treasury",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the city treasury and votive store",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                11,
+                10,
+                13
+              ]
+            },
+            "params": {
+              "archetype": "sanctuary_treasury",
+              "floors": 1,
+              "roof": "flat"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "north",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "vault"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "the_horse",
+        "kind": "generator",
+        "generator": "authored:trojan_horse",
+        "label": "the colossal Trojan horse standing before the citadel gates",
+        "params": {
+          "seat": "pad",
+          "face": {
+            "toward": "troy_citadel"
+          }
+        },
+        "constraints": [
+          {
+            "at": [
+              0.305,
+              0.52
+            ]
+          },
+          {
+            "distance": "troy_citadel",
+            "min": 8,
+            "max": 24
+          }
+        ],
+        "tags": [
+          "landmark",
+          "trojan_horse"
+        ]
+      },
+      {
+        "id": "greek_siege_engines",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "abandoned Greek siege engines scattered outside the citadel",
+        "params": {
+          "program": "abandoned_siege_engine",
+          "count": 4,
+          "area": {
+            "at": [
+              0.22,
+              0.44
+            ],
+            "radius": 0.12
+          },
+          "spacing": 20,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ]
+        }
+      },
+      {
+        "id": "greek_camp",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the abandoned Achaean siege encampment",
+        "params": {
+          "prop": "campsite",
+          "zone": "northwest"
+        }
+      },
+      {
+        "id": "beached_galley_1",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "Achaean war galley beached in the bay",
+        "params": {
+          "prop": "galleon",
+          "zone": "northwest",
+          "on": "water"
+        }
+      },
+      {
+        "id": "beached_galley_2",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "second Achaean vessel moored offshore",
+        "params": {
+          "prop": "longship",
+          "zone": "northwest",
+          "on": "water"
+        }
+      },
+      {
+        "id": "trojan_olive_farm",
+        "kind": "generator",
+        "generator": "precinct.farm@0",
+        "label": "terraced olive and grain holding outside the walls",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            96,
+            80
+          ]
+        },
+        "params": {
+          "parcels": 6,
+          "parcelSize": 16,
+          "crops": [
+            "wheat",
+            "pasture",
+            "potatoes"
+          ],
+          "edge": "wall"
+        },
+        "constraints": [
+          {
+            "distance": "troy_citadel",
+            "min": 14,
+            "max": 42
+          }
+        ],
+        "ports": {
+          "gate": {
+            "type": "road_stub",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "farm",
+          "rural"
+        ]
+      },
+      {
+        "id": "stone_field_wall",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "dry stone boundary wall ringing the farm holding",
+        "params": {
+          "entry": "dry_stone_wall",
+          "route": {
+            "ring": "trojan_olive_farm",
+            "margin": 6
+          }
+        }
+      },
+      {
+        "id": "scaean_approach_track",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "the rutted track along which the horse was dragged from the shore",
+        "params": {
+          "entry": "cart_track",
+          "route": {
+            "along": "trojan_roads",
+            "offset": 2,
+            "side": "left"
+          }
+        }
+      },
+      {
+        "id": "mediterranean_groves",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "olive and oak groves on the hills south of Troy",
+        "params": {
+          "area": {
+            "at": [
+              0.65,
+              0.65
+            ],
+            "radius": 140
+          },
+          "density": 0.08,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 30,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "undergrowth": {
+            "grass": 0.35,
+            "flowers": 0.08,
+            "deadwood": 0.04
+          },
+          "species": [
+            {
+              "id": "olive_oak",
+              "weight": 3,
+              "shape": "oak_spreading"
+            },
+            {
+              "id": "scrub_oak",
+              "weight": 2,
+              "shape": "oak_round"
+            }
+          ]
+        }
+      },
+      {
+        "id": "plains_brush",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse scrub across the Trojan plain",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 6,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "species": [
+            {
+              "id": "wild_oak",
+              "weight": 1,
+              "shape": "oak_round"
+            }
+          ]
+        }
+      },
+      {
+        "id": "trojan_roads",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "beaten earth roads connecting the gates, horse, and farm",
+        "params": {
+          "anchors": [
+            "troy_citadel",
+            "the_horse",
+            "trojan_olive_farm"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": false
+        }
+      }
+    ]
+  },
+  "programs": {
+    "trojan_horse": {
+      "mode": "landmark",
+      "envelope": [
+        15,
+        28,
+        21
+      ],
+      "sourceHash": "b3:277bbac3995595bd2735d3fd5504a1c86949853f7e7d4a90622b521bc40ad031",
+      "outputHash": "b3:7ece3d8775a3d6736dda66c081219a037743d20e063bc19bb929985b7de6ab6d",
+      "conforms": false,
+      "conformHash": "b3:8786ec1cd52de03e536e1712e39e89428d95d0b6eee50d8e425a9adc21ff8451",
+      "source": "export const envelope = [15, 28, 21];\n\nexport default function build(api) {\n  const [sizeX, sizeY, sizeZ] = api.size;\n\n  // 1. Theme Palette\n  const planks = api.theme?.wood?.planks || \"minecraft:spruce_planks\";\n  const log = api.theme?.wood?.log || \"minecraft:oak_log\";\n  const stripped = api.theme?.wood?.stripped || \"minecraft:stripped_spruce_log\";\n  const stairs = api.theme?.wood?.stairs || \"minecraft:spruce_stairs\";\n  const slab = api.theme?.wood?.slab || \"minecraft:spruce_slab\";\n  const fence = api.theme?.wood?.fence || \"minecraft:spruce_fence\";\n  const trapdoor = api.theme?.wood?.trapdoor || \"minecraft:spruce_trapdoor\";\n\n  const darkPlanks = \"minecraft:dark_oak_planks\";\n  const darkLog = \"minecraft:dark_oak_log\";\n  const darkStairs = \"minecraft:dark_oak_stairs\";\n  const darkSlab = \"minecraft:dark_oak_slab\";\n  const chain = \"minecraft:chain[axis=y]\";\n\n  function clean(blockStr) {\n    return blockStr.split(\"[\")[0];\n  }\n\n  function getLog(base, axis = \"y\") {\n    return `${clean(base)}[axis=${axis}]`;\n  }\n\n  function getStairs(base, facing = \"north\", half = \"bottom\", shape = \"straight\") {\n    return `${clean(base)}[facing=${facing},half=${half},shape=${shape}]`;\n  }\n\n  function getSlab(base, type = \"bottom\") {\n    return `${clean(base)}[type=${type}]`;\n  }\n\n  function getTrapdoor(base, facing = \"north\", half = \"bottom\", open = false) {\n    return `${clean(base)}[facing=${facing},half=${half},open=${open}]`;\n  }\n\n  function getLadder(facing = \"north\") {\n    return `minecraft:ladder[facing=${facing}]`;\n  }\n\n  function set(x, y, z, block) {\n    if (x >= 0 && x < sizeX && y >= 0 && y < sizeY && z >= 0 && z < sizeZ) {\n      api.set(x, y, z, block);\n    }\n  }\n\n  const seatY = 4;\n\n  // 2. Ground Conformity & Pilings (Rule 6)\n  const footprint = [];\n  // Wheels footprint\n  for (const x of [2, 3, 11, 12]) {\n    for (let z = 5; z <= 7; z++) footprint.push([x, z]);\n    for (let z = 13; z <= 15; z++) footprint.push([x, z]);\n  }\n  // Chassis skids footprint\n  for (const x of [3, 4, 6, 7, 8, 10, 11]) {\n    footprint.push([x, 3], [x, 4], [x, 16], [x, 17]);\n  }\n\n  for (const [fx, fz] of footprint) {\n    const gh = Math.round(api.heightAt(fx, fz));\n    const targetY = Math.max(0, Math.min(seatY, seatY + gh));\n    if (targetY < seatY) {\n      for (let y = seatY - 1; y >= targetY; y--) {\n        set(fx, y, fz, getLog(log, \"y\"));\n      }\n    } else if (targetY > seatY) {\n      for (let y = seatY; y <= Math.min(seatY + 3, seatY + gh); y++) {\n        set(fx, y, fz, getLog(log, \"y\"));\n      }\n    }\n  }\n\n  // 3. Heavy Wheeled Base & Sled Platform (Y = 4 to 8)\n  // Axles\n  for (let x = 2; x <= 12; x++) {\n    set(x, 5, 6, getLog(log, \"x\"));\n    set(x, 5, 14, getLog(log, \"x\"));\n  }\n\n  // Wheels function\n  function placeWheel(xCenter, zCenter) {\n    for (const x of [xCenter, xCenter === 2 ? 3 : 11]) {\n      // Hub\n      set(x, 5, zCenter, stripped);\n      // Cardinal rim blocks\n      set(x, 6, zCenter, darkPlanks);\n      set(x, 4, zCenter, darkPlanks);\n      set(x, 5, zCenter - 1, stripped);\n      set(x, 5, zCenter + 1, stripped);\n      // Rounded corners\n      set(x, 6, zCenter - 1, getStairs(darkStairs, \"south\", \"top\"));\n      set(x, 6, zCenter + 1, getStairs(darkStairs, \"north\", \"top\"));\n      set(x, 4, zCenter - 1, getStairs(darkStairs, \"south\", \"bottom\"));\n      set(x, 4, zCenter + 1, getStairs(darkStairs, \"north\", \"bottom\"));\n    }\n  }\n\n  placeWheel(2, 6);\n  placeWheel(12, 6);\n  placeWheel(2, 14);\n  placeWheel(12, 14);\n\n  // Longitudinal chassis beams (Y = 6)\n  for (let z = 3; z <= 17; z++) {\n    set(3, 6, z, getLog(log, \"z\"));\n    set(4, 6, z, planks);\n    set(6, 6, z, getLog(log, \"z\"));\n    set(7, 6, z, getLog(log, \"z\"));\n    set(8, 6, z, getLog(log, \"z\"));\n    set(10, 6, z, planks);\n    set(11, 6, z, getLog(log, \"z\"));\n  }\n\n  // Cross chassis ties (Y = 6)\n  for (const z of [3, 6, 9, 12, 14, 17]) {\n    for (let x = 3; x <= 11; x++) {\n      set(x, 6, z, getLog(log, \"x\"));\n    }\n  }\n\n  // Platform deck (Y = 7)\n  for (let x = 3; x <= 11; x++) {\n    for (let z = 3; z <= 17; z++) {\n      set(x, 7, z, planks);\n    }\n  }\n  // Timber rim around platform\n  for (let z = 3; z <= 17; z++) {\n    set(3, 7, z, getLog(log, \"z\"));\n    set(11, 7, z, getLog(log, \"z\"));\n  }\n  for (let x = 3; x <= 11; x++) {\n    set(x, 7, 3, getLog(log, \"x\"));\n    set(x, 7, 17, getLog(log, \"x\"));\n  }\n\n  // Towing cleats & platform posts (Y = 8)\n  for (const [px, pz] of [[3, 3], [11, 3], [3, 17], [11, 17], [5, 3], [7, 3], [9, 3]]) {\n    set(px, 8, pz, fence);\n  }\n  set(7, 7, 2, fence);\n  set(7, 7, 1, chain);\n\n  // 4. Horse Legs (Y = 8 to 14)\n  // Front-Left (X=4..5, Z=5..6) & Front-Right (X=9..10, Z=5..6)\n  for (let y = 8; y <= 14; y++) {\n    // Left\n    set(4, y, 5, getLog(log, \"y\"));\n    set(5, y, 5, planks);\n    set(4, y, 6, planks);\n    set(5, y, 6, getLog(log, \"y\"));\n    // Right\n    set(9, y, 5, planks);\n    set(10, y, 5, getLog(log, \"y\"));\n    set(9, y, 6, getLog(log, \"y\"));\n    set(10, y, 6, planks);\n  }\n\n  // Front Hoof flares\n  set(4, 8, 4, getStairs(stairs, \"south\", \"bottom\"));\n  set(5, 8, 4, getStairs(stairs, \"south\", \"bottom\"));\n  set(9, 8, 4, getStairs(stairs, \"south\", \"bottom\"));\n  set(10, 8, 4, getStairs(stairs, \"south\", \"bottom\"));\n  set(3, 8, 5, getStairs(stairs, \"east\", \"bottom\"));\n  set(3, 8, 6, getStairs(stairs, \"east\", \"bottom\"));\n  set(11, 8, 5, getStairs(stairs, \"west\", \"bottom\"));\n  set(11, 8, 6, getStairs(stairs, \"west\", \"bottom\"));\n\n  // Hind Legs with anatomically angled hocks (Y = 8 to 14)\n  for (let y = 8; y <= 10; y++) {\n    set(4, y, 13, getLog(log, \"y\"));\n    set(5, y, 13, planks);\n    set(4, y, 14, planks);\n    set(5, y, 14, getLog(log, \"y\"));\n\n    set(9, y, 13, planks);\n    set(10, y, 13, getLog(log, \"y\"));\n    set(9, y, 14, getLog(log, \"y\"));\n    set(10, y, 14, planks);\n  }\n  // Hock joint (Y = 11..12) - shifted back\n  for (let y = 11; y <= 12; y++) {\n    set(4, y, 14, getLog(log, \"y\"));\n    set(5, y, 14, planks);\n    set(4, y, 15, planks);\n    set(5, y, 15, getLog(log, \"y\"));\n\n    set(9, y, 14, planks);\n    set(10, y, 14, getLog(log, \"y\"));\n    set(9, y, 15, getLog(log, \"y\"));\n    set(10, y, 15, planks);\n  }\n  // Upper thighs (Y = 13..14)\n  for (let y = 13; y <= 14; y++) {\n    for (let z = 13; z <= 15; z++) {\n      set(4, y, z, getLog(log, \"y\"));\n      set(5, y, z, planks);\n      set(9, y, z, planks);\n      set(10, y, z, getLog(log, \"y\"));\n    }\n  }\n\n  // Hind Hoof flares\n  set(4, 8, 15, getStairs(stairs, \"north\", \"bottom\"));\n  set(5, 8, 15, getStairs(stairs, \"north\", \"bottom\"));\n  set(9, 8, 15, getStairs(stairs, \"north\", \"bottom\"));\n  set(10, 8, 15, getStairs(stairs, \"north\", \"bottom\"));\n\n  // Cross-braces between legs\n  for (let x = 6; x <= 8; x++) {\n    set(x, 9, 5, getLog(log, \"x\"));\n    set(x, 12, 6, getLog(log, \"x\"));\n    set(x, 9, 13, getLog(log, \"x\"));\n    set(x, 12, 14, getLog(log, \"x\"));\n  }\n\n  // Stealth Access Ladder up the inner right hind leg\n  for (let y = 8; y <= 13; y++) {\n    set(8, y, 13, getLadder(\"east\"));\n  }\n\n  // 5. Torso / Hull Construction (Y = 14 to 20, Z = 4 to 17)\n  // Belly floor (Y = 14)\n  for (let x = 4; x <= 10; x++) {\n    for (let z = 5; z <= 16; z++) {\n      set(x, 14, z, planks);\n    }\n  }\n  // Secret belly trapdoor seam\n  set(7, 14, 12, getTrapdoor(trapdoor, \"north\", \"bottom\", false));\n  set(8, 14, 12, getTrapdoor(trapdoor, \"north\", \"bottom\", false));\n\n  // Torso outer shell fill\n  for (let y = 14; y <= 20; y++) {\n    for (let z = 4; z <= 17; z++) {\n      let xMin = 4, xMax = 10;\n\n      if (y === 14) {\n        if (z < 5 || z > 16) continue;\n        xMin = 4; xMax = 10;\n      } else if (y === 15 || y === 16 || y === 17) {\n        if (z >= 6 && z <= 14) {\n          xMin = 3; xMax = 11;\n        } else if (z === 17) {\n          xMin = 5; xMax = 9;\n        } else {\n          xMin = 4; xMax = 10;\n        }\n      } else if (y === 18) {\n        if (z > 16) continue;\n        if (z >= 5 && z <= 14) {\n          xMin = 4; xMax = 10;\n        } else {\n          xMin = 5; xMax = 9;\n        }\n      } else if (y === 19) {\n        if (z < 4 || z > 15) continue;\n        if (z >= 5 && z <= 14) {\n          xMin = 5; xMax = 9;\n        } else {\n          xMin = 6; xMax = 8;\n        }\n      } else if (y === 20) {\n        if (z < 4 || z > 14) continue;\n        xMin = 6; xMax = 8;\n      }\n\n      for (let x = xMin; x <= xMax; x++) {\n        const isRib = (z % 3 === 0) || (x === xMin || x === xMax);\n        const block = isRib ? stripped : planks;\n        set(x, y, z, block);\n      }\n    }\n  }\n\n  // Hull rub-rails & flank bevels\n  for (let z = 6; z <= 14; z++) {\n    set(3, 16, z, getLog(log, \"z\"));\n    set(11, 16, z, getLog(log, \"z\"));\n    set(3, 18, z, getStairs(stairs, \"east\", \"top\"));\n    set(11, 18, z, getStairs(stairs, \"west\", \"top\"));\n    set(3, 14, z, getStairs(stairs, \"west\", \"bottom\"));\n    set(11, 14, z, getStairs(stairs, \"east\", \"bottom\"));\n  }\n\n  // Chest medallion boss & rigging chains\n  set(7, 17, 3, getTrapdoor(trapdoor, \"north\", \"bottom\", false));\n  for (let y = 10; y <= 13; y++) {\n    set(4, y, 4, chain);\n    set(10, y, 4, chain);\n  }\n\n  // 6. Carve the Hollow Soldier Interior (Rule for interiors)\n  // min: [5, 15, 8], max: [9, 18, 13]\n  for (let x = 5; x <= 9; x++) {\n    for (let y = 15; y <= 18; y++) {\n      for (let z = 8; z <= 13; z++) {\n        set(x, y, z, \"minecraft:air\");\n      }\n    }\n  }\n\n  // Scout peepholes on flanks\n  set(3, 16, 10, getTrapdoor(trapdoor, \"west\", \"bottom\", true));\n  set(11, 16, 10, getTrapdoor(trapdoor, \"east\", \"bottom\", true));\n\n  // 7. Neck and Mane (Y = 18 to 25)\n  const neckProfile = [\n    { y: 18, zMin: 3, zMax: 5, xMin: 5, xMax: 9 },\n    { y: 19, zMin: 2, zMax: 5, xMin: 5, xMax: 9 },\n    { y: 20, zMin: 2, zMax: 4, xMin: 5, xMax: 9 },\n    { y: 21, zMin: 1, zMax: 4, xMin: 5, xMax: 9 },\n    { y: 22, zMin: 1, zMax: 3, xMin: 5, xMax: 9 },\n    { y: 23, zMin: 1, zMax: 3, xMin: 5, xMax: 9 },\n    { y: 24, zMin: 1, zMax: 3, xMin: 6, xMax: 8 }\n  ];\n\n  for (const n of neckProfile) {\n    for (let x = n.xMin; x <= n.xMax; x++) {\n      for (let z = n.zMin; z <= n.zMax; z++) {\n        set(x, n.y, z, planks);\n      }\n    }\n    // Front throat curve\n    for (let x = n.xMin; x <= n.xMax; x++) {\n      set(x, n.y, n.zMin, getStairs(stairs, \"north\", \"top\"));\n    }\n  }\n\n  // Mane (Stepped dorsal crest)\n  set(7, 20, 5, darkPlanks);\n  set(7, 21, 5, getLog(darkLog, \"z\"));\n  set(7, 21, 4, darkPlanks);\n  set(7, 22, 4, getLog(darkLog, \"z\"));\n  set(7, 22, 5, getStairs(darkStairs, \"south\", \"bottom\"));\n  set(7, 23, 4, darkPlanks);\n  set(6, 23, 4, getSlab(darkSlab, \"bottom\"));\n  set(8, 23, 4, getSlab(darkSlab, \"bottom\"));\n  set(7, 24, 4, getStairs(darkStairs, \"north\", \"bottom\"));\n  set(7, 25, 3, getSlab(darkSlab, \"bottom\"));\n\n  // 8. Head, Muzzle, Ears, Eyes (Y = 22 to 27, Z = 0 to 4)\n  // Jowl and Cheeks (Y = 23..24)\n  for (let y = 23; y <= 24; y++) {\n    for (let x = 5; x <= 9; x++) {\n      set(x, y, 2, planks);\n      set(x, y, 3, planks);\n    }\n    set(4, y, 2, getStairs(stairs, \"east\", \"bottom\"));\n    set(10, y, 2, getStairs(stairs, \"west\", \"bottom\"));\n  }\n\n  // Muzzle (pointing NORTH to -Z)\n  // Lower jaw (Y = 23)\n  for (let x = 6; x <= 8; x++) {\n    set(x, 23, 1, planks);\n    set(x, 23, 0, getStairs(stairs, \"south\", \"top\"));\n  }\n  // Upper snout & nostrils (Y = 24)\n  for (let x = 6; x <= 8; x++) {\n    set(x, 24, 1, getLog(log, \"z\"));\n  }\n  set(7, 24, 0, getLog(log, \"z\"));\n  set(6, 24, 0, getStairs(stairs, \"north\", \"bottom\"));\n  set(8, 24, 0, getStairs(stairs, \"north\", \"bottom\"));\n\n  // Forehead & Brow (Y = 25)\n  for (let x = 5; x <= 9; x++) {\n    for (let z = 1; z <= 3; z++) {\n      set(x, 25, z, planks);\n    }\n  }\n  for (let x = 6; x <= 8; x++) {\n    set(x, 25, 1, getStairs(stairs, \"north\", \"bottom\"));\n  }\n  // Eyes\n  set(4, 25, 2, getTrapdoor(trapdoor, \"west\", \"bottom\", false));\n  set(10, 25, 2, getTrapdoor(trapdoor, \"east\", \"bottom\", false));\n\n  // Head Crown (Y = 26)\n  for (let x = 6; x <= 8; x++) {\n    set(x, 26, 2, planks);\n    set(x, 26, 3, getSlab(slab, \"bottom\"));\n  }\n\n  // Ears (Y = 26..27)\n  set(5, 26, 2, getLog(stripped, \"y\"));\n  set(9, 26, 2, getLog(stripped, \"y\"));\n  set(5, 27, 2, getStairs(darkStairs, \"north\", \"bottom\"));\n  set(9, 27, 2, getStairs(darkStairs, \"north\", \"bottom\"));\n\n  // 9. Flowing Carved Tail (Y = 9 to 17, Z = 17 to 19)\n  set(7, 17, 17, getLog(log, \"z\"));\n\n  set(7, 16, 18, getLog(log, \"y\"));\n  set(6, 16, 18, getStairs(stairs, \"north\", \"top\"));\n  set(8, 16, 18, getStairs(stairs, \"north\", \"top\"));\n\n  set(7, 15, 18, getLog(log, \"y\"));\n  set(6, 15, 18, planks);\n  set(8, 15, 18, planks);\n\n  set(7, 14, 18, getLog(log, \"y\"));\n  set(7, 14, 19, getStairs(stairs, \"north\", \"bottom\"));\n\n  set(7, 13, 19, getLog(log, \"y\"));\n  set(6, 13, 19, fence);\n  set(8, 13, 19, fence);\n\n  set(7, 12, 19, getLog(log, \"y\"));\n\n  set(7, 11, 19, getStairs(stairs, \"south\", \"bottom\"));\n  set(7, 11, 18, getLog(log, \"y\"));\n\n  set(7, 10, 18, getLog(log, \"y\"));\n  set(7, 9, 18, getStairs(stairs, \"south\", \"bottom\"));\n\n  // 10. Return Result\n  return {\n    name: \"Trojan Horse\",\n    seatY: seatY,\n    anchors: {\n      front: [7, 24, 0],\n      door: [7, 7, 11]\n    },\n    interiors: [\n      {\n        min: [5, 15, 8],\n        max: [9, 18, 13],\n        kind: \"vault\"\n      }\n    ]\n  };\n}"
+    },
+    "abandoned_siege_engine": {
+      "mode": "plugin",
+      "envelope": [
+        11,
+        10,
+        13
+      ],
+      "sourceHash": "b3:b3ca5a3564b15e9064ad5af67620d731c81f00fcff62c58efbdbf69eff901fee",
+      "outputHash": "b3:ca6ed4b10a47a06295e50212ed1831a52676a65d108894ed1ff9f17fede6e831",
+      "conforms": false,
+      "conformHash": "b3:791ee2764ba524cc0727221bac432d58e97f4e0446b94a9502cfb3ef9646584a",
+      "source": "export const envelope = [11, 10, 13];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const rand = api.random;\n\n  // Retrieve town carpentry and masonry palette from theme\n  const tWood = api.theme?.wood || {};\n  const tStone = api.theme?.stone || {};\n\n  const woodLog = tWood.log || \"minecraft:oak_log\";\n  const woodPlanks = tWood.planks || \"minecraft:oak_planks\";\n  const woodStripped = tWood.stripped || \"minecraft:stripped_oak_log\";\n  const woodStairs = tWood.stairs || \"minecraft:oak_stairs\";\n  const woodSlab = tWood.slab || \"minecraft:oak_slab\";\n  const woodFence = tWood.fence || \"minecraft:oak_fence\";\n  const woodTrapdoor = tWood.trapdoor || \"minecraft:oak_trapdoor\";\n\n  // Dried ox-hides, cured leather, and siege ironwork\n  const hidePrimary = \"minecraft:terracotta\";\n  const hideSecondary = \"minecraft:brown_wool\";\n  const hideTertiary = \"minecraft:brown_terracotta\";\n  const hideRough = \"minecraft:packed_mud\";\n  const ironHead = \"minecraft:iron_block\";\n  const ironAnvil = \"minecraft:anvil\";\n  const chainBlock = \"minecraft:chain\";\n  const ironBar = \"minecraft:iron_bars\";\n\n  // Base names for state formatting\n  function clean(b) {\n    return b ? b.split(\"[\")[0] : \"minecraft:oak_planks\";\n  }\n\n  const logBase = clean(woodLog);\n  const strippedBase = clean(woodStripped);\n  const stairsBase = clean(woodStairs);\n  const slabBase = clean(woodSlab);\n\n  function logX() { return `${logBase}[axis=x]`; }\n  function logY() { return `${logBase}[axis=y]`; }\n  function logZ() { return `${logBase}[axis=z]`; }\n  function strLogX() { return `${strippedBase}[axis=x]`; }\n  function strLogY() { return `${strippedBase}[axis=y]`; }\n  function strLogZ() { return `${strippedBase}[axis=z]`; }\n  function stairN(half = \"bottom\") { return `${stairsBase}[facing=north,half=${half}]`; }\n  function stairS(half = \"bottom\") { return `${stairsBase}[facing=south,half=${half}]`; }\n  function stairE(half = \"bottom\") { return `${stairsBase}[facing=east,half=${half}]`; }\n  function stairW(half = \"bottom\") { return `${stairsBase}[facing=west,half=${half}]`; }\n  function slabBottom() { return `${slabBase}[type=bottom]`; }\n  function slabTop() { return `${slabBase}[type=top]`; }\n\n  function set(x, y, z, b) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      api.set(x, y, z, b);\n    }\n  }\n\n  // Terrain height conformity: extends footings down to real ground\n  function groundSole(x, yBase, z, b) {\n    const gh = Math.round(api.heightAt(x, z));\n    const low = Math.min(yBase, gh);\n    const high = Math.max(yBase, gh);\n    for (let y = low; y <= high; y++) {\n      set(x, y, z, b);\n    }\n  }\n\n  function placeBeamX(x1, x2, y, z, block) {\n    const min = Math.min(x1, x2);\n    const max = Math.max(x1, x2);\n    for (let x = min; x <= max; x++) {\n      set(x, y, z, block);\n    }\n  }\n\n  function placeBeamZ(x, y, z1, z2, block) {\n    const min = Math.min(z1, z2);\n    const max = Math.max(z1, z2);\n    for (let z = min; z <= max; z++) {\n      set(x, y, z, block);\n    }\n  }\n\n  function pickHide(r) {\n    if (r < 0.35) return hidePrimary;\n    if (r < 0.65) return hideSecondary;\n    if (r < 0.85) return hideTertiary;\n    return hideRough;\n  }\n\n  // Sturdy multi-block solid timber wheel\n  function buildWheel(wx, wz, broken = false) {\n    if (broken) {\n      groundSole(wx, 0, wz, woodPlanks);\n      set(wx, 0, wz - 1, woodSlab);\n      set(wx, 0, wz + 1, woodSlab);\n      set(wx, 1, wz, woodPlanks);\n      return;\n    }\n    for (let dz = -1; dz <= 1; dz++) {\n      for (let dy = 0; dy <= 2; dy++) {\n        const isCorner = (dz === -1 || dz === 1) && (dy === 0 || dy === 2);\n        if (!isCorner) {\n          set(wx, dy, wz + dz, logZ());\n        } else {\n          set(wx, dy, wz + dz, woodPlanks);\n        }\n        if (dy === 0) {\n          groundSole(wx, 0, wz + dz, woodPlanks);\n        }\n      }\n    }\n    set(wx, 1, wz, woodStripped);\n  }\n\n  const variant = (api.instance ? api.instance.index : 0) % 4;\n  let engineName = \"Achaean Siege Engine\";\n\n  if (variant === 0) {\n    // -------------------------------------------------------------------------\n    // VARIANT 0: Heavy A-Frame Battering Ram with Ox-Hide Canopy\n    // -------------------------------------------------------------------------\n    engineName = \"Achaean Heavy Battering Ram\";\n\n    // 4 Heavy spoked wheels\n    buildWheel(1, 3);\n    buildWheel(1, 9);\n    buildWheel(9, 3);\n    buildWheel(9, 9);\n\n    // Axles\n    placeBeamX(1, 9, 1, 3, logX());\n    placeBeamX(1, 9, 1, 9, logX());\n\n    // Carriage side sills\n    placeBeamZ(2, 1, 1, 11, logZ());\n    placeBeamZ(8, 1, 1, 11, logZ());\n\n    // Crossbeams and footing anchors\n    for (const z of [1, 3, 6, 9, 11]) {\n      placeBeamX(2, 8, 1, z, logX());\n      groundSole(2, 0, z, woodLog);\n      groundSole(8, 0, z, woodLog);\n    }\n\n    // Timber floor deck\n    for (let z = 2; z <= 10; z++) {\n      for (let x = 3; x <= 7; x++) {\n        set(x, 1, z, woodPlanks);\n      }\n    }\n\n    // Side waist rails\n    placeBeamZ(2, 2, 1, 11, woodPlanks);\n    placeBeamZ(8, 2, 1, 11, woodPlanks);\n\n    // Continuous 6-connected A-frame trestle uprights\n    for (const z of [2, 6, 10]) {\n      // West truss\n      set(2, 2, z, logY());\n      set(2, 3, z, logY());\n      set(3, 3, z, woodPlanks);\n      set(3, 4, z, logY());\n      set(3, 5, z, logY());\n      set(4, 5, z, woodPlanks);\n      set(4, 6, z, logY());\n      set(4, 7, z, logY());\n      set(5, 7, z, woodPlanks);\n\n      // East truss\n      set(8, 2, z, logY());\n      set(8, 3, z, logY());\n      set(7, 3, z, woodPlanks);\n      set(7, 4, z, logY());\n      set(7, 5, z, logY());\n      set(6, 5, z, woodPlanks);\n      set(6, 6, z, logY());\n      set(6, 7, z, logY());\n    }\n\n    // Ridge beam along peak\n    placeBeamZ(5, 8, 1, 11, strLogZ());\n\n    // Hide-draped protective pitched roof\n    for (let z = 1; z <= 11; z++) {\n      set(5, 9, z, slabBottom());\n\n      set(4, 8, z, pickHide(rand()));\n      set(6, 8, z, pickHide(rand()));\n      set(4, 7, z, slabTop());\n      set(6, 7, z, slabTop());\n\n      set(3, 6, z, pickHide(rand()));\n      set(7, 6, z, pickHide(rand()));\n      set(3, 5, z, stairW());\n      set(7, 5, z, stairE());\n\n      set(2, 4, z, pickHide(rand()));\n      set(8, 4, z, pickHide(rand()));\n      set(1, 4, z, slabBottom());\n      set(9, 4, z, slabBottom());\n    }\n\n    // Front and rear gables\n    for (const z of [1, 11]) {\n      set(3, 3, z, woodFence);\n      set(7, 3, z, woodFence);\n      set(4, 4, z, woodFence);\n      set(6, 4, z, woodFence);\n      set(4, 5, z, woodFence);\n      set(6, 5, z, woodFence);\n      set(5, 7, z, woodPlanks);\n    }\n\n    // Suspended Ram Beam with Cast Iron Ram-Head\n    set(5, 3, 0, ironHead);\n    set(5, 4, 0, ironAnvil);\n    set(5, 3, 1, ironHead);\n    set(5, 2, 0, stairN(\"top\"));\n    set(4, 3, 0, stairW(\"top\"));\n    set(6, 3, 0, stairE(\"top\"));\n\n    // Main pine log ram\n    placeBeamZ(5, 3, 2, 10, strLogZ());\n\n    // Rear push crossbars\n    set(4, 3, 10, logX());\n    set(6, 3, 10, logX());\n    set(5, 3, 11, logZ());\n\n    // Iron suspension chains hanging from roof ridge\n    for (const z of [3, 6, 9]) {\n      set(5, 7, z, chainBlock);\n      set(5, 6, z, chainBlock);\n      set(5, 5, z, chainBlock);\n      set(5, 4, z, chainBlock);\n    }\n\n    // Wheel wedges and rear ladder\n    set(1, 0, 1, stairS());\n    set(1, 0, 5, stairN());\n    set(9, 0, 1, stairS());\n    set(9, 0, 5, stairN());\n    groundSole(1, 0, 1, woodPlanks);\n    groundSole(1, 0, 5, woodPlanks);\n    groundSole(9, 0, 1, woodPlanks);\n    groundSole(9, 0, 5, woodPlanks);\n\n    for (let y = 1; y <= 5; y++) {\n      set(8, y, 11, woodFence);\n    }\n\n  } else if (variant === 1) {\n    // -------------------------------------------------------------------------\n    // VARIANT 1: Wheeled Mantlet & Artillery Shielding Machine\n    // -------------------------------------------------------------------------\n    engineName = \"Greek Assault Mantlet Screen\";\n\n    // 3 sound wheels, 1 broken front-west wheel\n    buildWheel(1, 3, true);\n    buildWheel(1, 9, false);\n    buildWheel(9, 3, false);\n    buildWheel(9, 9, false);\n\n    // Axles\n    placeBeamX(1, 9, 1, 3, logX());\n    placeBeamX(1, 9, 1, 9, logX());\n\n    // Chassis frame\n    placeBeamZ(2, 1, 1, 11, logZ());\n    placeBeamZ(8, 1, 1, 11, logZ());\n\n    for (const z of [1, 3, 6, 9, 11]) {\n      placeBeamX(2, 8, 1, z, logX());\n      groundSole(2, 0, z, woodLog);\n      groundSole(8, 0, z, woodLog);\n    }\n\n    // Lower deck\n    for (let z = 2; z <= 10; z++) {\n      for (let x = 3; x <= 7; x++) {\n        set(x, 1, z, woodPlanks);\n      }\n    }\n\n    // Sloped Mantlet Shield Facade (slanted from Z=1 at Y=1 back to Z=4 at Y=8)\n    for (let x = 2; x <= 8; x++) {\n      set(x, 1, 1, logX());\n      groundSole(x, 0, 1, woodLog);\n      set(x, 2, 1, pickHide(rand()));\n    }\n    for (let x = 2; x <= 8; x++) {\n      set(x, 3, 2, pickHide(rand()));\n      set(x, 2, 2, woodPlanks);\n      if (x === 3 || x === 7) {\n        set(x, 4, 2, woodFence); // Arrow slit\n      } else {\n        set(x, 4, 2, pickHide(rand()));\n      }\n    }\n    for (let x = 2; x <= 8; x++) {\n      set(x, 5, 3, pickHide(rand()));\n      set(x, 4, 3, woodPlanks);\n      if (x === 5) {\n        set(x, 6, 3, woodFence); // View port\n      } else {\n        set(x, 6, 3, pickHide(rand()));\n      }\n    }\n    for (let x = 2; x <= 8; x++) {\n      set(x, 7, 4, pickHide(rand()));\n      set(x, 6, 4, woodPlanks);\n      set(x, 8, 4, stairS()); // Parapet coping\n    }\n\n    // Flying diagonal timber rear buttresses\n    set(2, 6, 5, logZ());\n    set(2, 5, 6, logZ());\n    set(2, 4, 7, logZ());\n    set(2, 3, 8, logZ());\n    set(2, 2, 9, logZ());\n\n    set(8, 6, 5, logZ());\n    set(8, 5, 6, logZ());\n    set(8, 4, 7, logZ());\n    set(8, 3, 8, logZ());\n    set(8, 2, 9, logZ());\n\n    // Intermediate archer platform at Y=4\n    for (let z = 3; z <= 6; z++) {\n      for (let x = 3; x <= 7; x++) {\n        set(x, 4, z, woodPlanks);\n      }\n      set(3, 5, z, woodFence);\n      set(7, 5, z, woodFence);\n    }\n    placeBeamX(3, 7, 3, 6, logX());\n    set(3, 2, 6, logY());\n    set(7, 2, 6, logY());\n\n    // High observation crow's nest at Y=7\n    for (let z = 4; z <= 5; z++) {\n      for (let x = 4; x <= 6; x++) {\n        set(x, 7, z, woodPlanks);\n      }\n    }\n    set(4, 8, 5, woodFence);\n    set(6, 8, 5, woodFence);\n\n    // Ladders and winch drum\n    for (let y = 1; y <= 4; y++) {\n      set(5, y, 6, woodFence);\n    }\n    for (let y = 4; y <= 7; y++) {\n      set(5, y, 5, woodFence);\n    }\n\n    set(5, 2, 9, logX());\n    set(4, 2, 9, woodFence);\n    set(6, 2, 9, woodFence);\n    set(5, 3, 9, woodTrapdoor);\n\n    // Propped cribbing under broken wheel axle\n    set(2, 0, 3, woodPlanks);\n    groundSole(2, 0, 3, woodPlanks);\n    set(1, 0, 3, woodPlanks);\n    groundSole(1, 0, 3, woodPlanks);\n\n  } else if (variant === 2) {\n    // -------------------------------------------------------------------------\n    // VARIANT 2: Smashed Trestle Ram with Direct Trojan Stone Strike\n    // -------------------------------------------------------------------------\n    engineName = \"Battered Siege Ram of Troy\";\n\n    // West wheels intact; East front wheel smashed\n    buildWheel(1, 3, false);\n    buildWheel(1, 9, false);\n    buildWheel(9, 3, true);\n    buildWheel(9, 9, false);\n\n    // Axles & Sills\n    placeBeamX(1, 9, 1, 3, logX());\n    placeBeamX(1, 9, 1, 9, logX());\n    placeBeamZ(2, 1, 1, 11, logZ());\n    placeBeamZ(8, 1, 1, 11, logZ());\n\n    for (const z of [1, 3, 6, 9, 11]) {\n      placeBeamX(2, 8, 1, z, logX());\n      groundSole(2, 0, z, woodLog);\n      groundSole(8, 0, z, woodLog);\n    }\n\n    // Floor deck\n    for (let z = 2; z <= 10; z++) {\n      for (let x = 3; x <= 7; x++) {\n        set(x, 1, z, woodPlanks);\n      }\n    }\n\n    // Intact West A-Frame Posts\n    for (const z of [2, 6, 10]) {\n      set(2, 2, z, logY());\n      set(2, 3, z, logY());\n      set(3, 3, z, woodPlanks);\n      set(3, 4, z, logY());\n      set(3, 5, z, logY());\n      set(4, 5, z, woodPlanks);\n      set(4, 6, z, logY());\n      set(4, 7, z, logY());\n      set(5, 7, z, woodPlanks);\n    }\n\n    // Smashed East Posts\n    set(8, 2, 2, logY());\n    set(8, 3, 2, woodFence);\n\n    set(8, 2, 6, logY());\n    set(8, 3, 6, logY());\n    set(7, 3, 6, woodPlanks);\n    set(7, 4, 6, woodFence);\n\n    set(8, 2, 10, logY());\n    set(8, 3, 10, logY());\n    set(7, 3, 10, woodPlanks);\n    set(7, 4, 10, logY());\n    set(7, 5, 10, logY());\n    set(6, 5, 10, woodPlanks);\n    set(6, 6, 10, logY());\n    set(6, 7, 10, logY());\n\n    // Sagging collapsed ridge beam\n    placeBeamZ(5, 8, 6, 11, strLogZ());\n    set(5, 7, 5, strLogZ());\n    set(6, 6, 4, strLogZ());\n    set(6, 5, 3, strLogZ());\n    set(7, 4, 2, strLogZ());\n\n    // Intact West Canopy\n    for (let z = 1; z <= 11; z++) {\n      set(5, 9, z, slabBottom());\n      set(4, 8, z, pickHide(rand()));\n      set(4, 7, z, slabTop());\n      set(3, 6, z, pickHide(rand()));\n      set(3, 5, z, stairW());\n      set(2, 4, z, pickHide(rand()));\n      set(1, 4, z, slabBottom());\n    }\n\n    // Torn East Canopy (rear only; front destroyed)\n    for (let z = 7; z <= 11; z++) {\n      set(6, 8, z, pickHide(rand()));\n      set(6, 7, z, slabTop());\n      set(7, 6, z, pickHide(rand()));\n      set(7, 5, z, stairE());\n      set(8, 4, z, pickHide(rand()));\n    }\n\n    // Splintered timber around the breach\n    set(6, 6, 6, woodFence);\n    set(7, 4, 5, woodFence);\n    set(8, 3, 4, woodFence);\n    set(7, 2, 3, woodPlanks);\n\n    // Trojan Boulder missile lodged inside the carriage\n    const rockBlock = tStone.primary || \"minecraft:stone_bricks\";\n    const rockAccent = tStone.accent || \"minecraft:cobblestone\";\n    set(6, 2, 4, rockBlock);\n    set(6, 3, 4, rockAccent);\n    set(7, 2, 4, rockAccent);\n    set(6, 2, 5, rockBlock);\n\n    // Smashed tilted ram beam (front dropped to ground)\n    set(5, 1, 0, ironHead);\n    set(5, 2, 0, ironAnvil);\n    set(5, 1, 1, ironHead);\n    set(5, 1, 2, strLogZ());\n    set(5, 2, 3, strLogZ());\n    set(5, 2, 4, strLogZ());\n    set(5, 3, 5, strLogZ());\n    set(5, 3, 6, strLogZ());\n    set(5, 4, 7, strLogZ());\n    set(5, 4, 8, strLogZ());\n    set(5, 4, 9, strLogZ());\n    set(5, 4, 10, strLogZ());\n\n    set(4, 4, 10, logX());\n    set(6, 4, 10, logX());\n\n    // Surviving rear suspension chains\n    for (const z of [8, 10]) {\n      set(5, 7, z, chainBlock);\n      set(5, 6, z, chainBlock);\n      set(5, 5, z, chainBlock);\n    }\n\n  } else {\n    // -------------------------------------------------------------------------\n    // VARIANT 3: Ox-Hide Sapping Testudo (Tortoise Bore Engine)\n    // -------------------------------------------------------------------------\n    engineName = \"Achaean Sapping Testudo\";\n\n    // 6 Roller wheels for heavy sapping tortoise\n    for (const z of [2, 6, 10]) {\n      buildWheel(1, z, false);\n      buildWheel(9, z, false);\n      placeBeamX(1, 9, 1, z, logX());\n    }\n\n    // Side chassis sills\n    placeBeamZ(2, 1, 1, 11, logZ());\n    placeBeamZ(8, 1, 1, 11, logZ());\n\n    // Cross-ribs and floor\n    for (let z = 1; z <= 11; z += 2) {\n      placeBeamX(2, 8, 1, z, logX());\n      groundSole(2, 0, z, woodLog);\n      groundSole(8, 0, z, woodLog);\n    }\n\n    for (let z = 1; z <= 11; z++) {\n      for (let x = 3; x <= 7; x++) {\n        set(x, 1, z, woodPlanks);\n      }\n    }\n\n    // Heavy low-profile hide walls at X=1 and X=9\n    for (let z = 1; z <= 11; z++) {\n      set(1, 2, z, pickHide(rand()));\n      set(1, 3, z, pickHide(rand()));\n      set(9, 2, z, pickHide(rand()));\n      set(9, 3, z, pickHide(rand()));\n      set(2, 2, z, woodPlanks);\n      set(8, 2, z, woodPlanks);\n    }\n\n    // Triple-sloped multi-layer hide canopy (repels Greek fire & rocks)\n    for (let z = 1; z <= 11; z++) {\n      set(2, 4, z, pickHide(rand()));\n      set(8, 4, z, pickHide(rand()));\n      set(2, 3, z, stairW());\n      set(8, 3, z, stairE());\n\n      set(3, 5, z, pickHide(rand()));\n      set(7, 5, z, pickHide(rand()));\n      set(3, 4, z, stairW());\n      set(7, 4, z, stairE());\n\n      set(4, 6, z, pickHide(rand()));\n      set(6, 6, z, pickHide(rand()));\n      set(4, 5, z, stairW());\n      set(6, 5, z, stairE());\n\n      set(5, 7, z, strLogZ());\n      set(5, 8, z, slabBottom());\n    }\n\n    // Armored front shield bulkhead\n    for (let x = 2; x <= 8; x++) {\n      set(x, 2, 1, pickHide(rand()));\n      set(x, 3, 1, pickHide(rand()));\n    }\n    // Bore exit portal\n    set(5, 2, 1, \"minecraft:air\");\n    set(5, 3, 1, \"minecraft:air\");\n    set(4, 2, 1, woodLog);\n    set(6, 2, 1, woodLog);\n    set(5, 4, 1, stairN(\"top\"));\n\n    // Iron Wall Sapping Bore\n    set(5, 2, 0, ironHead);\n    set(5, 3, 0, ironAnvil);\n    set(4, 2, 0, ironBar);\n    set(6, 2, 0, ironBar);\n    set(5, 1, 0, stairN(\"top\"));\n\n    placeBeamZ(5, 2, 2, 10, strLogZ());\n    placeBeamZ(5, 3, 2, 10, logZ());\n\n    // Sappers' dual-sided push and turn levers\n    for (const z of [3, 5, 7, 9]) {\n      set(4, 2, z, logX());\n      set(6, 2, z, logX());\n      set(4, 3, z, woodFence);\n      set(6, 3, z, woodFence);\n    }\n\n    // Timber floor guide rollers\n    for (const z of [2, 6, 10]) {\n      set(5, 1, z, woodStripped);\n    }\n\n    // Rear sapper entry portal\n    set(3, 2, 11, woodFence);\n    set(7, 2, 11, woodFence);\n    set(4, 2, 11, woodFence);\n    set(6, 2, 11, woodFence);\n  }\n\n  return {\n    name: engineName,\n    seatY: 0,\n    anchors: {\n      front: [5, 3, 0]\n    }\n  };\n}"
+    }
+  }
+}

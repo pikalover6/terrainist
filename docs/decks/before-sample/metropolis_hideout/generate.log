@@ -1,0 +1,152 @@
+prompt     A high-tech apocalyptic hideout in the massively overgrown ruins of a metropolis.
+seed       304
+size       512x512
+model      google/gemini-3.7-flash
+effort     high
+kit        settlement
+
+intent     {"era":"far_future","wealth":0.5,"decline":0.85,"formality":0.6,"climate":{"humidity":0.5,"temperature":0.2},"character":{"label":"overgrown ruined metropolis hideout","materialTheme":"modern_city","urbanForm":"grid","flora":{"prefer":["old_growth","emergent","understory"]},"archetypes":{"prefer":["bunker_complex","laboratory","field_station"]},"motifs":{"roofType":"flat","massing":"towered"}},"tokens":{"terrain":"a sprawling grid of ruined skyscrapers heavily overgrown with dense jungle and massive root systems","fittings":"blast_door on the bunker_complex; airlock_vestibule on the laboratory","infra":"barricade_line across the ruined avenue leading to the hideout; surveillance_perimeter around the fortified shelter","icons":"shattered skyscrapers smothered in vines and canopy trees; a heavily fortified high-tech shelter concealed within the concrete ruins; solar arrays and communication dishes hidden among overgrowth"}}
+           1 attempt(s), 8304 tokens
+
+authored with google/gemini-3.7-flash in 2 attempt(s)
+  attempt 1   1 problem(s): LOAM-T008 UNKNOWN_KEY@world.solar_grid.params
+  attempt 2   valid
+  tokens     177123 in + 20249 out = 197372  ($0.0768)
+programs   1 of 1 kept (budget 3 landmark / 3 plugin)
+  ok     comm_array_tower [landmark]  1 attempt(s), 23124 tokens  ($0.0384), 5 warning(s)
+  tokens     3312 in + 19812 out = 23124  (14356 of the out reasoning)  ($0.0384)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/metropolis_hideout/out/overgrown_metro_hideout.loam.json
+
+
+compile feedback, round 1 of 2:
+
+The compiler reported 1 problem(s) with the compiled world:
+
+note LOAM-T113 CARVE_DRY at world.metro_terrain.collapsed_highway: valley "collapsed_highway" asked to flood ("flooded": "auto") but compiled dry: not one of its columns reaches the sea. Its lowest point sits 295 blocks south-east of the nearest coastline, so the carve is a dry channel in the middle of the land.
+  fix: end the carve at the water instead of guessing where it is: make the last "course" waypoint the string "coast" (e.g. "course": [[0.54, 0.40], [0.5, 0.28], "coast"]) and the compiler will aim it at the sea this seed actually produced. Use it as the *first* waypoint for an inlet drawn inland. If the channel is meant to be a dry gorge, say so with "flooded": "never" and this note goes away.
+
+  revision 1 authored in 1 attempt(s)
+  tokens     92728 in + 9123 out = 101851  ($0.0519)
+
+compiled "overgrown_metro_hideout" — 1.21.11 (DataVersion 4671)
+  world      /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/metropolis_hideout/out/overgrown_metro_hideout
+  seed       304
+  region     512x512 at (-256, -256)
+  heights    60.9..79.8  sea 63  snow line 76.4
+  land       97.8% of columns above sea level
+  biomes     plains 68.5%, forest 27.6%, ocean 2.2%, river 1.2%, beach 0.4%, windswept_hills 0.1%
+  trees      6412 (metro_overgrowth=6699, wilderness_scatter=631)
+  chunks     1024
+  blocks     37749028 (1321871 vegetation)
+  markers    65
+  spawn      [0, 75, 0]
+  timings    validate 1ms  field 227ms  layout 512ms  climate 40ms  columns 21ms  caves 0ms  structures 1800ms  programs 21ms  scatter 436ms  biomes 29ms  validators 30ms  emit 3749ms  total 6897ms
+  programs   world.satellite_uplink=comm_array_tower×1 (715 blocks)
+  doc        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/metropolis_hideout/out/overgrown_metro_hideout.loam.json
+  report     /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/metropolis_hideout/out/overgrown_metro_hideout.report.json
+
+warning LOAM-W330 PROGRAM_ENVELOPE_OVERRIDDEN at world.satellite_uplink: this node declares an envelope; program "comm_array_tower" declares [15, 26, 15] and the program wins
+  fix: drop the node's "envelope" — the program is what knows how much room it needs
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.service_conduits: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+note LOAM-W522 PROGRAM_FACE_REMEASURED at world.satellite_uplink: this landmark was placed at (-26, 141), not where its facing was first measured from, so the facing was taken again from the real site: 0° becomes 90°
+  fix: nothing to change — the front points where the document asked it to. To pin the site as well, tighten the coarse target with a "radius"/"tolerance" or a hard "zone"
+
+note LOAM-I526 PLATFORM_SUBMERGED at world.ruined_metropolis: platform "block.50131.3" in "world.ruined_metropolis" is mostly water and is not graded: its columns keep the pristine terrain and the water on it
+  fix: nothing to change if the quarter meets the water there; if the water was not meant to be inside the quarter, move or shrink the district's envelope off it
+
+note LOAM-I526 PLATFORM_SUBMERGED at world.ruined_metropolis: platform "block.60491.0" in "world.ruined_metropolis" is mostly water and is not graded: its columns keep the pristine terrain and the water on it
+  fix: nothing to change if the quarter meets the water there; if the water was not meant to be inside the quarter, move or shrink the district's envelope off it
+
+note LOAM-I526 PLATFORM_SUBMERGED at world.ruined_metropolis: platform "block.60491.1" in "world.ruined_metropolis" is mostly water and is not graded: its columns keep the pristine terrain and the water on it
+  fix: nothing to change if the quarter meets the water there; if the water was not meant to be inside the quarter, move or shrink the district's envelope off it
+
+note LOAM-I526 PLATFORM_SUBMERGED at world.ruined_metropolis: platform "block.60491.5" in "world.ruined_metropolis" is mostly water and is not graded: its columns keep the pristine terrain and the water on it
+  fix: nothing to change if the quarter meets the water there; if the water was not meant to be inside the quarter, move or shrink the district's envelope off it
+
+note LOAM-T242 GROUND_PLANE_DRIFT at world.ruined_metropolis: 5299 of 37031 platform column(s) in "world.ruined_metropolis" within 12 block(s) of a graded carriageway stand off the street's own storey lattice, the worst by 9 block(s)
+  fix: Nothing to change in the document — a document cannot move its own storey lattice. A non-zero count is a compiler finding: the anchor did not hold on this quarter.
+
+note LOAM-I512 DISTRICT_RUINS at world.ruined_metropolis: decline 0.88 gives a ruin share of 0.77: 30 of 41 infill lots roll into ruined shells (light 0, heavy 1, total 29)
+  fix: raise or lower intent.decline on this district to move the share; landmarks you declared are exempt unless they carry params.decay
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.shattered_tower_prime: "skyscraper" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.decayed_corporate_center: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.infill_-61_-132: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.infill_180_-132: "skyscraper" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.infill_166_-115: "skyscraper" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.infill_166_-81: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.infill_-32_-26: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.infill_166_-6: "skyscraper" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.infill_-53_6: "skyscraper" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.infill_126_86: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+  fix: leave this node intact, or use an archetype the shell grammar builds if you want it ruined
+
+note LOAM-I412 SEAM_SERVED at world.ruined_metropolis: seams served (S1): 11 wall(s), 0 tier stack(s) over 0 face(s) and 0 column(s), 41 bank(s), 55 kerb seam(s), and 0 seam(s) a building already stood on
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.ruined_metropolis: multi-level ground: 11 retaining wall(s) over 157 column(s) (0 parapeted), 55 kerb seam(s), 41 bank(s), and 0 seam(s) a building already stood on; 32 seam column(s) got no wall (32 building); 1500 column(s) graded as bank
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.ruined_metropolis: transitions by context (§5): 1814 edge column(s) — fill 1814 (582 bank, 1040 kerb, 192 retaining), cut 0 (none)
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.ruined_metropolis: built faces by finished drop (§13.8): 192 face column(s) along the seams a wall was built on — 1 at 1, 112 at 2, 48 at 3, 21 at 4, 10 at 5
+  fix: No action needed.
+
+note LOAM-T237 FRONTAGE_TIE_DRIFT at world.ruined_metropolis: street segment "segment:ew6!world.ruined_metropolis" was surfaced above its datum at 9 of 280 station(s), by up to 1 block(s); the lots seated against that datum keep the level the datum gave them
+  fix: No change needed if the run crosses or skirts water — a deck and a shore rim are the one legal cause, and a street that rose out of the water is a street doing the right thing. A large drift away from water means the datum and the surfacer have become two graders: report it.
+
+note LOAM-T237 FRONTAGE_TIE_DRIFT at world.ruined_metropolis: street segment "segment:ns0!world.ruined_metropolis" was surfaced above its datum at 12 of 260 station(s), by up to 2 block(s); the lots seated against that datum keep the level the datum gave them
+  fix: No change needed if the run crosses or skirts water — a deck and a shore rim are the one legal cause, and a street that rose out of the water is a street doing the right thing. A large drift away from water means the datum and the surfacer have become two graders: report it.
+
+note LOAM-T237 FRONTAGE_TIE_DRIFT at world.ruined_metropolis: street segment "segment:ew5!world.ruined_metropolis" was surfaced above its datum at 5 of 280 station(s), by up to 2 block(s); the lots seated against that datum keep the level the datum gave them
+  fix: No change needed if the run crosses or skirts water — a deck and a shore rim are the one legal cause, and a street that rose out of the water is a street doing the right thing. A large drift away from water means the datum and the surfacer have become two graders: report it.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.ruined_metropolis: every cut face finished: 1402 column(s) faced in the hill's own rock
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world: face finish: 546 column(s) striped in the hill's own rock, 238 paved face(s) footed, 86 crown notch(es) closed
+  fix: No action needed.
+
+note LOAM-I497 GROUND_STAGE at world: ground stage: 2231 intent(s) (building.footprint 202, doorstep.landing 1, quarter.plane 1731, retaining.seam 220, retaining.skirt 6, road.network 4, street.network 21, street.sidewalk 1, verge 45), 5 resolve(s), 4306 column(s) moved, 1191 transition(s) (bank 343, built 23, kerb 795, retaining 2, rock 27, tiered 1), 375 of them unbuilt by any pass; coverage 3189 boundary pair(s) — 2572 in a transition, 522 suppressed by request, 95 by a face, 0 a kerb, 0 uncovered (excluded: 24729 natural, 73 wet)
+  fix: Nothing — this is the stage's own golden, and it is a note so that a count moving is visible in a diff before a block moves in a world.
+
+note LOAM-I412 SEAM_SERVED at world: terminal seam builder (§3.3): 8 derived transition(s) built (bank 1, rock 7) over 0 column(s) of face, 1 of graded bank (0 eased under §7.2's natural blend) and 111 finished in the hill's own rock; 353 absorbed under S7, 4 refused
+  fix: No action needed.
+
+warning LOAM-W413 SEAM_UNSERVED at world.ruined_metropolis: 4 derived transition(s) in "world.ruined_metropolis" were chosen and could not be placed: a derived retaining seam at -79,-49 drops 3 block(s) over 6 column(s) and was served by a revetted stack of 1 tier(s), but 1 tier(s) found no ground to stand on and 0 column(s) were left uncovered — a street, a footprint or water owns the ground the course needed; a derived tiered seam at -33,-43 drops 7 block(s) over 6 column(s) and was served by a revetted stack of 2 tier(s), but 2 tier(s) found no ground to stand on and 0 column(s) were left uncovered — a street, a footprint or water owns the ground the course needed; a derived retaining seam at 47,-7 drops 2 block(s) over 9 column(s) and was served by a revetted stack of 1 tier(s), but 1 tier(s) found no ground to stand on and 0 column(s) were left uncovered — a street, a footprint or water owns the ground the course needed; and 1 more
+  fix: Nothing in the document names the columns directly: widen the block so the construction has room, or lower the quarter's density so the two levels are closer together.
+
+note LOAM-I514 GREEN_SKIN at <document>: the green skin covered 5126 ruined columns: 9426 climbing strands (3 glow lichen), 21 leaf plugs (117 of them substituted for glazing), 165 moss carpets, 87 pavement substitutions, 10 tufts, 40 street trunks and 2 shell trees elected (8080 spine columns, shortest sight-line run 24, nearest trunk to a junction 4), 11481 blocks
+  fix: informational
+
+note LOAM-T341 PROGRAM_SEATED_PAD at world.satellite_uplink: "comm_array_tower" writes the same sole on every column, so it is seated on a levelled pad rather than on the real ground
+  fix: no change needed here — the fix is in the program: read api.heightAt at every column it touches and answer it, and the next authoring run will seat it on the ground itself
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 73278 footprint columns (plus 29530 feathered over 40 columns) to minecraft:plains, from the ambient majority (minecraft:plains, 89% of 18431 ring columns); snow policy auto resolved to "never" on a 0/73278 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+  authoring  2 model run(s), 1 compile-feedback round(s), 269851 in + 29372 out = 299223 tokens (11710 of the out reasoning) ($0.1286)
+
+next: terrainist install /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/metropolis_hideout/out/overgrown_metro_hideout

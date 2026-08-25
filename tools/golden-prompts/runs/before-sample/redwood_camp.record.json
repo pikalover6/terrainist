@@ -1,0 +1,166 @@
+{
+  "id": "redwood_camp",
+  "family": "redwood_camp",
+  "kit": "settlement",
+  "prompt": "An ancient forest of colossal redwoods with a small logging camp at its edge.",
+  "seed": 306,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "era": "industrial",
+    "wealth": 0.3,
+    "decline": 0.1,
+    "formality": 0.1,
+    "climate": {
+      "biome": "minecraft:old_growth_spruce_taiga",
+      "temperature": 0.3,
+      "humidity": 0.8,
+      "snow": "never"
+    },
+    "character": {
+      "label": "redwood logging camp",
+      "materialTheme": "boreal_pine",
+      "formPacks": [
+        "wilds_camps"
+      ],
+      "urbanForm": "grown",
+      "flora": {
+        "prefer": [
+          "emergent",
+          "old_growth",
+          "spruce_ancient",
+          "giant"
+        ]
+      },
+      "props": {
+        "prefer": [
+          "cart"
+        ]
+      }
+    },
+    "tokens": {
+      "terrain": "a towering ancient redwood forest bordered by a clearing and sawpit terrace",
+      "infra": "cut-over ground around the camp fringe; log flume leading from the stand; cart tracks into the woods",
+      "icons": "colossal old-growth redwood trees looming over modest log bunkhouses, lumber stacks, sawpits, and timber wagons"
+    }
+  },
+  "attempts": 3,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 467608,
+    "completionTokens": 67766,
+    "cost": 0.2458
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 25,
+    "maxDepth": 2,
+    "generators": [
+      "authored:felled_colossal_redwood",
+      "authored:steam_donkey_rig",
+      "building.grammar@0",
+      "infra.entry@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "cottage",
+      "dormitory",
+      "granary",
+      "inn",
+      "log_cabin",
+      "sawmill",
+      "tavern",
+      "warehouse"
+    ],
+    "archetypesInCatalog": 8,
+    "formPacks": [
+      "wilds_camps"
+    ],
+    "props": [
+      "campsite",
+      "cart",
+      "covered_wagon",
+      "hitching_post",
+      "log_pile"
+    ],
+    "species": [
+      "larch_tall",
+      "redwood_tall",
+      "scrub_pine",
+      "tall_pine"
+    ],
+    "envelopes": [
+      "512x512",
+      "24x24",
+      "11x11x17",
+      "11x12x13",
+      "13x12x19",
+      "11x10x13",
+      "13x11x13",
+      "16x20x14",
+      "38x16x15"
+    ],
+    "constraints": 22,
+    "constraintKinds": [
+      "adjacent_to",
+      "at",
+      "blend",
+      "distance",
+      "facing",
+      "gap",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform"
+    ],
+    "constraintsWithStrength": 10,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 5,
+    "programReferences": 2,
+    "conformsTrue": 0,
+    "labels": 17,
+    "eras": [
+      "industrial"
+    ],
+    "bytes": 50564
+  },
+  "wallMs": 742000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 3,
+    "feedbackRounds": 1,
+    "programs": [
+      "ok felled_colossal_redwood [landmark] 1 attempt(s), 28173 tokens ($0.0479), 26 warning(s)",
+      "ok steam_donkey_rig [landmark] 1 attempt(s), 24468 tokens ($0.0409), 13 warning(s)",
+      "ok hollow_stump_workshop [plugin] 1 attempt(s), 25663 tokens ($0.0432), 10 warning(s)"
+    ],
+    "programCost": 0.1336,
+    "totalCost": 0.3794,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/redwood_camp/out/redwood_logging_camp",
+    "finalDiagnostics": {
+      "LOAM-W330": 2,
+      "LOAM-T208": 1,
+      "LOAM-W522": 1,
+      "LOAM-I463": 1,
+      "LOAM-I497": 1,
+      "LOAM-T233": 1,
+      "LOAM-T341": 3,
+      "LOAM-W337": 1,
+      "LOAM-W470": 1
+    },
+    "crash": [],
+    "docName": "redwood_logging_camp.loam.json"
+  }
+}

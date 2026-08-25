@@ -1,0 +1,95 @@
+prompt     An ancient forest of colossal redwoods with a small logging camp at its edge.
+seed       306
+size       512x512
+model      google/gemini-3.7-flash
+effort     high
+kit        settlement
+
+intent     {"era":"industrial","wealth":0.3,"decline":0.1,"formality":0.1,"climate":{"biome":"minecraft:old_growth_spruce_taiga","temperature":0.3,"humidity":0.8,"snow":"never"},"character":{"label":"redwood logging camp","materialTheme":"boreal_pine","formPacks":["wilds_camps"],"urbanForm":"grown","flora":{"prefer":["emergent","old_growth","spruce_ancient","giant"]},"props":{"prefer":["cart"]}},"tokens":{"terrain":"a towering ancient redwood forest bordered by a clearing and sawpit terrace","infra":"cut-over ground around the camp fringe; log flume leading from the stand; cart tracks into the woods","icons":"colossal old-growth redwood trees looming over modest log bunkhouses, lumber stacks, sawpits, and timber wagons"}}
+           1 attempt(s), 7896 tokens
+
+authored with google/gemini-3.7-flash in 3 attempt(s)
+  attempt 1   1 problem(s): LOAM-T000 BAD_DOCUMENT@<document>
+  attempt 2   1 problem(s): LOAM-T000 BAD_DOCUMENT@<document>
+  attempt 3   valid
+  tokens     258549 in + 21917 out = 280466  ($0.0814)
+programs   3 of 3 kept (budget 3 landmark / 3 plugin)
+  ok     felled_colossal_redwood [landmark]  1 attempt(s), 28173 tokens  ($0.0479), 26 warning(s)
+  ok     steam_donkey_rig [landmark]  1 attempt(s), 24468 tokens  ($0.0409), 13 warning(s)
+  ok     hollow_stump_workshop [plugin]  1 attempt(s), 25663 tokens  ($0.0432), 10 warning(s)
+  tokens     10430 in + 69174 out = 79604  (52774 of the out reasoning)  ($0.1336)
+
+wiring     3 program(s) authored but never invoked: felled_colossal_redwood [landmark], steam_donkey_rig [landmark], hollow_stump_workshop [plugin]
+
+  wired in 1 attempt(s); 104529 in + 23082 out = 127611 tokens  ($0.0825)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/redwood_camp/out/redwood_logging_camp.loam.json
+
+
+compile feedback, round 1 of 2:
+
+The compiler reported 2 problem(s) with the compiled world:
+
+warning LOAM-W519 LANDMARK_CONSTRAINT_IGNORED at world.steam_donkey.constraints[1]: "facing" in a bespoke landmark's constraints cannot turn it: a landmark's yaw is decided from "params.face" before the solver reserves its (already turned) box, so this constraint is ignored
+  fix: write it as a param instead: "params": { "face": { "toward": "log_yard" } } (LOAM-SPEC §15.1) — the constraint spelling would only have moved the landmark to change the angle
+note LOAM-T112 RIVER_PONDED at world.terrain.flume_stream: river "flume_stream" is connected to no sea on this map; it was demoted to a chain of 12 ponds over 193 columns, with the stretches between them left dry
+  fix: nothing to change if a pond chain is what you wanted. For a flowing river, give the map a sea for it to reach — lower "baseHeight" or raise "continentalness.seaFraction" until the coast is inside the region — and end the river's "course" on that coast.
+
+  revision 1 authored in 1 attempt(s)
+  tokens     104530 in + 22767 out = 127297  ($0.0819)
+
+compiled "redwood_logging_camp" — 1.21.11 (DataVersion 4671)
+  world      /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/redwood_camp/out/redwood_logging_camp
+  seed       306
+  region     512x512 at (-256, -256)
+  heights    57.5..106.7  sea 63  snow line 104.5
+  land       96.8% of columns above sea level
+  biomes     taiga 46.6%, plains 36.9%, old_growth_spruce_taiga 7.3%, windswept_hills 5.6%, cold_ocean 3.2%, snowy_beach 0.4%
+  trees      3249 (ancient_redwoods=2552, forest_buffer=748)
+  chunks     1024
+  blocks     36952180 (252446 vegetation)
+  markers    79
+  spawn      [-171, 67, 170]
+  timings    validate 4ms  field 322ms  layout 124ms  climate 42ms  columns 21ms  caves 0ms  structures 284ms  programs 96ms  scatter 259ms  biomes 18ms  validators 2ms  emit 1323ms  total 2516ms
+  programs   world.steam_donkey=steam_donkey_rig×1 (792 blocks), world.colossal_felled_redwood=felled_colossal_redwood×1 (1512 blocks), world.stump_workshops=hollow_stump_workshop×1 (232 blocks)
+  doc        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/redwood_camp/out/redwood_logging_camp.loam.json
+  report     /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/redwood_camp/out/redwood_logging_camp.report.json
+
+warning LOAM-W330 PROGRAM_ENVELOPE_OVERRIDDEN at world.steam_donkey: this node declares an envelope; program "steam_donkey_rig" declares [16, 20, 14] and the program wins
+  fix: drop the node's "envelope" — the program is what knows how much room it needs
+
+warning LOAM-W330 PROGRAM_ENVELOPE_OVERRIDDEN at world.colossal_felled_redwood: this node declares an envelope; program "felled_colossal_redwood" declares [38, 16, 15] and the program wins
+  fix: drop the node's "envelope" — the program is what knows how much room it needs
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.camp_lanes: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+note LOAM-W522 PROGRAM_FACE_REMEASURED at world.steam_donkey: this landmark was placed at (-45, 194), not where its facing was first measured from, so the facing was taken again from the real site: 180° becomes 0°
+  fix: nothing to change — the front points where the document asked it to. To pin the site as well, tighten the coarse target with a "radius"/"tolerance" or a hard "zone"
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world: face finish: 13 column(s) striped in the hill's own rock, 0 paved face(s) footed, 0 crown notch(es) closed
+  fix: No action needed.
+
+note LOAM-I497 GROUND_STAGE at world: ground stage: 26 intent(s) (building.footprint 16, plaza.ground 1, plaza.well 2, prop.pad 1, road.network 6), 5 resolve(s), 284 column(s) moved, 2 transition(s) (kerb 2), 0 of them unbuilt by any pass; coverage 152 boundary pair(s) — 91 in a transition, 61 suppressed by request, 0 by a face, 0 a kerb, 0 uncovered (excluded: 71864 natural, 0 wet)
+  fix: Nothing — this is the stage's own golden, and it is a note so that a count moving is visible in a diff before a block moves in a world.
+
+warning LOAM-T233 INFRA_ROUTE_UNANCHORED at world.cart_track_lane: the "along" route names "camp_lanes": "camp_lanes" is not a corridor with a line of its own — pointing "along" at a building buys you nothing
+  fix: name a node the compiler placed — a district, a holding, a precinct or a road — in the route form, e.g. "route": { "ring": "north_holding", "margin": 12 }
+
+note LOAM-T341 PROGRAM_SEATED_PAD at world.steam_donkey: "steam_donkey_rig" writes the same sole on every column, so it is seated on a levelled pad rather than on the real ground
+  fix: no change needed here — the fix is in the program: read api.heightAt at every column it touches and answer it, and the next authoring run will seat it on the ground itself
+
+note LOAM-T341 PROGRAM_SEATED_PAD at world.colossal_felled_redwood: "felled_colossal_redwood" writes the same sole on every column, so it is seated on a levelled pad rather than on the real ground
+  fix: no change needed here — the fix is in the program: read api.heightAt at every column it touches and answer it, and the next authoring run will seat it on the ground itself
+
+note LOAM-T341 PROGRAM_SEATED_PAD at world.stump_workshops: "hollow_stump_workshop" writes the same sole on every column, so it is seated on a levelled pad rather than on the real ground
+  fix: no change needed here — the fix is in the program: read api.heightAt at every column it touches and answer it, and the next authoring run will seat it on the ground itself
+
+warning LOAM-W337 PROGRAM_DROPPED at world.stump_workshops: "hollow_stump_workshop" asked for 4 instances and only 1 site would take one
+  fix: the area cannot hold that many at this spacing: widen "area", lower "spacing" below 19, relax "maxSlope"/"avoidTags", or ask for fewer
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 2720 footprint columns (plus 16406 feathered over 40 columns) to minecraft:old_growth_spruce_taiga, named by climate intent; snow policy never resolved to "never" on a 0/2720 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+  authoring  3 model run(s), 1 compile-feedback round(s), 467608 in + 67766 out = 535374 tokens (18441 of the out reasoning) ($0.2458)
+
+next: terrainist install /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/redwood_camp/out/redwood_logging_camp

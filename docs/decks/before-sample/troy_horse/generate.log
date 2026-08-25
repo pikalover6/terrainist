@@ -1,0 +1,161 @@
+prompt     The Trojan horse in Troy, right before the soldiers emerge.
+seed       303
+size       512x512
+model      google/gemini-3.7-flash
+effort     high
+kit        settlement
+
+intent     {"era":"ancient","wealth":0.7,"decline":0.1,"formality":0.65,"event":{"kind":"siege","severity":0.85,"recency":0},"climate":{"temperature":0.7,"humidity":-0.3,"snow":"never"},"character":{"label":"walled citadel of Troy","materialTheme":"sun_clay","fortification":"walled","formPacks":["classical_mediterranean"],"archetypes":{"prefer":["peristyle_house","megaron","stoa","peripteral_temple","palaestra","olive_press","sanctuary_treasury","propylaea"],"forbid":["townhouse","terraced_row","shop_row","office","apartment_block"]},"motifs":{"roofType":"flat","massing":"blocky","ornamentDensity":0.5},"urbanForm":"grown","courtyards":0.6,"ground":"stepped"},"tokens":{"terrain":"a walled city on a rise above a sandy plain; the Aegean shore in view","icons":"the colossal wooden horse inside the city walls near the Scaean gate; high stone ramparts and watchtowers; royal megaron palace at the acropolis crest; abandoned Greek siege camp and distant beached galleys","event_context":"deep night after drunken victory celebrations; armed Mycenaean soldiers quietly waiting to unbolt the wooden horse's trapdoor inside the quiet courtyard"}}
+           1 attempt(s), 8407 tokens
+
+authored with google/gemini-3.7-flash in 2 attempt(s)
+  attempt 1   1 problem(s): LOAM-T231 INFRA_ENTRY_PARAM@world.scaean_approach_track.params.route
+  attempt 2   valid
+  tokens     177157 in + 18020 out = 195177  ($0.0726)
+programs   2 of 2 kept (budget 3 landmark / 3 plugin)
+  ok     trojan_horse [landmark]  2 attempt(s), 51523 tokens  ($0.0679), 6 warning(s)
+  ok     abandoned_siege_engine [plugin]  1 attempt(s), 29481 tokens  ($0.0502), 13 warning(s)
+  tokens     22529 in + 58475 out = 81004  (39230 of the out reasoning)  ($0.1181)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/troy_horse/out/trojan_horse_troy.loam.json
+
+
+compile feedback, round 1 of 2:
+
+
+Layout solver report:
+
+  world.the_horse: placed after landmark_coarse_ring (97 candidates considered)
+    unsatisfied at constraint [0] (declared soft, now soft, weight 2, cost 0.22)
+
+  revision 1 authored in 1 attempt(s)
+  tokens     101050 in + 18767 out = 119817  ($0.0731)
+
+
+compile feedback, round 2 of 2:
+
+
+Layout solver report:
+
+  world.the_horse: placed after landmark_coarse_ring (97 candidates considered)
+    unsatisfied at constraint [0] (declared soft, now soft, weight 2, cost 0.06)
+
+  revision 2 authored in 1 attempt(s)
+  tokens     101048 in + 22119 out = 123167  ($0.0794)
+
+compiled "trojan_horse_troy" — 1.21.11 (DataVersion 4671)
+  world      /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/troy_horse/out/trojan_horse_troy
+  seed       303
+  region     512x512 at (-256, -256)
+  heights    52.2..82.9  sea 63  snow line 81.9
+  land       86.1% of columns above sea level
+  biomes     savanna 75.5%, ocean 12.7%, forest 8.1%, beach 2.4%, windswept_savanna 1.2%
+  trees      1861 (mediterranean_groves=1064, plains_brush=966)
+  chunks     1024
+  blocks     36014364 (206494 vegetation)
+  markers    79
+  spawn      [-113, 83, 10]
+  timings    validate 3ms  field 257ms  layout 334ms  climate 43ms  columns 25ms  caves 0ms  structures 945ms  programs 42ms  scatter 182ms  biomes 43ms  validators 3ms  emit 1314ms  total 3278ms
+  programs   world.the_horse=trojan_horse×1 (1261 blocks), world.greek_siege_engines=abandoned_siege_engine×1 (381 blocks)
+  doc        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/troy_horse/out/trojan_horse_troy.loam.json
+  report     /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/troy_horse/out/trojan_horse_troy.report.json
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.trojan_roads: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+warning LOAM-W520 LANDMARK_COARSE_SEATED at world.the_horse: every site at this landmark's coarse target was refused by the building slope veto (steepest 79° across the footprint); it was seated there anyway, at (-85, -5), and its ground is padded — a landmark is not a building
+  fix: nothing to change if the landmark is meant to crown that ground. If it should stand on the flat instead, move the "at"/"zone" target off the slope, or add { "terrain_conform": "flatten", "maxSlope": <degrees> } to say how much slope it will accept
+
+warning LOAM-W410 LEVEL_DISSOLVED at world.troy_citadel: platform "block.30450.1" in "world.troy_citadel" stood 23 block(s) above "block.30450.0", past the 18 a tier stack can serve, so it gave its level back and took its neighbour's
+  fix: Split the difference across more platforms — raise "params.blockSize" so the quarter steps in smaller pieces — or move the quarter onto ground whose relief a retained face can hold.
+
+warning LOAM-W410 LEVEL_DISSOLVED at world.troy_citadel: platform "block.30450.2" in "world.troy_citadel" stood 24 block(s) above "block.30450.0", past the 18 a tier stack can serve, so it gave its level back and took its neighbour's
+  fix: Split the difference across more platforms — raise "params.blockSize" so the quarter steps in smaller pieces — or move the quarter onto ground whose relief a retained face can hold.
+
+warning LOAM-W410 LEVEL_DISSOLVED at world.troy_citadel: platform "block.30450.3" in "world.troy_citadel" stood 20 block(s) above "block.30450.0", past the 18 a tier stack can serve, so it gave its level back and took its neighbour's
+  fix: Split the difference across more platforms — raise "params.blockSize" so the quarter steps in smaller pieces — or move the quarter onto ground whose relief a retained face can hold.
+
+warning LOAM-W410 LEVEL_DISSOLVED at world.troy_citadel: platform "block.30450.4" in "world.troy_citadel" stood 22 block(s) above "block.30450.0", past the 18 a tier stack can serve, so it gave its level back and took its neighbour's
+  fix: Split the difference across more platforms — raise "params.blockSize" so the quarter steps in smaller pieces — or move the quarter onto ground whose relief a retained face can hold.
+
+warning LOAM-W410 LEVEL_DISSOLVED at world.troy_citadel: platform "block.30450.5" in "world.troy_citadel" stood 22 block(s) above "block.30450.0", past the 18 a tier stack can serve, so it gave its level back and took its neighbour's
+  fix: Split the difference across more platforms — raise "params.blockSize" so the quarter steps in smaller pieces — or move the quarter onto ground whose relief a retained face can hold.
+
+warning LOAM-W410 LEVEL_DISSOLVED at world.troy_citadel: platform "block.30450.7" in "world.troy_citadel" stood 20 block(s) above "block.30450.0", past the 18 a tier stack can serve, so it gave its level back and took its neighbour's
+  fix: Split the difference across more platforms — raise "params.blockSize" so the quarter steps in smaller pieces — or move the quarter onto ground whose relief a retained face can hold.
+
+warning LOAM-W410 LEVEL_DISSOLVED at world.troy_citadel: platform "block.30450.6" in "world.troy_citadel" stood 19 block(s) above "block.30450.4", past the 18 a tier stack can serve, so it gave its level back and took its neighbour's
+  fix: Split the difference across more platforms — raise "params.blockSize" so the quarter steps in smaller pieces — or move the quarter onto ground whose relief a retained face can hold.
+
+note LOAM-I526 PLATFORM_SUBMERGED at world.troy_citadel: platform "block.30450.0" in "world.troy_citadel" is mostly water and is not graded: its columns keep the pristine terrain and the water on it
+  fix: nothing to change if the quarter meets the water there; if the water was not meant to be inside the quarter, move or shrink the district's envelope off it
+
+note LOAM-T242 GROUND_PLANE_DRIFT at world.troy_citadel: 1209 of 19102 platform column(s) in "world.troy_citadel" within 12 block(s) of a graded carriageway stand off the street's own storey lattice, the worst by -23 block(s)
+  fix: Nothing to change in the document — a document cannot move its own storey lattice. A non-zero count is a compiler finding: the anchor did not hold on this quarter.
+
+note LOAM-I512 DISTRICT_RUINS at world.troy_citadel: decline 0.10 gives a ruin share of 0.00: 0 of 66 infill lots roll into ruined shells (light 0, heavy 0, total 0)
+  fix: decline is below the ruin onset of 0.35 — below it decline is wear, not ruin; raise it to ruin buildings
+
+warning LOAM-W413 SEAM_UNSERVED at world.troy_citadel: a seam in "world.troy_citadel" drops 17 blocks over 9 column(s) and was served by a revetted stack of 3 tier(s) (faces 6+6+5), but 0 of those tier(s) found no ground to stand on and 2 seam column(s) were left uncovered because the tier beneath them could not be placed — a street, a footprint or water owns the ground the stack would have stepped down onto
+  fix: Nothing in the document names the columns directly: widen the block so the stack has room to step down, or lower the quarter's density so the two platforms are closer together.
+
+note LOAM-I412 SEAM_SERVED at world.troy_citadel: seams served (S1): 2 wall(s), 2 tier stack(s) (2 revetted) over 6 face(s) and 27 column(s), 10 bank(s), 5 kerb seam(s), and 0 seam(s) a building already stood on
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.troy_citadel: multi-level ground: 2 retaining wall(s) over 26 column(s) (0 parapeted), 5 kerb seam(s), 10 bank(s), and 0 seam(s) a building already stood on; 781 column(s) graded as bank
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.troy_citadel: transitions by context (§5): 260 edge column(s) — fill 260 (155 bank, 71 kerb, 19 retaining, 15 tiered), cut 0 (none)
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.troy_citadel: built faces by finished drop (§13.8): 46 face column(s) along the seams a wall was built on — 19 at 2, 9 at 5, 18 at 6
+  fix: No action needed.
+
+note LOAM-I504 FARM_TRACK at world.trojan_olive_farm: "world.trojan_olive_farm" publishes a road_stub at its gate: a road.network@0 node anchored on "world.trojan_olive_farm" runs the lane to it
+  fix: add "trojan_olive_farm" to the "anchors" of the document's road.network@0 node, or give that node a "lanes" entry naming it
+
+warning LOAM-T228 PROP_RESEATED at world.beached_galley_1: no water within 48 blocks of the galleon's coarse target, so it sought the waterline and seated at [-202, -67]
+  fix: nothing to fix if the prop is where you want it; to hold it to one part of the world, give the node an explicit "at": {"x", "z"} on the water and it will fail in place instead of moving
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.troy_citadel: every cut face finished: 464 column(s) faced in the hill's own rock
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world: face finish: 332 column(s) striped in the hill's own rock, 143 paved face(s) footed, 21 crown notch(es) closed
+  fix: No action needed.
+
+note LOAM-I497 GROUND_STAGE at world: ground stage: 1134 intent(s) (building.footprint 148, doorstep.landing 4, farm.parcel 7, plaza.well 2, quarter.plane 837, retaining.seam 99, retaining.skirt 9, street.network 16, street.sidewalk 1, verge 11), 5 resolve(s), 1385 column(s) moved, 373 transition(s) (bank 198, built 1, kerb 139, retaining 1, rock 32, tiered 2), 233 of them unbuilt by any pass; coverage 1233 boundary pair(s) — 867 in a transition, 20 suppressed by request, 346 by a face, 0 a kerb, 0 uncovered (excluded: 47291 natural, 0 wet)
+  fix: Nothing — this is the stage's own golden, and it is a note so that a count moving is visible in a diff before a block moves in a world.
+
+note LOAM-I412 SEAM_SERVED at world: terminal seam builder (§3.3): 4 derived transition(s) built (rock 1, tiered 3) over 36 column(s) of face, 0 of graded bank (0 eased under §7.2's natural blend) and 22 finished in the hill's own rock; 221 absorbed under S7, 5 refused
+  fix: No action needed.
+
+warning LOAM-W413 SEAM_UNSERVED at world.troy_citadel: 5 derived transition(s) in "world.troy_citadel" were chosen and could not be placed: a derived retaining seam at -66,34 drops 5 block(s) over 7 column(s) and was served by a revetted stack of 1 tier(s), but 1 tier(s) found no ground to stand on and 0 column(s) were left uncovered — a street, a footprint or water owns the ground the course needed; a derived bank at -52,45 falls 19 block(s) over 11 column(s), but only 0 column(s) of open ground stand beyond it where a 1:2 bank wants 38, and the revetted stack S5 re-dresses it as found no ground to stand on either; a derived tiered seam at -40,45 drops 9 block(s) over 15 column(s) and was served by a revetted stack of 2 tier(s), but 1 tier(s) found no ground to stand on and 0 column(s) were left uncovered — a street, a footprint or water owns the ground the course needed; and 2 more
+  fix: Nothing in the document names the columns directly: widen the block so the construction has room, or lower the quarter's density so the two levels are closer together.
+
+warning LOAM-W489 INTENT_FORTIFICATION_UNKNOWN at world: intent.character.fortification asks for a wall and 1 node(s) already declare "params.walls" — the authored walls are built and no second circuit is added
+  fix: this is the intended precedence; delete "params.walls" if you want the dial to decide the wall, or leave it if the parameters are what you meant
+
+note LOAM-I524 WALL_FOOTING_DEEP at world.troy_citadel: wall run "masonry" (876 course columns, 2158 built) sank its footing 0.5 courses on average and 10 at the deepest (cap 18) — the deep stretch stands as a sheer pier of wall material, not as a wall on the ground
+  fix: no change needed if the pier reads as a rampart on a walk — otherwise move the circuit clear of the dip with a larger "walls.margin", or shrink the envelope so the course keeps to the settlement's own bench
+
+note LOAM-I415 WALL_COURSE_CROSSES_SEAM at world.troy_citadel: wall run "masonry" (876 course columns) crosses a platform boundary at 9 column(s) where the ground steps at least 2 block(s) — the deepest crossing is 19 block(s) and the longest unbroken stretch is 3 column(s), and along it the wall's own fill is the face rather than a wall standing on one
+  fix: no action needed — the circuit is not moved on this number. It is the measurement that decides whether a crossing is worth building as a tier stack instead, which is a later round
+
+warning LOAM-T233 INFRA_ROUTE_UNANCHORED at world.scaean_approach_track: the "along" route names "trojan_roads": "trojan_roads" is not a corridor with a line of its own — pointing "along" at a building buys you nothing
+  fix: name a node the compiler placed — a district, a holding, a precinct or a road — in the route form, e.g. "route": { "ring": "north_holding", "margin": 12 }
+
+note LOAM-T341 PROGRAM_SEATED_PAD at world.the_horse: "trojan_horse" writes the same sole on every column, so it is seated on a levelled pad rather than on the real ground
+  fix: no change needed here — the fix is in the program: read api.heightAt at every column it touches and answer it, and the next authoring run will seat it on the ground itself
+
+note LOAM-T341 PROGRAM_SEATED_PAD at world.greek_siege_engines: "abandoned_siege_engine" writes the same sole on every column, so it is seated on a levelled pad rather than on the real ground
+  fix: no change needed here — the fix is in the program: read api.heightAt at every column it touches and answer it, and the next authoring run will seat it on the ground itself
+
+warning LOAM-W337 PROGRAM_DROPPED at world.greek_siege_engines: "abandoned_siege_engine" asked for 4 instances and only 1 site would take one
+  fix: the area cannot hold that many at this spacing: widen "area", lower "spacing" below 19, relax "maxSlope"/"avoidTags", or ask for fewer
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 41983 footprint columns (plus 23872 feathered over 40 columns) to minecraft:savanna, from the ambient majority (minecraft:savanna, 83% of 14706 ring columns); snow policy never resolved to "never" on a 0/41983 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+  authoring  3 model run(s), 2 compile-feedback round(s), 379255 in + 58906 out = 438161 tokens (16272 of the out reasoning) ($0.2250)
+
+note: 2 compile-feedback round(s) used; the findings above remain
+next: terrainist install /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/troy_horse/out/trojan_horse_troy

@@ -1,0 +1,160 @@
+{
+  "id": "pirate_unicorn_isles",
+  "family": "pirates_v_unicorns",
+  "kit": "settlement",
+  "prompt": "A pirate island and a unicorn island, at war.",
+  "seed": 301,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "climate": {
+      "temperature": 0.6,
+      "humidity": 0.5,
+      "snow": "never"
+    },
+    "tokens": {
+      "terrain": "two distinct islands separated by a contested channel of open sea",
+      "event_direction": "pirate fleet and coastal batteries targeting the unicorn sanctuary across the strait; holy defenders fortifying the opposite shore",
+      "region_pirate_island": "era renaissance, wealth 0.35, decline 0.5, formality 0.15; materialTheme temperate_timber; formPacks [\"nautical_pirate\"]; prefer archetypes tavern, warehouse, watchtower, lighthouse; props galleon; ramshackle pirate redoubts, shore batteries, careened raiders, palisades facing the sea",
+      "region_unicorn_island": "era medieval, wealth 0.85, decline 0.05, formality 0.7; materialTheme white_quartz; formPacks [\"arcane_magical\"]; prefer archetypes church, manor, watchtower; sacred unicorn glades, gleaming coastal bastions, pristine pavilions, enchanted watchtowers"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 315483,
+    "completionTokens": 84571,
+    "cost": 0.2769
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 26,
+    "maxDepth": 2,
+    "generators": [
+      "authored:celestial_unicorn_colossus",
+      "authored:pirate_flagship_bastion",
+      "building.grammar@0",
+      "infra.entry@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "apothecary",
+      "armory",
+      "beacon_spire",
+      "cathedral",
+      "colossus",
+      "cooperage",
+      "cottage",
+      "crystal_shrine",
+      "general_store",
+      "gravedigger_hut",
+      "guildhall",
+      "library",
+      "manor_house",
+      "observatory",
+      "smithy",
+      "tavern",
+      "townhouse",
+      "warehouse",
+      "watchtower"
+    ],
+    "archetypesInCatalog": 19,
+    "formPacks": [
+      "arcane_magical",
+      "nautical_pirate"
+    ],
+    "props": [
+      "fountain",
+      "galleon",
+      "memorial_garden",
+      "pier",
+      "rowboat",
+      "standing_stones"
+    ],
+    "species": [
+      "blossom_tree",
+      "dark_pine",
+      "gnarled_oak",
+      "pale_birch",
+      "wild_oak"
+    ],
+    "envelopes": [
+      "512x512",
+      "128x128",
+      "11x11x11",
+      "128x128",
+      "13x16x15"
+    ],
+    "constraints": 8,
+    "constraintKinds": [
+      "at",
+      "blend",
+      "distance",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform"
+    ],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 3,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 2,
+    "programReferences": 2,
+    "conformsTrue": 0,
+    "labels": 18,
+    "eras": [
+      "pirate",
+      "medieval"
+    ],
+    "bytes": 79785
+  },
+  "wallMs": 1054000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 3,
+    "feedbackRounds": 2,
+    "programs": [
+      "ok pirate_flagship_bastion [landmark] 1 attempt(s), 28820 tokens ($0.0491), 10 warning(s)",
+      "ok celestial_unicorn_colossus [landmark] 1 attempt(s), 24258 tokens ($0.0405), 1 warning(s",
+      "ok coastal_cannon_emplacement [plugin] 1 attempt(s), 35522 tokens ($0.0616), 4 warning(s)",
+      "ok warding_crystal_pylon [plugin] 2 attempt(s), 47845 tokens ($0.0614), 27 warning(s)"
+    ],
+    "programCost": 0.2126,
+    "totalCost": 0.4895,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/pirate_unicorn_isles/out/pirates_vs_unicorns",
+    "finalDiagnostics": {
+      "LOAM-T208": 1,
+      "LOAM-W521": 1,
+      "LOAM-I526": 7,
+      "LOAM-T242": 2,
+      "LOAM-E170": 2,
+      "LOAM-I512": 2,
+      "LOAM-T224": 2,
+      "LOAM-W527": 1,
+      "LOAM-W485": 1,
+      "LOAM-I412": 2,
+      "LOAM-I463": 5,
+      "LOAM-I497": 1,
+      "LOAM-W413": 2,
+      "LOAM-I415": 1,
+      "LOAM-T234": 1,
+      "LOAM-T341": 3,
+      "LOAM-W337": 2,
+      "LOAM-W470": 1,
+      "LOAM-T107": 1
+    },
+    "crash": [],
+    "docName": "pirates_vs_unicorns.loam.json"
+  }
+}

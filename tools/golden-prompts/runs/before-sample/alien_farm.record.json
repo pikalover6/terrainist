@@ -1,0 +1,179 @@
+{
+  "id": "alien_farm",
+  "family": "alien_farm",
+  "kit": "settlement",
+  "prompt": "A small farm town being invaded by aliens.",
+  "seed": 302,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "era": "industrial",
+    "wealth": 0.4,
+    "decline": 0.2,
+    "formality": 0.2,
+    "event": {
+      "kind": "siege",
+      "severity": 0.8,
+      "recency": 0
+    },
+    "climate": {
+      "biome": "minecraft:plains",
+      "temperature": 0.2,
+      "humidity": 0.1,
+      "snow": "never"
+    },
+    "character": {
+      "label": "invaded farm town",
+      "materialTheme": "temperate_timber",
+      "formPacks": [
+        "agrarian",
+        "alien_scifi"
+      ],
+      "archetypes": {
+        "prefer": [
+          "cottage",
+          "windmill",
+          "tavern"
+        ]
+      },
+      "props": {
+        "prefer": [
+          "cart",
+          "well_head",
+          "notice_board"
+        ]
+      },
+      "motifs": {
+        "roofType": "gable",
+        "massing": "sprawling"
+      },
+      "urbanForm": "linear"
+    },
+    "tokens": {
+      "terrain": "rural farmland with crop fields, pastures, and dirt roads connecting scattered homesteads",
+      "event_direction": "alien invaders descend from the northern sky and advance across the fields toward the town center",
+      "infra": "crop_circle pressed into the corn fields; quarantine_fence along the northern fields; barricade_line across the main farm road; crash_furrow into the downed scout craft",
+      "icons": "alien landing craft hovering above the fields; glowing crop glyphs; abandoned tractors and farm carts; strange bio-mounds sprouting along fence lines"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 83952,
+    "completionTokens": 13867,
+    "cost": 0.0575
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 31,
+    "maxDepth": 2,
+    "generators": [
+      "authored:alien_mothership",
+      "authored:crashed_saucer",
+      "building.grammar@0",
+      "infra.entry@0",
+      "precinct.farm@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "cottage",
+      "farmhouse",
+      "general_store",
+      "smithy",
+      "tavern",
+      "town_hall",
+      "windmill"
+    ],
+    "archetypesInCatalog": 7,
+    "formPacks": [
+      "agrarian",
+      "alien_scifi"
+    ],
+    "props": [
+      "cart",
+      "covered_wagon",
+      "hitching_post",
+      "notice_board",
+      "well_head"
+    ],
+    "species": [
+      "field_oak",
+      "hedge_birch",
+      "wild_oak"
+    ],
+    "envelopes": [
+      "512x512",
+      "112x96",
+      "22x22",
+      "13x16x13",
+      "13x10x11",
+      "13x11x13",
+      "9x8x9",
+      "9x14x9",
+      "9x11x9",
+      "11x11x9",
+      "9x8x9"
+    ],
+    "constraints": 30,
+    "constraintKinds": [
+      "adjacent_to",
+      "blend",
+      "distance",
+      "facing",
+      "gap",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform",
+      "zone"
+    ],
+    "constraintsWithStrength": 14,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 8,
+    "programReferences": 2,
+    "conformsTrue": 0,
+    "labels": 25,
+    "eras": [
+      "industrial"
+    ],
+    "bytes": 56607
+  },
+  "wallMs": 427000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 1,
+    "feedbackRounds": 0,
+    "programs": [
+      "ok crashed_saucer [landmark] 1 attempt(s), 23378 tokens ($0.0388), 17 warning(s)",
+      "ok alien_mothership [landmark] 1 attempt(s), 26150 tokens ($0.0440), 26 warning(s)",
+      "ok drop_pod [plugin] 1 attempt(s), 22293 tokens ($0.0368), 2 warning(s)"
+    ],
+    "programCost": 0.1196,
+    "totalCost": 0.1771,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/alien_farm/out/alien_invasion_farm",
+    "finalDiagnostics": {
+      "LOAM-T208": 1,
+      "LOAM-W517": 1,
+      "LOAM-I504": 1,
+      "LOAM-I463": 1,
+      "LOAM-I497": 1,
+      "LOAM-T233": 2,
+      "LOAM-W337": 1,
+      "LOAM-W470": 1
+    },
+    "crash": [],
+    "docName": "alien_invasion_farm.loam.json"
+  }
+}

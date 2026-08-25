@@ -1,0 +1,87 @@
+compiled "soot_canal_junction" — 1.21.11 (DataVersion 4671)
+  world      /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/railway_town/out/soot_canal_junction-unstable/soot_canal_junction
+  seed       312
+  region     512x512 at (-256, -256)
+  heights    50.6..73.2  sea 63  snow line 72.7
+  land       97.5% of columns above sea level
+  biomes     plains 98.5%, windswept_hills 1.4%, river 0.0%
+  trees      1369 (sooty_outskirts_trees=1444)
+  chunks     1024
+  blocks     35122221 (74244 vegetation)
+  markers    97
+  spawn      [-4, 66, -4]
+  timings    validate 7ms  field 438ms  layout 438ms  climate 35ms  columns 72ms  caves 0ms  structures 1233ms  programs 82ms  scatter 127ms  biomes 26ms  validators 2ms  emit 1067ms  total 3622ms
+  programs   world.coal_transshipment_gantry=rail_coal_transshipment_gantry×1 (1418 blocks), world.canal_locks=canal_lock_gates×2 (938 blocks), world.canal_narrowboats=canal_narrowboat×2 (990 blocks)
+  built from 085e22d3b073 (claude/project-upgrade-planning-uwlziw, dirty)
+
+note LOAM-T112 RIVER_PONDED at world.terrain.main_canal_channel: river "main_canal_channel" is connected to no sea on this map; it was demoted to a chain of 1 pond over 18 columns, with the stretches between them left dry
+  fix: nothing to change if a pond chain is what you wanted. For a flowing river, give the map a sea for it to reach — lower "baseHeight" or raise "continentalness.seaFraction" until the coast is inside the region — and end the river's "course" on that coast.
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.town_roads: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+note LOAM-W522 PROGRAM_FACE_REMEASURED at world.coal_transshipment_gantry: this landmark was placed at (58, 43), not where its facing was first measured from, so the facing was taken again from the real site: 90° becomes 270°
+  fix: nothing to change — the front points where the document asked it to. To pin the site as well, tighten the coarse target with a "radius"/"tolerance" or a hard "zone"
+
+note LOAM-I526 PLATFORM_SUBMERGED at world.canal_quarter: platform "block.2806.2" in "world.canal_quarter" is mostly water and is not graded: its columns keep the pristine terrain and the water on it
+  fix: nothing to change if the quarter meets the water there; if the water was not meant to be inside the quarter, move or shrink the district's envelope off it
+
+note LOAM-I526 PLATFORM_SUBMERGED at world.canal_quarter: platform "block.2806.3" in "world.canal_quarter" is mostly water and is not graded: its columns keep the pristine terrain and the water on it
+  fix: nothing to change if the quarter meets the water there; if the water was not meant to be inside the quarter, move or shrink the district's envelope off it
+
+note LOAM-T242 GROUND_PLANE_DRIFT at world.canal_quarter: 7753 of 26554 platform column(s) in "world.canal_quarter" within 12 block(s) of a graded carriageway stand off the street's own storey lattice, the worst by 7 block(s)
+  fix: Nothing to change in the document — a document cannot move its own storey lattice. A non-zero count is a compiler finding: the anchor did not hold on this quarter.
+
+note LOAM-I512 DISTRICT_RUINS at world.canal_quarter: decline 0.30 gives a ruin share of 0.00: 0 of 43 infill lots roll into ruined shells (light 0, heavy 0, total 0)
+  fix: decline is below the ruin onset of 0.35 — below it decline is wear, not ruin; raise it to ruin buildings
+
+warning LOAM-T224 COURTYARD_NONE at world.canal_quarter: no block in "world.canal_quarter" can hold a courtyard: 40 of 57 are too thin for two opposite rows of lots
+  fix: raise "params.blockSize" so a block is at least 41 columns across, or raise "density" to "high" so the perimeter builds a continuous street wall
+
+warning LOAM-W483 INTENT_ARCHETYPE_UNKNOWN at world: intent.character.archetypes names 1 value no registry carries: "manor" — it is ignored
+  fix: did you mean: "manor" → manor_house
+
+note LOAM-I412 SEAM_SERVED at world.canal_quarter: seams served (S1): 10 wall(s), 0 tier stack(s) over 0 face(s) and 0 column(s), 18 bank(s), 44 kerb seam(s), and 1 seam(s) a building already stood on
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.canal_quarter: multi-level ground: 10 retaining wall(s) over 271 column(s) (0 parapeted), 44 kerb seam(s), 18 bank(s), and 1 seam(s) a building already stood on; 27 seam column(s) got no wall (27 builtSeam); 846 column(s) graded as bank
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.canal_quarter: transitions by context (§5): 1465 edge column(s) — fill 1465 (270 bank, 27 built, 923 kerb, 245 retaining), cut 0 (none)
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.canal_quarter: built faces by finished drop (§13.8): 245 face column(s) along the seams a wall was built on — 99 at 2, 114 at 3, 30 at 4, 2 at 6
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.canal_quarter: every cut face finished: 1497 column(s) faced in the hill's own rock
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world: face finish: 868 column(s) striped in the hill's own rock, 1390 paved face(s) footed, 207 crown notch(es) closed
+  fix: No action needed.
+
+note LOAM-I497 GROUND_STAGE at world: ground stage: 1996 intent(s) (building.footprint 118, fluid.channel 3, quarter.plane 1610, retaining.seam 204, retaining.skirt 22, road.network 2, street.network 14, street.sidewalk 1, verge 22), 5 resolve(s), 8299 column(s) moved, 1816 transition(s) (bank 489, built 15, kerb 1295, retaining 3, rock 14), 463 of them unbuilt by any pass; coverage 4262 boundary pair(s) — 3469 in a transition, 644 suppressed by request, 149 by a face, 0 a kerb, 0 uncovered (excluded: 31302 natural, 979 wet)
+  fix: Nothing — this is the stage's own golden, and it is a note so that a count moving is visible in a diff before a block moves in a world.
+
+note LOAM-I412 SEAM_SERVED at world: terminal seam builder (§3.3): 25 derived transition(s) built (bank 1, retaining 1, revetted 15, rock 7, tiered 1) over 295 column(s) of face, 11 of graded bank (2 eased under §7.2's natural blend) and 148 finished in the hill's own rock; 425 absorbed under S7, 8 refused
+  fix: No action needed.
+
+warning LOAM-W413 SEAM_UNSERVED at world.canal_quarter: 8 derived transition(s) in "world.canal_quarter" were chosen and could not be placed: a derived bank at -61,-16 falls 6 block(s) over 9 column(s), but only 0 column(s) of open ground stand beyond it where a 1:2 bank wants 12, and the revetted stack S5 re-dresses it as found no ground to stand on either; a derived tiered seam at -5,-6 drops 16 block(s) over 20 column(s) and was served by a revetted stack of 3 tier(s), but 0 tier(s) found no ground to stand on and 1 column(s) were left uncovered — a street, a footprint or water owns the ground the course needed; a derived retaining seam at -13,-2 drops 2 block(s) over 11 column(s) and was served by a revetted stack of 1 tier(s), but 1 tier(s) found no ground to stand on and 0 column(s) were left uncovered — a street, a footprint or water owns the ground the course needed; and 5 more
+  fix: Nothing in the document names the columns directly: widen the block so the construction has room, or lower the quarter's density so the two levels are closer together.
+
+note LOAM-T341 PROGRAM_SEATED_PAD at world.coal_transshipment_gantry: "rail_coal_transshipment_gantry" writes the same sole on every column, so it is seated on a levelled pad rather than on the real ground
+  fix: no change needed here — the fix is in the program: read api.heightAt at every column it touches and answer it, and the next authoring run will seat it on the ground itself
+
+warning LOAM-W337 PROGRAM_DROPPED at world.canal_locks: "canal_lock_gates" asked for 3 instances and only 2 sites would take one
+  fix: the area cannot hold that many at this spacing: widen "area", lower "spacing" below 39, relax "maxSlope"/"avoidTags", or ask for fewer
+
+warning LOAM-W337 PROGRAM_DROPPED at world.canal_narrowboats: "canal_narrowboat" asked for 6 instances and only 2 sites would take one
+  fix: the area cannot hold that many at this spacing: widen "area", lower "spacing" below 23, relax "maxSlope"/"avoidTags", or ask for fewer
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 53832 footprint columns (plus 24046 feathered over 40 columns) to minecraft:plains, from the ambient majority (minecraft:plains, 95% of 14717 ring columns); snow policy auto resolved to "never" on a 0/53832 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+
+warning LOAM-T110 UNSTABLE_FLUID at <document>: 71 fluid blocks would flow on the first tick — e.g. water at (-17, 54, -11); water at (-18, 54, -10); water at (-16, 54, -10); water at (-15, 54, -10); water at (-14, 54, -10); water at (-17, 54, -9); water at (-13, 54, -9); water at (-12, 54, -9)
+  fix: raise the surrounding terrain or lower the fluid: for a carved inlet, deepen the carve so the water surface stays at seaLevel; for a caldera, increase the volcano's height or reduce calderaDepth so the rim fully encloses the lava. Pass --allow-unstable only to inspect the result — the world will visibly drain in game.
+
+warning LOAM-T107 SPAWN_UNRESOLVED at world.meta.spawn: the requested spawn at (0, 0) is under water or too close to sea level; moved to (-4, -4)
+  fix: move "meta.spawn" onto land — pick a zone or "at" fraction over terrain at least two blocks above sea level

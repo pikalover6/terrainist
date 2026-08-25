@@ -139,3 +139,20 @@ Each entry carries a `watches` list: what to look at in that document, and which
 finding it belongs to. They are notes for a human reading a diff, not assertions
 the runner checks — a semantic assertion the model can satisfy by accident is
 worse than no assertion at all.
+
+## Full-pipeline runs
+
+`run.mjs` is authoring-only. When the question is the world rather than the
+document — the Stocktake Run's before-sample and its final golden bar —
+`generate-all.mjs` runs every prompt through `terrainist generate` (intent,
+authoring, programs, compile-feedback rounds, emit) at the current bytes, one
+folder and log per prompt, and `record-generate-run.mjs` turns that folder
+into a run directory of the same shape as `run.mjs` produces (documents,
+records with the census, `summary.json`), so `score.mjs` reads it. Costs in
+those records are parsed from the generate logs (authoring + programs).
+Measured 2026-08-25: ~$0.20 per world, ~56 min for 11 at concurrency 3.
+
+```
+node tools/golden-prompts/generate-all.mjs /path/to/out 3
+node tools/golden-prompts/record-generate-run.mjs /path/to/out runs/<label> <label>
+```

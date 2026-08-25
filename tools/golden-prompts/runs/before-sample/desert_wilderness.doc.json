@@ -1,0 +1,135 @@
+{
+  "loam": "0.1",
+  "profile": "terrain",
+  "meta": {
+    "name": "vast_salt_desert",
+    "worldSeed": "313",
+    "prompt": "A vast salt desert under a hard sun, cracked flat to the horizon, with nothing living on it.",
+    "spawn": {
+      "at": [
+        0.5,
+        0.5
+      ]
+    }
+  },
+  "intent": {
+    "climate": {
+      "biome": "minecraft:desert",
+      "temperature": 1,
+      "humidity": -1,
+      "snow": "never"
+    },
+    "character": {
+      "label": "barren salt flat",
+      "materialTheme": "sun_clay"
+    },
+    "tokens": {
+      "terrain": "a vast, level salt desert extending flat to the horizon; cracked white salt crust and baked alkaline earth",
+      "icons": "endless cracked salt polygon plains under a blazing sun; completely devoid of flora, fauna, water, or structures"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": {
+        "mix": [
+          [
+            "minecraft:calcite",
+            6
+          ],
+          [
+            "minecraft:diorite",
+            2
+          ],
+          [
+            "minecraft:white_terracotta",
+            1
+          ],
+          [
+            "minecraft:smooth_basalt",
+            1
+          ]
+        ]
+      },
+      "ground.subsurface": {
+        "mix": [
+          [
+            "minecraft:calcite",
+            4
+          ],
+          [
+            "minecraft:smooth_sandstone",
+            2
+          ]
+        ]
+      },
+      "ground.cliff": "minecraft:calcite",
+      "ground.beach": "minecraft:calcite",
+      "ground.stone": "minecraft:smooth_sandstone",
+      "ground.peak": "minecraft:calcite",
+      "ground.underwater": "minecraft:calcite"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Vast Salt Desert",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 66,
+          "amplitude": 5,
+          "octaves": 4,
+          "frequency": 0.002,
+          "lacunarity": 2,
+          "gain": 0.4,
+          "erosionPasses": 3,
+          "cliffThreshold": 70,
+          "soilDepth": 2,
+          "beachWidth": 2,
+          "snowLineFraction": 1
+        },
+        "children": [
+          {
+            "id": "salt_pan_bed",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "broad flat salt expanse",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 220,
+              "height": 4,
+              "rim": 40,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "arid",
+          "temperatureFrequency": 0.001,
+          "humidityFrequency": 0.001,
+          "latitudeGradient": 0
+        }
+      }
+    ]
+  }
+}

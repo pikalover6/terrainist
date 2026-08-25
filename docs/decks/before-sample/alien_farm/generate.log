@@ -1,0 +1,67 @@
+prompt     A small farm town being invaded by aliens.
+seed       302
+size       512x512
+model      google/gemini-3.7-flash
+effort     high
+kit        settlement
+
+intent     {"era":"industrial","wealth":0.4,"decline":0.2,"formality":0.2,"event":{"kind":"siege","severity":0.8,"recency":0},"climate":{"biome":"minecraft:plains","temperature":0.2,"humidity":0.1,"snow":"never"},"character":{"label":"invaded farm town","materialTheme":"temperate_timber","formPacks":["agrarian","alien_scifi"],"archetypes":{"prefer":["cottage","windmill","tavern"]},"props":{"prefer":["cart","well_head","notice_board"]},"motifs":{"roofType":"gable","massing":"sprawling"},"urbanForm":"linear"},"tokens":{"terrain":"rural farmland with crop fields, pastures, and dirt roads connecting scattered homesteads","event_direction":"alien invaders descend from the northern sky and advance across the fields toward the town center","infra":"crop_circle pressed into the corn fields; quarantine_fence along the northern fields; barricade_line across the main farm road; crash_furrow into the downed scout craft","icons":"alien landing craft hovering above the fields; glowing crop glyphs; abandoned tractors and farm carts; strange bio-mounds sprouting along fence lines"}}
+           1 attempt(s), 8153 tokens
+
+authored with google/gemini-3.7-flash in 1 attempt(s)
+  attempt 1   valid
+  tokens     83952 in + 13867 out = 97819  ($0.0575)
+programs   3 of 3 kept (budget 3 landmark / 3 plugin)
+  ok     crashed_saucer [landmark]  1 attempt(s), 23378 tokens  ($0.0388), 17 warning(s)
+  ok     alien_mothership [landmark]  1 attempt(s), 26150 tokens  ($0.0440), 26 warning(s)
+  ok     drop_pod [plugin]  1 attempt(s), 22293 tokens  ($0.0368), 2 warning(s)
+  tokens     10058 in + 61763 out = 71821  (45483 of the out reasoning)  ($0.1196)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/alien_farm/out/alien_invasion_farm.loam.json
+
+compiled "alien_invasion_farm" — 1.21.11 (DataVersion 4671)
+  world      /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/alien_farm/out/alien_invasion_farm
+  seed       302
+  region     512x512 at (-256, -256)
+  heights    59.9..77.8  sea 63  snow line 77.0
+  land       88.0% of columns above sea level
+  biomes     plains 71.9%, forest 15.6%, ocean 11.5%, beach 0.8%, windswept_hills 0.0%
+  trees      3141 (valley_copses=1898, sparse_wilderness=1298)
+  chunks     1024
+  blocks     35613072 (449324 vegetation)
+  markers    97
+  spawn      [0, 66, 170]
+  timings    validate 3ms  field 106ms  layout 83ms  climate 27ms  columns 18ms  caves 0ms  structures 609ms  programs 539ms  scatter 275ms  biomes 27ms  validators 3ms  emit 1656ms  total 3427ms
+  programs   world.scout_ship=crashed_saucer×1 (4243 blocks), world.mothership=alien_mothership×1 (21699 blocks), world.drop_pod_field=drop_pod×9 (3780 blocks)
+  doc        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/alien_farm/out/alien_invasion_farm.loam.json
+  report     /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/alien_farm/out/alien_invasion_farm.report.json
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.lanes: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+warning LOAM-W517 INTENT_FORM_PACK_ERA at world: intent.era resolves to "industrial", which is outside the affinity of the form pack "alien_scifi" (modern, far_future) — the pack is used as written
+  fix: affinity is advice, never a gate: an ancient form vocabulary in a modern city is a legal and deliberate combination. Change the era or the pack only if the pairing was not what you meant
+
+note LOAM-I504 FARM_TRACK at world.north_holding: "world.north_holding" publishes a road_stub at its gate: a road.network@0 node anchored on "world.north_holding" runs the lane to it
+  fix: add "north_holding" to the "anchors" of the document's road.network@0 node, or give that node a "lanes" entry naming it
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world: face finish: 18 column(s) striped in the hill's own rock, 6 paved face(s) footed, 0 crown notch(es) closed
+  fix: No action needed.
+
+note LOAM-I497 GROUND_STAGE at world: ground stage: 40 intent(s) (building.footprint 20, farm.parcel 7, plaza.ground 1, plaza.well 2, road.network 9, sweep.run 1), 5 resolve(s), 263 column(s) moved, 2 transition(s) (built 1, kerb 1), 0 of them unbuilt by any pass; coverage 71 boundary pair(s) — 23 in a transition, 48 suppressed by request, 0 by a face, 0 a kerb, 0 uncovered (excluded: 27282 natural, 0 wet)
+  fix: Nothing — this is the stage's own golden, and it is a note so that a count moving is visible in a diff before a block moves in a world.
+
+warning LOAM-T233 INFRA_ROUTE_UNANCHORED at world.crop_glyph: the "over" route names "north_holding": "north_holding" publishes no column mask, so there is no area to treat
+  fix: name a node the compiler placed — a district, a holding, a precinct or a road — in the route form, e.g. "route": { "ring": "north_holding", "margin": 12 }
+
+warning LOAM-T233 INFRA_ROUTE_UNANCHORED at world.road_barricade: the "across" route names "lanes": "lanes" is not a corridor, so there is nothing to draw a chord across
+  fix: name a node the compiler placed — a district, a holding, a precinct or a road — in the route form, e.g. "route": { "ring": "north_holding", "margin": 12 }
+
+warning LOAM-W337 PROGRAM_DROPPED at world.drop_pod_field: "drop_pod" asked for 14 instances and only 9 sites would take one
+  fix: the area cannot hold that many at this spacing: widen "area", lower "spacing" below 21, relax "maxSlope"/"avoidTags", or ask for fewer
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 5553 footprint columns (plus 26991 feathered over 40 columns) to minecraft:plains, named by climate intent; snow policy never resolved to "never" on a 0/5553 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+  authoring  1 model run(s), 0 compile-feedback round(s), 83952 in + 13867 out = 97819 tokens (7765 of the out reasoning) ($0.0575)
+
+next: terrainist install /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/alien_farm/out/alien_invasion_farm

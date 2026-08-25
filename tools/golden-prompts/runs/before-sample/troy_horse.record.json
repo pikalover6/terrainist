@@ -1,0 +1,188 @@
+{
+  "id": "troy_horse",
+  "family": "troy",
+  "kit": "settlement",
+  "prompt": "The Trojan horse in Troy, right before the soldiers emerge.",
+  "seed": 303,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "era": "ancient",
+    "wealth": 0.7,
+    "decline": 0.1,
+    "formality": 0.65,
+    "event": {
+      "kind": "siege",
+      "severity": 0.85,
+      "recency": 0
+    },
+    "climate": {
+      "temperature": 0.7,
+      "humidity": -0.3,
+      "snow": "never"
+    },
+    "character": {
+      "label": "walled citadel of Troy",
+      "materialTheme": "sun_clay",
+      "fortification": "walled",
+      "formPacks": [
+        "classical_mediterranean"
+      ],
+      "archetypes": {
+        "prefer": [
+          "peristyle_house",
+          "megaron",
+          "stoa",
+          "peripteral_temple",
+          "palaestra",
+          "olive_press",
+          "sanctuary_treasury",
+          "propylaea"
+        ],
+        "forbid": [
+          "townhouse",
+          "terraced_row",
+          "shop_row",
+          "office",
+          "apartment_block"
+        ]
+      },
+      "motifs": {
+        "roofType": "flat",
+        "massing": "blocky",
+        "ornamentDensity": 0.5
+      },
+      "urbanForm": "grown",
+      "courtyards": 0.6,
+      "ground": "stepped"
+    },
+    "tokens": {
+      "terrain": "a walled city on a rise above a sandy plain; the Aegean shore in view",
+      "icons": "the colossal wooden horse inside the city walls near the Scaean gate; high stone ramparts and watchtowers; royal megaron palace at the acropolis crest; abandoned Greek siege camp and distant beached galleys",
+      "event_context": "deep night after drunken victory celebrations; armed Mycenaean soldiers quietly waiting to unbolt the wooden horse's trapdoor inside the quiet courtyard"
+    }
+  },
+  "attempts": 2,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 379255,
+    "completionTokens": 58906,
+    "cost": 0.225
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 23,
+    "maxDepth": 2,
+    "generators": [
+      "authored:trojan_horse",
+      "building.grammar@0",
+      "infra.entry@0",
+      "precinct.farm@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "barracks",
+      "church",
+      "cottage",
+      "courtyard_house",
+      "granary",
+      "hall",
+      "keep",
+      "megaron",
+      "olive_press",
+      "peripteral_temple",
+      "peristyle_house",
+      "sanctuary_treasury",
+      "smithy",
+      "stoa"
+    ],
+    "archetypesInCatalog": 14,
+    "formPacks": [
+      "classical_mediterranean"
+    ],
+    "props": [
+      "campsite",
+      "galleon",
+      "longship"
+    ],
+    "species": [
+      "olive_oak",
+      "scrub_oak",
+      "wild_oak"
+    ],
+    "envelopes": [
+      "512x512",
+      "210x190",
+      "17x14x21",
+      "15x14x21",
+      "13x11x15",
+      "11x10x13",
+      "96x80"
+    ],
+    "constraints": 4,
+    "constraintKinds": [
+      "at",
+      "distance",
+      "max",
+      "min"
+    ],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 4,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 23,
+    "eras": [
+      "ancient"
+    ],
+    "bytes": 41023
+  },
+  "wallMs": 619000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 3,
+    "feedbackRounds": 2,
+    "programs": [
+      "ok trojan_horse [landmark] 2 attempt(s), 51523 tokens ($0.0679), 6 warning(s)",
+      "ok abandoned_siege_engine [plugin] 1 attempt(s), 29481 tokens ($0.0502), 13 warning(s)"
+    ],
+    "programCost": 0.1181,
+    "totalCost": 0.3431,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/troy_horse/out/trojan_horse_troy",
+    "finalDiagnostics": {
+      "LOAM-T208": 1,
+      "LOAM-W520": 1,
+      "LOAM-W410": 7,
+      "LOAM-I526": 1,
+      "LOAM-T242": 1,
+      "LOAM-I512": 1,
+      "LOAM-W413": 2,
+      "LOAM-I412": 2,
+      "LOAM-I463": 5,
+      "LOAM-I504": 1,
+      "LOAM-T228": 1,
+      "LOAM-I497": 1,
+      "LOAM-W489": 1,
+      "LOAM-I524": 1,
+      "LOAM-I415": 1,
+      "LOAM-T233": 1,
+      "LOAM-T341": 2,
+      "LOAM-W337": 1,
+      "LOAM-W470": 1
+    },
+    "crash": [],
+    "docName": "trojan_horse_troy.loam.json"
+  }
+}

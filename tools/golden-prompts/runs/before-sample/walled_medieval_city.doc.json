@@ -1,0 +1,397 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "walled_hill_city",
+    "worldSeed": "311",
+    "prompt": "A walled medieval city on a hill, its castle keep above the rooftops.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "intent": {
+    "era": "medieval",
+    "character": {
+      "label": "walled hilltop castle town",
+      "materialTheme": "temperate_timber",
+      "fortification": "walled",
+      "urbanForm": "hillside",
+      "ground": "stepped",
+      "courtyards": 0.5,
+      "archetypes": {
+        "prefer": [
+          "manor",
+          "watchtower",
+          "church",
+          "tavern",
+          "cottage"
+        ]
+      },
+      "motifs": {
+        "roofType": "gable",
+        "massing": "stepped"
+      }
+    },
+    "tokens": {
+      "terrain": "a prominent hill rising above the surrounding landscape",
+      "icons": "a towering castle keep at the summit overlooking dense medieval rooftops within a continuous defensive wall circuit"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:dirt_path",
+      "road.shoulder": "minecraft:cobblestone"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "The walled hilltop city and its surrounding lands",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "rolling countryside with a steep central hill",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 68,
+          "amplitude": 24,
+          "octaves": 5,
+          "frequency": 0.0032,
+          "gain": 0.48,
+          "erosionPasses": 2,
+          "cliffThreshold": 55,
+          "soilDepth": 3,
+          "beachWidth": 4,
+          "snowLineFraction": 0.95
+        },
+        "children": [
+          {
+            "id": "city_hill",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the prominent hill bearing the walled city and keep",
+            "params": {
+              "verb": "peak",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 160,
+              "height": 42,
+              "profile": "rounded",
+              "irregularity": 0.16
+            }
+          },
+          {
+            "id": "valley_stream",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the stream skirting the southern slopes",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.12,
+                  0.78
+                ],
+                [
+                  0.48,
+                  0.84
+                ],
+                [
+                  0.86,
+                  0.76
+                ],
+                "coast"
+              ],
+              "width": 12,
+              "depth": 6,
+              "meander": 0.5
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0014,
+          "humidityFrequency": 0.0016
+        }
+      },
+      {
+        "id": "high_keep",
+        "kind": "generator",
+        "generator": "authored:castle_keep",
+        "label": "the great castle keep commanding the summit",
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "hill_city",
+            "min": 6,
+            "max": 24,
+            "strength": "soft"
+          }
+        ],
+        "tags": [
+          "landmark",
+          "keep"
+        ]
+      },
+      {
+        "id": "hill_city",
+        "kind": "district",
+        "label": "the medieval walled city climbing the hill",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            240,
+            240
+          ]
+        },
+        "params": {
+          "fabric": "hillside",
+          "density": "medium",
+          "blockSize": 36,
+          "mix": [
+            "townhouse",
+            "tudor_row",
+            "shop_row",
+            "tavern",
+            "cottage",
+            "bakery",
+            "guildhall",
+            "barracks"
+          ],
+          "courtyards": 0.5,
+          "ground": "stepped",
+          "walls": {
+            "style": "masonry",
+            "margin": 10,
+            "towerPitch": 38,
+            "height": 8,
+            "gates": true
+          }
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          }
+        ],
+        "tags": [
+          "city",
+          "urban",
+          "fortified"
+        ],
+        "children": [
+          {
+            "id": "summit_church",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the stone church overlooking the terraces",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                16,
+                17
+              ]
+            },
+            "params": {
+              "archetype": "church",
+              "floors": 2,
+              "roof": "gable"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "west",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "church"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "lowland_farm",
+        "kind": "generator",
+        "generator": "precinct.farm@0",
+        "label": "the farmstead and cultivated fields in the southern valley",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            96,
+            80
+          ]
+        },
+        "params": {
+          "parcels": 5,
+          "parcelSize": 16,
+          "crops": [
+            "wheat",
+            "carrots",
+            "pasture"
+          ],
+          "edge": "fence"
+        },
+        "constraints": [
+          {
+            "zone": "southwest"
+          },
+          {
+            "distance": "hill_city",
+            "min": 24,
+            "max": 70,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "gate": {
+            "type": "road_stub",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "farm",
+          "rural"
+        ]
+      },
+      {
+        "id": "high_roads",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "the road network linking the valley and city gates",
+        "params": {
+          "anchors": [
+            "hill_city",
+            "lowland_farm",
+            "high_keep"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 16
+        }
+      },
+      {
+        "id": "north_forest",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "dense oak and birch woods on the northern slopes",
+        "params": {
+          "area": {
+            "zone": "north"
+          },
+          "density": 0.16,
+          "spacing": 3,
+          "clumping": 0.45,
+          "maxSlope": 32,
+          "elevation": [
+            2,
+            65
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "undergrowth": {
+            "grass": 0.4,
+            "flowers": 0.05,
+            "deadwood": 0.03
+          },
+          "strata": true,
+          "species": [
+            {
+              "id": "great_oak",
+              "weight": 3,
+              "shape": "oak_spreading"
+            },
+            {
+              "id": "slender_birch",
+              "weight": 1,
+              "shape": "birch_slim"
+            }
+          ]
+        }
+      },
+      {
+        "id": "ambient_woodland",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse trees across the outer lowlands",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 35,
+          "elevation": [
+            2,
+            120
+          ],
+          "edgeFalloff": 12,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "species": [
+            {
+              "id": "field_oak",
+              "weight": 2,
+              "shape": "oak_round"
+            },
+            {
+              "id": "field_birch",
+              "weight": 1,
+              "shape": "birch_slim"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "programs": {
+    "castle_keep": {
+      "mode": "landmark",
+      "envelope": [
+        26,
+        34,
+        26
+      ],
+      "sourceHash": "b3:16c018c541921f1539624f61ce4780d7544958d7f807eed0275c3e8de78528f1",
+      "outputHash": "b3:623eed22b8a28f5835e4d40c30c7170c0117481e3646aea4b84f2650447b5f16",
+      "conforms": false,
+      "conformHash": "b3:d7737e21aaca0a5414a6d7825f7d1c755bc6f5f38c130200b29a37e1f5caf489",
+      "source": "export const envelope = [26, 34, 26];\n\nexport default function build(api) {\n  const [sizeX, sizeY, sizeZ] = api.size;\n\n  // ---------------------------------------------------------\n  // THEME ROLES & PALETTE RESOLUTION\n  // ---------------------------------------------------------\n  const stonePri = api.theme.stone?.primary ?? \"minecraft:stone_bricks\";\n  const stoneAcc = api.theme.stone?.accent ?? \"minecraft:cracked_stone_bricks\";\n  const stoneStairs = api.theme.stone?.stairs ?? \"minecraft:stone_brick_stairs\";\n  const stoneSlab = api.theme.stone?.slab ?? \"minecraft:stone_brick_slab\";\n  const stoneWall = api.theme.stone?.wall ?? \"minecraft:stone_brick_wall\";\n\n  const groundPlinth = api.theme.ground?.plinth ?? \"minecraft:andesite\";\n  const groundPavement = api.theme.ground?.pavement ?? \"minecraft:cobblestone\";\n\n  const woodPlanks = api.theme.wood?.planks ?? \"minecraft:spruce_planks\";\n  const woodLog = api.theme.wood?.log ?? \"minecraft:spruce_log\";\n  const woodFence = api.theme.wood?.fence ?? \"minecraft:spruce_fence\";\n  const woodDoor = api.theme.wood?.door ?? \"minecraft:spruce_door\";\n\n  const roofSolid = api.theme.roof?.solid ?? \"minecraft:dark_oak_planks\";\n  const roofStairs = api.theme.roof?.stairs ?? \"minecraft:dark_oak_stairs\";\n  const roofSlab = api.theme.roof?.slab ?? \"minecraft:dark_oak_slab\";\n\n  const ironBars = \"minecraft:iron_bars\";\n  const bannerRed = \"minecraft:red_wool\";\n  const bannerGold = \"minecraft:yellow_wool\";\n  const lantern = \"minecraft:lantern[hanging=false]\";\n\n  // ---------------------------------------------------------\n  // HELPER FUNCTIONS\n  // ---------------------------------------------------------\n  function set(x, y, z, block) {\n    if (x >= 0 && x < sizeX && y >= 0 && y < sizeY && z >= 0 && z < sizeZ) {\n      api.set(x, y, z, block);\n    }\n  }\n\n  function randomStone() {\n    const r = api.random();\n    if (r < 0.18) return stoneAcc;\n    if (r < 0.26) return groundPlinth;\n    return stonePri;\n  }\n\n  function fill(x1, y1, z1, x2, y2, z2, blockOrFn) {\n    const minX = Math.min(x1, x2), maxX = Math.max(x1, x2);\n    const minY = Math.min(y1, y2), maxY = Math.max(y1, y2);\n    const minZ = Math.min(z1, z2), maxZ = Math.max(z1, z2);\n    for (let x = minX; x <= maxX; x++) {\n      for (let y = minY; y <= maxY; y++) {\n        for (let z = minZ; z <= maxZ; z++) {\n          const b = typeof blockOrFn === \"function\" ? blockOrFn(x, y, z) : blockOrFn;\n          set(x, y, z, b);\n        }\n      }\n    }\n  }\n\n  function stair(facing, half = \"bottom\", shape = \"straight\", mat = stoneStairs) {\n    const base = mat.split(\"[\")[0];\n    return `${base}[facing=${facing},half=${half},shape=${shape}]`;\n  }\n\n  function slab(type = \"bottom\", mat = stoneSlab) {\n    const base = mat.split(\"[\")[0];\n    return `${base}[type=${type}]`;\n  }\n\n  // ---------------------------------------------------------\n  // 1. FOOTPRINT & TERRAIN CONFORMITY (RULE 5 & 6)\n  // ---------------------------------------------------------\n  function isFootprint(x, z) {\n    // Corner towers (NW, NE, SW, SE)\n    if (x >= 1 && x <= 8 && z >= 1 && z <= 8) return true;\n    if (x >= 17 && x <= 24 && z >= 1 && z <= 8) return true;\n    if (x >= 1 && x <= 8 && z >= 17 && z <= 24) return true;\n    if (x >= 17 && x <= 24 && z >= 17 && z <= 24) return true;\n    // Central keep core body & bays\n    if (x >= 3 && x <= 22 && z >= 3 && z <= 22) return true;\n    // North grand staircase\n    if (x >= 10 && x <= 15 && z >= 0 && z <= 3) return true;\n    return false;\n  }\n\n  for (let x = 0; x < sizeX; x++) {\n    for (let z = 0; z < sizeZ; z++) {\n      if (isFootprint(x, z)) {\n        const gh = api.heightAt(x, z);\n        const bottomY = Math.min(0, gh);\n        // Step foundation skirts down to local terrain\n        for (let y = bottomY; y <= 0; y++) {\n          set(x, y, z, y === 0 ? groundPlinth : groundPavement);\n        }\n        if (gh > 0) {\n          for (let y = 0; y <= gh; y++) {\n            set(x, y, z, groundPlinth);\n          }\n        }\n      }\n    }\n  }\n\n  // ---------------------------------------------------------\n  // 2. BATTERED BASE / TALUS (y = 0 to 4)\n  // ---------------------------------------------------------\n  // Solid foundation platform at y=0\n  fill(3, 0, 3, 22, 0, 22, groundPlinth);\n\n  // Sloped battered skirts along wall bays at y=1..3\n  // North talus (facing south)\n  for (let x = 8; x <= 17; x++) {\n    set(x, 1, 3, stair(\"south\", \"bottom\"));\n    set(x, 2, 4, stair(\"south\", \"bottom\"));\n  }\n  // South talus (facing north)\n  for (let x = 8; x <= 17; x++) {\n    set(x, 1, 22, stair(\"north\", \"bottom\"));\n    set(x, 2, 21, stair(\"north\", \"bottom\"));\n  }\n  // West talus (facing east)\n  for (let z = 8; z <= 17; z++) {\n    set(3, 1, z, stair(\"east\", \"bottom\"));\n    set(4, 2, z, stair(\"east\", \"bottom\"));\n  }\n  // East talus (facing west)\n  for (let z = 8; z <= 17; z++) {\n    set(22, 1, z, stair(\"west\", \"bottom\"));\n    set(21, 2, z, stair(\"west\", \"bottom\"));\n  }\n\n  // Battered corners at 4 towers (y=1)\n  const towerCorners = [\n    [1, 1, 8, 8],     // NW\n    [17, 1, 24, 8],   // NE\n    [1, 17, 8, 24],   // SW\n    [17, 17, 24, 24], // SE\n  ];\n\n  for (const [x1, z1, x2, z2] of towerCorners) {\n    for (let x = x1; x <= x2; x++) {\n      set(x, 1, z1, stair(\"south\", \"bottom\"));\n      set(x, 1, z2, stair(\"north\", \"bottom\"));\n    }\n    for (let z = z1; z <= z2; z++) {\n      set(x1, 1, z, stair(\"east\", \"bottom\"));\n      set(x2, 1, z, stair(\"west\", \"bottom\"));\n    }\n  }\n\n  // ---------------------------------------------------------\n  // 3. MAIN KEEP SHELL & TOWERS (y = 1 to 25)\n  // ---------------------------------------------------------\n  // Corner Clasping Towers (NW, NE, SW, SE)\n  const towers = [\n    [2, 2, 7, 7],     // NW Tower\n    [18, 2, 23, 7],   // NE Tower\n    [2, 18, 7, 23],   // SW Tower\n    [18, 18, 23, 23], // SE Tower\n  ];\n\n  for (const [tx1, tz1, tx2, tz2] of towers) {\n    fill(tx1, 1, tz1, tx2, 25, tz2, randomStone);\n  }\n\n  // Main Keep Curtain Walls\n  // North & South walls\n  fill(5, 1, 5, 20, 25, 6, randomStone);\n  fill(5, 1, 19, 20, 25, 20, randomStone);\n  // West & East walls\n  fill(5, 1, 5, 6, 25, 20, randomStone);\n  fill(19, 1, 5, 20, 25, 20, randomStone);\n\n  // Pilaster Buttresses along wall centers (y=4..24)\n  fill(12, 4, 4, 13, 24, 4, randomStone);   // North pilaster\n  fill(12, 4, 21, 13, 24, 21, randomStone); // South pilaster\n  fill(4, 4, 12, 4, 24, 13, randomStone);   // West pilaster\n  fill(21, 4, 12, 21, 24, 13, randomStone); // East pilaster\n\n  // String course bands (architectural tiers)\n  for (let yBand of [7, 16]) {\n    for (let x = 7; x <= 18; x++) {\n      set(x, yBand, 4, stair(\"south\", \"top\"));\n      set(x, yBand, 21, stair(\"north\", \"top\"));\n    }\n    for (let z = 7; z <= 18; z++) {\n      set(4, yBand, z, stair(\"east\", \"top\"));\n      set(21, yBand, z, stair(\"west\", \"top\"));\n    }\n  }\n\n  // ---------------------------------------------------------\n  // 4. NORTH FOREBUILDING & FORTIFIED PORTAL\n  // ---------------------------------------------------------\n  // Grand Entry Stairway (ascending to portal at y=4)\n  for (let x = 11; x <= 14; x++) {\n    set(x, 1, 0, stair(\"north\", \"bottom\"));\n    set(x, 1, 1, groundPlinth);\n    set(x, 2, 1, stair(\"north\", \"bottom\"));\n    set(x, 1, 2, groundPlinth);\n    set(x, 2, 2, groundPlinth);\n    set(x, 3, 2, stair(\"north\", \"bottom\"));\n    set(x, 1, 3, groundPlinth);\n    set(x, 2, 3, groundPlinth);\n    set(x, 3, 3, groundPlinth);\n    set(x, 4, 3, groundPlinth);\n  }\n\n  // Stairway stone parapets\n  for (let z = 0; z <= 3; z++) {\n    set(10, z + 1, z, stoneWall);\n    set(15, z + 1, z, stoneWall);\n  }\n\n  // Fortified Gateway Piers (X=11 & 14, y=4..7)\n  fill(11, 4, 4, 11, 7, 5, randomStone);\n  fill(14, 4, 4, 14, 7, 5, randomStone);\n  // Arched Portal Opening\n  set(12, 4, 4, \"minecraft:air\");\n  set(13, 4, 4, \"minecraft:air\");\n  set(12, 5, 4, \"minecraft:air\");\n  set(13, 5, 4, \"minecraft:air\");\n  set(12, 6, 4, stair(\"west\", \"top\"));\n  set(13, 6, 4, stair(\"east\", \"top\"));\n  fill(11, 7, 4, 14, 7, 4, randomStone);\n\n  // Portcullis & Doorway inside\n  set(12, 4, 5, ironBars);\n  set(13, 4, 5, ironBars);\n  set(12, 5, 5, ironBars);\n  set(13, 5, 5, ironBars);\n  set(12, 4, 6, \"minecraft:air\");\n  set(13, 4, 6, \"minecraft:air\");\n  set(12, 5, 6, \"minecraft:air\");\n  set(13, 5, 6, \"minecraft:air\");\n\n  // ---------------------------------------------------------\n  // 5. INTERIOR TIERS & FLOORS\n  // ---------------------------------------------------------\n  // Tier 1: Undercroft / Vault (y=1..6)\n  fill(7, 0, 7, 18, 0, 18, groundPlinth);\n  // Central vaulted stone pillars\n  fill(10, 1, 10, 10, 6, 10, randomStone);\n  fill(15, 1, 10, 15, 6, 10, randomStone);\n  fill(10, 1, 15, 10, 6, 15, randomStone);\n  fill(15, 1, 15, 15, 6, 15, randomStone);\n\n  // Tier 2: Great Hall Floor (y=7)\n  fill(7, 7, 7, 18, 7, 18, woodPlanks);\n  // Hall timber ceiling beams (y=15)\n  for (let z = 8; z <= 17; z += 3) {\n    fill(7, 15, z, 18, 15, z, woodLog);\n  }\n\n  // Tier 3: Lord's Solar / Quarters Floor (y=16)\n  fill(7, 16, 7, 18, 16, 18, woodPlanks);\n\n  // Great Hall Fireplace & Chimney (West wall, X: 5..6, Z: 11..14)\n  fill(5, 8, 11, 6, 26, 14, randomStone);\n  // Hearth niche\n  fill(6, 8, 12, 6, 10, 13, \"minecraft:air\");\n  set(6, 11, 12, stair(\"south\", \"top\"));\n  set(6, 11, 13, stair(\"north\", \"top\"));\n\n  // Hollow out the interior chambers for compiler furnishing\n  fill(7, 1, 7, 18, 6, 18, (x, y, z) => {\n    // Keep pillars solid\n    if ((x === 10 || x === 15) && (z === 10 || z === 15)) return randomStone();\n    return \"minecraft:air\";\n  });\n  fill(7, 8, 7, 18, 14, 18, (x, y, z) => {\n    if (x <= 6 && z >= 11 && z <= 14) return randomStone(); // Chimney breast\n    return \"minecraft:air\";\n  });\n  fill(7, 17, 7, 18, 24, 18, (x, y, z) => {\n    if (x <= 6 && z >= 11 && z <= 14) return randomStone(); // Chimney\n    return \"minecraft:air\";\n  });\n\n  // ---------------------------------------------------------\n  // 6. EMBRASURES, ARROW SLITS & GOTHIC WINDOWS\n  // ---------------------------------------------------------\n  // Arrow slits in Undercroft (y=3)\n  const arrowSlits = [\n    [9, 3, 4, \"south\"], [16, 3, 4, \"south\"],   // North\n    [9, 3, 21, \"north\"], [16, 3, 21, \"north\"], // South\n    [4, 3, 9, \"east\"], [4, 3, 16, \"east\"],     // West\n    [21, 3, 9, \"west\"], [21, 3, 16, \"west\"],   // East\n  ];\n  for (const [x, y, z, facing] of arrowSlits) {\n    set(x, y, z, ironBars);\n  }\n\n  // Great Hall Gothic Arched Windows (y=10..13)\n  // South windows\n  for (const wx of [9, 10, 15, 16]) {\n    fill(wx, 10, 20, wx, 12, 20, ironBars);\n    set(wx, 13, 20, stair(\"north\", \"top\"));\n  }\n  // East windows\n  for (const wz of [9, 10, 15, 16]) {\n    fill(20, 10, wz, 20, 12, wz, ironBars);\n    set(20, 13, wz, stair(\"west\", \"top\"));\n  }\n  // North windows\n  for (const wx of [9, 16]) {\n    fill(wx, 10, 5, wx, 12, 5, ironBars);\n    set(wx, 13, 5, stair(\"south\", \"top\"));\n  }\n\n  // Lord's Solar High Windows (y=19..21)\n  for (const wx of [10, 15]) {\n    set(wx, 19, 5, ironBars);\n    set(wx, 20, 5, stair(\"south\", \"top\"));\n    set(wx, 19, 20, ironBars);\n    set(wx, 20, 20, stair(\"north\", \"top\"));\n  }\n  for (const wz of [10, 15]) {\n    set(20, 19, wz, ironBars);\n    set(20, 20, wz, stair(\"west\", \"top\"));\n    set(5, 19, wz, ironBars);\n    set(5, 20, wz, stair(\"east\", \"top\"));\n  }\n\n  // ---------------------------------------------------------\n  // 7. ROOF DECK, MACHICOLATIONS & BATTLEMENTS (y = 25 to 29)\n  // ---------------------------------------------------------\n  // Roof Fighting Platform Floor (y=25)\n  fill(5, 25, 5, 20, 25, 20, randomStone);\n\n  // Cantilevered Corbel Table (Machicolations) at y=25\n  // North & South corbels\n  for (let x = 4; x <= 21; x++) {\n    set(x, 25, 4, stair(\"south\", \"top\"));\n    set(x, 25, 21, stair(\"north\", \"top\"));\n  }\n  // West & East corbels\n  for (let z = 4; z <= 21; z++) {\n    set(4, 25, z, stair(\"east\", \"top\"));\n    set(21, 25, z, stair(\"west\", \"top\"));\n  }\n\n  // Parapet Base (y=26..27)\n  // North parapet\n  fill(4, 26, 4, 21, 27, 4, randomStone);\n  // South parapet\n  fill(4, 26, 21, 21, 27, 21, randomStone);\n  // West parapet\n  fill(4, 26, 4, 4, 27, 21, randomStone);\n  // East parapet\n  fill(21, 26, 4, 21, 27, 21, randomStone);\n\n  // Crenellations & Merlons (y=28..29)\n  // North & South battlements\n  for (let x = 4; x <= 21; x++) {\n    if (x % 2 === 0) {\n      set(x, 28, 4, randomStone());\n      set(x, 29, 4, stoneWall);\n      set(x, 28, 21, randomStone());\n      set(x, 29, 21, stoneWall);\n    } else {\n      set(x, 28, 4, slab(\"bottom\"));\n      set(x, 28, 21, slab(\"bottom\"));\n    }\n  }\n  // West & East battlements\n  for (let z = 4; z <= 21; z++) {\n    if (z % 2 === 0) {\n      set(4, 28, z, randomStone());\n      set(4, 29, z, stoneWall);\n      set(21, 28, z, randomStone());\n      set(21, 29, z, stoneWall);\n    } else {\n      set(4, 28, z, slab(\"bottom\"));\n      set(21, 28, z, slab(\"bottom\"));\n    }\n  }\n\n  // ---------------------------------------------------------\n  // 8. CORNER BARTIZANS & TOWER SUMMITS (y = 25 to 33)\n  // ---------------------------------------------------------\n  for (const [tx1, tz1, tx2, tz2] of towers) {\n    // Solid tower walls rising above main roof deck (y=26..29)\n    fill(tx1, 26, tz1, tx2, 29, tz2, (x, y, z) => {\n      if (x === tx1 || x === tx2 || z === tz1 || z === tz2) return randomStone();\n      return \"minecraft:air\"; // Bartizan interior\n    });\n\n    // Floor of bartizan fighting top (y=29)\n    fill(tx1, 29, tz1, tx2, 29, tz2, randomStone);\n\n    // Corbeling out around bartizans (y=29)\n    for (let x = tx1; x <= tx2; x++) {\n      set(x, 29, tz1 - 1, stair(\"south\", \"top\"));\n      set(x, 29, tz2 + 1, stair(\"north\", \"top\"));\n    }\n    for (let z = tz1; z <= tz2; z++) {\n      set(tx1 - 1, 29, z, stair(\"east\", \"top\"));\n      set(tx2 + 1, 29, z, stair(\"west\", \"top\"));\n    }\n\n    // Parapet & Merlons on Turrets (y=30..31)\n    for (let x = tx1 - 1; x <= tx2 + 1; x++) {\n      for (let z = tz1 - 1; z <= tz2 + 1; z++) {\n        const isBorder = (x === tx1 - 1 || x === tx2 + 1 || z === tz1 - 1 || z === tz2 + 1);\n        if (isBorder) {\n          set(x, 30, z, randomStone());\n          if ((x + z) % 2 === 0) {\n            set(x, 31, z, stoneWall);\n          } else {\n            set(x, 31, z, slab(\"bottom\"));\n          }\n        }\n      }\n    }\n  }\n\n  // Conical / Hipped Timber Roof Caps on NW & SE Turrets (y=31..33)\n  // NW Turret Roof Cap\n  fill(3, 31, 3, 6, 31, 6, roofSolid);\n  for (let x = 2; x <= 7; x++) {\n    set(x, 31, 2, stair(\"south\", \"bottom\", \"straight\", roofStairs));\n    set(x, 31, 7, stair(\"north\", \"bottom\", \"straight\", roofStairs));\n  }\n  for (let z = 2; z <= 7; z++) {\n    set(2, 31, z, stair(\"east\", \"bottom\", \"straight\", roofStairs));\n    set(7, 31, z, stair(\"west\", \"bottom\", \"straight\", roofStairs));\n  }\n  fill(4, 32, 4, 5, 32, 5, roofSolid);\n  set(4, 33, 4, woodFence);\n  set(4, 33, 5, ironBars);\n\n  // SE Turret Roof Cap\n  fill(19, 31, 19, 22, 31, 22, roofSolid);\n  for (let x = 18; x <= 23; x++) {\n    set(x, 31, 18, stair(\"south\", \"bottom\", \"straight\", roofStairs));\n    set(x, 31, 23, stair(\"north\", \"bottom\", \"straight\", roofStairs));\n  }\n  for (let z = 18; z <= 23; z++) {\n    set(18, 31, z, stair(\"east\", \"bottom\", \"straight\", roofStairs));\n    set(23, 31, z, stair(\"west\", \"bottom\", \"straight\", roofStairs));\n  }\n  fill(20, 32, 20, 21, 32, 21, roofSolid);\n  set(21, 33, 21, woodFence);\n  set(21, 33, 20, ironBars);\n\n  // NE & SW Turrets: Tall Heraldic Standards / Banners (y=30..33)\n  // NE Flagstaff & Royal Banner\n  for (let y = 30; y <= 33; y++) {\n    set(20, y, 4, woodFence);\n  }\n  set(19, 33, 4, bannerGold);\n  set(19, 32, 4, bannerRed);\n  set(19, 31, 4, bannerGold);\n  set(18, 33, 4, bannerRed);\n  set(18, 32, 4, bannerGold);\n\n  // SW Flagstaff & Banner\n  for (let y = 30; y <= 33; y++) {\n    set(4, y, 20, woodFence);\n  }\n  set(5, 33, 20, bannerRed);\n  set(5, 32, 20, bannerGold);\n  set(5, 31, 20, bannerRed);\n  set(6, 33, 20, bannerGold);\n  set(6, 32, 20, bannerRed);\n\n  // ---------------------------------------------------------\n  // 9. CENTRAL WATCHTOWER & ROOF ACCESS (y = 25 to 33)\n  // ---------------------------------------------------------\n  // Central Watchtower (X: 11..14, Z: 11..14)\n  fill(11, 25, 11, 14, 30, 14, (x, y, z) => {\n    if (x === 11 || x === 14 || z === 11 || z === 14) return randomStone();\n    return \"minecraft:air\";\n  });\n\n  // Watchtower Doorway (facing North onto roof deck)\n  set(12, 26, 11, \"minecraft:air\");\n  set(13, 26, 11, \"minecraft:air\");\n  set(12, 27, 11, stair(\"west\", \"top\"));\n  set(13, 27, 11, stair(\"east\", \"top\"));\n\n  // Watchtower roof floor & battlements (y=30..31)\n  fill(11, 30, 11, 14, 30, 14, randomStone);\n  for (let x = 11; x <= 14; x++) {\n    set(x, 31, 11, stoneWall);\n    set(x, 31, 14, stoneWall);\n  }\n  for (let z = 11; z <= 14; z++) {\n    set(11, 31, z, stoneWall);\n    set(14, 31, z, stoneWall);\n  }\n\n  // Central Great Mast / Keep Spire (y=31..33)\n  fill(12, 31, 12, 13, 31, 13, randomStone);\n  set(12, 32, 12, woodFence);\n  set(12, 33, 12, woodFence);\n  set(13, 33, 12, bannerGold);\n  set(13, 32, 12, bannerRed);\n\n  // Chimney pot on roof deck (West side)\n  fill(5, 26, 12, 6, 28, 13, randomStone);\n  set(5, 29, 12, stoneWall);\n  set(6, 29, 13, stoneWall);\n\n  // ---------------------------------------------------------\n  // 10. RETURN RESULTS WITH HONEST SEAT, ANCHORS & INTERIORS\n  // ---------------------------------------------------------\n  return {\n    name: \"castle_keep\",\n    seatY: 0,\n    anchors: {\n      front: [13, 0, 0],\n      door: [13, 4, 4],\n      summit: [12, 33, 12],\n    },\n    interiors: [\n      {\n        min: [7, 1, 7],\n        max: [18, 6, 18],\n        kind: \"vault\",\n      },\n      {\n        min: [7, 8, 7],\n        max: [18, 14, 18],\n        kind: \"hall\",\n      },\n      {\n        min: [7, 17, 7],\n        max: [18, 24, 18],\n        kind: \"quarters\",\n      },\n    ],\n  };\n}"
+    }
+  }
+}

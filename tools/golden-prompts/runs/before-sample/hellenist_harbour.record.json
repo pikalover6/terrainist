@@ -1,0 +1,172 @@
+{
+  "id": "hellenist_harbour",
+  "family": "hellenist_city",
+  "kit": "settlement",
+  "prompt": "A modern Hellenist city being invaded by sea monsters.",
+  "seed": 305,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "era": "modern",
+    "wealth": 0.8,
+    "decline": 0.1,
+    "formality": 0.8,
+    "event": {
+      "kind": "siege",
+      "severity": 0.8,
+      "recency": 0
+    },
+    "climate": {
+      "biome": "minecraft:warm_ocean",
+      "temperature": 0.7,
+      "humidity": 0.2,
+      "snow": "never"
+    },
+    "character": {
+      "label": "modern Hellenist coastal metropolis under sea monster assault",
+      "materialTheme": "modern_city",
+      "formPacks": [
+        "classical_mediterranean"
+      ],
+      "archetypes": {
+        "prefer": [
+          "stoa",
+          "peripteral_temple",
+          "odeon",
+          "propylaea",
+          "monument",
+          "lighthouse"
+        ]
+      },
+      "props": {
+        "prefer": [
+          "fountain",
+          "statue",
+          "bollard",
+          "street_lamp"
+        ]
+      },
+      "urbanForm": "grid",
+      "motifs": {
+        "roofType": "flat",
+        "massing": "blocky",
+        "windowRhythm": "regular",
+        "ornamentDensity": 0.6
+      }
+    },
+    "tokens": {
+      "terrain": "a grand classical-revival coastal city fronting a wide harbour and deep open sea",
+      "event_direction": "colossal sea monsters emerging from the open ocean breaching the harbour walls and advancing onto the waterfront",
+      "infra": "barricade_line across the waterfront boulevard; emergency_cordon ringing the lower docks; broken quayside piers where beasts have come ashore",
+      "icons": "neoclassical monumental colonnades facing the sea; breached seawalls; emergency sirens and modern searchlights illuminating towering aquatic monsters"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 185572,
+    "completionTokens": 31048,
+    "cost": 0.1278
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 17,
+    "maxDepth": 2,
+    "generators": [
+      "authored:colossal_leviathan",
+      "building.grammar@0",
+      "infra.entry@0",
+      "precinct.harbour@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "apartment_block",
+      "cottage",
+      "courthouse",
+      "department_store",
+      "museum",
+      "office",
+      "opera_house",
+      "shop_row",
+      "skyscraper",
+      "townhouse",
+      "university_hall"
+    ],
+    "archetypesInCatalog": 11,
+    "formPacks": [
+      "classical_mediterranean"
+    ],
+    "props": [],
+    "species": [
+      "hazel",
+      "larch_cypress",
+      "med_oak",
+      "wild_oak"
+    ],
+    "envelopes": [
+      "512x512",
+      "340x240",
+      "21x20x25",
+      "18x60x18",
+      "17x16x21",
+      "110x18x70"
+    ],
+    "constraints": 5,
+    "constraintKinds": [
+      "band",
+      "distance",
+      "max",
+      "min",
+      "on",
+      "zone"
+    ],
+    "constraintsWithStrength": 1,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 3,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 16,
+    "eras": [
+      "modern"
+    ],
+    "bytes": 43284
+  },
+  "wallMs": 464000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 2,
+    "feedbackRounds": 1,
+    "programs": [
+      "ok colossal_leviathan [landmark] 1 attempt(s), 28396 tokens ($0.0482), 27 warning(s)",
+      "ok sea_monster [plugin] 1 attempt(s), 31160 tokens ($0.0533), 4 warning(s)"
+    ],
+    "programCost": 0.1015,
+    "totalCost": 0.2293,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/hellenist_harbour/out/hellenic_abyss",
+    "finalDiagnostics": {
+      "LOAM-T208": 1,
+      "LOAM-I512": 4,
+      "LOAM-W517": 1,
+      "LOAM-I463": 2,
+      "LOAM-I497": 1,
+      "LOAM-I412": 1,
+      "LOAM-T230": 1,
+      "LOAM-W337": 1,
+      "LOAM-W472": 1,
+      "LOAM-W470": 1
+    },
+    "crash": [],
+    "docName": "hellenic_abyss.loam.json"
+  }
+}

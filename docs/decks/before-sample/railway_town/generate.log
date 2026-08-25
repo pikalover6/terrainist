@@ -1,0 +1,34 @@
+prompt     A soot-blackened industrial town where the railway meets the canal.
+seed       312
+size       512x512
+model      google/gemini-3.7-flash
+effort     high
+kit        settlement
+
+intent     {"era":"industrial","wealth":0.35,"decline":0.3,"formality":0.5,"character":{"label":"soot-blackened industrial canal and rail hub","materialTheme":"temperate_timber","urbanForm":"canal","archetypes":{"prefer":["warehouse","mill","workshop","tavern","tenement"],"forbid":["manor","temple","megaron"]},"props":{"prefer":["cart","crane","smokestack","barge","lamp_post"]},"motifs":{"roofType":"shed","massing":"blocky","windowRhythm":"regular","ornamentDensity":0.2}},"tokens":{"terrain":"a network of canal cuts and basins meeting a rail line and sidings through a gritty brick-and-soot mill quarter","infra":"railway_tracks along the water basin; canal_locks and towpaths along the water cuts; coal_chutes over the loading quays","icons":"brick mill chimneys, steam plumes, canal barges tied at the wharves, iron rail bridges over the canal"}}
+           1 attempt(s), 7774 tokens
+
+authored with google/gemini-3.7-flash in 1 attempt(s)
+  attempt 1   valid
+  tokens     83904 in + 9479 out = 93383  ($0.0492)
+programs   3 of 3 kept (budget 3 landmark / 3 plugin)
+  ok     rail_coal_transshipment_gantry [landmark]  1 attempt(s), 29495 tokens  ($0.0503), 27 warning(s)
+  ok     canal_narrowboat [plugin]  1 attempt(s), 26732 tokens  ($0.0451), 11 warning(s)
+  ok     canal_lock_gates [plugin]  2 attempt(s), 53651 tokens  ($0.0728), 12 warning(s)
+  tokens     25741 in + 85446 out = 111187  (60458 of the out reasoning)  ($0.1699)
+
+wiring     3 program(s) authored but never invoked: rail_coal_transshipment_gantry [landmark], canal_narrowboat [plugin], canal_lock_gates [plugin]
+
+  wired in 1 attempt(s); 107462 in + 26094 out = 133556 tokens  ($0.0892)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/railway_town/out/soot_canal_junction.loam.json
+
+
+terrainist: PHYSICS LINT FAILED — this is a compiler bug, not a document problem.
+The authored document is legal Loam; the compiler still emitted a world that
+breaks its own invariants. Do not re-prompt: file this against the compiler,
+with the document at /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/railway_town/out/soot_canal_junction.loam.json.
+
+error LOAM-T110 UNSTABLE_FLUID at <document>: 71 fluid blocks would flow on the first tick — e.g. water at (-17, 54, -11); water at (-18, 54, -10); water at (-16, 54, -10); water at (-15, 54, -10); water at (-14, 54, -10); water at (-17, 54, -9); water at (-13, 54, -9); water at (-12, 54, -9)
+  fix: raise the surrounding terrain or lower the fluid: for a carved inlet, deepen the carve so the water surface stays at seaLevel; for a caldera, increase the volcano's height or reduce calderaDepth so the rim fully encloses the lava. Pass --allow-unstable only to inspect the result — the world will visibly drain in game.
+

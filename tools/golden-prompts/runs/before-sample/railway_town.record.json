@@ -1,0 +1,156 @@
+{
+  "id": "railway_town",
+  "family": "new/alias",
+  "kit": "settlement",
+  "prompt": "A soot-blackened industrial town where the railway meets the canal.",
+  "seed": 312,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": false,
+  "intent": {
+    "era": "industrial",
+    "wealth": 0.35,
+    "decline": 0.3,
+    "formality": 0.5,
+    "character": {
+      "label": "soot-blackened industrial canal and rail hub",
+      "materialTheme": "temperate_timber",
+      "urbanForm": "canal",
+      "archetypes": {
+        "prefer": [
+          "warehouse",
+          "mill",
+          "workshop",
+          "tavern",
+          "tenement"
+        ],
+        "forbid": [
+          "manor",
+          "temple",
+          "megaron"
+        ]
+      },
+      "props": {
+        "prefer": [
+          "cart",
+          "crane",
+          "smokestack",
+          "barge",
+          "lamp_post"
+        ]
+      },
+      "motifs": {
+        "roofType": "shed",
+        "massing": "blocky",
+        "windowRhythm": "regular",
+        "ornamentDensity": 0.2
+      }
+    },
+    "tokens": {
+      "terrain": "a network of canal cuts and basins meeting a rail line and sidings through a gritty brick-and-soot mill quarter",
+      "infra": "railway_tracks along the water basin; canal_locks and towpaths along the water cuts; coal_chutes over the loading quays",
+      "icons": "brick mill chimneys, steam plumes, canal barges tied at the wharves, iron rail bridges over the canal"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": null,
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 23,
+    "maxDepth": 2,
+    "generators": [
+      "authored:rail_coal_transshipment_gantry",
+      "building.grammar@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "apartment_block",
+      "brickworks",
+      "coal_tipple",
+      "cottage",
+      "factory_hall",
+      "gasworks",
+      "roundhouse",
+      "signal_box",
+      "steam_plant",
+      "tavern",
+      "terraced_row",
+      "train_station",
+      "warehouse"
+    ],
+    "archetypesInCatalog": 13,
+    "formPacks": [],
+    "props": [
+      "caboose",
+      "cart",
+      "freight_car",
+      "locomotive",
+      "log_pile"
+    ],
+    "species": [
+      "smoky_pine",
+      "stunted_oak"
+    ],
+    "envelopes": [
+      "512x512",
+      "240x220",
+      "15x13x21",
+      "13x14x17",
+      "13x14x19",
+      "15x15x15",
+      "15x14x21",
+      "9x13x11"
+    ],
+    "constraints": 8,
+    "constraintKinds": [
+      "blend",
+      "distance",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform",
+      "zone"
+    ],
+    "constraintsWithStrength": 3,
+    "hardConstraints": 0,
+    "forests": 1,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 6,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 22,
+    "eras": [
+      "industrial"
+    ],
+    "bytes": 60022
+  },
+  "wallMs": 648000,
+  "generate": {
+    "exit": "1",
+    "modelRuns": null,
+    "feedbackRounds": null,
+    "programs": [
+      "ok rail_coal_transshipment_gantry [landmark] 1 attempt(s), 29495 tokens ($0.0503), 27 warn",
+      "ok canal_narrowboat [plugin] 1 attempt(s), 26732 tokens ($0.0451), 11 warning(s)",
+      "ok canal_lock_gates [plugin] 2 attempt(s), 53651 tokens ($0.0728), 12 warning(s)"
+    ],
+    "programCost": 0.1699,
+    "totalCost": 0.1699,
+    "compiled": false,
+    "worldDir": null,
+    "finalDiagnostics": {},
+    "crash": [
+      "terrainist: PHYSICS LINT FAILED — this is a compiler bug, not a document problem."
+    ],
+    "docName": "soot_canal_junction.loam.json"
+  }
+}

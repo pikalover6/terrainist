@@ -1,0 +1,59 @@
+prompt     A glowing mushroom vale where a strange village has grown between the caps.
+seed       307
+size       512x512
+model      google/gemini-3.7-flash
+effort     high
+kit        settlement
+
+intent     {"era":"medieval","wealth":0.4,"formality":0.15,"climate":{"temperature":0.2,"humidity":0.8},"character":{"label":"glowing mushroom vale village","materialTheme":"temperate_timber","urbanForm":"grown","flora":{"prefer":["fungal","glow","mushroom_giant_red","mushroom_shelf_brown","glowcap"]},"archetypes":{"prefer":["cottage","tavern","watchtower"]}},"tokens":{"terrain":"a damp vale cradled between slopes, filled with giant glowing mushroom caps and spore mist","icons":"village dwellings perched under and built between massive glowing mushrooms; rope bridges and timber walkways between the stalks; bioluminescent lanterns along winding paths"}}
+           1 attempt(s), 7785 tokens
+
+authored with google/gemini-3.7-flash in 1 attempt(s)
+  attempt 1   valid
+  tokens     83792 in + 10846 out = 94638  ($0.0518)
+programs   1 of 1 kept (budget 3 landmark / 3 plugin)
+  ok     elder_glowcap [landmark]  1 attempt(s), 25912 tokens  ($0.0437), 1 warning(s)
+  tokens     3251 in + 22661 out = 25912  (17409 of the out reasoning)  ($0.0437)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/glowcap_vale/out/glowshroom_vale.loam.json
+
+compiled "glowshroom_vale" — 1.21.11 (DataVersion 4671)
+  world      /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/glowcap_vale/out/glowshroom_vale
+  seed       307
+  region     512x512 at (-256, -256)
+  heights    54.2..118.1  sea 63  snow line 115.3
+  land       93.7% of columns above sea level
+  biomes     plains 59.3%, forest 25.0%, windswept_hills 10.2%, ocean 4.5%, beach 1.0%, river 0.1%, stony_peaks 0.0%
+  trees      4340 (glowing_mushroom_grove=3535, ambient_woodland=1005)
+  chunks     1024
+  blocks     37243876 (543065 vegetation)
+  markers    82
+  spawn      [0, 72, 0]
+  timings    validate 1ms  field 248ms  layout 92ms  climate 33ms  columns 33ms  caves 0ms  structures 398ms  programs 97ms  scatter 312ms  biomes 20ms  validators 3ms  emit 2487ms  total 3752ms
+  programs   world.the_elder_cap=elder_glowcap×1 (4726 blocks)
+  doc        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/glowcap_vale/out/glowshroom_vale.loam.json
+  report     /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/glowcap_vale/out/glowshroom_vale.report.json
+
+warning LOAM-W330 PROGRAM_ENVELOPE_OVERRIDDEN at world.the_elder_cap: this node declares an envelope; program "elder_glowcap" declares [27, 40, 27] and the program wins
+  fix: drop the node's "envelope" — the program is what knows how much room it needs
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.spore_paths: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+note LOAM-W522 PROGRAM_FACE_REMEASURED at world.the_elder_cap: this landmark was placed at (13, 24), not where its facing was first measured from, so the facing was taken again from the real site: 0° becomes 270°
+  fix: nothing to change — the front points where the document asked it to. To pin the site as well, tighten the coarse target with a "radius"/"tolerance" or a hard "zone"
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world: face finish: 9 column(s) striped in the hill's own rock, 26 paved face(s) footed, 0 crown notch(es) closed
+  fix: No action needed.
+
+note LOAM-I497 GROUND_STAGE at world: ground stage: 29 intent(s) (building.footprint 18, plaza.ground 1, plaza.well 2, road.network 8), 5 resolve(s), 150 column(s) moved, 8 transition(s) (kerb 8), 0 of them unbuilt by any pass; coverage 244 boundary pair(s) — 113 in a transition, 131 suppressed by request, 0 by a face, 0 a kerb, 0 uncovered (excluded: 98002 natural, 0 wet)
+  fix: Nothing — this is the stage's own golden, and it is a note so that a count moving is visible in a diff before a block moves in a world.
+
+note LOAM-T341 PROGRAM_SEATED_PAD at world.the_elder_cap: "elder_glowcap" writes the same sole on every column, so it is seated on a levelled pad rather than on the real ground
+  fix: no change needed here — the fix is in the program: read api.heightAt at every column it touches and answer it, and the next authoring run will seat it on the ground itself
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 2603 footprint columns (plus 13829 feathered over 40 columns) to minecraft:plains, from the ambient majority (minecraft:plains, 84% of 8960 ring columns); snow policy auto resolved to "never" on a 0/2603 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+  authoring  1 model run(s), 0 compile-feedback round(s), 83792 in + 10846 out = 94638 tokens (5700 of the out reasoning) ($0.0518)
+
+next: terrainist install /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/glowcap_vale/out/glowshroom_vale

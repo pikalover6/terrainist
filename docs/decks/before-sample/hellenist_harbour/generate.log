@@ -1,0 +1,93 @@
+prompt     A modern Hellenist city being invaded by sea monsters.
+seed       305
+size       512x512
+model      google/gemini-3.7-flash
+effort     high
+kit        settlement
+
+intent     {"era":"modern","wealth":0.8,"decline":0.1,"formality":0.8,"event":{"kind":"siege","severity":0.8,"recency":0},"climate":{"biome":"minecraft:warm_ocean","temperature":0.7,"humidity":0.2,"snow":"never"},"character":{"label":"modern Hellenist coastal metropolis under sea monster assault","materialTheme":"modern_city","formPacks":["classical_mediterranean"],"archetypes":{"prefer":["stoa","peripteral_temple","odeon","propylaea","monument","lighthouse"]},"props":{"prefer":["fountain","statue","bollard","street_lamp"]},"urbanForm":"grid","motifs":{"roofType":"flat","massing":"blocky","windowRhythm":"regular","ornamentDensity":0.6}},"tokens":{"terrain":"a grand classical-revival coastal city fronting a wide harbour and deep open sea","event_direction":"colossal sea monsters emerging from the open ocean breaching the harbour walls and advancing onto the waterfront","infra":"barricade_line across the waterfront boulevard; emergency_cordon ringing the lower docks; broken quayside piers where beasts have come ashore","icons":"neoclassical monumental colonnades facing the sea; breached seawalls; emergency sirens and modern searchlights illuminating towering aquatic monsters"}}
+           1 attempt(s), 8102 tokens
+
+authored with google/gemini-3.7-flash in 1 attempt(s)
+  attempt 1   valid
+  tokens     83996 in + 10221 out = 94217  ($0.0507)
+programs   2 of 2 kept (budget 3 landmark / 3 plugin)
+  ok     colossal_leviathan [landmark]  1 attempt(s), 28396 tokens  ($0.0482), 27 warning(s)
+  ok     sea_monster [plugin]  1 attempt(s), 31160 tokens  ($0.0533), 4 warning(s)
+  tokens     6775 in + 52781 out = 59556  (38440 of the out reasoning)  ($0.1015)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/hellenist_harbour/out/hellenic_abyss.loam.json
+
+
+compile feedback, round 1 of 2:
+
+
+Layout solver report:
+
+  world.the_leviathan: placed after landmark_coarse_ring (97 candidates considered)
+    unsatisfied zone constraint [2] (declared soft, now soft, weight 2, cost 0.33)
+
+  revision 1 authored in 1 attempt(s)
+  tokens     101576 in + 20827 out = 122403  ($0.0771)
+
+compiled "hellenic_abyss" — 1.21.11 (DataVersion 4671)
+  world      /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/hellenist_harbour/out/hellenic_abyss
+  seed       305
+  region     512x512 at (-256, -256)
+  heights    47.1..112.1  sea 63  snow line 102.3
+  land       80.8% of columns above sea level
+  biomes     plains 79.6%, ocean 16.5%, windswept_hills 2.2%, beach 1.8%, stony_peaks 0.0%
+  trees      557 (hillside_cypresses=51, sparse_wilderness=596)
+  chunks     1024
+  blocks     36025035 (43307 vegetation)
+  markers    81
+  spawn      [0, 78, 0]
+  timings    validate 3ms  field 202ms  layout 1138ms  climate 37ms  columns 24ms  caves 0ms  structures 581ms  programs 1380ms  scatter 189ms  biomes 27ms  validators 3ms  emit 1028ms  total 4671ms
+  programs   world.the_leviathan=colossal_leviathan×1 (30304 blocks), world.monster_pack=sea_monster×8 (2688 blocks)
+  doc        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/hellenist_harbour/out/hellenic_abyss.loam.json
+  report     /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/hellenist_harbour/out/hellenic_abyss.report.json
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.metropolitan_arterials: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+note LOAM-I512 DISTRICT_RUINS at world.hellenic_metropolis.cell_1: decline 0.10 gives a ruin share of 0.00: 0 of 6 infill lots roll into ruined shells (light 0, heavy 0, total 0)
+  fix: decline is below the ruin onset of 0.35 — below it decline is wear, not ruin; raise it to ruin buildings
+
+note LOAM-I512 DISTRICT_RUINS at world.hellenic_metropolis.cell_2: decline 0.10 gives a ruin share of 0.00: 0 of 5 infill lots roll into ruined shells (light 0, heavy 0, total 0)
+  fix: decline is below the ruin onset of 0.35 — below it decline is wear, not ruin; raise it to ruin buildings
+
+note LOAM-I512 DISTRICT_RUINS at world.hellenic_metropolis.cell_3: decline 0.10 gives a ruin share of 0.00: 0 of 5 infill lots roll into ruined shells (light 0, heavy 0, total 0)
+  fix: decline is below the ruin onset of 0.35 — below it decline is wear, not ruin; raise it to ruin buildings
+
+note LOAM-I512 DISTRICT_RUINS at world.hellenic_metropolis.cell_4: decline 0.10 gives a ruin share of 0.00: 0 of 8 infill lots roll into ruined shells (light 0, heavy 0, total 0)
+  fix: decline is below the ruin onset of 0.35 — below it decline is wear, not ruin; raise it to ruin buildings
+
+warning LOAM-W517 INTENT_FORM_PACK_ERA at world: intent.era resolves to "modern", which is outside the affinity of the form pack "classical_mediterranean" (ancient) — the pack is used as written
+  fix: affinity is advice, never a gate: an ancient form vocabulary in a modern city is a legal and deliberate combination. Change the era or the pack only if the pairing was not what you meant
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.grand_harbour: every cut face finished: 33 column(s) faced in the hill's own rock
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world: face finish: 146 column(s) striped in the hill's own rock, 335 paved face(s) footed, 4 crown notch(es) closed
+  fix: No action needed.
+
+note LOAM-I497 GROUND_STAGE at world: ground stage: 383 intent(s) (building.footprint 60, precinct.ground 1, quarter.plane 298, street.network 20, street.sidewalk 4), 5 resolve(s), 855 column(s) moved, 86 transition(s) (bank 34, kerb 47, rock 5), 39 of them unbuilt by any pass; coverage 664 boundary pair(s) — 174 in a transition, 490 suppressed by request, 0 by a face, 0 a kerb, 0 uncovered (excluded: 54043 natural, 31 wet)
+  fix: Nothing — this is the stage's own golden, and it is a note so that a count moving is visible in a diff before a block moves in a world.
+
+note LOAM-I412 SEAM_SERVED at world: terminal seam builder (§3.3): 2 derived transition(s) built (rock 2) over 0 column(s) of face, 0 of graded bank (0 eased under §7.2's natural blend) and 35 finished in the hill's own rock; 37 absorbed under S7, 0 refused
+  fix: No action needed.
+
+note LOAM-T230 WALL_COURSE_CLAMPED at world.hellenic_metropolis: the settlement is built to the world-region edge, so the circuit flattens along the boundary there — closed, not clipped; buildings on the line become part of the wall
+  fix: no change needed — or grow the settlement with wall room from the region edge if the flattened stretch reads wrong on a walk
+
+warning LOAM-W337 PROGRAM_DROPPED at world.monster_pack: "sea_monster" asked for 14 instances and only 8 sites would take one
+  fix: the area cannot hold that many at this spacing: widen "area", lower "spacing" below 23, relax "maxSlope"/"avoidTags", or ask for fewer
+
+warning LOAM-W472 BIOME_INTENT_UNKNOWN at world: climate intent names the biome "minecraft:warm_ocean", which this emitter's table does not carry; falling back to the land-use clamp's derived biome
+  fix: name one of the 35 biomes this emitter paints: minecraft:ocean, minecraft:deep_ocean, minecraft:cold_ocean, minecraft:deep_cold_ocean, minecraft:beach, minecraft:snowy_beach, minecraft:plains, minecraft:snowy_plains, minecraft:forest, minecraft:taiga, minecraft:windswept_hills, minecraft:stony_peaks, minecraft:snowy_slopes, minecraft:river, minecraft:basalt_deltas, minecraft:dark_forest, minecraft:birch_forest, minecraft:old_growth_birch_forest, minecraft:flower_forest, minecraft:windswept_forest, minecraft:pale_garden, minecraft:cherry_grove, minecraft:sunflower_plains, minecraft:meadow, minecraft:grove, minecraft:savanna, minecraft:windswept_savanna, minecraft:jungle, minecraft:sparse_jungle, minecraft:swamp, minecraft:snowy_taiga, minecraft:old_growth_spruce_taiga, minecraft:old_growth_pine_taiga, minecraft:jagged_peaks, minecraft:frozen_peaks. Biomes whose signature is ground material (desert, badlands, mangrove_swamp, mushroom_fields, ice_spikes) are not carried — ask for that ground with terrain, not with a climate intent.
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 91657 footprint columns (plus 33183 feathered over 40 columns) to minecraft:plains, from the ambient majority (minecraft:plains, 88% of 20839 ring columns); snow policy never resolved to "never" on a 0/91657 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+  authoring  2 model run(s), 1 compile-feedback round(s), 185572 in + 31048 out = 216620 tokens (10010 of the out reasoning) ($0.1278)
+
+next: terrainist install /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/hellenist_harbour/out/hellenic_abyss

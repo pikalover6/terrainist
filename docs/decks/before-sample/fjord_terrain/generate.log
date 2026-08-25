@@ -1,0 +1,35 @@
+prompt     A deep fjord cutting inland between pine ridges, its water open to the sea.
+seed       314
+size       512x512
+model      google/gemini-3.7-flash
+effort     high
+kit        terrain
+
+intent     {"climate":{"biome":"minecraft:taiga","temperature":-0.2,"humidity":0.5,"blend":"soft"},"character":{"materialTheme":"boreal_pine","flora":{"prefer":["spruce_tall","conifer"]}},"tokens":{"terrain":"a deep fjord cutting inland between steep pine ridges, its water opening to the sea"}}
+           1 attempt(s), 8194 tokens
+
+authored with google/gemini-3.7-flash in 1 attempt(s)
+  attempt 1   valid
+  tokens     13474 in + 4873 out = 18347  ($0.0142)
+programs   none (budget 3 landmark / 3 plugin)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/fjord_terrain/out/deep_pine_fjord.loam.json
+
+compiled "deep_pine_fjord" — 1.21.11 (DataVersion 4671)
+  world      /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/fjord_terrain/out/deep_pine_fjord
+  seed       314
+  region     512x512 at (-256, -256)
+  heights    -12.3..170.1  sea 63  snow line 157.3
+  land       69.2% of columns above sea level
+  biomes     windswept_hills 24.6%, plains 20.4%, taiga 19.8%, cold_ocean 18.6%, deep_cold_ocean 11.2%, stony_peaks 3.0%, snowy_beach 2.3%, snowy_slopes 0.1%
+  trees      6113 (ridge_pine_forest=5812, wilderness_pine_scatter=301)
+  chunks     1024
+  blocks     38726934 (501330 vegetation)
+  markers    75
+  spawn      [-164, 91, -41]
+  timings    validate 1ms  field 381ms  layout 0ms  climate 30ms  columns 41ms  caves 41ms  structures 0ms  programs 0ms  scatter 282ms  biomes 12ms  validators 15ms  emit 1541ms  total 2458ms
+  doc        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/fjord_terrain/out/deep_pine_fjord.loam.json
+  report     /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/fjord_terrain/out/deep_pine_fjord.report.json
+  authoring  1 model run(s), 0 compile-feedback round(s), 13474 in + 4873 out = 18347 tokens (2975 of the out reasoning) ($0.0142)
+
+next: terrainist install /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/fjord_terrain/out/deep_pine_fjord

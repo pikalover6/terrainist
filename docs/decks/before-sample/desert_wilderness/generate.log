@@ -1,0 +1,35 @@
+prompt     A vast salt desert under a hard sun, cracked flat to the horizon, with nothing living on it.
+seed       313
+size       512x512
+model      google/gemini-3.7-flash
+effort     high
+kit        terrain
+
+intent     {"climate":{"biome":"minecraft:desert","temperature":1,"humidity":-1,"snow":"never"},"character":{"label":"barren salt flat","materialTheme":"sun_clay"},"tokens":{"terrain":"a vast, level salt desert extending flat to the horizon; cracked white salt crust and baked alkaline earth","icons":"endless cracked salt polygon plains under a blazing sun; completely devoid of flora, fauna, water, or structures"}}
+           1 attempt(s), 7768 tokens
+
+authored with google/gemini-3.7-flash in 1 attempt(s)
+  attempt 1   valid
+  tokens     13490 in + 3894 out = 17384  ($0.0124)
+programs   none (budget 3 landmark / 3 plugin)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/desert_wilderness/out/vast_salt_desert.loam.json
+
+compiled "vast_salt_desert" — 1.21.11 (DataVersion 4671)
+  world      /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/desert_wilderness/out/vast_salt_desert
+  seed       313
+  region     512x512 at (-256, -256)
+  heights    64.6..70.0  sea 63  snow line 70.0
+  land       100.0% of columns above sea level
+  biomes     plains 100.0%
+  trees      0 ()
+  chunks     1024
+  blocks     34749765 (0 vegetation)
+  markers    5
+  spawn      [0, 71, 0]
+  timings    validate 0ms  field 82ms  layout 0ms  climate 35ms  columns 114ms  caves 0ms  structures 0ms  programs 0ms  scatter 3ms  biomes 8ms  validators 1ms  emit 695ms  total 1052ms
+  doc        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/desert_wilderness/out/vast_salt_desert.loam.json
+  report     /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/desert_wilderness/out/vast_salt_desert.report.json
+  authoring  1 model run(s), 0 compile-feedback round(s), 13490 in + 3894 out = 17384 tokens (2984 of the out reasoning) ($0.0124)
+
+next: terrainist install /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/desert_wilderness/out/vast_salt_desert

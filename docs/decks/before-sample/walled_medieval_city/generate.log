@@ -1,0 +1,129 @@
+prompt     A walled medieval city on a hill, its castle keep above the rooftops.
+seed       311
+size       512x512
+model      google/gemini-3.7-flash
+effort     high
+kit        settlement
+
+intent     {"era":"medieval","character":{"label":"walled hilltop castle town","materialTheme":"temperate_timber","fortification":"walled","urbanForm":"hillside","ground":"stepped","courtyards":0.5,"archetypes":{"prefer":["manor","watchtower","church","tavern","cottage"]},"motifs":{"roofType":"gable","massing":"stepped"}},"tokens":{"terrain":"a prominent hill rising above the surrounding landscape","icons":"a towering castle keep at the summit overlooking dense medieval rooftops within a continuous defensive wall circuit"}}
+           1 attempt(s), 7794 tokens
+
+authored with google/gemini-3.7-flash in 1 attempt(s)
+  attempt 1   valid
+  tokens     83743 in + 7100 out = 90843  ($0.0447)
+programs   1 of 1 kept (budget 3 landmark / 3 plugin)
+  ok     castle_keep [landmark]  1 attempt(s), 20556 tokens  ($0.0337), 5 warning(s)
+  tokens     3685 in + 17728 out = 21413  (10045 of the out reasoning)  ($0.0346)
+
+wiring     1 program(s) authored but never invoked: castle_keep [landmark]
+
+  wired in 1 attempt(s); 93969 in + 12501 out = 106470 tokens  ($0.0310)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/walled_medieval_city/out/walled_hill_city.loam.json
+
+compiled "walled_hill_city" — 1.21.11 (DataVersion 4671)
+  world      /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/walled_medieval_city/out/walled_hill_city
+  seed       311
+  region     512x512 at (-256, -256)
+  heights    53.3..111.0  sea 63  snow line 108.6
+  land       77.0% of columns above sea level
+  biomes     plains 73.1%, ocean 23.0%, windswept_hills 1.7%, beach 1.5%, forest 0.7%
+  trees      1027 (north_forest=133, ambient_woodland=982)
+  chunks     1024
+  blocks     36284005 (91614 vegetation)
+  markers    73
+  spawn      [0, 111, 0]
+  timings    validate 2ms  field 200ms  layout 801ms  climate 44ms  columns 29ms  caves 0ms  structures 1160ms  programs 177ms  scatter 247ms  biomes 30ms  validators 3ms  emit 1104ms  total 3883ms
+  programs   world.high_keep=castle_keep×1 (11276 blocks)
+  doc        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/walled_medieval_city/out/walled_hill_city.loam.json
+  report     /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/walled_medieval_city/out/walled_hill_city.report.json
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.high_roads: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+note LOAM-W522 PROGRAM_FACE_REMEASURED at world.high_keep: this landmark was placed at (-37, 75), not where its facing was first measured from, so the facing was taken again from the real site: 180° becomes 270°
+  fix: nothing to change — the front points where the document asked it to. To pin the site as well, tighten the coarse target with a "radius"/"tolerance" or a hard "zone"
+
+note LOAM-T242 GROUND_PLANE_DRIFT at world.hill_city: 16527 of 25212 platform column(s) in "world.hill_city" within 12 block(s) of a graded carriageway stand off the street's own storey lattice, the worst by -33 block(s)
+  fix: Nothing to change in the document — a document cannot move its own storey lattice. A non-zero count is a compiler finding: the anchor did not hold on this quarter.
+
+warning LOAM-W483 INTENT_ARCHETYPE_UNKNOWN at world: intent.character.archetypes names 1 value no registry carries: "manor" — it is ignored
+  fix: did you mean: "manor" → manor_house
+
+note LOAM-I412 SEAM_SERVED at world.hill_city: seams served (S1): 0 wall(s), 2 tier stack(s) (2 revetted) over 4 face(s) and 71 column(s), 0 bank(s), 0 kerb seam(s), and 0 seam(s) a building already stood on
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.hill_city: transitions by context (§5): 846 edge column(s) — fill 41 (41 tiered), cut 805 (802 retaining, 3 rock)
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.hill_city: built faces by finished drop (§13.8): 71 face column(s) along the seams a wall was built on — 43 at 4, 28 at 5
+  fix: No action needed.
+
+note LOAM-T237 FRONTAGE_TIE_DRIFT at world.hill_city: street segment "segment:dn2_108!world.hill_city" was surfaced above its datum at 16 of 40 station(s), by up to 3 block(s); the lots seated against that datum keep the level the datum gave them
+  fix: No change needed if the run crosses or skirts water — a deck and a shore rim are the one legal cause, and a street that rose out of the water is a street doing the right thing. A large drift away from water means the datum and the surfacer have become two graders: report it.
+
+note LOAM-T237 FRONTAGE_TIE_DRIFT at world.hill_city: street segment "segment:dn2_36!world.hill_city" was surfaced above its datum at 22 of 130 station(s), by up to 4 block(s); the lots seated against that datum keep the level the datum gave them
+  fix: No change needed if the run crosses or skirts water — a deck and a shore rim are the one legal cause, and a street that rose out of the water is a street doing the right thing. A large drift away from water means the datum and the surfacer have become two graders: report it.
+
+note LOAM-T237 FRONTAGE_TIE_DRIFT at world.hill_city: street segment "segment:dn2_72!world.hill_city" was surfaced above its datum at 22 of 70 station(s), by up to 4 block(s); the lots seated against that datum keep the level the datum gave them
+  fix: No change needed if the run crosses or skirts water — a deck and a shore rim are the one legal cause, and a street that rose out of the water is a street doing the right thing. A large drift away from water means the datum and the surfacer have become two graders: report it.
+
+note LOAM-T237 FRONTAGE_TIE_DRIFT at world.hill_city: street segment "segment:dn3_144!world.hill_city" was surfaced above its datum at 17 of 73 station(s), by up to 4 block(s); the lots seated against that datum keep the level the datum gave them
+  fix: No change needed if the run crosses or skirts water — a deck and a shore rim are the one legal cause, and a street that rose out of the water is a street doing the right thing. A large drift away from water means the datum and the surfacer have become two graders: report it.
+
+note LOAM-T237 FRONTAGE_TIE_DRIFT at world.hill_city: street segment "segment:dn3_180!world.hill_city" was surfaced above its datum at 18 of 60 station(s), by up to 4 block(s); the lots seated against that datum keep the level the datum gave them
+  fix: No change needed if the run crosses or skirts water — a deck and a shore rim are the one legal cause, and a street that rose out of the water is a street doing the right thing. A large drift away from water means the datum and the surfacer have become two graders: report it.
+
+note LOAM-T237 FRONTAGE_TIE_DRIFT at world.hill_city: street segment "segment:dn3_216!world.hill_city" was surfaced above its datum at 14 of 33 station(s), by up to 3 block(s); the lots seated against that datum keep the level the datum gave them
+  fix: No change needed if the run crosses or skirts water — a deck and a shore rim are the one legal cause, and a street that rose out of the water is a street doing the right thing. A large drift away from water means the datum and the surfacer have become two graders: report it.
+
+note LOAM-T237 FRONTAGE_TIE_DRIFT at world.hill_city: street segment "segment:dn3_36!world.hill_city" was surfaced above its datum at 8 of 51 station(s), by up to 3 block(s); the lots seated against that datum keep the level the datum gave them
+  fix: No change needed if the run crosses or skirts water — a deck and a shore rim are the one legal cause, and a street that rose out of the water is a street doing the right thing. A large drift away from water means the datum and the surfacer have become two graders: report it.
+
+note LOAM-T237 FRONTAGE_TIE_DRIFT at world.hill_city: street segment "segment:dn3_72!world.hill_city" was surfaced above its datum at 8 of 42 station(s), by up to 3 block(s); the lots seated against that datum keep the level the datum gave them
+  fix: No change needed if the run crosses or skirts water — a deck and a shore rim are the one legal cause, and a street that rose out of the water is a street doing the right thing. A large drift away from water means the datum and the surfacer have become two graders: report it.
+
+note LOAM-T237 FRONTAGE_TIE_DRIFT at world.hill_city: street segment "segment:dn4_108!world.hill_city" was surfaced above its datum at 6 of 22 station(s), by up to 2 block(s); the lots seated against that datum keep the level the datum gave them
+  fix: No change needed if the run crosses or skirts water — a deck and a shore rim are the one legal cause, and a street that rose out of the water is a street doing the right thing. A large drift away from water means the datum and the surfacer have become two graders: report it.
+
+note LOAM-T237 FRONTAGE_TIE_DRIFT at world.hill_city: street segment "segment:dn4_144!world.hill_city" was surfaced above its datum at 2 of 25 station(s), by up to 1 block(s); the lots seated against that datum keep the level the datum gave them
+  fix: No change needed if the run crosses or skirts water — a deck and a shore rim are the one legal cause, and a street that rose out of the water is a street doing the right thing. A large drift away from water means the datum and the surfacer have become two graders: report it.
+
+note LOAM-T237 FRONTAGE_TIE_DRIFT at world.hill_city: street segment "segment:dn4_36!world.hill_city" was surfaced above its datum at 16 of 51 station(s), by up to 4 block(s); the lots seated against that datum keep the level the datum gave them
+  fix: No change needed if the run crosses or skirts water — a deck and a shore rim are the one legal cause, and a street that rose out of the water is a street doing the right thing. A large drift away from water means the datum and the surfacer have become two graders: report it.
+
+note LOAM-T237 FRONTAGE_TIE_DRIFT at world.hill_city: street segment "segment:dn4_72!world.hill_city" was surfaced above its datum at 35 of 112 station(s), by up to 5 block(s); the lots seated against that datum keep the level the datum gave them
+  fix: No change needed if the run crosses or skirts water — a deck and a shore rim are the one legal cause, and a street that rose out of the water is a street doing the right thing. A large drift away from water means the datum and the surfacer have become two graders: report it.
+
+note LOAM-I504 FARM_TRACK at world.lowland_farm: "world.lowland_farm" publishes a road_stub at its gate: a road.network@0 node anchored on "world.lowland_farm" runs the lane to it
+  fix: add "lowland_farm" to the "anchors" of the document's road.network@0 node, or give that node a "lanes" entry naming it
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.hill_city: every cut face finished: 2253 column(s) faced in the hill's own rock, of which 805 were declared cut edges (§5.4); 802 of those wanted masonry (§5.2 rule 9) and got rock — an uphill wall is v1
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world: face finish: 1913 column(s) striped in the hill's own rock, 1229 paved face(s) footed, 47 crown notch(es) closed
+  fix: No action needed.
+
+note LOAM-I497 GROUND_STAGE at world: ground stage: 684 intent(s) (building.footprint 24, farm.parcel 6, quarter.plane 525, retaining.seam 55, retaining.skirt 44, street.network 23, street.sidewalk 1, verge 6), 5 resolve(s), 13351 column(s) moved, 1229 transition(s) (bank 596, built 1, kerb 382, retaining 7, rock 230, tiered 13), 712 of them unbuilt by any pass; coverage 5336 boundary pair(s) — 3808 in a transition, 844 suppressed by request, 684 by a face, 0 a kerb, 0 uncovered (excluded: 46955 natural, 94 wet)
+  fix: Nothing — this is the stage's own golden, and it is a note so that a count moving is visible in a diff before a block moves in a world.
+
+note LOAM-I412 SEAM_SERVED at world: terminal seam builder (§3.3): 21 derived transition(s) built (bank 2, revetted 16, rock 1, tiered 2) over 301 column(s) of face, 2183 of graded bank (1 eased under §7.2's natural blend) and 5 finished in the hill's own rock; 657 absorbed under S7, 15 refused
+  fix: No action needed.
+
+warning LOAM-W413 SEAM_UNSERVED at world.hill_city: 15 derived transition(s) in "world.hill_city" were chosen and could not be placed: a derived bank at -16,-160 falls 6 block(s) over 15 column(s), but only 0 column(s) of open ground stand beyond it where a 1:2 bank wants 12, and the revetted stack S5 re-dresses it as found no ground to stand on either; a derived bank at -22,-159 falls 6 block(s) over 7 column(s), but only 0 column(s) of open ground stand beyond it where a 1:2 bank wants 12, and the revetted stack S5 re-dresses it as found no ground to stand on either; a derived bank at -3,-159 falls 6 block(s) over 7 column(s), but only 0 column(s) of open ground stand beyond it where a 1:2 bank wants 12, and the revetted stack S5 re-dresses it as found no ground to stand on either; and 12 more
+  fix: Nothing in the document names the columns directly: widen the block so the construction has room, or lower the quarter's density so the two levels are closer together.
+
+warning LOAM-W489 INTENT_FORTIFICATION_UNKNOWN at world: intent.character.fortification asks for a wall and 1 node(s) already declare "params.walls" — the authored walls are built and no second circuit is added
+  fix: this is the intended precedence; delete "params.walls" if you want the dial to decide the wall, or leave it if the parameters are what you meant
+
+note LOAM-I415 WALL_COURSE_CROSSES_SEAM at world.hill_city: wall run "masonry" (946 course columns) crosses a platform boundary at 11 column(s) where the ground steps at least 2 block(s) — the deepest crossing is 7 block(s) and the longest unbroken stretch is 3 column(s), and along it the wall's own fill is the face rather than a wall standing on one
+  fix: no action needed — the circuit is not moved on this number. It is the measurement that decides whether a crossing is worth building as a tier stack instead, which is a later round
+
+note LOAM-T341 PROGRAM_SEATED_PAD at world.high_keep: "castle_keep" writes the same sole on every column, so it is seated on a levelled pad rather than on the real ground
+  fix: no change needed here — the fix is in the program: read api.heightAt at every column it touches and answer it, and the next authoring run will seat it on the ground itself
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 55227 footprint columns (plus 24421 feathered over 40 columns) to minecraft:plains, from the ambient majority (minecraft:plains, 68% of 15420 ring columns); snow policy auto resolved to "never" on a 0/55227 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+  authoring  2 model run(s), 0 compile-feedback round(s), 177712 in + 19601 out = 197313 tokens (7654 of the out reasoning) ($0.0758)
+
+next: terrainist install /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/b0/walled_medieval_city/out/walled_hill_city

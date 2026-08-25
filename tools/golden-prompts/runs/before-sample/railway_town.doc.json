@@ -1,0 +1,665 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "soot_canal_junction",
+    "worldSeed": "312",
+    "prompt": "A soot-blackened industrial town where the railway meets the canal.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:cobblestone",
+      "road.shoulder": "minecraft:gravel",
+      "ground.surface": {
+        "mix": [
+          [
+            "minecraft:coarse_dirt",
+            3
+          ],
+          [
+            "minecraft:podzol",
+            2
+          ],
+          [
+            "minecraft:gravel",
+            1
+          ]
+        ]
+      },
+      "ground.cliff": "minecraft:deepslate"
+    }
+  },
+  "intent": {
+    "era": "industrial",
+    "wealth": 0.35,
+    "decline": 0.3,
+    "formality": 0.5,
+    "character": {
+      "label": "soot-blackened industrial canal and rail hub",
+      "materialTheme": "temperate_timber",
+      "urbanForm": "canal",
+      "archetypes": {
+        "prefer": [
+          "warehouse",
+          "factory_hall",
+          "blast_furnace_works",
+          "coal_tipple",
+          "train_station",
+          "brickworks",
+          "tavern",
+          "apartment_block"
+        ],
+        "forbid": [
+          "manor",
+          "temple",
+          "megaron",
+          "pagoda"
+        ]
+      },
+      "props": {
+        "prefer": [
+          "barge",
+          "lamp_post",
+          "cart",
+          "log_pile",
+          "rail_line",
+          "bollard_row"
+        ]
+      },
+      "motifs": {
+        "roofType": "shed",
+        "massing": "blocky",
+        "windowRhythm": "regular",
+        "ornamentDensity": 0.2
+      }
+    },
+    "tokens": {
+      "terrain": "a network of canal cuts and basins meeting a rail line and sidings through a gritty brick-and-soot mill quarter",
+      "infra": "railway_tracks along the water basin; canal_locks and towpaths along the water cuts; coal_chutes over the loading quays",
+      "icons": "brick mill chimneys, steam plumes, canal barges tied at the wharves, iron rail bridges over the canal"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "the industrial junction basin",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "low-lying river valley engineered for rail and canal transport",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 68,
+          "amplitude": 16,
+          "octaves": 4,
+          "frequency": 0.0035,
+          "gain": 0.45,
+          "erosionPasses": 2,
+          "cliffThreshold": 60,
+          "soilDepth": 4,
+          "beachWidth": 3,
+          "snowLineFraction": 0.95
+        },
+        "children": [
+          {
+            "id": "industrial_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "graded terrain pad for the rail yard and canal wharves",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 150,
+              "height": 4,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "main_canal_channel",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the main engineered canal cut running through the town to the coast",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.1,
+                  0.52
+                ],
+                [
+                  0.35,
+                  0.5
+                ],
+                [
+                  0.65,
+                  0.5
+                ],
+                [
+                  0.9,
+                  0.48
+                ],
+                "coast"
+              ],
+              "width": 18,
+              "depth": 7,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "wharf_basin",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the wide turning and transshipment basin",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.48,
+                0.5
+              ],
+              "radius": 42,
+              "depth": 6,
+              "water": true,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0015,
+          "latitudeGradient": -0.1
+        }
+      },
+      {
+        "id": "canal_quarter",
+        "kind": "district",
+        "label": "the canal-side mill and freight quarter",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            240,
+            220
+          ]
+        },
+        "params": {
+          "fabric": "canal",
+          "density": "medium",
+          "mix": [
+            "factory_hall",
+            "warehouse",
+            "brickworks",
+            "coal_tipple",
+            "steam_plant",
+            "apartment_block",
+            "tavern",
+            "terraced_row"
+          ],
+          "blockSize": 42,
+          "courtyards": 0.3
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 8
+          }
+        ],
+        "tags": [
+          "urban",
+          "industrial",
+          "canal_district"
+        ],
+        "children": [
+          {
+            "id": "central_station",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the canal terminal railway station",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                15,
+                13,
+                21
+              ]
+            },
+            "params": {
+              "archetype": "train_station",
+              "floors": 2
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "rail"
+            ]
+          },
+          {
+            "id": "coal_tipple_dock",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the elevated coal tipple over the wharf",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                14,
+                17
+              ]
+            },
+            "params": {
+              "archetype": "coal_tipple",
+              "floors": 1
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "north",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "industrial"
+            ]
+          },
+          {
+            "id": "central_steam_plant",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the central boiler plant providing power to the mills",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                14,
+                19
+              ]
+            },
+            "params": {
+              "archetype": "steam_plant",
+              "floors": 2
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "west",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "industrial"
+            ]
+          },
+          {
+            "id": "town_gasworks",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the town gasholder and retorts",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                15,
+                15,
+                15
+              ]
+            },
+            "params": {
+              "archetype": "gasworks",
+              "floors": 1
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "east",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "industrial"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "coal_transshipment_gantry",
+        "kind": "generator",
+        "generator": "authored:rail_coal_transshipment_gantry",
+        "label": "the rail-to-barge coal transshipment gantry",
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "canal_quarter",
+            "min": 6,
+            "max": 28,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "landmark",
+          "industrial",
+          "rail"
+        ]
+      },
+      {
+        "id": "engine_roundhouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "locomotive maintenance shed and inspection pit",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            14,
+            21
+          ]
+        },
+        "params": {
+          "archetype": "roundhouse",
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "distance": "canal_quarter",
+            "min": 10,
+            "max": 40,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "rail",
+          "industrial"
+        ]
+      },
+      {
+        "id": "rail_signal_box",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the switching cabin overlooking the canal junction",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            13,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "signal_box",
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "distance": "engine_roundhouse",
+            "min": 8,
+            "max": 24,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "rail"
+        ]
+      },
+      {
+        "id": "canal_locks",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "timber and iron lock gates along the canal cuts",
+        "params": {
+          "program": "canal_lock_gates",
+          "count": 3,
+          "area": {
+            "zone": "center"
+          },
+          "spacing": 40,
+          "seat": "wade"
+        }
+      },
+      {
+        "id": "canal_narrowboats",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "coal and cargo narrowboats along the canal wharves",
+        "params": {
+          "program": "canal_narrowboat",
+          "count": 6,
+          "area": {
+            "zone": "center"
+          },
+          "spacing": 24,
+          "seat": "wade"
+        }
+      },
+      {
+        "id": "locomotive_engine",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a shunting locomotive on the junction siding",
+        "params": {
+          "prop": "locomotive",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "freight_car_coal",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "loaded coal gondola car",
+        "params": {
+          "prop": "freight_car",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "freight_caboose",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "brake van at the tail of the siding",
+        "params": {
+          "prop": "caboose",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "wharf_cart",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "dockside haulage cart",
+        "params": {
+          "prop": "cart",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "wharf_fuel_stack",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "stacked timber and fuel chocks beside the railway",
+        "params": {
+          "prop": "log_pile",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "town_roads",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "cobblestone street grid connecting the railway and canal terminals",
+        "params": {
+          "anchors": [
+            "canal_quarter",
+            "coal_transshipment_gantry",
+            "engine_roundhouse",
+            "rail_signal_box"
+          ],
+          "pattern": "grid",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 14
+        }
+      },
+      {
+        "id": "sooty_outskirts_trees",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse, smoke-stunted trees beyond the railway embankment",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 5,
+          "clumping": 0.5,
+          "maxSlope": 30,
+          "elevation": [
+            2,
+            80
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct",
+            "urban"
+          ],
+          "undergrowth": {
+            "grass": 0.25,
+            "flowers": 0.01,
+            "deadwood": 0.12
+          },
+          "species": [
+            {
+              "id": "stunted_oak",
+              "weight": 2,
+              "shape": "oak_round"
+            },
+            {
+              "id": "smoky_pine",
+              "weight": 1,
+              "shape": "spruce_squat"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "programs": {
+    "rail_coal_transshipment_gantry": {
+      "mode": "landmark",
+      "envelope": [
+        24,
+        22,
+        20
+      ],
+      "sourceHash": "b3:aad5920c2ce86323da624523fc125ea484589b23bad657c0ef1728e86db99e96",
+      "outputHash": "b3:4f9d1fe0033be9eb27e8be37e2eeef30a108c69274897d8320411a5f9945df33",
+      "conforms": false,
+      "conformHash": "b3:58e976ab190f2fac4e206bd5948bb7bb6dfc3d3ab1378455a65a67d4bd9c86f2",
+      "source": "export const envelope = [24, 22, 20];\n\nexport default function build(api) {\n  const [sizeX, sizeY, sizeZ] = api.size;\n  const seatY = 6;\n\n  function set(x, y, z, block) {\n    if (x >= 0 && x < sizeX && y >= 0 && y < sizeY && z >= 0 && z < sizeZ) {\n      api.set(x, y, z, block);\n    }\n  }\n\n  function groundY(x, z) {\n    return Math.round(seatY + api.heightAt(x, z));\n  }\n\n  function baseBlock(str) {\n    return (str || \"\").split(\"[\")[0];\n  }\n\n  function withState(blockStr, stateStr) {\n    const base = baseBlock(blockStr);\n    return `${base}[${stateStr}]`;\n  }\n\n  // --- Theme Palette Mapping ---\n  const woodPlanks = baseBlock(api.theme.wood?.planks) || \"minecraft:spruce_planks\";\n  const woodLog = baseBlock(api.theme.wood?.log) || \"minecraft:dark_oak_log\";\n  const woodStripped = baseBlock(api.theme.wood?.stripped) || \"minecraft:stripped_dark_oak_log\";\n  const woodStairs = baseBlock(api.theme.wood?.stairs) || \"minecraft:dark_oak_stairs\";\n  const woodSlab = baseBlock(api.theme.wood?.slab) || \"minecraft:dark_oak_slab\";\n  const woodFence = baseBlock(api.theme.wood?.fence) || \"minecraft:dark_oak_fence\";\n  const woodDoor = baseBlock(api.theme.wood?.door) || \"minecraft:spruce_door\";\n  const woodTrapdoor = baseBlock(api.theme.wood?.trapdoor) || \"minecraft:spruce_trapdoor\";\n\n  const stonePrimary = baseBlock(api.theme.stone?.primary) || \"minecraft:deepslate_bricks\";\n  const stoneAccent = baseBlock(api.theme.stone?.accent) || \"minecraft:cracked_deepslate_bricks\";\n  const stoneStairs = baseBlock(api.theme.stone?.stairs) || \"minecraft:deepslate_brick_stairs\";\n  const stoneSlab = baseBlock(api.theme.stone?.slab) || \"minecraft:deepslate_brick_slab\";\n  const stoneWall = baseBlock(api.theme.stone?.wall) || \"minecraft:deepslate_brick_wall\";\n\n  const groundPlinth = baseBlock(api.theme.ground?.plinth) || \"minecraft:deepslate_tiles\";\n  const groundPave = baseBlock(api.theme.ground?.pavement) || \"minecraft:cobblestone\";\n\n  const roofSolid = baseBlock(api.theme.roof?.solid) || \"minecraft:mud_bricks\";\n  const roofStairs = baseBlock(api.theme.roof?.stairs) || \"minecraft:mud_brick_stairs\";\n\n  // =========================================================================\n  // 1. CANAL WHARF QUAY & TOWPATH (Z = 4 .. 5, X = 0 .. 23)\n  // =========================================================================\n  for (let x = 0; x < 24; x++) {\n    for (let z = 4; z <= 5; z++) {\n      const gy = groundY(x, z);\n      const topDeckY = Math.max(seatY, gy);\n\n      // Sub-quay foundation masonry down to terrain\n      for (let y = Math.max(0, gy); y < topDeckY; y++) {\n        set(x, y, z, (y === topDeckY - 1) ? stonePrimary : groundPlinth);\n      }\n\n      // Wharf surface course\n      if (z === 4) {\n        set(x, topDeckY, z, (x % 4 === 0) ? withState(woodLog, \"axis=x\") : woodPlanks);\n      } else {\n        set(x, topDeckY, z, ((x + z) % 3 === 0) ? groundPave : woodPlanks);\n      }\n    }\n  }\n\n  // Wharf Fender Piles & Mooring Bollards (along Z = 4)\n  for (let x = 1; x < 23; x += 4) {\n    const gy = groundY(x, 4);\n    const topDeckY = Math.max(seatY, gy);\n    // Vertical timber fender pile protruding above wharf edge\n    set(x, topDeckY + 1, 4, withState(woodLog, \"axis=y\"));\n    set(x, topDeckY + 1, 3, withState(woodTrapdoor, \"facing=north,half=bottom,open=false\"));\n  }\n\n  // Heavy Cast-Iron Bollards\n  for (const bx of [3, 11, 19]) {\n    const topDeckY = Math.max(seatY, groundY(bx, 4));\n    set(bx, topDeckY + 1, 4, \"minecraft:anvil[facing=north]\");\n  }\n\n  // =========================================================================\n  // 2. MOORED CANAL COAL BARGE (X = 5 .. 18, Z = 1 .. 3)\n  // =========================================================================\n  for (let x = 5; x <= 18; x++) {\n    const gy = groundY(x, 2);\n    const bargeBaseY = Math.max(seatY - 1, gy);\n\n    // Underwater pilings/keel timbers anchoring barge to seabed\n    for (let y = Math.max(0, gy); y < bargeBaseY; y++) {\n      set(x, y, 2, stonePrimary);\n    }\n\n    // Hull floor\n    for (let z = 1; z <= 3; z++) {\n      set(x, bargeBaseY, z, woodPlanks);\n    }\n\n    // Hull gunwales / sidewalls\n    set(x, bargeBaseY + 1, 1, withState(woodTrapdoor, \"facing=south,half=bottom,open=false\"));\n    set(x, bargeBaseY + 1, 3, withState(woodTrapdoor, \"facing=north,half=bottom,open=false\"));\n\n    // Coal cargo heaps inside the hold\n    set(x, bargeBaseY + 1, 2, \"minecraft:coal_block\");\n    if (x === 7 || x === 8 || x === 15 || x === 16) {\n      // Direct heaps piled under chutes\n      set(x, bargeBaseY + 2, 2, \"minecraft:coal_block\");\n    } else if (x % 2 === 0) {\n      set(x, bargeBaseY + 2, 2, woodSlab);\n    }\n  }\n\n  // Barge Bow & Stern\n  const bowY = Math.max(seatY - 1, groundY(5, 2));\n  set(5, bowY + 1, 2, withState(woodStairs, \"facing=east,half=bottom\"));\n  set(4, bowY + 1, 2, woodSlab);\n\n  const sternY = Math.max(seatY - 1, groundY(18, 2));\n  set(18, sternY + 1, 2, withState(woodStairs, \"facing=west,half=bottom\"));\n  set(19, sternY + 1, 2, withState(woodLog, \"axis=y\")); // rudder stock\n  set(19, sternY + 2, 2, \"minecraft:lever[face=floor,facing=east]\"); // tiller\n\n  // Mooring Chains connecting barge to wharf\n  const mooringY1 = Math.max(seatY, groundY(5, 4)) + 1;\n  set(5, mooringY1, 3, \"minecraft:chain[axis=z]\");\n  const mooringY2 = Math.max(seatY, groundY(18, 4)) + 1;\n  set(18, mooringY2, 3, \"minecraft:chain[axis=z]\");\n\n  // =========================================================================\n  // 3. GANTRY TRESTLE LEGS & FOOTINGS (Z = 6, 9, 12, 15, 18)\n  // =========================================================================\n  const bentZ = [6, 9, 12, 15, 18];\n  const legX = [2, 8, 15, 21];\n\n  for (const pz of bentZ) {\n    for (const px of legX) {\n      const gy = groundY(px, pz);\n      const startY = Math.max(0, gy);\n      const deckLevel = 14;\n      const plinthTop = Math.min(deckLevel - 1, Math.max(startY + 1, seatY + 1));\n\n      // Stepped masonry footing conforming to ground\n      for (let y = startY; y <= plinthTop; y++) {\n        set(px, y, pz, (y === plinthTop) ? stoneAccent : groundPlinth);\n      }\n\n      // Flare foundation base if elevated\n      if (gy < seatY) {\n        if (px > 0) set(px - 1, startY, pz, withState(stoneStairs, \"facing=east,half=bottom\"));\n        if (px < 23) set(px + 1, startY, pz, withState(stoneStairs, \"facing=west,half=bottom\"));\n      }\n\n      // Massive vertical timber/iron upright column\n      for (let y = plinthTop + 1; y <= deckLevel; y++) {\n        set(px, y, pz, withState(woodStripped, \"axis=y\"));\n      }\n    }\n  }\n\n  // =========================================================================\n  // 4. HORIZONTAL BEAMS, GIRDERS & CROSS-BRACING\n  // =========================================================================\n  // Longitudinal stringers along Z at y = 10 and y = 14\n  for (const px of legX) {\n    for (let z = 6; z <= 18; z++) {\n      set(px, 10, z, withState(woodLog, \"axis=z\"));\n      set(px, 14, z, withState(woodLog, \"axis=z\"));\n    }\n  }\n\n  // Transverse crossbeams along X at y = 10 and y = 14\n  for (const pz of bentZ) {\n    for (let x = 2; x <= 21; x++) {\n      set(x, 10, pz, withState(woodLog, \"axis=x\"));\n      set(x, 14, pz, withState(woodLog, \"axis=x\"));\n    }\n  }\n\n  // Diagonal sway bracing & iron truss rods along the outer flanks\n  for (let z = 6; z <= 17; z++) {\n    if (!bentZ.includes(z)) {\n      set(2, 11, z, \"minecraft:iron_bars\");\n      set(2, 12, z, \"minecraft:iron_bars\");\n      set(2, 13, z, \"minecraft:iron_bars\");\n\n      set(21, 11, z, \"minecraft:iron_bars\");\n      set(21, 12, z, \"minecraft:iron_bars\");\n      set(21, 13, z, \"minecraft:iron_bars\");\n    }\n  }\n\n  // Transverse sway trusses\n  for (const pz of bentZ) {\n    for (const x of [3, 4, 5, 6, 7, 16, 17, 18, 19, 20]) {\n      set(x, 12, pz, woodFence);\n      set(x, 13, pz, woodFence);\n    }\n  }\n\n  // =========================================================================\n  // 5. DUAL COAL HOPPER BINS (Y = 10 .. 14, Z = 6 .. 11)\n  // =========================================================================\n  // West Bunker: X = 4..10, Z = 6..11\n  // East Bunker: X = 13..19, Z = 6..11\n  const bunkers = [\n    { xMin: 4, xMax: 10, cx: 7 },\n    { xMin: 13, xMax: 19, cx: 16 }\n  ];\n\n  for (const b of bunkers) {\n    // Inverted funnel bottom at y = 11\n    for (let z = 6; z <= 11; z++) {\n      set(b.xMin, 11, z, withState(woodStairs, \"facing=east,half=top\"));\n      set(b.xMax, 11, z, withState(woodStairs, \"facing=west,half=top\"));\n    }\n    for (let x = b.xMin; x <= b.xMax; x++) {\n      set(x, 11, 11, withState(woodStairs, \"facing=north,half=top\"));\n    }\n\n    // Hopper Wall Sheathing at y = 12 .. 14\n    for (let y = 12; y <= 14; y++) {\n      for (let z = 6; z <= 11; z++) {\n        set(b.xMin, y, z, woodPlanks);\n        set(b.xMax, y, z, woodPlanks);\n        // Outer iron reinforcing bands\n        if (b.xMin > 0) set(b.xMin - 1, y, z, withState(woodTrapdoor, \"facing=east,half=bottom,open=false\"));\n        if (b.xMax < 23) set(b.xMax + 1, y, z, withState(woodTrapdoor, \"facing=west,half=bottom,open=false\"));\n      }\n      for (let x = b.xMin; x <= b.xMax; x++) {\n        set(x, y, 11, woodPlanks);\n        set(x, y, 12, withState(woodTrapdoor, \"facing=north,half=bottom,open=false\"));\n      }\n    }\n\n    // Interior Coal Mass inside Bunkers\n    for (let x = b.xMin + 1; x <= b.xMax - 1; x++) {\n      for (let z = 7; z <= 10; z++) {\n        set(x, 12, z, \"minecraft:coal_block\");\n        set(x, 13, z, \"minecraft:coal_block\");\n        if (x === b.xMin + 1 || x === b.xMax - 1 || z === 10) {\n          set(x, 14, z, \"minecraft:coal_block\");\n        }\n      }\n    }\n  }\n\n  // =========================================================================\n  // 6. ANGLED COAL LOADING CHUTES (Z = 1 .. 6, Y = 8 .. 13)\n  // =========================================================================\n  for (const cx of [7, 16]) {\n    // Hopper discharge throat\n    set(cx, 11, 6, \"minecraft:hopper[facing=north]\");\n    set(cx - 1, 11, 6, withState(stoneStairs, \"facing=east,half=bottom\"));\n    set(cx + 1, 11, 6, withState(stoneStairs, \"facing=west,half=bottom\"));\n\n    // Angled metal chute trough\n    set(cx, 10, 5, \"minecraft:deepslate_tile_stairs[facing=south,half=top]\");\n    set(cx - 1, 10, 5, \"minecraft:iron_bars\");\n    set(cx + 1, 10, 5, \"minecraft:iron_bars\");\n    set(cx, 9, 5, stoneWall);\n\n    set(cx, 9, 4, \"minecraft:deepslate_tile_stairs[facing=south,half=bottom]\");\n    set(cx - 1, 9, 4, \"minecraft:iron_bars\");\n    set(cx + 1, 9, 4, \"minecraft:iron_bars\");\n\n    set(cx, 8, 3, \"minecraft:deepslate_tile_stairs[facing=south,half=bottom]\");\n    set(cx - 1, 8, 3, \"minecraft:iron_bars\");\n    set(cx + 1, 8, 3, \"minecraft:iron_bars\");\n\n    // Chute Spout Lip overhanging the barge\n    set(cx, 8, 2, \"minecraft:hopper[facing=south]\");\n    set(cx - 1, 8, 2, \"minecraft:iron_bars\");\n    set(cx + 1, 8, 2, \"minecraft:iron_bars\");\n\n    // Suspension chains supporting the chute boom\n    set(cx, 14, 4, withState(woodLog, \"axis=x\"));\n    for (let cy = 9; cy <= 13; cy++) {\n      set(cx, cy, 4, \"minecraft:chain[axis=y]\");\n    }\n    set(cx, 9, 3, \"minecraft:chain[axis=y]\");\n\n    // Gate control lever on top catwalk\n    set(cx, 15, 6, \"minecraft:lever[face=floor,facing=north]\");\n  }\n\n  // =========================================================================\n  // 7. ELEVATED RAILWAY TRACKS & SIDINGS (Y = 14 .. 16, Z = 5 .. 19)\n  // =========================================================================\n  // Siding 1 (West Track, centered X = 7) & Siding 2 (East Track, centered X = 16)\n  for (const rx of [7, 16]) {\n    for (let z = 6; z <= 19; z++) {\n      // Timber sleepers & ballast decking\n      set(rx, 14, z, withState(woodStripped, \"axis=x\"));\n      set(rx - 1, 14, z, woodPlanks);\n      set(rx + 1, 14, z, woodPlanks);\n\n      // Steel railway track\n      set(rx, 15, z, \"minecraft:rail[shape=north_south]\");\n    }\n\n    // Heavy Track Buffer Stop at North End (Z = 5)\n    set(rx - 1, 15, 5, withState(woodLog, \"axis=x\"));\n    set(rx, 15, 5, withState(woodLog, \"axis=x\"));\n    set(rx + 1, 15, 5, withState(woodLog, \"axis=x\"));\n    set(rx, 16, 5, \"minecraft:lantern[hanging=false]\");\n    set(rx, 15, 4, \"minecraft:iron_bars\");\n  }\n\n  // Central Walkway between sidings (X = 11 .. 12, Z = 5 .. 19)\n  for (let z = 5; z <= 19; z++) {\n    set(11, 14, z, woodPlanks);\n    set(12, 14, z, woodPlanks);\n    set(10, 15, z, woodFence);\n    set(13, 15, z, woodFence);\n  }\n\n  // Outer Safety Catwalks & Railings\n  for (let z = 5; z <= 19; z++) {\n    set(2, 14, z, woodPlanks);\n    set(3, 14, z, woodPlanks);\n    set(1, 15, z, woodFence);\n\n    set(20, 14, z, woodPlanks);\n    set(21, 14, z, woodPlanks);\n    set(22, 15, z, woodFence);\n  }\n\n  // Access Ladder from Wharf to High Catwalk at (X = 3, Z = 6)\n  const ladderBottomY = Math.max(seatY, groundY(3, 6));\n  for (let y = ladderBottomY; y <= 14; y++) {\n    set(3, y, 6, withState(woodStripped, \"axis=y\"));\n    set(3, y, 5, \"minecraft:ladder[facing=north]\");\n  }\n\n  // South Rail Abutment Wall (Z = 19, X = 5 .. 18)\n  for (let x = 5; x <= 18; x++) {\n    const gy = groundY(x, 19);\n    for (let y = Math.max(0, gy); y <= 13; y++) {\n      set(x, y, 19, stonePrimary);\n    }\n  }\n\n  // =========================================================================\n  // 8. MECHANICAL HOIST DERRICK & STEAM WINCH (Y = 15 .. 20, Z = 4 .. 8)\n  // =========================================================================\n  // Heavy A-Frame Crane Masts\n  for (let y = 15; y <= 20; y++) {\n    set(11, y, 6, withState(woodStripped, \"axis=y\"));\n    set(12, y, 6, withState(woodStripped, \"axis=y\"));\n  }\n  for (let y = 15; y <= 19; y++) {\n    set(11, y, 8, withState(woodStripped, \"axis=y\"));\n    set(12, y, 8, withState(woodStripped, \"axis=y\"));\n  }\n\n  // Overhead Jib Boom & Winch Crosshead (y = 20)\n  set(10, 20, 6, withState(woodStairs, \"facing=east,half=bottom\"));\n  set(11, 20, 6, withState(woodLog, \"axis=x\"));\n  set(12, 20, 6, withState(woodLog, \"axis=x\"));\n  set(13, 20, 6, withState(woodStairs, \"facing=west,half=bottom\"));\n\n  for (let z = 3; z <= 5; z++) {\n    set(11, 20, z, withState(woodLog, \"axis=z\"));\n    set(12, 20, z, withState(woodLog, \"axis=z\"));\n  }\n  set(11, 20, 3, withState(woodStairs, \"facing=south,half=bottom\"));\n  set(12, 20, 3, withState(woodStairs, \"facing=south,half=bottom\"));\n\n  // Pulley, Hoist Chains & Suspended Coal Skip\n  set(11, 19, 3, \"minecraft:grindstone[face=ceiling,facing=north]\");\n  for (let y = 15; y <= 18; y++) {\n    set(11, y, 3, \"minecraft:chain[axis=y]\");\n  }\n  set(11, 14, 3, \"minecraft:cauldron\");\n\n  // Steam Hoist Winch & Exhaust Flue\n  set(11, 15, 8, \"minecraft:iron_block\");\n  set(12, 15, 8, \"minecraft:anvil[facing=east]\");\n  set(12, 16, 8, stoneWall);\n  set(12, 17, 8, stoneWall);\n  set(12, 18, 8, \"minecraft:iron_bars\");\n\n  // =========================================================================\n  // 9. OPERATOR / WEIGH-HOUSE CABIN (X = 16 .. 20, Y = 14 .. 18, Z = 12 .. 16)\n  // =========================================================================\n  // Floor at y = 14\n  for (let x = 16; x <= 20; x++) {\n    for (let z = 12; z <= 16; z++) {\n      set(x, 14, z, woodPlanks);\n    }\n  }\n\n  // Cabin Walls at y = 15 .. 17\n  for (let y = 15; y <= 17; y++) {\n    // Corner posts\n    set(16, y, 12, withState(woodLog, \"axis=y\"));\n    set(20, y, 12, withState(woodLog, \"axis=y\"));\n    set(16, y, 16, withState(woodLog, \"axis=y\"));\n    set(20, y, 16, withState(woodLog, \"axis=y\"));\n\n    // North Wall (Window overlooking chutes)\n    for (let x = 17; x <= 19; x++) {\n      set(x, y, 12, (y === 16) ? \"minecraft:iron_bars\" : woodPlanks);\n    }\n\n    // South Wall\n    for (let x = 17; x <= 19; x++) {\n      set(x, y, 16, woodPlanks);\n    }\n\n    // East Wall (Side window)\n    for (let z = 13; z <= 15; z++) {\n      set(20, y, z, (y === 16 && z === 14) ? \"minecraft:iron_bars\" : woodPlanks);\n    }\n\n    // West Wall (Entrance doorway)\n    set(16, y, 13, woodPlanks);\n    set(16, y, 15, woodPlanks);\n  }\n\n  // Cabin Door\n  set(16, 15, 14, withState(woodDoor, \"facing=west,half=lower,open=false\"));\n  set(16, 16, 14, withState(woodDoor, \"facing=west,half=upper,open=false\"));\n  set(16, 17, 14, woodPlanks);\n\n  // Cabin Shed Roof (y = 18)\n  for (let x = 16; x <= 20; x++) {\n    for (let z = 12; z <= 16; z++) {\n      set(x, 18, z, (z === 12) ? withState(roofStairs, \"facing=south,half=bottom\") : roofSolid);\n    }\n  }\n\n  // Stove Flue Pipe\n  set(19, 18, 15, stoneWall);\n  set(19, 19, 15, stoneWall);\n  set(19, 20, 15, \"minecraft:iron_bars\");\n\n  // =========================================================================\n  // 10. INDUSTRIAL COAL WAGON ON SIDING 1 (West Track, Z = 9 .. 12)\n  // =========================================================================\n  // Wagon Wheels / Axles\n  set(7, 15, 9, \"minecraft:grindstone[face=floor,facing=north]\");\n  set(7, 15, 12, \"minecraft:grindstone[face=floor,facing=north]\");\n\n  // Wagon Box at y = 16\n  for (let z = 9; z <= 12; z++) {\n    set(7, 16, z, woodPlanks);\n    set(6, 16, z, withState(woodTrapdoor, \"facing=east,half=bottom,open=false\"));\n    set(8, 16, z, withState(woodTrapdoor, \"facing=west,half=bottom,open=false\"));\n  }\n  set(7, 16, 9, withState(woodTrapdoor, \"facing=south,half=bottom,open=false\"));\n  set(7, 16, 12, withState(woodTrapdoor, \"facing=north,half=bottom,open=false\"));\n\n  // Coal cargo in wagon\n  set(7, 17, 10, \"minecraft:coal_block\");\n  set(7, 17, 11, \"minecraft:coal_block\");\n\n  // =========================================================================\n  // 11. INDUSTRIAL LIGHTING & SOOT-STAINED DETAILS\n  // =========================================================================\n  // Hanging lanterns under trestle bents\n  set(2, 9, 7, \"minecraft:chain[axis=y]\");\n  set(2, 8, 7, \"minecraft:lantern[hanging=true]\");\n\n  set(21, 9, 7, \"minecraft:chain[axis=y]\");\n  set(21, 8, 7, \"minecraft:lantern[hanging=true]\");\n\n  set(11, 13, 10, \"minecraft:lantern[hanging=true]\");\n\n  // Catwalk deck lanterns\n  set(2, 15, 12, \"minecraft:lantern[hanging=false]\");\n  set(11, 15, 15, \"minecraft:lantern[hanging=false]\");\n\n  return {\n    name: \"rail_coal_transshipment_gantry\",\n    seatY,\n    anchors: {\n      front: [12, seatY, 0],\n      door: [16, 15, 14],\n      wharf: [6, seatY, 4],\n      rail_in: [12, 15, 19]\n    },\n    interiors: [\n      {\n        min: [17, 15, 13],\n        max: [19, 17, 15],\n        kind: \"workshop\"\n      }\n    ]\n  };\n}"
+    },
+    "canal_narrowboat": {
+      "mode": "plugin",
+      "envelope": [
+        7,
+        12,
+        24
+      ],
+      "sourceHash": "b3:b12af80c20204ca9ab0d054a0eb1482fd9cb922779dea0e8069bc2ce9f3f2ae8",
+      "outputHash": "b3:67ffdf78732ea4ad2f9331790da74e7329025d11c82011a443ab7a077f5f1620",
+      "conforms": false,
+      "conformHash": "b3:344ab418aff83b034e2340e337531e527e84c0dc2d8c93fdd44792dafa82954d",
+      "source": "export const envelope = [7, 12, 24];\n\nexport default function build(api) {\n  const { theme } = api;\n  const seatY = 3;\n  const variant = api.instance.index % 6;\n  const rng = () => api.random();\n\n  // Helper functions for block state manipulation\n  function getBase(blockStr) {\n    if (!blockStr) return \"minecraft:spruce_planks\";\n    const idx = blockStr.indexOf(\"[\");\n    return idx === -1 ? blockStr : blockStr.slice(0, idx);\n  }\n\n  function stairs(baseStairs, facing, half = \"bottom\", shape = \"straight\") {\n    const base = getBase(baseStairs || theme.wood.stairs);\n    return `${base}[facing=${facing},half=${half},shape=${shape}]`;\n  }\n\n  function slab(baseSlab, type = \"bottom\") {\n    const base = getBase(baseSlab || theme.wood.slab);\n    return `${base}[type=${type}]`;\n  }\n\n  function log(baseLog, axis = \"y\") {\n    const base = getBase(baseLog || theme.wood.log);\n    return `${base}[axis=${axis}]`;\n  }\n\n  function trapdoor(baseTrapdoor, facing = \"north\", half = \"bottom\", open = false) {\n    const base = getBase(baseTrapdoor || theme.wood.trapdoor);\n    return `${base}[facing=${facing},half=${half},open=${open}]`;\n  }\n\n  function door(baseDoor, facing = \"north\", half = \"lower\", hinge = \"left\", open = false) {\n    const base = getBase(baseDoor || theme.wood.door);\n    return `${base}[facing=${facing},half=${half},hinge=${hinge},open=${open}]`;\n  }\n\n  // Tracking occupied columns to guarantee ground conformity on all terrains\n  const occupiedCols = new Map();\n\n  function setBlock(x, y, z, block) {\n    if (x < 0 || x >= envelope[0] || y < 0 || y >= envelope[1] || z < 0 || z >= envelope[2]) return;\n    if (!block) return;\n    api.set(x, y, z, block);\n  }\n\n  function place(x, y, z, block) {\n    if (!block) return;\n    setBlock(x, y, z, block);\n    const key = `${x},${z}`;\n    if (!occupiedCols.has(key)) {\n      occupiedCols.set(key, { x, z, minY: y, maxY: y });\n    } else {\n      const rec = occupiedCols.get(key);\n      rec.minY = Math.min(rec.minY, y);\n      rec.maxY = Math.max(rec.maxY, y);\n    }\n  }\n\n  const plank = theme.wood.planks;\n  const woodLog = theme.wood.log;\n  const strippedLog = theme.wood.stripped || theme.wood.log;\n  const woodStairs = theme.wood.stairs;\n  const woodSlab = theme.wood.slab;\n  const woodFence = theme.wood.fence;\n  const woodTrapdoor = theme.wood.trapdoor;\n  const roofSolid = theme.roof.solid || theme.wood.planks;\n  const roofStairs = theme.roof.stairs || theme.wood.stairs;\n  const roofSlab = theme.roof.slab || theme.wood.slab;\n  const stoneWall = theme.stone.wall || \"minecraft:blackstone_wall\";\n  const stoneAccent = theme.stone.accent || \"minecraft:deepslate_bricks\";\n\n  // -------------------------------------------------------------\n  // 1. HULL BASE & GUNWALES\n  // -------------------------------------------------------------\n\n  // Bottom keel & floor plate (y = seatY)\n  // Bow tip\n  place(3, seatY, 1, woodLog);\n\n  // Bow taper\n  for (let x = 2; x <= 4; x++) {\n    place(x, seatY, 2, plank);\n  }\n\n  // Main hull floor (z = 3 to 21)\n  for (let z = 3; z <= 21; z++) {\n    for (let x = 1; x <= 5; x++) {\n      const isEdge = (x === 1 || x === 5 || z === 3 || z === 21);\n      place(x, seatY, z, isEdge ? log(woodLog, \"z\") : plank);\n    }\n  }\n\n  // Stern taper floor (z = 22)\n  for (let x = 2; x <= 4; x++) {\n    place(x, seatY, 22, log(woodLog, \"x\"));\n  }\n\n  // Gunwales (hull sides) along the hold and decks (y = seatY + 1, seatY + 2)\n  // Prow gunwales at z = 1..2\n  place(3, seatY + 1, 1, log(strippedLog, \"y\"));\n  place(3, seatY + 2, 1, log(woodLog, \"y\"));\n\n  place(2, seatY + 1, 2, stairs(woodStairs, \"north\"));\n  place(4, seatY + 1, 2, stairs(woodStairs, \"north\"));\n  place(2, seatY + 2, 2, slab(woodSlab, \"bottom\"));\n  place(4, seatY + 2, 2, slab(woodSlab, \"bottom\"));\n\n  // Foredeck at z = 3\n  place(1, seatY + 1, 3, stairs(woodStairs, \"west\"));\n  place(5, seatY + 1, 3, stairs(woodStairs, \"east\"));\n  place(1, seatY + 2, 3, slab(woodSlab, \"bottom\"));\n  place(5, seatY + 2, 3, slab(woodSlab, \"bottom\"));\n  for (let x = 2; x <= 4; x++) {\n    place(x, seatY + 1, 3, plank);\n  }\n\n  // Hold gunwales (z = 4 to 15)\n  for (let z = 4; z <= 15; z++) {\n    // Left side gunwale\n    place(1, seatY + 1, z, stairs(woodStairs, \"east\", \"bottom\"));\n    place(1, seatY + 2, z, trapdoor(woodTrapdoor, \"west\", \"bottom\", false));\n\n    // Right side gunwale\n    place(5, seatY + 1, z, stairs(woodStairs, \"west\", \"bottom\"));\n    place(5, seatY + 2, z, trapdoor(woodTrapdoor, \"east\", \"bottom\", false));\n\n    // Internal hold floor reinforcement\n    for (let x = 2; x <= 4; x++) {\n      place(x, seatY, z, (z % 4 === 0) ? log(strippedLog, \"x\") : plank);\n    }\n  }\n\n  // -------------------------------------------------------------\n  // 2. FORWARD BULKHEAD & CABIN ENCLOSURE\n  // -------------------------------------------------------------\n\n  // Mid bulkhead separating hold from cabin (z = 16)\n  for (let x = 1; x <= 5; x++) {\n    place(x, seatY + 1, 16, log(woodLog, \"x\"));\n    place(x, seatY + 2, 16, plank);\n    place(x, seatY + 3, 16, plank);\n  }\n  // Hold entrance / porthole on mid bulkhead\n  place(3, seatY + 1, 16, log(strippedLog, \"y\"));\n  place(3, seatY + 2, 16, trapdoor(woodTrapdoor, \"north\", \"top\", false));\n\n  // Aft Cabin walls (z = 17 to 19)\n  for (let z = 17; z <= 19; z++) {\n    // Left cabin wall\n    place(1, seatY + 1, z, plank);\n    place(1, seatY + 2, z, z === 18 ? \"minecraft:iron_bars\" : plank);\n    place(1, seatY + 3, z, plank);\n\n    // Right cabin wall\n    place(5, seatY + 1, z, plank);\n    place(5, seatY + 2, z, z === 18 ? \"minecraft:iron_bars\" : plank);\n    place(5, seatY + 3, z, plank);\n  }\n\n  // Aft bulkhead (z = 20) with cabin door\n  for (let x = 1; x <= 5; x++) {\n    place(x, seatY + 1, 20, plank);\n    place(x, seatY + 2, 20, plank);\n    place(x, seatY + 3, 20, plank);\n  }\n  // Cabin doorway at x = 3, z = 20\n  place(3, seatY + 1, 20, door(theme.wood.door, \"north\", \"lower\"));\n  place(3, seatY + 2, 20, door(theme.wood.door, \"north\", \"upper\"));\n\n  // Cabin Roof (y = seatY + 4 = 7)\n  for (let z = 16; z <= 20; z++) {\n    place(0, seatY + 4, z, stairs(roofStairs, \"east\"));\n    place(1, seatY + 4, z, roofSolid);\n    place(2, seatY + 4, z, slab(roofSlab, \"bottom\"));\n    place(3, seatY + 4, z, roofSolid);\n    place(4, seatY + 4, z, slab(roofSlab, \"bottom\"));\n    place(5, seatY + 4, z, roofSolid);\n    place(6, seatY + 4, z, stairs(roofStairs, \"west\"));\n  }\n\n  // Cabin Stovepipe / Chimney with Industrial Smoke\n  const chimneyX = (variant % 2 === 0) ? 2 : 4;\n  const chimneyZ = 18;\n  place(chimneyX, seatY + 4, chimneyZ, \"minecraft:hopper[facing=down]\");\n  place(chimneyX, seatY + 5, chimneyZ, stoneWall);\n  place(chimneyX, seatY + 6, chimneyZ, stoneWall);\n  place(chimneyX, seatY + 7, chimneyZ, \"minecraft:tinted_glass\");\n\n  // Pigeon box / roof vent on cabin roof\n  place(3, seatY + 5, 18, trapdoor(woodTrapdoor, \"north\", \"bottom\", false));\n\n  // -------------------------------------------------------------\n  // 3. AFT COCKPIT, HELM, TILLER & RUDDER\n  // -------------------------------------------------------------\n\n  // Cockpit deck at z = 21\n  place(1, seatY + 1, 21, stairs(woodStairs, \"west\"));\n  place(5, seatY + 1, 21, stairs(woodStairs, \"east\"));\n  place(1, seatY + 2, 21, slab(woodSlab, \"bottom\"));\n  place(5, seatY + 2, 21, slab(woodSlab, \"bottom\"));\n  for (let x = 2; x <= 4; x++) {\n    place(x, seatY + 1, 21, plank);\n  }\n\n  // Stern transom at z = 22\n  place(2, seatY + 1, 22, stairs(woodStairs, \"north\"));\n  place(3, seatY + 1, 22, log(woodLog, \"y\"));\n  place(4, seatY + 1, 22, stairs(woodStairs, \"north\"));\n  place(2, seatY + 2, 22, slab(woodSlab, \"bottom\"));\n  place(4, seatY + 2, 22, slab(woodSlab, \"bottom\"));\n\n  // Rudder post and Swan-neck Tiller\n  place(3, seatY + 2, 22, log(strippedLog, \"y\"));\n  place(3, seatY + 3, 22, stoneWall);\n  place(3, seatY + 3, 21, \"minecraft:iron_bars\"); // Tiller extending over helm\n\n  // Rudder blade extending behind stern (z = 23)\n  place(3, seatY, 23, plank);\n  place(3, seatY + 1, 23, trapdoor(woodTrapdoor, \"west\", \"bottom\", true));\n\n  // -------------------------------------------------------------\n  // 4. BOW RIGGING & PROW DETAILS\n  // -------------------------------------------------------------\n\n  // Front rope fender / bumper\n  place(3, seatY + 1, 0, \"minecraft:chain[axis=z]\");\n\n  // Foredeck bollards / towing bitt\n  place(3, seatY + 2, 3, woodFence);\n  place(3, seatY + 3, 3, \"minecraft:lantern[hanging=false]\");\n\n  if (variant === 1 || variant === 4) {\n    // Bow cargo derrick / tow mast\n    place(2, seatY + 2, 3, woodFence);\n    place(4, seatY + 2, 3, woodFence);\n    place(3, seatY + 4, 3, woodFence);\n    place(3, seatY + 5, 3, woodFence);\n    place(3, seatY + 6, 3, \"minecraft:chain[axis=y]\");\n  } else if (variant === 3 || variant === 5) {\n    // Heavy iron searchlight / brazier\n    place(3, seatY + 3, 1, stoneWall);\n    place(3, seatY + 4, 1, \"minecraft:lantern[hanging=false]\");\n  }\n\n  // -------------------------------------------------------------\n  // 5. CARGO HOLD VARIATIONS (z = 4 to 15, x = 2 to 4)\n  // -------------------------------------------------------------\n\n  if (variant === 0) {\n    // VARIANT 0: \"The Soot-Laden Coal Hopper\"\n    // Heaped mounds of raw coal, coal ore, and blackstone\n    for (let z = 4; z <= 15; z++) {\n      for (let x = 2; x <= 4; x++) {\n        const distFromMid = Math.abs(z - 9.5);\n        const height = (distFromMid < 4 && (x === 3 || rng() > 0.3)) ? 3 : (rng() > 0.4 ? 2 : 1);\n\n        for (let dy = 1; dy <= height; dy++) {\n          const r = rng();\n          let coalBlock = \"minecraft:coal_block\";\n          if (r < 0.25) coalBlock = \"minecraft:blackstone\";\n          else if (r < 0.4) coalBlock = \"minecraft:coal_ore\";\n          else if (r < 0.5) coalBlock = \"minecraft:deepslate_coal_ore\";\n          place(x, seatY + dy, z, coalBlock);\n        }\n      }\n    }\n    // Coal shovel / buckets on hold rim\n    place(2, seatY + 2, 4, \"minecraft:cauldron\");\n    place(4, seatY + 2, 15, \"minecraft:hopper[facing=down]\");\n  } else if (variant === 1) {\n    // VARIANT 1: \"The Heavy Crated Freight Barge\"\n    // Stacked crates, barrels, and tied-down industrial goods\n    for (let z = 4; z <= 15; z++) {\n      for (let x = 2; x <= 4; x++) {\n        if (z % 3 === 0) {\n          // Row of barrels\n          place(x, seatY + 1, z, \"minecraft:barrel[facing=up]\");\n          if (x === 3 || (x === 2 && rng() > 0.4)) {\n            place(x, seatY + 2, z, \"minecraft:barrel[facing=up]\");\n          }\n        } else if (z % 3 === 1) {\n          // Timber crates\n          place(x, seatY + 1, z, log(strippedLog, \"y\"));\n          if (x === 3 || (x === 4 && rng() > 0.4)) {\n            place(x, seatY + 2, z, plank);\n          }\n        } else {\n          // Tied down boxes with chains\n          place(x, seatY + 1, z, plank);\n          if (x === 3) {\n            place(x, seatY + 2, z, \"minecraft:chain[axis=z]\");\n          }\n        }\n      }\n    }\n    // Hold partition arches\n    place(2, seatY + 3, 9, woodFence);\n    place(3, seatY + 3, 9, slab(woodSlab, \"bottom\"));\n    place(4, seatY + 3, 9, woodFence);\n  } else if (variant === 2) {\n    // VARIANT 2: \"The Canvas-Covered Bulk Narrowboat\"\n    // Curved canvas tarp roof over the cargo hold\n    for (let z = 4; z <= 15; z++) {\n      // Internal cargo beneath tarp\n      for (let x = 2; x <= 4; x++) {\n        place(x, seatY + 1, z, plank);\n        if (x === 3) place(x, seatY + 2, z, \"minecraft:barrel[facing=north]\");\n      }\n\n      // Tarp hood\n      place(1, seatY + 2, z, stairs(roofStairs, \"east\"));\n      place(2, seatY + 3, z, slab(roofSlab, \"bottom\"));\n      place(3, seatY + 3, z, roofSolid);\n      place(4, seatY + 3, z, slab(roofSlab, \"bottom\"));\n      place(5, seatY + 2, z, stairs(roofStairs, \"west\"));\n    }\n  } else if (variant === 3) {\n    // VARIANT 3: \"The Industrial Scrap & Iron Hauler\"\n    // Scrap iron bins, cauldrons, heavy machinery anvils\n    for (let z = 4; z <= 15; z++) {\n      for (let x = 2; x <= 4; x++) {\n        place(x, seatY + 1, z, stoneAccent);\n      }\n    }\n    // Scrap cauldrons\n    place(2, seatY + 1, 5, \"minecraft:cauldron\");\n    place(4, seatY + 1, 5, \"minecraft:cauldron\");\n    place(3, seatY + 1, 7, \"minecraft:anvil[facing=north]\");\n    place(2, seatY + 1, 10, \"minecraft:hopper[facing=down]\");\n    place(4, seatY + 1, 10, \"minecraft:hopper[facing=down]\");\n    place(3, seatY + 1, 13, \"minecraft:cauldron\");\n    place(3, seatY + 2, 13, \"minecraft:iron_bars\");\n\n    // Cross chains & scrap piles\n    place(2, seatY + 2, 7, \"minecraft:iron_bars\");\n    place(4, seatY + 2, 7, \"minecraft:iron_bars\");\n    place(3, seatY + 2, 7, \"minecraft:chain[axis=x]\");\n    place(3, seatY + 1, 11, \"minecraft:blackstone\");\n    place(3, seatY + 2, 11, \"minecraft:blackstone\");\n  } else if (variant === 4) {\n    // VARIANT 4: \"The Pig-Iron & Timber Carrier\"\n    // Bundled stripped railway sleepers and iron bar strapping\n    for (let z = 4; z <= 15; z++) {\n      for (let x = 2; x <= 4; x++) {\n        place(x, seatY + 1, z, log(strippedLog, \"z\"));\n        if (z % 4 !== 0) {\n          place(x, seatY + 2, z, log(strippedLog, \"z\"));\n        } else {\n          // Binding strap\n          place(x, seatY + 2, z, \"minecraft:chain[axis=x]\");\n        }\n      }\n    }\n    // Hold dividing post\n    place(3, seatY + 3, 9, woodFence);\n    place(3, seatY + 4, 9, \"minecraft:lantern[hanging=false]\");\n  } else {\n    // VARIANT 5: \"The Foundry Slag & Chemical Vat Tanker\"\n    // Two large industrial chemical vats in the hold\n    const buildVat = (centerZ) => {\n      for (let dz = -1; dz <= 1; dz++) {\n        for (let x = 2; x <= 4; x++) {\n          place(x, seatY + 1, centerZ + dz, stoneAccent);\n          place(x, seatY + 2, centerZ + dz, stoneAccent);\n        }\n      }\n      place(3, seatY + 3, centerZ, \"minecraft:hopper[facing=down]\");\n      place(2, seatY + 2, centerZ, \"minecraft:iron_bars\");\n      place(4, seatY + 2, centerZ, \"minecraft:iron_bars\");\n    };\n\n    buildVat(6);\n    buildVat(13);\n\n    // Mid-ship inspection walkway between vats (z = 9..10)\n    for (let z = 9; z <= 10; z++) {\n      place(3, seatY + 1, z, plank);\n      place(2, seatY + 2, z, \"minecraft:iron_bars\");\n      place(4, seatY + 2, z, \"minecraft:iron_bars\");\n    }\n    place(3, seatY + 2, 9, \"minecraft:lantern[hanging=false]\");\n  }\n\n  // -------------------------------------------------------------\n  // 6. GROUND CONFORMITY PASS (Rule 6)\n  // -------------------------------------------------------------\n  // Under every occupied column, extend the hull/keel down to meet\n  // the canal bed / seabed / bank on any of the 5 test terrains.\n  for (const { x, z, minY, maxY } of occupiedCols.values()) {\n    const groundY = seatY + api.heightAt(x, z);\n\n    // If ground drops below the boat, fill downwards to canal bed\n    if (groundY < minY) {\n      const startY = Math.max(0, groundY);\n      for (let y = startY; y < minY; y++) {\n        const kBlock = (y % 2 === 0) ? log(woodLog, \"y\") : plank;\n        setBlock(x, y, z, kBlock);\n      }\n    }\n\n    // If ground rises into the hull on a hillside/shore bank,\n    // ensure foundation meets the terrain\n    if (groundY > maxY) {\n      const topY = Math.min(envelope[1] - 1, groundY);\n      for (let y = maxY + 1; y <= topY; y++) {\n        setBlock(x, y, z, plank);\n      }\n    }\n  }\n\n  const names = [\n    \"Coal-Laden Canal Narrowboat\",\n    \"Crated Freight Narrowboat\",\n    \"Canvased Bulk Narrowboat\",\n    \"Industrial Scrap Narrowboat\",\n    \"Timber & Iron Narrowboat\",\n    \"Foundry Vat Narrowboat\",\n  ];\n\n  return {\n    name: names[variant],\n    seatY: seatY,\n    anchors: {\n      front: [3, seatY + 1, 0],\n      bow: [3, seatY + 1, 1],\n      door: [3, seatY + 1, 20],\n      stern: [3, seatY + 1, 22],\n    },\n    interiors: [\n      {\n        min: [2, seatY + 1, 17],\n        max: [4, seatY + 3, 19],\n        kind: \"quarters\",\n      },\n    ],\n  };\n}"
+    },
+    "canal_lock_gates": {
+      "mode": "plugin",
+      "envelope": [
+        14,
+        11,
+        16
+      ],
+      "sourceHash": "b3:94774136a8ce15b348c65c34ceaf3b24f68a5255810f6edee96eeab225bb26fa",
+      "outputHash": "b3:6f2afb3008740b06e4d5ed4e853e7dddeca227c42d5b1cc1f0e24637e3ec9f28",
+      "conforms": false,
+      "conformHash": "b3:f80f2973c2dd325d7438d677bc637b1ada41d4e3eb9105981bb5ed39d3332c71",
+      "source": "export const envelope = [14, 11, 16];\n\nexport default function build(api) {\n  const [sizeX, sizeY, sizeZ] = api.size;\n  const seatPlaneY = 3;\n\n  function withState(blockStr, stateStr) {\n    if (!blockStr) return \"\";\n    const isSlabState = stateStr.includes(\"type=\");\n    if (isSlabState && !blockStr.includes(\"_slab\") && !blockStr.includes(\"slab\")) {\n      return blockStr;\n    }\n    const bracketIdx = blockStr.indexOf(\"[\");\n    if (bracketIdx === -1) {\n      return `${blockStr}[${stateStr}]`;\n    }\n    const base = blockStr.slice(0, bracketIdx);\n    const existing = blockStr.slice(bracketIdx + 1, -1);\n    const stateMap = new Map();\n    if (existing.length > 0) {\n      for (const part of existing.split(\",\")) {\n        const eq = part.indexOf(\"=\");\n        if (eq !== -1) {\n          stateMap.set(part.slice(0, eq).trim(), part.slice(eq + 1).trim());\n        }\n      }\n    }\n    for (const part of stateStr.split(\",\")) {\n      const eq = part.indexOf(\"=\");\n      if (eq !== -1) {\n        stateMap.set(part.slice(0, eq).trim(), part.slice(eq + 1).trim());\n      }\n    }\n    const merged = Array.from(stateMap.entries())\n      .map(([k, v]) => `${k}=${v}`)\n      .join(\",\");\n    return `${base}[${merged}]`;\n  }\n\n  function setBlock(x, y, z, block) {\n    if (x >= 0 && x < sizeX && y >= 0 && y < sizeY && z >= 0 && z < sizeZ && block) {\n      api.set(x, y, z, block);\n    }\n  }\n\n  const theme = api.theme || {};\n  const stone = theme.stone || {};\n  const ground = theme.ground || {};\n  const wood = theme.wood || {};\n\n  const stonePrimary = stone.primary || \"minecraft:stone_bricks\";\n  const stoneAccent = stone.accent || \"minecraft:deepslate_bricks\";\n  const stoneStairs = stone.stairs || \"minecraft:stone_brick_stairs\";\n  const stoneSlab = stone.slab || \"minecraft:stone_brick_slab\";\n  const stoneWall = stone.wall || \"minecraft:stone_brick_wall\";\n\n  const groundPavement = ground.pavement || \"minecraft:cobblestone\";\n  const groundCoping = ground.coping || \"minecraft:stone_slab\";\n  const groundPlinth = ground.plinth || \"minecraft:deepslate_bricks\";\n  const groundRevetment = ground.revetment || \"minecraft:stone_bricks\";\n\n  const woodPlanks = wood.planks || \"minecraft:dark_oak_planks\";\n  const woodLog = wood.log || \"minecraft:dark_oak_log\";\n  const woodStripped = wood.stripped || \"minecraft:stripped_dark_oak_log\";\n  const woodSlab = wood.slab || \"minecraft:dark_oak_slab\";\n  const woodTrapdoor = wood.trapdoor || \"minecraft:dark_oak_trapdoor\";\n\n  function getMasonry(x, y, z, isWet = false) {\n    const r = (Math.sin(x * 12.9898 + y * 78.233 + z * 37.719) * 43758.5453) % 1;\n    const val = r < 0 ? r + 1 : r;\n    if (isWet || y <= 1) {\n      if (val < 0.4) return stoneAccent;\n      if (val < 0.6) return \"minecraft:mossy_stone_bricks\";\n      return stonePrimary;\n    }\n    if (val < 0.25) return stoneAccent;\n    if (val < 0.38) return \"minecraft:cracked_stone_bricks\";\n    return stonePrimary;\n  }\n\n  function getPavement(x, y, z) {\n    const r = (Math.sin(x * 39.34 + y * 11.73 + z * 93.17) * 43758.5453) % 1;\n    const val = r < 0 ? r + 1 : r;\n    if (val < 0.5) return groundPavement;\n    if (val < 0.75) return stonePrimary;\n    if (val < 0.88) return groundPlinth;\n    return \"minecraft:mossy_cobblestone\";\n  }\n\n  // Determine lock operation state across plugin instances\n  const instIdx = (api.instance.index || 0) % 3;\n\n  // 1. Foundation and Terrain Conformance\n  for (let x = 0; x < sizeX; x++) {\n    for (let z = 0; z < sizeZ; z++) {\n      const h = Math.round(api.heightAt(x, z));\n      const groundY = seatPlaneY + h;\n      const isTowpathWest = x <= 3;\n      const isTowpathEast = x >= 10;\n      const isChamber = x >= 4 && x <= 9;\n\n      if (isTowpathWest || isTowpathEast) {\n        const bottomY = Math.max(0, Math.min(groundY, seatPlaneY));\n        for (let y = bottomY; y <= 2; y++) {\n          setBlock(x, y, z, getMasonry(x, y, z, y <= 1));\n        }\n        if (x <= 2 || x >= 11) {\n          setBlock(x, 3, z, getPavement(x, 3, z));\n        }\n        if (groundY > 3) {\n          const topHill = Math.min(sizeY - 1, groundY);\n          for (let y = 4; y <= topHill; y++) {\n            if (x === 0 || x === sizeX - 1) {\n              setBlock(x, y, z, groundRevetment);\n            } else {\n              setBlock(x, y, z, getMasonry(x, y, z, false));\n            }\n          }\n        }\n      } else if (isChamber) {\n        const bottomY = Math.max(0, Math.min(groundY, 1));\n        for (let y = bottomY; y <= 0; y++) {\n          setBlock(x, y, z, groundPlinth);\n        }\n        setBlock(x, 1, z, getMasonry(x, 1, z, true));\n      }\n    }\n  }\n\n  // 2. Lock Chamber Walls & Quoins\n  for (let z = 0; z < sizeZ; z++) {\n    // West Chamber Wall (x = 3)\n    for (let y = 1; y <= 3; y++) {\n      setBlock(3, y, z, getMasonry(3, y, z, y <= 1));\n    }\n    // East Chamber Wall (x = 10)\n    for (let y = 1; y <= 3; y++) {\n      setBlock(10, y, z, getMasonry(10, y, z, y <= 1));\n    }\n\n    // Wall Copings\n    setBlock(3, 3, z, groundCoping);\n    setBlock(10, 3, z, groundCoping);\n  }\n\n  // Gate Recesses in walls (z = 8..11)\n  for (let z = 8; z <= 11; z++) {\n    setBlock(3, 2, z, withState(stoneStairs, \"facing=east,half=bottom\"));\n    setBlock(10, 2, z, withState(stoneStairs, \"facing=west,half=bottom\"));\n  }\n\n  // Hollow Quoins at z = 7 (Hinge pockets for heel posts)\n  setBlock(3, 2, 7, withState(stoneStairs, \"facing=south,half=bottom\"));\n  setBlock(3, 3, 7, withState(stoneStairs, \"facing=south,half=bottom\"));\n  setBlock(10, 2, 7, withState(stoneStairs, \"facing=south,half=bottom\"));\n  setBlock(10, 3, 7, withState(stoneStairs, \"facing=south,half=bottom\"));\n\n  // 3. Mitre Sill (Cill) on Canal Floor (y = 2, pointing north / upstream)\n  setBlock(6, 2, 5, stoneAccent);\n  setBlock(7, 2, 5, stoneAccent);\n  setBlock(5, 2, 6, stoneAccent);\n  setBlock(8, 2, 6, stoneAccent);\n  setBlock(4, 2, 7, stoneAccent);\n  setBlock(9, 2, 7, stoneAccent);\n\n  // Sill bumper timbers\n  setBlock(6, 2, 4, withState(woodStripped, \"axis=x\"));\n  setBlock(7, 2, 4, withState(woodStripped, \"axis=x\"));\n  setBlock(5, 2, 5, withState(woodStripped, \"axis=x\"));\n  setBlock(8, 2, 5, withState(woodStripped, \"axis=x\"));\n\n  // 4. Lock Gates & Balance Beams per Instance\n  if (instIdx === 0) {\n    // === INSTANCE 0: CLOSED MITRE GATES UNDER FULL HEAD ===\n    // West Gate Leaf\n    for (let y = 1; y <= 5; y++) {\n      setBlock(4, y, 7, withState(woodLog, \"axis=y\")); // Heel post\n      setBlock(5, y, 6, woodPlanks);                    // Leaf\n      setBlock(6, y, 5, withState(woodLog, \"axis=y\")); // Mitre post\n    }\n    // West Gate Iron straps & walkway\n    setBlock(4, 3, 7, withState(woodTrapdoor, \"facing=south,half=bottom\"));\n    setBlock(6, 3, 5, withState(woodTrapdoor, \"facing=north,half=bottom\"));\n    setBlock(4, 5, 7, withState(woodSlab, \"type=top\"));\n    setBlock(5, 5, 6, withState(woodSlab, \"type=top\"));\n    setBlock(6, 5, 5, withState(woodSlab, \"type=top\"));\n    // West Handrail\n    setBlock(4, 6, 7, \"minecraft:iron_bars\");\n    setBlock(5, 6, 6, \"minecraft:iron_bars\");\n    setBlock(6, 6, 5, \"minecraft:iron_bars\");\n\n    // West Balance Beam (extending back across towpath)\n    setBlock(3, 5, 7, withState(woodLog, \"axis=x\"));\n    setBlock(2, 5, 8, withState(woodLog, \"axis=z\"));\n    setBlock(1, 4, 9, withState(woodLog, \"axis=z\"));\n    setBlock(0, 4, 10, \"minecraft:anvil[facing=north]\"); // Counterbalance weight\n    setBlock(0, 3, 10, groundPlinth);\n\n    // West Paddle Gear (Rack & Pinion Sluice)\n    setBlock(5, 6, 6, \"minecraft:hopper[facing=down]\");\n    setBlock(5, 7, 6, \"minecraft:lightning_rod[facing=up]\");\n    setBlock(5, 6, 5, \"minecraft:lever[face=wall,facing=north]\");\n\n    // East Gate Leaf\n    for (let y = 1; y <= 5; y++) {\n      setBlock(9, y, 7, withState(woodLog, \"axis=y\")); // Heel post\n      setBlock(8, y, 6, woodPlanks);                    // Leaf\n      setBlock(7, y, 5, withState(woodLog, \"axis=y\")); // Mitre post\n    }\n    // East Gate Walkway\n    setBlock(9, 5, 7, withState(woodSlab, \"type=top\"));\n    setBlock(8, 5, 6, withState(woodSlab, \"type=top\"));\n    setBlock(7, 5, 5, withState(woodSlab, \"type=top\"));\n    // East Handrail\n    setBlock(9, 6, 7, \"minecraft:iron_bars\");\n    setBlock(8, 6, 6, \"minecraft:iron_bars\");\n    setBlock(7, 6, 5, \"minecraft:iron_bars\");\n\n    // East Balance Beam\n    setBlock(10, 5, 7, withState(woodLog, \"axis=x\"));\n    setBlock(11, 5, 8, withState(woodLog, \"axis=z\"));\n    setBlock(12, 4, 9, withState(woodLog, \"axis=z\"));\n    setBlock(13, 4, 10, \"minecraft:anvil[facing=north]\");\n    setBlock(13, 3, 10, groundPlinth);\n\n    // East Paddle Gear\n    setBlock(8, 6, 6, \"minecraft:hopper[facing=down]\");\n    setBlock(8, 7, 6, \"minecraft:lightning_rod[facing=up]\");\n    setBlock(8, 6, 5, \"minecraft:lever[face=wall,facing=north]\");\n\n    // Props: Bollards & Gas Lamp Post\n    setBlock(1, 4, 2, \"minecraft:anvil[facing=north]\");\n    setBlock(1, 4, 13, \"minecraft:anvil[facing=north]\");\n    setBlock(12, 4, 2, \"minecraft:anvil[facing=north]\");\n    setBlock(12, 4, 13, \"minecraft:anvil[facing=north]\");\n\n    // East Towpath Gas Lantern\n    setBlock(13, 4, 3, stoneWall);\n    setBlock(13, 5, 3, \"minecraft:iron_bars\");\n    setBlock(13, 6, 3, \"minecraft:iron_bars\");\n    setBlock(13, 7, 3, \"minecraft:lantern[hanging=false]\");\n\n  } else if (instIdx === 1) {\n    // === INSTANCE 1: WORKING LOCK — SLUICING / GATE CRACKED AJAR ===\n    // West Gate slightly ajar\n    for (let y = 1; y <= 5; y++) {\n      setBlock(4, y, 7, withState(woodLog, \"axis=y\")); // Heel post\n      setBlock(4, y, 6, woodPlanks);                    // Slanted leaf\n      setBlock(5, y, 5, withState(woodLog, \"axis=y\")); // Tip post\n    }\n    // West Walkway & Hoisted Sluice Paddle\n    setBlock(4, 5, 7, withState(woodSlab, \"type=top\"));\n    setBlock(4, 5, 6, withState(woodSlab, \"type=top\"));\n    setBlock(5, 5, 5, withState(woodSlab, \"type=top\"));\n    setBlock(4, 6, 7, \"minecraft:iron_bars\");\n    setBlock(5, 6, 5, \"minecraft:iron_bars\");\n\n    // Hoisted Rack (high sluice opening)\n    setBlock(4, 6, 6, \"minecraft:hopper[facing=down]\");\n    setBlock(4, 7, 6, \"minecraft:iron_bars\");\n    setBlock(4, 8, 6, \"minecraft:lightning_rod[facing=up]\");\n    setBlock(4, 5, 6, \"minecraft:chain[axis=y]\");\n    setBlock(4, 6, 5, \"minecraft:lever[face=wall,facing=north]\");\n\n    // West Balance Beam\n    setBlock(3, 5, 7, withState(woodLog, \"axis=x\"));\n    setBlock(2, 5, 8, withState(woodLog, \"axis=z\"));\n    setBlock(1, 4, 9, withState(woodLog, \"axis=z\"));\n    setBlock(0, 4, 9, \"minecraft:anvil[facing=north]\");\n    setBlock(0, 3, 9, groundPlinth);\n\n    // East Gate closed\n    for (let y = 1; y <= 5; y++) {\n      setBlock(9, y, 7, withState(woodLog, \"axis=y\"));\n      setBlock(8, y, 6, woodPlanks);\n      setBlock(7, y, 5, withState(woodLog, \"axis=y\"));\n    }\n    setBlock(9, 5, 7, withState(woodSlab, \"type=top\"));\n    setBlock(8, 5, 6, withState(woodSlab, \"type=top\"));\n    setBlock(7, 5, 5, withState(woodSlab, \"type=top\"));\n    setBlock(9, 6, 7, \"minecraft:iron_bars\");\n    setBlock(8, 6, 6, \"minecraft:iron_bars\");\n    setBlock(7, 6, 5, \"minecraft:iron_bars\");\n\n    // East Balance Beam\n    setBlock(10, 5, 7, withState(woodLog, \"axis=x\"));\n    setBlock(11, 5, 8, withState(woodLog, \"axis=z\"));\n    setBlock(12, 4, 9, withState(woodLog, \"axis=z\"));\n    setBlock(13, 4, 10, \"minecraft:anvil[facing=north]\");\n    setBlock(13, 3, 10, groundPlinth);\n\n    // East Paddle Gear\n    setBlock(8, 6, 6, \"minecraft:hopper[facing=down]\");\n    setBlock(8, 7, 6, \"minecraft:lightning_rod[facing=up]\");\n    setBlock(8, 6, 5, \"minecraft:lever[face=wall,facing=north]\");\n\n    // Props: Sluice capstan winch & maintenance grease pot\n    setBlock(1, 4, 3, \"minecraft:cauldron\");\n    setBlock(1, 4, 4, \"minecraft:chain[axis=z]\");\n    setBlock(12, 4, 5, \"minecraft:hopper[facing=down]\"); // Grease bucket\n    setBlock(1, 4, 13, \"minecraft:anvil[facing=north]\");\n    setBlock(12, 4, 2, \"minecraft:anvil[facing=north]\");\n    setBlock(12, 4, 13, \"minecraft:anvil[facing=north]\");\n\n    // West Towpath Lantern\n    setBlock(0, 4, 12, stoneWall);\n    setBlock(0, 5, 12, \"minecraft:iron_bars\");\n    setBlock(0, 6, 12, \"minecraft:iron_bars\");\n    setBlock(0, 7, 12, \"minecraft:lantern[hanging=false]\");\n\n  } else {\n    // === INSTANCE 2: OPEN GATES FOLDED INTO WALL RECESSES ===\n    // West Gate swung back into recess (x = 3, z = 7..10)\n    for (let y = 1; y <= 5; y++) {\n      setBlock(3, y, 7, withState(woodLog, \"axis=y\"));\n      setBlock(3, y, 8, woodPlanks);\n      setBlock(3, y, 9, woodPlanks);\n      setBlock(3, y, 10, withState(woodLog, \"axis=y\"));\n    }\n    setBlock(3, 5, 7, withState(woodSlab, \"type=top\"));\n    setBlock(3, 5, 8, withState(woodSlab, \"type=top\"));\n    setBlock(3, 5, 9, withState(woodSlab, \"type=top\"));\n    setBlock(3, 5, 10, withState(woodSlab, \"type=top\"));\n\n    // West Swung Balance Beam (swung forward)\n    setBlock(2, 5, 6, withState(woodLog, \"axis=z\"));\n    setBlock(1, 4, 5, withState(woodLog, \"axis=z\"));\n    setBlock(0, 4, 4, \"minecraft:anvil[facing=east]\");\n    setBlock(0, 3, 4, groundPlinth);\n\n    // East Gate swung back into recess (x = 10, z = 7..10)\n    for (let y = 1; y <= 5; y++) {\n      setBlock(10, y, 7, withState(woodLog, \"axis=y\"));\n      setBlock(10, y, 8, woodPlanks);\n      setBlock(10, y, 9, woodPlanks);\n      setBlock(10, y, 10, withState(woodLog, \"axis=y\"));\n    }\n    setBlock(10, 5, 7, withState(woodSlab, \"type=top\"));\n    setBlock(10, 5, 8, withState(woodSlab, \"type=top\"));\n    setBlock(10, 5, 9, withState(woodSlab, \"type=top\"));\n    setBlock(10, 5, 10, withState(woodSlab, \"type=top\"));\n\n    // East Swung Balance Beam\n    setBlock(11, 5, 6, withState(woodLog, \"axis=z\"));\n    setBlock(12, 4, 5, withState(woodLog, \"axis=z\"));\n    setBlock(13, 4, 4, \"minecraft:anvil[facing=west]\");\n    setBlock(13, 3, 4, groundPlinth);\n\n    // Recessed Wall Access Ladder for Boatmen (x = 4, attached to west wall face)\n    setBlock(3, 1, 4, \"minecraft:ladder[facing=east]\");\n    setBlock(3, 2, 4, \"minecraft:ladder[facing=east]\");\n    setBlock(3, 3, 4, \"minecraft:ladder[facing=east]\");\n\n    // Stacked spare lock timber balks on west towpath\n    setBlock(1, 4, 12, withState(woodLog, \"axis=z\"));\n    setBlock(1, 4, 13, withState(woodLog, \"axis=z\"));\n    setBlock(1, 4, 14, withState(woodLog, \"axis=z\"));\n    setBlock(1, 5, 13, withState(woodSlab, \"type=bottom\"));\n\n    // Bollards & Mooring Chain\n    setBlock(1, 4, 1, \"minecraft:anvil[facing=north]\");\n    setBlock(12, 4, 1, \"minecraft:anvil[facing=north]\");\n    setBlock(12, 4, 2, \"minecraft:chain[axis=z]\");\n    setBlock(12, 4, 3, \"minecraft:chain[axis=z]\");\n    setBlock(12, 4, 14, \"minecraft:anvil[facing=north]\");\n  }\n\n  return {\n    name: \"canal_lock_gates\",\n    seatY: seatPlaneY,\n    anchors: {\n      front: [6, 3, 0],\n      door: [6, 3, 0],\n      towpath_west: [1, 3, 0],\n      towpath_east: [12, 3, 0],\n      quoin_west: [3, 4, 7],\n      quoin_east: [10, 4, 7]\n    }\n  };\n}"
+    }
+  }
+}
