@@ -177,6 +177,18 @@ the lever: teach `distance` soft in the fences** (25 tether constraints,
 none soft) — kit-only, reversible, verified redwood_camp ×3 authored and
 compiled.
 
+**LANDED — the campaign's strongest kit result.** Twelve fence tethers
+soft, eleven kept hard where the relationship is the composition. redwood
+×3, before and after recompiled in one pass: **E404 11/4/10 → 0/0/0**
+(terrain_conform 5/2/4 → 0/0/0), all diagnostics 17/8/15 → 8/5/5; soft
+tethers written 0 → 9/10/11, hard 12/9/9 → 2/0/0. troy 0/0/0 → 0/0/2,
+both tethers and no conform — the priority inversion working as
+designed. The demotion question, answered: never slope, never maxSlope,
+never terrain_conform — the kit taught hard tethers by example, 25 times,
+with not one `soft`. $0.235. (One LOAM-T110 seen in conform-after-3's
+redwood, inland — a single sighting, not caused by the change; to be
+glanced at.)
+
 **"What else was hard" census (orchestrator, zero spend, 227 demotions
 matched to their nodes in the battery docs):** the conform was LAST in the
 constraints array in 86/100 of its demotions; the nodes carried 2 hard
