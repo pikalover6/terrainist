@@ -59,6 +59,14 @@ RIGHT (F20 calibration), both kits teach the 0.02 line (Kai's verdict). Wave 2b 
 line (the citadel, ~$0.04/world), A3 dynamic context assembly, binding-
 contracts teaching. The campaign window (caps) is Kai's to design.
 
+**Perf ladder:** rung 1+2 LANDED c446041 (gate 5,572/0): single-
+compression position hash 4.6×, scatter 3.8×, compile −15/−6/−21 %; troy
+NOT representative (thalassa 9.4 s structures-bound, pirates scatter-
+bound); emit cost = prismarine's linear palette scan (couples to authoring
+richness); next rung run-fill only. Menus design ratified by Kai: two
+tiers (named packs whole, era-affine round-robin), ~60 entries/2.1k
+tokens, statuses=[implemented], empty menu ⇒ no message.
+
 **#27 closed (e792d16):** resolveGround ×5 = §1.6 design (four prefixes +
 the generating fifth); I497's hard-coded resolves:1 fixed (report bytes
 only). Retaining probe (env-guarded wrappers on the built dist): 40

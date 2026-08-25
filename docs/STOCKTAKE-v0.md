@@ -107,6 +107,32 @@ of wall; full report: scratchpad perf/REPORT.md + battery of scripts).
 - Byte-identity discipline binds throughout: every optimization proves
   output-identical worlds (shasums vs pre-change build) — performance work
   is the one place regressions hide silently.
+- **Wave-2a perf ladder (Kai-driven session "perf", own worktree, branch
+  `perf/compile-ladder`; every rung shasum-identical per file on all three
+  baseline docs, FULL suite as the flip gate):**
+  - *Baseline corrected — troy was not representative.* troy 5.0 s
+    (structures 1.4 / scatter 0.9 / emit 1.6), **thalassa 9.4 s, structures-
+    bound (4.6 s)**, pirates 6.8 s, scatter-bound (2.0 s). Structures on a
+    dense city is nearly a whole troy compile by itself — a read-only
+    thalassa structures profile is queued (report only; structures stays
+    un-edited under #27).
+  - *Rung 1+2 LANDED (`c446041`, gate 5,572/0):* a single-compression
+    BLAKE3 for the 44-byte position input (`determinism/position-hash.ts`,
+    no allocation, no BigInt) — the cost was hasher construction and XOF
+    machinery, not maths: 1123 → 243 ns/call (4.6×); scatter 3.8× on
+    troy; whole compile −15 % troy / −6 % thalassa / −21 % pirates. Proof:
+    27,036 positions × 9 seeds against the generic implementation, plus
+    per-file shasums.
+  - *Emit mechanism re-attributed:* the "16 ns/block through the palette
+    API" is a **linear palette scan** in prismarine's
+    `IndirectPaletteContainer.set` (12.8 ns/block at palette 1 → 35.5 at
+    palette 32; a raw bit-array write is 4.1). Emit cost is coupled to how
+    varied the authoring is. Next rung (Kai: run-fill only, deflate pool
+    shown before built): first block of each section slice through the
+    public setter, stable-container bit-packed remainder, shape-check +
+    silent fallback; expected ~2× on the fill. `terrain/emit.ts` is emit
+    code by role and was granted to the session as one file; the string
+    chunk-key maps in structures/** are parked as a later orchestrator rung.
 
 ## WS-F — Architectural inventory (the "glaring stuff" census)
 
