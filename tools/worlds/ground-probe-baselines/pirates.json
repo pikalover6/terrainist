@@ -11,9 +11,9 @@
     "z0": -210,
     "z1": 248
   },
-  "ownedColumns": 44363,
+  "ownedColumns": 44437,
   "intents": {
-    "total": 1115,
+    "total": 1129,
     "byClass": [
       {
         "name": "quarter.plane",
@@ -21,7 +21,7 @@
       },
       {
         "name": "building.footprint",
-        "n": 146
+        "n": 160
       },
       {
         "name": "retaining.seam",
@@ -56,11 +56,11 @@
   "columnsWonByClass": [
     {
       "name": "quarter.plane",
-      "n": 15764
+      "n": 14915
     },
     {
       "name": "building.footprint",
-      "n": 13750
+      "n": 14673
     },
     {
       "name": "street.network",
@@ -96,75 +96,75 @@
     "byDelta": [
       {
         "delta": 0,
-        "n": 113382
+        "n": 112417
       },
       {
         "delta": 1,
-        "n": 8279
+        "n": 8270
       },
       {
         "delta": 2,
-        "n": 1346
+        "n": 1356
       },
       {
         "delta": 3,
-        "n": 755
+        "n": 580
       },
       {
         "delta": 4,
-        "n": 641
+        "n": 642
       },
       {
         "delta": 5,
-        "n": 554
+        "n": 564
       },
       {
         "delta": 6,
-        "n": 96
+        "n": 101
       },
       {
         "delta": 7,
-        "n": 711
+        "n": 709
       },
       {
         "delta": 8,
-        "n": 526
+        "n": 545
       },
       {
         "delta": 9,
-        "n": 1837
+        "n": 1933
       },
       {
         "delta": 10,
-        "n": 5803
+        "n": 6241
       },
       {
         "delta": 11,
-        "n": 2533
+        "n": 2704
       },
       {
         "delta": 12,
-        "n": 1807
+        "n": 1936
       },
       {
         "delta": 13,
-        "n": 1843
+        "n": 1928
       },
       {
         "delta": 14,
-        "n": 346
+        "n": 382
       },
       {
         "delta": 15,
-        "n": 2531
+        "n": 2667
       },
       {
         "delta": 16,
-        "n": 169
+        "n": 185
       },
       {
         "delta": 17,
-        "n": 248
+        "n": 247
       },
       {
         "delta": 18,
@@ -248,7 +248,7 @@
   "cliffCensus": [
     {
       "pair": "natural over natural",
-      "n": 3980,
+      "n": 3978,
       "avg": 2.9,
       "max": 10
     },
@@ -278,8 +278,8 @@
     },
     {
       "pair": "retaining.skirt over natural",
-      "n": 31,
-      "avg": 5.8,
+      "n": 26,
+      "avg": 6,
       "max": 9
     },
     {
@@ -290,8 +290,8 @@
     },
     {
       "pair": "retaining.skirt over retaining.skirt",
-      "n": 20,
-      "avg": 3.5,
+      "n": 18,
+      "avg": 3.6,
       "max": 4
     },
     {
@@ -355,12 +355,6 @@
       "max": 2
     },
     {
-      "pair": "quarter.plane over retaining.skirt",
-      "n": 2,
-      "avg": 3.5,
-      "max": 4
-    },
-    {
       "pair": "street.sidewalk over street.network",
       "n": 2,
       "avg": 2.5,
@@ -371,6 +365,12 @@
       "n": 2,
       "avg": 4,
       "max": 5
+    },
+    {
+      "pair": "quarter.plane over retaining.skirt",
+      "n": 1,
+      "avg": 3,
+      "max": 3
     },
     {
       "pair": "street.network over street.network",
@@ -386,16 +386,16 @@
     }
   ],
   "buildingSeats": {
-    "count": 38,
+    "count": 42,
     "sinkHist": [
       {
         "delta": 0,
-        "n": 38
+        "n": 42
       }
     ],
     "worst": [
       {
-        "source": "world.pirate_cove_town.infill_-78_-77#pad@868",
+        "source": "world.pirate_cove_town.infill_-78_-77#pad@871",
         "floorY": 63,
         "ringMed": 63,
         "ringMax": 66,
@@ -404,7 +404,7 @@
         "n": 112
       },
       {
-        "source": "world.pirate_cove_town.infill_-78_-77#pad@868#preserve",
+        "source": "world.pirate_cove_town.infill_-78_-77#pad@871#preserve",
         "floorY": 63,
         "ringMed": 63,
         "ringMax": 66,
@@ -431,7 +431,43 @@
         "n": 729
       },
       {
-        "source": "world.pirate_cove_town.infill_-142_-84#pad@867",
+        "source": "world.pirate_cove_town.infill_-111_-184#pad@853",
+        "floorY": 69,
+        "ringMed": 69,
+        "ringMax": 69,
+        "sink": 0,
+        "worst": 0,
+        "n": 169
+      },
+      {
+        "source": "world.pirate_cove_town.infill_-111_-184#pad@853#preserve",
+        "floorY": 69,
+        "ringMed": 69,
+        "ringMax": 69,
+        "sink": 0,
+        "worst": 0,
+        "n": 169
+      },
+      {
+        "source": "world.pirate_cove_town.infill_-126_-184#pad@852",
+        "floorY": 69,
+        "ringMed": 69,
+        "ringMax": 69,
+        "sink": 0,
+        "worst": 0,
+        "n": 169
+      },
+      {
+        "source": "world.pirate_cove_town.infill_-126_-184#pad@852#preserve",
+        "floorY": 69,
+        "ringMed": 69,
+        "ringMax": 69,
+        "sink": 0,
+        "worst": 0,
+        "n": 169
+      },
+      {
+        "source": "world.pirate_cove_town.infill_-142_-84#pad@870",
         "floorY": 69,
         "ringMed": 69,
         "ringMax": 69,
@@ -440,7 +476,7 @@
         "n": 168
       },
       {
-        "source": "world.pirate_cove_town.infill_-142_-84#pad@867#preserve",
+        "source": "world.pirate_cove_town.infill_-142_-84#pad@870#preserve",
         "floorY": 69,
         "ringMed": 69,
         "ringMax": 69,
@@ -449,7 +485,7 @@
         "n": 168
       },
       {
-        "source": "world.pirate_cove_town.infill_-180_-72#pad@870",
+        "source": "world.pirate_cove_town.infill_-180_-72#pad@873",
         "floorY": 69,
         "ringMed": 69,
         "ringMax": 69,
@@ -458,49 +494,13 @@
         "n": 88
       },
       {
-        "source": "world.pirate_cove_town.infill_-180_-72#pad@870#preserve",
+        "source": "world.pirate_cove_town.infill_-180_-72#pad@873#preserve",
         "floorY": 69,
         "ringMed": 69,
         "ringMax": 69,
         "sink": 0,
         "worst": 0,
         "n": 88
-      },
-      {
-        "source": "world.pirate_cove_town.infill_-194_-72#pad@869",
-        "floorY": 69,
-        "ringMed": 69,
-        "ringMax": 69,
-        "sink": 0,
-        "worst": 0,
-        "n": 96
-      },
-      {
-        "source": "world.pirate_cove_town.infill_-194_-72#pad@869#preserve",
-        "floorY": 69,
-        "ringMed": 69,
-        "ringMax": 69,
-        "sink": 0,
-        "worst": 0,
-        "n": 96
-      },
-      {
-        "source": "world.pirate_cove_town.infill_-53_-109#pad@864",
-        "floorY": 69,
-        "ringMed": 69,
-        "ringMax": 69,
-        "sink": 0,
-        "worst": 0,
-        "n": 210
-      },
-      {
-        "source": "world.pirate_cove_town.infill_-53_-109#pad@864#preserve",
-        "floorY": 69,
-        "ringMed": 69,
-        "ringMax": 69,
-        "sink": 0,
-        "worst": 0,
-        "n": 210
       }
     ]
   },
@@ -575,11 +575,11 @@
     },
     {
       "name": "quarter.plane",
-      "n": 62,
+      "n": 58,
       "byDelta": [
         {
           "delta": 0,
-          "n": 62
+          "n": 58
         }
       ]
     },
@@ -623,7 +623,7 @@
     }
   ],
   "clusters": {
-    "count": 22,
+    "count": 23,
     "top": [
       {
         "score": 379,
@@ -654,26 +654,6 @@
           {
             "name": "natural/precinct.ground",
             "n": 56
-          }
-        ]
-      },
-      {
-        "score": 212,
-        "edges": 45,
-        "cx": 186,
-        "cz": 201,
-        "topKinds": [
-          {
-            "name": "retaining.skirt/natural",
-            "n": 28
-          },
-          {
-            "name": "retaining.skirt/retaining.skirt",
-            "n": 11
-          },
-          {
-            "name": "quarter.plane/natural",
-            "n": 4
           }
         ]
       },
@@ -720,11 +700,31 @@
             "n": 27
           }
         ]
+      },
+      {
+        "score": 110,
+        "edges": 37,
+        "cx": -65,
+        "cz": -73,
+        "topKinds": [
+          {
+            "name": "retaining.seam/retaining.seam",
+            "n": 34
+          },
+          {
+            "name": "natural/retaining.seam",
+            "n": 2
+          },
+          {
+            "name": "street.sidewalk/natural",
+            "n": 1
+          }
+        ]
       }
     ]
   },
   "floaters": {
-    "total": 12475,
+    "total": 12454,
     "byRule": [
       {
         "rule": "unsupported.chain",
@@ -805,7 +805,7 @@
       },
       {
         "rule": "unsupported.multiface",
-        "n": 12465,
+        "n": 12444,
         "witnesses": [
           {
             "x": 37,

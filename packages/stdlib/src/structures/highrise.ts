@@ -83,6 +83,26 @@ import type { BuildingMaterials } from "./themes.js";
  */
 export const HIGHRISE_ARCHETYPES = ["skyscraper", "office", "hotel", "apartment_block"] as const;
 
+/**
+ * **The door's head course is written, not skipped.**
+ *
+ * The curtain-wall loop declares "the doorway and its head course: opaque,
+ * always" and then, on the ground storey, skips the door columns at relative
+ * y1, y2 *and* y3 — the leaves stand at y1–2, so y3 *is* the head course, and
+ * it was the one cell the rule left unwritten whenever `storyHeight > 3` put
+ * the storey's head band above it (at `storyHeight === 3` the band itself
+ * happened to fill it). Measured 2026-08-25 on `examples/c1-harbourtown`
+ * (`scratchpad/voxel-trace/VOXEL-TRACE.md`): an `office` with `storyHeight
+ * 4` had air at both door-head cells, and once road sovereignty took one of
+ * its two canopy slabs the other had air on six sides — `floating.slab`, the
+ * physics gate. `false` is the old guard (`y > 3`), kept so the world it made
+ * can be recompiled; `true` writes the wall at y3 over every highrise door.
+ * Ships `true` in the commit that found it (the Stocktake Run, unit 9):
+ * a red physics gate does not land, and the only cells this moves are the
+ * head course over highrise doors — attributed in the Run's ledger.
+ */
+export const HIGHRISE_DOOR_HEAD_SOLID = true;
+
 /** One of the tall archetypes. */
 export type HighriseArchetype = (typeof HIGHRISE_ARCHETYPES)[number];
 
@@ -388,7 +408,11 @@ export function emitHighrise(r: HighriseRequest): BuildingResult {
         // a glass pane has nothing to hinge on, and the lobby's opening is
         // structure, not glazing.
         if (doorColumns.has(key)) {
-          if (s > 0 || y > 3) put(cell.x, y, cell.z, wallAt(cell.x, y, cell.z));
+          // See {@link HIGHRISE_DOOR_HEAD_SOLID}: the leaves are y1–2; y3 is
+          // the head course and is wall.
+          if (s > 0 || y > (HIGHRISE_DOOR_HEAD_SOLID ? 2 : 3)) {
+            put(cell.x, y, cell.z, wallAt(cell.x, y, cell.z));
+          }
           continue;
         }
         if (spandrel) {

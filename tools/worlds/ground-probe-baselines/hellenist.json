@@ -7,25 +7,25 @@
   },
   "bbox": {
     "x0": -177,
-    "x1": 172,
+    "x1": 163,
     "z0": -184,
     "z1": 224
   },
-  "ownedColumns": 63110,
+  "ownedColumns": 57574,
   "intents": {
-    "total": 458,
+    "total": 378,
     "byClass": [
       {
         "name": "quarter.plane",
-        "n": 313
+        "n": 224
       },
       {
         "name": "building.footprint",
-        "n": 108
+        "n": 128
       },
       {
         "name": "street.network",
-        "n": 28
+        "n": 19
       },
       {
         "name": "road.network",
@@ -33,14 +33,14 @@
       },
       {
         "name": "street.sidewalk",
-        "n": 3
-      },
-      {
-        "name": "verge",
         "n": 2
       },
       {
         "name": "precinct.ground",
+        "n": 1
+      },
+      {
+        "name": "verge",
         "n": 1
       }
     ]
@@ -48,19 +48,19 @@
   "columnsWonByClass": [
     {
       "name": "street.network",
-      "n": 22710
-    },
-    {
-      "name": "quarter.plane",
-      "n": 18599
+      "n": 20685
     },
     {
       "name": "building.footprint",
-      "n": 15006
+      "n": 16293
+    },
+    {
+      "name": "quarter.plane",
+      "n": 14491
     },
     {
       "name": "street.sidewalk",
-      "n": 5974
+      "n": 5336
     },
     {
       "name": "precinct.ground",
@@ -72,43 +72,43 @@
     },
     {
       "name": "verge",
-      "n": 156
+      "n": 104
     }
   ],
   "sanity": {
-    "n": 114149,
+    "n": 111369,
     "byDelta": [
       {
         "delta": 0,
-        "n": 93575
+        "n": 88890
       },
       {
         "delta": 1,
-        "n": 528
+        "n": 485
       },
       {
         "delta": 2,
-        "n": 224
+        "n": 539
       },
       {
         "delta": 3,
-        "n": 363
+        "n": 271
       },
       {
         "delta": 4,
-        "n": 167
+        "n": 284
       },
       {
         "delta": 5,
-        "n": 109
+        "n": 104
       },
       {
         "delta": 6,
-        "n": 102
+        "n": 94
       },
       {
         "delta": 7,
-        "n": 147
+        "n": 153
       },
       {
         "delta": 8,
@@ -116,47 +116,47 @@
       },
       {
         "delta": 9,
-        "n": 190
+        "n": 556
       },
       {
         "delta": 10,
-        "n": 1302
+        "n": 1591
       },
       {
         "delta": 11,
-        "n": 786
+        "n": 1085
       },
       {
         "delta": 12,
-        "n": 605
+        "n": 693
       },
       {
         "delta": 13,
-        "n": 1563
+        "n": 1642
       },
       {
         "delta": 14,
-        "n": 181
+        "n": 302
       },
       {
         "delta": 15,
-        "n": 689
+        "n": 669
       },
       {
         "delta": 16,
-        "n": 170
+        "n": 242
       },
       {
         "delta": 17,
-        "n": 782
+        "n": 852
       },
       {
         "delta": 18,
-        "n": 339
+        "n": 360
       },
       {
         "delta": 19,
-        "n": 280
+        "n": 297
       },
       {
         "delta": 20,
@@ -164,7 +164,7 @@
       },
       {
         "delta": 21,
-        "n": 1437
+        "n": 1460
       },
       {
         "delta": 22,
@@ -172,7 +172,7 @@
       },
       {
         "delta": 23,
-        "n": 202
+        "n": 212
       },
       {
         "delta": 24,
@@ -180,7 +180,7 @@
       },
       {
         "delta": 25,
-        "n": 2122
+        "n": 2222
       },
       {
         "delta": 26,
@@ -188,7 +188,7 @@
       },
       {
         "delta": 27,
-        "n": 171
+        "n": 233
       },
       {
         "delta": 28,
@@ -196,11 +196,11 @@
       },
       {
         "delta": 29,
-        "n": 926
+        "n": 943
       },
       {
         "delta": 30,
-        "n": 321
+        "n": 322
       },
       {
         "delta": 31,
@@ -272,18 +272,18 @@
       },
       {
         "delta": 54,
-        "n": 2
+        "n": 1
       },
       {
         "delta": 57,
-        "n": 31
+        "n": 32
       },
       {
         "delta": 59,
         "n": 37
       },
       {
-        "delta": 66,
+        "delta": 69,
         "n": 1
       },
       {
@@ -324,14 +324,14 @@
   "cliffCensus": [
     {
       "pair": "natural over natural",
-      "n": 1838,
+      "n": 1294,
       "avg": 2.1,
       "max": 7
     },
     {
       "pair": "natural over street.network",
-      "n": 200,
-      "avg": 5.8,
+      "n": 184,
+      "avg": 5.9,
       "max": 12
     },
     {
@@ -342,20 +342,14 @@
     },
     {
       "pair": "quarter.plane over natural",
-      "n": 34,
-      "avg": 4.1,
+      "n": 26,
+      "avg": 4.3,
       "max": 5
     },
     {
-      "pair": "verge over natural",
-      "n": 28,
-      "avg": 2.9,
-      "max": 3
-    },
-    {
       "pair": "street.network over street.network",
-      "n": 20,
-      "avg": 3,
+      "n": 19,
+      "avg": 3.1,
       "max": 4
     },
     {
@@ -381,10 +375,16 @@
       "n": 3,
       "avg": 3.7,
       "max": 4
+    },
+    {
+      "pair": "verge over natural",
+      "n": 2,
+      "avg": 2.5,
+      "max": 3
     }
   ],
   "buildingSeats": {
-    "count": 72,
+    "count": 80,
     "sinkHist": [
       {
         "delta": -1,
@@ -392,7 +392,7 @@
       },
       {
         "delta": 0,
-        "n": 68
+        "n": 76
       },
       {
         "delta": 7,
@@ -437,61 +437,7 @@
         "n": 399
       },
       {
-        "source": "world.neoclassical_metropolis.cell_1.infill_-46_22#pad@188",
-        "floorY": 71,
-        "ringMed": 71,
-        "ringMax": 71,
-        "sink": 0,
-        "worst": 0,
-        "n": 80
-      },
-      {
-        "source": "world.neoclassical_metropolis.cell_1.infill_-46_22#pad@188#preserve",
-        "floorY": 71,
-        "ringMed": 71,
-        "ringMax": 71,
-        "sink": 0,
-        "worst": 0,
-        "n": 80
-      },
-      {
-        "source": "world.neoclassical_metropolis.cell_4.infill_-114_147#pad@623",
-        "floorY": 71,
-        "ringMed": 71,
-        "ringMax": 71,
-        "sink": 0,
-        "worst": 0,
-        "n": 132
-      },
-      {
-        "source": "world.neoclassical_metropolis.cell_4.infill_-114_147#pad@623#preserve",
-        "floorY": 71,
-        "ringMed": 71,
-        "ringMax": 71,
-        "sink": 0,
-        "worst": 0,
-        "n": 132
-      },
-      {
-        "source": "world.neoclassical_metropolis.cell_4.infill_-118_170#pad@624",
-        "floorY": 71,
-        "ringMed": 71,
-        "ringMax": 71,
-        "sink": 0,
-        "worst": 0,
-        "n": 210
-      },
-      {
-        "source": "world.neoclassical_metropolis.cell_4.infill_-118_170#pad@624#preserve",
-        "floorY": 71,
-        "ringMed": 71,
-        "ringMax": 71,
-        "sink": 0,
-        "worst": 0,
-        "n": 210
-      },
-      {
-        "source": "world.neoclassical_metropolis.cell_4.infill_59_95#pad@621",
+        "source": "world.neoclassical_metropolis.cell_1.infill_-141_75#pad@205",
         "floorY": 71,
         "ringMed": 71,
         "ringMax": 71,
@@ -500,32 +446,86 @@
         "n": 117
       },
       {
-        "source": "world.neoclassical_metropolis.cell_4.infill_59_95#pad@621#preserve",
+        "source": "world.neoclassical_metropolis.cell_1.infill_-141_75#pad@205#preserve",
         "floorY": 71,
         "ringMed": 71,
         "ringMax": 71,
         "sink": 0,
         "worst": 0,
         "n": 117
+      },
+      {
+        "source": "world.neoclassical_metropolis.cell_1.infill_-143_-17#pad@187",
+        "floorY": 71,
+        "ringMed": 71,
+        "ringMax": 71,
+        "sink": 0,
+        "worst": 0,
+        "n": 132
+      },
+      {
+        "source": "world.neoclassical_metropolis.cell_1.infill_-143_-17#pad@187#preserve",
+        "floorY": 71,
+        "ringMed": 71,
+        "ringMax": 71,
+        "sink": 0,
+        "worst": 0,
+        "n": 132
+      },
+      {
+        "source": "world.neoclassical_metropolis.cell_1.infill_-46_22#pad@196",
+        "floorY": 71,
+        "ringMed": 71,
+        "ringMax": 71,
+        "sink": 0,
+        "worst": 0,
+        "n": 80
+      },
+      {
+        "source": "world.neoclassical_metropolis.cell_1.infill_-46_22#pad@196#preserve",
+        "floorY": 71,
+        "ringMed": 71,
+        "ringMax": 71,
+        "sink": 0,
+        "worst": 0,
+        "n": 80
+      },
+      {
+        "source": "world.neoclassical_metropolis.cell_1.infill_-48_44#pad@199",
+        "floorY": 71,
+        "ringMed": 71,
+        "ringMax": 71,
+        "sink": 0,
+        "worst": 0,
+        "n": 180
+      },
+      {
+        "source": "world.neoclassical_metropolis.cell_1.infill_-48_44#pad@199#preserve",
+        "floorY": 71,
+        "ringMed": 71,
+        "ringMax": 71,
+        "sink": 0,
+        "worst": 0,
+        "n": 180
       }
     ]
   },
   "streetFlank": [
     {
       "name": "street.sidewalk",
-      "n": 4007,
+      "n": 3308,
       "byDelta": [
         {
           "delta": -1,
-          "n": 20
+          "n": 10
         },
         {
           "delta": 0,
-          "n": 3926
+          "n": 3266
         },
         {
           "delta": 1,
-          "n": 58
+          "n": 29
         },
         {
           "delta": 3,
@@ -539,7 +539,7 @@
     },
     {
       "name": "natural",
-      "n": 2700,
+      "n": 2502,
       "byDelta": [
         {
           "delta": -5,
@@ -559,31 +559,31 @@
         },
         {
           "delta": -1,
-          "n": 175
+          "n": 136
         },
         {
           "delta": 0,
-          "n": 1827
+          "n": 1840
         },
         {
           "delta": 1,
-          "n": 461
+          "n": 305
         },
         {
           "delta": 2,
-          "n": 15
-        },
-        {
-          "delta": 3,
-          "n": 14
-        },
-        {
-          "delta": 4,
           "n": 17
         },
         {
+          "delta": 3,
+          "n": 11
+        },
+        {
+          "delta": 4,
+          "n": 12
+        },
+        {
           "delta": 5,
-          "n": 36
+          "n": 26
         },
         {
           "delta": 6,
@@ -617,11 +617,11 @@
     },
     {
       "name": "quarter.plane",
-      "n": 125,
+      "n": 82,
       "byDelta": [
         {
           "delta": 0,
-          "n": 119
+          "n": 76
         },
         {
           "delta": 5,
@@ -632,24 +632,10 @@
           "n": 2
         }
       ]
-    },
-    {
-      "name": "verge",
-      "n": 8,
-      "byDelta": [
-        {
-          "delta": -1,
-          "n": 2
-        },
-        {
-          "delta": 0,
-          "n": 6
-        }
-      ]
     }
   ],
   "clusters": {
-    "count": 22,
+    "count": 19,
     "top": [
       {
         "score": 556,
@@ -704,18 +690,6 @@
         ]
       },
       {
-        "score": 76,
-        "edges": 26,
-        "cx": 162,
-        "cz": 47,
-        "topKinds": [
-          {
-            "name": "verge/natural",
-            "n": 26
-          }
-        ]
-      },
-      {
         "score": 74,
         "edges": 13,
         "cx": -132,
@@ -728,14 +702,26 @@
         ]
       },
       {
-        "score": 72,
-        "edges": 15,
+        "score": 65,
+        "edges": 13,
         "cx": 155,
-        "cz": -1,
+        "cz": -2,
         "topKinds": [
           {
             "name": "natural/street.network",
-            "n": 15
+            "n": 13
+          }
+        ]
+      },
+      {
+        "score": 58,
+        "edges": 14,
+        "cx": 155,
+        "cz": 105,
+        "topKinds": [
+          {
+            "name": "quarter.plane/natural",
+            "n": 14
           }
         ]
       }

@@ -19,8 +19,8 @@ import { STREET_FACE_ALONG_SIDE, middleOut } from "../src/layout/district.js";
 import { PARK_BUDGET_BY_AREA } from "../src/layout/city.js";
 
 describe("a block face fronts the street anywhere along it", () => {
-  it("lands off", () => {
-    expect(STREET_FACE_ALONG_SIDE).toBe(false);
+  it("ships on: the side is scanned middle-out", () => {
+    expect(STREET_FACE_ALONG_SIDE).toBe(true);
   });
 
   it("asks the midpoint first, then alternates outward to both ends", () => {
@@ -40,7 +40,7 @@ describe("a block face fronts the street anywhere along it", () => {
 });
 
 describe("the park budget counts land, not cells", () => {
-  it("lands off", () => {
-    expect(PARK_BUDGET_BY_AREA).toBe(false);
+  it("ships on: parks stay under PARK_MAX_SHARE of the cells' land", () => {
+    expect(PARK_BUDGET_BY_AREA).toBe(true);
   });
 });

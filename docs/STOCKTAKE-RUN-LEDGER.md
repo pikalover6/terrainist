@@ -7,47 +7,46 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 8 (hellenist's density: cause found, two
-  switches landed off) is committed.
-- **Next unit:** unit 9 — flip `STREET_FACE_ALONG_SIDE`
-  (`layout/district.ts`) and `PARK_BUDGET_BY_AREA` (`layout/city.ts`).
-  Trial at both on: hellenist_k1 3.3 → 14.3 lots/10k (23 → 63 buildings),
-  the fresh harbour 4.3 → 12.7 (31 → 68), the r5 anchor 3.1 → 7.1, the
-  hellenist_r22 baseline 12.0 → 14.8; troy and metropolis controls
-  unmoved. The flip commit must carry: the fourteen payload shas
-  (`bi/bi14.sh`; reference `bi/off8/PAYLOADS`) — expect hellenist_r22 and
-  hellenist_k1 to move, every other document identical — with each moved
-  world attributed (cell characters before → after, lots per cell,
-  diagnostics); the ground-probe `hellenist` baseline regenerated and
-  attributed; renders read (the park cell becomes fabric); tests re-pinned
-  with cause if any pin those documents; FULL suite; station 3 re-read.
-  After that: F10 (two-phase parcel growth), F6/F7 (`W527` on the planned
-  path + `SITE_STRIP_DISSOLVED`), the `I512` street probe (F4); then §10.3
-  — the icon metric, the rules-only kit, E1's three arms.
-- **Last commit:** f73da43 (unit 7). Convention: this line names the
+- **In flight:** nothing — unit 9 (the city flips + the highrise head-course
+  fix) is committed.
+- **Next unit:** unit 10 — the small findings unit: F6 (`W527
+  WALLED_QUARTER_SPARSE` blind on the planned path — coverage = built
+  columns / enclosed land minus streets, so a walled hill town's own T4
+  guard fires) and F7 (`SITE_STRIP_DISSOLVED`, the note SITE-PLAN §3.7
+  mandates: strip, measurement, cost). Diagnostics change the report, not
+  the world: payload-identical on all fourteen; new codes take their
+  numbers from `packages/spec/src/terrain/diagnostics.ts`'s pre-allocated
+  table (append only). Then F10 (two-phase parcel growth), F4 (the `I512`
+  street probe), F14 (a physics unit over the shipped worlds' pre-existing
+  findings); then §10.3 — the icon metric, the rules-only kit, E1's three
+  arms.
+- **Last commit:** a03c7d5 (unit 8). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
 - **Spend:** $2.29 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
-- **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19.)
+- **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19, D25.)
 - **Findings queue (law 1: bugs before anything else):**
   - F1 — `railway_town` `LOAM-T110 UNSTABLE_FLUID` at emit.
-  - F2 — anchors at HEAD: metropolis fixed as far as ratified laws allow;
-    troy/pirates better with the kerb flip; **hellenist attributed
-    not-worse** (unit 8: +9 buildings, two landmarks relocated by the
-    solver's soft `at` cost, `W521`).
+  - F2 — anchors at HEAD: all four attributed; metropolis and hellenist read
+    (units 4, 8); troy/pirates moved better with the kerb flip.
   - F3 — metropolis authoring regression, lost 3-of-3. E2/E3.
   - F4 — `LOAM-I512` "ruined shells" vs intact boxes — street-level probe.
-  - F5 — hillside `held` raster artefact — fixed (units 5–6).
+  - F5 — fixed (units 5–6). F11, F12 — **fixed** (units 8–9). F13 — **the
+    highrise door's head course never written** (`storyHeight > 3`) —
+    **fixed** (unit 9, D25).
   - F6 — `W527` gated `planned === undefined`; F7 — `SITE_STRIP_DISSOLVED`
-    never existed. One small unit.
+    never existed. Unit 10.
   - F8 — `frontageLots` drops (~70 % starvation → F10, ~30 % geometry → P1).
   - F9 — new hillside lots' cut faces undressed (P2); walkability audit
     reads zero entrance reach on montfort/walled — instrument gap.
   - F10 — `LOT_PARCEL_OWN_STATIONS` orphans 24 % of the plane; two-phase
     growth needed; off.
-  - F11 — **city cells: the park budget counts cells, not land** (65 % of
-    the fresh Hellenist city is park with no fabric) — switch landed off.
-  - F12 — **`streetBehind` misses diagonal carriageways** in 45° cells (68 %
-    of hellenist_k1's block land fronts "nothing") — switch landed off.
+  - F14 — pre-existing physics findings on shipped worlds (the physics gate
+    covers fixtures only): sea-lantern chains/lanterns on the leviathan and
+    harbour props (thalassa 54/31, hellenist_k1 46/24), three isolated
+    blocks and a dripstone on thalassa, andesite-wall chains on the
+    metropolis (48), pirates' `interior.blocked_column` 429 and
+    `prop.fluid_leak` 33, troy's `floating.stair` 1. One physics unit,
+    probe first.
 ## DECISIONS
 
 (every fork taken: the reversible default chosen, why, and how to undo it)
@@ -175,6 +174,18 @@ running state. The NOW block is rewritten at the end of every turn.
   (+9 buildings; the colossus moved 116 blocks by the solver's documented
   soft `at` cost) and the E2 placement question goes to the icon metric
   rather than to a compiler change. Undo: Kai's veto.
+- **D25 (unit 9):** the highrise head-course fix (`HIGHRISE_DOOR_HEAD_SOLID`)
+  ships ON in the same commit as the city flips that exposed it, without a
+  separate off-state commit: the physics gate was red at the flip and a red
+  gate does not land; the constant keeps the old guard reachable; the
+  movement is exactly the head-course cells over highrise doors on three
+  documents (+14, +4, +8 blocks), attributed, with no placement or
+  diagnostic moving. Law 5's letter ("flip separately") is bent once, its
+  purpose (attribution) kept. Undo: one constant; Kai's veto open.
+- **D26 (unit 9):** pre-existing physics findings on the shipped worlds
+  (F14) are not chased in this unit — the gate pins the fixtures, the
+  committed baselines' `floaters` show these predate the Run — and go to a
+  physics unit of their own, probe first. Undo: n/a.
 
 ## SPEND
 
@@ -188,14 +199,16 @@ running state. The NOW block is rewritten at the end of every turn.
 | 6 | the frontage flip — compiles, probes, renders, re-pins, the FULL suite | 0.00 | 2.29 |
 | 7 | the second flip — compiles, audits, the FULL suite | 0.00 | 2.29 |
 | 8 | hellenist's density — instrumented probe, two switches off, trials, the FULL suite | 0.00 | 2.29 |
+| 9 | the city flips + the highrise head fix — compiles, lints, traces, baselines, two FULL suites | 0.00 | 2.29 |
 
 ## VERDICTS
 
 (pointers to `docs/decks/<deck>/VERDICT.md`)
 
 - `docs/decks/before-sample/VERDICT.md` — station 1 metropolis_hideout:
-  **FAIL** (T6, T9); station 3 hellenist_harbour: **FAIL** (T7); station 7
-  walled_medieval_city: **FAIL** (T4, T7); stations 2, 4–6, 8–11 pending.
+  **FAIL** (T6, T9); station 3 hellenist_harbour: **FAIL (T7, narrowed:
+  4.3 → 12.7 lots/10k at the flip)**; station 7 walled_medieval_city: **FAIL**
+  (T4, T7); stations 2, 4–6, 8–11 pending.
 
 ## REACH
 
@@ -352,3 +365,20 @@ running state. The NOW block is rewritten at the end of every turn.
   `Test Files 336 passed | 1 skipped (337)`, `Tests 5641 passed | 31 skipped
   (5672)`. Files: `layout/district.ts`, `layout/city.ts`,
   `test/city-density.test.ts`, the record, VERDICT station 3. Spend $0.
+- **unit 9 — the city flips and the highrise head fix (2026-08-25):**
+  `STREET_FACE_ALONG_SIDE` and `PARK_BUDGET_BY_AREA` → true: by payload
+  four documents moved, attributed (hellenist_k1 23 → 63 buildings, the
+  park cell a grid; hellenist_r22 55 → 65; pirates_r22 73 → 80; troy_k1
+  re-faces nine blocks), ten identical; the fresh Hellenist 4.3 → 12.7
+  lots/10k. The flip's FULL suite exposed a `floating.slab` on the physics
+  gate fixture; a pass-by-pass voxel trace (opus-5-medium, verbatim §H)
+  found the highrise curtain wall never writing the door's head course
+  (F13) — fixed behind `HIGHRISE_DOOR_HEAD_SOLID`, on (D25), harbourtown
+  clean, three worlds +14/+4/+8 blocks. Ground-probe baselines `hellenist`
+  and `pirates` regenerated and attributed; `empty-block-law` census
+  re-pinned (38/14/26 → 37/13/25, one block found its street). Station 3
+  re-read: FAIL narrowed. F14 logged. Tests: FULL suite COUNTS at the final
+  bytes `Test Files 337 passed | 1 skipped (338)`, `Tests 5642 passed | 31
+  skipped (5673)`. Files: `layout/district.ts`, `layout/city.ts`,
+  `stdlib/structures/highrise.ts`, tests ×3, two baselines, the record
+  §F–§H, VERDICT station 3. Subagent: 1 (opus-5-medium). Spend $0.

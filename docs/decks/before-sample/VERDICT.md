@@ -122,10 +122,14 @@ harbour for them to come out of.
 **Verdict: FAIL** on T7 — the icons are there, the city is not. Cause
 established by probe (unit 8): the `city` node's park budget counts cells
 not land, and its 45° cells' blocks front nothing by the midpoint probe.
-Two switches landed off; trial at both on: **4.3 → 12.7 lots per 10k,
-31 → 68 buildings** here, 3.3 → 14.3 on the walked hellenist_k1. **What the
-Run will do:** flip both (next unit), then re-read; the residual is the
-45° block geometry (P3).
+Two switches landed off (unit 8) and flipped (unit 9).
+
+**Re-read after the flip (unit 9):** **12.7 lots per 10k, 68 buildings** —
+the park cell is a grid of 65 lots; the walked hellenist_k1 reads 14.3 with
+its south-east quarter a full block grid. Three times the density, still
+under troy's 20: **FAIL on T7, narrowed** — the icon metric's per-prompt
+density floor (§6) decides where "a city" begins; the residual is P3's
+diagonal geometry. The walk decides.
 
 ---
 

@@ -3331,7 +3331,7 @@ export const PLANNED_SITE_WHOLE_STRIP = true;
  * whose corner is the only column facing the diagonal street is a face.
  * Staged under the Run's law 5: landed `false`; flipped in its own commit.
  */
-export const STREET_FACE_ALONG_SIDE = false;
+export const STREET_FACE_ALONG_SIDE = true;
 
 /**
  * The positions along a side, middle first, then alternately outward —

@@ -207,10 +207,17 @@ describe("a walled quarter leaves no block bare", () => {
     // blocks: for the first time the sum clears `bare` with no
     // `MIN_INFILL_SIDE` escape left on this fixture. The two-block and taller
     // seams still bound their blocks, which is why the count is not zero.
+    //
+    // **Re-pinned a fourth time at `STREET_FACE_ALONG_SIDE`** (the Run's
+    // unit 9): one block whose midpoint probe had found no street now finds
+    // one along its side and is cut into lots before the law is asked —
+    // **bare 38 → 37**, and the answering tiers each drop one with it
+    // (**redrawn 14 → 13, dressed 26 → 25**). 38 answers for 37 bare blocks;
+    // the sum still clears `bare`.
     expect({ bare, redrawn, dressed: dressedCount }).toEqual({
-      bare: 38,
-      redrawn: 14,
-      dressed: 26,
+      bare: 37,
+      redrawn: 13,
+      dressed: 25,
     });
     // The direction of the law still holds where it can be stated without the
     // remainder tier's padding: the re-draw and the dressings between them

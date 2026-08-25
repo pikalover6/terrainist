@@ -97,6 +97,62 @@ it, with the controls untouched. The remaining gap is B.
 - **E2 note:** the colossus outbid by the ground (`W521`) — the icon
   metric's dominance/placement clause.
 
+## F. The flip (unit 9, 2026-08-25): both switches → true
+
+**The fourteen law-5 documents** (payload shas, `bi/off8` vs `bi/on9`):
+ten identical; four moved, each attributed:
+
+| world | buildings | cells (lots/blocks) before → after | placements | diagnostics | read |
+|---|---:|---|---|---|---|
+| hellenist_sea_siege_k1 (walked) | 23 → **63** | cell_0 16/25, cell_1 3/10, cell_2 3/7, cell_4 5/4 → **cell_0 59/32, cell_3 58/16** (the 24,948-column park is fabric; the three small cells are the parks now — 16k columns, 24 % of the land) | 26 → 66 | `I512` 4 → 2 | **better** — the south-east quarter is a grid of quartz blocks where there was grass (render pair `bi/renders/hellenist_k1-{off8,on9}.png`) |
+| hellenist_r22 / thalassa_polis (law-5 baseline) | 55 → 65 | cell_1 18/28, cell_3 4/5, cell_4 70/21 → cell_1 **44**/28, cell_4 70/21 (cell_3 became the park) | 57 → 67 | `I512` 3 → 2, `T234` 0 → 1 | better (+10; the street scan doubles cell_1) |
+| pirates_r22 | 73 → 80 | cove 53 → 56, citadel 61 → 64 (grown blocks whose midpoint probe missed their street) | 76 → 83 (5 moved) | none | not-worse |
+| troy_k1 | 47 → 47 | 74/32 unchanged | 47 → 47 (9 re-faced) | none | not-worse — nine buildings turn to a street the midpoint probe had not seen |
+
+**The fresh Hellenist at the flip:** 31 → **68** buildings, 4.3 → **12.7**
+lots per 10k (cell_5, the 26k-column park, now 65 lots); in-district
+quartz bricks 53k, glass 6.3k. The r5 anchor at HEAD: 29 → 52, 3.1 → 7.1.
+
+**Ground-probe baseline** `hellenist` regenerated (thalassa moved): owned
+columns 63,110 → 57,574 and intents 458 → 378 (cell_3's 5 blocks are a
+park now, no quarter plane); building seats 72 → 80, the eight new seats
+at delta 0; floaters unchanged. Attributed.
+
+**Verdict on the flip:** better on T7 on every Hellenist, not-worse on the
+two organic worlds it touched; the residual against troy's 20 is P3's
+diagonal geometry. Lands; Kai's veto open (law 6).
+
+## G. What the flip exposed: the highrise door's missing head course (F13, fixed)
+
+The FULL suite at the flip failed the physics gate on
+`examples/c1-harbourtown` — one `floating.slab @ 244,75,102`, a canopy slab
+with air on six sides — on a lot the street scan had re-faced (`office`,
+`storyHeight 4`, yaw 180). A pass-by-pass voxel trace (verbatim in §H) named
+the rule: `packages/stdlib/src/structures/highrise.ts` — `emitHighrise`'s
+curtain-wall loop skips the door columns at relative y1, y2 *and* y3 on the
+ground storey (`if (s > 0 || y > 3)`), while its comment promises "the
+doorway and its head course: opaque, always"; the leaves stand at y1–2, so
+y3 *is* the head course, and it was the one cell never written whenever
+`storyHeight > 3` put the storey's head band above it. Road sovereignty then
+took one of the door's two canopy slabs as a stump and the other was left
+floating. Belief vs behaviour, class 1, on every highrise door in every
+world; single-leaf doors included.
+
+**Fix:** `HIGHRISE_DOOR_HEAD_SOLID` (`highrise.ts`), the guard `y > 2` — the
+wall is written at the head course. Ships `true` in this commit (a red
+physics gate does not land; D25); `false` keeps the old guard. Effect: the
+harbourtown lints clean; by payload three law-5 documents move, each by
+exactly the head-course cells — hellenist_r22 +14 building blocks (7
+highrise buildings), hellenist_k1 +4 (2), metropolis_k1 +8 (4) — with no
+placement, count or diagnostic moving. The hellenist ground-probe baseline
+regenerated a second time. Physics findings that remain on those worlds
+(sea-lantern chains and lanterns on the leviathan and harbour props, three
+isolated blocks, one dripstone; the metropolis's andesite-wall chains)
+predate the Run per the committed baselines' `floaters` and are logged as
+F14 for a physics unit; the gate fixture is clean.
+
+## H. The voxel trace, verbatim — appended after §E at the end of this file.
+
 ## E. The block probe, verbatim
 
 # BLOCK PROBE — why Hellenist city blocks yield so few lots
@@ -255,3 +311,127 @@ Every zero-lot block in every document is `no_street_face`. Sites B, C and D nev
    one with four street faces and four lots. `troy_citadel` (grown + `courtyards: 0.6`) gets large domain-split
    blocks whose courtyard branch cuts all four strips even where `streetBehind` found only one street — which
    is exactly the compensation the Hellenist cells lack.
+# Voxel trace — `floating.slab @ 244,75,102` on `c1-harbourtown`
+
+## The building
+
+`world.harbourtown.cell_14.infill_237_103`, footprint x238–252 / z103–113,
+foundationY 71, yaw 180. From `report.layout.structures.buildings[…].meta`:
+
+- `params.archetype = "office"` (no `tags` field on the report row)
+- `params.floors = 2`, `params.storyHeight = 4`, `roof = "flat"`,
+  `windowShape = "mullion"`, `windowRhythm = "regular"`
+- `meta.door = { x: 7, z: 10, face: "south" }` (building-relative)
+
+`office` is in `HIGHRISE_ARCHETYPES`
+(`packages/stdlib/src/structures/highrise.ts:84`), so `emitBuilding` routes it to
+`emitHighrise` at `packages/stdlib/src/structures/core.ts:1159–1170`. **It never
+reaches `emitEntrance`** — the brief's premise that this is an ordinary
+`building.grammar` shell with `emitEntrance`'s lintel is wrong. Instrumented
+`emitEntrance` logged three 15×11 calls in the whole compile (warehouse,
+warehouse, convenience_store) and none of them is this building.
+
+Relative→world: rel y0 = world y72, so rel y1/2 = the door leaves at y73/74,
+rel y3 = **y75**, rel y4 = y76. Under yaw 180 the highrise `door` (hinge left)
+lands at world x245 and its `secondLeaf` (hinge right) at x244.
+
+## Ordered writes to the four voxels
+
+Instrumented `lay(emitter, list)` in `packages/compiler/dist/structures/index.js`
+(every candidate write, before any last-write-wins), plus every drop in the
+doorstep columns inside `enforceRoadSovereignty`.
+
+```
+#1 lay=buildings idx=368963 244,73,103 stateId=13873   (spruce_door lower, hinge=right)
+#2 lay=buildings idx=369018 244,74,103 stateId=13865   (spruce_door upper, hinge=right)
+#3 lay=buildings idx=369062 244,75,102 stateId=16239   (mossy_cobblestone_slab[type=top] — canopy, secondLeaf)
+#4 lay=buildings idx=369063 245,75,102 stateId=16239   (mossy_cobblestone_slab[type=top] — canopy, door)
+#5 lay=buildings idx=369119 244,76,103 stateId=171     (stripped_spruce_log[axis=x] — head course)
+#6 lay=buildings idx=369120 245,76,103 stateId=171     (stripped_spruce_log[axis=x] — head course)
+   sovereignty BAND-DROP  245,72,102 stateId=8588 emitter=doorsteps groundTop=71
+   sovereignty STUMP-DROP 245,75,102 stateId=16239 groundTop=71
+```
+
+- **(244,75,103)** — never written by any pass, in any order. Zero candidates.
+- **(245,75,103)** — never written by any pass, in any order. Zero candidates.
+- **(244,75,102)** — written once (`buildings`, #3), never dropped. The survivor
+  the lint reports.
+- **(244,76,103)** — written once (`buildings`, #5), never dropped.
+
+## The pass and the rule that leaves the door head as air
+
+`packages/stdlib/src/structures/highrise.ts:387–393`, inside `emitHighrise`'s
+curtain-wall loop (the `--- the shaft: curtain wall, storey by storey ---`
+block, `highrise.ts:355–405`), reached from `lay("buildings", …)`
+(`packages/compiler/src/structures/index.ts:1214`):
+
+```ts
+// The doorway and its head course: opaque, always. A door leaf hung in
+// a glass pane has nothing to hinge on, and the lobby's opening is
+// structure, not glazing.
+if (doorColumns.has(key)) {
+  if (s > 0 || y > 3) put(cell.x, y, cell.z, wallAt(cell.x, y, cell.z));
+  continue;
+}
+```
+
+Classification: **the shell's own facade rule, not a fit-out, not the doorstep
+pass, not decay.** It is the curtain-wall band skipping the door columns. It is
+also not "the lintel written one course too high": `emitHighrise` writes **no
+lintel at all**. What sits at y76 is the ordinary storey **head band**
+(`highrise.ts:383–386`, `const head = y === base + storey`), which for
+`storyHeight = 4` falls on rel y4 = world y76 — hence the
+`stripped_spruce_log[axis=x]` there and the `spruce_planks` floor plate at y77.
+
+**Belief vs behaviour.** The comment asserts "the doorway *and its head course*:
+opaque, always". The guard `s > 0 || y > 3` is written as if the opening were
+rel y1–2 and the head course were rel y3+; on the ground storey (`s === 0`) it
+skips rel y1, y2 **and y3**, so the cell it names as the head course is exactly
+the one it leaves unwritten. Because `if (head)` is tested *before* the
+`doorColumns` branch (`highrise.ts:383`), the bug only bites when
+`storyHeight > 3`: at `storyHeight === 3` rel y3 *is* the head band and gets its
+frame log, and the door head is solid. This building has `storyHeight = 4`, so
+rel y3 falls through to the door-column skip and stays air.
+
+## Why the slab is left floating
+
+The head-course hole alone would not lint: the two canopy slabs at
+(244,75,102) and (245,75,102) are neighbours and support each other.
+`enforceRoadSovereignty` (`packages/compiler/src/structures/index.ts:2922–2999`)
+takes one of them:
+
+1. Column (245,102) is road-sovereign with `plan.ground = 71`. The `doorsteps`
+   pass laid a step at (245,72,102), inside the band
+   `y <= top + ROAD_SOVEREIGN_HEADROOM` (`ROAD_SOVEREIGN_HEADROOM = 3`,
+   `index.ts:419`) → **BAND-DROP**, and the column joins `cleared`.
+2. Pass 2, "the clear leaves no stump" (`index.ts:2964–2983`), walks upward from
+   `y = top + HEADROOM + 1 = 75` while the foreign stack is unbroken, finds the
+   canopy slab at (245,75,102) and drops it too → **STUMP-DROP**.
+
+Column (244,102) is untouched (no band drop logged there), so its canopy
+survives. With (245,75,102) gone, (245,75,103) and (244,75,103) air from the
+highrise rule, and nothing above or below, (244,75,102) has air on all six
+sides → `floating.slab`.
+
+## Does it strike single-leaf doors?
+
+Yes — it is **not** specific to two-leaf doors, nor to `inn`/`hall`. This is the
+highrise grammar, not `emitEntrance`; its `secondLeaf` is computed
+unconditionally whenever it fits (`highrise.ts:297–305`), with no archetype gate.
+`doorColumns` holds both leaves and the `s > 0 || y > 3` guard applies per
+column, so a single-leaf highrise door (a footprint where `secondLeaf` does not
+fit) gets the same air cell at rel y3. The trigger is the grammar
+(`skyscraper` / `office` / `hotel` / `apartment_block`) plus `storyHeight > 3` —
+not the leaf count.
+
+## Shas — dist restored byte-for-byte
+
+Before and after are identical:
+
+```
+85910f431974fe54229622fbd0659e20d7fb1835ceaf31128e115449e804d527  packages/compiler/dist/structures/index.js
+f6bca413cea836e6056e71dc10ccbe6b8a713a7eff7453681bd3dc33f8b0fb19  packages/stdlib/dist/structures/core.js
+```
+
+Backups: `index.js.bak`, `core.js.bak` in this directory; `shas-before.txt` /
+`shas-after.txt` diff clean.

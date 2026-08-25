@@ -268,7 +268,7 @@ export const PARK_MAX_SHARE = 0.34;
  * as fabric. Staged under the Run's law 5: landed `false`; flipped in its own
  * commit.
  */
-export const PARK_BUDGET_BY_AREA = false;
+export const PARK_BUDGET_BY_AREA = true;
 
 /** Below this fraction of its own bounding box a cell is an awkward shape. */
 export const PARK_COMPACTNESS = 0.5;
