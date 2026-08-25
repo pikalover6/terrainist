@@ -27,8 +27,8 @@ const DEPTHS: readonly (readonly [number, number])[] = [
 const FROM = 2;
 
 describe("a station with claimable ground is frontage", () => {
-  it("lands off: the raster's held bit is the shipped rule", () => {
-    expect(STRIP_FRONTAGE_BY_CLAIM).toBe(false);
+  it("ships on: a station with claimable depth is frontage", () => {
+    expect(STRIP_FRONTAGE_BY_CLAIM).toBe(true);
   });
 
   it("turns a diagonal's 1010 into the frontage the probe measured", () => {

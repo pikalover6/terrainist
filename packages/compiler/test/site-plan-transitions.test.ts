@@ -301,6 +301,28 @@ describe("the constants cannot drift apart", () => {
  * numbers are on the other note. The two notes together are the composition, and
  * both are pinned.
  */
+/**
+ * **Re-pinned wholesale at the frontage-by-claim flip
+ * (`STRIP_FRONTAGE_BY_CLAIM` true, `layout/forms/hillside.ts`, 2026-08-25) —
+ * attribution: the flip, and nothing else.**
+ *
+ * The steep fixture seats 7 -> 14 buildings once a frontage station with
+ * claimable depth counts as frontage, and every census below is that seen
+ * through the transition instrument. **Not one row got worse per building**,
+ * which is this block's whole reading: `cutColumns` and `plannedColumns` rise
+ * in absolute (415 -> 460, 478 -> 496) and fall by half per building
+ * (59.3 -> 32.9, 68.3 -> 35.4), while everything the builders have to answer
+ * falls on both readings — `fillColumns` 63 -> 36, `derivedBuilt` 42 -> 36,
+ * `derivedFaceColumns` 527 -> 393, `derivedBankColumns` 501 -> 284,
+ * `stacks` 5 -> 3, `unservedSeams` 6 -> 4, `derivedRefusals` 9 -> 6.
+ *
+ * The mechanism is one sentence: a seated lot platforms the ground, so the
+ * seam is a building's floor rather than a face for the terminal builder to
+ * grade, revet or refuse. What the tests are *for* is unmoved — every declared
+ * edge still carries a treatment, no face is built past `RETAIN_MAX`, no seam
+ * is refused for being a composite, and every refusal that remains is still
+ * `W413`'s one honest exception.
+ */
 const STEEP_EDGES = {
   /**
    * Goldens, re-measured 2026-08-07 (evening) after the causeway landing
@@ -325,8 +347,8 @@ const STEEP_EDGES = {
   // enumerates those same faces and the terminal builder answers them, at
   // `derivedFaceColumns` + `derivedBankColumns` below. What is left on this note
   // is `levelSeams`' own fill, which was always the smaller half.
-  fillColumns: 63,
-  cutColumns: 415, // 269 → 415 (377 retaining, 38 rock); unmoved at the 11F flip
+  fillColumns: 36, // frontage-by-claim flip (STRIP_FRONTAGE_BY_CLAIM, 2026-08-25): 63 -> 36, DOWN 27, and 9.0 -> 2.6 per building: the seats the flip lands claim the low ground the sweep used to have to fill.
+  cutColumns: 460, // 269 → 415 (377 retaining, 38 rock); unmoved at the 11F flip frontage-by-claim flip (STRIP_FRONTAGE_BY_CLAIM, 2026-08-25): 415 -> 460, UP 45 in absolute; 59.3 -> 32.9 per building, BETTER by nearly half. Twice the buildings on 1:2.5 ground declare more cut edge between them, and less of it each.
   // 10 → 11 (2026-08-07, the composite gate). The extra bank is the 90-column
   // skirt that reported `drop: 6` — a face rule 9 sanctions — while thirteen of
   // its columns stood over ground seven blocks down, six of them contiguous.
@@ -344,7 +366,7 @@ const STEEP_EDGES = {
   // 952 → 945 at the 11F flip (seven columns absorbed by S7); **945 → 478 at
   // WP-G4's**, which is `fillColumns`' 467 absorbed columns and nothing else —
   // the cut side is unmoved, to the column.
-  plannedColumns: 478,
+  plannedColumns: 496, // frontage-by-claim flip (STRIP_FRONTAGE_BY_CLAIM, 2026-08-25): 478 -> 496, the denominator, +18: fill 36 + cut 460. Per building 68.3 -> 35.4.
   /** Unmoved: the seven-block terrace face WP-3 was given, still 183 columns. */
   tallDropSeamColumns: 183,
   /**
@@ -362,15 +384,15 @@ const STEEP_EDGES = {
    * terminal builder's single per-quarter aggregate (§3.4's "aggregated per
    * quarter"), which carries nine derived refusals inside it.
    */
-  unservedSeams: 6,
+  unservedSeams: 4, // frontage-by-claim flip (STRIP_FRONTAGE_BY_CLAIM, 2026-08-25): 6 -> 4, DOWN two; 0.86 -> 0.29 per building, BETTER by two thirds. The seats stand on ground a stack used to fail to step down onto.
   /**
    * Bank seams in the district `SEAM_SERVED` tally — the benched one plus eight
    * short ones. **9 → 0 at WP-G4's flip**: every one of them was a skirt.
    */
   banks: 0,
   /** The district pass's own stacks, after the absorption: 7 → 5 over 14 → 10 faces. */
-  stacks: 5,
-  stackFaces: 10,
+  stacks: 3, // frontage-by-claim flip (STRIP_FRONTAGE_BY_CLAIM, 2026-08-25): 5 -> 3, DOWN two: two of the district pass's stacks are ground a frontage lot now holds. Per building 0.71 -> 0.21.
+  stackFaces: 6, // frontage-by-claim flip (STRIP_FRONTAGE_BY_CLAIM, 2026-08-25): 10 -> 6, following `stacks` at two faces each.
   /**
    * **The other half of the composition, on the terminal builder's note.** What
    * the district pass stopped reporting did not stop being built: 56 derived
@@ -412,9 +434,9 @@ const STEEP_EDGES = {
   // face.** Road claims now sit at blended levels between the drape and the n5
   // graded profile, which changes which seams the resolver derives on this steep
   // fixture — one more transition over six more columns.
-  derivedBuilt: 42, // n9 retune (tail exponent + closing, 2026-08-23): 37 -> 39 — road claims at the new levels change which seams the resolver derives on this steep fixture. cross verdict (PULL_CROSS, 2026-08-23): 39 -> 42 — cross-fall joins the pull verdict and the side-sloping streets level, so three more seams derive at the new row heights.
-  derivedFaceColumns: 527, // n9 retune (tail exponent + closing, 2026-08-23): 277 -> 409 — the same census drift, over a much longer stretch of face. cross verdict (PULL_CROSS, 2026-08-23): 409 -> 527 — the same census drift, over a longer stretch of face: the re-levelled rows cut the tilted shelves flat and the terminal builder answers the cut.
-  derivedBankColumns: 501, // n9 retune (tail exponent + closing, 2026-08-23): 498 -> 501 — the graded-bank side follows.
+  derivedBuilt: 36, // n9 retune (tail exponent + closing, 2026-08-23): 37 -> 39 — road claims at the new levels change which seams the resolver derives on this steep fixture. cross verdict (PULL_CROSS, 2026-08-23): 39 -> 42 — cross-fall joins the pull verdict and the side-sloping streets level, so three more seams derive at the new row heights. frontage-by-claim flip (STRIP_FRONTAGE_BY_CLAIM, 2026-08-25): 42 -> 36, DOWN six; 6.0 -> 2.6 per building. Fewer transitions to derive where a lot is seated.
+  derivedFaceColumns: 393, // n9 retune (tail exponent + closing, 2026-08-23): 277 -> 409 — the same census drift, over a much longer stretch of face. cross verdict (PULL_CROSS, 2026-08-23): 409 -> 527 — the same census drift, over a longer stretch of face: the re-levelled rows cut the tilted shelves flat and the terminal builder answers the cut. frontage-by-claim flip (STRIP_FRONTAGE_BY_CLAIM, 2026-08-25): 527 -> 393, DOWN 134; 75.3 -> 28.1 per building, BETTER by nearly two thirds.
+  derivedBankColumns: 284, // n9 retune (tail exponent + closing, 2026-08-23): 498 -> 501 — the graded-bank side follows. frontage-by-claim flip (STRIP_FRONTAGE_BY_CLAIM, 2026-08-25): 501 -> 284, DOWN 217; 71.6 -> 20.3 per building. Graded bank is what the flip's seats replace with platform.
   /**
    * Derived transitions the stack served but could not cover (the terminal
    * builder's per-quarter aggregate). **9 → 10 at the `GROUND_V1_FREEZE` flip**:
@@ -426,7 +448,7 @@ const STEEP_EDGES = {
    * so three of the courses that could not find ground to stand on now can. Not
    * a fix — the same street, moved.
    */
-  derivedRefusals: 9, // n9 retune (tail exponent + closing, 2026-08-23): 7 -> 10 — more derived courses find a street, a footprint or water already owning the ground they needed. cross verdict (PULL_CROSS, 2026-08-23): 10 -> 9 — one fewer derived course finds its ground already owned, the levelled rows connecting a little better.
+  derivedRefusals: 6, // n9 retune (tail exponent + closing, 2026-08-23): 7 -> 10 — more derived courses find a street, a footprint or water already owning the ground they needed. cross verdict (PULL_CROSS, 2026-08-23): 10 -> 9 — one fewer derived course finds its ground already owned, the levelled rows connecting a little better. frontage-by-claim flip (STRIP_FRONTAGE_BY_CLAIM, 2026-08-25): 9 -> 6, DOWN three; 1.29 -> 0.43 per building, BETTER by two thirds.
 } as const;
 
 describe("the steep fixture's transitions, compiled", () => {

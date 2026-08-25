@@ -2005,7 +2005,7 @@ export function layDistrict(
       tags: landmark.tags,
       seed: landmark.seed,
       frontPort: undefined,
-      ...frontageOf(site.rect, site.face, site.lots),
+      ...frontageOf(site.rect, site.face, site.lots, site.street),
     });
   }
 
@@ -3255,6 +3255,52 @@ export function boundingSeams(seams: readonly LevelSeam[]): readonly LevelSeam[]
 }
 
 /**
+ * **A frontage lot grows inward through its own stations, never sideways into
+ * a neighbour's.**
+ *
+ * Off — `false` is today's bytes — a lot's parcel is grown by breadth-first
+ * search from its span of the build-to line through any column of the strip
+ * no other lot has taken, with a budget of `size × MAX_INFILL_DEPTH` (≈ 240
+ * columns) in a strip only 19 deep; and every column it grew is then marked
+ * `taken`. So the parcel runs *along* the strip, eats the stations of the
+ * lot after it, and that lot arrives at fewer than 25 columns and a 1 × 1
+ * rectangle. Measured (2026-08-25, `scratchpad/lot-probe/LOT-PROBE.md`):
+ * 47 of 49 drops on montfort_hill and 55 of 58 on the fresh walled city are
+ * the rectangle test, and about 70 % of those are this starvation — 30 of the
+ * walled city's 43 starved lots sit immediately after a built one. §4.2 step
+ * 3 says "seeded from its own span of the build-to line and grown inward",
+ * which is what `true` makes it: a column is admitted only when its station
+ * lies in the lot's own span. The remaining drops are the genuine geometry
+ * of an axis-aligned rectangle inside a diagonal band.
+ *
+ * Staged under the Run's law 5: landed `false`; flipped in its own commit.
+ */
+export const LOT_PARCEL_OWN_STATIONS = false;
+
+/** {@link LOT_PARCEL_OWN_STATIONS}'s rule as a pure function. */
+export function inLotSpan(station: number, from: number, size: number): boolean {
+  return station >= from && station < from + size;
+}
+
+/**
+ * **The whole strip, offered to a landmark — actually the whole strip.**
+ *
+ * Off — `false` is today's bytes — the planned path's block site is
+ * `largestRect` of `stripRect`, and `stripRect` is the union of the lots
+ * already *seated*, so "the whole strip, offered to a landmark no run of lots
+ * can hold" (the comment in `frontageLots`) is the buildings already placed,
+ * never deeper than one seat. Measured on the fresh walled city at the
+ * frontage flip: 3,984 free columns and 19 of depth on strip 0, and the site
+ * offered is 13 × 13; the largest anywhere is 20 × 9; a 13 × 17 church gets
+ * `LOAM-E170` where it used to fit on a 30-column-wide lot. `true` offers the
+ * strip's own free mask (its columns, unblocked, within `MAX_INFILL_DEPTH`),
+ * and a landmark that takes such a site claims only the lots its rectangle
+ * covers rather than every lot on the strip. Staged under law 5: landed
+ * `false`; flipped in its own commit.
+ */
+export const PLANNED_SITE_WHOLE_STRIP = false;
+
+/**
  * Most rectangles a curved block is cut into. `subdivide` is cheap and
  * `largestFreeRect` is O(area), so this is a guard against a pathological
  * component rather than a shape decision.
@@ -3476,6 +3522,8 @@ interface BlockSite {
   readonly rect: Rect;
   readonly face: HorizontalFace;
   readonly street: string;
+  /** A planned strip's site ({@link PLANNED_SITE_WHOLE_STRIP}); absent on a block. */
+  readonly planned?: boolean;
 }
 
 /**
@@ -3749,6 +3797,17 @@ function frontageLots(
     if (strip.stations === 0) continue;
     const sizes = allocateFrontage(strip.stations, LOT_FRONTAGE[density] as number);
     const stripRect = new Uint8Array(grid.cells);
+    // The strip's own free mask — what {@link PLANNED_SITE_WHOLE_STRIP} offers
+    // a landmark: every column the strip claimed, unblocked, within a lot's
+    // reach of the frontage.
+    const stripFree = new Uint8Array(grid.cells);
+    if (PLANNED_SITE_WHOLE_STRIP) {
+      for (let c = 0; c < grid.cells; c++) {
+        if (strip.columns[c] !== 1 || blocked[c] === 1) continue;
+        if ((strip.depth[c] as number) >= MAX_INFILL_DEPTH) continue;
+        stripFree[c] = 1;
+      }
+    }
     // Every claimed column, by the station of the build-to line it belongs to.
     // Built once per strip: the lots partition the stations, so their column
     // sets are disjoint by construction and two lots can never take one column.
@@ -3794,6 +3853,9 @@ function frontageLots(
           if (n < 0 || member[n] === 1) continue;
           if (strip.columns[n] !== 1 || blocked[n] === 1 || taken[n] === 1) continue;
           if ((strip.depth[n] as number) >= MAX_INFILL_DEPTH) continue;
+          // See {@link LOT_PARCEL_OWN_STATIONS}: inward through this lot's own
+          // stations, never sideways into the next lot's.
+          if (LOT_PARCEL_OWN_STATIONS && !inLotSpan(strip.station[n] as number, from, size)) continue;
           member[n] = 1;
           columns++;
           frontier.push(n);
@@ -3843,13 +3905,14 @@ function frontageLots(
     // The whole strip, offered to a landmark no run of lots can hold. Its face
     // is the strip's own outward normal at its midpoint, so a church seated on
     // it still puts its door on the street.
-    const site = largestRect(bounds, stripRect);
+    const site = largestRect(bounds, PLANNED_SITE_WHOLE_STRIP ? stripFree : stripRect);
     if (site !== null) {
       sites.push({
         block: strip.index,
         rect: site,
         face: faceOf(strip.outward[strip.stations >> 1] as Point2),
         street: strip.street,
+        planned: true,
       });
     }
   }
@@ -4158,9 +4221,11 @@ export function frontageOf(
   rect: Rect,
   face: HorizontalFace,
   lots: readonly Pick<Lot, "street" | "corner">[],
+  /** The street when `lots` is empty — a planned site that covered no lot. */
+  street?: string,
 ): FrontageRecord {
   return {
-    street: lots[0]?.street ?? "",
+    street: lots[0]?.street ?? street ?? "",
     corner: lots.some((lot) => lot.corner),
     frontAnchor: frontAnchorOf(rect, face),
   };
@@ -4238,11 +4303,18 @@ function envelopeSize(node: StructureNode): readonly [number, number, number] {
   return [11, Math.max(4, Math.round(floors * FLOOR_HEIGHT)), 11];
 }
 
+/** Two rectangles share at least one column. */
+function overlapsRect(a: Rect, b: Rect): boolean {
+  return a.x0 <= b.x1 && b.x0 <= a.x1 && a.z0 <= b.z1 && b.z0 <= a.z1;
+}
+
 /** A run of adjacent lots a landmark may take. */
 interface LotRun {
   readonly lots: readonly Lot[];
   readonly rect: Rect;
   readonly face: HorizontalFace;
+  /** The site's street when the run holds no lot to read it from (a planned site). */
+  readonly street?: string;
 }
 
 /**
@@ -4271,12 +4343,18 @@ function claimSite(
   if (run !== null) return run;
 
   for (const block of blocks) {
-    const mine = lots.filter((l) => l.block === block.block);
-    if (mine.length === 0 || mine.some((l) => claimed.has(l.id))) continue;
+    // A planned strip's site under {@link PLANNED_SITE_WHOLE_STRIP} is the
+    // strip's free mask, and the landmark claims only the lots its rectangle
+    // covers; a block site is the block, and the landmark takes every lot on it.
+    const whole = PLANNED_SITE_WHOLE_STRIP && block.planned === true;
+    const mine = lots.filter(
+      (l) => l.block === block.block && (!whole || overlapsRect(l.rect, block.rect)),
+    );
+    if ((mine.length === 0 && !whole) || mine.some((l) => claimed.has(l.id))) continue;
     const yaw = yawFacing(frontFace(landmark.ports, undefined), block.face);
     const [rw, , rd] = rotatedSize(landmark.size, yaw);
     if (rw > block.rect.x1 - block.rect.x0 + 1 || rd > block.rect.z1 - block.rect.z0 + 1) continue;
-    return { lots: mine, rect: block.rect, face: block.face };
+    return { lots: mine, rect: block.rect, face: block.face, street: block.street };
   }
   return null;
 }

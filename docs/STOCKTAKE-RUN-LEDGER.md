@@ -7,55 +7,48 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 5 (montfort's cause found; the switch landed
-  off) is committed.
-- **Next unit:** unit 6 — flip `STRIP_FRONTAGE_BY_CLAIM` false → true
-  (`packages/compiler/src/layout/forms/hillside.ts`). Trial: montfort 5 → 13
-  buildings, the fresh walled city 13 → 24, site-plan-hillside 11 → 16,
-  -steep 7 → 14, all physics clean. The flip commit must carry: (a) the
-  fourteen law-5 shasums (`bi/bi.sh` + the five hillside documents; refs in
-  `bi/after-on` and `bi/ex-off5`) with every moved world attributed; (b) an
-  answer for `E170 CANNOT_FIT` on the walled city's `summit_church` 13 × 17
-  — true-width frontage lots are narrower than the landmark, so a landmark on
-  a planned strip must take the stations it needs (design it from
-  `frontageLots` / the landmark seat; small → same commit behind the same
-  switch or its own, medium → proposal); (c) the dropped-lots probe (montfort
-  20 → 55 dropped at the flip: which test drops them — the seated rectangle
-  of a diagonal parcel vs `MIN_INFILL_SIDE`, presumably; measure first); (d)
-  before/after renders read by the instrument; (e) tests re-pinned with
-  cause; (f) FULL suite; (g) station 7 re-read. Then: `W527` on the planned
-  path + the `SITE_STRIP_DISSOLVED` note (small unit); hellenist's density
-  (§10.2); the `I512` street probe (F4); the icon metric (§10.3).
-- **Last commit:** b3e84d7 (unit 4). Convention: this line names the
+- **In flight:** nothing — unit 6 (the frontage flip) is committed.
+- **Next unit:** unit 7 — flip the two switches landed off in unit 6:
+  `LOT_PARCEL_OWN_STATIONS` and `PLANNED_SITE_WHOLE_STRIP`
+  (`packages/compiler/src/layout/district.ts`). Trial at both true
+  (`bi/ex-trial7`): the walled city seats its church again (`E170` 1 → 0,
+  24 → 20 buildings, deeper), montfort 13 → 12 buildings but +47 % building
+  blocks and 11 → 14 dwellings, site-plan-hillside 16 → 20 (drops 12 → 3),
+  -steep 14 → 17 (drops 19 → 10). The flip commit must carry: the fourteen
+  shasums attributed (refs `bi/on6b`, `bi/ex-on6b`); the walkability audit
+  (`scratchpad/walk-audit.mjs`) before/after on montfort + walled and the
+  fixture goldens re-pinned with cause and per-unit reading (the
+  `scratchpad/probe/dump.mjs` after-values are the before-values now);
+  render pairs; FULL suite; station 7 re-read. Then: `W527` on the planned
+  path + the `SITE_STRIP_DISSOLVED` note (F6/F7, small unit); the
+  walkability audit's zero reach on the named worlds (instrument gap);
+  hellenist's density (§10.2); the `I512` street probe (F4); the icon metric
+  (§10.3).
+- **Last commit:** 58bf781 (unit 5). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
 - **Spend:** $2.29 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
-- **Open decisions for Kai:** none. (Kai's post-hoc veto is open on D12.)
+- **Open decisions for Kai:** none. (Post-hoc veto open on D12 and D19.)
 - **Findings queue (law 1: bugs before anything else):**
-  - F1 — `railway_town` (seed 312) authored one-shot, kept 3 programs, then
-    the emit refused with `LOAM-T110 UNSTABLE_FLUID` (71 canal-water blocks
-    would flow); the CLI labels it a compiler bug. Document and an
-    `--allow-unstable` world are recorded. Fix code-first in its own unit.
-  - F2 — all four anchors differ at HEAD. Metropolis: fixed as far as the
-    ratified laws allow (units 3–4). Troy and pirates moved with the kerb
-    flip (both better); hellenist untouched — their own anchor diffs are
-    still unattributed until their stations.
-  - F3 — authoring regression on the metropolis prompt, lost 3-of-3 at kit
-    c22cb4fe: the program-backed skyscraper-skeleton field, the river,
-    `era: modern` (now `far_future`), unnamed decayed generators (now six
-    named archetypes). E2/E3 pre-registration; no kit byte moves before it.
-  - F4 — `LOAM-I512` claims 77 % of infill lots are "ruined shells"; the
-    isometric shows intact boxes on both the anchor and the fresh world.
-    Street-level probe (≥3 columns) — slop class 1 either way.
-  - F5 — **the hillside planner counts a raster artefact as frontage**
-    (unit 5): on diagonal contours `held` reads `1010…` from the
-    nearest-point tie, so `stations` is half the frontage; strips dissolve
-    on it and lots are cut on it. Switch landed off; flip is unit 6.
-  - F6 — `W527 WALLED_QUARTER_SPARSE` is gated `planned === undefined`:
-    blind on the planned hillside path, the form every walled hill town
-    gets (class 1). F7 — `SITE_STRIP_DISSOLVED` (SITE-PLAN §3.7) does not
-    exist as a diagnostic (class 6). One small unit for both.
-  - F8 — `frontageLots` drops most of the lots the planner cuts on a hill
-    (montfort 20 of 28 before, 55 of 75 at the flip); cause unmeasured.
+  - F1 — `railway_town` `LOAM-T110 UNSTABLE_FLUID` at emit (compiler bug by
+    the CLI's own label; document + `--allow-unstable` world recorded).
+  - F2 — anchors differ at HEAD: metropolis fixed as far as ratified laws
+    allow (units 3–4); troy/pirates moved better with the kerb flip;
+    hellenist untouched — its anchor diff unattributed until its station.
+  - F3 — metropolis authoring regression, lost 3-of-3 (skeleton field,
+    river, `era: modern`, unnamed decayed generators). E2/E3.
+  - F4 — `LOAM-I512` "ruined shells" vs intact boxes in the isometric —
+    street-level probe.
+  - F5 — hillside `held` is a raster artefact — **fixed** (units 5–6).
+  - F6 — `W527` gated `planned === undefined`; F7 — `SITE_STRIP_DISSOLVED`
+    never existed. One small unit.
+  - F8 — `frontageLots` drops: ~70 % bookkeeping (a lot's BFS blob eats the
+    next lot's stations — switch landed off, unit 7), ~30 % geometry
+    (axis-aligned rectangles on diagonal strips — proposal P1).
+  - F9 — the new hillside lots' cut faces go undressed: steep fixture
+    `entranceReachableShare` 0.966 → 0.850, cut-offs +40 % per column, all
+    undressed; the parked shoulder/verge item (proposal P2). Plus the
+    walkability audit reads zero entrance reach on montfort and the walled
+    city both before and after — instrument gap.
 ## DECISIONS
 
 (every fork taken: the reversible default chosen, why, and how to undo it)
@@ -140,6 +133,21 @@ running state. The NOW block is rewritten at the end of every turn.
 - **D16 (unit 5):** the law-5 set for hillside work is the nine worlds plus
   five hillside documents (three `examples/` fixtures, montfort_k1, the
   before-sample walled city); references live in `bi/ex-off5/SHASUMS`.
+- **D17 (unit 6):** the wall circuits' new shapes are read not-worse by the
+  ratified built-hull law (`fabric-hull.ts`, Kai's 2026-08-11 Troy walk):
+  more town, tighter wall. Undo: n/a (a law, not a choice made here).
+- **D18 (unit 6):** two more switches (`LOT_PARCEL_OWN_STATIONS`,
+  `PLANNED_SITE_WHOLE_STRIP`) land OFF in the same commit as the frontage
+  flip — the probe that found them ran on the flipped dist and their
+  off-state is byte-identical to it on all fourteen documents; their flip is
+  unit 7. Undo: delete the two constants and their branches.
+- **D19 (unit 6):** the frontage flip lands although the steep fixture's
+  goldens read worse per unit on reachability and clutter (15 of 69
+  re-pins) — the loss is attributed to the parked shoulder/verge debt on
+  the new lots (F9/P2), the named worlds' own dressing counts improve, and
+  the T4 gain is an order of magnitude. Written in the tests' own
+  convention and in `MONTFORT-HILLSIDE-2026-08-25.md` §H. Undo: Kai's
+  veto; one constant to revert.
 
 ## SPEND
 
@@ -150,6 +158,7 @@ running state. The NOW block is rewritten at the end of every turn.
 | 3 | the lever landed off — compiles and the FULL suite only | 0.00 | 2.29 |
 | 4 | the flip — compiles, renders, baselines, the FULL suite | 0.00 | 2.29 |
 | 5 | montfort's cause — instrumented probe, switch landed off, the FULL suite | 0.00 | 2.29 |
+| 6 | the frontage flip — compiles, probes, renders, re-pins, the FULL suite | 0.00 | 2.29 |
 
 ## VERDICTS
 
@@ -166,6 +175,19 @@ running state. The NOW block is rewritten at the end of every turn.
 ## PROPOSALS
 
 (features skipped as too large — written up, not built)
+
+- **P1 — yaw-seated frontage buildings on planned strips** (unit 6). On a
+  45° contour the largest axis-aligned rectangle of a 15 × 19 parcel is
+  under `MIN_INFILL_SIDE`, so ~30 % of hillside lots drop for geometry alone
+  (`scratchpad/lot-probe`, montfort 15 of 49, walled 15 of 58; wc strip 7:
+  9 lots, 665 free columns, nothing built). SITE-PLAN §4.2 keeps rectangular
+  axis-aligned buildings "for v0"; the grammar takes a rectangle. Seating
+  at the street's yaw is a grammar-facing change of more than a day.
+- **P2 — shoulders/verges on planned lots** (unit 6). A lot seated on steep
+  claimed ground cuts its own platform and its cut face is undressed — the
+  steep fixture's cut-offs are 100 % undressed before and after the flip and
+  reachability falls 0.966 → 0.850 when the lots double. This is the parked
+  "shoulder/verge" backlog item (spec §2); the flip made its price visible.
 
 ## TASTE
 
@@ -250,3 +272,19 @@ running state. The NOW block is rewritten at the end of every turn.
   (5663)`. Files: `forms/hillside.ts`, `test/strip-frontage.test.ts`,
   `docs/decks/anchors/MONTFORT-HILLSIDE-2026-08-25.md`, VERDICT station 7.
   Subagent: 1 (opus-5-medium, the instrumented probe). Spend $0.
+- **unit 6 — the frontage flip (2026-08-25):** `STRIP_FRONTAGE_BY_CLAIM`
+  → true. Four hillside worlds moved, attributed (§F): montfort 5 → 13
+  buildings, walled 13 → 24 (church unseated, `E170`), fixtures 11 → 16 and
+  7 → 14; the other ten of fourteen identical; wall circuits tighten by the
+  built-hull law (D17). Lot-drop probe (opus-5-medium, verbatim §G): drops
+  are the rectangle test, ~70 % starvation by sideways BFS growth, ~30 %
+  diagonal geometry; the landmark "whole strip" is the seated union. Two
+  switches landed off with trial numbers (D18); `frontage-lots.test.ts`.
+  28 fixture goldens re-pinned with cause and per-unit reading (15 worse —
+  §H, F9, P2, D19); walkability audited on the named worlds. Tests: FULL
+  suite at the flipped bytes `Test Files 3 failed | 332 passed | 1 skipped
+  (336)`, `Tests 28 failed | 5608 passed | 31 skipped (5667)`; after the
+  re-pins the three files re-run green `30 / 30 / 35 passed`,
+  `strip-frontage 5`, `frontage-lots 4`. Files: `layout/district.ts`,
+  `forms/hillside.ts`, five tests, `MONTFORT-HILLSIDE-2026-08-25.md` §F–§H,
+  VERDICT station 7. Subagents: 2 (opus-5-medium). Spend $0.

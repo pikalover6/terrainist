@@ -626,9 +626,30 @@ describe("flat ground cannot select this form", () => {
  * principal streets: it and the composition bars are in tension, and that
  * tension is this package's finding rather than something to tune away.
  */
+/**
+ * **Re-pinned wholesale at the frontage-by-claim flip
+ * (`STRIP_FRONTAGE_BY_CLAIM` true, `layout/forms/hillside.ts`, 2026-08-25) —
+ * attribution: the flip, and nothing else.**
+ *
+ * A hillside frontage station with claimable depth counts as frontage now, so
+ * the strips seat lots they used to drop. This fixture's district goes 8 -> 13
+ * buildings (16 in the world, from 11), 14 -> 23 lots, 5 -> 8 infill and
+ * 11 -> 15 terrace bays; the steep fixture's goes 5 -> 12 buildings (7 -> 14),
+ * with its extra seats landing as infill (2 -> 10) rather than as frontage
+ * lots. Composition holds: both quarters still clear §6.1's natural bar and
+ * §3.6a's net street bar, and `wallColumns` FELL on both — 143 -> 130 and
+ * 559 -> 403, better per building by a third and by three fifths — because a
+ * seated lot is ground that needs no retaining wall.
+ *
+ * The one row that reads worse per unit is `lotsDropped` on the gentle
+ * fixture: 7 -> 12, and 0.33 -> 0.34 of the stations offered. The flip offers
+ * many more stations and drops a hair more of them; it does not touch the
+ * rectangle starvation `LOT_PARCEL_OWN_STATIONS` is staged for. Not asserted,
+ * pinned so the next flip has a before.
+ */
 const GOLDEN = {
   quarterColumns: 24_320,
-  districtBuildings: 8,
+  districtBuildings: 13, // frontage-by-claim flip (STRIP_FRONTAGE_BY_CLAIM, 2026-08-25): 8 -> 13. This is the flip itself, not a side effect: a hillside frontage station with claimable depth now counts as frontage, so the strips carry lots they used to drop and the quarter seats five more buildings.
   /**
    * A terrace is one building with `bays` front doors. This is the town's size.
    *
@@ -645,14 +666,14 @@ const GOLDEN = {
    * change touched the lot walk; it changed the streets the walk reads. **Wants
    * a walk before it is called good.**
    */
-  dwellings: 16,
+  dwellings: 23, // frontage-by-claim flip (STRIP_FRONTAGE_BY_CLAIM, 2026-08-25): 16 -> 23. Follows `districtBuildings`; per building 2.00 -> 1.77, so the new seats are smaller houses rather than more of the same.
   // 15 → 14 (2026-08-08), the same subdivision.
-  lots: 14,
-  lotsDropped: 7,
+  lots: 23, // frontage-by-claim flip (STRIP_FRONTAGE_BY_CLAIM, 2026-08-25): 14 -> 23. The frontage the flip counts, seated: nine more lots on the same three blocks.
+  lotsDropped: 12, // frontage-by-claim flip (STRIP_FRONTAGE_BY_CLAIM, 2026-08-25): 7 -> 12. UP five in absolute, and WORSE per lot offered too: 7/21 = 0.33 dropped before, 12/35 = 0.34 now. The flip offers many more stations and drops very slightly more of them; it does not fix the rectangle starvation LOT_PARCEL_OWN_STATIONS is staged for. Not asserted; recorded so the next flip has a before.
   // 4 → 5 (2026-08-08): the lot the subdivision lost is a gap the grammar fills.
-  infill: 5,
+  infill: 8, // frontage-by-claim flip (STRIP_FRONTAGE_BY_CLAIM, 2026-08-25): 5 -> 8. Follows the lots.
   // 17 → 11 (2026-08-08), the dwelling count read as bays.
-  terraceBays: 11,
+  terraceBays: 15, // frontage-by-claim flip (STRIP_FRONTAGE_BY_CLAIM, 2026-08-25): 11 -> 15. Follows the lots: four more bays on the terraces the new frontage feeds.
   offPlatform: 0,
   /**
    * 150 → 156 (2026-08-07), and up was the right direction then: a flight that
@@ -680,7 +701,7 @@ const GOLDEN = {
    * seven more columns of face come back needing a finish. Re-pinned at the
    * measured flag-on value; the trade itself belongs to the walk.
    */
-  wallColumns: 143,
+  wallColumns: 130, // frontage-by-claim flip (STRIP_FRONTAGE_BY_CLAIM, 2026-08-25): 143 -> 130, DOWN thirteen — and 13.0 -> 8.1 per building, BETTER by a third. A seated lot is ground that needs no retaining wall, so more seats means less wall. Still comfortably under the 600 bar this check is really for.
   /** Rungs of §6.3's ladder walked, and where it landed. */
   replanRounds: 3,
   principalStreets: 2,
@@ -930,12 +951,12 @@ const STEEP = {
    * dwellings, sixteen lots and two replan rounds; the rows below are what the
    * tree these numbers were re-pinned in actually produces.
    */
-  districtBuildings: 5,
-  dwellings: 13,
+  districtBuildings: 12, // frontage-by-claim flip (STRIP_FRONTAGE_BY_CLAIM, 2026-08-25): 5 -> 12, and on this gradient the flip more than doubles the quarter: a station with claimable depth counts as frontage, so 1:2.5 ground carries seats it used to refuse.
+  dwellings: 18, // frontage-by-claim flip (STRIP_FRONTAGE_BY_CLAIM, 2026-08-25): 13 -> 18. Per building 2.60 -> 1.50 — the new seats are small.
   /** 11 → 8 at the spine, 8 → 18 with the extra streets (2026-08-08). */
-  lots: 18,
-  infill: 2,
-  terraceBays: 11,
+  lots: 17, // frontage-by-claim flip (STRIP_FRONTAGE_BY_CLAIM, 2026-08-25): 18 -> 17, DOWN one, which is the honest reading of a flip that moved buildings 5 -> 12: the extra seats are `infill` (2 -> 10), not frontage lots. The frontage the flip counts feeds the infill pass on this gradient.
+  infill: 10, // frontage-by-claim flip (STRIP_FRONTAGE_BY_CLAIM, 2026-08-25): 2 -> 10, five-fold — see `lots` above: this is where the flip's extra buildings landed on steep ground.
+  terraceBays: 8, // frontage-by-claim flip (STRIP_FRONTAGE_BY_CLAIM, 2026-08-25): 11 -> 8, DOWN three: fewer bays, because more of the strip is seated outright rather than left to terrace.
   // 85 → 129: three walls on a longer town rather than one on a short one.
   // 129 → **48** (2026-08-07, the composite gate). The 81 columns that went are
   // the 90-column skirt that reported `drop: 6` and would have presented seven
@@ -978,7 +999,7 @@ const STEEP = {
   // `site-plan-transitions.test.ts` re-pins as 271 → 277: the blend puts road
   // claims at levels between the drape and the graded profile, and the terminal
   // seam builder derives one more transition off them.
-  wallColumns: 559, // n9 retune (tail exponent + closing, 2026-08-23): 309 -> 441 — road claims at the new levels change which seams derive; the terminal builder answers a much longer stretch of face. cross verdict (PULL_CROSS, 2026-08-23): 441 -> 559 — the terminal builder answers a longer stretch of face as the levelled rows cut the tilted shelves flat.
+  wallColumns: 403, // n9 retune (tail exponent + closing, 2026-08-23): 309 -> 441 — road claims at the new levels change which seams derive; the terminal builder answers a much longer stretch of face. cross verdict (PULL_CROSS, 2026-08-23): 441 -> 559 — the terminal builder answers a longer stretch of face as the levelled rows cut the tilted shelves flat. frontage-by-claim flip (STRIP_FRONTAGE_BY_CLAIM, 2026-08-25): 559 -> 403, DOWN 156 — and 79.9 -> 33.6 per building, BETTER by nearly three fifths. The seats stand where the terminal builder used to answer face.
   // 3 → 1: the ladder's **first** rung now clears both gates, where before the
   // causeways' paving pushed it two rungs down.
   replanRounds: 1,
@@ -991,7 +1012,7 @@ const STEEP = {
    * terraces are three more terraces' worth of cut, and 0.56 still clears 0.40
    * comfortably.
    */
-  naturalFraction: 0.5555,
+  naturalFraction: 0.5454, // frontage-by-claim flip (STRIP_FRONTAGE_BY_CLAIM, 2026-08-25): 0.5555 -> 0.5454, DOWN a hundredth of the quarter: the new seats platform ground that used to read as uncut hillside. Still well clear of the 0.4 gate.
   /**
    * 0.2386 → 0.2347 → 0.2550 (2026-08-08), and this one is **gross** — every
    * paved column, spine included. Three more principal streets cost street and
@@ -1000,8 +1021,8 @@ const STEEP = {
    * number the gate is actually applied to — 0.1850 — clears it comfortably.
    * That is §3.6a's whole argument, arriving on the fixture that needs it.
    */
-  streetFraction: 0.2550,
-  spineFraction: 0.0699,
+  streetFraction: 0.2568, // frontage-by-claim flip (STRIP_FRONTAGE_BY_CLAIM, 2026-08-25): 0.2550 -> 0.2568, UP eighteen ten-thousandths gross. It still clears §3.6a's gate the way this fixture always has — net of the spine, 0.1887 against the 0.25 bar.
+  spineFraction: 0.0682, // frontage-by-claim flip (STRIP_FRONTAGE_BY_CLAIM, 2026-08-25): 0.0699 -> 0.0682, DOWN seventeen ten-thousandths: the spine is the same carriage road over a quarter with more seats in it.
 } as const;
 
 describe("the steep fixture hill town, compiled", () => {

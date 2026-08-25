@@ -134,10 +134,12 @@ export const TERRACE_RISE = RETAIN_MAX;
  * line is continuous and `stations` is its arc length. The column → station map
  * is untouched; a lot that spans such a station simply gathers its columns from
  * the neighbours the tie gave them to (`frontageLots` partitions stations, not
- * columns). Staged under the Run's law 5: landed `false`, flipped in its own
- * commit with every moved world attributed.
+ * columns). Staged under the Run's law 5: landed `false`; **`true` ships**
+ * (2026-08-25) — four hillside worlds moved and each is attributed in
+ * `docs/decks/anchors/MONTFORT-HILLSIDE-2026-08-25.md` §F: buildings roughly
+ * double on every planned hill (montfort_hill_k1 5 → 13). One line to undo.
  */
-export const STRIP_FRONTAGE_BY_CLAIM = false;
+export const STRIP_FRONTAGE_BY_CLAIM = true;
 
 /**
  * The frontage a strip holds: {@link STRIP_FRONTAGE_BY_CLAIM}'s rule as a pure

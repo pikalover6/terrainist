@@ -89,9 +89,16 @@ keep above the rooftops — the tallest thing, inside the circuit.
 **Verdict: FAIL** on T4 (one order of magnitude short of "a town inside the
 wall") and T7 (density). Cause established by probe, not the hill's slope:
 the hillside planner counts a raster artefact as its frontage and dissolves
-strips it had already claimed (unit 5). **What the Run will do:** flip
-`STRIP_FRONTAGE_BY_CLAIM` (trial: 13 → 24 buildings here, 5 → 13 on
-montfort), then the dropped-lots probe, then re-read this station.
+strips it had already claimed (unit 5).
+
+**Re-read after the flip (unit 6):** 24 buildings (22 in the district), the
+circuit tightened round the town by the built-hull law, `summit_church`
+temporarily unseated (`E170`) — restored at the next flip
+(`PLANNED_SITE_WHOLE_STRIP`, trial: 20 buildings + the church). Still
+**FAIL** on T4/T7 by the instrument — twice the town, not yet a town; the
+drops that remain are the geometry of axis-aligned buildings on diagonal
+strips (proposal P1). **What the Run will do:** flip the two staged
+switches (unit 7), then the walk decides.
 
 ---
 

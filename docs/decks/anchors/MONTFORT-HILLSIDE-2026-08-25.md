@@ -228,3 +228,270 @@ divided by 2–3.
 6. Not answered by this probe: why the surviving strips still drop 20 / 23 lots
    downstream in `district.ts`, and whether `stations` should be replaced by arc
    length or the tie rule made side-aware — both are outside the instrumented code.
+
+## F. The flip (unit 6, 2026-08-25): `STRIP_FRONTAGE_BY_CLAIM` false → true
+
+**The fourteen law-5 documents** (`bi/after-on` vs `bi/on6`, `bi/ex-before`
+vs `bi/ex-on6`): the nine non-hillside worlds and `hillside-village` (no
+district) byte-identical; the four planned hills moved, each attributed:
+
+| world | buildings | district | buildingBlocks | lots / dropped | dwellings | diagnostics | read |
+|---|---:|---:|---:|---:|---:|---|---|
+| montfort_hill_k1 | 5 → **13** | 1 → 9 | 5,349 → 13,794 | 8/20 → 20/55 | 1 → 11 | none | **better** — a town appears inside the circuit; the wall (the built hull, see below) grows 176 → 606 course columns |
+| walled (before-sample) | 13 → **24** | 11 → 22 | 29,564 → 28,499 | 38/23 → 47/67 | 26 → 31 | `E170` 0 → 1 (`summit_church` 13 × 17), `T237` 12 → 9 | better on T4; **one landmark lost** — attributed below and restored by the next switch |
+| site-plan-hillside | 11 → 16 | 8 → 13 | 16,123 → 24,215 | 14/6 → 23/12 | 16 → 23 | `W413` 0 → 1 | not-worse (+5) |
+| site-plan-hillside-steep | 7 → 14 | 5 → 12 | 12,230 → 17,729 | 18/7 → 17/19 | 13 → 18 | `W413` 6 → 4 | not-worse (+7) |
+
+**The wall changed shape, by its own law.** Both circuits tightened round
+the new town — montfort's to the dense south-west cluster, the walled
+city's to a triangle — because `structures/fabric-hull.ts` draws the wall
+round the hull of what was actually built (core fabric = building
+footprints, plus paving that hugs it), the reference frame Kai's Troy walk
+of 2026-08-11 ratified. More town, bigger and tighter wall: montfort's
+course 176 → 606 columns, the walled city's 946 → 994. Read not-worse (T4:
+buildings dominate walls); montfort's keep stood outside the circuit
+before and after (walk card). Render pairs:
+`bi/renders/{montfort_hill,walled_medieval_city}-{ex-off5,ex-on6}.png`.
+
+**The lost church, and the drops — probed** (`scratchpad/lot-probe/`,
+verbatim in §G): every drop in `frontageLots` is the rectangle test
+(montfort 47/49, walled 55/58), split ~70/30 between **bookkeeping** — a
+built lot marks its whole BFS blob `taken` with a budget of `size ×
+MAX_INFILL_DEPTH` ≈ 240 columns in a 19-deep strip, runs sideways and
+starves the next lot (30 of the walled city's 43 starved lots follow a
+built one) — and **geometry** — an axis-aligned rectangle inside a
+diagonal band. And the "whole strip offered to a landmark" is the union of
+the lots already seated (deepest seat 14 on a 19-deep strip; largest site
+anywhere 20 × 9), which is why a 13 × 17 church that used to fit on a
+30-column-wide lot gets `E170`.
+
+**Two more switches, landed off in this commit** (`layout/district.ts`,
+pinned by `test/frontage-lots.test.ts`):
+`LOT_PARCEL_OWN_STATIONS` (a parcel grows inward through its own stations)
+and `PLANNED_SITE_WHOLE_STRIP` (the site is the strip's free mask; the
+landmark claims only the lots it covers). Off-state byte-identical to the
+flip on all fourteen (`bi/on6b`, `bi/ex-on6b`). Trial at both `true`
+(`bi/ex-trial7`):
+
+| document | buildings | district | buildingBlocks | lots / dropped | dwellings | landmarks unplaced |
+|---|---:|---:|---:|---:|---:|---:|
+| montfort_hill_k1 | 13 → 12 | 9 → 8 | 13,794 → 20,259 | 20/55 → 25/50 | 11 → 14 | 0 |
+| walled (before-sample) | 24 → 20 | 22 → 18 | 28,499 → 30,571 | 47/67 → 53/62 | 31 → 27 | **1 → 0** — the church seats |
+| site-plan-hillside | 16 → 20 | 13 → 17 | 24,215 → 30,206 | 23/12 → 31/3 | 23 → 26 | 0 |
+| site-plan-hillside-steep | 14 → 17 | 12 → 15 | 17,729 → 18,060 | 17/19 → 26/10 | 18 → 23 | 0 |
+
+Fewer, deeper buildings on the two diagonal-heavy hills (the church takes
+the four lots it covers), more on the fixtures; the drops that remain are
+the geometry half — **a proposal**: seat frontage buildings at the street's
+yaw on planned strips (SITE-PLAN §4.2 keeps rectangular, axis-aligned
+buildings "for v0"; on a 45° contour the largest axis-aligned rectangle of
+a 15 × 19 parcel is under `MIN_INFILL_SIDE`). That is a grammar-facing
+change, more than a day, written up in the ledger's PROPOSALS.
+
+## G. The lot probe, verbatim
+
+# LOT-PROBE — why frontage lots drop, and why a 13 × 17 landmark cannot be seated
+
+Probe: `packages/compiler/dist/layout/district.js` patched under `LOT_PROBE=1`
+(stderr only), compiled `montfort_hill.loam.json` (mh) and
+`before-sample/walled_medieval_city.doc.json` (wc) with `--report`, then restored.
+
+dist sha before = after = `f8eb419096e7eb7cf78689aa975ffc13d5b9df62ca0362df2cbd75eaab91d7b3`
+
+Raw: `mh.err` / `wc.err`; reports `mh.report.json` / `wc.report.json`.
+
+## The `dropped++` sites in `frontageLots` (src lines 3803, 3810)
+
+| code | site | condition |
+|---|---|---|
+| `D1_NO_COLUMNS` | 3803 | the grown parcel is empty (`columns === 0`) |
+| `D2_NO_RECT` | 3810 | `largestRect(bounds, member) === null` |
+| `D3_RECT_THIN` | 3810 | rect's short side `< MIN_INFILL_SIDE` (= 7) |
+
+The other `dropped++` in the district are outside `frontageLots`: `subdivide`'s
+`emit` (strip shorter than 7; lot not free — src 3573, 3587) and `tryInfill`
+(`infillLot` returned null — src 2110). Report `lotsDropped` sums all of them:
+mh 55 = 49 (frontageLots) + 6; wc 67 = 58 (frontageLots) + 9.
+
+## Q1 — drops by reason
+
+| doc | lots cut | BUILT | D1_NO_COLUMNS | D2_NO_RECT | D3_RECT_THIN | dropped |
+|---|---|---|---|---|---|---|
+| mh | 69 | 20 | 2 | 0 | 47 | 49 |
+| wc | 105 | 47 | 3 | 0 | 55 | 58 |
+
+**Every drop is the rectangle test.** `largestRect` never returns null; 96 % of
+drops are a rectangle whose short side is under 7.
+
+### Largest-rectangle short side, dropped vs kept
+
+| short side | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 13 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| mh dropped | 13 | 8 | 3 | 3 | 8 | 12 | – | – | – | – | – | – |
+| mh kept | – | – | – | – | – | – | 5 | 6 | 4 | 4 | 1 | – |
+| wc dropped | 26 | 8 | 1 | 0 | 6 | 14 | – | – | – | – | – | – |
+| wc kept | – | – | – | – | – | – | 9 | 9 | 16 | 10 | 2 | 1 |
+
+Kept lots cluster at 7–10; there is no near-miss population — the drops are
+either ~1–2 (no parcel left) or 5–6 (a diagonal ribbon).
+
+### Lot station spans (the frontage allocation is healthy)
+
+`LOT_FRONTAGE` gives 13–16 stations everywhere; the span is never the problem.
+
+| span (stations) | 13 | 14 | 15 | 16 |
+|---|---|---|---|---|
+| mh all / dropped | 1/0 | 10/8 | 35/29 | 23/12 |
+| wc all / dropped | – | 13/10 | 78/42 | 14/6 |
+
+### The two populations — geometry vs bookkeeping
+
+Cross-tab of dropped lots by parcel size (`columns`, budget = span × 16 ≈ 240)
+against the rectangle's short side:
+
+| doc | cols < 25 & short ≤ 2 | cols 25–149 | cols ≥ 150 & short 3–6 | cols ≥ 150 & short ≤ 2 |
+|---|---|---|---|---|
+| mh (49) | 21 | 13 | 13 | 2 |
+| wc (58) | 34 | 9 | 15 | 0 |
+
+- **Bookkeeping — starved parcels (mh 21 + part of 13; wc 34 + 3):** the parcel
+  grew to a handful of columns and its rectangle is 1 × 1. Cause: a *built*
+  neighbour marked **every column of its own grown parcel** `taken`
+  (src 3822: `for (…) if (member[c] === 1) taken[c] = 1`), not just its seated
+  rectangle. Growth is a greedy BFS up to `size × MAX_INFILL_DEPTH` = 240
+  columns, and a strip is only 19 deep, so a built lot's BFS runs *sideways*
+  along the frontage and eats the next lot's stations. The strip traces show the
+  alternation directly, e.g. wc strip 0:
+  `B9x9 B10x11 x1x1/7 B14x11 B11x9 x8x2/23 B14x10 …`.
+  In wc **30 of the 43 starved lots immediately follow a BUILT lot**; in mh 14
+  of 34 (the rest follow a dropped lot that starved on the same built parcel two
+  places back). Dropped lots never mark `taken` — the `continue` precedes the
+  marking — so drops do not cascade of their own accord.
+- **Geometry — diagonal parcels (mh 13–15; wc 15):** a full-budget parcel
+  (240–256 columns, i.e. all the ground the lot is allowed) whose largest
+  *axis-aligned* rectangle is a ribbon: mh `26x6/240`, `28x6/241`, `21x5/200`,
+  `2x30/224`; wc `6x12/240`, `13x5/256`, `11x6/241`, `6x16/181`. wc strip 7
+  (130 stations, 9 lots, 665 free columns) built **nothing** — every lot is
+  6 wide because the strip runs diagonally.
+
+**Other bookkeeping is not a factor.** The per-strip census shows `taken` never
+removes a column at strip entry (`taken=0` on all 6 mh and all 9 wc strips —
+strips are disjoint), `badst=0` everywhere, and the `MAX_INFILL_DEPTH` cut is
+small (mh 59 of 8 184 strip columns = 0.7 %; wc 338 of 15 341 = 2.2 %).
+`blocked` removes 12 % (mh 1 003) / 8 % (wc 1 237) — real terrain and street,
+not bookkeeping.
+
+**Verdict.** The dominant drop reason is `D3_RECT_THIN` (mh 47/49 = 96 %,
+wc 55/58 = 95 %), and it splits roughly half and half:
+**mh ≈ 34 bookkeeping / 15 geometry; wc ≈ 37 bookkeeping / 15 geometry.**
+The bookkeeping half is one line — a built lot claiming its whole BFS blob
+rather than its seated rectangle plus a margin, with a BFS budget (240) an
+order of magnitude larger than the rectangle it seats (~90). The geometry half
+is the genuine limit: an axis-aligned rectangle inside a diagonal 19-deep band.
+
+## Q2 — the landmark seat, and the 13 × 17
+
+`claimSite` (src 4264) tries two things:
+
+1. `claimRun` — a run of ≤ `MAX_LANDMARK_RUN` *adjacent* unclaimed lots (same
+   block, same face, consecutive `order`), using the union of their seated
+   rectangles. A run only ever grows **along** the frontage; its depth is the
+   union's depth, i.e. one lot's seated depth.
+2. `blockSites` — for a planned strip this is `largestRect(bounds, stripRect)`
+   at src 3846, and **`stripRect` is the union of the lots already seated on
+   that strip**, not the strip's own mask. So "the whole strip, offered to a
+   landmark" is in fact only the largest axis-aligned rectangle inside the
+   buildings already placed.
+
+### wc at the current dist — every candidate the search saw
+
+47 unclaimed lots, none deeper than 14:
+
+`13x13 15x7 10x9 9x10 7x14 12x8 10x11 14x10 11x9 9x9 14x11 9x10 8x9 10x11`
+`10x10 15x10 13x8 9x9 15x10 8x10 18x7 15x9 14x9 9x10 11x7 12x11 11x7 9x10`
+`14x8 9x8 20x9 7x7 9x8 13x7 11x10 9x10 7x8 11x7 10x10 8x13 9x10 9x9 8x9 9x9`
+`10x11 9x10 10x10`
+
+Largest by area: **20 × 9** (180); largest short side: 13 (`13x13`);
+largest depth: 14 (`7x14`).
+
+8 block sites (one per strip that seated anything; strip 7 seated nothing so it
+offered none):
+
+| site | b0 | b1 | b2 | b3 | b4 | b5 | b6 | b8 |
+|---|---|---|---|---|---|---|---|---|
+| w × d | 13×13 | 15×10 | 10×10 | 10×11 | 14×8 | 12×11 | 20×9 | 8×13 |
+
+Largest site: **20 × 9**. Compare the ground actually available: strip 0 holds
+4 150 columns of which 3 984 are free, and it offers a 13 × 13 site, because
+only 1 513 columns were seated and the seated rectangles do not abut.
+
+A 13 × 17 (rotated 17 × 13 on an east/west face) needs one side ≥ 17. **No
+candidate has a side over 15 except `20x9` and `18x7`, whose other side is
+9 and 7.** Hence `LOAM-E170 CANNOT_FIT`.
+
+### The previous behaviour, for contrast
+
+`bi/ex-off5/walled_medieval_city.report.json`: `world.hill_city.summit_church`
+placed at yaw 180 with footprint `x0 −132 … x1 −120`, `z0 −161 … z1 −145` —
+exactly **13 × 17**, `landmarksUnplaced: 0`, `stats.blocks: 10`, `lots: 38`,
+`lotsDropped: 23`. That district ran the rectangular-block path, whose
+`subdivide` `cut.front` offers a whole block frontage strip, so a 13 × 17 site
+existed for free.
+
+### What a true-width frontage would need
+
+The strips are **19 columns deep**, so a 17-deep seat is available on depth
+alone (17 ≤ 19) — the depth is there and is being thrown away. What is missing
+is width in the *offered* rectangle:
+
+- On the block-site path: `stripRect` must be the strip's **own mask** (or at
+  least the lots' union parcels), not the seated rectangles. Strip 0 at 3 984
+  free columns and 19 deep contains far more than 13 × 13.
+- On the lot-run path: a landmark needs a run whose union is ≥ 13 wide **and**
+  ≥ 17 deep. At `LOT_FRONTAGE` ≈ 15 stations per lot, 13 columns of width is
+  **one lot**; the binding constraint is depth — the seated rectangles top out
+  at 14 because the parcel BFS and the 7-wide rectangle test never reach the
+  back of the 19-deep strip. Concretely: a 13 × 17 needs **a single lot seated
+  to the strip's full depth (17 of 19)** rather than a run of stations —
+  today's deepest seat is 14, and the median kept depth is 9–10.
+
+## H. What the flip cost, per unit (the re-pinned goldens)
+
+The FULL suite at the flipped bytes failed 28 pinned numbers in
+`walkability.test.ts`, `site-plan-hillside.test.ts` and
+`site-plan-transitions.test.ts`, all over the two site-plan fixtures whose
+buildings doubled. Each was re-pinned **with its cause and its per-unit
+reading** (69 assertions touched: 27 better per unit, 27 same, **15 worse
+per unit**). The worse ones, stated plainly:
+
+- steep fixture `entranceReachableShare` 0.966 → **0.850** — one laid column
+  in six unreachable on foot where it was one in thirty; `soloWorstDensity`
+  0.621 → **1.464** (the worst solo place is now 2.3× the worst junction;
+  the module's founding co-location claim inverted); `soloDensity` +50 %;
+  sunken lamps per lamp 0.18 → 0.26; cut-off columns 2.2 % → 3.0 % with
+  undressed cut-offs still 100 % of them.
+- hillside fixture: `junctionDensity` +13 %, `soloDensity` +24 %, sunken
+  lamps 0.08 → 0.14, buried columns 1.5 % → 1.8 %, `lotsDropped` 7 → 12.
+
+**Mechanism** (the audits' own witnesses): a lot seated on a station the old
+rule dropped sits on steeper claimed ground, cuts its own platform, and the
+unfeathered cut face beside it is the shoulder/verge debt — now paid on
+twice as many lots. That debt is the parked compiler backlog item
+"shoulder/verge" (spec §2); it is logged as finding F9 and proposal P2, not
+chased here.
+
+**On the named worlds** (in-process walkability audit, `scratchpad/
+walk-audit.mjs`, before → after): montfort buried/column 0.017 → 0.011,
+unserved faces 17 → 14, components 17 → 25, solo density 0.006 → 0.020 with
+2.6× the buildings; walled buried/column 0.021 → 0.019, unserved faces
+37 → 25, dead ends 25 → 16, solo density 0.031 → 0.037 with 1.85× the
+buildings. `entranceReachableShare` reads **0 on both sides of both
+worlds** — the audit's reach never enters these quarters (orphan columns
+1,4k / 4,9k), an instrument gap to close before it can decide anything
+here.
+
+**Verdict on the flip:** better on T4/T7 on every planned hill and on the
+named worlds' own dressing counts; worse per unit on the steep fixture's
+reachability and clutter, attributed to unpaid shoulders on the new lots.
+Lands, with F9/P2 open and Kai's veto open (law 6).
