@@ -204,11 +204,18 @@ analysis harness over it:
   model wrote a coherent European town instead. So the binding hypothesis
   narrows to the named-pack cases (glowcap_vale, redwood_camp: right pack,
   coherent menu, zero adoption); walled and railway_town are retired as
-  its evidence. fjord control 0/0/0. **Kai's ruling pending: cut tier 2,
-  or gate it on the cultural affinity FORM_PACKS already carries
-  (materialTheme / characters); re-test on walled + railway ~$0.15. The
-  flag question is now genuinely open — "not yet" until the era tier is
-  fixed.**
+  its evidence. fjord control 0/0/0. **Kai's rulings (2026-08-24): "Drop
+  tier 2 entirely" — no re-test (after the cut a no-pack prompt gets an
+  empty menu, i.e. no message, an identity the tests already prove); flag
+  "not yet — after the era tier is fixed".** The number that decided it,
+  across both measurements' 19 menu-bearing arms: **tier 1 (named pack)
+  198 ids shown, 49 adopted; tier 2 (era-affine) 580 ids shown, 0
+  adopted** — ~75 % of the menu's tokens, never once used, across four
+  eras: a clean empirical kill. Affinity-gating was offered and shown NOT
+  to work: walled's materialTheme `temperate_timber` is an affinity of
+  seven packs including east_asian and feudal_japanese — FORM_PACKS'
+  affinity fields are W517 advice, too coarse to serve as a retrieval
+  filter. Cut implemented in registry-export.ts at zero spend.
 
 ## WS-D — Price optimization
 
