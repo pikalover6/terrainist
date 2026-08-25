@@ -54,6 +54,19 @@ Byte-identity's two traps (compare decompressed NBT; a worktree CLI resolves
 to the main tree); shared-tree git discipline after three clobbers; funnel
 memory + rendered log born.
 
+**08-09 → 08-17 (compressed from cell 2):** rung B walked; THE ICON LAW
+ratified (worlds must SCREAM the prompt; U1 stranger test); catalog breadth
+ratified both tracks (not_started burndown + expansion packs, formPacks as
+the 4th grounded list); infra.entry@0 host, wall machinery, urban floor;
+NEVER-WAIT ratified 08-13; installs moved to PrismLauncher; ops lore
+(prettier ban, pipes swallow vitest exits, never emit from mid-flight
+dist). The Gemini arc (08-14/15): Gemini's WORK walked better than Luna's
+and its failures were harness → the reshape rulings (auto-braces, gate
+leniency §15.2 PERMANENT, canonical programSourceHash); Gemini 3.7 Flash
+high pinned for ALL uses; implementers opus-5-low. The autonomous run
+(08-17): viewer rounds + shader pack, machinery tail closed, SIX go-ham
+packs (+2 later → 265 members), pack laws banked, dev app landed unseen.
+
 **Locked decisions:** authoring model is a PIN and cheap-model-first —
 Gemini 3.7 Flash at high for ALL uses since 08-15 (Luna was the 08-02→08-15
 default; models are config, one `--model` away); critique→repair is MANUAL
