@@ -211,8 +211,18 @@ function wallPlan(ctx: FitOutContext): WorksPlan | null {
 /** The plan for a **roof rebuild**: a wall plan that also has room to build in. */
 function roofPlan(ctx: FitOutContext): WorksPlan | null {
   const plan = wallPlan(ctx);
-  if (plan === null) return null;
-  return plan.top - plan.base < 2 ? null : plan;
+  if (plan === null) {
+    ctx.skipped?.push("roof work: the interior is not the one-block inset the rebuild plans over");
+    return null;
+  }
+  const courses = plan.top - plan.base;
+  if (courses < 2) {
+    ctx.skipped?.push(
+      `roof work: ${courses} course${courses === 1 ? "" : "s"} above the eave where the rebuild needs 2 — a flat or low roof leaves no room`,
+    );
+    return null;
+  }
+  return plan;
 }
 
 /** The footprint perimeter of a rect plan, in canonical (z, x) order. */

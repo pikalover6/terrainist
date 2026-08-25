@@ -462,6 +462,15 @@ export interface FitOutContext {
    * `BuildingMeta.decay`. Absent for every caller that does not care.
    */
   readonly decayReport?: DecayPassReport;
+  /**
+   * Where a fit-out says what it could **not** do. A roof rebuild that finds
+   * no room above the eave (`roofPlan` null — a flat roof, a thick-walled
+   * interior) used to skip its bands, gallery, lamp or spire in silence and
+   * ship the shell; the Stocktake Run's probe pass 3 met a "lighthouse" that
+   * was a two-floor box. Push one line per skipped thing; the compiler reports
+   * them as `LOAM-W524 FITOUT_ROOF_SKIPPED` against the building.
+   */
+  readonly skipped?: string[];
 }
 
 /** Plan width, from the interior rect: the interior is inset one cell all round. */

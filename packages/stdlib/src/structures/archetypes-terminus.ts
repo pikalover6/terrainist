@@ -254,8 +254,21 @@ function wallPlan(ctx: FitOutContext): TerminusPlan | null {
 /** The plan for work that rebuilds the roof: a wall plan with room over it. */
 function roofPlan(ctx: FitOutContext): TerminusPlan | null {
   const plan = wallPlan(ctx);
-  if (plan === null) return null;
-  return plan.top - plan.base < 2 ? null : plan;
+  if (plan === null) {
+    ctx.skipped?.push("roof work: the interior is not the one-block inset the rebuild plans over");
+    return null;
+  }
+  if (plan.top - plan.base < 2) {
+    // The Stocktake Run's probe pass 3 (2026-08-25): a lighthouse asked for
+    // with `roof: "flat"` had one course above its eave, and its bands,
+    // gallery and lamp were skipped in silence. Say so (`LOAM-W524`).
+    const courses = plan.top - plan.base;
+    ctx.skipped?.push(
+      `roof work: ${courses} course${courses === 1 ? "" : "s"} above the eave where the rebuild needs 2 — a flat or low roof leaves no room`,
+    );
+    return null;
+  }
+  return plan;
 }
 
 /** Blocks a re-clad may never overwrite: the way in, the way up, the fire, the lights. */

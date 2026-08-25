@@ -7,9 +7,17 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 33 (probe pass 3: six of six generated, five one-shot, every icon present, zero boxes; four of six pass by read — the baobab (dominant by rule too), the river forts with a river that holds and a bridge ending mid-stream, the karst, the horde camp's great tent; the mammoth fails on F27's known remainder and the lighthouse on a new cause, F29 — G4 not met) is committed.
-- **Next unit:** unit 34 — **F29, the silent fit-out**: probe `fitLighthouse` on the pass-3 document (why `archetype: "lighthouse", floors: 2, roof: "flat"` built a box: the roof override, a height floor, or a fallback path), then the smallest honest fix — a `LOAM-W…` note when an archetype's own fit-out is skipped or overruled by params (the sibling of `W511`), and, if the probe names a bug, the fix behind a switch (law 5). Then probe pass 4 — six new prompts for G4 (≈ $1.70). Then F17, census 1.21, P5/P6/P7; the remaining verdict stations, G2, the final deck and closing report.
-- **Last commit:** 30f2075 (unit 32). Convention: this line names the
+- **In flight:** nothing — unit 34 (F29: a fit-out that skips its own roof
+  work now says so, `LOAM-W524`) is committed.
+- **Next unit:** unit 35 — **probe pass 4**: six new prompts for G4,
+  pre-registered (one per spec §6 category, none of passes 1 and 3),
+  through the program stage (≈ $1.70, cap $3.00), scored by the metric and
+  read from full-height renders; a probe fails only on a read; a failure
+  whose cause is an open F-number (F27's remainder) is not a new class. G4
+  is met when these six surface no new failure class. Then F17, census
+  1.21 and the `roofPlan` ×25 duplicate (class 3, new row), P5/P6/P7; the
+  remaining verdict stations, G2, the final deck and closing report.
+- **Last commit:** cbe412f (unit 33). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
 - **Spend:** $13.47 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
 - **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19, D25,
@@ -34,11 +42,11 @@ running state. The NOW block is rewritten at the end of every turn.
     column): the two-villages fjord, 14 % of its floor wet, up to 31 blocks
     dry. Fixed (unit 30): `LOAM-I502 CARVE_MOSTLY_DRY`, measured along the
     floor samples, below half wet.
-  - F29 — **an archetype's bespoke fit-out is defeated by the author's
-    params or falls back, with no diagnostic**: the pass-3 lighthouse
-    (`archetype: "lighthouse", floors: 2, roof: "flat"`) is a two-floor
-    box where the catalog promises a banded spire with a lantern, and the
-    compile says nothing. Unit 34.
+  - F29 — fixed (unit 34): the lighthouse's `roofPlan` was null — a flat
+    roof leaves one course above the eave where the rebuild needs two — and
+    every archetype file's private `roofPlan` skipped in silence; the
+    fit-out context now carries a `skipped` sink, all 25 copies name their
+    reason, and the compiler reports `LOAM-W524 FITOUT_ROOF_SKIPPED`.
   - F28 — closed (unit 32): a prominence rule would reconcile none of the
     four (the gompa's "ordinary buildings" are its own outbuildings; the
     bell sits *below* its village; the ferry is span), so `dominant` keeps
@@ -555,6 +563,18 @@ running state. The NOW block is rewritten at the end of every turn.
   exactly the four icons whose verdict needed a render — the tent, the
   bridge, the kill site, the tower — and on nothing else; on this pass the
   instrument and the reads agree about where to look. Undo: n/a.
+- **D75 (unit 34):** the fix is the diagnostic, not the roof: a lighthouse
+  asked for with `roof: "flat"` is the author's request, and the
+  compile-feedback rounds are where the author changes it — once told. A
+  switch that overrode the roof for the lighthouse alone would fix one
+  archetype of 25 that share the silence. The sink is one optional array
+  on the fit-out context; the terminus copy names its reasons by hand and
+  the other 24 by an opus-5-low batch ({COPIES}); nothing moves a block.
+  Undo: delete the field, the pushes and the warning.
+- **D76 (unit 34):** `roofPlan` ×25 is filed with the census (class 3, a
+  duplicated authority) rather than consolidated here: the copies differ
+  in what they plan over, and a consolidation is its own byte-identical
+  refactor unit. Undo: n/a.
 
 ## SPEND
 
@@ -593,6 +613,7 @@ running state. The NOW block is rewritten at the end of every turn.
 | 31 | F27 in the kit — the golden gate (`runs/after-f27`) and four probes re-run (`runs/probe-2b`) | 1.55 | 11.77 |
 | 32 | F28 — the metric re-scored on `runs/probe-2b`, no authoring | 0.00 | 11.77 |
 | 33 | probe pass 3 — six new worlds generated end to end (`runs/probe-3`), the icon metric | 1.70 | 13.47 |
+| 34 | F29 — one in-process compile, one bi14 run, the FULL suite | 0.00 | 13.47 |
 
 ## VERDICTS
 
@@ -1234,3 +1255,18 @@ surface no new failure class.
   full-height renders (`docs/decks/probes/PROBE-PASS-3-2026-08-25.md`).
   six of six generated, five one-shot, every icon present, zero boxes; four of six pass by read — the baobab (dominant by rule too), the river forts with a river that holds and a bridge ending mid-stream, the karst, the horde camp's great tent; the mammoth fails on F27's known remainder and the lighthouse on a new cause, F29 — G4 not met Tests: FULL suite COUNTS none run — no compiler, stdlib or tool code moved in this unit; the roster, the run records and the documents only. Files: the roster,
   `runs/probe-3`, the record, the ledger. Spend $1.70.
+- **unit 34 — F29: the silent fit-out speaks (2026-08-25):** the pass-3
+  lighthouse's report meta (wallTop 16, flat roofTop 17,
+  `ROOF_FLOURISH_RISE` 1) shows `roofPlan` null by one course; `fitLighthouse`
+  keeps its bands, gallery and sea-lantern inside `if (plan !== null)`, and
+  25 archetype files carry their own `roofPlan` with the same silence.
+  Landed: `FitOutContext.skipped` (+ `FurnishRequest`, threaded by
+  `core.ts` into `meta.fitOutSkipped`), reasons named in every copy
+  (24 files, 48 sites, none skipped; stdlib 99 files / 1,752 tests), `LOAM-W524 FITOUT_ROOF_SKIPPED` from `buildings.ts`, a
+  stdlib test on the lighthouse at `roof: "flat"` vs a roof with room. On
+  the pass-3 document the warning reads: *"lighthouse" skipped the work
+  that makes it itself — roof work: 1 course above the eave where the
+  rebuild needs 2*. Census: `roofPlan` ×25 filed (D76). The thirteen: all thirteen payload-identical to unit 30; W524 on the thirteen: troy_k1 .
+  Tests: FULL suite COUNTS Test Files 348 passed | 1 skipped (349), Tests 5686 passed | 31 skipped (5717). Files: `archetypes-civic.ts`,
+  `archetypes.ts`, `core.ts`, 25 archetype files, `buildings.ts`, the
+  registry, the test, the census, the ledger. Spend $0.

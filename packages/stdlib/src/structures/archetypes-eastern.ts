@@ -242,10 +242,19 @@ function roofPlan(ctx: FitOutContext): EasternPlan | null {
   const sx = ctx.size[0];
   const sz = ctx.size[2];
   const it = ctx.interior;
-  if (it.x0 !== 1 || it.z0 !== 1 || it.x1 !== sx - 2 || it.z1 !== sz - 2) return null;
+  if (it.x0 !== 1 || it.z0 !== 1 || it.x1 !== sx - 2 || it.z1 !== sz - 2) {
+    ctx.skipped?.push("roof work: the interior is not the one-block inset the rebuild plans over");
+    return null;
+  }
   const base = ctx.wallTop + 1;
   const top = ctx.roofTop + ROOF_FLOURISH_RISE;
-  if (top - base < 2) return null;
+  const courses = top - base;
+  if (courses < 2) {
+    ctx.skipped?.push(
+      `roof work: ${courses} course${courses === 1 ? "" : "s"} above the eave where the rebuild needs 2 — a flat or low roof leaves no room`,
+    );
+    return null;
+  }
   return { sx, sz, base, top };
 }
 

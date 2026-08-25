@@ -201,6 +201,18 @@ export function buildBuildings(
       });
     const result = build(job.params);
     const decay = result.meta.decay;
+    // F29 (Stocktake unit 34): a fit-out that skipped its own roof work says so.
+    const skipped = (result.meta as { fitOutSkipped?: readonly string[] }).fitOutSkipped;
+    if (Array.isArray(skipped) && skipped.length > 0) {
+      diagnostics.push(
+        warning(
+          "FITOUT_ROOF_SKIPPED",
+          job.nodePath,
+          `"${job.params.archetype ?? "building"}" skipped the work that makes it itself — ${skipped.join("; ")} — and the plain shell stands in its place`,
+          'give the archetype room above the eave: drop "roof": "flat" (a hip or cone roof leaves the courses it rebuilds over) or add a storey; a lighthouse with no gallery is a tower',
+        ),
+      );
+    }
     const asked = typeof job.params.decay === "number" && job.params.decay > 0;
     if (decay === undefined) {
       // A shell that never reached the decay engine at all. The two shapes that

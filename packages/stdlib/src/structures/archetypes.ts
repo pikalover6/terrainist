@@ -1076,6 +1076,8 @@ interface FurnishRequest {
   readonly decay?: number;
   /** Where the decay pass records what it did. See {@link FitOutContext}. */
   readonly decayReport?: DecayPassReport;
+  /** See `FitOutContext.skipped`: what the fit-out could not do, one line each. */
+  readonly skipped?: string[];
 }
 
 /**
@@ -1360,6 +1362,7 @@ export function furnish(r: FurnishRequest): number {
     ...(r.entranceTreatment === undefined ? {} : { entranceTreatment: r.entranceTreatment }),
     ...(r.decay === undefined ? {} : { decay: r.decay }),
     ...(r.decayReport === undefined ? {} : { decayReport: r.decayReport }),
+    ...(r.skipped === undefined ? {} : { skipped: r.skipped }),
   };
   n += furnishExtended(ctx);
   n += furnishBlitz(ctx);

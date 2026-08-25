@@ -1563,9 +1563,12 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
     params.decay === undefined || params.decay <= 0
       ? undefined
       : { written: 0, quenched: 0, withdrawn: 0, settled: 0, refused: false, mode: "none" };
+  /** What the fit-out skipped and why — see `FitOutContext.skipped`. */
+  const fitOutSkipped: string[] = [];
   const furnitureCount = hasInterior
     ? furnish({
         put,
+        skipped: fitOutSkipped,
         style,
         archetype,
         interior,
@@ -1657,6 +1660,7 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
       lanternCount: lanternCount + cellarLanterns,
       apronOps,
       furnitureCount,
+      ...(fitOutSkipped.length === 0 ? {} : { fitOutSkipped }),
       ...(decayReport === undefined ? {} : { decay: decayReport }),
       chimney,
       materialKey: materialKey(materials),

@@ -497,6 +497,15 @@ export const TERRAIN_DIAGNOSTICS = {
    */
   DECAY_MODE_FALLBACK: "LOAM-W511",
   /**
+   * An archetype's own fit-out skipped the work that makes it itself — a
+   * lighthouse's bands, gallery and lamp; a spire; a dome — because the shell
+   * left it no room above the eave (a flat roof, a thick-walled interior), and
+   * the plain shell stands where the archetype should. The probe pass that
+   * found it (Stocktake Run unit 33) met a "lighthouse" that was a two-floor
+   * box and heard nothing.
+   */
+  FITOUT_ROOF_SKIPPED: "LOAM-W524",
+  /**
    * Per district: `decline`, the ruin share, lots rolled / ruined / refused.
    *
    * **Not optional.** DESIGN's second failure mode is machinery that exists and

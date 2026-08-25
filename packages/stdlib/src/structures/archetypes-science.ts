@@ -224,8 +224,18 @@ function wallPlan(ctx: FitOutContext): SciencePlan | null {
 /** The plan for work that rebuilds the roof: a wall plan with room over it. */
 function roofPlan(ctx: FitOutContext): SciencePlan | null {
   const plan = wallPlan(ctx);
-  if (plan === null) return null;
-  return plan.top - plan.base < 2 ? null : plan;
+  if (plan === null) {
+    ctx.skipped?.push("roof work: the interior is not the one-block inset the rebuild plans over");
+    return null;
+  }
+  const courses = plan.top - plan.base;
+  if (courses < 2) {
+    ctx.skipped?.push(
+      `roof work: ${courses} course${courses === 1 ? "" : "s"} above the eave where the rebuild needs 2 — a flat or low roof leaves no room`,
+    );
+    return null;
+  }
+  return plan;
 }
 
 /** Blocks a re-clad may never overwrite: the way in, the way up, the fire, the lights. */
