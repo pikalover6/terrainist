@@ -170,8 +170,10 @@ export const DEFAULT_PALETTE: Readonly<Record<string, PaletteValue>> = Object.fr
  * These are **not** members of {@link DEFAULT_PALETTE}: their default depends
  * on the settlement's material theme, and the palette is resolved long before
  * a theme is drawn. The street pass asks the palette first (so
- * `style.palettes` still overrides everything) and falls back to the theme
- * table below. That is the same "symbol, else named default" idiom the
+ * `style.palettes` outranks this table — though not the intent layer above it:
+ * `character.palettes` merges over `style.palettes` in `terrain/compile.ts`,
+ * measured in `docs/STOCKTAKE-SLOP-CENSUS.md` §8, M5) and falls back to the
+ * theme table below. That is the same "symbol, else named default" idiom the
  * streetscape's `street.crossing.*` symbols already use.
  */
 export interface StreetMaterials {
@@ -733,8 +735,9 @@ export class Palette {
    * profile left blank (`street.curb`) it may fill; a role symbol the profile
    * gave a fixed default (`road.step`) it may *replace*, because that default
    * is the grey this phase is removing; a symbol the author wrote in
-   * `style.palettes` it may never touch, which is what keeps
-   * `style.palettes` the last word it has always been.
+   * `style.palettes` it may never touch, which keeps `style.palettes` above the
+   * derivation — but not last overall: `character.palettes` merges over
+   * `style.palettes` downstream (census `docs/STOCKTAKE-SLOP-CENSUS.md` §8, M5).
    */
   private readonly authored: ReadonlySet<string>;
 

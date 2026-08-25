@@ -178,6 +178,7 @@ import {
   STREET_PLANE_MIN_FLANK,
   STREET_PLANE_MIN_RUN,
   TERRACE_BY_TERRAIN,
+  makePlacement,
   type LayoutNodeInput,
   type PadEdit,
   type Placement,
@@ -730,9 +731,9 @@ export interface DistrictProduct {
    * `surfaceStreetGraph`. No new parameter crosses the boundary, and no second
    * copy of the graph-to-district correspondence exists to drift.
    *
-   * **Absent while `FRONTAGE_TIE` is off**, which is every compile today: the
-   * datum is not even graded, the product is the object it has always been, and
-   * the surfacer's datum path is unreachable.
+   * `FRONTAGE_TIE` is on, so a quarter with a street graph grades a datum and
+   * this field carries it into the surfacer. It is absent only where nothing was
+   * graded — no street graph — and there the surfacer's datum path is unused.
    */
   readonly datum?: StreetDatum;
   /**
@@ -996,6 +997,15 @@ export interface CellFabric {
    * cell they landed in is what actually placed them.
    */
   readonly landmarkBase?: string;
+  /**
+   * True when the *city* this cell was cut from declared `params.walls`.
+   *
+   * The synthetic cell node carries no `walls` of its own — the circuit is the
+   * city's — so without this the walled-coverage guard (`LOAM-W527`) saw a
+   * city walled by `params.walls` only through the intent's `fortification`
+   * (the Stocktake Run's census, class 1.17, 2026-08-25).
+   */
+  readonly walled?: boolean;
   /**
    * Points this cell's plan may organise itself around, in a fixed order.
    *
@@ -2410,9 +2420,11 @@ export function layDistrict(
     // tied branch replaces only the **last** fallback — the median of the
     // building's own footprint, which is the lip generator of §0.1.
     //
-    // `datum` is `null` while {@link FRONTAGE_TIE} is off, so `tied` is
-    // `undefined`, the `??` chain below is character-for-character today's
-    // expression, and this whole branch is dead code.
+    // {@link FRONTAGE_TIE} is on, so `datum` is non-null for a quarter with a
+    // street graph and `tied` is the frontage answer for a lot that fronts one.
+    // `tied` stays `undefined` on the untied path — no datum, or a lot with no
+    // street — and there the `??` chain below is the untied-lot expression,
+    // character-for-character the one that shipped before the tie.
     const tied =
       datum === null || item.street === ""
         ? undefined
@@ -2437,17 +2449,16 @@ export function layDistrict(
     const planeY = levels !== null && platform !== NO_PLATFORM ? (levels.levelY[platform] as number) : undefined;
     const foundationY =
       seatOnPlane(planeY, tied) ?? cell?.foundationY ?? tied ?? medianGround(input.field, rect);
-    const made: Placement = {
+    const made: Placement = makePlacement({
       nodePath: item.nodePath,
       id: item.id,
-      translation: [rect.x0, foundationY, rect.z0],
       yaw,
       mirror: false,
       size: [rw, rh, rd],
       footprint: rect,
       anchor: { x: rect.x0 + ((rw - 1) >> 1), z: rect.z0 + ((rd - 1) >> 1) },
       foundationY,
-    };
+    });
     const solverNode: LayoutNodeInput = {
       id: item.id,
       nodePath: item.nodePath,
@@ -2512,7 +2523,7 @@ export function layDistrict(
   // planned quarter has no blocks; its land is every column the streets did
   // not take, natural ground included, because the natural ground inside the
   // wall is exactly the sparse part.
-  if (walledQuarter(p, intent) && (planned === undefined ? blocks.length > 0 : true)) {
+  if ((walledQuarter(p, intent) || cell?.walled === true) && (planned === undefined ? blocks.length > 0 : true)) {
     let blockLand = 0;
     if (planned === undefined) {
       for (const block of blocks) blockLand += block.columns;

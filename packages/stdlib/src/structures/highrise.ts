@@ -66,7 +66,7 @@ import type {
   ResolvedBuildingParams,
   Shell,
 } from "./core.js";
-import type { BuildingMaterials } from "./themes.js";
+import { materialKey, type BuildingMaterials } from "./themes.js";
 
 /* -------------------------------------------------------------------------- */
 /* the archetypes                                                              */
@@ -807,7 +807,7 @@ export function emitHighrise(r: HighriseRequest): BuildingResult {
     apronOps,
     furnitureCount,
     chimney: false,
-    materialKey: `${r.materials.wood.planks}|${r.materials.stone.primary}|${r.materials.roof.stairs}`,
+    materialKey: materialKey(r.materials),
   };
   return { ops: sortOpsLocal([...cells.values()]), meta };
 }

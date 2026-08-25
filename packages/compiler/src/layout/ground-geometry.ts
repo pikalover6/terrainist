@@ -80,7 +80,9 @@ const BLOCKING_CLASSES: ReadonlySet<string> = new Set<string>([
   "sweep.run",
   "doorstep.landing",
   "building.footprint",
-  "pad.record",
+  // `"pad.record"` was listed here and is not: no intent carries that class
+  // (the Stocktake Run's census, class 2, 2026-08-25 — verified by payload sha
+  // on the fourteen law-5 worlds).
 ]);
 
 /** The classes the retaining pass itself declares — its own built-set, by owner. */

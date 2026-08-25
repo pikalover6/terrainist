@@ -52,6 +52,7 @@ import type { FormFocus } from "./forms/index.js";
 import { erode, largestRect, maskRuns, withoutReserved } from "./masks.js";
 import { frontFace, resolvePorts, rotatedSize } from "./ports.js";
 import { MIN_DISTRICT_SPAN, SIDEWALK_BY_DENSITY } from "./streets.js";
+import { makePlacement } from "./types.js";
 import type { LayoutNodeInput, PadEdit, Placement, ResolvedPort } from "./types.js";
 import {
   SET_PIECE_MAX,
@@ -391,17 +392,16 @@ function layCity(
       children: byCell.get(index) ?? [],
     };
     const foundationY = maskMedian(input.field, cell);
-    const seat: Placement = {
+    const seat: Placement = makePlacement({
       nodePath: cellPath,
       id: cell.id,
-      translation: [cell.bounds.x0, foundationY, cell.bounds.z0],
       yaw: 0,
       mirror: false,
       size: [width, 1, depth],
       footprint: cell.bounds,
       anchor: { x: cell.bounds.x0 + ((width - 1) >> 1), z: cell.bounds.z0 + ((depth - 1) >> 1) },
       foundationY,
-    };
+    });
     // --- the cell's terrace -------------------------------------------------
     // A city gets no city-wide pad (see `padFor`), but a *quarter* is one
     // terrace: without this its buildings stand at the cell's median while its
@@ -464,6 +464,8 @@ function layCity(
       foundationY,
       minBuilding: CELL_MIN_BUILDING,
       landmarkBase: nodePath,
+      // The city's wall is the cell's for the coverage guard (census 1.17).
+      ...(node.params.walls !== undefined ? { walled: true } : {}),
       // What this cell's plan may be about (§2.1). The city pass knows things a
       // district never can: which squares the armature seated beside it, which
       // landmarks were dealt to it, and where its outline meets an arterial. A
@@ -624,17 +626,16 @@ function seatSetPieces(args: SeatInput): SeatResult {
     if (rect === null) return null;
     const childPath = `${nodePath}.${id}`;
     const foundationY = medianGround(input.field, rect);
-    const made: Placement = {
+    const made: Placement = makePlacement({
       nodePath: childPath,
       id,
-      translation: [rect.x0, foundationY, rect.z0],
       yaw,
       mirror: false,
       size: [rw, rh, rd],
       footprint: rect,
       anchor: { x: rect.x0 + ((rw - 1) >> 1), z: rect.z0 + ((rd - 1) >> 1) },
       foundationY,
-    };
+    });
     nodes.push({
       id,
       nodePath: childPath,

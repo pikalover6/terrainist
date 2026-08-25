@@ -829,6 +829,19 @@ async function compileValidated(
       ...(cityFabric.cities.length === 0 ? {} : { cities: cityFabric.cities }),
     };
   }
+  // A carve declared `flooded: "never"` that the sea flooded anyway: the count
+  // was always taken; the author now hears it (census 1.18).
+  if (classification.overriddenNoFlood > 0) {
+    const n = classification.overriddenNoFlood;
+    diagnostics.push(
+      note(
+        "CARVE_FLOODED_ANYWAY",
+        rootPath,
+        `${n} column${n === 1 ? "" : "s"} carved with "flooded": "never" ${n === 1 ? "was" : "were"} flooded anyway: the sea reaches them, and a dry column below sea level beside standing water would drain on the first tick (LOAM-T110)`,
+        'Nothing to change if the carve was meant to meet the sea. To keep it dry, raise its floor above sea level or move it inland so the sea cannot reach it; "never" is honoured exactly as far as physics allows.',
+      ),
+    );
+  }
   const layoutMs = now() - tLayout;
 
   // --- pass 5: columns -----------------------------------------------------

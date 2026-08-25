@@ -137,9 +137,11 @@ export interface BridgeBaseStates {
  * Resolve the three styles against the palette the theme derived.
  *
  * `symbol` is asked first and the base state is the fallback, which is the same
- * precedence `resolveRoadStates` uses — `style.palettes` still overrides
- * everything, a theme that derived its ground roles gets its own masonry, and a
- * world with neither gets the kit unchanged.
+ * precedence `resolveRoadStates` uses — `style.palettes` outranks the derived
+ * roles (though intent's `character.palettes` merges over `style.palettes`
+ * upstream: census `docs/STOCKTAKE-SLOP-CENSUS.md` §8, M5), a theme that derived
+ * its ground roles gets its own masonry, and a world with neither gets the kit
+ * unchanged.
  */
 export function resolveBridgeStyles(
   palette: Palette,

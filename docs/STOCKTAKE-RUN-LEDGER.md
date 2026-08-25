@@ -7,23 +7,19 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 16 (the slop census, classes 1–3 opened and
-  the small items executed) is committed.
-- **Next unit:** unit 17 — **the census's executable S items, batch one**
-  (`docs/STOCKTAKE-SLOP-CENSUS.md` §8's lists): 1.17 the walled `city`'s
-  cells reach `W527` (carry the parent's wall into the guard, not the cell's
-  params; diagnostics only); 1.18 a note when a `never` column was flooded
-  anyway (`overriddenNoFlood` gets its reader — a new diagnostic code from
-  the registry's free numbers); class-2 S4 drop `"pad.record"` from
-  `BLOCKING_CLASSES` once no intent carries it (verify by payload sha);
-  class-3 M4 one `materialKey()` for the four inlined literals, P2 one
-  `makePlacement()` for the seven mints, M2 exempt `street.curb` from the
-  `scoped` palette skip (byte-moving — switch + attribution), D4/M5 the
-  stale "`FRONTAGE_TIE` is off" and "`style.palettes` is the last word"
-  docblocks. Payload identity on the fourteen for every diagnostics-only or
-  refactor item; law 5 for anything that moves a block; FULL suite once.
-  Then F10, F4, F14, F17; §10.5 probe prompts; the remaining stations.
-- **Last commit:** e12df60 (unit 15). Convention: this line names the
+- **In flight:** nothing — unit 17 (the census's executable S items, batch
+  one: eight items, payload-identical on the fourteen) is committed.
+- **Next unit:** unit 18 — **F10, two-phase parcel growth**, the
+  `frontageLots` starvation the ledger's F8 traced (~70 %): grow parcels
+  against the strip's claimable stations first, then let lots own their
+  stations (`LOT_PARCEL_OWN_STATIONS`, off since F10 orphaned 24 % of the
+  plane). Probe first (`walk-audit.mjs` on montfort/walled: orphans, entrance
+  reach), switch landed off, attributed on the fourteen, flipped separately
+  (law 5). If the probe says the orphans are geometry not order, stop and
+  write it up as P1's evidence instead. Then census batch two (M1, M2 by law
+  5, M3, class-2 S5/S6, D3 note), F4, F14, F17; §10.5 probe prompts; the
+  remaining stations.
+- **Last commit:** f5844d2 (unit 16). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
 - **Spend:** $8.19 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
 - **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19, D25,
@@ -280,6 +276,24 @@ running state. The NOW block is rewritten at the end of every turn.
   comment line would make every later run read as a kit change; the
   generated `settlement-core.md`/`modules/` are named in the harness README
   instead. Undo: n/a.
+- **D37 (unit 17):** the batch's eight items share one identity check on
+  the fourteen rather than one per item: every item is a comment, a
+  report-only diagnostic, or a literal-for-call substitution that preserves
+  key order, so one `bi14` run (all fourteen IDENTICAL to `u10`) is the
+  proof; per-item runs would cost eight × fourteen compiles to learn what
+  the helper guarantees by construction. The FULL suite ran once. Undo:
+  revert the commit.
+- **D38 (unit 17):** M2 (exempt `street.curb` from the `scoped` palette
+  skip) is held out of batch one though the NOW block named it: it moves
+  blocks and needs law 5 (switch off, attributed, flipped separately), and
+  one byte-moving item inside a payload-identical batch would leave the
+  batch's identity proof meaning nothing. It goes to batch two with M1 and
+  M3. Undo: n/a.
+- **D39 (unit 17):** the `never`-flooded note is a **note** (`LOAM-I500`),
+  not a warning: the compiler did the only physically stable thing, and the
+  author's remedy (raise the floor or move inland) is optional; a warning
+  would nag every harbour carve that was meant to meet the sea. Undo: change
+  the severity.
 
 ## SPEND
 
@@ -301,6 +315,7 @@ running state. The NOW block is rewritten at the end of every turn.
 | 14 | T110 attributed — probe, two switches off, trials, the FULL suite | 0.00 | 8.19 |
 | 15 | the fluid flip — compiles, re-score, the FULL suite | 0.00 | 8.19 |
 | 16 | the slop census, classes 1–3 — three probes, comment fixes, the FULL suite | 0.00 | 8.19 |
+| 17 | census S items, batch one — one bi14 identity run, the FULL suite | 0.00 | 8.19 |
 
 ## VERDICTS
 
@@ -585,3 +600,23 @@ running state. The NOW block is rewritten at the end of every turn.
   COUNTS `Test Files 341 passed | 1 skipped (342)`, `Tests 5664 passed | 31
   skipped (5695)`. Files: the census, six source files (comments), two
   docs. Spend $0.
+- **unit 17 — the census's executable S items, batch one (2026-08-25):**
+  eight items from `docs/STOCKTAKE-SLOP-CENSUS.md` §8, all payload-identical
+  on the fourteen. Diagnostics: 1.17 the district cell context carries
+  `walled` (set by `city-pass` from `params.walls`) and the `W527` gate
+  consults it — a walled city now reaches the guard without a walled intent
+  (unchanged on the fourteen: the same three logs carry W527 before and
+  after, their intents are walled); 1.18 `LOAM-I500 CARVE_FLOODED_ANYWAY`
+  registered and emitted from `terrain/compile.ts` when
+  `classification.overriddenNoFlood > 0` — silent on the fourteen, 3,762
+  columns on the E1 metropolis. Dead path: class-2 S4 `"pad.record"` dropped
+  from `BLOCKING_CLASSES`. Refactors (opus-5-low, report
+  `scratchpad/census/S-BATCH-1.md`): M4 four inlined `materialKey` literals
+  → the call (highrise, terrace, core ×2); P2 `makePlacement(...)` in
+  `layout/types.ts` at seven sites (solve, district, city-pass ×2,
+  exhibits/context, precincts, farm); D4 eight stale "`FRONTAGE_TIE` is off"
+  comments; M5 five `style.palettes` docblocks and the themes-intent
+  contradiction (`palette.ts:958,:999` carry the claim too — flagged, next
+  batch). M2 held out (D38). Tests: FULL suite COUNTS Test Files 341 passed | 1 skipped (342), Tests 5664 passed | 31 skipped (5695); `packages/spec`
+  469 passed. Files: the census, seven compiler sources, four stdlib
+  sources, the spec registry, `layout/types.ts`. Spend $0.

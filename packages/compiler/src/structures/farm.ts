@@ -71,6 +71,7 @@ import {
 } from "../layout/ground-contract.js";
 import type { GroundDriver } from "../layout/ground-driver.js";
 import { resolveGround } from "../layout/ground-resolver.js";
+import { makePlacement } from "../layout/types.js";
 import type { OccupancyGrid, Placement } from "../layout/types.js";
 import { FluidKind } from "../terrain/columns.js";
 import type { ColumnPlan } from "../terrain/columns.js";
@@ -2251,17 +2252,16 @@ function farmstead(
       const groundY = groundUnder(rect, region, resolved, sow.yardLevel);
       out.push({
         nodePath,
-        placement: {
+        placement: makePlacement({
           nodePath,
           id,
-          translation: [rect.x0, groundY, rect.z0],
           yaw: 0,
           mirror: false,
           size: [rect.x1 - rect.x0 + 1, h, rect.z1 - rect.z0 + 1],
           footprint: rect,
           anchor: { x: (rect.x0 + rect.x1) >> 1, z: (rect.z0 + rect.z1) >> 1 },
           foundationY: groundY,
-        },
+        }),
         size: [rect.x1 - rect.x0 + 1, h, rect.z1 - rect.z0 + 1],
         archetype,
         tags: [...sow.job.tags, "farmstead", archetype],

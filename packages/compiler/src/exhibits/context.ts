@@ -54,7 +54,7 @@ import type { PortDeclaration, Yaw } from "@terrainist/spec";
 
 import type { PrismarineStack } from "../emit/prismarine.js";
 import type { Rect } from "../layout/frames.js";
-import { DEFAULT_BLEND, type Placement, type ResolvedPort } from "../layout/types.js";
+import { DEFAULT_BLEND, makePlacement, type Placement, type ResolvedPort } from "../layout/types.js";
 import { resolvePorts } from "../layout/ports.js";
 import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
 import { resolvePalette } from "../terrain/palette.js";
@@ -539,10 +539,9 @@ export function buildContextExhibits(input: {
     const footprint = contextFootprint(cell);
     const foundationY = foundations.get(cell.id) as number;
     const [sx, , sz] = cell.size;
-    const placement: Placement = {
+    const placement: Placement = makePlacement({
       nodePath,
       id: cell.id,
-      translation: [footprint.x0, foundationY, footprint.z0],
       yaw: cell.yaw,
       mirror: false,
       size: cell.yaw === 90 || cell.yaw === 270 ? [sz, cell.size[1], sx] : cell.size,
@@ -552,7 +551,7 @@ export function buildContextExhibits(input: {
         z: footprint.z0 + ((footprint.z1 - footprint.z0) >> 1),
       },
       foundationY,
-    };
+    });
     return {
       nodePath,
       placement,

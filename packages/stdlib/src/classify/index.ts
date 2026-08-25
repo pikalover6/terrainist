@@ -102,8 +102,8 @@ export interface OceanMask {
  * blocked column adjacent to water is flooded regardless, to a fixed point, and
  * counted — `never` is honoured exactly as far as physics allows — and, since
  * {@link OCEAN_FILL_CONTINUES}, the sea that crossed such a column keeps going
- * past it. `overriddenNoFlood` is counted and, today, read by nobody: no
- * diagnostic tells the author their `never` was overridden (census 1.9).
+ * past it. `overriddenNoFlood` is counted and reported to the author as
+ * `LOAM-I500 CARVE_FLOODED_ANYWAY` by the compiler (census 1.18).
  */
 /**
  * **The ocean fill continues past a flooded `never` column it had to flood.**

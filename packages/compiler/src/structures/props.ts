@@ -175,8 +175,10 @@ export interface PropPassInput {
    * The quarters' street datums, forwarded to every placement — 8E.
    *
    * `buildStructures` hands these over only when at least one district graded
-   * one, which is never while `FRONTAGE_TIE` is off, so the pass is called with
-   * exactly the argument object it has always been called with.
+   * one. `FRONTAGE_TIE` is on, so a settlement quarter with a street graph does
+   * grade one and this field is present for it; a compile with no graded datum
+   * (no quarter, no streets) still calls the pass with the datum-free argument
+   * object it has always been called with.
    */
   readonly datums?: readonly (StreetDatum | undefined)[];
 }
@@ -443,8 +445,9 @@ export interface PropPlacementInput {
   /**
    * The quarters' street datums — 8E's prop client of F1 ({@link datumPropBase}).
    *
-   * Absent for every compile while `FRONTAGE_TIE` is off: no quarter grades a
-   * datum, so `buildStructures` hands none over and this whole path is dead.
+   * `FRONTAGE_TIE` is on, so a quarter with a street graph grades a datum and
+   * this field arrives with it; it is absent only where no quarter graded one,
+   * and that is the compile where this path stays unused.
    */
   readonly datums?: readonly (StreetDatum | undefined)[];
 }

@@ -58,7 +58,7 @@ import { driverForPlan, type GroundDriver } from "../layout/ground-driver.js";
 import type { PrismarineStack } from "../emit/prismarine.js";
 import type { Rect } from "../layout/frames.js";
 import { resolvePorts } from "../layout/ports.js";
-import { QUAY_SHED_OWN_SHORE } from "../layout/types.js";
+import { QUAY_SHED_OWN_SHORE, makePlacement } from "../layout/types.js";
 import type { OccupancyGrid, Placement, ResolvedPort } from "../layout/types.js";
 import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
 import type { GroundClaim } from "../layout/ground-contract.js";
@@ -1569,10 +1569,9 @@ function seekCoast(job: PrecinctJob, input: PrecinctPassInput, _miss: ShoreMiss)
     best = {
       rect: candidate.rect,
       read,
-      placement: {
+      placement: makePlacement({
         nodePath: job.placement.nodePath,
         id: job.placement.id,
-        translation: [candidate.rect.x0, foundationY, candidate.rect.z0],
         yaw: job.placement.yaw,
         mirror: job.placement.mirror,
         size: job.placement.size,
@@ -1582,7 +1581,7 @@ function seekCoast(job: PrecinctJob, input: PrecinctPassInput, _miss: ShoreMiss)
           z: (candidate.rect.z0 + candidate.rect.z1) >> 1,
         },
         foundationY,
-      },
+      }),
     };
   }
   return best;

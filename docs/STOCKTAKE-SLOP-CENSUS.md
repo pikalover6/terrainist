@@ -31,8 +31,8 @@ probes of unit 16 (`CLASS-1/2/3.md`, appended below in §8).
 | 1.11 | `layout/platforms.ts` `mostlyWater` | a bench "mostly water" keeps its bed | a majority vote; a terrace pad beside a lake grades the lake dry | proposal (L) | **P4** |
 | 1.12 | `layout/district.ts` `SEAM_BLOCK_MIN_DROP` | every platform seam "is exactly where a retaining wall will stand" | a kerb seam stood no wall and still split the block | fix behind `SEAM_BLOCK_MIN_DROP` (S) | **done (units 3–4)** |
 | 1.13 | `layout/types.ts` `TERRACE_BY_TERRAIN` | "nothing consults this value" since the election | TRUE for the compiler (readers sit below the election's return; `seatOnPlane` short-circuited); tests read it | keep-with-note (§4.3) | verified (unit 16) |
-| 1.17 | `layout/city-pass.ts` synthetic cell nodes | a walled `city` answers for its coverage | the cell node never carries `CityParams.walls`, so `walledQuarter` sees a city walled by `params.walls` only through the intent's `fortification` | fix (S, ~5 lines: carry the parent's wall into the cell's guard, not its params) | open |
-| 1.18 | `stdlib/classify/index.ts` `overriddenNoFlood` | "counted" | read by nobody; no diagnostic tells the author their `never` was overridden | fix (S: a note) | open — comment corrected (unit 16) |
+| 1.17 | `layout/city-pass.ts` synthetic cell nodes | a walled `city` answers for its coverage | the cell node never carries `CityParams.walls`, so `walledQuarter` sees a city walled by `params.walls` only through the intent's `fortification` | fix (S, ~5 lines: carry the parent's wall into the cell's guard, not its params) | done (unit 17) — the cell context carries `walled` from `params.walls`; the W527 gate consults it |
+| 1.18 | `stdlib/classify/index.ts` `overriddenNoFlood` | "counted" | read by nobody; no diagnostic tells the author their `never` was overridden | fix (S: a note) | done (unit 17) — `LOAM-I500 CARVE_FLOODED_ANYWAY`; 3,762 columns on the metropolis |
 | 1.19 | `stdlib/structures/archetypes-classical.ts:47–55` | (deliberately leaves a head course air) | the highrise pattern's cousin; worth its own probe before touching | probe (S) | open |
 | 1.14 | `layout/district.ts` `LOAM-I512 DISTRICT_RUINS` | "N of M infill lots roll into ruined shells" | the isometric shows intact boxes on the anchor and the fresh world alike | probe (M) | **open (F4)** |
 | 1.15 | `docs/SITE-PLAN-v0.md` §3.7 | "One `SITE_STRIP_DISSOLVED` note names the strip…" | no such diagnostic existed | fix (S) | **done (unit 10)** |
@@ -44,7 +44,7 @@ probes of unit 16 (`CLASS-1/2/3.md`, appended below in §8).
 
 | # | seam | belief | behaviour | disposition | status |
 |---|---|---|---|---|---|
-| 2.1 | the declare/build split (`structures/index.ts` `declareStructures`; GROUND-CONTRACT §1.6 pass 5b) | every pass declares, then builds, in tier order | a statement-order cut only: `enterTier` has no caller, so a bare pre-freeze `view()` is the baseline, and 79 % of structure blocks (121,277 of 153,720 on troy) are emitted at absolute y before `freeze()` | fix the inverted comment (S, done unit 16) or call `enterTier` at the tier (M) | comment done; M open |
+| 2.1 | the declare/build split (`structures/index.ts` `declareStructures`; GROUND-CONTRACT §1.6 pass 5b) | every pass declares, then builds, in tier order | a statement-order cut only: `enterTier` has no caller, so a bare pre-freeze `view()` is the baseline, and 79 % of structure blocks (121,277 of 153,720 on troy) are emitted at absolute y before `freeze()` | fix the inverted comment (S, done unit 16) or call `enterTier` at the tier (M) | comment done; `pad.record` dropped (unit 17, payload-identical); M open |
 | 2.2 | report `blockSpans` vs the emitted world | "a return value nothing downstream reads" | read by `emit/walkability.ts` and the compile report; the blocks themselves match the world (120/120 sampled on troy, 0 mismatch) — the divergence is attribution: 363 positions double-written with 14 emitter flips, and 1,185 program blocks (the horse) outside every span | fix comment (S, done unit 16); record first-writer attribution + the excluded programs in `BlockSpan`'s doc (S, open); §12: fix or document, never assume away | partly done |
 | 2.3 | the driver write-through (`layout/ground-driver.ts`) | "the mixture-period driver" whose `commit` writes through | `GROUND_V1_FREEZE = true`: `commit`'s write-through is dead; `plan.surface` is written outside the `write` guard by `structures/props.ts` and `programs/site-treatment.ts` | keep-with-note (S) now; rewrite (M) when `driverForPlan`'s users retire; the outside writes → proposal (M) | open |
 | 2.4 | the kit files vs the compiler registries | "every archetype the building grammar knows" is in the kit | one-directional: **175 of 428 building archetypes (41 %) and 253 of 654 catalog entries (39 %) are never named in `settlement-author.md`**; 0 kit ids the registry lacks; form packs 18/18, fabrics and terrain verbs in step (E7's question, answered the other way: the kit under-names, F18) | add the missing rows (M); a kit-vs-registry drift check in the doc lint (S) | open |
@@ -56,8 +56,8 @@ probes of unit 16 (`CLASS-1/2/3.md`, appended below in §8).
 | # | thing | deciders | the authority | disposition | status |
 |---|---|---|---|---|---|
 | 3.1 | heights | 19 deciders | GROUND-CONTRACT-v1 §1.1–1.5: one baseline, one resolve, one freeze | the pads decide twice (baked into the field, then re-declared as claims that cannot lose — WP-G3's undone half, `compile.ts:746–750` admits it): fix (L); the four-way `??` at `district.ts` `foundationY` with the election having collapsed `seatOnPlane`: rewrite (M); `buildings.ts` `floorY = foundationY + 1` never re-reading the frozen ground: keep-with-note + proposal (S); "`FRONTAGE_TIE` is off, which is every compile" comments: fix (S) | open |
-| 3.2 | placement | 10 deciders | `layout/solve.ts` for document nodes; the fabric for what it invents | the harbour reseat (`precincts.ts`) is a second authority half-published — `layoutOutcome.placements` never learns, so vegetation reserves, transition-avoid, land-use and program claims use the abandoned envelope: fix (M); seven independent `Placement` mints → one `makePlacement` (S) | open |
-| 3.3 | palettes | 15 deciders | `terrain/palette.ts` `Palette` (defaults < theme < `style.palettes`) | two `resolveStreetStates` deciding `street.curb` with different fallbacks (rewrite, S); `roads.ts` `scoped` skip splitting kerb and border across themes (fix, S); two tables for the ground roles disagreeing for one theme (keep-with-note + agreement test, S); `materialKey` inlined four times (fix, S); intent silently outranking `style.palettes` against five docblocks (fix docs, S) | open |
+| 3.2 | placement | 10 deciders | `layout/solve.ts` for document nodes; the fabric for what it invents | the harbour reseat (`precincts.ts`) is a second authority half-published — `layoutOutcome.placements` never learns, so vegetation reserves, transition-avoid, land-use and program claims use the abandoned envelope: fix (M); seven independent `Placement` mints → one `makePlacement` (S) | P2 done (unit 17) — `makePlacement` at seven sites, payload-identical |
+| 3.3 | palettes | 15 deciders | `terrain/palette.ts` `Palette` (defaults < theme < `style.palettes`) | two `resolveStreetStates` deciding `street.curb` with different fallbacks (rewrite, S); `roads.ts` `scoped` skip splitting kerb and border across themes (fix, S); two tables for the ground roles disagreeing for one theme (keep-with-note + agreement test, S); `materialKey` inlined four times (fix, S); intent silently outranking `style.palettes` against five docblocks (fix docs, S) | M4 + M5 doc half done (unit 17); M1/M2/M3 open |
 
 ## 4. Dead paths — shipped-true flags with dead off-paths, dead passes
 
@@ -459,6 +459,7 @@ staleable copy of the same tables; `packages/agents/src/kit.ts:31` loads only
    positions, 14 flips on troy) and the excluded programs (1,185 blocks on troy).
 4. `layout/ground-geometry.ts:83` — drop `"pad.record"` from `BLOCKING_CLASSES`
    once no intent is confirmed to carry it; verify with `world-payload-sha.mjs`.
+   — done (unit 17): payload-identical on the fourteen.
 5. `structures/props.ts:977` + `programs/site-treatment.ts:283` — note that
    `plan.surface` is written outside the `write` guard and outside the contract.
 6. A kit-vs-registry drift check in the doc lint, red at 175.
@@ -639,12 +640,12 @@ reversible default is to correct the five comments and file the precedence quest
 
 ## Executable S items
 
-1. **M4** — replace the four inlined `materialKey` literals with `materialKey(r.materials)`.
-2. **P2** — one `makePlacement(...)` helper; seven call sites.
+1. **M4** — replace the four inlined `materialKey` literals with `materialKey(r.materials)`. — done (unit 17).
+2. **P2** — one `makePlacement(...)` helper; seven call sites. — done (unit 17).
 3. **M1** — collapse the two `resolveStreetStates` ground-role branches onto one resolver.
-4. **D4** — correct every "`FRONTAGE_TIE` is off, which is every compile" comment.
+4. **D4** — correct every "`FRONTAGE_TIE` is off, which is every compile" comment. — done (unit 17): 8 comments.
 5. **M5 (doc half)** — correct the five "`style.palettes` is the last word" docblocks and
-   the contradictory comment at `themes-intent.ts:193`.
+   the contradictory comment at `themes-intent.ts:193`. — done (unit 17); `palette.ts:958,:999` carry the same claim, untouched.
 6. **M3** — the table-vs-derivation agreement test over `ALL_MATERIAL_THEMES`.
 7. **M2** — exempt `street.curb` from the `scoped` palette skip (`roads.ts:3587`).
 8. **D3 (note half)** — a post-freeze `foundationY` vs `resolved.ground` delta note.

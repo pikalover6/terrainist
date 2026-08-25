@@ -179,7 +179,9 @@ export function registerStructureFanOut(): void {
     drives: "which MaterialTheme a settlement is built in (stdlib/structures/themes.ts)",
     resolve(intent, ctx) {
       // `character.materialTheme` is an author naming a theme outright, so it
-      // outranks the era's preference and the seeded draw alike — but it is a
+      // outranks the era's preference, the seeded draw, and — because it returns
+      // above the `ctx.today` guard below — `style.palettes["theme"]` too
+      // (census `docs/STOCKTAKE-SLOP-CENSUS.md` §8, M5). But it is a
       // free string from a language model, so it
       // is *grounded* rather than trusted: exact id, then the alias table, then
       // nothing (and `vocabulary.ts` has already drawn the warning that says
@@ -191,8 +193,9 @@ export function registerStructureFanOut(): void {
       }
       if (!intent.eraDeclared) return ctx.today;
       // An explicit override already in the document (`style.palettes.theme`)
-      // stays authoritative: it is the power-user hatch and intent is not a
-      // reason to take it away.
+      // is authoritative *from here down* — over the era table and the seeded
+      // draw. It does not outrank a grounded `character.materialTheme`, which
+      // returned above (census `docs/STOCKTAKE-SLOP-CENSUS.md` §8, M5).
       if (ctx.today !== undefined) return ctx.today;
       for (const id of THEME_BY_ERA[intent.eraClass]) {
         if (isKnownTheme(id)) return id;

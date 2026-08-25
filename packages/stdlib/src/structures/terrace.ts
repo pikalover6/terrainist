@@ -90,7 +90,7 @@ import type {
   ResolvedBuildingParams,
   Shell,
 } from "./core.js";
-import type { BuildingMaterials, MaterialTheme } from "./themes.js";
+import { materialKey, type BuildingMaterials, type MaterialTheme } from "./themes.js";
 
 /* -------------------------------------------------------------------------- */
 /* the archetype                                                               */
@@ -812,7 +812,7 @@ export function emitTerrace(r: TerraceRequest): BuildingResult {
     apronOps,
     furnitureCount,
     chimney: false,
-    materialKey: `${r.materials.wood.planks}|${r.materials.stone.primary}|${r.materials.roof.stairs}`,
+    materialKey: materialKey(r.materials),
   };
   return { ops: sortOpsLocal([...cells.values()]), meta };
 }

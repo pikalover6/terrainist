@@ -54,7 +54,7 @@ import {
   type TerraceBayPlan,
 } from "./terrace.js";
 import type { DecayPassReport } from "./decay.js";
-import { pickTheme, styleOf, type BuildingMaterials, type MaterialTheme } from "./themes.js";
+import { materialKey, pickTheme, styleOf, type BuildingMaterials, type MaterialTheme } from "./themes.js";
 import {
   cellarDressing,
   cellarSecondAccent,
@@ -1659,7 +1659,7 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
       furnitureCount,
       ...(decayReport === undefined ? {} : { decay: decayReport }),
       chimney,
-      materialKey: `${materials.wood.planks}|${materials.stone.primary}|${materials.roof.stairs}`,
+      materialKey: materialKey(materials),
     },
   };
 }
@@ -2488,7 +2488,7 @@ function emitWatchtower(r: TowerRequest): BuildingResult {
       apronOps: door === null ? 0 : 1,
       furnitureCount: 0,
       chimney: false,
-      materialKey: `${r.materials.wood.planks}|${r.materials.stone.primary}|${r.materials.roof.stairs}`,
+      materialKey: materialKey(r.materials),
     },
   };
 }

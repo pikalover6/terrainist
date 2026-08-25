@@ -1144,6 +1144,14 @@ export const TERRAIN_DIAGNOSTICS = {
    */
   SITE_STRIP_DISSOLVED: "LOAM-I499",
   /**
+   * A carve declared `flooded: "never"` was flooded anyway: the sea reached
+   * it, and a dry below-sea column beside standing water is the exposed face
+   * `LOAM-T110` refuses, so physics wins over the declaration. The count was
+   * always taken (`computeOceanMask`'s `overriddenNoFlood`) and, until the
+   * Stocktake Run's census (class 1.18, 2026-08-25), read by nobody.
+   */
+  CARVE_FLOODED_ANYWAY: "LOAM-I500",
+  /**
    * `docs/GROUND-CONTRACT-v1.md` §3.2's coverage invariant is violated: a
    * boundary pair between two winners at different levels that matches none of
    * the four accounting clauses — no derived transition, no `transition: "none"`

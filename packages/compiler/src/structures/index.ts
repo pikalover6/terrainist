@@ -885,7 +885,10 @@ export function declareStructures(input: StructurePassInput): StructurePlan {
   // courtyard's edge, the retaining wall's face and the stair's tread all ask
   // the palette for a symbol that used to have no value and fell back to one
   // hard-coded block each. `Palette.derive` refuses to move anything the
-  // document itself wrote, so `style.palettes` is still the last word.
+  // document itself wrote, so `style.palettes` outranks the derivation — but
+  // not the intent layer: `character.palettes` merges over `style.palettes` in
+  // `terrain/compile.ts`, and `character.materialTheme` outranks
+  // `style.palettes["theme"]` (census `docs/STOCKTAKE-SLOP-CENSUS.md` §8, M5).
   //
   // It runs here, before the first pass reads a symbol, because a role that
   // arrived halfway through would make two columns of one wall different
@@ -1451,9 +1454,9 @@ export function declareStructures(input: StructurePassInput): StructurePlan {
       graphPaths: districts.map((d) => d.nodePath),
       // F8: the datum the quarter graded when its graph was drawn, lined up with
       // `graphs` by the same `districts` walk that lines up `graphPaths`. Handed
-      // over only when at least one quarter has one — which is never while
-      // `FRONTAGE_TIE` is off — so the surfacer is called with exactly the
-      // argument object it has always been called with.
+      // over only when at least one quarter has one. `FRONTAGE_TIE` is on, so
+      // a quarter with a street graph does; where none graded a datum the
+      // surfacer is called with the datum-free argument object it always was.
       ...(districts.some((d) => d.datum !== undefined)
         ? { datums: districts.map((d) => d.datum) }
         : {}),
@@ -1927,9 +1930,10 @@ export function declareStructures(input: StructurePassInput): StructurePlan {
           stack: input.stack,
           reserved: built.map((b) => b.footprint),
           // 8E, F1's prop client. Handed over on exactly the condition the
-          // surfacer's `datums` is — at least one quarter graded one, which is
-          // never while `FRONTAGE_TIE` is off — so a compile with no datum calls
-          // `buildProps` with the identical argument object it always has.
+          // surfacer's `datums` is — at least one quarter graded one, which
+          // with `FRONTAGE_TIE` on is any quarter with a street graph. A compile
+          // with no datum still calls `buildProps` with the argument object it
+          // always has.
           ...(districts.some((d) => d.datum !== undefined)
             ? { datums: districts.map((d) => d.datum) }
             : {}),

@@ -230,8 +230,9 @@ export const ROAD_FILL_BAND = 0;
  * **Live only on the datum path.** The cap is applied where a segment carries a
  * {@link StreetSurfaceInput.datums} profile, which is where F1's inheritance
  * exists. The arterial path, the `road.network@0` path and every ungraded-datum
- * street keep the uncapped cut they have always had, so `FRONTAGE_TIE = false`
- * is byte-identical. Wave 8F revisits the number on walk evidence.
+ * street keep the uncapped cut they have always had, which is why turning the
+ * tie off was byte-identical; `FRONTAGE_TIE` is now `true`, so the cap is live
+ * wherever a datum is graded. Wave 8F revisits the number on walk evidence.
  *
  * **Applied where the datum is graded — wave 8G.** `gradeStreetDatum` takes
  * this same cap into its floor, and the `max` below is then a no-op wherever
@@ -3554,9 +3555,12 @@ interface StreetStateSet {
 /**
  * Resolve the urban material class.
  *
- * Precedence is palette symbol, then theme table, then the rural states —
- * so `style.palettes` still overrides everything and a document that declares
- * nothing gets a street that matches the buildings beside it.
+ * Precedence is palette symbol, then theme table, then the rural states — so
+ * `style.palettes` outranks both tables here, and a document that declares
+ * nothing gets a street that matches the buildings beside it. It is not the
+ * final word above this function: intent (`character.palettes`) merges over
+ * `style.palettes` before the palette is read (census
+ * `docs/STOCKTAKE-SLOP-CENSUS.md` §8, M5).
  *
  * The verge deliberately reuses the carriageway: see the note on
  * {@link surfaceStreetGraph}.

@@ -82,6 +82,7 @@ import {
   DEFAULT_IMPROVEMENT_ROUNDS,
   DEFAULT_MAX_SLOPE,
   LANDMARK_COARSE_RING,
+  makePlacement,
   type ConstraintReport,
   type CorridorReport,
   type CoarseReport,
@@ -1172,17 +1173,16 @@ function commit(
   const { candidate, stats } = scored;
   const [w, h, d] = rotatedSize(node.size, candidate.yaw);
   const foundationY = referenceY(node, stats);
-  const placement: Placement = {
+  const placement: Placement = makePlacement({
     nodePath: node.nodePath,
     id: node.id,
-    translation: [candidate.rect.x0, foundationY, candidate.rect.z0],
     yaw: candidate.yaw,
     mirror: false,
     size: [w, h, d],
     footprint: candidate.rect,
     anchor: candidate.anchor,
     foundationY,
-  };
+  });
   placed.set(node.id, placement);
 
   report.placed = true;

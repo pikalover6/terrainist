@@ -155,6 +155,41 @@ export interface Placement {
   readonly foundationY: number;
 }
 
+/**
+ * The one mint for a {@link Placement}.
+ *
+ * Every site that used to write the literal agreed on two things: the key
+ * order above, and `translation === [footprint.x0, foundationY, footprint.z0]`
+ * — so those are the two the helper owns. Everything else is passed, because
+ * the anchor rule is genuinely not shared (`(size - 1) >> 1` off the min corner
+ * in the fabric, the solver's own candidate anchor in `solve.ts`, the rect
+ * midpoint in `precincts`/`farm`). Byte-identical by construction: the object
+ * it returns has the same keys in the same order with the same values as the
+ * literals it replaced (census: `docs/STOCKTAKE-SLOP-CENSUS.md` §8, P2).
+ */
+export function makePlacement(fields: {
+  readonly nodePath: string;
+  readonly id: string;
+  readonly yaw: Yaw;
+  readonly mirror: false;
+  readonly size: readonly [number, number, number];
+  readonly footprint: Rect;
+  readonly anchor: { readonly x: number; readonly z: number };
+  readonly foundationY: number;
+}): Placement {
+  return {
+    nodePath: fields.nodePath,
+    id: fields.id,
+    translation: [fields.footprint.x0, fields.foundationY, fields.footprint.z0],
+    yaw: fields.yaw,
+    mirror: fields.mirror,
+    size: fields.size,
+    footprint: fields.footprint,
+    anchor: fields.anchor,
+    foundationY: fields.foundationY,
+  };
+}
+
 /** One relaxation-ladder rung (§4.6). */
 export type LadderRung =
   | "absorbed"
@@ -464,8 +499,8 @@ export const FRONTAGE_CUT_MAX = 6;
  * `layout/index.ts`. Two different numbers under one name in one barrel is the
  * ambiguity the compiler refuses and the reader should too.
  *
- * Dead while {@link FRONTAGE_TIE} is off: no quarter grades a datum, so nothing
- * is ever probed.
+ * {@link FRONTAGE_TIE} is on, so quarters do grade datums and this reach is
+ * probed; it goes unused only on a compile where nothing graded one.
  */
 export const SITE_FRONTAGE_REACH = 12;
 
