@@ -1,0 +1,179 @@
+{
+  "id": "probe_bronze_tundra",
+  "family": "probe",
+  "kit": "settlement",
+  "prompt": "A Bronze Age tin-mining camp on a frozen tundra coast in midwinter: pit heads, smelting fires, hide tents and a beached trading ship.",
+  "seed": 903,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "era": "ancient",
+    "wealth": 0.3,
+    "decline": 0.15,
+    "formality": 0.1,
+    "climate": {
+      "biome": "minecraft:snowy_plains",
+      "temperature": -0.9,
+      "humidity": -0.3,
+      "snow": "always"
+    },
+    "character": {
+      "label": "Bronze Age tin-mining camp",
+      "materialTheme": "boreal_pine",
+      "formPacks": [
+        "wilds_camps"
+      ],
+      "archetypes": {
+        "prefer": [
+          "mine_entrance",
+          "smeltery",
+          "hovel",
+          "storehouse",
+          "watchtower"
+        ],
+        "forbid": [
+          "townhouse",
+          "terraced_row",
+          "shop_row",
+          "office",
+          "apartment_block"
+        ]
+      },
+      "props": {
+        "prefer": [
+          "fire_pit",
+          "log_pile",
+          "cart"
+        ]
+      },
+      "urbanForm": "grown"
+    },
+    "tokens": {
+      "terrain": "a barren frozen tundra coast with a rocky shoreline and freezing sea ice",
+      "icons": "open pit heads cut into permafrost, charcoal smelting hearths, hide and skin tents, beached Bronze Age trade ship icebound on the shingle, cassiterite ore piles",
+      "infra": "cart_track from the tin pits down to the beached ship"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 185079,
+    "completionTokens": 31002,
+    "cost": 0.1275
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 24,
+    "maxDepth": 2,
+    "generators": [
+      "authored:beached_trade_ship",
+      "building.grammar@0",
+      "infra.entry@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "beacon_tower",
+      "charcoal_burner",
+      "cottage",
+      "granary",
+      "hut",
+      "mine_head",
+      "shepherds_bothy",
+      "smithy",
+      "warehouse",
+      "watchtower"
+    ],
+    "archetypesInCatalog": 10,
+    "formPacks": [
+      "wilds_camps"
+    ],
+    "props": [
+      "cairn",
+      "campsite",
+      "cart",
+      "log_pile",
+      "tent",
+      "yurt"
+    ],
+    "species": [
+      "scrub_spruce",
+      "wind_pine"
+    ],
+    "envelopes": [
+      "512x512",
+      "22x22",
+      "9x12x9",
+      "13x11x13",
+      "11x9x11",
+      "9x11x9",
+      "9x11x9",
+      "9x18x9"
+    ],
+    "constraints": 23,
+    "constraintKinds": [
+      "adjacent_to",
+      "at",
+      "band",
+      "blend",
+      "connected",
+      "distance",
+      "facing",
+      "gap",
+      "max",
+      "min",
+      "on",
+      "oreChamber",
+      "reference",
+      "style",
+      "terrain_conform",
+      "via",
+      "zone"
+    ],
+    "constraintsWithStrength": 9,
+    "hardConstraints": 0,
+    "forests": 1,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 6,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 23,
+    "eras": [
+      "ancient"
+    ],
+    "bytes": 44932
+  },
+  "wallMs": 515000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 2,
+    "feedbackRounds": 1,
+    "programs": [
+      "ok beached_trade_ship [landmark] 1 attempt(s), 26597 tokens ($0.0448), 4 warning(s)",
+      "ok tin_smelting_hearth [plugin] 1 attempt(s), 31435 tokens ($0.0539), 3 warning(s)"
+    ],
+    "programCost": 0.0987,
+    "totalCost": 0.2262,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/probe2/gen/probe_bronze_tundra/out/tin_tundra_camp",
+    "finalDiagnostics": {
+      "LOAM-T208": 1,
+      "LOAM-W517": 1,
+      "LOAM-I463": 1,
+      "LOAM-I497": 1,
+      "LOAM-T233": 1,
+      "LOAM-T341": 1,
+      "LOAM-W470": 1
+    },
+    "crash": [],
+    "docName": "tin_tundra_camp.loam.json"
+  }
+}

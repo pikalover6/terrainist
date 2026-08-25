@@ -1,0 +1,95 @@
+{
+  "id": "probe_caldera",
+  "family": "probe",
+  "kit": "terrain",
+  "prompt": "A volcanic caldera lake with black-sand shores, steaming vents along the rim and a lava tube opening on the outer slope — no settlement of any kind.",
+  "seed": 904,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "climate": {
+      "temperature": 0.9,
+      "humidity": -0.4,
+      "snow": "never"
+    },
+    "character": {
+      "label": "volcanic caldera wilderness",
+      "flora": {
+        "prefer": [
+          "sparse",
+          "deadwood"
+        ]
+      }
+    },
+    "tokens": {
+      "terrain": "a deep caldera lake enclosed by a circular volcanic crater rim with black-sand shores; steaming vents and fumaroles along the rim; a lava tube cave opening on the outer slope",
+      "nature": "pristine volcanic wilderness with no settlement, buildings, or roads of any kind"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 13531,
+    "completionTokens": 11389,
+    "cost": 0.0264
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 9,
+    "maxDepth": 2,
+    "generators": [
+      "cave.carver@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [],
+    "archetypesInCatalog": 0,
+    "formPacks": [],
+    "props": [],
+    "species": [
+      "charred_spruce",
+      "sparse_juniper",
+      "volcanic_juniper"
+    ],
+    "envelopes": [
+      "512x512"
+    ],
+    "constraints": 0,
+    "constraintKinds": [],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 0,
+    "programReferences": 0,
+    "conformsTrue": 0,
+    "labels": 7,
+    "eras": [],
+    "bytes": 17196
+  },
+  "wallMs": 231000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 1,
+    "feedbackRounds": 0,
+    "programs": [
+      "ok steaming_vent [plugin] 2 attempt(s), 43289 tokens ($0.0574), 1 warning(s)"
+    ],
+    "programCost": 0.0574,
+    "totalCost": 0.0838,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/probe2/gen/probe_caldera/out/volcanic_caldera_lake",
+    "finalDiagnostics": {
+      "LOAM-T341": 1,
+      "LOAM-W337": 1
+    },
+    "crash": [],
+    "docName": "volcanic_caldera_lake.loam.json"
+  }
+}

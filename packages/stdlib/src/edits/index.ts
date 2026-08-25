@@ -1518,6 +1518,9 @@ export function resolvePondChains(
 
 /* -------------------------------------------------------------------------- */
 /* Dry carves — LOAM-T113                                                      */
+
+/** Below this share of a `flooded: "auto"` carve's floor samples wet, it is "mostly dry" (`LOAM-I502`). */
+export const CARVE_MOSTLY_DRY_SHARE = 0.5;
 /* -------------------------------------------------------------------------- */
 
 /** One carve that asked to flood and did not. */
@@ -1589,12 +1592,50 @@ export function reportDryCarves(
       if (!footprintHas(fp, idx)) continue;
       if (sea.oceanMask[idx] === 1) {
         wet++;
-        break;
+        continue;
       }
       const y = values[idx] as number;
       if (y < lowY) {
         lowY = y;
         lowIdx = idx;
+      }
+    }
+    // **Mostly dry — `LOAM-I502`.** A carve whose mouth touches the sea while
+    // the rest of its course runs above it used to pass here as "wet": one
+    // ocean column was enough to stay silent. The Stocktake Run's probe pass
+    // 2 (2026-08-25) carved a fjord between two villages whose floor stood
+    // 17–46 blocks above the sea everywhere but the mouth, and nothing said
+    // so; the villages got a ferry beside a mountain. Measured along the
+    // carve's own centreline — the floor — not its footprint, because a
+    // channel that floods along its whole length still has dry banks; below
+    // {@link CARVE_MOSTLY_DRY_SHARE} of the floor samples wet, it is named.
+    const course = out.courses.find((c) => c.editId === carve.editId);
+    if (wet > 0 && course !== undefined && course.samples.length >= 4) {
+      let wetSamples = 0;
+      let counted = 0;
+      let above = 0;
+      for (const s of course.samples) {
+        const sx = Math.round(s.x) - x0;
+        const sz = Math.round(s.z) - z0;
+        if (sx < 0 || sz < 0 || sx >= width || sz >= depth) continue;
+        const idx = sz * width + sx;
+        counted++;
+        if (sea.oceanMask[idx] === 1) wetSamples++;
+        else above = Math.max(above, (values[idx] as number) - sea.seaLevel);
+      }
+      if (counted >= 4 && wetSamples < counted * CARVE_MOSTLY_DRY_SHARE) {
+        const pct = Math.round((100 * wetSamples) / counted);
+        const rounded = Math.max(0, Math.round(above));
+        out.diagnostics.push({
+          code: "LOAM-I502",
+          editId: carve.editId,
+          severity: "note",
+          message:
+            `${carve.verb} "${carve.editId}" asked to flood ("flooded": "auto") and is mostly dry: ` +
+            `${wetSamples} of ${counted} points along its floor reach the sea (${pct} %), and along ` +
+            `the rest the floor stands up to ${rounded} block${rounded === 1 ? "" : "s"} above sea level.`,
+        });
+        continue;
       }
     }
     if (wet > 0 || lowIdx < 0) continue;

@@ -1,0 +1,751 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "tin_tundra_camp",
+    "worldSeed": "903",
+    "prompt": "A Bronze Age tin-mining camp on a frozen tundra coast in midwinter: pit heads, smelting fires, hide tents and a beached trading ship.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.beach": "minecraft:gravel",
+      "road.surface": "minecraft:coarse_dirt",
+      "road.shoulder": "minecraft:gravel"
+    }
+  },
+  "intent": {
+    "era": "ancient",
+    "wealth": 0.3,
+    "decline": 0.15,
+    "formality": 0.1,
+    "climate": {
+      "biome": "minecraft:snowy_plains",
+      "temperature": -0.9,
+      "humidity": -0.3,
+      "snow": "always"
+    },
+    "character": {
+      "label": "Bronze Age tin-mining camp",
+      "materialTheme": "boreal_pine",
+      "formPacks": [
+        "wilds_camps"
+      ],
+      "archetypes": {
+        "prefer": [
+          "mine_head",
+          "charcoal_burner",
+          "hut",
+          "warehouse",
+          "shepherds_bothy"
+        ],
+        "forbid": [
+          "townhouse",
+          "terraced_row",
+          "shop_row",
+          "office",
+          "apartment_block"
+        ]
+      },
+      "props": {
+        "prefer": [
+          "campsite",
+          "yurt",
+          "tent",
+          "cart",
+          "log_pile",
+          "cairn"
+        ]
+      },
+      "urbanForm": "grown",
+      "programs": [
+        {
+          "id": "beached_trade_ship",
+          "mode": "landmark",
+          "brief": "A Bronze Age sewn-plank wooden trade ship beached at a tilt on the icy shingle shoreline, its hull wedged on frost-locked gravel with cargo bundles, skins, and amphorae scattered on the shore.",
+          "envelope": [
+            24,
+            10,
+            8
+          ]
+        },
+        {
+          "id": "tin_smelting_hearth",
+          "mode": "plugin",
+          "brief": "A primitive stone-lined charcoal bloomery hearth for smelting cassiterite tin ore, surrounded by black slag scatter, stone anvils, and glowing embers.",
+          "envelope": [
+            6,
+            4,
+            6
+          ],
+          "count": 4
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "a barren frozen tundra coast with a rocky shoreline and freezing sea ice",
+      "icons": "open pit heads cut into permafrost, charcoal smelting hearths, hide and skin tents, beached Bronze Age trade ship icebound on the shingle, cassiterite ore piles",
+      "infra": "cart_track from the tin pits down to the beached ship"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Frozen Tundra Tin Works",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "frost-heaved coastal tundra rolling down to the northern sea",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 71,
+          "amplitude": 24,
+          "octaves": 5,
+          "frequency": 0.0035,
+          "gain": 0.52,
+          "erosionPasses": 2,
+          "continentalness": {
+            "frequency": 0.001,
+            "seaFraction": 0.32
+          },
+          "cliffThreshold": 56,
+          "soilDepth": 3,
+          "beachWidth": 6,
+          "snowLineFraction": 0
+        },
+        "children": [
+          {
+            "id": "inlet_bay",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the freezing tidal inlet where the ship ran aground",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.5,
+                  0.42
+                ],
+                [
+                  0.48,
+                  0.28
+                ],
+                "coast"
+              ],
+              "width": 55,
+              "depth": 16,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "camp_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "a low shelf above the frozen shore for the camp",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.52,
+                0.54
+              ],
+              "radius": 90,
+              "height": 6,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "tin_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the rocky permafrost ridge rich in cassiterite tin veins",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.22,
+                  0.72
+                ],
+                [
+                  0.52,
+                  0.78
+                ],
+                [
+                  0.82,
+                  0.7
+                ]
+              ],
+              "width": 60,
+              "height": 30,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "boreal",
+          "temperatureFrequency": 0.0012,
+          "latitudeGradient": -0.4
+        }
+      },
+      {
+        "id": "sparse_tundra",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "stunted wind-bent spruce and hardy dwarf shrubs across the tundra",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 32,
+          "elevation": [
+            2,
+            120
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.08,
+            "flowers": 0,
+            "deadwood": 0.08
+          },
+          "species": [
+            {
+              "id": "scrub_spruce",
+              "shape": "spruce_squat",
+              "weight": 3
+            },
+            {
+              "id": "wind_pine",
+              "shape": "spruce_tall",
+              "weight": 1
+            }
+          ],
+          "strata": {
+            "emergent": "none",
+            "understory": {
+              "species": [
+                {
+                  "id": "juniper",
+                  "shape": "juniper_scrub"
+                }
+              ],
+              "density": 0.08
+            },
+            "floor": "default"
+          }
+        }
+      },
+      {
+        "id": "camp_ground",
+        "kind": "primitive",
+        "label": "the trampled work ground of the mining camp",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            22,
+            22
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "beached_ship",
+        "kind": "generator",
+        "generator": "authored:beached_trade_ship",
+        "label": "the icebound Bronze Age trading vessel on the gravel shore",
+        "params": {
+          "seat": "wade"
+        },
+        "constraints": [
+          {
+            "at": [
+              0.49,
+              0.36
+            ]
+          },
+          {
+            "on": "@terrain:coastline",
+            "band": 36
+          },
+          {
+            "distance": "camp_ground",
+            "min": 20,
+            "max": 90,
+            "strength": "soft"
+          }
+        ]
+      },
+      {
+        "id": "smelting_hearths",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "charcoal smelting bloomery pits around the work ground",
+        "params": {
+          "program": "tin_smelting_hearth",
+          "count": 4,
+          "area": {
+            "zone": "center"
+          },
+          "spacing": 16,
+          "avoidTags": [
+            "road",
+            "structure"
+          ]
+        }
+      },
+      {
+        "id": "pithead_primary",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the main timber headframe over the frozen tin shaft",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            12,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "mine_head",
+          "floors": 1,
+          "roof": "gable",
+          "basement": {
+            "depth": 5,
+            "style": "mine"
+          }
+        },
+        "constraints": [
+          {
+            "distance": "camp_ground",
+            "min": 10,
+            "max": 35,
+            "strength": "soft"
+          },
+          {
+            "connected": "ore_assay_hut",
+            "via": "tunnel",
+            "style": "mine",
+            "oreChamber": true
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "mine_head",
+          "craft"
+        ]
+      },
+      {
+        "id": "ore_assay_hut",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the charcoal burner and smelting lodge",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "archetype": "charcoal_burner",
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "camp_ground",
+            "gap": [
+              2,
+              8
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "camp_ground"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "craft"
+        ]
+      },
+      {
+        "id": "ore_storehouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "timber storehouse for heavy cassiterite ore and trade goods",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            9,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "warehouse",
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "camp_ground",
+            "gap": [
+              1,
+              8
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "camp_ground"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "store"
+        ]
+      },
+      {
+        "id": "miners_bothy",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "rough drystone and turf shelter for the miners",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            11,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "shepherds_bothy",
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "camp_ground",
+            "min": 8,
+            "max": 30,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "camp_hut",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "hearth hut by the edge of the pit workings",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            11,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "hut",
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "camp_ground",
+            "min": 8,
+            "max": 32,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "coast_watch",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "optional": true,
+        "label": "coastal watch tower overlooking the frozen approach",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            18,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "beacon_tower",
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "on": "@terrain:coastline",
+            "band": 30
+          },
+          {
+            "distance": "camp_ground",
+            "min": 35,
+            "max": 90,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "max",
+            "blend": 5
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "lookout"
+        ]
+      },
+      {
+        "id": "camp_campsite",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "skin tents, hearth fire and tool piles clustered together",
+        "params": {
+          "prop": "campsite",
+          "zone": "center",
+          "jitter": 0.1
+        }
+      },
+      {
+        "id": "hide_yurt",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "heavy hide-covered yurt for winter shelter",
+        "params": {
+          "prop": "yurt",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "skin_tent",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a skin tent pitched near the smelting hearths",
+        "params": {
+          "prop": "tent",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "ore_cart",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a wooden cart laden with ore blocks",
+        "params": {
+          "prop": "cart",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "fuel_logs",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "fuel wood stack for the smelting hearths",
+        "params": {
+          "prop": "log_pile",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "shingle_cairn",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "trail cairn marking the descent to the beached ship",
+        "params": {
+          "prop": "cairn",
+          "zone": "north"
+        }
+      },
+      {
+        "id": "camp_track",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "worn cart track between the tin workings and the shore",
+        "params": {
+          "entry": "cart_track",
+          "route": {
+            "along": "camp_lanes",
+            "offset": 0
+          }
+        }
+      },
+      {
+        "id": "camp_lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "trodden frozen paths connecting the pits, tents and the beached ship",
+        "params": {
+          "anchors": [
+            "camp_ground",
+            "#tag:house",
+            "pithead_primary",
+            "beached_ship"
+          ],
+          "pattern": "organic",
+          "width": 2,
+          "lanterns": false
+        }
+      }
+    ]
+  },
+  "programs": {
+    "beached_trade_ship": {
+      "mode": "landmark",
+      "envelope": [
+        17,
+        16,
+        27
+      ],
+      "sourceHash": "b3:a4181b8d90fa8f98b4320d2e832a8a505375b646d9185bbfd710009697be6582",
+      "outputHash": "b3:23c98df8b01c87f8f2dd408b44ab0b2a69ef5eb1c2dea324f03dc16076c53d7d",
+      "conforms": false,
+      "conformHash": "b3:5a0d95244b41958bc5d6130ddad17db517c767851a73c732482bf9ed14a18d90",
+      "source": "export const envelope = [17, 16, 27];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const seatY = 4;\n\n  // Grid buffer to ensure single writes and deterministic output order\n  const grid = new Map();\n\n  function setBlock(x, y, z, block) {\n    if (x < 0 || x >= W || y < 0 || y >= H || z < 0 || z >= D) return;\n    if (!block) return;\n    grid.set(`${x},${y},${z}`, block);\n  }\n\n  function getBlock(x, y, z) {\n    return grid.get(`${x},${y},${z}`);\n  }\n\n  function groundY(x, z) {\n    const raw = seatY + api.heightAt(x, z);\n    return Math.max(0, Math.min(H - 1, Math.round(raw)));\n  }\n\n  function supportDown(x, startY, z, defaultBlock) {\n    const gy = groundY(x, z);\n    for (let y = startY - 1; y >= gy; y--) {\n      if (!getBlock(x, y, z)) {\n        setBlock(x, y, z, defaultBlock);\n      }\n    }\n  }\n\n  // Theme palette resolution with safe fallbacks\n  const woodPlanks = api.theme?.wood?.planks || \"minecraft:spruce_planks\";\n  const woodLog = api.theme?.wood?.log || \"minecraft:spruce_log\";\n  const woodStripped = api.theme?.wood?.stripped || \"minecraft:stripped_spruce_log\";\n  const woodStairs = api.theme?.wood?.stairs || \"minecraft:spruce_stairs\";\n  const woodSlab = api.theme?.wood?.slab || \"minecraft:spruce_slab\";\n  const woodFence = api.theme?.wood?.fence || \"minecraft:spruce_fence\";\n  const woodTrapdoor = api.theme?.wood?.trapdoor || \"minecraft:spruce_trapdoor\";\n\n  const stonePrimary = api.theme?.stone?.primary || \"minecraft:stone_bricks\";\n  const stoneSlab = api.theme?.stone?.slab || \"minecraft:stone_brick_slab\";\n  const stoneWall = api.theme?.stone?.wall || \"minecraft:stone_brick_wall\";\n\n  const groundScree = api.theme?.ground?.scree || \"minecraft:gravel\";\n  const groundBank = api.theme?.ground?.bank || \"minecraft:coarse_dirt\";\n  const groundPavement = api.theme?.ground?.pavement || \"minecraft:cobblestone\";\n\n  function withState(block, states) {\n    const base = block.split(\"[\")[0];\n    const stateStr = Object.entries(states).map(([k, v]) => `${k}=${v}`).join(\",\");\n    return `${base}[${stateStr}]`;\n  }\n\n  // -------------------------------------------------------------\n  // 1. SHINGLE BEACH BERM & FROST-LOCKED SHORELINE FOUNDATION\n  // -------------------------------------------------------------\n  for (let z = 2; z <= 24; z++) {\n    const u = (z - 13) / 10.5;\n    const halfWidth = Math.max(1, Math.round(5.2 * Math.sqrt(Math.max(0, 1.0 - u * u))));\n    const minX = Math.max(1, 8 - halfWidth - 2);\n    const maxX = Math.min(W - 2, 8 + halfWidth + 3);\n\n    for (let x = minX; x <= maxX; x++) {\n      const gy = groundY(x, z);\n      const hash = (x * 7 + z * 13 + (x ^ z)) % 10;\n      let mat = groundScree;\n      if (hash === 1 || hash === 2) mat = groundBank;\n      else if (hash === 3 || hash === 4) mat = groundPavement;\n      else if (hash === 5) mat = \"minecraft:packed_ice\";\n      else if (hash === 6) mat = stonePrimary;\n\n      setBlock(x, gy, z, mat);\n\n      // Add a slight frost ridge under the ship's beached side\n      if (x >= 7 && x <= 13 && z >= 6 && z <= 20 && gy + 1 < H) {\n        if (hash >= 4) {\n          setBlock(x, gy + 1, z, hash > 7 ? \"minecraft:packed_ice\" : groundScree);\n        }\n      }\n    }\n  }\n\n  // -------------------------------------------------------------\n  // 2. KEEL & BOTTOM ROCKER\n  // -------------------------------------------------------------\n  for (let z = 3; z <= 23; z++) {\n    const u = (z - 13.0) / 10.5;\n    const yk = Math.round(5.0 + 2.4 * (u * u) - 0.4 * u);\n    const tiltShift = Math.round((yk - 5.0) * 0.35);\n    const kx = 8 + tiltShift;\n\n    setBlock(kx, yk, z, withState(woodLog, { axis: \"z\" }));\n    supportDown(kx, yk, z, groundScree);\n\n    // Keel bilge supports\n    setBlock(kx - 1, yk, z, woodPlanks);\n    supportDown(kx - 1, yk, z, groundScree);\n    setBlock(kx + 1, yk, z, woodPlanks);\n    supportDown(kx + 1, yk, z, groundScree);\n  }\n\n  // -------------------------------------------------------------\n  // 3. SEWN-PLANK HULL SHELL (Tilted/Listed to Starboard +X)\n  // -------------------------------------------------------------\n  for (let z = 3; z <= 23; z++) {\n    const u = (z - 13.0) / 10.5;\n    if (Math.abs(u) > 1.02) continue;\n\n    const R = 3.3 * Math.sqrt(Math.max(0, 1.0 - u * u));\n    const yk = 5.0 + 2.4 * (u * u) - 0.4 * u;\n    const h = 2.6 + 0.6 * (u * u);\n    const yg = yk + h;\n\n    const minY = Math.floor(yk);\n    const maxY = Math.ceil(yg);\n\n    for (let y = minY; y <= maxY; y++) {\n      const tiltOffset = (y - 5.0) * 0.35;\n      const xc = 8.0 + tiltOffset;\n      const t = (y - yk) / h;\n      if (t < -0.1 || t > 1.25) continue;\n\n      const w = R * Math.min(1.15, Math.sqrt(Math.max(0.08, t)));\n      const xPort = Math.round(xc - w);\n      const xStbd = Math.round(xc + w);\n\n      // Floor planking in hold bottom\n      if (t <= 0.45) {\n        for (let x = xPort; x <= xStbd; x++) {\n          if (!getBlock(x, y, z)) {\n            setBlock(x, y, z, woodPlanks);\n            supportDown(x, y, z, groundScree);\n          }\n        }\n      }\n\n      // Port side (high side)\n      if (y === maxY) {\n        setBlock(xPort, y, z, withState(woodSlab, { type: \"bottom\" }));\n      } else {\n        const blk = (y === minY + 1) ? withState(woodStripped, { axis: \"z\" }) : woodPlanks;\n        setBlock(xPort, y, z, blk);\n      }\n      supportDown(xPort, y, z, groundScree);\n\n      // Starboard side (low beaching side)\n      if (y === maxY) {\n        setBlock(xStbd, y, z, withState(woodSlab, { type: \"bottom\" }));\n      } else {\n        const blk = (y === minY + 1) ? withState(woodStripped, { axis: \"z\" }) : woodPlanks;\n        setBlock(xStbd, y, z, blk);\n      }\n      supportDown(xStbd, y, z, groundScree);\n    }\n  }\n\n  // -------------------------------------------------------------\n  // 4. INTERNAL RIBS, FRAMES & THWARTS (Sewn transverse beams)\n  // -------------------------------------------------------------\n  const ribZ = [5, 8, 11, 14, 17, 20];\n  for (const rz of ribZ) {\n    const u = (rz - 13.0) / 10.5;\n    const yk = Math.round(5.0 + 2.4 * (u * u) - 0.4 * u);\n    const R = 3.3 * Math.sqrt(Math.max(0, 1.0 - u * u));\n    const xc = 8.0 + (yk + 1.5 - 5.0) * 0.35;\n    const xPort = Math.round(xc - R * 0.85);\n    const xStbd = Math.round(xc + R * 0.85);\n\n    const thwartY = yk + 2;\n    if (thwartY < H) {\n      for (let x = xPort + 1; x < xStbd; x++) {\n        setBlock(x, thwartY, rz, woodPlanks);\n      }\n      // Rib vertical cleats on inner hull\n      setBlock(xPort, thwartY, rz, withState(woodStripped, { axis: \"y\" }));\n      setBlock(xStbd, thwartY, rz, withState(woodStripped, { axis: \"y\" }));\n    }\n  }\n\n  // -------------------------------------------------------------\n  // 5. STEM POST (PROW - NORTH -Z) & STERN POST (+Z)\n  // -------------------------------------------------------------\n  // Stem curves up north toward Z = 1\n  setBlock(8, 7, 3, withState(woodLog, { axis: \"z\" }));\n  supportDown(8, 7, 3, groundScree);\n  setBlock(8, 8, 3, withState(woodLog, { axis: \"y\" }));\n  setBlock(8, 8, 2, withState(woodLog, { axis: \"z\" }));\n  supportDown(8, 8, 2, groundScree);\n  setBlock(8, 9, 2, withState(woodLog, { axis: \"y\" }));\n  setBlock(8, 10, 2, withState(woodLog, { axis: \"y\" }));\n  setBlock(8, 11, 2, withState(woodStripped, { axis: \"y\" }));\n  // Carved prow beak / twin horn\n  setBlock(8, 11, 1, withState(woodStairs, { facing: \"south\", half: \"top\" }));\n  setBlock(8, 12, 1, woodFence);\n  setBlock(8, 10, 1, withState(woodStairs, { facing: \"north\", half: \"bottom\" }));\n\n  // Stern curves up south toward Z = 25\n  setBlock(8, 7, 23, withState(woodLog, { axis: \"z\" }));\n  supportDown(8, 7, 23, groundScree);\n  setBlock(8, 8, 24, withState(woodLog, { axis: \"z\" }));\n  supportDown(8, 8, 24, groundScree);\n  setBlock(8, 9, 24, withState(woodLog, { axis: \"y\" }));\n  setBlock(8, 10, 24, withState(woodStripped, { axis: \"y\" }));\n  setBlock(8, 10, 25, withState(woodStairs, { facing: \"north\", half: \"top\" }));\n  setBlock(8, 11, 25, woodFence);\n\n  // Steering oar (Quarter rudder on starboard quarter)\n  setBlock(11, 7, 22, woodFence);\n  setBlock(11, 6, 23, withState(woodLog, { axis: \"z\" }));\n  setBlock(11, 5, 24, withState(woodTrapdoor, { facing: \"east\", half: \"top\", open: \"true\" }));\n  setBlock(11, 4, 25, withState(woodTrapdoor, { facing: \"east\", half: \"top\", open: \"true\" }));\n  supportDown(11, 4, 25, groundScree);\n\n  // -------------------------------------------------------------\n  // 6. MAST, YARDARM, FURL ED SAIL & RIGGING\n  // -------------------------------------------------------------\n  const mastX = 9;\n  const mastZ = 12;\n  // Mast stepped on keel and rising through thwart\n  for (let y = 5; y <= 14; y++) {\n    setBlock(mastX, y, mastZ, withState(woodLog, { axis: \"y\" }));\n  }\n  setBlock(mastX, 15, mastZ, woodFence);\n  setBlock(mastX, 13, mastZ - 1, \"minecraft:lantern[hanging=true]\");\n\n  // Cross yardarm at Y = 12\n  for (let x = 6; x <= 12; x++) {\n    if (x !== mastX) {\n      setBlock(x, 12, mastZ, withState(woodLog, { axis: \"x\" }));\n    }\n  }\n  setBlock(5, 12, mastZ, woodFence);\n  setBlock(13, 12, mastZ, woodFence);\n\n  // Furled coarse wool sail lashed to yard\n  for (let x = 6; x <= 12; x++) {\n    setBlock(x, 11, mastZ, \"minecraft:white_wool\");\n    setBlock(x, 11, mastZ + 1, withState(woodTrapdoor, { facing: \"north\", half: \"top\", open: \"false\" }));\n  }\n  setBlock(7, 10, mastZ, \"minecraft:white_wool\");\n  setBlock(9, 10, mastZ, \"minecraft:white_wool\");\n  setBlock(11, 10, mastZ, \"minecraft:white_wool\");\n\n  // Rigging stays (Forestay, Backstay, Shrouds)\n  setBlock(mastX, 13, 8, \"minecraft:chain[axis=z]\");\n  setBlock(8, 10, 5, woodFence);\n  setBlock(mastX, 13, 16, \"minecraft:chain[axis=z]\");\n  setBlock(8, 9, 20, woodFence);\n  setBlock(5, 9, mastZ, woodFence);\n  setBlock(12, 8, mastZ, woodFence);\n\n  // -------------------------------------------------------------\n  // 7. TIMBER PROPPING STRUTS (SHORES - Port Side Support)\n  // -------------------------------------------------------------\n  // Strut 1 (Forward Port)\n  setBlock(5, 7, 7, withState(woodLog, { axis: \"x\" }));\n  setBlock(4, 6, 7, withState(woodLog, { axis: \"x\" }));\n  setBlock(3, 5, 7, withState(woodLog, { axis: \"y\" }));\n  setBlock(2, 4, 7, stoneWall);\n  supportDown(2, 4, 7, stonePrimary);\n\n  // Strut 2 (Midships Port)\n  setBlock(4, 7, 13, withState(woodLog, { axis: \"x\" }));\n  setBlock(3, 6, 13, withState(woodLog, { axis: \"x\" }));\n  setBlock(2, 5, 13, withState(woodLog, { axis: \"y\" }));\n  setBlock(1, 4, 13, stoneWall);\n  supportDown(1, 4, 13, stonePrimary);\n\n  // Strut 3 (Aft Port)\n  setBlock(5, 7, 19, withState(woodLog, { axis: \"x\" }));\n  setBlock(4, 6, 19, withState(woodLog, { axis: \"x\" }));\n  setBlock(3, 5, 19, withState(woodLog, { axis: \"y\" }));\n  setBlock(2, 4, 19, stoneWall);\n  supportDown(2, 4, 19, stonePrimary);\n\n  // -------------------------------------------------------------\n  // 8. STARBOARD GANGPLANK & UNLOADING RAMP\n  // -------------------------------------------------------------\n  // Gangplank down from gunwale at Z = 15..16\n  setBlock(11, 6, 15, woodPlanks);\n  setBlock(12, 5, 15, withState(woodStairs, { facing: \"west\", half: \"bottom\" }));\n  setBlock(13, 5, 15, woodPlanks);\n  setBlock(14, 4, 15, withState(woodStairs, { facing: \"west\", half: \"bottom\" }));\n  supportDown(14, 4, 15, groundScree);\n\n  setBlock(11, 6, 16, woodPlanks);\n  setBlock(12, 5, 16, withState(woodStairs, { facing: \"west\", half: \"bottom\" }));\n  setBlock(13, 5, 16, woodPlanks);\n  setBlock(14, 4, 16, withState(woodStairs, { facing: \"west\", half: \"bottom\" }));\n  supportDown(14, 4, 16, groundScree);\n\n  // Under-gangplank bracing\n  setBlock(13, 4, 15, woodFence);\n  supportDown(13, 4, 15, groundScree);\n  setBlock(13, 4, 16, woodFence);\n  supportDown(13, 4, 16, groundScree);\n\n  // -------------------------------------------------------------\n  // 9. CARGO IN THE HOLD & UNLOADED ON SHORE\n  // -------------------------------------------------------------\n  // Forward hold cargo (Z = 7..10)\n  setBlock(8, 6, 7, \"minecraft:decorated_pot\");\n  setBlock(9, 6, 7, \"minecraft:decorated_pot\");\n  setBlock(8, 6, 8, \"minecraft:raw_copper_block\");\n  setBlock(7, 6, 8, \"minecraft:barrel[facing=up]\");\n  setBlock(8, 7, 8, \"minecraft:hay_block[axis=y]\");\n  setBlock(7, 6, 9, \"minecraft:raw_iron_block\");\n  setBlock(8, 6, 9, \"minecraft:raw_copper_block\");\n  setBlock(9, 6, 9, \"minecraft:white_wool\");\n  setBlock(7, 6, 10, \"minecraft:hay_block[axis=y]\");\n  setBlock(8, 6, 10, \"minecraft:barrel[facing=up]\");\n\n  // Aft hold cargo (Z = 16..19)\n  setBlock(8, 6, 16, \"minecraft:chest[facing=south]\");\n  setBlock(7, 6, 16, \"minecraft:barrel[facing=up]\");\n  setBlock(9, 6, 16, \"minecraft:raw_copper_block\");\n  setBlock(8, 6, 17, \"minecraft:decorated_pot\");\n  setBlock(7, 6, 17, \"minecraft:decorated_pot\");\n  setBlock(8, 7, 17, \"minecraft:white_wool\");\n  setBlock(8, 6, 18, \"minecraft:raw_iron_block\");\n  setBlock(9, 6, 18, \"minecraft:barrel[facing=up]\");\n\n  // Beach cargo on Starboard shoreline (X = 12..15, Z = 9..14)\n  const beachItems = [\n    { x: 13, z: 9, blk: \"minecraft:campfire[lit=false]\" },\n    { x: 14, z: 9, blk: stoneSlab },\n    { x: 13, z: 10, blk: \"minecraft:decorated_pot\" },\n    { x: 14, z: 10, blk: \"minecraft:decorated_pot\" },\n    { x: 13, z: 11, blk: \"minecraft:barrel[facing=up]\" },\n    { x: 14, z: 11, blk: \"minecraft:hay_block[axis=y]\" },\n    { x: 13, z: 12, blk: \"minecraft:raw_copper_block\" },\n    { x: 14, z: 12, blk: \"minecraft:raw_copper_block\" },\n    { x: 13, z: 13, blk: \"minecraft:raw_iron_block\" },\n    { x: 14, z: 13, blk: \"minecraft:white_wool\" },\n    { x: 13, z: 14, blk: \"minecraft:barrel[facing=up]\" },\n    { x: 14, z: 14, blk: \"minecraft:decorated_pot\" },\n  ];\n\n  for (const item of beachItems) {\n    const gy = groundY(item.x, item.z) + 1;\n    if (gy < H) {\n      setBlock(item.x, gy, item.z, item.blk);\n      supportDown(item.x, gy, item.z, groundScree);\n    }\n  }\n\n  // Double stack some cargo on the beach\n  const gy13_12 = groundY(13, 12) + 2;\n  if (gy13_12 < H) {\n    setBlock(13, gy13_12, 12, \"minecraft:raw_copper_block\");\n  }\n  const gy14_11 = groundY(14, 11) + 2;\n  if (gy14_11 < H) {\n    setBlock(14, gy14_11, 11, \"minecraft:white_wool\");\n  }\n\n  // -------------------------------------------------------------\n  // 10. FROST, SEA-ICE RIME & DRIFTED SNOW DUSTING\n  // -------------------------------------------------------------\n  // Add ice rime patches at base of the tilted hull\n  for (let z = 4; z <= 22; z += 2) {\n    const gyPort = groundY(4, z);\n    if (!getBlock(4, gyPort + 1, z)) {\n      setBlock(4, gyPort + 1, z, \"minecraft:packed_ice\");\n    }\n    const gyStbd = groundY(12, z);\n    if (!getBlock(12, gyStbd + 1, z)) {\n      setBlock(12, gyStbd + 1, z, \"minecraft:packed_ice\");\n    }\n  }\n\n  // Natural snow dusting on exposed top surfaces\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      // Find highest solid block in column\n      let topY = -1;\n      for (let y = H - 1; y >= 0; y--) {\n        if (getBlock(x, y, z)) {\n          topY = y;\n          break;\n        }\n      }\n\n      if (topY >= 0 && topY < H - 1) {\n        const topBlock = getBlock(x, topY, z);\n        // Do not place snow on fences, stairs, pots, or existing snow\n        if (\n          !topBlock.includes(\"fence\") &&\n          !topBlock.includes(\"stairs\") &&\n          !topBlock.includes(\"lantern\") &&\n          !topBlock.includes(\"chain\") &&\n          !topBlock.includes(\"decorated_pot\") &&\n          !topBlock.includes(\"campfire\") &&\n          !topBlock.includes(\"snow\")\n        ) {\n          const snowHash = (x * 17 + z * 31 + topY * 7) % 5;\n          if (snowHash === 0 || snowHash === 1) {\n            setBlock(x, topY + 1, z, \"minecraft:snow[layers=1]\");\n          }\n        }\n      }\n    }\n  }\n\n  // -------------------------------------------------------------\n  // 11. DETERMINISTIC EMISSION\n  // -------------------------------------------------------------\n  for (let y = 0; y < H; y++) {\n    for (let z = 0; z < D; z++) {\n      for (let x = 0; x < W; x++) {\n        const key = `${x},${y},${z}`;\n        if (grid.has(key)) {\n          api.set(x, y, z, grid.get(key));\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"beached_trade_ship\",\n    seatY: seatY,\n    anchors: {\n      front: [8, 10, 0],\n      door: [14, 5, 15],\n      cargo: [13, 5, 12],\n      mast: [9, 14, 12],\n    },\n  };\n}"
+    },
+    "tin_smelting_hearth": {
+      "mode": "plugin",
+      "envelope": [
+        9,
+        13,
+        9
+      ],
+      "sourceHash": "b3:884e2b742b768fcceeb22e7780f4a83b1c6d335d5c98c5d82dfd9062c7e6f45b",
+      "outputHash": "b3:026263b433ec9e20493254c68137bd2c205ba11bae93a79ba3f83c31fe168e1a",
+      "conforms": false,
+      "conformHash": "b3:521aaece22230daefa98781eaa2ad8f4433dc7f085eac1741927fac844bcdcab",
+      "source": "export const envelope = [9, 13, 9];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const seatY = 3;\n\n  // 3D voxel buffer to construct and guarantee 6-connectivity\n  const grid = Array.from({ length: W }, () =>\n    Array.from({ length: H }, () => new Array(D).fill(null))\n  );\n\n  function setB(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      grid[x][y][z] = block;\n    }\n  }\n\n  function getB(x, y, z) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      return grid[x][y][z];\n    }\n    return null;\n  }\n\n  function withState(block, stateStr) {\n    if (!block) return block;\n    if (block.includes(\"[\")) return block;\n    return `${block}[${stateStr}]`;\n  }\n\n  // Safe theme palette extraction with robust defaults\n  const st = api.theme.stone || {};\n  const wd = api.theme.wood || {};\n  const gd = api.theme.ground || {};\n\n  const stonePrimary = st.primary || \"minecraft:cobblestone\";\n  const stoneAccent = st.accent || \"minecraft:stone_bricks\";\n  const stoneStairs = st.stairs || \"minecraft:stone_brick_stairs\";\n  const stoneSlab = st.slab || \"minecraft:stone_brick_slab\";\n  const stoneWall = st.wall || \"minecraft:cobblestone_wall\";\n\n  const woodLog = wd.log || \"minecraft:spruce_log\";\n  const woodPlanks = wd.planks || \"minecraft:spruce_planks\";\n  const woodStairs = wd.stairs || \"minecraft:spruce_stairs\";\n  const woodSlab = wd.slab || \"minecraft:spruce_slab\";\n  const woodFence = wd.fence || \"minecraft:spruce_fence\";\n  const woodTrapdoor = wd.trapdoor || \"minecraft:spruce_trapdoor\";\n\n  const groundPave = gd.pavement || \"minecraft:cobblestone\";\n  const groundScree = gd.scree || \"minecraft:gravel\";\n  const groundPlinth = gd.plinth || \"minecraft:stone_bricks\";\n  const groundRevet = gd.revetment || \"minecraft:cobblestone\";\n\n  // Metallurgy & Bronze Age permafrost props\n  const magmaBlock = \"minecraft:magma_block\";\n  const coalBlock = \"minecraft:coal_block\";\n  const blackstone = \"minecraft:blackstone\";\n  const basaltBlock = \"minecraft:basalt[axis=y]\";\n  const deepslateBlock = \"minecraft:cobbled_deepslate\";\n  const rawCopper = \"minecraft:raw_copper_block\";\n  const rawIron = \"minecraft:raw_iron_block\";\n  const tinOre = \"minecraft:deepslate_iron_ore\";\n  const chippedAnvil = \"minecraft:chipped_anvil[facing=north]\";\n  const cauldron = \"minecraft:cauldron\";\n  const chainY = \"minecraft:chain[axis=y]\";\n  const smokeCampfire = \"minecraft:campfire[lit=true,facing=north]\";\n  const blastFurnace = \"minecraft:blast_furnace[facing=north,lit=true]\";\n  const litFurnace = \"minecraft:furnace[facing=north,lit=true]\";\n\n  // Plugin variation based on instance index & seed\n  const variant = (api.instance.index + Math.floor(api.random() * 4)) % 4;\n\n  // Local ground height at column (x, z)\n  function getGroundY(x, z) {\n    const h = Math.round(api.heightAt(x, z));\n    return Math.max(0, Math.min(seatY + h, H - 2));\n  }\n\n  function getBase(x, z) {\n    return Math.max(seatY, getGroundY(x, z));\n  }\n\n  // Define workshop footprint\n  const footprint = [];\n  for (let x = 0; x <= 8; x++) {\n    for (let z = 0; z <= 8; z++) {\n      const inCore = (x >= 1 && x <= 7 && z >= 1 && z <= 7);\n      const inWingLeft = (x === 0 && z >= 2 && z <= 6);\n      const inWingRight = (x === 8 && z >= 2 && z <= 6);\n      if (inCore || inWingLeft || inWingRight) {\n        footprint.push([x, z]);\n      }\n    }\n  }\n\n  // 1. Terrain-conforming foundation and solid working apron\n  for (const [x, z] of footprint) {\n    const gy = getGroundY(x, z);\n    const baseY = getBase(x, z);\n\n    // Deep skirt down to local terrain\n    const minFill = Math.min(gy, seatY - 1);\n    for (let y = minFill; y < baseY; y++) {\n      const rnd = api.random();\n      const fBlock = rnd < 0.6 ? groundPlinth : (rnd < 0.85 ? groundRevet : stonePrimary);\n      setB(x, y, z, fBlock);\n    }\n\n    // Floor pavement layer\n    const fRnd = api.random();\n    let floorBlock = groundPave;\n    if (fRnd < 0.3) floorBlock = stonePrimary;\n    else if (fRnd < 0.55) floorBlock = groundScree;\n    else if (fRnd < 0.7) floorBlock = stoneAccent;\n    setB(x, baseY, z, floorBlock);\n  }\n\n  // 2. Build variant specific smelting hearth structures\n  if (variant === 0) {\n    // VARIANT 0: Tall Shaft Bloomery with Twin Bellows & Slag Run\n\n    // Rear boulder windbreak wall (South)\n    for (let x = 1; x <= 7; x++) {\n      const b = getBase(x, 7);\n      setB(x, b + 1, 7, stonePrimary);\n      setB(x, b + 2, 7, stoneAccent);\n      setB(x, b + 3, 7, stonePrimary);\n      setB(x, b + 4, 7, stoneWall);\n    }\n\n    // Cylindrical Shaft Bloomery (x: 3..5, z: 4..6)\n    for (let x = 3; x <= 5; x++) {\n      for (let z = 4; z <= 6; z++) {\n        const b = getBase(x, z);\n        const isCenter = (x === 4 && z === 5);\n\n        // Lower hearth level\n        if (isCenter) {\n          setB(x, b + 1, z, magmaBlock);\n        } else if (x === 4 && z === 4) {\n          setB(x, b + 1, z, blastFurnace);\n        } else if (x === 3 && z === 5) {\n          setB(x, b + 1, z, \"minecraft:hopper[facing=east]\");\n        } else {\n          setB(x, b + 1, z, stonePrimary);\n        }\n\n        // Shaft chimney rising up to y = b + 7\n        for (let yOffset = 2; yOffset <= 6; yOffset++) {\n          const curY = b + yOffset;\n          if (isCenter) {\n            // Keep flue hollow inside\n            continue;\n          }\n          const isCorner = (x !== 4 && z !== 5);\n          const mat = isCorner ? stoneWall : (api.random() < 0.5 ? stonePrimary : stoneAccent);\n          setB(x, curY, z, mat);\n        }\n\n        // Chimney crown and active smoking flue\n        if (isCenter) {\n          setB(x, b + 7, z, smokeCampfire);\n        } else {\n          setB(x, b + 7, z, withState(stoneStairs, \"facing=north,half=bottom\"));\n        }\n      }\n    }\n\n    // Molten Slag Run leading forward out of tap arch\n    setB(4, getBase(4, 3) + 1, 3, magmaBlock);\n    setB(4, getBase(4, 2) + 1, 2, blackstone);\n    setB(4, getBase(4, 1) + 1, 1, deepslateBlock);\n\n    // Bellows Platform (West)\n    for (let x = 1; x <= 2; x++) {\n      for (let z = 4; z <= 6; z++) {\n        const b = getBase(x, z);\n        setB(x, b + 1, z, woodPlanks);\n      }\n    }\n    const bBellows = getBase(1, 5);\n    setB(2, bBellows + 2, 5, withState(woodTrapdoor, \"facing=east,half=bottom,open=false\"));\n    setB(1, bBellows + 2, 5, withState(woodLog, \"axis=y\"));\n    setB(1, bBellows + 3, 5, woodFence);\n    setB(1, getBase(1, 4) + 2, 4, woodFence);\n    setB(1, getBase(1, 6) + 2, 6, woodFence);\n\n    // Slag Mound (East)\n    setB(6, getBase(6, 5) + 1, 5, coalBlock);\n    setB(6, getBase(6, 5) + 2, 5, deepslateBlock);\n    setB(7, getBase(7, 5) + 1, 5, blackstone);\n    setB(7, getBase(7, 4) + 1, 4, coalBlock);\n    setB(6, getBase(6, 4) + 1, 4, basaltBlock);\n    setB(7, getBase(7, 6) + 1, 6, deepslateBlock);\n    setB(6, getBase(6, 6) + 1, 6, magmaBlock);\n\n    // Cassiterite Ore Crushing Area (West)\n    setB(1, getBase(1, 2) + 1, 2, rawCopper);\n    setB(2, getBase(2, 2) + 1, 2, tinOre);\n    setB(1, getBase(1, 3) + 1, 3, rawIron);\n    setB(2, getBase(2, 1) + 1, 1, stoneAccent);\n    setB(2, getBase(2, 1) + 2, 1, withState(stoneSlab, \"type=bottom\"));\n\n    // Anvil & Quenching Basin (East)\n    const bAnv = getBase(6, 2);\n    setB(6, bAnv + 1, 2, withState(woodLog, \"axis=y\"));\n    setB(6, bAnv + 2, 2, chippedAnvil);\n    setB(6, getBase(6, 1) + 1, 1, cauldron);\n    setB(7, getBase(7, 2) + 1, 2, rawCopper);\n\n  } else if (variant === 1) {\n    // VARIANT 1: Low Bowl Hearth & Timber Lean-To Shelter\n\n    // 4 Corner Timber Shelter Posts\n    const p1Base = getBase(1, 7);\n    const p2Base = getBase(7, 7);\n    const p3Base = getBase(1, 2);\n    const p4Base = getBase(7, 2);\n\n    for (let y = p1Base + 1; y <= seatY + 6; y++) setB(1, y, 7, withState(woodLog, \"axis=y\"));\n    for (let y = p2Base + 1; y <= seatY + 6; y++) setB(7, y, 7, withState(woodLog, \"axis=y\"));\n    for (let y = p3Base + 1; y <= seatY + 4; y++) setB(1, y, 2, withState(woodLog, \"axis=y\"));\n    for (let y = p4Base + 1; y <= seatY + 4; y++) setB(7, y, 2, withState(woodLog, \"axis=y\"));\n\n    // Crossbeams connecting posts\n    for (let x = 2; x <= 6; x++) {\n      setB(x, seatY + 6, 7, withState(woodLog, \"axis=x\"));\n      setB(x, seatY + 4, 2, withState(woodLog, \"axis=x\"));\n    }\n    for (let z = 3; z <= 6; z++) {\n      setB(1, seatY + 5, z, withState(woodLog, \"axis=z\"));\n      setB(7, seatY + 5, z, withState(woodLog, \"axis=z\"));\n    }\n\n    // Sloped Rafters and Roof covering the rear hearth\n    for (let x = 1; x <= 7; x++) {\n      setB(x, seatY + 7, 7, withState(woodSlab, \"type=bottom\"));\n      setB(x, seatY + 6, 6, withState(woodStairs, \"facing=north,half=bottom\"));\n      setB(x, seatY + 6, 5, withState(woodStairs, \"facing=north,half=bottom\"));\n      setB(x, seatY + 5, 4, withState(woodStairs, \"facing=north,half=bottom\"));\n      setB(x, seatY + 5, 3, withState(woodStairs, \"facing=north,half=bottom\"));\n      setB(x, seatY + 4, 2, withState(woodSlab, \"type=top\"));\n    }\n\n    // Enclosed rear windbreak wall\n    for (let x = 2; x <= 6; x++) {\n      const b = getBase(x, 7);\n      for (let y = b + 1; y <= seatY + 5; y++) {\n        setB(x, y, 7, api.random() < 0.6 ? woodPlanks : stonePrimary);\n      }\n    }\n\n    // Central Smelting Bowl (x: 3..5, z: 4..6)\n    for (let x = 3; x <= 5; x++) {\n      for (let z = 4; z <= 6; z++) {\n        const b = getBase(x, z);\n        if (x === 4 && z === 5) {\n          setB(x, b + 1, z, smokeCampfire);\n        } else if (x === 4 && z === 4) {\n          setB(x, b + 1, z, magmaBlock);\n        } else if (x === 4 && z === 6) {\n          setB(x, b + 1, z, coalBlock);\n        } else if (x === 3 && z === 5) {\n          setB(x, b + 1, z, \"minecraft:hopper[facing=east]\");\n        } else {\n          setB(x, b + 1, z, withState(stoneStairs, \"facing=north,half=bottom\"));\n        }\n      }\n    }\n    // Suspended spark chain\n    setB(4, seatY + 5, 5, chainY);\n    setB(4, seatY + 4, 5, chainY);\n\n    // Fuel cord stacked under shelter (East)\n    for (let z = 4; z <= 6; z++) {\n      const b = getBase(6, z);\n      setB(6, b + 1, z, coalBlock);\n      setB(6, b + 2, z, withState(woodLog, \"axis=z\"));\n    }\n\n    // Casting Trenches & Tin Ingot Beds (North)\n    setB(3, getBase(3, 3) + 1, 3, withState(stoneSlab, \"type=bottom\"));\n    setB(4, getBase(4, 3) + 1, 3, magmaBlock);\n    setB(5, getBase(5, 3) + 1, 3, withState(stoneSlab, \"type=bottom\"));\n    setB(4, getBase(4, 2) + 1, 2, rawCopper);\n    setB(5, getBase(5, 2) + 1, 2, rawIron);\n\n    // Ore Crushing Station & Anvil (West)\n    const bAnv = getBase(2, 4);\n    setB(2, bAnv + 1, 4, stoneAccent);\n    setB(2, bAnv + 2, 4, chippedAnvil);\n    setB(2, getBase(2, 5) + 1, 5, cauldron);\n    setB(1, getBase(1, 4) + 1, 4, tinOre);\n    setB(1, getBase(1, 5) + 1, 5, rawCopper);\n\n  } else if (variant === 2) {\n    // VARIANT 2: Beehive Domed Smelting Kiln & Ore Derrick Crane\n\n    // Domed Beehive Kiln (x: 2..5, z: 3..6)\n    for (let x = 2; x <= 5; x++) {\n      for (let z = 3; z <= 6; z++) {\n        const b = getBase(x, z);\n        const isCore = (x >= 3 && x <= 4 && z >= 4 && z <= 5);\n        const isPortal = (x >= 3 && x <= 4 && z === 3);\n\n        // Ground & Hearth base\n        if (isCore) {\n          setB(x, b + 1, z, magmaBlock);\n        } else if (isPortal) {\n          setB(x, b + 1, z, blastFurnace);\n        } else {\n          setB(x, b + 1, z, stonePrimary);\n        }\n\n        // Dome walls\n        for (let yOff = 2; yOff <= 3; yOff++) {\n          const curY = b + yOff;\n          if (isCore) continue;\n          if (isPortal && yOff === 2) {\n            setB(x, curY, z, withState(stoneStairs, \"facing=south,half=top\"));\n          } else {\n            setB(x, curY, z, api.random() < 0.6 ? stonePrimary : stoneAccent);\n          }\n        }\n\n        // Dome cap tapering inward\n        if (!isCore && !isPortal) {\n          setB(x, b + 4, z, withState(stoneStairs, \"facing=north,half=bottom\"));\n        } else {\n          setB(x, b + 4, z, stonePrimary);\n        }\n      }\n    }\n\n    // Dome crown vent and smoking top\n    const bCrown = getBase(3, 4);\n    setB(3, bCrown + 5, 4, smokeCampfire);\n    setB(4, bCrown + 5, 4, withState(stoneSlab, \"type=bottom\"));\n    setB(3, bCrown + 5, 5, withState(stoneSlab, \"type=bottom\"));\n    setB(4, bCrown + 5, 5, withState(stoneSlab, \"type=bottom\"));\n\n    // Heavy Timber Derrick Crane (East, x: 7, z: 2..5)\n    const bCrane = getBase(7, 3);\n    for (let y = bCrane + 1; y <= seatY + 8; y++) {\n      setB(7, y, 3, withState(woodLog, \"axis=y\"));\n    }\n    setB(7, bCrane + 1, 2, woodFence);\n    setB(7, bCrane + 1, 4, woodFence);\n    setB(6, bCrane + 1, 3, woodFence);\n\n    // Overhanging Boom\n    setB(7, seatY + 8, 3, withState(woodLog, \"axis=x\"));\n    setB(6, seatY + 8, 3, withState(woodLog, \"axis=x\"));\n    setB(5, seatY + 8, 3, withState(woodLog, \"axis=x\"));\n    setB(5, seatY + 7, 3, chainY);\n    setB(5, seatY + 6, 3, \"minecraft:hopper[facing=down]\");\n\n    // Slag Dump Yard (West)\n    setB(0, getBase(0, 4) + 1, 4, deepslateBlock);\n    setB(1, getBase(1, 4) + 1, 4, coalBlock);\n    setB(1, getBase(1, 5) + 1, 5, basaltBlock);\n    setB(0, getBase(0, 5) + 1, 5, blackstone);\n    setB(1, getBase(1, 5) + 2, 5, deepslateBlock);\n\n    // Smelter's Anvil & Washing Pit (East)\n    const bAnv = getBase(6, 5);\n    setB(6, bAnv + 1, 5, withState(woodLog, \"axis=y\"));\n    setB(6, bAnv + 2, 5, chippedAnvil);\n    setB(7, getBase(7, 5) + 1, 5, cauldron);\n    setB(6, getBase(6, 6) + 1, 6, rawCopper);\n    setB(7, getBase(7, 6) + 1, 6, rawIron);\n\n  } else {\n    // VARIANT 3: Twin-Shaft Bloomery & Smelt Master's Station\n\n    // Massive curved masonry windbreak revetment (South)\n    for (let x = 1; x <= 7; x++) {\n      const b = getBase(x, 7);\n      for (let y = b + 1; y <= seatY + 4; y++) {\n        setB(x, y, 7, (x % 2 === 0) ? stoneAccent : stonePrimary);\n      }\n      setB(x, seatY + 5, 7, stoneWall);\n    }\n\n    // West Smelting Shaft (x: 2..3, z: 4..5)\n    for (let x = 2; x <= 3; x++) {\n      for (let z = 4; z <= 5; z++) {\n        const b = getBase(x, z);\n        if (x === 2 && z === 4) {\n          setB(x, b + 1, z, blastFurnace);\n        } else if (x === 3 && z === 5) {\n          setB(x, b + 1, z, magmaBlock);\n        } else {\n          setB(x, b + 1, z, stonePrimary);\n        }\n\n        for (let yOff = 2; yOff <= 5; yOff++) {\n          setB(x, b + yOff, z, api.random() < 0.5 ? stonePrimary : stoneAccent);\n        }\n        setB(x, b + 6, z, withState(stoneSlab, \"type=bottom\"));\n      }\n    }\n    setB(2, getBase(2, 4) + 6, 4, smokeCampfire);\n\n    // East Smelting Shaft (x: 5..6, z: 4..5)\n    for (let x = 5; x <= 6; x++) {\n      for (let z = 4; z <= 5; z++) {\n        const b = getBase(x, z);\n        if (x === 6 && z === 4) {\n          setB(x, b + 1, z, litFurnace);\n        } else if (x === 5 && z === 5) {\n          setB(x, b + 1, z, coalBlock);\n        } else {\n          setB(x, b + 1, z, stonePrimary);\n        }\n\n        for (let yOff = 2; yOff <= 5; yOff++) {\n          setB(x, b + yOff, z, api.random() < 0.5 ? stonePrimary : stoneAccent);\n        }\n        setB(x, b + 6, z, withState(stoneSlab, \"type=bottom\"));\n      }\n    }\n\n    // Central Slag Drainage Trench (x: 4, z: 3..6)\n    setB(4, getBase(4, 5) + 1, 5, magmaBlock);\n    setB(4, getBase(4, 4) + 1, 4, blackstone);\n    setB(4, getBase(4, 3) + 1, 3, deepslateBlock);\n\n    // Cassiterite Stock Reserve (West)\n    setB(1, getBase(1, 2) + 1, 2, rawCopper);\n    setB(1, getBase(1, 3) + 1, 3, rawIron);\n    setB(1, getBase(1, 4) + 1, 4, tinOre);\n    setB(2, getBase(2, 2) + 1, 2, stoneAccent);\n    setB(2, getBase(2, 2) + 2, 2, withState(stoneSlab, \"type=bottom\"));\n\n    // Anvil & Quenching Trough (East)\n    const bAnv = getBase(7, 2);\n    setB(7, bAnv + 1, 2, withState(woodLog, \"axis=y\"));\n    setB(7, bAnv + 2, 2, chippedAnvil);\n    setB(7, getBase(7, 3) + 1, 3, cauldron);\n    setB(7, getBase(7, 4) + 1, 4, rawCopper);\n  }\n\n  // 3. Guarantee 100% 6-connected body via BFS validation\n  const visited = Array.from({ length: W }, () =>\n    Array.from({ length: H }, () => new Uint8Array(D))\n  );\n\n  const startX = 4;\n  const startY = getBase(4, 4);\n  const startZ = 4;\n\n  const queue = [[startX, startY, startZ]];\n  if (grid[startX][startY][startZ] !== null) {\n    visited[startX][startY][startZ] = 1;\n  }\n\n  const dirs = [\n    [1, 0, 0], [-1, 0, 0],\n    [0, 1, 0], [0, -1, 0],\n    [0, 0, 1], [0, 0, -1]\n  ];\n\n  let head = 0;\n  while (head < queue.length) {\n    const [cx, cy, cz] = queue[head++];\n    for (const [dx, dy, dz] of dirs) {\n      const nx = cx + dx;\n      const ny = cy + dy;\n      const nz = cz + dz;\n      if (nx >= 0 && nx < W && ny >= 0 && ny < H && nz >= 0 && nz < D) {\n        if (!visited[nx][ny][nz] && grid[nx][ny][nz] !== null) {\n          visited[nx][ny][nz] = 1;\n          queue.push([nx, ny, nz]);\n        }\n      }\n    }\n  }\n\n  // Remove any unreachable stray voxels (if any)\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        if (grid[x][y][z] !== null && !visited[x][y][z]) {\n          grid[x][y][z] = null;\n        }\n      }\n    }\n  }\n\n  // 4. Deterministic write in strict (x -> y -> z) order\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const block = grid[x][y][z];\n        if (block !== null) {\n          api.set(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"tin_smelting_hearth\",\n    seatY: seatY,\n    anchors: {\n      front: [4, seatY, 0],\n      hearth: [4, seatY + 1, 4],\n      anvil: [6, seatY + 1, 2]\n    }\n  };\n}"
+    }
+  }
+}

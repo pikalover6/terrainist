@@ -204,7 +204,7 @@ export const DEFAULT_LAVA_FLOWS = 2;
  * emits bare codes; this table is where each one gets its symbolic name and,
  * more importantly, its fix hint — which G3 feeds back to the authoring LLM.
  */
-type EditDiagnosticName = "BASIN_RIM_NOT_CLOSED" | "RIVER_PONDED" | "CARVE_DRY";
+type EditDiagnosticName = "BASIN_RIM_NOT_CLOSED" | "RIVER_PONDED" | "CARVE_DRY" | "CARVE_MOSTLY_DRY";
 
 const EDIT_DIAGNOSTIC_NAMES: Readonly<
   Record<string, { readonly name: EditDiagnosticName; readonly fix: string }>
@@ -228,6 +228,13 @@ const EDIT_DIAGNOSTIC_NAMES: Readonly<
       "compiler will aim it at the sea this seed actually produced. Use it as the *first* " +
       "waypoint for an inlet drawn inland. If the channel is meant to be a dry gorge, say so " +
       'with "flooded": "never" and this note goes away.',
+  },
+  "LOAM-I502": {
+    name: "CARVE_MOSTLY_DRY",
+    fix:
+      'deepen the carve ("depth") until its floor lies below sea level along its whole course, or ' +
+      'set "flooded": "always" for a channel that must hold water whatever the land does; if a dry ' +
+      'valley with a wet mouth is what was meant, "flooded": "never" and this note goes away.',
   },
 });
 

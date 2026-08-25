@@ -1,0 +1,161 @@
+{
+  "id": "probe_temple_bell",
+  "family": "probe",
+  "kit": "settlement",
+  "prompt": "A feudal Japanese hill village of terraced paddies, with a great bronze temple bell in its own pavilion on the ridge above, rung at dusk.",
+  "seed": 905,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.4,
+    "formality": 0.2,
+    "climate": {
+      "temperature": 0.2,
+      "humidity": 0.4
+    },
+    "character": {
+      "label": "feudal Japanese hill village",
+      "materialTheme": "temperate_timber",
+      "formPacks": [
+        "feudal_japanese"
+      ],
+      "archetypes": {
+        "prefer": [
+          "machiya",
+          "cottage",
+          "granary",
+          "tea_room"
+        ],
+        "forbid": [
+          "townhouse",
+          "apartment_block",
+          "office"
+        ]
+      },
+      "urbanForm": "hillside",
+      "ground": "stepped"
+    },
+    "tokens": {
+      "terrain": "a steep hillside village surrounded by terraced rice paddies, rising to a prominent ridge overlooking the valley",
+      "icons": "a great bronze temple bell hung in an open timber pavilion on the high ridge; stepped water paddies on stone-retained terraces; stone lanterns along climbing stone stairs",
+      "lighting": "dusk"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 272464,
+    "completionTokens": 33761,
+    "cost": 0.1655
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 19,
+    "maxDepth": 2,
+    "generators": [
+      "authored:bell_pavilion",
+      "building.grammar@0",
+      "infra.entry@0",
+      "precinct.farm@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "church",
+      "cottage",
+      "granary",
+      "machiya",
+      "pagoda",
+      "tea_house",
+      "temple"
+    ],
+    "archetypesInCatalog": 7,
+    "formPacks": [
+      "feudal_japanese"
+    ],
+    "props": [
+      "cairn",
+      "well_head"
+    ],
+    "species": [
+      "slender_birch",
+      "tall_cedar",
+      "valley_cherry",
+      "valley_oak",
+      "wild_cherry"
+    ],
+    "envelopes": [
+      "512x512",
+      "170x150",
+      "11x16x11",
+      "9x13x17",
+      "13x15x13",
+      "110x96",
+      "100x88"
+    ],
+    "constraints": 8,
+    "constraintKinds": [
+      "adjacent_to",
+      "at",
+      "band",
+      "distance",
+      "gap",
+      "max",
+      "min",
+      "on",
+      "zone"
+    ],
+    "constraintsWithStrength": 5,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 2,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 18,
+    "eras": [
+      "medieval"
+    ],
+    "bytes": 27147
+  },
+  "wallMs": 382000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 3,
+    "feedbackRounds": 2,
+    "programs": [
+      "ok bell_pavilion [landmark] 1 attempt(s), 35242 tokens ($0.0611), 6 warning(s)"
+    ],
+    "programCost": 0.0611,
+    "totalCost": 0.2266,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/probe2/gen/probe_temple_bell/out/bell_ridge_village",
+    "finalDiagnostics": {
+      "LOAM-W330": 1,
+      "LOAM-T208": 1,
+      "LOAM-W520": 1,
+      "LOAM-T242": 1,
+      "LOAM-I499": 2,
+      "LOAM-W483": 1,
+      "LOAM-I463": 3,
+      "LOAM-T237": 3,
+      "LOAM-I504": 2,
+      "LOAM-I497": 1,
+      "LOAM-I412": 1,
+      "LOAM-W413": 1,
+      "LOAM-T232": 1,
+      "LOAM-T341": 1,
+      "LOAM-W470": 1
+    },
+    "crash": [],
+    "docName": "bell_ridge_village.loam.json"
+  }
+}

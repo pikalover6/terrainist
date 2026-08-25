@@ -1,0 +1,141 @@
+{
+  "id": "probe_two_villages",
+  "family": "probe",
+  "kit": "settlement",
+  "prompt": "Two rival fishing villages on opposite shores of a narrow fjord, one of stone and one of timber, joined only by a rope ferry.",
+  "seed": 902,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "era": "medieval",
+    "climate": {
+      "temperature": -0.4,
+      "humidity": 0.3,
+      "snow": "auto"
+    },
+    "tokens": {
+      "terrain": "two steep opposing shores separated by a narrow water fjord",
+      "infra": "rope ferry cable stretched across the water between the two opposing village quays",
+      "region_stone_village": "era medieval, wealth 0.45, decline 0.15, formality 0.25; urbanForm hillside; ground stepped; stone masonry cottages, slate roofs, fish drying racks, smokehouse, stone pier, ferry landing",
+      "region_timber_village": "era medieval, wealth 0.4, decline 0.2, formality 0.2; materialTheme boreal_pine; formPacks [\"nordic_viking\"]; urbanForm hillside; ground stepped; timber log longhouses, wooden stilt docks, net mending lofts, boat sheds, ferry winch house"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 281841,
+    "completionTokens": 57355,
+    "cost": 0.2132
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 31,
+    "maxDepth": 2,
+    "generators": [
+      "authored:rope_ferry",
+      "building.grammar@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "boathouse",
+      "cannery",
+      "cottage",
+      "guildhall",
+      "hall",
+      "inn",
+      "longhouse",
+      "sawmill",
+      "tannery",
+      "tavern",
+      "warehouse",
+      "watchtower"
+    ],
+    "archetypesInCatalog": 12,
+    "formPacks": [
+      "nordic_viking"
+    ],
+    "props": [
+      "buoy",
+      "fishing_sloop",
+      "fishing_trawler",
+      "pier",
+      "rowboat"
+    ],
+    "species": [
+      "highland_spruce",
+      "squat_spruce",
+      "taiga_larch",
+      "taiga_spruce",
+      "tall_spruce"
+    ],
+    "envelopes": [
+      "512x512",
+      "104x96",
+      "13x14x17",
+      "11x11x17",
+      "7x19x7",
+      "104x96",
+      "11x13x21",
+      "11x11x17",
+      "7x19x7"
+    ],
+    "constraints": 4,
+    "constraintKinds": [
+      "at",
+      "band",
+      "on"
+    ],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 3,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 6,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 26,
+    "eras": [
+      "medieval"
+    ],
+    "bytes": 39137
+  },
+  "wallMs": 616000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 3,
+    "feedbackRounds": 2,
+    "programs": [
+      "ok rope_ferry [landmark] 1 attempt(s), 34088 tokens ($0.0590), 11 warning(s)",
+      "ok fish_drying_rack [plugin] 1 attempt(s), 20214 tokens ($0.0329), 27 warning(s)"
+    ],
+    "programCost": 0.0919,
+    "totalCost": 0.3051,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/probe2/gen/probe_two_villages/out/fjord_rivals",
+    "finalDiagnostics": {
+      "LOAM-T208": 1,
+      "LOAM-W521": 1,
+      "LOAM-T242": 2,
+      "LOAM-I512": 2,
+      "LOAM-W413": 3,
+      "LOAM-I412": 2,
+      "LOAM-I463": 5,
+      "LOAM-T228": 1,
+      "LOAM-I497": 1,
+      "LOAM-T341": 1,
+      "LOAM-W337": 1,
+      "LOAM-W470": 1,
+      "LOAM-T107": 1
+    },
+    "crash": [],
+    "docName": "fjord_rivals.loam.json"
+  }
+}

@@ -1,0 +1,899 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "skywhale_bazaar",
+    "worldSeed": "906",
+    "prompt": "A desert town built inside the ribcage of a fossilised sky-whale: the ribs form the market hall, the skull is the temple, and the spine is the main street.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.5,
+    "formality": 0.4,
+    "climate": {
+      "biome": "minecraft:desert",
+      "temperature": 1,
+      "humidity": -1,
+      "snow": "never"
+    },
+    "character": {
+      "label": "fossil sky-whale desert settlement",
+      "materialTheme": "sun_clay",
+      "formPacks": [
+        "desert_caravanserai"
+      ],
+      "urbanForm": "linear",
+      "motifs": {
+        "roofType": "flat",
+        "windowRhythm": "sparse"
+      },
+      "archetypes": {
+        "prefer": [
+          "spice_market",
+          "caravanserai",
+          "adobe_pueblo",
+          "market_stall",
+          "tea_house",
+          "apothecary",
+          "cistern"
+        ],
+        "forbid": [
+          "skyscraper",
+          "office",
+          "tudor_row",
+          "chalet"
+        ]
+      },
+      "props": {
+        "prefer": [
+          "market_barrow",
+          "covered_wagon",
+          "fossil_dig",
+          "campsite",
+          "well_head",
+          "hitching_post"
+        ]
+      },
+      "programs": [
+        {
+          "id": "skywhale_skull_temple",
+          "mode": "landmark",
+          "brief": "A colossal hollowed fossilized sky-whale skull half-buried in the dunes, with vaulted eye sockets and tooth arches forming temple porticos, lit with altar braziers and hanging lanterns.",
+          "envelope": [
+            32,
+            22,
+            36
+          ]
+        },
+        {
+          "id": "skywhale_ribcage_market",
+          "mode": "landmark",
+          "brief": "A towering series of curved fossil sky-whale ribs vaulting high across the street, draped with sun-bleached shade canopies, merchant stalls, and trade counters forming a bone bazaar arcade.",
+          "envelope": [
+            26,
+            18,
+            48
+          ]
+        },
+        {
+          "id": "fossil_vertebra_arch",
+          "mode": "plugin",
+          "brief": "A weathered fossil sky-whale vertebra and spinal segment jutting from the sand dunes as a bleached archway and waypoint marker along the spine road.",
+          "envelope": [
+            7,
+            6,
+            7
+          ],
+          "count": 12
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "vast open desert dunes surrounding the colossal fossilised skeleton of a sky-whale half-buried in the sand",
+      "icons": "colossal sky-whale fossil skeleton: curved ribcage forming a vaulted market arcade; massive skull hollowed out as a central temple; articulated spine ridge paved as the main street"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": "minecraft:sand",
+      "ground.subsurface": "minecraft:sandstone",
+      "ground.cliff": "minecraft:smooth_sandstone",
+      "ground.beach": "minecraft:sand",
+      "road.surface": "minecraft:smooth_sandstone",
+      "road.shoulder": "minecraft:sandstone",
+      "plaza.path": "minecraft:cut_sandstone",
+      "plaza.cobble": "minecraft:smooth_sandstone",
+      "plaza.border": "minecraft:bone_block"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "The Sky-Whale Ribcage Settlement",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "windswept desert dunes and the fossil bone valley",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 70,
+          "amplitude": 18,
+          "octaves": 4,
+          "frequency": 0.003,
+          "gain": 0.45,
+          "warp": {
+            "amount": 16,
+            "frequency": 0.003
+          },
+          "erosionPasses": 2,
+          "cliffThreshold": 52,
+          "soilDepth": 3,
+          "beachWidth": 2,
+          "snowLineFraction": 1
+        },
+        "children": [
+          {
+            "id": "bone_valley_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "shallow flat shelf where the sky-whale settled into the desert",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 115,
+              "height": 5,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "whale_spine_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "elevated spine ridge alignment running through the center",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.28,
+                  0.5
+                ],
+                [
+                  0.5,
+                  0.5
+                ],
+                [
+                  0.72,
+                  0.5
+                ]
+              ],
+              "width": 38,
+              "height": 7,
+              "profile": "rounded",
+              "meander": 0.15
+            }
+          },
+          {
+            "id": "oasis_basin",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "small spring basin sheltered near the skull",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.34,
+                0.38
+              ],
+              "radius": 32,
+              "depth": 6,
+              "water": true,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "arid",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0015
+        }
+      },
+      {
+        "id": "oasis_scrub",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "desert ironwood and scrub around the spring",
+        "params": {
+          "area": {
+            "at": [
+              0.34,
+              0.38
+            ],
+            "radius": 45
+          },
+          "density": 0.035,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 28,
+          "edgeFalloff": 8,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.1,
+            "flowers": 0.02,
+            "deadwood": 0.2
+          },
+          "species": [
+            {
+              "id": "desert_hardwood",
+              "weight": 2,
+              "shape": "desert_ironwood"
+            },
+            {
+              "id": "dune_scrub",
+              "weight": 3,
+              "shape": "juniper_scrub"
+            }
+          ]
+        }
+      },
+      {
+        "id": "desert_scatter",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse deadwood and desert shrubs across the wastes",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.008,
+          "spacing": 6,
+          "clumping": 0.3,
+          "maxSlope": 35,
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.02,
+            "flowers": 0,
+            "deadwood": 0.15
+          },
+          "species": [
+            {
+              "id": "scrub_bush",
+              "weight": 1,
+              "shape": "juniper_scrub"
+            }
+          ]
+        }
+      },
+      {
+        "id": "spine_market_plaza",
+        "kind": "primitive",
+        "label": "the spine street concourse inside the whale ribcage",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            36,
+            16
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public",
+          "market"
+        ]
+      },
+      {
+        "id": "skull_temple",
+        "kind": "generator",
+        "generator": "authored:skywhale_skull_temple",
+        "label": "the fossil skull sanctuary at the head of the spine",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            32,
+            22,
+            36
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.4,
+              0.5
+            ]
+          },
+          {
+            "distance": "spine_market_plaza",
+            "min": 10,
+            "max": 32,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "params": {
+          "face": {
+            "toward": "spine_market_plaza"
+          },
+          "seat": "embed",
+          "embedDepth": 3
+        },
+        "tags": [
+          "landmark",
+          "temple",
+          "faith"
+        ]
+      },
+      {
+        "id": "ribcage_arcade",
+        "kind": "generator",
+        "generator": "authored:skywhale_ribcage_market",
+        "label": "the monumental ribcage framing the main market",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            26,
+            18,
+            48
+          ]
+        },
+        "constraints": [
+          {
+            "adjacent_to": "spine_market_plaza",
+            "gap": [
+              1,
+              6
+            ],
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "params": {
+          "seat": "embed",
+          "embedDepth": 2
+        },
+        "tags": [
+          "landmark",
+          "market",
+          "trade"
+        ]
+      },
+      {
+        "id": "vertebra_trail",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "scattered massive vertebrae jutting along the spine corridor",
+        "params": {
+          "program": "fossil_vertebra_arch",
+          "count": 12,
+          "area": {
+            "at": [
+              0.5,
+              0.5
+            ],
+            "radius": 0.35
+          },
+          "spacing": 22,
+          "seat": "embed",
+          "embedDepth": 2,
+          "avoidTags": [
+            "structure",
+            "plaza"
+          ]
+        }
+      },
+      {
+        "id": "caravanserai_inn",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the grand caravanserai for desert traders",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            12,
+            17
+          ]
+        },
+        "params": {
+          "archetype": "caravanserai",
+          "floors": 1,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "spine_market_plaza",
+            "gap": [
+              2,
+              10
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "spine_market_plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "trade",
+          "inn",
+          "house"
+        ]
+      },
+      {
+        "id": "spice_bazaar",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "spice and dye exchange under the ribs",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            17
+          ]
+        },
+        "params": {
+          "archetype": "spice_market",
+          "floors": 1,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "spine_market_plaza",
+            "gap": [
+              2,
+              8
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "spine_market_plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "trade",
+          "market"
+        ]
+      },
+      {
+        "id": "apothecary_shop",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "bone-ash and herb alchemist shop",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            10,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "apothecary",
+          "floors": 1,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "distance": "spine_market_plaza",
+            "min": 6,
+            "max": 28,
+            "strength": "soft"
+          },
+          {
+            "facing": "spine_market_plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "craft",
+          "trade"
+        ]
+      },
+      {
+        "id": "oasis_tea_house",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "tea house overlooking the spring and spine road",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "archetype": "tea_house",
+          "floors": 1,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "distance": "spine_market_plaza",
+            "min": 8,
+            "max": 32,
+            "strength": "soft"
+          },
+          {
+            "facing": "spine_market_plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "trade",
+          "food"
+        ]
+      },
+      {
+        "id": "desert_dwelling_north",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "adobe home nestled behind the north rib line",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "adobe_pueblo",
+          "floors": 1,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "distance": "spine_market_plaza",
+            "min": 10,
+            "max": 45,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "desert_dwelling_south",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "sandstone home built into the flank sands",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "adobe_pueblo",
+          "floors": 1,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "distance": "spine_market_plaza",
+            "min": 12,
+            "max": 50,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "desert_cistern",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "vaulted water reservoir near the temple",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            12,
+            17
+          ]
+        },
+        "params": {
+          "archetype": "cistern",
+          "floors": 1,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "distance": "skull_temple",
+            "min": 8,
+            "max": 30,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "waterworks",
+          "civic"
+        ]
+      },
+      {
+        "id": "fossil_excavation",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "archaeological dig unearthing whale bone plates",
+        "params": {
+          "prop": "fossil_dig",
+          "zone": "center",
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "nomad_campsite",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "caravan camp set up outside the bone gate",
+        "params": {
+          "prop": "campsite",
+          "zone": "east",
+          "jitter": 0.15
+        }
+      },
+      {
+        "id": "oasis_well",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "deep water well in the town center",
+        "params": {
+          "prop": "well_head",
+          "zone": "center",
+          "jitter": 0.05
+        }
+      },
+      {
+        "id": "trader_wagon",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "desert freight wagon parked near the market",
+        "params": {
+          "prop": "covered_wagon",
+          "zone": "center",
+          "jitter": 0.1
+        }
+      },
+      {
+        "id": "market_cart",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "fruit and spice vendor barrow",
+        "params": {
+          "prop": "market_barrow",
+          "zone": "center",
+          "jitter": 0.08
+        }
+      },
+      {
+        "id": "spine_boardwalk",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "raised plank walk alongside the bone street",
+        "params": {
+          "entry": "boardwalk",
+          "route": {
+            "along": "spine_road",
+            "offset": 2,
+            "side": "left"
+          }
+        }
+      },
+      {
+        "id": "spine_road",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "the sandstone spine thoroughfare linking the skull temple and market",
+        "params": {
+          "anchors": [
+            "spine_market_plaza",
+            "skull_temple",
+            "ribcage_arcade",
+            "#tag:house",
+            "#tag:trade"
+          ],
+          "pattern": "ribbon",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 12
+        }
+      }
+    ]
+  },
+  "programs": {
+    "skywhale_skull_temple": {
+      "mode": "landmark",
+      "envelope": [
+        32,
+        28,
+        36
+      ],
+      "sourceHash": "b3:b49eabebb4ead1fb68ff916eb027fbe2d43d4b82c861c7d06dd3e9791acdc226",
+      "outputHash": "b3:09eccf46914a469ed2e0ed5c961fc6ec87e13a3c4b765a065b70c95f6c28a2ba",
+      "conforms": false,
+      "conformHash": "b3:725c3867bdd655ed7dee42204c80d294a51b9145785098471812ebd31c1d7632",
+      "source": "export const envelope = [32, 28, 36];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const seatY = 6;\n  const cx = 15.5;\n\n  // Theme roles with safe standard fallbacks\n  const pStone = api.theme.stone.primary || \"minecraft:smooth_sandstone\";\n  const pAccent = api.theme.stone.accent || \"minecraft:cut_sandstone\";\n  const pPlinth = api.theme.ground.plinth || \"minecraft:sandstone\";\n  const pPavement = api.theme.ground.pavement || \"minecraft:smooth_sandstone\";\n  const pKerb = api.theme.ground.kerb || \"minecraft:cut_sandstone\";\n  const pStairs = api.theme.stone.stairs || \"minecraft:sandstone_stairs\";\n  const pSlab = api.theme.stone.slab || \"minecraft:sandstone_slab\";\n  const pWall = api.theme.stone.wall || \"minecraft:sandstone_wall\";\n  const pWoodPlanks = api.theme.wood.planks || \"minecraft:oak_planks\";\n  const pWoodFence = api.theme.wood.fence || \"minecraft:oak_fence\";\n\n  // State formatting helpers\n  function makeStair(baseStr, facing, half = \"bottom\", shape = \"straight\") {\n    const baseName = (baseStr || \"minecraft:sandstone_stairs\").split(\"[\")[0];\n    return `${baseName}[facing=${facing},half=${half},shape=${shape},waterlogged=false]`;\n  }\n\n  function makeSlab(baseStr, type = \"bottom\") {\n    const baseName = (baseStr || \"minecraft:sandstone_slab\").split(\"[\")[0];\n    return `${baseName}[type=${type},waterlogged=false]`;\n  }\n\n  function getBone(axis = \"y\", seed = 0) {\n    const v = Math.sin(seed * 12.9898) * 43758.5453;\n    const frac = v - Math.floor(v);\n    if (frac > 0.88) return \"minecraft:smooth_sandstone\";\n    if (frac > 0.80) return \"minecraft:cut_sandstone\";\n    return `minecraft:bone_block[axis=${axis}]`;\n  }\n\n  // 3D Voxel buffer\n  const grid = Array.from({ length: W }, () =>\n    Array.from({ length: H }, () => new Array(D).fill(null))\n  );\n\n  function setV(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      grid[x][y][z] = block;\n    }\n  }\n\n  function getV(x, y, z) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      return grid[x][y][z];\n    }\n    return null;\n  }\n\n  // -------------------------------------------------------------\n  // 1. TEMPLE FLOORING & ENTRANCE STEPS\n  // -------------------------------------------------------------\n  // Entrance steps at z = 0..3 stepping from seatY up to seatY + 2\n  for (let x = 12; x <= 19; x++) {\n    setV(x, seatY, 0, makeStair(pStairs, \"north\"));\n  }\n  for (let x = 11; x <= 20; x++) {\n    setV(x, seatY, 1, pStone);\n    if (x >= 12 && x <= 19) setV(x, seatY + 1, 1, makeStair(pStairs, \"north\"));\n  }\n  for (let x = 10; x <= 21; x++) {\n    setV(x, seatY, 2, pStone);\n    setV(x, seatY + 1, 2, pStone);\n    if (x >= 12 && x <= 19) setV(x, seatY + 2, 2, makeStair(pStairs, \"north\"));\n  }\n\n  // Main temple floor at y = seatY + 2 (z = 3 to 34)\n  for (let z = 3; z <= 34; z++) {\n    let flW;\n    if (z <= 13) {\n      flW = 4.0 + (z / 14.0) * 6.5;\n    } else if (z <= 32) {\n      const u = (z - 13) / 19.0;\n      flW = 12.0 * Math.pow(Math.sin(u * Math.PI), 0.5) + 3.0;\n    } else {\n      flW = 4.0;\n    }\n\n    const minX = Math.max(1, Math.floor(cx - flW));\n    const maxX = Math.min(W - 2, Math.ceil(cx + flW));\n\n    for (let x = minX; x <= maxX; x++) {\n      // Sub-floor solid plinth\n      setV(x, seatY + 1, z, pPlinth);\n\n      // Floor surface\n      if (x >= 14 && x <= 17) {\n        // Central ritual runner\n        setV(x, seatY + 2, z, (z % 3 === 0) ? pAccent : pPavement);\n      } else if (x === 13 || x === 18) {\n        setV(x, seatY + 2, z, pKerb);\n      } else {\n        setV(x, seatY + 2, z, pPavement);\n      }\n    }\n  }\n\n  // Sanctuary Raised Dais (z = 25 to 31, y = seatY + 3)\n  for (let x = 12; x <= 19; x++) {\n    setV(x, seatY + 3, 25, makeStair(pStairs, \"north\"));\n  }\n  for (let z = 26; z <= 31; z++) {\n    for (let x = 10; x <= 21; x++) {\n      setV(x, seatY + 2, z, pStone);\n      setV(x, seatY + 3, z, (x >= 14 && x <= 17) ? pAccent : pPavement);\n    }\n  }\n\n  // -------------------------------------------------------------\n  // 2. CRANIUM VAULTED DOME (z = 13 to 34)\n  // -------------------------------------------------------------\n  const cranCenterZ = 23.5;\n  const cranCenterY = seatY + 8.5;\n\n  for (let z = 13; z <= 34; z++) {\n    const u = (z - 13) / 21.0;\n    const profile = Math.sin(u * Math.PI);\n    const rxOut = 13.2 * Math.pow(profile, 0.48) + 2.4;\n    const ryOut = 10.8 * Math.pow(profile, 0.45) + 2.0;\n\n    const rxIn = Math.max(1.2, rxOut - 1.8);\n    const ryIn = Math.max(1.2, ryOut - 1.6);\n\n    for (let x = 0; x < W; x++) {\n      const dx = x - cx;\n      for (let y = seatY + 2; y < H; y++) {\n        const dy = y - cranCenterY;\n\n        const dOut = (dx / rxOut) ** 2 + (dy / ryOut) ** 2;\n        const dIn = (dx / rxIn) ** 2 + (dy / ryIn) ** 2;\n\n        if (dOut <= 1.0 && dIn >= 1.0) {\n          // Check Blowhole Skylight Openings (z = 21..24, dorsal top)\n          const isBlowhole = (y >= seatY + 14) && (z >= 21 && z <= 24) &&\n            ((x === 13 || x === 14 || x === 17 || x === 18) && (z === 22 || z === 23));\n\n          // Check Eye Socket Openings (z = 13..17, lateral flanks)\n          const isLeftEye = (x <= 7) && (z >= 13 && z <= 17) && (y >= seatY + 3 && y <= seatY + 8) &&\n            (((z - 15) / 2.3) ** 2 + ((y - (seatY + 5.5)) / 2.6) ** 2 <= 1.0);\n          const isRightEye = (x >= 24) && (z >= 13 && z <= 17) && (y >= seatY + 3 && y <= seatY + 8) &&\n            (((z - 15) / 2.3) ** 2 + ((y - (seatY + 5.5)) / 2.6) ** 2 <= 1.0);\n\n          if (!isBlowhole && !isLeftEye && !isRightEye) {\n            setV(x, y, z, getBone(\"z\", x * 17 + y * 31 + z * 7));\n          }\n        }\n      }\n    }\n\n    // Sagittal dorsal crest along cranial midline\n    const topY = Math.min(H - 1, Math.floor(cranCenterY + ryOut));\n    setV(15, topY, z, getBone(\"z\", z * 11));\n    setV(16, topY, z, getBone(\"z\", z * 13));\n  }\n\n  // Eye Socket Balconies & Overlooks\n  for (let z = 13; z <= 17; z++) {\n    // Left balcony\n    for (let x = 4; x <= 8; x++) {\n      setV(x, seatY + 2, z, pPlinth);\n      setV(x, seatY + 3, z, pWoodPlanks);\n    }\n    setV(4, seatY + 4, z, pWoodFence);\n\n    // Right balcony\n    for (let x = 23; x <= 27; x++) {\n      setV(x, seatY + 2, z, pPlinth);\n      setV(x, seatY + 3, z, pWoodPlanks);\n    }\n    setV(27, seatY + 4, z, pWoodFence);\n  }\n\n  // Blowhole Skylight Rims\n  for (let z = 21; z <= 24; z++) {\n    for (let x = 12; x <= 19; x++) {\n      if ((x >= 13 && x <= 14) || (x >= 17 && x <= 18)) {\n        if (z === 21 || z === 24 || x === 12 || x === 19) {\n          const by = seatY + 16;\n          if (getV(x, by, z) === null) {\n            setV(x, by, z, makeSlab(pSlab, \"bottom\"));\n          }\n        }\n      }\n    }\n  }\n\n  // -------------------------------------------------------------\n  // 3. ROSTRUM / UPPER SNOUT VAULT (z = 0 to 13)\n  // -------------------------------------------------------------\n  for (let z = 0; z <= 13; z++) {\n    const u = z / 14.0;\n    const yTop = seatY + 6.5 + u * 9.0;\n    const wOut = 4.2 + u * 7.5;\n    const wIn = Math.max(1.0, wOut - 1.6);\n\n    for (let x = 0; x < W; x++) {\n      const dx = Math.abs(x - cx);\n      if (dx <= wOut) {\n        const yVaultOut = yTop - ((dx / wOut) ** 1.65) * (yTop - (seatY + 2.0));\n        const yVaultIn = (yTop - 1.4) - ((dx / wIn) ** 1.65) * (yTop - (seatY + 3.2));\n\n        for (let y = seatY + 2; y <= Math.ceil(yTop); y++) {\n          if (y <= yVaultOut && (y >= yVaultIn || y <= seatY + 2)) {\n            setV(x, y, z, getBone(\"z\", x * 13 + y * 7 + z * 23));\n          }\n        }\n      }\n    }\n\n    // Rostrum dorsal ridge\n    const ridgeY = Math.min(H - 1, Math.floor(yTop) + 1);\n    setV(15, ridgeY, z, getBone(\"z\", z * 19));\n    setV(16, ridgeY, z, getBone(\"z\", z * 23));\n  }\n\n  // -------------------------------------------------------------\n  // 4. BALEEN / TOOTH ARCHES (PORTICO COLONNADE)\n  // -------------------------------------------------------------\n  const toothStations = [2, 4, 6, 8, 10, 12];\n  for (const tz of toothStations) {\n    const u = tz / 14.0;\n    const wSnout = 4.2 + u * 7.5;\n    const yRim = Math.floor(seatY + 6.5 + u * 9.0 - (wSnout / wSnout) ** 1.65 * (4.5 + u * 9.0));\n\n    const leftX = Math.round(cx - wSnout);\n    const rightX = Math.round(cx + wSnout);\n\n    // Left tooth pillar\n    for (let y = seatY + 1; y <= yRim + 1; y++) {\n      setV(leftX, y, tz, getBone(\"y\", leftX * 3 + y * 7));\n      setV(leftX, y, tz + 1, getBone(\"y\", leftX * 5 + y * 11));\n    }\n    setV(leftX + 1, seatY + 1, tz, makeStair(pStairs, \"west\", \"bottom\"));\n    setV(leftX + 1, yRim, tz, makeStair(pStairs, \"east\", \"top\"));\n\n    // Right tooth pillar\n    for (let y = seatY + 1; y <= yRim + 1; y++) {\n      setV(rightX, y, tz, getBone(\"y\", rightX * 3 + y * 7));\n      setV(rightX, y, tz + 1, getBone(\"y\", rightX * 5 + y * 11));\n    }\n    setV(rightX - 1, seatY + 1, tz, makeStair(pStairs, \"east\", \"bottom\"));\n    setV(rightX - 1, yRim, tz, makeStair(pStairs, \"west\", \"top\"));\n  }\n\n  // -------------------------------------------------------------\n  // 5. LOWER MANDIBLES (SWEEPING JAWBONES)\n  // -------------------------------------------------------------\n  for (let z = 0; z <= 18; z++) {\n    const u = z / 18.0;\n    const mandXLeft = 7.0 - Math.sin(u * Math.PI * 0.75) * 4.6;\n    const mandXRight = 31.0 - mandXLeft;\n    const mandY = seatY + 1.0 + u * 6.5;\n\n    const mxL = Math.round(mandXLeft);\n    const mxR = Math.round(mandXRight);\n    const my = Math.round(mandY);\n\n    // Left jaw cross-section\n    setV(mxL, my, z, getBone(\"z\", z * 17));\n    setV(mxL + 1, my, z, getBone(\"z\", z * 19));\n    setV(mxL, my - 1, z, getBone(\"z\", z * 23));\n    setV(mxL + 1, my - 1, z, pStone);\n\n    // Right jaw cross-section\n    setV(mxR, my, z, getBone(\"z\", z * 29));\n    setV(mxR - 1, my, z, getBone(\"z\", z * 31));\n    setV(mxR, my - 1, z, getBone(\"z\", z * 37));\n    setV(mxR - 1, my - 1, z, pStone);\n  }\n\n  // -------------------------------------------------------------\n  // 6. INTERNAL TRANSVERSE VAULT RIBS\n  // -------------------------------------------------------------\n  const ribStations = [8, 13, 18, 23, 28];\n  for (const rz of ribStations) {\n    for (let x = 4; x <= 27; x++) {\n      for (let y = seatY + 4; y < H - 1; y++) {\n        if (getV(x, y, rz) === null && getV(x, y + 1, rz) !== null) {\n          // Protruding rib voxel under ceiling\n          setV(x, y, rz, getBone(\"x\", x * 13 + y * 7));\n          break;\n        }\n      }\n    }\n  }\n\n  // -------------------------------------------------------------\n  // 7. SANCTUARY HIGH ALTAR & RELIQUARY\n  // -------------------------------------------------------------\n  // Altar Base (z = 27 to 29, x = 14 to 17)\n  for (let z = 27; z <= 29; z++) {\n    for (let x = 14; x <= 17; x++) {\n      setV(x, seatY + 3, z, pStone);\n      setV(x, seatY + 4, z, (x === 14 || x === 17) ? getBone(\"y\", x + z) : pAccent);\n    }\n  }\n\n  // Altar Table & Reliquary centerpiece\n  setV(14, seatY + 5, 27, makeSlab(pSlab, \"bottom\"));\n  setV(17, seatY + 5, 27, makeSlab(pSlab, \"bottom\"));\n  setV(14, seatY + 5, 29, makeSlab(pSlab, \"bottom\"));\n  setV(17, seatY + 5, 29, makeSlab(pSlab, \"bottom\"));\n  setV(15, seatY + 5, 27, pKerb);\n  setV(16, seatY + 5, 27, pKerb);\n  setV(15, seatY + 5, 29, pKerb);\n  setV(16, seatY + 5, 29, pKerb);\n\n  // Sacred Altar Braziers (Soul Fire)\n  setV(14, seatY + 5, 28, \"minecraft:soul_campfire[lit=true]\");\n  setV(17, seatY + 5, 28, \"minecraft:soul_campfire[lit=true]\");\n\n  // Central Sacred Relic\n  setV(15, seatY + 5, 28, \"minecraft:chiseled_sandstone\");\n  setV(16, seatY + 5, 28, \"minecraft:chiseled_sandstone\");\n  setV(15, seatY + 6, 28, \"minecraft:sea_lantern\");\n  setV(16, seatY + 6, 28, \"minecraft:sea_lantern\");\n\n  // Altar Reredos Backdrop (z = 31, x = 13..18)\n  for (let x = 13; x <= 18; x++) {\n    for (let y = seatY + 4; y <= seatY + 8; y++) {\n      if (x === 13 || x === 18) {\n        setV(x, y, 31, getBone(\"y\", x * 5 + y * 7));\n      } else {\n        setV(x, y, 31, (y === seatY + 8) ? makeSlab(pSlab, \"top\") : pAccent);\n      }\n    }\n  }\n\n  // -------------------------------------------------------------\n  // 8. OCCIPITAL CONDYLES & SPINAL ARCHWAY (z = 32 to 35)\n  // -------------------------------------------------------------\n  const occY = seatY + 6.5;\n  for (let z = 32; z <= 35; z++) {\n    for (let x = 9; x <= 22; x++) {\n      for (let y = seatY + 2; y <= seatY + 12; y++) {\n        const dx = x - cx;\n        const dy = y - occY;\n        const d = Math.sqrt(dx * dx + dy * dy);\n\n        if (d <= 5.4 && d >= 3.2) {\n          setV(x, y, z, getBone(\"z\", x * 7 + y * 13 + z * 19));\n        }\n      }\n    }\n  }\n\n  // Dual Occipital Condyle rounded masses\n  for (let z = 34; z <= 35; z++) {\n    for (let y = seatY + 3; y <= seatY + 6; y++) {\n      for (let x = 9; x <= 11; x++) setV(x, y, z, getBone(\"z\", x + y));\n      for (let x = 20; x <= 22; x++) setV(x, y, z, getBone(\"z\", x + y));\n    }\n  }\n\n  // -------------------------------------------------------------\n  // 9. HANGING CHAINS, LANTERNS & BRAZIERS\n  // -------------------------------------------------------------\n  // Nave & Sanctuary Hanging Lanterns\n  const lanternDrops = [\n    { x: 15, z: 8, topY: seatY + 9, len: 2, soul: false },\n    { x: 16, z: 8, topY: seatY + 9, len: 2, soul: false },\n    { x: 15, z: 13, topY: seatY + 12, len: 3, soul: false },\n    { x: 16, z: 13, topY: seatY + 12, len: 3, soul: false },\n    { x: 15, z: 18, topY: seatY + 14, len: 3, soul: true },\n    { x: 16, z: 18, topY: seatY + 14, len: 3, soul: true },\n    { x: 15, z: 28, topY: seatY + 13, len: 4, soul: true },\n    { x: 16, z: 28, topY: seatY + 13, len: 4, soul: true },\n    { x: 5, z: 15, topY: seatY + 7, len: 2, soul: false },\n    { x: 26, z: 15, topY: seatY + 7, len: 2, soul: false },\n  ];\n\n  for (const l of lanternDrops) {\n    for (let i = 0; i < l.len; i++) {\n      setV(l.x, l.topY - i, l.z, \"minecraft:chain[axis=y]\");\n    }\n    const lanternBlock = l.soul\n      ? \"minecraft:soul_lantern[hanging=true]\"\n      : \"minecraft:lantern[hanging=true]\";\n    setV(l.x, l.topY - l.len, l.z, lanternBlock);\n  }\n\n  // Entrance Flanking Pilgrimage Braziers\n  setV(9, seatY + 1, 1, pPlinth);\n  setV(9, seatY + 2, 1, pKerb);\n  setV(9, seatY + 3, 1, \"minecraft:campfire[lit=true]\");\n\n  setV(22, seatY + 1, 1, pPlinth);\n  setV(22, seatY + 2, 1, pKerb);\n  setV(22, seatY + 3, 1, \"minecraft:campfire[lit=true]\");\n\n  // -------------------------------------------------------------\n  // 10. GROUND CONFORMANCE & EMISSION TO API\n  // -------------------------------------------------------------\n  // Read heightAt at every occupied column and extend foundations down\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      let lowestY = -1;\n      let lowestBlock = null;\n\n      for (let y = 0; y < H; y++) {\n        if (grid[x][y][z] !== null) {\n          lowestY = y;\n          lowestBlock = grid[x][y][z];\n          break;\n        }\n      }\n\n      if (lowestY !== -1) {\n        // Column is occupied: check terrain height\n        const terrainH = Math.round(api.heightAt(x, z));\n        const targetGroundY = Math.max(0, Math.min(H - 1, seatY + terrainH));\n\n        // Choose continuous foundation material\n        let fillBlock = pPlinth;\n        if (lowestBlock.includes(\"bone_block\")) {\n          fillBlock = getBone(\"y\", x * 11 + z * 17);\n        } else if (lowestBlock.includes(\"pavement\") || lowestBlock.includes(\"stone\")) {\n          fillBlock = pStone;\n        }\n\n        // Extend downwards if ground falls away\n        if (targetGroundY < lowestY) {\n          for (let y = lowestY - 1; y >= targetGroundY; y--) {\n            grid[x][y][z] = fillBlock;\n          }\n        }\n      }\n    }\n  }\n\n  // Emit all voxels into world\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const block = grid[x][y][z];\n        if (block !== null) {\n          api.set(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"skywhale_skull_temple\",\n    seatY: seatY,\n    anchors: {\n      front: [16, seatY, 0],\n      door: [16, seatY + 2, 0],\n      altar: [16, seatY + 4, 28],\n      spine: [16, seatY + 2, 35]\n    },\n    interiors: [\n      { min: [10, seatY + 3, 4], max: [21, seatY + 10, 24], kind: \"nave\" },\n      { min: [11, seatY + 4, 25], max: [20, seatY + 11, 31], kind: \"vault\" },\n      { min: [4, seatY + 4, 13], max: [8, seatY + 7, 17], kind: \"hall\" },\n      { min: [23, seatY + 4, 13], max: [27, seatY + 7, 17], kind: \"hall\" }\n    ]\n  };\n}"
+    },
+    "skywhale_ribcage_market": {
+      "mode": "landmark",
+      "envelope": [
+        27,
+        20,
+        48
+      ],
+      "sourceHash": "b3:3a6b5139d26f6f749c8cd92ea12e235a80cc76ecbe25ad52e6894bbb599152e2",
+      "outputHash": "b3:ab0b62a16c706ff6b899123a6ba7407c82b832594052f49dea812b309412334a",
+      "conforms": false,
+      "conformHash": "b3:4d56c8130ddbdb98bb6cf66c4111a8ae40785801629cbd3721b9a608e5308634",
+      "source": "export const envelope = [27, 20, 48];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n\n  // Theme-aware palette extraction with robust fallbacks\n  const woodPlanks = api.theme?.wood?.planks ?? \"minecraft:oak_planks\";\n  const woodLog = api.theme?.wood?.log ?? \"minecraft:oak_log\";\n  const woodStripped = api.theme?.wood?.stripped ?? \"minecraft:stripped_oak_log\";\n  const woodStairs = api.theme?.wood?.stairs ?? \"minecraft:oak_stairs\";\n  const woodSlab = api.theme?.wood?.slab ?? \"minecraft:oak_slab\";\n  const woodFence = api.theme?.wood?.fence ?? \"minecraft:oak_fence\";\n  const woodTrapdoor = api.theme?.wood?.trapdoor ?? \"minecraft:oak_trapdoor\";\n\n  const stonePrimary = api.theme?.stone?.primary ?? \"minecraft:cut_sandstone\";\n  const stoneAccent = api.theme?.stone?.accent ?? \"minecraft:chiseled_sandstone\";\n  const stoneStairs = api.theme?.stone?.stairs ?? \"minecraft:sandstone_stairs\";\n  const stoneSlab = api.theme?.stone?.slab ?? \"minecraft:sandstone_slab\";\n  const stoneWall = api.theme?.stone?.wall ?? \"minecraft:sandstone_wall\";\n\n  const groundPave = api.theme?.ground?.pavement ?? \"minecraft:smooth_sandstone\";\n  const groundKerb = api.theme?.ground?.kerb ?? \"minecraft:cut_sandstone\";\n  const groundPlinth = api.theme?.ground?.plinth ?? \"minecraft:sandstone\";\n  const groundRev = api.theme?.ground?.revetment ?? \"minecraft:cut_sandstone\";\n\n  function withState(blockStr, stateStr) {\n    if (!blockStr) return blockStr;\n    if (blockStr.includes(\"[\")) {\n      const base = blockStr.split(\"[\")[0];\n      const existing = blockStr.slice(blockStr.indexOf(\"[\") + 1, -1);\n      return `${base}[${existing},${stateStr}]`;\n    }\n    return `${blockStr}[${stateStr}]`;\n  }\n\n  function setBlock(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      api.set(x, y, z, block);\n    }\n  }\n\n  // ==========================================\n  // 1. TERRAIN CONFORMATION & GROUND PLINTH\n  // ==========================================\n  for (let x = 1; x <= 25; x++) {\n    for (let z = 0; z < D; z++) {\n      const h = Math.floor(api.heightAt(x, z));\n      const minGround = Math.min(0, h);\n\n      // Foundation down to real terrain\n      for (let y = minGround; y < 0; y++) {\n        if (x <= 2 || x >= 24 || z === 0 || z === D - 1) {\n          setBlock(x, y, z, groundRev);\n        } else {\n          setBlock(x, y, z, groundPlinth);\n        }\n      }\n\n      // Ground pavement course at y = 0\n      if (x >= 9 && x <= 17) {\n        // Main vertebral avenue\n        if (x === 13) {\n          if (z % 3 === 0) {\n            setBlock(x, 0, z, \"minecraft:bone_block[axis=z]\");\n          } else {\n            setBlock(x, 0, z, groundKerb);\n          }\n        } else if (x === 9 || x === 17) {\n          setBlock(x, 0, z, groundKerb);\n        } else {\n          setBlock(x, 0, z, groundPave);\n        }\n      } else if ((x >= 2 && x <= 8) || (x >= 18 && x <= 24)) {\n        // Bazaar stall floors\n        setBlock(x, 0, z, woodPlanks);\n      }\n    }\n  }\n\n  // ==========================================\n  // 2. DORSAL VERTEBRAL SPINE (Apex along Z)\n  // ==========================================\n  for (let z = 0; z < D; z++) {\n    // Neural canal and vertebral body\n    setBlock(13, 16, z, \"minecraft:bone_block[axis=z]\");\n    setBlock(12, 16, z, \"minecraft:bone_block[axis=x]\");\n    setBlock(14, 16, z, \"minecraft:bone_block[axis=x]\");\n    setBlock(13, 15, z, \"minecraft:bone_block[axis=y]\");\n    setBlock(13, 17, z, \"minecraft:bone_block[axis=y]\");\n\n    // Vertebrae nodes with prominent dorsal & transverse spines\n    if (z % 6 === 3 || z % 6 === 4) {\n      setBlock(13, 18, z, \"minecraft:bone_block[axis=y]\");\n      setBlock(13, 19, z, \"minecraft:bone_block[axis=y]\");\n      setBlock(11, 16, z, \"minecraft:bone_block[axis=x]\");\n      setBlock(15, 16, z, \"minecraft:bone_block[axis=x]\");\n      setBlock(11, 17, z, \"minecraft:bone_block[axis=y]\");\n      setBlock(15, 17, z, \"minecraft:bone_block[axis=y]\");\n    }\n  }\n\n  // ==========================================\n  // 3. CURVED SKY-WHALE RIB ARCHES\n  // ==========================================\n  const ribZCenters = [3, 9, 15, 21, 27, 33, 39, 45];\n\n  for (const z0 of ribZCenters) {\n    for (let dz = 0; dz <= 1; dz++) {\n      const z = z0 + dz;\n\n      // Parametric rib vault curve\n      for (let step = 0; step <= 50; step++) {\n        const u = step / 50.0; // 0 (bottom) to 1 (apex)\n        const y = Math.round(u * 16.0);\n        \n        // Organic parabolic catenary with desert whale outward flare\n        const xLeftExact = 13.0 - 11.5 * Math.sqrt(Math.max(0, 1 - u * u)) - 1.5 * Math.sin(Math.PI * u);\n        const xLeft = Math.round(xLeftExact);\n        const xRight = 26 - xLeft;\n\n        const axis = (u > 0.65) ? \"axis=x\" : \"axis=y\";\n        const bone = `minecraft:bone_block[${axis}]`;\n\n        // Left rib thickness\n        setBlock(xLeft, y, z, bone);\n        if (u < 0.65) {\n          setBlock(xLeft + 1, y, z, bone);\n        } else {\n          setBlock(xLeft, y - 1, z, bone);\n        }\n\n        // Right rib thickness\n        setBlock(xRight, y, z, bone);\n        if (u < 0.65) {\n          setBlock(xRight - 1, y, z, bone);\n        } else {\n          setBlock(xRight, y - 1, z, bone);\n        }\n      }\n    }\n\n    // Anchor bone footings deep into local terrain\n    for (let rx = 1; rx <= 4; rx++) {\n      for (let rz = z0 - 1; rz <= z0 + 2; rz++) {\n        const h = Math.floor(api.heightAt(rx, rz));\n        for (let y = Math.min(0, h); y <= 0; y++) {\n          setBlock(rx, y, rz, \"minecraft:bone_block[axis=y]\");\n        }\n      }\n    }\n    for (let rx = 22; rx <= 25; rx++) {\n      for (let rz = z0 - 1; rz <= z0 + 2; rz++) {\n        const h = Math.floor(api.heightAt(rx, rz));\n        for (let y = Math.min(0, h); y <= 0; y++) {\n          setBlock(rx, y, rz, \"minecraft:bone_block[axis=y]\");\n        }\n      }\n    }\n  }\n\n  // ==========================================\n  // 4. MEZZANINE CATWALKS & ACCESS STAIRS\n  // ==========================================\n  // Balcony decks\n  for (let z = 4; z <= 44; z++) {\n    // West catwalk\n    for (let x = 4; x <= 6; x++) {\n      setBlock(x, 6, z, woodPlanks);\n    }\n    setBlock(6, 7, z, woodFence);\n\n    // East catwalk\n    for (let x = 20; x <= 22; x++) {\n      setBlock(x, 6, z, woodPlanks);\n    }\n    setBlock(20, 7, z, woodFence);\n  }\n\n  // Catwalk support pillars at rib junctions\n  for (const z0 of ribZCenters) {\n    for (let y = 1; y <= 6; y++) {\n      setBlock(5, y, z0, woodLog);\n      setBlock(21, y, z0, woodLog);\n    }\n  }\n\n  // Access stairs to catwalks (North and South flights)\n  const stairSets = [\n    { startZ: 5, dir: 1, facing: \"south\" },\n    { startZ: 43, dir: -1, facing: \"north\" },\n  ];\n\n  for (const set of stairSets) {\n    for (let i = 0; i < 5; i++) {\n      const curZ = set.startZ + i * set.dir;\n      const curY = 1 + i;\n\n      // West flight\n      for (let sy = 1; sy < curY; sy++) {\n        setBlock(7, sy, curZ, woodPlanks);\n      }\n      setBlock(7, curY, curZ, withState(woodStairs, `facing=${set.facing},half=bottom`));\n\n      // East flight\n      for (let sy = 1; sy < curY; sy++) {\n        setBlock(19, sy, curZ, woodPlanks);\n      }\n      setBlock(19, curY, curZ, withState(woodStairs, `facing=${set.facing},half=bottom`));\n    }\n  }\n\n  // ==========================================\n  // 5. BAZAAR MERCHANT STALLS & COUNTERS\n  // ==========================================\n  const stallAwnings = [\n    [\"minecraft:yellow_wool\", \"minecraft:white_wool\"],\n    [\"minecraft:orange_wool\", \"minecraft:white_wool\"],\n    [\"minecraft:terracotta\", \"minecraft:yellow_terracotta\"],\n    [\"minecraft:yellow_wool\", \"minecraft:orange_wool\"],\n    [\"minecraft:white_wool\", \"minecraft:smooth_sandstone\"],\n    [\"minecraft:orange_terracotta\", \"minecraft:yellow_wool\"],\n    [\"minecraft:yellow_wool\", \"minecraft:white_wool\"],\n  ];\n\n  for (let k = 0; k < ribZCenters.length - 1; k++) {\n    const zStart = ribZCenters[k] + 2;\n    const zEnd = ribZCenters[k + 1] - 1;\n    const awning = stallAwnings[k % stallAwnings.length];\n\n    for (let z = zStart; z <= zEnd; z++) {\n      // West stall trade counters & decor\n      setBlock(8, 1, z, woodFence);\n      setBlock(8, 2, z, withState(stoneStairs, \"facing=east,half=top\"));\n      setBlock(4, 1, z, (z % 2 === 0) ? \"minecraft:barrel[facing=up]\" : stoneAccent);\n      setBlock(4, 2, z, (z % 2 === 0) ? \"minecraft:bookshelf\" : \"minecraft:hay_block[axis=y]\");\n\n      // East stall trade counters & decor\n      setBlock(18, 1, z, woodFence);\n      setBlock(18, 2, z, withState(stoneStairs, \"facing=west,half=top\"));\n      setBlock(22, 1, z, (z % 2 === 0) ? \"minecraft:cauldron\" : \"minecraft:barrel[facing=up]\");\n      setBlock(22, 2, z, (z % 2 === 0) ? stoneAccent : \"minecraft:bone_block[axis=y]\");\n\n      // Stall shade awnings (sloping downward toward street)\n      const color = awning[(z - zStart) % 2];\n      \n      // West awning\n      setBlock(4, 5, z, color);\n      setBlock(5, 5, z, color);\n      setBlock(6, 5, z, color);\n      setBlock(7, 4, z, color);\n      setBlock(8, 4, z, color);\n\n      // East awning\n      setBlock(22, 5, z, color);\n      setBlock(21, 5, z, color);\n      setBlock(20, 5, z, color);\n      setBlock(19, 4, z, color);\n      setBlock(18, 4, z, color);\n    }\n\n    // Corner lantern posts on counters\n    setBlock(8, 3, zStart, woodFence);\n    setBlock(8, 3, zEnd, woodFence);\n    setBlock(18, 3, zStart, woodFence);\n    setBlock(18, 3, zEnd, woodFence);\n  }\n\n  // ==========================================\n  // 6. HIGH VAULT SHADE CANOPIES & SUNBEAMS\n  // ==========================================\n  for (let k = 0; k < ribZCenters.length - 1; k += 2) {\n    const zStart = ribZCenters[k] + 2;\n    const zEnd = ribZCenters[k + 1] - 1;\n\n    for (let z = zStart; z <= zEnd; z++) {\n      for (let x = 9; x <= 17; x++) {\n        // Catenary drape across upper nave\n        const sag = Math.round(14 - 1.6 * Math.sin(Math.PI * (x - 9) / 8.0));\n        \n        // Artistic slits letting dramatic desert sun rays reach the bazaar floor\n        if ((x + z) % 4 !== 0) {\n          const tarpBlock = ((x + z) % 3 === 0) ? \"minecraft:white_wool\" : \"minecraft:yellow_wool\";\n          setBlock(x, sag, z, tarpBlock);\n        }\n      }\n    }\n  }\n\n  // ==========================================\n  // 7. CENTRAL SPINE LIGHTING (Hanging Lanterns)\n  // ==========================================\n  const chandelierZs = [6, 12, 18, 24, 30, 36, 42];\n  for (const cz of chandelierZs) {\n    setBlock(13, 15, cz, \"minecraft:chain[axis=y]\");\n    setBlock(13, 14, cz, \"minecraft:chain[axis=y]\");\n    setBlock(13, 13, cz, \"minecraft:chain[axis=y]\");\n    setBlock(13, 12, cz, \"minecraft:lantern[hanging=true]\");\n  }\n\n  // ==========================================\n  // 8. GRAND ENTRANCE PORTALS (North & South)\n  // ==========================================\n  // North Portal (Front - Whale Cervical Collar & Tusks)\n  const leftTuskCoords = [\n    [6, 1, 1], [5, 2, 1], [5, 3, 1], [4, 4, 1], [4, 5, 1], [3, 6, 1], [3, 7, 0], [2, 8, 0]\n  ];\n  for (const [tx, ty, tz] of leftTuskCoords) {\n    setBlock(tx, ty, tz, \"minecraft:bone_block[axis=y]\");\n  }\n\n  const rightTuskCoords = [\n    [20, 1, 1], [21, 2, 1], [21, 3, 1], [22, 4, 1], [22, 5, 1], [23, 6, 1], [23, 7, 0], [24, 8, 0]\n  ];\n  for (const [tx, ty, tz] of rightTuskCoords) {\n    setBlock(tx, ty, tz, \"minecraft:bone_block[axis=y]\");\n  }\n\n  // Entrance ceremonial stone plinths\n  setBlock(8, 1, 0, stoneAccent);\n  setBlock(8, 2, 0, stoneWall);\n  setBlock(8, 3, 0, \"minecraft:lantern[hanging=false]\");\n\n  setBlock(18, 1, 0, stoneAccent);\n  setBlock(18, 2, 0, stoneWall);\n  setBlock(18, 3, 0, \"minecraft:lantern[hanging=false]\");\n\n  // South Exit Portal (Caudal Vertebral Gateway)\n  setBlock(8, 1, D - 1, stoneAccent);\n  setBlock(8, 2, D - 1, stoneWall);\n  setBlock(8, 3, D - 1, \"minecraft:lantern[hanging=false]\");\n\n  setBlock(18, 1, D - 1, stoneAccent);\n  setBlock(18, 2, D - 1, stoneWall);\n  setBlock(18, 3, D - 1, \"minecraft:lantern[hanging=false]\");\n\n  return {\n    name: \"Skywhale Ribcage Market Arcade\",\n    seatY: 0,\n    anchors: {\n      front: [13, 0, 0],\n      door: [13, 0, 0],\n      back: [13, 0, 47],\n      street_north: [13, 0, 0],\n      street_south: [13, 0, 47],\n    },\n    interiors: [\n      { min: [9, 1, 2], max: [17, 10, 45], kind: \"hall\" },\n      { min: [4, 1, 4], max: [7, 4, 14], kind: \"shop\" },\n      { min: [4, 1, 16], max: [7, 4, 26], kind: \"bazaar\" },\n      { min: [4, 1, 28], max: [7, 4, 38], kind: \"vault\" },\n      { min: [19, 1, 4], max: [22, 4, 14], kind: \"shop\" },\n      { min: [19, 1, 16], max: [22, 4, 26], kind: \"market\" },\n      { min: [19, 1, 28], max: [22, 4, 38], kind: \"shop\" },\n    ],\n  };\n}"
+    },
+    "fossil_vertebra_arch": {
+      "mode": "plugin",
+      "envelope": [
+        11,
+        12,
+        11
+      ],
+      "sourceHash": "b3:05c748a799963dbb7f06c9f63fd8020101bf9a4041f617e32b9d92a238f475a4",
+      "outputHash": "b3:546558b273e2454c41684dfb5d88c32631c5c1ef70f765074649d631fe0d3989",
+      "conforms": false,
+      "conformHash": "b3:3b1910710f1a030ed04fef4e1fce3eecb4291eccfff551aa6188836ea8529124",
+      "source": "export const envelope = [11, 12, 11];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const seatY = 3;\n  const cx = 5;\n  const cz = 5;\n\n  const instIdx = api.instance ? api.instance.index : 0;\n  const rng = () => api.random();\n\n  // Palette resolution from theme and literal fossil materials\n  const boneY = \"minecraft:bone_block[axis=y]\";\n  const boneX = \"minecraft:bone_block[axis=x]\";\n  const boneZ = \"minecraft:bone_block[axis=z]\";\n  const stonePri = api.theme.stone.primary || \"minecraft:smooth_sandstone\";\n  const stoneAcc = api.theme.stone.accent || \"minecraft:cut_sandstone\";\n  const stoneWall = api.theme.stone.wall || \"minecraft:sandstone_wall\";\n  const groundPave = api.theme.ground.pavement || \"minecraft:sandstone\";\n  const groundScree = api.theme.ground.scree || \"minecraft:sand\";\n  const groundBank = api.theme.ground.bank || \"minecraft:smooth_sandstone\";\n  const woodFence = api.theme.wood.fence || \"minecraft:oak_fence\";\n\n  // 3D Voxel grid\n  const grid = [];\n  for (let x = 0; x < W; x++) {\n    grid[x] = [];\n    for (let y = 0; y < H; y++) {\n      grid[x][y] = new Array(D).fill(null);\n    }\n  }\n\n  // --- Procedural Morphology Parameters per Instance ---\n  // Morphological types:\n  // 0: Majestic tall blade spine, wide sweeping wings, hanging central lantern\n  // 1: Tilted forward, fractured stub spine, left wing horn beacon\n  // 2: Twin-horned dorsal crest, upward curving wings, roadside cairn\n  // 3: Fenestrated (windowed) dorsal crest, compact wings, embedded glowing relic\n  const spineType = instIdx % 4;\n  const tiltX = (rng() - 0.5) * 0.22; // forward/backward tilt\n  const tiltZ = (rng() - 0.5) * 0.16; // lateral lean\n\n  const spineLeanX = (rng() - 0.5) * 0.2;\n  const spineLeanZ = (rng() * 0.35) - 0.1; // slight backward or forward sweep\n  const spineHeight = spineType === 1 ? 7.0 + rng() * 0.6 : (spineType === 0 ? 8.4 + rng() * 0.5 : 7.8 + rng() * 0.5);\n  const spineThickX = spineType === 3 ? 1.35 : (spineType === 0 ? 1.05 : 0.9);\n  const spineThickZ = spineType === 3 ? 1.8 : 1.4;\n\n  const leftWingLen = 3.6 + rng() * 1.2;\n  const rightWingLen = (instIdx % 3 === 1) ? 2.8 + rng() * 0.6 : 3.6 + rng() * 1.2; // asymmetric erosion\n  const leftWingSlope = (rng() - 0.4) * 0.6;\n  const rightWingSlope = (rng() - 0.4) * 0.6;\n  const leftWingSweep = (rng() - 0.5) * 0.5;\n  const rightWingSweep = (rng() - 0.5) * 0.5;\n  const wingBaseY = 3.2 + rng() * 0.6;\n  const wingThickness = 0.95 + rng() * 0.25;\n\n  const pillarDist = 2.75 + (rng() - 0.5) * 0.3;\n  const pillarRadius = 1.75;\n  const pillarTopY = 4.9;\n\n  const archCenterY = 2.9;\n  const archOuterRad = 3.6;\n  const archInnerRad = 1.7;\n  const archMinY = 2.5;\n  const archMaxY = 6.2;\n  const archThicknessZ = 2.2;\n\n  const weatheringChance = 0.18 + rng() * 0.22;\n\n  // --- Geometry Evaluation Function ---\n  function evaluateVertebra(x, y, z) {\n    const rx = x - cx;\n    const ry = y - seatY;\n    const rz = z - cz;\n\n    // Apply 3D coordinate tilt\n    const tx = rx - tiltZ * ry;\n    const ty = ry;\n    const tz = rz - tiltX * ry;\n\n    // Road tunnel exclusion (neural canal interior)\n    if (Math.abs(tx) < 1.45 && ty >= 0 && ty < 3.7 && Math.abs(tz) <= 4.8) {\n      return { solid: false };\n    }\n\n    // 1. Pillars (Vertebral Pedicles & Base Columns)\n    const leftDist = Math.hypot(tx - (-pillarDist), tz * 0.85);\n    const rightDist = Math.hypot(tx - pillarDist, tz * 0.85);\n    const pRad = pillarRadius - 0.08 * ty;\n    const inLeftPillar = (leftDist <= pRad) && (ty >= 0 && ty <= pillarTopY);\n    const inRightPillar = (rightDist <= pRad) && (ty >= 0 && ty <= pillarTopY);\n\n    // 2. Arch Vault (Neural Arch Crest)\n    const archRad = Math.hypot(tx, (ty - archCenterY) * 1.15);\n    const inArch = (archRad <= archOuterRad) && (archRad >= archInnerRad) &&\n                   (ty >= archMinY && ty <= archMaxY) && (Math.abs(tz) <= archThicknessZ);\n\n    // 3. Dorsal Spine (Neural Process)\n    let inSpine = false;\n    if (ty >= archMaxY - 0.9 && ty <= spineHeight) {\n      const sH = ty - (archMaxY - 0.9);\n      const spX = tx - spineLeanX * sH;\n      const spZ = tz - spineLeanZ * sH;\n\n      if (spineType === 2 && ty > archMaxY + 1.0) {\n        // Twin-forked crest\n        const dL = Math.hypot(spX - (-0.85), spZ);\n        const dR = Math.hypot(spX - 0.85, spZ);\n        inSpine = (dL <= 0.8 || dR <= 0.8);\n      } else if (spineType === 3 && ty > archMaxY + 0.5 && ty < spineHeight - 0.6 && Math.abs(spZ) < 0.65) {\n        // Fenestrated crest (window pierced in bone)\n        const distCrest = Math.hypot(spX / spineThickX, spZ / spineThickZ);\n        inSpine = distCrest <= 1.0 && (Math.abs(ty - (archMaxY + 1.4)) > 0.55 || Math.abs(spX) > 0.55);\n      } else {\n        const thickX = Math.max(0.65, spineThickX - 0.08 * sH);\n        const thickZ = Math.max(0.7, spineThickZ - 0.12 * sH);\n        inSpine = (Math.abs(spX) <= thickX) && (Math.abs(spZ) <= thickZ);\n      }\n    }\n\n    // 4. Transverse Processes (Lateral Wings)\n    let inWings = false;\n    if (tx <= -1.7 && tx >= -leftWingLen) {\n      const wFrac = (-tx - 1.7) / (leftWingLen - 1.7 + 0.001);\n      const wY = wingBaseY + leftWingSlope * wFrac;\n      const wZ = leftWingSweep * wFrac;\n      const wThick = Math.max(0.6, wingThickness * (1.0 - 0.35 * wFrac));\n      if (Math.hypot(ty - wY, tz - wZ) <= wThick) inWings = true;\n    }\n    if (tx >= 1.7 && tx <= rightWingLen) {\n      const wFrac = (tx - 1.7) / (rightWingLen - 1.7 + 0.001);\n      const wY = wingBaseY + rightWingSlope * wFrac;\n      const wZ = rightWingSweep * wFrac;\n      const wThick = Math.max(0.6, wingThickness * (1.0 - 0.35 * wFrac));\n      if (Math.hypot(ty - wY, tz - wZ) <= wThick) inWings = true;\n    }\n\n    // 5. Articular Facets (Anterior & Posterior Zygapophyses)\n    let inFacets = false;\n    if (Math.abs(ty - 4.1) <= 1.2) {\n      const dPreL = Math.hypot(tx - (-2.1), tz - (-1.8));\n      const dPreR = Math.hypot(tx - 2.1, tz - (-1.8));\n      const dPostL = Math.hypot(tx - (-2.1), tz - 1.8);\n      const dPostR = Math.hypot(tx - 2.1, tz - 1.8);\n      if (dPreL <= 0.85 || dPreR <= 0.85 || dPostL <= 0.85 || dPostR <= 0.85) {\n        inFacets = true;\n      }\n    }\n\n    // 6. Centrum Base Collar & Footing Flanges\n    let inBaseCollar = false;\n    if (ty >= 0 && ty <= 2.2) {\n      const bDistL = Math.hypot(tx - (-2.6), tz);\n      const bDistR = Math.hypot(tx - 2.6, tz);\n      if ((bDistL <= 2.35 - 0.35 * ty || bDistR <= 2.35 - 0.35 * ty) && Math.abs(tx) >= 1.1) {\n        inBaseCollar = true;\n      }\n      // Posterior centrum thick ridge\n      if (tz >= 1.2 && tz <= 2.8 && Math.abs(tx) <= 3.2 && Math.abs(tx) >= 1.0) {\n        inBaseCollar = true;\n      }\n    }\n\n    const isSolid = inLeftPillar || inRightPillar || inArch || inSpine || inWings || inFacets || inBaseCollar;\n    if (!isSolid) return { solid: false };\n\n    // Select bone striation axis\n    let axis = \"y\";\n    if (inWings) {\n      axis = \"x\";\n    } else if (inFacets || (inArch && Math.abs(tz) > 1.3)) {\n      axis = \"z\";\n    } else if (inArch && ty >= archMaxY - 1.0) {\n      axis = \"x\";\n    }\n\n    return {\n      solid: true,\n      axis,\n      inSpine,\n      inWings,\n      inArch,\n      ty\n    };\n  }\n\n  // --- Step 1: Rasterize Bone Geometry into Grid ---\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const res = evaluateVertebra(x, y, z);\n        if (res.solid) {\n          // Weathering / mineral crust patina\n          const r = rng();\n          if (r < weatheringChance * 0.6) {\n            grid[x][y][z] = stonePri;\n          } else if (r < weatheringChance) {\n            grid[x][y][z] = stoneAcc;\n          } else {\n            grid[x][y][z] = res.axis === \"x\" ? boneX : (res.axis === \"z\" ? boneZ : boneY);\n          }\n        }\n      }\n    }\n  }\n\n  // --- Step 2: Ground Adaptation & Deep Foundation Conformance ---\n  // Every column reads api.heightAt and solidly anchors into the terrain\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const h = api.heightAt(x, z);\n      const gY = Math.max(0, Math.min(H - 1, seatY + Math.round(h)));\n\n      // Check if structure stands above this column\n      let hasStructureAbove = false;\n      for (let y = seatY; y < H; y++) {\n        if (grid[x][y][z] != null) {\n          hasStructureAbove = true;\n          break;\n        }\n      }\n\n      if (hasStructureAbove) {\n        // If ground drops below seat plane, fill down to terrain surface\n        if (gY < seatY) {\n          for (let y = gY; y < seatY; y++) {\n            grid[x][y][z] = (y === gY && rng() > 0.5) ? groundBank : boneY;\n          }\n        }\n        // If ground rises above seat plane, thicken foundation courses\n        if (gY > seatY) {\n          for (let y = seatY; y <= gY; y++) {\n            if (grid[x][y][z] == null) {\n              grid[x][y][z] = boneY;\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // --- Step 3: Spine Road / Highway Path Through Neural Canal ---\n  // Pave the traversable street through the archway\n  for (let z = 0; z < D; z++) {\n    for (let x = cx - 1; x <= cx + 1; x++) {\n      const h = api.heightAt(x, z);\n      const gY = Math.max(0, Math.min(H - 4, seatY + Math.round(h)));\n\n      // Road pavement course at terrain level\n      const isEdge = (x === cx - 1 || x === cx + 1);\n      grid[x][gY][z] = isEdge ? stoneAcc : groundPave;\n\n      // Ensure clear headroom for travelers walking through\n      for (let y = gY + 1; y <= gY + 3; y++) {\n        if (y < H && grid[x][y][z] != null) {\n          // Keep arch vault overhead, clear passage below\n          if (y < 6) {\n            grid[x][y][z] = null;\n          }\n        }\n      }\n    }\n  }\n\n  // --- Step 4: Waypoint Marker Details (Differing by Instance) ---\n  const waypointKind = instIdx % 4;\n\n  if (waypointKind === 0) {\n    // Hanging ancient desert lantern from the arch keystone\n    let archCeilY = -1;\n    for (let y = 5; y < H; y++) {\n      if (grid[cx][y][cz] != null) {\n        archCeilY = y;\n        break;\n      }\n    }\n    if (archCeilY >= 7) {\n      grid[cx][archCeilY - 1][cz] = \"minecraft:chain[axis=y]\";\n      grid[cx][archCeilY - 2][cz] = \"minecraft:lantern[hanging=true]\";\n    }\n  } else if (waypointKind === 1) {\n    // Beacon on the left transverse wing tip\n    let tipX = 0;\n    while (tipX < cx && grid[tipX][seatY + 3][cz] == null) {\n      tipX++;\n    }\n    let topY = -1;\n    for (let y = H - 1; y >= 0; y--) {\n      if (grid[tipX][y][cz] != null) {\n        topY = y;\n        break;\n      }\n    }\n    if (topY >= seatY && topY < H - 2) {\n      grid[tipX][topY + 1][cz] = woodFence;\n      grid[tipX][topY + 2][cz] = \"minecraft:lantern[hanging=false]\";\n    }\n  } else if (waypointKind === 2) {\n    // Roadside cairn waypoint shrine on the eastern approach\n    const cairnX = cx + 3;\n    const cairnZ = cz - 2;\n    const h = api.heightAt(cairnX, cairnZ);\n    const gY = Math.max(0, Math.min(H - 4, seatY + Math.round(h)));\n    grid[cairnX][gY + 1][cairnZ] = stoneWall;\n    grid[cairnX][gY + 2][cairnZ] = stonePri;\n    grid[cairnX][gY + 3][cairnZ] = \"minecraft:torch\";\n  } else if (waypointKind === 3) {\n    // Embedded glowing relic / amber node in dorsal spine forehead\n    for (let y = 7; y <= 9; y++) {\n      if (grid[cx][y][cz - 1] != null) {\n        grid[cx][y][cz - 1] = \"minecraft:ochre_froglight\";\n        break;\n      }\n    }\n  }\n\n  // --- Step 5: Connectivity Check & Voxel Volume Guarantee ---\n  // Ensure >= 500 solid voxels by reinforcing base/scree plinth if needed\n  function countSolid() {\n    let cnt = 0;\n    for (let x = 0; x < W; x++) {\n      for (let y = 0; y < H; y++) {\n        for (let z = 0; z < D; z++) {\n          if (grid[x][y][z] != null) cnt++;\n        }\n      }\n    }\n    return cnt;\n  }\n\n  let solidCount = countSolid();\n  if (solidCount < 530) {\n    // Thicken vertebral centrum base and plinth skirts\n    for (let x = 1; x < W - 1; x++) {\n      for (let z = 2; z < D - 2; z++) {\n        if (Math.abs(x - cx) >= 2) {\n          const h = api.heightAt(x, z);\n          const gY = Math.max(0, Math.min(H - 1, seatY + Math.round(h)));\n          for (let y = gY; y <= seatY + 1; y++) {\n            if (grid[x][y][z] == null) {\n              grid[x][y][z] = (y === gY) ? stonePri : boneY;\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // 6-Connectivity BFS to guarantee a single strictly connected solid\n  const visited = new Uint8Array(W * H * D);\n  const idx = (x, y, z) => (x * H + y) * D + z;\n  const components = [];\n\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        if (grid[x][y][z] == null) continue;\n        const sId = idx(x, y, z);\n        if (visited[sId]) continue;\n\n        const comp = [];\n        const queue = [[x, y, z]];\n        visited[sId] = 1;\n\n        let head = 0;\n        while (head < queue.length) {\n          const [qx, qy, qz] = queue[head++];\n          comp.push([qx, qy, qz]);\n\n          const neighbors = [\n            [qx + 1, qy, qz], [qx - 1, qy, qz],\n            [qx, qy + 1, qz], [qx, qy - 1, qz],\n            [qx, qy, qz + 1], [qx, qy, qz - 1]\n          ];\n\n          for (const [nx, ny, nz] of neighbors) {\n            if (nx >= 0 && nx < W && ny >= 0 && ny < H && nz >= 0 && nz < D) {\n              const nId = idx(nx, ny, nz);\n              if (!visited[nId] && grid[nx][ny][nz] != null) {\n                visited[nId] = 1;\n                queue.push([nx, ny, nz]);\n              }\n            }\n          }\n        }\n        components.push(comp);\n      }\n    }\n  }\n\n  // Keep largest component, prune any disconnected fragments\n  if (components.length > 1) {\n    let largest = components[0];\n    for (let i = 1; i < components.length; i++) {\n      if (components[i].length > largest.length) {\n        largest = components[i];\n      }\n    }\n\n    const keepSet = new Uint8Array(W * H * D);\n    for (const [kx, ky, kz] of largest) {\n      keepSet[idx(kx, ky, kz)] = 1;\n    }\n\n    for (let x = 0; x < W; x++) {\n      for (let y = 0; y < H; y++) {\n        for (let z = 0; z < D; z++) {\n          if (grid[x][y][z] != null && !keepSet[idx(x, y, z)]) {\n            grid[x][y][z] = null;\n          }\n        }\n      }\n    }\n  }\n\n  // --- Step 6: Write Output Blocks in Deterministic Order ---\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        if (grid[x][y][z] != null) {\n          api.set(x, y, z, grid[x][y][z]);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"fossil_vertebra_arch\",\n    seatY,\n    anchors: {\n      front: [cx, seatY, 0],\n      waypoint: [cx, seatY + 1, cz],\n      path_in: [cx, seatY, D - 1],\n      path_out: [cx, seatY, 0]\n    }\n  };\n}"
+    }
+  }
+}

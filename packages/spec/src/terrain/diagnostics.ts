@@ -1162,6 +1162,14 @@ export const TERRAIN_DIAGNOSTICS = {
    */
   FOOTPRINT_GROUND_LOST: "LOAM-I501",
   /**
+   * A carve that asked to flood (`flooded: "auto"`) is mostly dry: a few of its
+   * columns reach the sea — the mouth — and the rest of its course stands above
+   * it. `CARVE_DRY` (T113) is the case with no wet column at all; this is its
+   * sibling for the fjord whose mouth touches the water and whose bed does not
+   * (Stocktake Run probe pass 2, 2026-08-25).
+   */
+  CARVE_MOSTLY_DRY: "LOAM-I502",
+  /**
    * `docs/GROUND-CONTRACT-v1.md` §3.2's coverage invariant is violated: a
    * boundary pair between two winners at different levels that matches none of
    * the four accounting clauses — no derived transition, no `transition: "none"`

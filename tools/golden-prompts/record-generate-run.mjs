@@ -1,7 +1,7 @@
 // Turn a generate-all.mjs output folder into a golden-harness run directory
 // (<id>.doc.json + <id>.record.json + summary.json) so score.mjs can read it,
 // plus a one-line-per-prompt table for the deck README.
-//   node tools/golden-prompts/record-generate-run.mjs <generateDir> <runOutDir> <label>
+//   node tools/golden-prompts/record-generate-run.mjs <generateDir> <runOutDir> <label> [promptsFile]
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
@@ -9,8 +9,9 @@ import { fileURLToPath } from "node:url";
 import { censusDocument, kitEnvelopeLiterals } from "./run.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-const [B0, RUN, LABEL] = process.argv.slice(2);
-const suite = JSON.parse(fs.readFileSync(path.join(ROOT, "tools/golden-prompts/prompts.json"), "utf8"));
+const [B0, RUN, LABEL, PROMPTS_FILE] = process.argv.slice(2);
+// A fourth argument names another roster (the Stocktake Run's probes.json).
+const suite = JSON.parse(fs.readFileSync(PROMPTS_FILE ? path.resolve(PROMPTS_FILE) : path.join(ROOT, "tools/golden-prompts/prompts.json"), "utf8"));
 const status = fs.readFileSync(path.join(B0, "status.txt"), "utf8");
 fs.mkdirSync(RUN, { recursive: true });
 

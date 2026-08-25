@@ -1,0 +1,160 @@
+{
+  "id": "probe_sky_whale",
+  "family": "probe",
+  "kit": "settlement",
+  "prompt": "A desert town built inside the ribcage of a fossilised sky-whale: the ribs form the market hall, the skull is the temple, and the spine is the main street.",
+  "seed": 906,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.5,
+    "formality": 0.4,
+    "climate": {
+      "biome": "minecraft:desert",
+      "temperature": 1,
+      "humidity": -1,
+      "snow": "never"
+    },
+    "character": {
+      "label": "fossil sky-whale desert settlement",
+      "materialTheme": "sun_clay",
+      "formPacks": [
+        "desert_caravanserai"
+      ],
+      "urbanForm": "linear",
+      "motifs": {
+        "roofType": "flat"
+      }
+    },
+    "tokens": {
+      "terrain": "vast open desert dunes surrounding the colossal fossilised skeleton of a sky-whale half-buried in the sand",
+      "icons": "colossal sky-whale fossil skeleton: curved ribcage forming a vaulted market arcade; massive skull hollowed out as a central temple; articulated spine ridge paved as the main street"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 189497,
+    "completionTokens": 35064,
+    "cost": 0.1368
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 26,
+    "maxDepth": 2,
+    "generators": [
+      "authored:skywhale_ribcage_market",
+      "authored:skywhale_skull_temple",
+      "building.grammar@0",
+      "infra.entry@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "adobe_pueblo",
+      "apothecary",
+      "caravanserai",
+      "church",
+      "cistern",
+      "cottage",
+      "inn",
+      "market_stall",
+      "pumping_station",
+      "spice_market",
+      "tea_house",
+      "temple"
+    ],
+    "archetypesInCatalog": 12,
+    "formPacks": [
+      "desert_caravanserai"
+    ],
+    "props": [
+      "campsite",
+      "covered_wagon",
+      "fossil_dig",
+      "market_barrow",
+      "well_head"
+    ],
+    "species": [
+      "desert_hardwood",
+      "dune_scrub",
+      "scrub_bush"
+    ],
+    "envelopes": [
+      "512x512",
+      "36x16",
+      "32x22x36",
+      "26x18x48",
+      "15x12x17",
+      "13x12x17",
+      "9x10x9",
+      "13x11x13",
+      "13x12x11",
+      "11x11x11",
+      "15x12x17"
+    ],
+    "constraints": 27,
+    "constraintKinds": [
+      "adjacent_to",
+      "at",
+      "blend",
+      "distance",
+      "facing",
+      "gap",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform",
+      "zone"
+    ],
+    "constraintsWithStrength": 11,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 7,
+    "programReferences": 2,
+    "conformsTrue": 0,
+    "labels": 25,
+    "eras": [
+      "medieval"
+    ],
+    "bytes": 57448
+  },
+  "wallMs": 662000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 2,
+    "feedbackRounds": 1,
+    "programs": [
+      "ok skywhale_skull_temple [landmark] 1 attempt(s), 31543 tokens ($0.0542), 12 warning(s)",
+      "ok skywhale_ribcage_market [landmark] 1 attempt(s), 24123 tokens ($0.0403), 26 warning(s)",
+      "ok fossil_vertebra_arch [plugin] 1 attempt(s), 25515 tokens ($0.0429), 3 warning(s)"
+    ],
+    "programCost": 0.1374,
+    "totalCost": 0.2742,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/probe2/gen/probe_sky_whale/out/skywhale_bazaar",
+    "finalDiagnostics": {
+      "LOAM-W330": 2,
+      "LOAM-T208": 1,
+      "LOAM-W522": 1,
+      "LOAM-W483": 1,
+      "LOAM-I497": 1,
+      "LOAM-T233": 1,
+      "LOAM-W337": 1,
+      "LOAM-W472": 1,
+      "LOAM-W470": 1
+    },
+    "crash": [],
+    "docName": "skywhale_bazaar.loam.json"
+  }
+}

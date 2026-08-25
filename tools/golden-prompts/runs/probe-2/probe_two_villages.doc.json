@@ -1,0 +1,882 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "fjord_rivals",
+    "worldSeed": "902",
+    "prompt": "Two rival fishing villages on opposite shores of a narrow fjord, one of stone and one of timber, joined only by a rope ferry.",
+    "spawn": {
+      "zone": "west"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:dirt_path",
+      "road.shoulder": "minecraft:gravel",
+      "ground.cliff": "minecraft:stone"
+    }
+  },
+  "intent": {
+    "era": "medieval",
+    "climate": {
+      "biome": "minecraft:taiga",
+      "temperature": -0.4,
+      "humidity": 0.3,
+      "snow": "auto"
+    },
+    "character": {
+      "label": "fjord fishing rivalry",
+      "materialTheme": "boreal_pine",
+      "programs": [
+        {
+          "id": "rope_ferry",
+          "mode": "landmark",
+          "brief": "A heavy wooden ferry raft with overhead guide pulleys, tethered to a thick hawser cable spanning the fjord channel between stone and timber winches on opposite shores.",
+          "envelope": [
+            38,
+            14,
+            15
+          ]
+        },
+        {
+          "id": "fish_drying_rack",
+          "mode": "plugin",
+          "brief": "A weathered wooden A-frame drying rack with hung stockfish fillets, salted barrels, and dry coils of rope.",
+          "envelope": [
+            9,
+            13,
+            8
+          ],
+          "count": 12
+        }
+      ],
+      "archetypes": {
+        "prefer": [
+          "cottage",
+          "longhouse",
+          "boathouse",
+          "warehouse",
+          "sawmill",
+          "tavern"
+        ],
+        "forbid": [
+          "skyscraper",
+          "office",
+          "apartment_block",
+          "shopping_mall",
+          "gas_station"
+        ]
+      },
+      "props": {
+        "prefer": [
+          "fishing_sloop",
+          "rowboat",
+          "fishing_trawler",
+          "pier",
+          "buoy",
+          "log_pile"
+        ]
+      }
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "The Fjord of Rivals",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "steep glacial fjord carved between twin highlands",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 74,
+          "amplitude": 46,
+          "octaves": 5,
+          "frequency": 0.0035,
+          "lacunarity": 2,
+          "gain": 0.52,
+          "ridged": true,
+          "erosionPasses": 2,
+          "continentalness": {
+            "frequency": 0.0012,
+            "seaFraction": 0.4
+          },
+          "cliffThreshold": 50,
+          "soilDepth": 3,
+          "beachWidth": 2,
+          "snowLineFraction": 0.85
+        },
+        "children": [
+          {
+            "id": "fjord_channel",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the sea channel dividing east and west",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.5,
+                  0.95
+                ],
+                [
+                  0.5,
+                  0.6
+                ],
+                [
+                  0.5,
+                  0.3
+                ],
+                "coast"
+              ],
+              "width": 38,
+              "depth": 22,
+              "profile": "rounded",
+              "meander": 0.1,
+              "flooded": "auto"
+            }
+          },
+          {
+            "id": "west_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the stone village terrace on the west bank",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.32,
+                0.5
+              ],
+              "radius": 75,
+              "height": 8,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "east_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the timber village terrace on the east bank",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.68,
+                0.5
+              ],
+              "radius": 75,
+              "height": 8,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "west_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the western mountain wall",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.12,
+                  0.05
+                ],
+                [
+                  0.15,
+                  0.5
+                ],
+                [
+                  0.12,
+                  0.95
+                ]
+              ],
+              "width": 64,
+              "height": 52,
+              "profile": "sharp"
+            }
+          },
+          {
+            "id": "east_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the eastern mountain wall",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.88,
+                  0.05
+                ],
+                [
+                  0.85,
+                  0.5
+                ],
+                [
+                  0.88,
+                  0.95
+                ]
+              ],
+              "width": 64,
+              "height": 52,
+              "profile": "sharp"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "boreal",
+          "temperatureFrequency": 0.0014,
+          "humidityFrequency": 0.0018,
+          "latitudeGradient": -0.25,
+          "blendRadius": 8
+        }
+      },
+      {
+        "id": "west_pines",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "dense spruce forest on western slopes",
+        "params": {
+          "area": {
+            "at": [
+              0.2,
+              0.5
+            ],
+            "radius": 130
+          },
+          "density": 0.14,
+          "spacing": 3,
+          "clumping": 0.45,
+          "maxSlope": 34,
+          "elevation": [
+            2,
+            100
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.35,
+            "flowers": 0.02,
+            "deadwood": 0.08
+          },
+          "strata": true,
+          "species": [
+            {
+              "id": "tall_spruce",
+              "weight": 3,
+              "shape": "spruce_tall"
+            },
+            {
+              "id": "squat_spruce",
+              "weight": 1,
+              "shape": "spruce_squat"
+            }
+          ]
+        }
+      },
+      {
+        "id": "east_pines",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "larch and pine forest on eastern slopes",
+        "params": {
+          "area": {
+            "at": [
+              0.8,
+              0.5
+            ],
+            "radius": 130
+          },
+          "density": 0.15,
+          "spacing": 3,
+          "clumping": 0.5,
+          "maxSlope": 34,
+          "elevation": [
+            2,
+            100
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.35,
+            "flowers": 0.02,
+            "deadwood": 0.08
+          },
+          "strata": true,
+          "species": [
+            {
+              "id": "taiga_spruce",
+              "weight": 3,
+              "shape": "spruce_tall"
+            },
+            {
+              "id": "taiga_larch",
+              "weight": 2,
+              "shape": "larch_columnar"
+            }
+          ]
+        }
+      },
+      {
+        "id": "wilderness_cover",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse highland scrub",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 4,
+          "clumping": 0.6,
+          "maxSlope": 35,
+          "elevation": [
+            2,
+            120
+          ],
+          "edgeFalloff": 10,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "species": [
+            {
+              "id": "highland_spruce",
+              "weight": 1,
+              "shape": "spruce_squat"
+            }
+          ]
+        }
+      },
+      {
+        "id": "stone_village",
+        "kind": "district",
+        "label": "the western stone fishing settlement",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            104,
+            96
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.32,
+              0.5
+            ]
+          }
+        ],
+        "params": {
+          "fabric": "hillside",
+          "density": "medium",
+          "ground": "stepped",
+          "mix": [
+            "cottage",
+            "warehouse",
+            "boathouse",
+            "tavern",
+            "tannery"
+          ]
+        },
+        "intent": {
+          "wealth": 0.45,
+          "decline": 0.15,
+          "formality": 0.25,
+          "character": {
+            "label": "stone fishing village",
+            "materialTheme": "temperate_timber",
+            "palettes": {
+              "ground.surface": "minecraft:cobblestone",
+              "road.surface": "minecraft:cobblestone",
+              "plaza.path": "minecraft:stone_bricks"
+            },
+            "archetypes": {
+              "prefer": [
+                "cottage",
+                "warehouse",
+                "boathouse",
+                "tavern"
+              ],
+              "forbid": [
+                "skyscraper",
+                "office",
+                "apartment_block",
+                "shopping_mall"
+              ]
+            },
+            "motifs": {
+              "roofType": "gable",
+              "massing": "blocky",
+              "windowRhythm": "sparse"
+            }
+          }
+        },
+        "tags": [
+          "settlement",
+          "stone_side"
+        ],
+        "children": [
+          {
+            "id": "stone_guildhall",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the stone fishers moot and guildhall",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                14,
+                17
+              ]
+            },
+            "params": {
+              "archetype": "guildhall",
+              "floors": 1,
+              "roof": "gable"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "east",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "civic"
+            ]
+          },
+          {
+            "id": "stone_cannery",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the stone smokehouse and curing cellar",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                11,
+                11,
+                17
+              ]
+            },
+            "params": {
+              "archetype": "cannery",
+              "floors": 1,
+              "roof": "gable"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "east",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "trade"
+            ]
+          },
+          {
+            "id": "stone_watchtower",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "western lookout tower over the fjord",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                7,
+                19,
+                7
+              ]
+            },
+            "params": {
+              "archetype": "watchtower",
+              "floors": 2,
+              "roof": "flat"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "east",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "lookout"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "timber_village",
+        "kind": "district",
+        "label": "the eastern timber fishing settlement",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            104,
+            96
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.68,
+              0.5
+            ]
+          }
+        ],
+        "params": {
+          "fabric": "grown",
+          "density": "medium",
+          "ground": "stepped",
+          "mix": [
+            "longhouse",
+            "cottage",
+            "boathouse",
+            "sawmill",
+            "tavern"
+          ]
+        },
+        "intent": {
+          "wealth": 0.4,
+          "decline": 0.2,
+          "formality": 0.2,
+          "character": {
+            "label": "timber fishing village",
+            "materialTheme": "boreal_pine",
+            "formPacks": [
+              "nordic_viking"
+            ],
+            "archetypes": {
+              "prefer": [
+                "longhouse",
+                "cottage",
+                "boathouse",
+                "sawmill"
+              ],
+              "forbid": [
+                "skyscraper",
+                "office",
+                "apartment_block",
+                "shopping_mall"
+              ]
+            },
+            "motifs": {
+              "roofType": "gable",
+              "massing": "sprawling",
+              "windowRhythm": "sparse"
+            }
+          }
+        },
+        "tags": [
+          "settlement",
+          "timber_side"
+        ],
+        "children": [
+          {
+            "id": "timber_meadhall",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the timber chieftain longhouse",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                11,
+                13,
+                21
+              ]
+            },
+            "params": {
+              "archetype": "longhouse",
+              "floors": 2,
+              "roof": "gable"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "west",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "hall"
+            ]
+          },
+          {
+            "id": "timber_sawmill",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the boatbuilder sawmill",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                11,
+                11,
+                17
+              ]
+            },
+            "params": {
+              "archetype": "sawmill",
+              "floors": 1,
+              "roof": "gable"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "west",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "trade"
+            ]
+          },
+          {
+            "id": "timber_watchtower",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "eastern wooden lookout tower",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                7,
+                19,
+                7
+              ]
+            },
+            "params": {
+              "archetype": "watchtower",
+              "floors": 2,
+              "roof": "flat"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "west",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "lookout"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "rope_ferry_crossing",
+        "kind": "generator",
+        "generator": "authored:rope_ferry",
+        "label": "the rope ferry barge and guide cable crossing the fjord",
+        "constraints": [
+          {
+            "at": [
+              0.5,
+              0.5
+            ]
+          },
+          {
+            "on": "@terrain:coastline",
+            "band": 32
+          }
+        ],
+        "params": {
+          "seat": "wade"
+        },
+        "tags": [
+          "landmark",
+          "ferry"
+        ]
+      },
+      {
+        "id": "drying_racks",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "drying racks and salt barrels scattered along both shores",
+        "params": {
+          "program": "fish_drying_rack",
+          "count": 12,
+          "area": {
+            "all": true
+          },
+          "spacing": 24,
+          "avoidTags": [
+            "road"
+          ]
+        }
+      },
+      {
+        "id": "stone_pier",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the stone landing quay on the west shore",
+        "params": {
+          "prop": "pier",
+          "zone": "west",
+          "length": 14,
+          "width": 3
+        }
+      },
+      {
+        "id": "stone_sloop",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "fishing sloop moored at the stone quay",
+        "params": {
+          "prop": "fishing_sloop",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "stone_rowboat",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "rowboat",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "timber_pier",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the wooden stilt pier on the east shore",
+        "params": {
+          "prop": "pier",
+          "zone": "east",
+          "length": 14,
+          "width": 3
+        }
+      },
+      {
+        "id": "timber_sloop",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "fishing sloop moored at the timber pier",
+        "params": {
+          "prop": "fishing_sloop",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "timber_rowboat",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "rowboat",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "fjord_buoy_south",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "buoy",
+          "zone": "south",
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "fjord_buoy_north",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "buoy",
+          "zone": "north",
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "trawler_north",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "trawler hauling nets at the seaward mouth of the fjord",
+        "params": {
+          "prop": "fishing_trawler",
+          "zone": "north",
+          "jitter": 0.15
+        }
+      },
+      {
+        "id": "shore_lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "lanes connecting the quays, buildings and ferry approach",
+        "params": {
+          "anchors": [
+            "stone_village",
+            "timber_village",
+            "rope_ferry_crossing"
+          ],
+          "pattern": "organic",
+          "width": 2,
+          "lanterns": true,
+          "lanternSpacing": 16
+        }
+      }
+    ]
+  },
+  "programs": {
+    "rope_ferry": {
+      "mode": "landmark",
+      "envelope": [
+        38,
+        14,
+        15
+      ],
+      "sourceHash": "b3:756691a807648c98be16aef20065e4b47c71855e19c158cc545638c0a5141c17",
+      "outputHash": "b3:ff5a6481b07ed9b4ddbfc969b0487ff55e073986f50823b3a8d470ca5ae1eecb",
+      "conforms": false,
+      "conformHash": "b3:c01671e0700665a6d10be16b6b4ac6653500db8a59090f57d60049aa83de2ef3",
+      "source": "export const envelope = [38, 14, 15];\n\nexport default function build(api) {\n  const { size } = api;\n  const seatY = 3;\n\n  // Safe theme extraction with thematic medieval fallbacks\n  const woodPlanks = api.theme?.wood?.planks || \"minecraft:spruce_planks\";\n  const woodLog = api.theme?.wood?.log || \"minecraft:spruce_log\";\n  const woodStripped = api.theme?.wood?.stripped || \"minecraft:stripped_spruce_log\";\n  const woodStairs = api.theme?.wood?.stairs || \"minecraft:spruce_stairs\";\n  const woodSlab = api.theme?.wood?.slab || \"minecraft:spruce_slab\";\n  const woodFence = api.theme?.wood?.fence || \"minecraft:spruce_fence\";\n  const woodTrapdoor = api.theme?.wood?.trapdoor || \"minecraft:spruce_trapdoor\";\n\n  const stonePrimary = api.theme?.stone?.primary || \"minecraft:stone_bricks\";\n  const stoneAccent = api.theme?.stone?.accent || \"minecraft:cobblestone\";\n  const stoneStairs = api.theme?.stone?.stairs || \"minecraft:stone_brick_stairs\";\n  const stoneSlab = api.theme?.stone?.slab || \"minecraft:stone_brick_slab\";\n  const stoneWall = api.theme?.stone?.wall || \"minecraft:stone_brick_wall\";\n\n  const roofStairs = api.theme?.roof?.stairs || \"minecraft:dark_oak_stairs\";\n  const roofSlab = api.theme?.roof?.slab || \"minecraft:dark_oak_slab\";\n\n  const groundPavement = api.theme?.ground?.pavement || \"minecraft:cobblestone\";\n  const groundRevetment = api.theme?.ground?.revetment || \"minecraft:mossy_stone_bricks\";\n\n  function withState(blockStr, stateStr) {\n    if (!blockStr) return blockStr;\n    const base = blockStr.split(\"[\")[0];\n    return `${base}[${stateStr}]`;\n  }\n\n  function setBlock(x, y, z, block) {\n    if (x >= 0 && x < size[0] && y >= 0 && y < size[1] && z >= 0 && z < size[2]) {\n      api.set(x, y, z, block);\n    }\n  }\n\n  // Deterministic coordinate hash for masonry aging\n  function hash(x, y, z) {\n    let h = (x * 374761393 + y * 668265263 + z * 3628273) ^ 0x5bf03635;\n    h = Math.imul(h ^ (h >>> 16), 2246822519);\n    return (h ^ (h >>> 13)) >>> 0;\n  }\n\n  // =========================================================================\n  // 1. WEST QUAY & PIER (Stone Village Shore, X: 0..7, Z: 2..12)\n  // =========================================================================\n  for (let x = 0; x <= 7; x++) {\n    for (let z = 2; z <= 12; z++) {\n      const h = api.heightAt(x, z);\n      const gy = Math.max(0, Math.min(10, seatY + h));\n\n      if (gy <= 4) {\n        // Foundation course from seabed/ground to deck level\n        for (let y = gy; y <= 3; y++) {\n          if (y === gy) {\n            setBlock(x, y, z, groundRevetment);\n          } else {\n            const hVal = hash(x, y, z) % 3;\n            setBlock(x, y, z, hVal === 0 ? stonePrimary : (hVal === 1 ? stoneAccent : groundRevetment));\n          }\n        }\n\n        // Quay deck at Y = 4\n        if (x === 7) {\n          if (z === 3 || z === 4 || z === 10 || z === 11) {\n            // Steps down to water level\n            setBlock(x, 3, z, withState(stoneStairs, \"facing=east,half=top\"));\n            setBlock(x, 4, z, withState(stoneStairs, \"facing=east,half=bottom\"));\n          } else if (z === 2 || z === 12) {\n            // Mooring bollards\n            setBlock(x, 4, z, stonePrimary);\n            setBlock(x, 5, z, stoneWall);\n            setBlock(x, 6, z, withState(woodTrapdoor, \"facing=north,half=bottom,open=false\"));\n          } else {\n            setBlock(x, 4, z, stonePrimary);\n          }\n        } else {\n          setBlock(x, 4, z, hash(x, 4, z) % 2 === 0 ? groundPavement : stonePrimary);\n        }\n      } else {\n        // Rising ground on hillside tests: construct masonry retaining slope\n        for (let y = 3; y <= gy; y++) {\n          setBlock(x, y, z, hash(x, y, z) % 2 === 0 ? stonePrimary : stoneAccent);\n        }\n        setBlock(x, gy, z, groundPavement);\n      }\n    }\n  }\n\n  // Mooring chains hanging down quay edge\n  setBlock(7, 3, 2, \"minecraft:chain[axis=y]\");\n  setBlock(7, 2, 2, \"minecraft:chain[axis=y]\");\n  setBlock(7, 3, 12, \"minecraft:chain[axis=y]\");\n  setBlock(7, 2, 12, \"minecraft:chain[axis=y]\");\n\n  // =========================================================================\n  // 2. WEST STONE WINCH BASTION (X: 1..5, Z: 5..9, Y: 4..10)\n  // =========================================================================\n  // Heavy corner pillars\n  const westPillars = [[1, 5], [1, 9], [5, 5], [5, 9]];\n  for (const [px, pz] of westPillars) {\n    for (let y = 4; y <= 8; y++) {\n      setBlock(px, y, pz, stonePrimary);\n    }\n    setBlock(px, 9, pz, stoneWall);\n  }\n\n  // North & South walls\n  for (let x = 2; x <= 4; x++) {\n    for (let y = 5; y <= 7; y++) {\n      setBlock(x, y, 5, (x === 3 && y === 6) ? stoneWall : stonePrimary);\n      setBlock(x, y, 9, (x === 3 && y === 6) ? stoneWall : stonePrimary);\n    }\n  }\n\n  // West solid wall\n  for (let z = 6; z <= 8; z++) {\n    for (let y = 5; y <= 8; y++) {\n      setBlock(1, y, z, (z === 7 && y === 6) ? stoneWall : stonePrimary);\n    }\n  }\n\n  // East wall / Fjord opening archway\n  for (let y = 5; y <= 6; y++) {\n    setBlock(5, y, 6, stonePrimary);\n    setBlock(5, y, 8, stonePrimary);\n  }\n  setBlock(5, 7, 6, withState(stoneStairs, \"facing=south,half=top\"));\n  setBlock(5, 7, 8, withState(stoneStairs, \"facing=north,half=top\"));\n  setBlock(5, 7, 7, withState(stoneSlab, \"type=top\"));\n\n  // Stone corbelled roof eaves\n  for (let x = 1; x <= 5; x++) {\n    setBlock(x, 9, 5, withState(roofStairs, \"facing=north,half=bottom\"));\n    setBlock(x, 9, 9, withState(roofStairs, \"facing=south,half=bottom\"));\n  }\n  for (let z = 6; z <= 8; z++) {\n    setBlock(1, 9, z, withState(roofStairs, \"facing=west,half=bottom\"));\n    setBlock(5, 9, z, withState(roofStairs, \"facing=east,half=bottom\"));\n  }\n  for (let x = 2; x <= 4; x++) {\n    setBlock(x, 9, 6, stonePrimary);\n    setBlock(x, 9, 8, stonePrimary);\n    setBlock(x, 9, 7, stonePrimary);\n    setBlock(x, 10, 7, withState(roofSlab, \"type=bottom\"));\n  }\n\n  // Internal Stone Winch Mechanism\n  setBlock(2, 6, 7, withState(woodLog, \"axis=x\"));\n  setBlock(3, 6, 7, withState(woodStripped, \"axis=x\"));\n  setBlock(4, 6, 7, withState(woodLog, \"axis=x\"));\n  setBlock(2, 6, 6, withState(woodTrapdoor, \"facing=west,half=top,open=false\"));\n  setBlock(2, 6, 8, withState(woodTrapdoor, \"facing=west,half=top,open=false\"));\n  setBlock(3, 7, 7, \"minecraft:lantern[hanging=true]\");\n\n  // Cable exit mount\n  setBlock(5, 8, 6, stoneWall);\n  setBlock(5, 8, 8, stoneWall);\n  setBlock(5, 8, 7, withState(stoneSlab, \"type=top\"));\n\n  // =========================================================================\n  // 3. MAIN HAWSER CABLE (Spanning X: 5..32 at Z: 7, Y: 8)\n  // =========================================================================\n  for (let x = 5; x <= 32; x++) {\n    setBlock(x, 8, 7, \"minecraft:chain[axis=x]\");\n  }\n  // Cable tension drops\n  setBlock(10, 9, 7, \"minecraft:chain[axis=y]\");\n  setBlock(27, 9, 7, \"minecraft:chain[axis=y]\");\n\n  // =========================================================================\n  // 4. THE HEAVY FERRY RAFT (X: 14..22, Z: 4..10)\n  // =========================================================================\n  // Pontoon Hull (Y = 2)\n  for (let x = 15; x <= 21; x++) {\n    setBlock(x, 2, 5, withState(woodLog, \"axis=x\"));\n    setBlock(x, 2, 7, withState(woodLog, \"axis=x\"));\n    setBlock(x, 2, 9, withState(woodLog, \"axis=x\"));\n  }\n  // Pointed prow/stern ends\n  setBlock(14, 2, 5, withState(woodStairs, \"facing=west,half=bottom\"));\n  setBlock(14, 2, 7, withState(woodStairs, \"facing=west,half=bottom\"));\n  setBlock(14, 2, 9, withState(woodStairs, \"facing=west,half=bottom\"));\n  setBlock(22, 2, 5, withState(woodStairs, \"facing=east,half=bottom\"));\n  setBlock(22, 2, 7, withState(woodStairs, \"facing=east,half=bottom\"));\n  setBlock(22, 2, 9, withState(woodStairs, \"facing=east,half=bottom\"));\n\n  // Cross ribs under the deck\n  for (const rx of [16, 18, 20]) {\n    for (let z = 4; z <= 10; z++) {\n      setBlock(rx, 2, z, woodPlanks);\n    }\n  }\n\n  // Raft Decking (Y = 3)\n  for (let x = 15; x <= 21; x++) {\n    for (let z = 4; z <= 10; z++) {\n      if (z === 4 || z === 10) {\n        setBlock(x, 3, z, withState(woodStripped, \"axis=x\"));\n      } else {\n        setBlock(x, 3, z, woodPlanks);\n      }\n    }\n  }\n  // Boarding ramps on West & East ends\n  for (let z = 6; z <= 8; z++) {\n    setBlock(14, 3, z, withState(woodStairs, \"facing=east,half=bottom\"));\n    setBlock(22, 3, z, withState(woodStairs, \"facing=west,half=bottom\"));\n  }\n\n  // Safety Railings & Benches (Y = 4)\n  for (let x = 15; x <= 21; x++) {\n    if (x !== 17 && x !== 19) {\n      setBlock(x, 4, 4, woodFence);\n      setBlock(x, 4, 10, woodFence);\n    }\n  }\n  // Passenger benches\n  for (const bx of [15, 16, 20, 21]) {\n    setBlock(bx, 4, 5, withState(woodStairs, \"facing=south,half=bottom\"));\n    setBlock(bx, 4, 9, withState(woodStairs, \"facing=north,half=bottom\"));\n  }\n\n  // Deck details\n  setBlock(15, 4, 7, withState(woodLog, \"axis=y\"));\n  setBlock(16, 4, 7, withState(woodTrapdoor, \"facing=north,half=bottom,open=false\"));\n  setBlock(21, 4, 7, woodFence);\n  setBlock(22, 5, 7, withState(woodTrapdoor, \"facing=east,half=top,open=true\"));\n\n  // Overhead Guide Gantry (X: 17..19, Z: 4..10, Y: 4..9)\n  for (let y = 4; y <= 8; y++) {\n    setBlock(17, y, 4, withState(woodStripped, \"axis=y\"));\n    setBlock(19, y, 4, withState(woodStripped, \"axis=y\"));\n    setBlock(17, y, 10, withState(woodStripped, \"axis=y\"));\n    setBlock(19, y, 10, withState(woodStripped, \"axis=y\"));\n  }\n  setBlock(17, 7, 5, withState(woodStairs, \"facing=south,half=top\"));\n  setBlock(19, 7, 5, withState(woodStairs, \"facing=south,half=top\"));\n  setBlock(17, 7, 9, withState(woodStairs, \"facing=north,half=top\"));\n  setBlock(19, 7, 9, withState(woodStairs, \"facing=north,half=top\"));\n\n  // Overhead crossbeams (Y = 8)\n  for (let z = 5; z <= 9; z++) {\n    setBlock(17, 8, z, woodFence);\n    setBlock(19, 8, z, woodFence);\n  }\n  setBlock(18, 8, 4, withState(woodStripped, \"axis=y\"));\n  setBlock(18, 8, 5, withState(woodStairs, \"facing=south,half=top\"));\n  setBlock(18, 8, 6, woodPlanks);\n  // (18, 8, 7) is the hawser cable passing through\n  setBlock(18, 8, 8, woodPlanks);\n  setBlock(18, 8, 9, withState(woodStairs, \"facing=north,half=top\"));\n  setBlock(18, 8, 10, withState(woodStripped, \"axis=y\"));\n\n  // Pulley Sheave assembly over the cable (Y = 9..10)\n  setBlock(18, 9, 6, withState(woodStairs, \"facing=south,half=bottom\"));\n  setBlock(18, 9, 7, \"minecraft:iron_bars\");\n  setBlock(18, 9, 8, withState(woodStairs, \"facing=north,half=bottom\"));\n  setBlock(18, 10, 7, withState(woodSlab, \"type=bottom\"));\n\n  // Raft hand-crank windlass & vertical drive chain\n  setBlock(18, 4, 7, withState(woodStripped, \"axis=z\"));\n  setBlock(18, 4, 6, withState(woodTrapdoor, \"facing=north,half=top,open=false\"));\n  setBlock(18, 4, 8, withState(woodTrapdoor, \"facing=south,half=top,open=false\"));\n  setBlock(18, 5, 7, \"minecraft:chain[axis=y]\");\n  setBlock(18, 6, 7, \"minecraft:chain[axis=y]\");\n  setBlock(18, 7, 7, \"minecraft:chain[axis=y]\");\n\n  // Gantry lanterns\n  setBlock(18, 7, 5, \"minecraft:lantern[hanging=true]\");\n  setBlock(18, 7, 9, \"minecraft:lantern[hanging=true]\");\n\n  // =========================================================================\n  // 5. EAST TIMBER STILT DOCK (Timber Village Shore, X: 29..37, Z: 2..12)\n  // =========================================================================\n  const eastPilingX = [29, 32, 35, 37];\n  const eastPilingZ = [2, 5, 7, 9, 12];\n\n  for (const px of eastPilingX) {\n    for (const pz of eastPilingZ) {\n      const h = api.heightAt(px, pz);\n      const gy = Math.max(0, Math.min(10, seatY + h));\n      for (let y = gy; y <= 3; y++) {\n        setBlock(px, y, pz, withState(woodLog, \"axis=y\"));\n      }\n    }\n  }\n\n  // Cross-bracing between stilts at Y = 3\n  for (const px of [29, 32, 35]) {\n    for (let z = 3; z <= 11; z++) {\n      if (!eastPilingZ.includes(z)) {\n        setBlock(px, 3, z, woodFence);\n      }\n    }\n  }\n\n  // Dock Decking at Y = 4\n  for (let x = 29; x <= 37; x++) {\n    for (let z = 2; z <= 12; z++) {\n      const h = api.heightAt(x, z);\n      const gy = Math.max(0, Math.min(10, seatY + h));\n\n      if (gy > 4) {\n        // Hillside interface\n        for (let y = 3; y <= gy; y++) {\n          setBlock(x, y, z, withState(woodLog, \"axis=y\"));\n        }\n        setBlock(x, gy, z, woodPlanks);\n      } else {\n        setBlock(x, 4, z, woodPlanks);\n      }\n    }\n  }\n\n  // Dock curbs & edge trim\n  for (let x = 29; x <= 37; x++) {\n    setBlock(x, 4, 2, withState(woodStripped, \"axis=x\"));\n    setBlock(x, 4, 12, withState(woodStripped, \"axis=x\"));\n  }\n  for (let z = 2; z <= 12; z++) {\n    setBlock(29, 4, z, withState(woodStripped, \"axis=z\"));\n  }\n\n  // Mooring bits on dock\n  const dockBollards = [[29, 2], [29, 12], [37, 2], [37, 12]];\n  for (const [bx, bz] of dockBollards) {\n    setBlock(bx, 5, bz, woodFence);\n    setBlock(bx, 6, bz, withState(woodTrapdoor, \"facing=north,half=bottom,open=false\"));\n  }\n\n  // Boarding ladders down to water\n  setBlock(29, 3, 3, withState(woodStairs, \"facing=east,half=bottom\"));\n  setBlock(29, 3, 11, withState(woodStairs, \"facing=east,half=bottom\"));\n\n  // Fish drying rack on north dock rail\n  setBlock(30, 5, 2, woodFence);\n  setBlock(32, 5, 2, woodFence);\n  setBlock(31, 5, 2, withState(woodTrapdoor, \"facing=south,half=top,open=false\"));\n  setBlock(30, 6, 2, woodFence);\n  setBlock(31, 6, 2, woodFence);\n  setBlock(32, 6, 2, woodFence);\n\n  // Lantern post on south dock\n  setBlock(30, 5, 12, woodFence);\n  setBlock(30, 6, 12, woodFence);\n  setBlock(30, 7, 12, woodFence);\n  setBlock(30, 7, 11, woodFence);\n  setBlock(30, 6, 11, \"minecraft:lantern[hanging=true]\");\n\n  // =========================================================================\n  // 6. EAST TIMBER WINCH HOUSE (X: 31..35, Z: 5..9, Y: 4..13)\n  // =========================================================================\n  // 4 Main corner posts\n  const eastWinchPosts = [[31, 5], [31, 9], [35, 5], [35, 9]];\n  for (const [px, pz] of eastWinchPosts) {\n    for (let y = 4; y <= 10; y++) {\n      setBlock(px, y, pz, withState(woodStripped, \"axis=y\"));\n    }\n  }\n\n  // Girth crossbeams at Y = 8 and Y = 10\n  for (const y of [8, 10]) {\n    for (let x = 31; x <= 35; x++) {\n      setBlock(x, y, 5, withState(woodLog, \"axis=x\"));\n      setBlock(x, y, 9, withState(woodLog, \"axis=x\"));\n    }\n    for (let z = 5; z <= 9; z++) {\n      setBlock(31, y, z, withState(woodLog, \"axis=z\"));\n      setBlock(35, y, z, withState(woodLog, \"axis=z\"));\n    }\n  }\n\n  // Pitched Nordic timber roof (Y: 11..13)\n  for (let x = 30; x <= 36; x++) {\n    // North roof slope\n    setBlock(x, 11, 4, withState(roofStairs, \"facing=north,half=bottom\"));\n    setBlock(x, 12, 5, withState(roofStairs, \"facing=north,half=bottom\"));\n    setBlock(x, 12, 6, roofSlab);\n\n    // South roof slope\n    setBlock(x, 11, 10, withState(roofStairs, \"facing=south,half=bottom\"));\n    setBlock(x, 12, 9, withState(roofStairs, \"facing=south,half=bottom\"));\n    setBlock(x, 12, 8, roofSlab);\n\n    // Central Ridge\n    setBlock(x, 13, 7, withState(roofSlab, \"type=bottom\"));\n  }\n\n  // Gable end screens\n  for (const gx of [31, 35]) {\n    setBlock(gx, 11, 6, woodPlanks);\n    setBlock(gx, 11, 7, woodFence);\n    setBlock(gx, 11, 8, woodPlanks);\n    setBlock(gx, 12, 7, woodPlanks);\n  }\n\n  // Internal Timber Windlass Machinery\n  setBlock(33, 6, 6, withState(woodLog, \"axis=z\"));\n  setBlock(33, 6, 7, withState(woodLog, \"axis=z\"));\n  setBlock(33, 6, 8, withState(woodLog, \"axis=z\"));\n\n  // Capstan turning spokes\n  setBlock(33, 7, 7, woodFence);\n  setBlock(33, 5, 7, woodFence);\n  setBlock(32, 6, 7, woodFence);\n  setBlock(34, 6, 7, woodFence);\n\n  // Ballast weight box\n  setBlock(35, 5, 7, withState(woodStripped, \"axis=y\"));\n  setBlock(35, 6, 7, withState(woodStripped, \"axis=y\"));\n\n  // Cable anchor & guide pulleys\n  setBlock(32, 8, 6, withState(woodTrapdoor, \"facing=west,half=top,open=false\"));\n  setBlock(32, 8, 8, withState(woodTrapdoor, \"facing=west,half=top,open=false\"));\n  setBlock(32, 8, 7, \"minecraft:chain[axis=x]\");\n  setBlock(33, 8, 7, \"minecraft:chain[axis=y]\");\n\n  // Winch house interior lantern\n  setBlock(33, 11, 7, \"minecraft:lantern[hanging=true]\");\n\n  return {\n    name: \"rope_ferry\",\n    seatY: seatY,\n    anchors: {\n      front: [18, 4, 0],\n      west_landing: [0, 4, 7],\n      east_landing: [37, 4, 7],\n      ferry_raft: [18, 4, 7],\n    },\n  };\n}"
+    },
+    "fish_drying_rack": {
+      "mode": "plugin",
+      "envelope": [
+        9,
+        13,
+        8
+      ],
+      "sourceHash": "b3:fb519eb65b363dc5960cb24606d75cd024d47cac0aab718fc588446227032207",
+      "outputHash": "b3:0df347531005ac6a9782e03901f8e8e65df9f407b6583ecc37ad0dfc17599038",
+      "conforms": false,
+      "conformHash": "b3:b589b469e2b71b25ec5e805e560da287365b4fa26534824ab6307c62a9951de5",
+      "source": "export const envelope = [9, 13, 8];\n\nexport default function build(api) {\n  const { theme, instance } = api;\n  const rng = api.random;\n  const idx = instance.index;\n\n  // Helpers to safely apply block states to theme strings\n  function state(block, props) {\n    if (!block) return \"minecraft:spruce_planks\";\n    const base = block.includes(\"[\") ? block.slice(0, block.indexOf(\"[\")) : block;\n    return `${base}[${props}]`;\n  }\n\n  const logY = state(theme.wood.log, \"axis=y\");\n  const logX = state(theme.wood.log, \"axis=x\");\n  const logZ = state(theme.wood.log, \"axis=z\");\n  const strippedX = state(theme.wood.stripped || theme.wood.log, \"axis=x\");\n  const strippedY = state(theme.wood.stripped || theme.wood.log, \"axis=y\");\n\n  const planks = theme.wood.planks;\n  const fence = theme.wood.fence;\n  const slabBottom = state(theme.wood.slab, \"type=bottom\");\n  const slabTop = state(theme.wood.slab, \"type=top\");\n\n  const stonePlinth = theme.ground.plinth || theme.stone.primary;\n  const stonePave = theme.ground.pavement || theme.stone.primary;\n  const stoneSlab = state(theme.stone.slab || theme.wood.slab, \"type=bottom\");\n\n  // Voxel storage for deterministic rendering and 6-connectivity guarantees\n  const voxels = new Map();\n\n  function set(x, y, z, block) {\n    if (x < 0 || x >= envelope[0] || y < 0 || y >= envelope[1] || z < 0 || z >= envelope[2]) {\n      return;\n    }\n    const key = (x << 16) | (y << 8) | z;\n    voxels.set(key, { x, y, z, block });\n  }\n\n  function get(x, y, z) {\n    const key = (x << 16) | (y << 8) | z;\n    return voxels.get(key);\n  }\n\n  // Architectural style variations across 12 instances\n  const style = idx % 4; // 0: Grand Lofoten Hjell, 1: Shore Salt-Shed, 2: Deep Stilt Wharf, 3: High Wind Scaffold\n  const fishDensity = 0.55 + (idx * 0.035) % 0.4;\n  const ladderX = style === 1 ? 7 : (style === 2 ? 1 : 4);\n  const hasRearLeanTo = style === 1 || style === 2;\n  const highTierShelter = style === 0 || style === 3;\n\n  const seatY = 3;\n\n  // 1. Terrain following foundations & ballast stone piers\n  // Main bent X lines: 1, 4, 7\n  const bentsX = [1, 4, 7];\n  const postZ = [1, 3, 4, 6];\n\n  for (const bx of bentsX) {\n    for (const bz of postZ) {\n      const gh = Math.round(api.heightAt(bx, bz));\n      const groundY = Math.max(0, Math.min(seatY, seatY + gh));\n\n      // Build foundation pier down to local ground\n      for (let y = groundY; y <= seatY; y++) {\n        if (y <= 1) {\n          set(bx, y, bz, stonePlinth);\n          // Stone ballast footing expansion\n          if (bx > 0 && y === groundY) set(bx - 1, y, bz, stonePave);\n          if (bx < 8 && y === groundY) set(bx + 1, y, bz, stonePave);\n        } else {\n          set(bx, y, bz, logY);\n        }\n      }\n\n      // If uphill terrain rises above seat plane, seat properly on it\n      if (gh > 0) {\n        const topH = Math.min(6, seatY + gh);\n        for (let y = seatY + 1; y <= topH; y++) {\n          set(bx, y, bz, stonePlinth);\n        }\n      }\n    }\n  }\n\n  // Continuous foundation beams & under-deck joists (y = 2)\n  for (let x = 1; x <= 7; x++) {\n    for (const z of [1, 3, 4, 6]) {\n      if (!get(x, 2, z)) set(x, 2, z, logX);\n    }\n  }\n  for (const bx of bentsX) {\n    for (let z = 1; z <= 6; z++) {\n      if (!get(bx, 2, z)) set(bx, 2, z, logZ);\n    }\n  }\n\n  // 2. Timber Processing Deck & Wharf Boardwalk (y = 3)\n  for (let x = 1; x <= 7; x++) {\n    for (let z = 1; z <= 6; z++) {\n      // Create slight weathering gaps or trapdoor hatch based on PRNG\n      const isHatch = (x === 2 && z === 5 && idx % 2 === 0);\n      const isWornSlab = ((x + z + idx) % 7 === 0);\n\n      if (isHatch) {\n        set(x, 3, z, state(theme.wood.trapdoor, \"facing=north,half=bottom,open=false\"));\n      } else if (isWornSlab) {\n        set(x, 3, z, slabBottom);\n      } else {\n        set(x, 3, z, planks);\n      }\n    }\n  }\n\n  // Perimeter bumper kerb logs on the front approach (z = 1) and rear (z = 6)\n  for (let x = 0; x <= 8; x++) {\n    set(x, 3, 1, logX);\n    set(x, 3, 6, logX);\n  }\n\n  // 3. A-Frame Bents (Transverse frames at x = 1, 4, 7)\n  for (const bx of bentsX) {\n    // Lower tier posts (y = 4..5)\n    set(bx, 4, 1, logY);\n    set(bx, 5, 1, logY);\n    set(bx, 4, 6, logY);\n    set(bx, 5, 6, logY);\n\n    // Mid cross tie beam at y = 5\n    for (let z = 1; z <= 6; z++) {\n      set(bx, 5, z, logZ);\n    }\n\n    // Diagonal knee braces under cross tie (y = 4)\n    set(bx, 4, 2, state(theme.wood.stairs, \"facing=north,half=top\"));\n    set(bx, 4, 5, state(theme.wood.stairs, \"facing=south,half=top\"));\n\n    // Mid tier posts stepping inwards (y = 6..8)\n    for (let y = 6; y <= 8; y++) {\n      set(bx, y, 2, logY);\n      set(bx, y, 5, logY);\n    }\n\n    // Mid cross tie collar beam at y = 8\n    for (let z = 2; z <= 5; z++) {\n      set(bx, 8, z, logZ);\n    }\n    set(bx, 7, 3, state(theme.wood.stairs, \"facing=north,half=top\"));\n    set(bx, 7, 4, state(theme.wood.stairs, \"facing=south,half=top\"));\n\n    // High tier posts converging toward apex (y = 9..11)\n    for (let y = 9; y <= 11; y++) {\n      set(bx, y, 3, logY);\n      set(bx, y, 4, logY);\n    }\n\n    // High collar tie beam at y = 11\n    set(bx, 11, 3, logZ);\n    set(bx, 11, 4, logZ);\n\n    // Apex rafters / peak cap at y = 12\n    set(bx, 12, 3, state(theme.wood.stairs, \"facing=south,half=bottom\"));\n    set(bx, 12, 4, state(theme.wood.stairs, \"facing=north,half=bottom\"));\n  }\n\n  // 4. Longitudinal Drying Rails (Poles spanning full width across X)\n  for (let x = 0; x <= 8; x++) {\n    // Tier 1 rails (y = 5)\n    set(x, 5, 1, strippedX);\n    set(x, 5, 6, strippedX);\n\n    // Tier 2 rails (y = 7)\n    set(x, 7, 2, fence);\n    set(x, 7, 5, fence);\n\n    // Tier 3 rails (y = 9)\n    set(x, 9, 2, fence);\n    set(x, 9, 5, fence);\n    set(x, 9, 3, strippedX);\n    set(x, 9, 4, strippedX);\n\n    // Tier 4 high rails (y = 11)\n    set(x, 11, 3, strippedX);\n    set(x, 11, 4, strippedX);\n\n    // Ridge pole along the peak (y = 12)\n    set(x, 12, 3, logX);\n    set(x, 12, 4, logX);\n  }\n\n  // Catwalk on Tier 2 for inspecting and hanging fish (y = 6, z = 3..4)\n  for (let x = 1; x <= 7; x++) {\n    set(x, 6, 3, planks);\n    set(x, 6, 4, planks);\n  }\n\n  // Rear lean-to drying canopy / salt shed roof (when active)\n  if (hasRearLeanTo) {\n    for (let x = 0; x <= 8; x++) {\n      set(x, 8, 5, state(theme.wood.stairs, \"facing=north,half=bottom\"));\n      set(x, 7, 6, state(theme.wood.stairs, \"facing=north,half=bottom\"));\n      set(x, 6, 7, state(theme.wood.stairs, \"facing=north,half=bottom\"));\n      // Support posts along rear edge\n      if (x === 1 || x === 4 || x === 7) {\n        set(x, 4, 7, fence);\n        set(x, 5, 7, fence);\n      }\n    }\n  }\n\n  if (highTierShelter) {\n    for (let x = 0; x <= 8; x++) {\n      set(x, 10, 2, state(theme.wood.stairs, \"facing=south,half=bottom\"));\n      set(x, 10, 5, state(theme.wood.stairs, \"facing=north,half=bottom\"));\n    }\n  }\n\n  // 5. Stockfish Fillets / Dried Cod Pairs (Hanging beneath rails)\n  const fishTypes = [\n    \"minecraft:birch_trapdoor[facing=north,half=top,open=true]\",\n    \"minecraft:birch_trapdoor[facing=south,half=top,open=true]\",\n    \"minecraft:birch_slab[type=top]\",\n    \"minecraft:birch_fence\",\n    state(theme.wood.trapdoor, \"facing=north,half=top,open=true\"),\n    state(theme.wood.slab, \"type=top\")\n  ];\n\n  function hangFish(x, y, z, rVal) {\n    if (rVal < fishDensity && !get(x, y, z)) {\n      const typeIdx = Math.floor(rVal * 17) % fishTypes.length;\n      set(x, y, z, fishTypes[typeIdx]);\n    }\n  }\n\n  for (let x = 0; x <= 8; x++) {\n    // Under Tier 1 rails (y = 4)\n    hangFish(x, 4, 1, ((x * 7 + idx * 3) % 100) / 100);\n    hangFish(x, 4, 6, ((x * 11 + idx * 5) % 100) / 100);\n\n    // Under Tier 2 rails (y = 6)\n    hangFish(x, 6, 2, ((x * 13 + idx * 7) % 100) / 100);\n    hangFish(x, 6, 5, ((x * 17 + idx * 11) % 100) / 100);\n\n    // Under Tier 3 rails (y = 8)\n    hangFish(x, 8, 2, ((x * 19 + idx * 13) % 100) / 100);\n    hangFish(x, 8, 5, ((x * 23 + idx * 17) % 100) / 100);\n    hangFish(x, 8, 3, ((x * 29 + idx * 19) % 100) / 100);\n    hangFish(x, 8, 4, ((x * 31 + idx * 23) % 100) / 100);\n\n    // Under Tier 4 high rails (y = 10)\n    hangFish(x, 10, 3, ((x * 37 + idx * 29) % 100) / 100);\n    hangFish(x, 10, 4, ((x * 41 + idx * 31) % 100) / 100);\n  }\n\n  // 6. Access Ladders to Catwalk\n  const ladFacing = ladderX === 7 ? \"facing=west\" : (ladderX === 1 ? \"facing=east\" : \"facing=south\");\n  const ladZ = ladderX === 4 ? 2 : 3;\n  for (let y = 4; y <= 6; y++) {\n    set(ladderX, y, ladZ, `minecraft:ladder[${ladFacing}]`);\n  }\n\n  // 7. Salted Barrels, Fish Boxes, Brine Cauldron, and Rope Coils on the Deck (y = 4..5)\n  // Stacked salted fish barrels cluster A (x = 2..3, z = 2..3)\n  set(2, 4, 2, \"minecraft:barrel[facing=up]\");\n  if (style !== 3) {\n    set(2, 5, 2, \"minecraft:barrel[facing=up]\");\n  } else {\n    set(2, 5, 2, slabBottom);\n  }\n  set(3, 4, 2, \"minecraft:barrel[facing=north]\");\n\n  // Salted barrels cluster B (x = 5..6, z = 4..5)\n  set(6, 4, 4, \"minecraft:barrel[facing=up]\");\n  set(6, 4, 5, \"minecraft:barrel[facing=east]\");\n  if (style === 0 || style === 2) {\n    set(6, 5, 4, \"minecraft:barrel[facing=up]\");\n  }\n\n  // Salt brine tub / fish curing cauldron\n  const vatX = style % 2 === 0 ? 5 : 2;\n  const vatZ = style % 2 === 0 ? 2 : 4;\n  set(vatX, 4, vatZ, \"minecraft:cauldron\");\n\n  // Fish gutting & filleting bench with stone top\n  const tableX = style === 1 ? 3 : 5;\n  set(tableX, 4, 3, fence);\n  set(tableX, 5, 3, stoneSlab);\n\n  // Rope coils & dried hemp tackle bundles (hay blocks with axis alignment)\n  set(5, 4, 5, \"minecraft:hay_block[axis=y]\");\n  set(5, 5, 5, slabBottom);\n  if (style >= 2) {\n    set(2, 4, 4, \"minecraft:hay_block[axis=x]\");\n  }\n\n  // Suspension tackle chains hanging from tie beams\n  set(3, 7, 3, \"minecraft:chain[axis=y]\");\n  set(3, 6, 3, \"minecraft:chain[axis=y]\");\n  set(5, 7, 4, \"minecraft:chain[axis=y]\");\n\n  // 8. Front approach steps / ramps conforming to local ground\n  const frontGh = Math.round(api.heightAt(4, 0));\n  const frontY = Math.max(0, Math.min(seatY, seatY + frontGh));\n  for (let y = frontY; y < seatY; y++) {\n    set(4, y, 0, stonePave);\n    set(3, y, 0, stonePlinth);\n    set(5, y, 0, stonePlinth);\n  }\n  set(4, seatY, 0, state(theme.wood.stairs, \"facing=south,half=bottom\"));\n  set(3, seatY, 0, state(theme.wood.stairs, \"facing=south,half=bottom\"));\n  set(5, seatY, 0, state(theme.wood.stairs, \"facing=south,half=bottom\"));\n\n  // 9. Extra stability reinforcements under-deck to ensure solid voxel quota >= 500\n  for (let x = 1; x <= 7; x++) {\n    for (let z = 2; z <= 5; z++) {\n      if (!get(x, 2, z)) {\n        set(x, 2, z, planks);\n      }\n    }\n  }\n\n  // Flush all voxels deterministically sorted by coordinate\n  const sortedVoxels = Array.from(voxels.values()).sort((a, b) => {\n    if (a.y !== b.y) return a.y - b.y;\n    if (a.z !== b.z) return a.z - b.z;\n    return a.x - b.x;\n  });\n\n  for (const v of sortedVoxels) {\n    api.set(v.x, v.y, v.z, v.block);\n  }\n\n  return {\n    name: \"fish_drying_rack\",\n    seatY: seatY,\n    anchors: {\n      front: [4, seatY, 0],\n      deck: [4, seatY, 3]\n    }\n  };\n}"
+    }
+  }
+}

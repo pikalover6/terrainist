@@ -7,12 +7,12 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 29 (probe pass 1: six prompts authored and
-  scored; six of six authored (five one-shot), every icon present at document level, four form packs and the terrain kit reached for the first time, zero boxes and zero era violations; the icon verdict is deferred — the harness is authoring-only and five probes carry their icon in an `authored:` program the mode never writes (F24), so G4 is not yet counted) is committed.
-- **Next unit:** unit 30 — **probe pass 2, the program stage**: the same six through the full pipeline (`generate-all.mjs` needs the same `--prompts` roster option `run.mjs` got; then `record-generate-run.mjs` → `icon-metric.mjs --prompts probes.json`), pre-registered first: prediction (the ferry, bell, ribcage and pit heads are placed and the whale and bell dominate; the monastery still fails the footprint half), cost (≈ $0.24 per world measured, ≈ $1.50 the pass; cap $3.00), decision rule as pass 1. A program that does not place, or an icon that is placed and not dominant, is a finding with a cause. Then F17, census 1.21, P5/P6/P7 first steps if cheap; the remaining verdict stations, G2, the final deck and closing report.
-- **Last commit:** 27cc137 (unit 28). Convention: this line names the
+- **In flight:** nothing — unit 30 (probe pass 2 through the program stage;
+  six of six generated one-shot, every icon program placed, the sky-whale dominant and read as such, the caldera a pass by read, and four fails with two causes: the fjord carved between the villages stayed dry with no diagnostic (F26, fixed here as `LOAM-I502`), and the bell, the ferry, the monastery and the pit heads authored at building scale (F27, kit-teaching) — G4 not met) is committed.
+- **Next unit:** unit 31 — **F27 in the kit**: the program and landmark sections teach that an icon is built to dominate (T1: scale, height, prominence over the ordinary buildings — the whale at ×2.8/×6.8 is the example, the bell at ×1.27 the counter-example), gated by the golden harness (`run.mjs --label after-f27` + `score.mjs --gate` against `runs/probe-1`/the before-sample, ≈ $0.64); then probe pass 3 — six *new* probes (G4 needs six with no new class), pre-registered, through the program stage (≈ $1.70). Then F17, census 1.21, P5/P6/P7; the remaining verdict stations, G2, the final deck and closing report.
+- **Last commit:** 402e603 (unit 29). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
-- **Spend:** $8.55 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
+- **Spend:** $10.22 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
 - **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19, D25,
   D32.)
 - **Findings queue (law 1: bugs before anything else):**
@@ -30,6 +30,16 @@ running state. The NOW block is rewritten at the end of every turn.
   - F14 — closed (unit 27): 13,624 lint findings on the thirteen were
     97 % two instrument false positives (floor lichen; `sea_lantern` read
     as a lamp), fixed; the real remainder is F23.
+  - F26 — **a `flooded: "auto"` carve whose mouth reaches the sea but whose
+    floor runs above it got no diagnostic** (T113 stops at the first wet
+    column): the two-villages fjord, 14 % of its floor wet, up to 31 blocks
+    dry. Fixed (unit 30): `LOAM-I502 CARVE_MOSTLY_DRY`, measured along the
+    floor samples, below half wet.
+  - F27 — **the icon is authored at house scale**: the bell pavilion ×1.27,
+    the ferry rig ×0.93, the pit heads as huts, the monastery ×1.7 on a
+    200× mountain; the whale (×2.8, ×6.8) proves the model can. Nothing in
+    the kit says an icon is built to dominate (T1). Kit-teaching; the
+    metric agreed with the eye in all four. Unit 31.
   - F24 — **probe verdicts need the program stage**: the golden harness is
     authoring-only, and five of six probes carry their icon in an
     `authored:<id>` program the mode never writes (`W337 PROGRAM_DROPPED`),
@@ -484,6 +494,22 @@ running state. The NOW block is rewritten at the end of every turn.
   Pass 1's icon verdict is deferred rather than read as six failures: the
   mode cannot place a program, and a verdict that the instrument cannot
   reach is not a verdict (law 7). Undo: n/a.
+- **D67 (unit 30):** F26 is fixed in the same unit that found it, as
+  a note from the stdlib's own dry-carve report: the rule already existed
+  for the all-dry case, one wet column silenced it, and measuring along
+  the carve's floor samples (below half wet) is the smallest change that
+  names the fjord without naming a flooded channel with dry banks (the
+  first footprint-based cut did, and was thrown away on its own test).
+  Report-only; the thirteen identical. Undo: delete the block and the
+  code.
+- **D68 (unit 30):** the four "not dominant" verdicts are read as one
+  cause (F27, the kit) and not four metric quibbles: renders were read
+  before the metric was believed, and in every case the eye agreed — the
+  bell, the huts, the ferry and the monastery are the size of the houses
+  beside them. The monastery's 1.7×/1.69× is also the one case where F15's
+  threshold question would matter, and it is moot while the mountain is
+  the icon. G4 is not met by this pass; six new probes follow F27. Undo:
+  n/a.
 
 ## SPEND
 
@@ -518,6 +544,7 @@ running state. The NOW block is rewritten at the end of every turn.
 | 27 | F14 probed — two lint passes over the thirteen, three baseline re-pins, one bi14 run, the FULL suite | 0.00 | 8.19 |
 | 28 | F23 attributed — three lint passes, three baseline re-pins, one bi14 run, the FULL suite | 0.00 | 8.19 |
 | 29 | probe pass 1 — six prompts authored (`runs/probe-1`), the icon metric | 0.36 | 8.55 |
+| 30 | probe pass 2 — six worlds generated end to end (`runs/probe-2`), the icon metric | 1.67 | 10.22 |
 
 ## VERDICTS
 
@@ -564,6 +591,29 @@ $1.50 (log-derived, D4).
 | `probe_caldera` | terrain-only, the terrain kit | `cave.carver`, vents as a scatter program | dominance unmeasurable | nothing placed to compare a lake against — instrument gap for terrain icons | no |
 | `probe_temple_bell` | an icon in a prop pack, feudal_japanese at 0 % | the pack, `authored:bell_pavilion`; `T210` once, clean retry | bell unmeasured | the program is not authored in this mode (F24) | deferred to pass 2 |
 | `probe_sky_whale` | bespoke (T8), desert_caravanserai at 0 % | the pack, two `authored:` programs | not dominant on what stood: h ×0.8, a ×1.33 | the ribcage and skull are programs (F24) | deferred to pass 2 |
+
+**Pass 2 — pre-registered (unit 30, 2026-08-25), before any spend.** The
+same six prompts through the full pipeline (`generate-all.mjs <out> 3 ""
+tools/golden-prompts/probes.json` → `terrainist generate` per prompt:
+intent, authoring, programs, compile-feedback rounds, emit; then
+`record-generate-run.mjs` and `icon-metric.mjs --prompts probes.json`).
+Cost: ≈ $0.24 per world measured (WS-C median), ≈ $1.50 the pass; cap for
+the unit **$3.00**. **Prediction:** the ferry rig, the bell pavilion, the
+ribcage and skull and the pit heads are placed as programs; the whale and
+the bell read dominant; the monastery still fails the footprint half
+(F15); the caldera stays unmeasurable; one of six needs a second
+compile-feedback round. **Decision rule** as pass 1: a program that does
+not place, or an icon placed and not dominant, is a finding with a cause
+(F-number), promoted once fixed; passes stay one-off; these six count
+toward G4 only from this pass.
+
+| **pass 2** | | | | | |
+| `probe_sky_whale` | bespoke (T8) | skull temple, ribcage market, 9 vertebra arches placed | — | **dominant** h ×2.8, a ×6.8; the read agrees | no — pass |
+| `probe_caldera` | terrain-only | 7 of 14 vents; the lake, the rim, the tube | dominance unmeasurable | terrain icons have nothing to be dominant over (F24) | no — pass by read |
+| `probe_monastery` | 0 %-reach pack | flag span, seracs; the mani shrine refused on the cliff | monastery not dominant h ×1.7, a ×1.69; the read agrees (the mountain is the icon) | icon authored at building scale (F27) | after F27 |
+| `probe_temple_bell` | icon in a prop pack | the pavilion placed | not dominant h ×1.27, a ×2.78; the read agrees | F27 | after F27 |
+| `probe_two_villages` | two places | the ferry placed; 12 of 14 racks | ferry joins nothing: **no fjord** | the valley carved between the villages stayed dry with no diagnostic (F26 — fixed, `LOAM-I502`) | after F26 + F27 |
+| `probe_bronze_tundra` | unusual era/climate | the ship, 4 hearths | the mine is ordinary huts | F27; `W517` pack-era once more | after F27 |
 
 ## PROPOSALS
 
@@ -1036,3 +1086,16 @@ $1.50 (log-derived, D4).
   `icon-metric.mjs` take `--prompts <file>` so the golden roster stays
   untouched. Tests: FULL suite COUNTS Test Files 347 passed | 1 skipped (348), Tests 5680 passed | 31 skipped (5711). Files: `probes.json`, the
   two tools, the ledger. Spend $0.36.
+- **unit 30 — probe pass 2, the program stage (2026-08-25):** the six
+  probes through `terrainist generate` (`generate-all.mjs` with the probe
+  roster; worlds in the scratchpad, records in `runs/probe-2`), scored by
+  the icon metric and read from renders. six of six generated one-shot, every icon program placed, the sky-whale dominant and read as such, the caldera a pass by read, and four fails with two causes: the fjord carved between the villages stayed dry with no diagnostic (F26, fixed here as `LOAM-I502`), and the bell, the ferry, the monastery and the pit heads authored at building scale (F27, kit-teaching) — G4 not met Landed for F26:
+  `LOAM-I502 CARVE_MOSTLY_DRY` — `reportDryCarves` now measures a
+  `flooded: "auto"` carve along its own floor samples and names one below
+  half wet (the fjord: 10 % of its floor reaches the sea, up to 46 blocks
+  above it along the rest); `coast-anchor.test.ts` +2. Tools:
+  `generate-all.mjs` and `record-generate-run.mjs` take a roster argument.
+  The thirteen: all thirteen payload-identical to unit 28. Tests: FULL suite COUNTS Test Files 347 passed | 1 skipped (348), Tests 5682 passed | 31 skipped (5713). Files: `stdlib
+  edits/index.ts`, `compile.ts`, the registry, the test, the two tools,
+  `runs/probe-2`, `docs/decks/probes/PROBE-PASS-2-2026-08-25.md`, the
+  ledger. Spend $1.67.

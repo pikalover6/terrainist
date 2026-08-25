@@ -373,3 +373,44 @@ describe("compassBearing", () => {
     expect(compassBearing(-10, 10)).toBe("south-west");
   });
 });
+
+describe("reportDryCarves — LOAM-I502, the mostly dry carve", () => {
+  // A valley from the west coast inland: over the shore columns (height 50)
+  // it is under the sea; inland the land stands at 90 and a 20-deep valley
+  // floors at 70, seven blocks above the water. The mouth is wet, the
+  // course is dry — the fjord of the Stocktake Run's probe pass 2.
+  const inland: TerrainEdit = {
+    id: "fjord",
+    verb: "valley",
+    course: [
+      [0.05, 0.5],
+      [0.95, 0.5],
+    ],
+    width: 24,
+    depth: 20,
+  };
+  it("names a carve whose mouth reaches the sea while its course stands above it", () => {
+    const field = westCoast();
+    const out = applyEdits(field, [inland], ctx());
+    const ocean = computeOceanMask(field, SEA, out.noFlood).mask;
+    const dry = reportDryCarves(field, out, { seaLevel: SEA, oceanMask: ocean });
+    expect(dry).toHaveLength(0);
+    expect(out.diagnostics.find((d) => d.code === "LOAM-T113")).toBeUndefined();
+    const note = out.diagnostics.find((d) => d.code === "LOAM-I502");
+    expect(note?.severity).toBe("note");
+    expect(note?.editId).toBe("fjord");
+    expect(note?.message).toContain("mostly dry");
+    expect(note?.message).toMatch(/\d+ of \d+ points along its floor reach the sea/);
+    expect(note?.message).toMatch(/up to \d+ blocks above sea level/);
+  });
+  it("stays quiet when the carve floods along its whole floor", () => {
+    // A channel lying wholly over the shore columns (height 50): every floor
+    // sample is under the sea and connected to it.
+    const field = westCoast();
+    const out = applyEdits(field, [{ ...inland, id: "sound", course: [[0.02, 0.3], [0.15, 0.7]] }], ctx());
+    const ocean = computeOceanMask(field, SEA, out.noFlood).mask;
+    reportDryCarves(field, out, { seaLevel: SEA, oceanMask: ocean });
+    expect(out.diagnostics.find((d) => d.code === "LOAM-I502")).toBeUndefined();
+    expect(out.diagnostics.find((d) => d.code === "LOAM-T113")).toBeUndefined();
+  });
+});

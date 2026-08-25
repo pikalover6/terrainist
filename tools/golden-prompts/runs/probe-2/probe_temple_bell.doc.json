@@ -1,0 +1,631 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "bell_ridge_village",
+    "worldSeed": "905",
+    "prompt": "A feudal Japanese hill village of terraced paddies, with a great bronze temple bell in its own pavilion on the ridge above, rung at dusk.",
+    "spawn": {
+      "zone": "south"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:dirt_path",
+      "road.shoulder": "minecraft:andesite",
+      "plaza.path": "minecraft:stone_bricks",
+      "plaza.border": "minecraft:andesite"
+    }
+  },
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.4,
+    "formality": 0.2,
+    "climate": {
+      "temperature": 0.2,
+      "humidity": 0.4
+    },
+    "character": {
+      "label": "feudal Japanese hill village",
+      "materialTheme": "temperate_timber",
+      "formPacks": [
+        "feudal_japanese"
+      ],
+      "archetypes": {
+        "prefer": [
+          "machiya",
+          "cottage",
+          "granary",
+          "tea_room"
+        ],
+        "forbid": [
+          "townhouse",
+          "apartment_block",
+          "office"
+        ]
+      },
+      "urbanForm": "hillside",
+      "ground": "stepped",
+      "programs": [
+        {
+          "id": "bell_pavilion",
+          "mode": "landmark",
+          "brief": "A traditional Japanese open timber bell pavilion (shōrō) with heavy cedar posts, curved irimoya eave roof, a massive cast bronze temple bell (bonshō) suspended from crossbeams, and a suspended swinging log striker (shumoku).",
+          "envelope": [
+            13,
+            15,
+            13
+          ]
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "a steep hillside village surrounded by terraced rice paddies, rising to a prominent ridge overlooking the valley",
+      "icons": "a great bronze temple bell hung in an open timber pavilion on the high ridge; stepped water paddies on stone-retained terraces; stone lanterns along climbing stone stairs",
+      "lighting": "dusk"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "the terraced hill village and temple ridge",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "mountain slopes stepping down into a quiet agricultural valley",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 76,
+          "amplitude": 44,
+          "octaves": 5,
+          "frequency": 0.0032,
+          "gain": 0.48,
+          "erosionPasses": 2,
+          "cliffThreshold": 52,
+          "soilDepth": 4,
+          "beachWidth": 2,
+          "snowLineFraction": 0.92
+        },
+        "children": [
+          {
+            "id": "high_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the high mountain ridge overlooking the settlement",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.2,
+                  0.24
+                ],
+                [
+                  0.5,
+                  0.22
+                ],
+                [
+                  0.8,
+                  0.26
+                ]
+              ],
+              "width": 72,
+              "height": 36,
+              "profile": "rounded",
+              "meander": 0.25
+            }
+          },
+          {
+            "id": "village_spur",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the broad descending spur where the village terraces cling",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.5,
+                  0.22
+                ],
+                [
+                  0.5,
+                  0.48
+                ],
+                [
+                  0.48,
+                  0.7
+                ]
+              ],
+              "width": 90,
+              "height": 24,
+              "profile": "rounded",
+              "meander": 0.3
+            }
+          },
+          {
+            "id": "lower_valley",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the gentle valley floor below the paddies",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.1,
+                  0.82
+                ],
+                [
+                  0.5,
+                  0.8
+                ],
+                [
+                  0.9,
+                  0.84
+                ]
+              ],
+              "width": 72,
+              "depth": 14,
+              "profile": "rounded",
+              "flooded": "never",
+              "meander": 0.4
+            }
+          },
+          {
+            "id": "mountain_rill",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "a stream carving down the spur to feed the paddies",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.58,
+                  0.22
+                ],
+                [
+                  0.54,
+                  0.48
+                ],
+                [
+                  0.72,
+                  0.82
+                ]
+              ],
+              "width": 6,
+              "depth": 3,
+              "profile": "rounded",
+              "flooded": "never",
+              "meander": 0.5
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0015
+        }
+      },
+      {
+        "id": "ridge_pines",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "dark mountain pines and cedar stands across the upper slopes",
+        "params": {
+          "area": {
+            "zone": "north"
+          },
+          "density": 0.18,
+          "spacing": 3,
+          "clumping": 0.45,
+          "maxSlope": 34,
+          "elevation": [
+            4,
+            120
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "undergrowth": {
+            "grass": 0.35,
+            "flowers": 0.08,
+            "deadwood": 0.03
+          },
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "ancient_cedar",
+                  "shape": "spruce_ancient"
+                }
+              ]
+            },
+            "understory": "none",
+            "floor": "default"
+          },
+          "species": [
+            {
+              "id": "tall_cedar",
+              "weight": 4,
+              "shape": "spruce_tall"
+            },
+            {
+              "id": "wild_cherry",
+              "weight": 2,
+              "shape": "cherry_blossom"
+            },
+            {
+              "id": "slender_birch",
+              "weight": 1,
+              "shape": "birch_slim"
+            }
+          ]
+        }
+      },
+      {
+        "id": "valley_scatter",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse cherry blossoms and oaks in the valley",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 30,
+          "elevation": [
+            2,
+            110
+          ],
+          "edgeFalloff": 12,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "species": [
+            {
+              "id": "valley_cherry",
+              "weight": 3,
+              "shape": "cherry_blossom"
+            },
+            {
+              "id": "valley_oak",
+              "weight": 2,
+              "shape": "oak_round"
+            }
+          ]
+        }
+      },
+      {
+        "id": "hill_village",
+        "kind": "district",
+        "label": "the terraced hillside quarter of machiya shop-houses and lodges",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            170,
+            150
+          ]
+        },
+        "params": {
+          "fabric": "hillside",
+          "density": "medium",
+          "ground": "stepped",
+          "blockSize": 36,
+          "mix": [
+            "machiya",
+            "cottage",
+            "tea_house",
+            "granary"
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          }
+        ],
+        "tags": [
+          "village",
+          "settlement"
+        ],
+        "children": [
+          {
+            "id": "hill_pagoda",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the three-tiered village pagoda",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                11,
+                16,
+                11
+              ]
+            },
+            "params": {
+              "archetype": "pagoda",
+              "floors": 2
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "pagoda"
+            ]
+          },
+          {
+            "id": "headman_machiya",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the village headman's deep machiya",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                9,
+                13,
+                17
+              ]
+            },
+            "params": {
+              "archetype": "machiya",
+              "floors": 2
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "house",
+              "machiya"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "temple_bell_pavilion",
+        "kind": "generator",
+        "generator": "authored:bell_pavilion",
+        "label": "the great bronze bell in its open timber pavilion on the high ridge",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            15,
+            13
+          ]
+        },
+        "params": {
+          "seat": "pad",
+          "face": {
+            "toward": "hill_village"
+          }
+        },
+        "constraints": [
+          {
+            "at": [
+              0.5,
+              0.23
+            ]
+          },
+          {
+            "distance": "hill_village",
+            "min": 20,
+            "max": 90,
+            "strength": "soft"
+          },
+          {
+            "on": "@terrain:ridge",
+            "band": 36
+          }
+        ],
+        "tags": [
+          "landmark",
+          "temple",
+          "bell"
+        ]
+      },
+      {
+        "id": "paddy_terraces_west",
+        "kind": "generator",
+        "generator": "precinct.farm@0",
+        "label": "the terraced rice paddies descending the western slope",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            110,
+            96
+          ]
+        },
+        "params": {
+          "parcels": 8,
+          "parcelSize": 14,
+          "crops": [
+            "wheat",
+            "pasture"
+          ],
+          "edge": "wall",
+          "farmstead": "none"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "hill_village",
+            "gap": [
+              2,
+              32
+            ],
+            "strength": "soft"
+          },
+          {
+            "distance": "hill_village",
+            "min": 4,
+            "max": 64,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "gate": {
+            "type": "road_stub",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "farm",
+          "paddies"
+        ]
+      },
+      {
+        "id": "paddy_terraces_east",
+        "kind": "generator",
+        "generator": "precinct.farm@0",
+        "label": "the terraced rice paddies descending the eastern slope",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            100,
+            88
+          ]
+        },
+        "params": {
+          "parcels": 6,
+          "parcelSize": 14,
+          "crops": [
+            "wheat",
+            "pasture"
+          ],
+          "edge": "wall",
+          "farmstead": "none"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "hill_village",
+            "gap": [
+              2,
+              32
+            ],
+            "strength": "soft"
+          },
+          {
+            "distance": "hill_village",
+            "min": 4,
+            "max": 64,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "gate": {
+            "type": "road_stub",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "farm",
+          "paddies"
+        ]
+      },
+      {
+        "id": "paddy_retaining_wall",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "stone retaining boundary along the western paddy terraces",
+        "params": {
+          "entry": "retaining_wall",
+          "route": {
+            "ring": "paddy_terraces_west",
+            "margin": 4
+          }
+        }
+      },
+      {
+        "id": "village_paths",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "stone-lined climbing lanes connecting the village, paddies, and the ridge bell",
+        "params": {
+          "anchors": [
+            "hill_village",
+            "temple_bell_pavilion",
+            "paddy_terraces_west",
+            "paddy_terraces_east"
+          ],
+          "pattern": "organic",
+          "width": 2,
+          "lanterns": true,
+          "lanternSpacing": 12
+        }
+      },
+      {
+        "id": "village_well",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the communal well in the village core",
+        "params": {
+          "prop": "well_head",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "ridge_cairn",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a stone wayside marker along the ridge approach",
+        "params": {
+          "prop": "cairn",
+          "zone": "north"
+        }
+      }
+    ]
+  },
+  "programs": {
+    "bell_pavilion": {
+      "mode": "landmark",
+      "envelope": [
+        15,
+        19,
+        15
+      ],
+      "sourceHash": "b3:7e7511363dcdb669957978c9dded6753bcc0c9cf5b29aa6afda0ab52fecededc",
+      "outputHash": "b3:c1e1f632fb715dbfac4b0a3de6a3ba9bdea97e313a7530becf313c970b7d05f3",
+      "conforms": false,
+      "conformHash": "b3:8a3c78ea696531bca916c42016356b8a5346d0e215078ba3eafb48d1b78e2d60",
+      "source": "export const envelope = [15, 19, 15];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const SEAT_Y = 3;\n\n  function getBase(blockStr) {\n    if (!blockStr) return \"minecraft:stone_bricks\";\n    const idx = blockStr.indexOf(\"[\");\n    return idx === -1 ? blockStr : blockStr.slice(0, idx);\n  }\n\n  function makeStairs(baseStr, facing = \"north\", half = \"bottom\", shape = \"straight\") {\n    const id = getBase(baseStr);\n    return `${id}[facing=${facing},half=${half},shape=${shape}]`;\n  }\n\n  function makeSlab(baseStr, type = \"bottom\") {\n    const id = getBase(baseStr);\n    return `${id}[type=${type}]`;\n  }\n\n  function makeLog(baseStr, axis = \"y\") {\n    const id = getBase(baseStr);\n    return `${id}[axis=${axis}]`;\n  }\n\n  function makeTrapdoor(baseStr, facing = \"north\", half = \"bottom\", open = false) {\n    const id = getBase(baseStr);\n    return `${id}[facing=${facing},half=${half},open=${open}]`;\n  }\n\n  function setSafe(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      api.set(x, y, z, block);\n    }\n  }\n\n  const { theme } = api;\n  const stonePrimary = theme.stone.primary;\n  const stoneAccent = theme.stone.accent || stonePrimary;\n  const stoneStairs = theme.stone.stairs || stonePrimary;\n  const stoneSlab = theme.stone.slab || stonePrimary;\n  const stoneWall = theme.stone.wall || stonePrimary;\n  const stoneRevetment = theme.ground.revetment || stonePrimary;\n  const stonePavement = theme.ground.pavement || stonePrimary;\n\n  const woodPlanks = theme.wood.planks;\n  const woodLog = theme.wood.log;\n  const woodStripped = theme.wood.stripped || woodLog;\n  const woodStairs = theme.wood.stairs || woodPlanks;\n  const woodSlab = theme.wood.slab || woodPlanks;\n  const woodFence = theme.wood.fence;\n  const woodTrapdoor = theme.wood.trapdoor || woodPlanks;\n\n  const roofStairs = theme.roof.stairs || woodStairs;\n  const roofSlab = theme.roof.slab || woodSlab;\n  const roofSolid = theme.roof.solid || woodPlanks;\n\n  // -------------------------------------------------------------------------\n  // 1. FOUNDATION & PLINTH (Conforming directly to real terrain heightmap)\n  // -------------------------------------------------------------------------\n  const foundationMap = new Map();\n\n  // Main 9x9 raised platform (x: 3..11, z: 3..11)\n  for (let x = 3; x <= 11; x++) {\n    for (let z = 3; z <= 11; z++) {\n      const isBorder = x === 3 || x === 11 || z === 3 || z === 11;\n      let surface = isBorder ? stonePrimary : woodPlanks;\n\n      // Bell acoustic resonator ring in floor center\n      if (!isBorder && x >= 6 && x <= 8 && z >= 6 && z <= 8) {\n        surface = x === 7 && z === 7 ? stonePrimary : stoneAccent;\n      }\n\n      // Stone soseki (column base footings)\n      if ((x === 4 || x === 10) && (z === 4 || z === 10)) {\n        surface = stoneAccent;\n      }\n\n      foundationMap.set(`${x},${z}`, {\n        targetTopY: SEAT_Y + 1,\n        surface,\n        sub: isBorder ? stoneRevetment : stonePrimary,\n      });\n    }\n  }\n\n  // Front access steps (North side: z = 0..2)\n  for (let x = 5; x <= 9; x++) {\n    const z = 2;\n    const isMainStair = x >= 6 && x <= 8;\n    foundationMap.set(`${x},${z}`, {\n      targetTopY: SEAT_Y,\n      surface: isMainStair ? makeStairs(stoneStairs, \"south\", \"bottom\") : stonePrimary,\n      sub: stoneRevetment,\n    });\n  }\n  for (let x = 6; x <= 8; x++) {\n    for (let z = 0; z <= 1; z++) {\n      foundationMap.set(`${x},${z}`, {\n        targetTopY: SEAT_Y,\n        surface: stonePavement,\n        sub: stoneRevetment,\n      });\n    }\n  }\n\n  // Step skirts on perimeter\n  for (let z = 5; z <= 9; z++) {\n    for (const x of [2, 12]) {\n      foundationMap.set(`${x},${z}`, {\n        targetTopY: SEAT_Y,\n        surface: makeSlab(stoneSlab, \"bottom\"),\n        sub: stoneRevetment,\n      });\n    }\n  }\n  for (let x = 5; x <= 9; x++) {\n    const z = 12;\n    foundationMap.set(`${x},${z}`, {\n      targetTopY: SEAT_Y,\n      surface: makeSlab(stoneSlab, \"bottom\"),\n      sub: stoneRevetment,\n    });\n  }\n\n  // Render foundation columns conforming to terrain\n  for (const [key, data] of foundationMap.entries()) {\n    const [x, z] = key.split(\",\").map(Number);\n    const gh = Math.round(api.heightAt(x, z));\n    const groundY = Math.max(0, SEAT_Y + gh);\n    const topY = Math.max(data.targetTopY, groundY);\n\n    for (let y = groundY; y <= topY; y++) {\n      if (y === topY) {\n        setSafe(x, y, z, data.surface);\n      } else {\n        setSafe(x, y, z, data.sub);\n      }\n    }\n  }\n\n  // -------------------------------------------------------------------------\n  // 2. TIMBER POSTS (Hashira)\n  // -------------------------------------------------------------------------\n  const postPositions = [\n    [4, 4],\n    [10, 4],\n    [4, 10],\n    [10, 10],\n  ];\n\n  for (const [px, pz] of postPositions) {\n    for (let y = SEAT_Y + 2; y <= SEAT_Y + 8; y++) {\n      setSafe(px, y, pz, makeLog(woodLog, \"y\"));\n    }\n  }\n\n  // -------------------------------------------------------------------------\n  // 3. BALUSTRADE / RAILINGS (Kōran)\n  // -------------------------------------------------------------------------\n  const railY = SEAT_Y + 2;\n  const railTopY = SEAT_Y + 3;\n\n  for (let z = 5; z <= 9; z++) {\n    setSafe(4, railY, z, woodFence);\n    setSafe(4, railTopY, z, makeTrapdoor(woodTrapdoor, \"west\", \"bottom\"));\n    setSafe(10, railY, z, woodFence);\n    setSafe(10, railTopY, z, makeTrapdoor(woodTrapdoor, \"east\", \"bottom\"));\n  }\n  for (let x = 5; x <= 9; x++) {\n    setSafe(x, railY, 10, woodFence);\n    setSafe(x, railTopY, 10, makeTrapdoor(woodTrapdoor, \"south\", \"bottom\"));\n  }\n  // North front railings with central gateway (x: 6..8 open)\n  setSafe(5, railY, 4, woodFence);\n  setSafe(5, railTopY, 4, makeTrapdoor(woodTrapdoor, \"north\", \"bottom\"));\n  setSafe(9, railY, 4, woodFence);\n  setSafe(9, railTopY, 4, makeTrapdoor(woodTrapdoor, \"north\", \"bottom\"));\n\n  // -------------------------------------------------------------------------\n  // 4. STONE LANTERNS (Tōrō) at approaches\n  // -------------------------------------------------------------------------\n  const lanternSpots = [\n    [3, 2],\n    [11, 2],\n    [3, 12],\n    [11, 12],\n  ];\n  for (const [lx, lz] of lanternSpots) {\n    setSafe(lx, SEAT_Y + 1, lz, stonePrimary);\n    setSafe(lx, SEAT_Y + 2, lz, stoneWall);\n    setSafe(lx, SEAT_Y + 3, lz, \"minecraft:lantern\");\n    setSafe(lx, SEAT_Y + 4, lz, makeSlab(stoneSlab, \"bottom\"));\n  }\n\n  // -------------------------------------------------------------------------\n  // 5. BEAMS & BRACKET COMPLEXES (Nuki & Kumimono)\n  // -------------------------------------------------------------------------\n  // Lower arch brackets at y = SEAT_Y + 5\n  setSafe(4, SEAT_Y + 5, 5, makeStairs(woodStairs, \"north\", \"top\"));\n  setSafe(4, SEAT_Y + 5, 9, makeStairs(woodStairs, \"south\", \"top\"));\n  setSafe(10, SEAT_Y + 5, 5, makeStairs(woodStairs, \"north\", \"top\"));\n  setSafe(10, SEAT_Y + 5, 9, makeStairs(woodStairs, \"south\", \"top\"));\n  setSafe(5, SEAT_Y + 5, 10, makeStairs(woodStairs, \"west\", \"top\"));\n  setSafe(9, SEAT_Y + 5, 10, makeStairs(woodStairs, \"east\", \"top\"));\n  setSafe(5, SEAT_Y + 5, 4, makeStairs(woodStairs, \"west\", \"top\"));\n  setSafe(9, SEAT_Y + 5, 4, makeStairs(woodStairs, \"east\", \"top\"));\n\n  // Upper perimeter tie beams at y = SEAT_Y + 8\n  const beamY = SEAT_Y + 8;\n  for (let x = 3; x <= 11; x++) {\n    setSafe(x, beamY, 4, makeLog(woodLog, \"x\"));\n    setSafe(x, beamY, 10, makeLog(woodLog, \"x\"));\n  }\n  for (let z = 3; z <= 11; z++) {\n    setSafe(4, beamY, z, makeLog(woodLog, \"z\"));\n    setSafe(10, beamY, z, makeLog(woodLog, \"z\"));\n  }\n\n  // Cross beams supporting the central bell\n  for (let x = 4; x <= 10; x++) {\n    setSafe(x, beamY, 7, makeLog(woodLog, \"x\"));\n  }\n  for (let z = 4; z <= 10; z++) {\n    setSafe(7, beamY, z, makeLog(woodLog, \"z\"));\n  }\n\n  // Corner timber braces\n  setSafe(5, beamY, 5, woodPlanks);\n  setSafe(9, beamY, 5, woodPlanks);\n  setSafe(5, beamY, 9, woodPlanks);\n  setSafe(9, beamY, 9, woodPlanks);\n\n  // Stepped bracket arms (Dougong) extending outwards\n  const bracketY = SEAT_Y + 8;\n  setSafe(3, bracketY, 4, makeLog(woodLog, \"x\"));\n  setSafe(4, bracketY, 3, makeLog(woodLog, \"z\"));\n  setSafe(11, bracketY, 4, makeLog(woodLog, \"x\"));\n  setSafe(10, bracketY, 3, makeLog(woodLog, \"z\"));\n  setSafe(3, bracketY, 10, makeLog(woodLog, \"x\"));\n  setSafe(4, bracketY, 11, makeLog(woodLog, \"z\"));\n  setSafe(11, bracketY, 10, makeLog(woodLog, \"x\"));\n  setSafe(10, bracketY, 11, makeLog(woodLog, \"z\"));\n\n  const bracketTopY = SEAT_Y + 9;\n  setSafe(3, bracketTopY, 3, woodPlanks);\n  setSafe(11, bracketTopY, 3, woodPlanks);\n  setSafe(3, bracketTopY, 11, woodPlanks);\n  setSafe(11, bracketTopY, 11, woodPlanks);\n\n  // -------------------------------------------------------------------------\n  // 6. THE BONSHŌ (Great Bronze Temple Bell)\n  // -------------------------------------------------------------------------\n  // Top suspension hub and Ryūzu (dragon loop)\n  setSafe(7, SEAT_Y + 8, 7, \"minecraft:cut_copper\");\n  setSafe(7, SEAT_Y + 7, 7, \"minecraft:chain[axis=y]\");\n\n  // Kasagata (Bell Crown / Dome) at y = SEAT_Y + 6\n  const crownY = SEAT_Y + 6;\n  setSafe(7, crownY, 7, \"minecraft:weathered_cut_copper\");\n  setSafe(6, crownY, 7, makeStairs(\"minecraft:weathered_cut_copper_stairs\", \"east\", \"bottom\"));\n  setSafe(8, crownY, 7, makeStairs(\"minecraft:weathered_cut_copper_stairs\", \"west\", \"bottom\"));\n  setSafe(7, crownY, 6, makeStairs(\"minecraft:weathered_cut_copper_stairs\", \"south\", \"bottom\"));\n  setSafe(7, crownY, 8, makeStairs(\"minecraft:weathered_cut_copper_stairs\", \"north\", \"bottom\"));\n  setSafe(6, crownY, 6, makeSlab(\"minecraft:weathered_cut_copper_slab\", \"bottom\"));\n  setSafe(8, crownY, 6, makeSlab(\"minecraft:weathered_cut_copper_slab\", \"bottom\"));\n  setSafe(6, crownY, 8, makeSlab(\"minecraft:weathered_cut_copper_slab\", \"bottom\"));\n  setSafe(8, crownY, 8, makeSlab(\"minecraft:weathered_cut_copper_slab\", \"bottom\"));\n\n  // Chichinoma (Studded upper barrel) at y = SEAT_Y + 5\n  const bodyY = SEAT_Y + 5;\n  setSafe(7, bodyY, 7, \"minecraft:weathered_cut_copper\");\n  setSafe(6, bodyY, 7, \"minecraft:weathered_cut_copper\");\n  setSafe(8, bodyY, 7, \"minecraft:weathered_cut_copper\");\n  setSafe(7, bodyY, 6, \"minecraft:weathered_cut_copper\");\n  setSafe(7, bodyY, 8, \"minecraft:weathered_cut_copper\");\n  setSafe(6, bodyY, 6, \"minecraft:exposed_cut_copper\");\n  setSafe(8, bodyY, 6, \"minecraft:exposed_cut_copper\");\n  setSafe(6, bodyY, 8, \"minecraft:exposed_cut_copper\");\n  setSafe(8, bodyY, 8, \"minecraft:exposed_cut_copper\");\n\n  // Koma-no-tsume (Flared rim) & Tsukiza (Lotus striking target) at y = SEAT_Y + 4\n  const rimY = SEAT_Y + 4;\n  setSafe(6, rimY, 7, \"minecraft:weathered_cut_copper\");\n  setSafe(8, rimY, 7, \"minecraft:weathered_cut_copper\");\n  setSafe(7, rimY, 8, \"minecraft:weathered_cut_copper\");\n  setSafe(7, rimY, 6, \"minecraft:cut_copper\"); // Tsukiza striking target\n  setSafe(6, rimY, 6, makeStairs(\"minecraft:weathered_cut_copper_stairs\", \"south\", \"top\"));\n  setSafe(8, rimY, 6, makeStairs(\"minecraft:weathered_cut_copper_stairs\", \"south\", \"top\"));\n  setSafe(6, rimY, 8, makeStairs(\"minecraft:weathered_cut_copper_stairs\", \"north\", \"top\"));\n  setSafe(8, rimY, 8, makeStairs(\"minecraft:weathered_cut_copper_stairs\", \"north\", \"top\"));\n\n  // -------------------------------------------------------------------------\n  // 7. THE SHUMOKU (Suspended Swinging Striker Log)\n  // -------------------------------------------------------------------------\n  const strikerY = SEAT_Y + 4;\n  setSafe(7, strikerY, 2, makeLog(woodStripped, \"z\"));\n  setSafe(7, strikerY, 3, makeLog(woodStripped, \"z\"));\n  setSafe(7, strikerY, 4, makeLog(woodStripped, \"z\"));\n  setSafe(7, strikerY, 5, makeLog(woodLog, \"z\")); // Striker mallet head facing Tsukiza\n\n  // Suspension chains from crossbeams down to log\n  for (let y = SEAT_Y + 5; y <= SEAT_Y + 7; y++) {\n    setSafe(7, y, 2, \"minecraft:chain[axis=y]\");\n    setSafe(7, y, 4, \"minecraft:chain[axis=y]\");\n  }\n  // Pull rope hanging down from rear\n  setSafe(7, SEAT_Y + 3, 2, woodFence);\n  setSafe(7, SEAT_Y + 2, 2, makeTrapdoor(woodTrapdoor, \"north\", \"bottom\"));\n\n  // -------------------------------------------------------------------------\n  // 8. THE IRIMOYA ROOF (Hip-and-Gable with Sweeping Eaves)\n  // -------------------------------------------------------------------------\n  // Layer y = SEAT_Y + 9 (y = 12): Ceiling & Deep Eave Overhang\n  const roofY0 = SEAT_Y + 9;\n  for (let x = 3; x <= 11; x++) {\n    for (let z = 3; z <= 11; z++) {\n      setSafe(x, roofY0, z, makeSlab(woodSlab, \"top\"));\n    }\n  }\n  for (let x = 1; x <= 13; x++) {\n    setSafe(x, roofY0, 0, makeSlab(roofSlab, \"bottom\"));\n    setSafe(x, roofY0, 14, makeSlab(roofSlab, \"bottom\"));\n    setSafe(x, roofY0, 1, makeSlab(roofSlab, \"top\"));\n    setSafe(x, roofY0, 13, makeSlab(roofSlab, \"top\"));\n  }\n  for (let z = 1; z <= 13; z++) {\n    setSafe(0, roofY0, z, makeSlab(roofSlab, \"bottom\"));\n    setSafe(14, roofY0, z, makeSlab(roofSlab, \"bottom\"));\n    setSafe(1, roofY0, z, makeSlab(roofSlab, \"top\"));\n    setSafe(13, roofY0, z, makeSlab(roofSlab, \"top\"));\n  }\n\n  // Layer y = SEAT_Y + 10 (y = 13): Lower Slope & Upturned Sori Corners\n  const roofY1 = SEAT_Y + 10;\n  // Four corner sori tips\n  setSafe(0, roofY1, 0, makeSlab(roofSlab, \"bottom\"));\n  setSafe(14, roofY1, 0, makeSlab(roofSlab, \"bottom\"));\n  setSafe(0, roofY1, 14, makeSlab(roofSlab, \"bottom\"));\n  setSafe(14, roofY1, 14, makeSlab(roofSlab, \"bottom\"));\n\n  for (let x = 2; x <= 12; x++) {\n    setSafe(x, roofY1, 1, makeStairs(roofStairs, \"south\", \"bottom\"));\n    setSafe(x, roofY1, 13, makeStairs(roofStairs, \"north\", \"bottom\"));\n  }\n  for (let z = 2; z <= 12; z++) {\n    setSafe(1, roofY1, z, makeStairs(roofStairs, \"east\", \"bottom\"));\n    setSafe(13, roofY1, z, makeStairs(roofStairs, \"west\", \"bottom\"));\n  }\n  setSafe(1, roofY1, 1, makeStairs(roofStairs, \"south\", \"bottom\", \"outer_left\"));\n  setSafe(13, roofY1, 1, makeStairs(roofStairs, \"south\", \"bottom\", \"outer_right\"));\n  setSafe(1, roofY1, 13, makeStairs(roofStairs, \"north\", \"bottom\", \"outer_right\"));\n  setSafe(13, roofY1, 13, makeStairs(roofStairs, \"north\", \"bottom\", \"outer_left\"));\n\n  for (let x = 2; x <= 12; x++) {\n    for (let z = 2; z <= 12; z++) {\n      setSafe(x, roofY1, z, roofSolid);\n    }\n  }\n\n  // Layer y = SEAT_Y + 11 (y = 14): Mid Slope\n  const roofY2 = SEAT_Y + 11;\n  for (let x = 3; x <= 11; x++) {\n    setSafe(x, roofY2, 2, makeStairs(roofStairs, \"south\", \"bottom\"));\n    setSafe(x, roofY2, 12, makeStairs(roofStairs, \"north\", \"bottom\"));\n  }\n  for (let z = 3; z <= 11; z++) {\n    setSafe(2, roofY2, z, makeStairs(roofStairs, \"east\", \"bottom\"));\n    setSafe(12, roofY2, z, makeStairs(roofStairs, \"west\", \"bottom\"));\n  }\n  setSafe(2, roofY2, 2, makeStairs(roofStairs, \"south\", \"bottom\", \"outer_left\"));\n  setSafe(12, roofY2, 2, makeStairs(roofStairs, \"south\", \"bottom\", \"outer_right\"));\n  setSafe(2, roofY2, 12, makeStairs(roofStairs, \"north\", \"bottom\", \"outer_right\"));\n  setSafe(12, roofY2, 12, makeStairs(roofStairs, \"north\", \"bottom\", \"outer_left\"));\n\n  for (let x = 3; x <= 11; x++) {\n    for (let z = 3; z <= 11; z++) {\n      setSafe(x, roofY2, z, roofSolid);\n    }\n  }\n\n  // Layer y = SEAT_Y + 12 (y = 15): Irimoya Transition - Hip & Gable\n  const roofY3 = SEAT_Y + 12;\n  for (let x = 3; x <= 11; x++) {\n    setSafe(x, roofY3, 3, makeStairs(roofStairs, \"south\", \"bottom\"));\n    setSafe(x, roofY3, 11, makeStairs(roofStairs, \"north\", \"bottom\"));\n  }\n  for (let z = 4; z <= 10; z++) {\n    setSafe(3, roofY3, z, z === 7 ? makeLog(woodLog, \"y\") : woodPlanks);\n    setSafe(11, roofY3, z, z === 7 ? makeLog(woodLog, \"y\") : woodPlanks);\n  }\n  setSafe(2, roofY3, 3, makeStairs(roofStairs, \"south\", \"top\"));\n  setSafe(2, roofY3, 11, makeStairs(roofStairs, \"north\", \"top\"));\n  setSafe(12, roofY3, 3, makeStairs(roofStairs, \"south\", \"top\"));\n  setSafe(12, roofY3, 11, makeStairs(roofStairs, \"north\", \"top\"));\n\n  for (let x = 4; x <= 10; x++) {\n    for (let z = 4; z <= 10; z++) {\n      setSafe(x, roofY3, z, roofSolid);\n    }\n  }\n\n  // Layer y = SEAT_Y + 13 (y = 16): Upper Hip & Gable Wall\n  const roofY4 = SEAT_Y + 13;\n  for (let x = 3; x <= 11; x++) {\n    setSafe(x, roofY4, 4, makeStairs(roofStairs, \"south\", \"bottom\"));\n    setSafe(x, roofY4, 10, makeStairs(roofStairs, \"north\", \"bottom\"));\n  }\n  setSafe(3, roofY4, 5, makeStairs(roofStairs, \"south\", \"bottom\"));\n  setSafe(3, roofY4, 9, makeStairs(roofStairs, \"north\", \"bottom\"));\n  setSafe(11, roofY4, 5, makeStairs(roofStairs, \"south\", \"bottom\"));\n  setSafe(11, roofY4, 9, makeStairs(roofStairs, \"north\", \"bottom\"));\n  for (let z = 6; z <= 8; z++) {\n    setSafe(3, roofY4, z, woodPlanks);\n    setSafe(11, roofY4, z, woodPlanks);\n  }\n\n  for (let x = 4; x <= 10; x++) {\n    for (let z = 5; z <= 9; z++) {\n      setSafe(x, roofY4, z, roofSolid);\n    }\n  }\n\n  // Layer y = SEAT_Y + 14 (y = 17): Gable Apex & Ridge Base\n  const roofY5 = SEAT_Y + 14;\n  for (let x = 3; x <= 11; x++) {\n    setSafe(x, roofY5, 5, makeStairs(roofStairs, \"south\", \"bottom\"));\n    setSafe(x, roofY5, 9, makeStairs(roofStairs, \"north\", \"bottom\"));\n  }\n  setSafe(3, roofY5, 6, makeStairs(roofStairs, \"south\", \"bottom\"));\n  setSafe(3, roofY5, 8, makeStairs(roofStairs, \"north\", \"bottom\"));\n  setSafe(3, roofY5, 7, roofSolid);\n  setSafe(11, roofY5, 6, makeStairs(roofStairs, \"south\", \"bottom\"));\n  setSafe(11, roofY5, 8, makeStairs(roofStairs, \"north\", \"bottom\"));\n  setSafe(11, roofY5, 7, roofSolid);\n\n  for (let x = 4; x <= 10; x++) {\n    for (let z = 6; z <= 8; z++) {\n      setSafe(x, roofY5, z, roofSolid);\n    }\n  }\n\n  // Layer y = SEAT_Y + 15 (y = 18): Main Ridge (Ōmune) & Onigawara Finials\n  const roofY6 = SEAT_Y + 15;\n  setSafe(2, roofY6, 7, makeStairs(roofStairs, \"east\", \"bottom\")); // West Onigawara\n  setSafe(12, roofY6, 7, makeStairs(roofStairs, \"west\", \"bottom\")); // East Onigawara\n  for (let x = 3; x <= 11; x++) {\n    setSafe(x, roofY6, 7, makeSlab(roofSlab, \"bottom\"));\n  }\n  for (let x = 4; x <= 10; x++) {\n    setSafe(x, roofY6, 6, makeStairs(roofStairs, \"south\", \"bottom\"));\n    setSafe(x, roofY6, 8, makeStairs(roofStairs, \"north\", \"bottom\"));\n  }\n  setSafe(7, roofY6, 7, stoneAccent); // Central peak crest\n\n  return {\n    name: \"bell_pavilion\",\n    seatY: SEAT_Y,\n    anchors: {\n      front: [7, SEAT_Y + 1, 0],\n      door: [7, SEAT_Y + 1, 2],\n      bell: [7, SEAT_Y + 5, 7],\n    },\n  };\n}"
+    }
+  }
+}

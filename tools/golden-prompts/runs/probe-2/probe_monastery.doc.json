@@ -1,0 +1,828 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "himalayan_monastery",
+    "worldSeed": "901",
+    "prompt": "A Himalayan monastery clinging to a cliff face above a glacier, prayer flags strung across the gorge, a village of yak herders on the moraine below.",
+    "spawn": {
+      "at": [
+        0.45,
+        0.72
+      ]
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": {
+        "mix": [
+          [
+            "minecraft:snow_block",
+            4
+          ],
+          [
+            "minecraft:packed_ice",
+            2
+          ],
+          [
+            "minecraft:gravel",
+            2
+          ],
+          [
+            "minecraft:coarse_dirt",
+            1
+          ]
+        ]
+      },
+      "ground.stone": "minecraft:deepslate",
+      "ground.cliff": "minecraft:deepslate",
+      "road.surface": "minecraft:gravel",
+      "road.shoulder": "minecraft:coarse_dirt"
+    }
+  },
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.4,
+    "decline": 0.1,
+    "formality": 0.4,
+    "climate": {
+      "biome": "minecraft:frozen_peaks",
+      "temperature": -0.8,
+      "humidity": -0.3,
+      "snow": "always"
+    },
+    "character": {
+      "label": "Himalayan cliffside monastery and moraine settlement",
+      "materialTheme": "boreal_pine",
+      "formPacks": [
+        "himalayan_monastery"
+      ],
+      "urbanForm": "hillside",
+      "ground": "stepped",
+      "courtyards": 0.4,
+      "archetypes": {
+        "prefer": [
+          "assembly_hall",
+          "monks_cell",
+          "scripture_library",
+          "butter_tea_kitchen",
+          "yak_byre",
+          "hermit_retreat",
+          "granary"
+        ],
+        "forbid": [
+          "townhouse",
+          "terraced_row",
+          "shop_row",
+          "office",
+          "apartment_block"
+        ]
+      },
+      "motifs": {
+        "massing": "stepped",
+        "roofType": "flat"
+      },
+      "programs": [
+        {
+          "id": "prayer_flag_gorge_span",
+          "mode": "landmark",
+          "brief": "Long braided suspension lines strung with dense rows of vibrant prayer flags spanning across the rocky gorge between stone anchor cairns on opposing cliff faces.",
+          "envelope": [
+            48,
+            18,
+            16
+          ]
+        },
+        {
+          "id": "glacier_ice_seracs",
+          "mode": "landmark",
+          "brief": "A fractured tongue of turquoise packed ice, blue ice seracs, and embedded dark moraine boulders wedged in the floor of the glacial gorge.",
+          "envelope": [
+            52,
+            24,
+            40
+          ]
+        },
+        {
+          "id": "mani_stone_shrine",
+          "mode": "plugin",
+          "brief": "A sacred drystone mani wall piled high with inscribed slate prayer tablets, carved mantras, yak skulls, and miniature flag poles.",
+          "envelope": [
+            5,
+            4,
+            5
+          ],
+          "count": 6
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "a sheer cliff face towering above a glacier and gravel moraine valley, with a deep gorge cutting between rock faces",
+      "icons": "lines of colourful prayer flags spanning the gorge; chortens and mani stone cairns marking the cliff tracks; yak herder stone huts and dung drying yards on the moraine below",
+      "infra": "prayer_flag_line across the gorge; cliff_stair connecting the high assembly hall down to the valley trail; dry_stone_wall enclosing the yak paddocks on the moraine"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "The High Himalayan Pass, Cliff Monastery, and Moraine",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "towering mountain ridge and glacial gorge",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 112,
+          "amplitude": 82,
+          "octaves": 6,
+          "frequency": 0.0032,
+          "lacunarity": 2,
+          "gain": 0.52,
+          "ridged": true,
+          "warp": {
+            "amount": 28,
+            "frequency": 0.0035
+          },
+          "erosionPasses": 2,
+          "cliffThreshold": 44,
+          "soilDepth": 2,
+          "beachWidth": 2,
+          "snowLineFraction": 0.15
+        },
+        "children": [
+          {
+            "id": "north_cliff_wall",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "sheer northern cliff face carrying the monastery",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.12,
+                  0.24
+                ],
+                [
+                  0.48,
+                  0.22
+                ],
+                [
+                  0.88,
+                  0.26
+                ]
+              ],
+              "width": 78,
+              "height": 92,
+              "profile": "sharp",
+              "meander": 0.35
+            }
+          },
+          {
+            "id": "monastery_ledge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "projecting cliff spur for the dzong monastery",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.48,
+                0.3
+              ],
+              "radius": 60,
+              "height": 32,
+              "rim": 6,
+              "profile": "sharp",
+              "irregularity": 0.16
+            }
+          },
+          {
+            "id": "glacial_gorge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "deep gorge cutting below the cliff face",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.15,
+                  0.44
+                ],
+                [
+                  0.48,
+                  0.47
+                ],
+                [
+                  0.86,
+                  0.51
+                ]
+              ],
+              "width": 46,
+              "depth": 48,
+              "profile": "sharp",
+              "meander": 0.42,
+              "flooded": "never"
+            }
+          },
+          {
+            "id": "moraine_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "gravel moraine terrace where the yak herders settle",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.45,
+                0.7
+              ],
+              "radius": 95,
+              "height": 14,
+              "rim": 4,
+              "profile": "rounded",
+              "irregularity": 0.22
+            }
+          },
+          {
+            "id": "eastern_sentinel_peak",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "high glaciated peak flanking the pass",
+            "params": {
+              "verb": "peak",
+              "at": [
+                0.86,
+                0.18
+              ],
+              "radius": 74,
+              "height": 105,
+              "profile": "sharp",
+              "irregularity": 0.2
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "boreal",
+          "temperatureFrequency": 0.001,
+          "humidityFrequency": 0.0015,
+          "latitudeGradient": -0.4,
+          "blendRadius": 10
+        }
+      },
+      {
+        "id": "cliff_monastery",
+        "kind": "district",
+        "label": "the cliffside dzong monastery",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            120,
+            100
+          ]
+        },
+        "intent": {
+          "wealth": 0.6,
+          "character": {
+            "label": "Cliffside Tibetan Buddhist Dzong",
+            "urbanForm": "hillside",
+            "ground": "stepped",
+            "courtyards": 0.6,
+            "archetypes": {
+              "prefer": [
+                "monastery",
+                "stupa",
+                "library",
+                "hermitage",
+                "bell_tower"
+              ]
+            }
+          }
+        },
+        "params": {
+          "fabric": "hillside",
+          "density": "medium",
+          "ground": "stepped",
+          "courtyards": 0.6,
+          "mix": [
+            "monastery",
+            "stupa",
+            "library",
+            "hermitage",
+            "bell_tower",
+            "granary"
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.48,
+              0.3
+            ]
+          },
+          {
+            "zone": "north"
+          }
+        ],
+        "tags": [
+          "monastery",
+          "sacred",
+          "cliff"
+        ],
+        "children": [
+          {
+            "id": "grand_assembly_hall",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the great whitewashed assembly hall overlooking the abyss",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                15,
+                17,
+                19
+              ]
+            },
+            "params": {
+              "archetype": "monastery",
+              "floors": 2,
+              "roof": "flat"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "sacred"
+            ]
+          },
+          {
+            "id": "sacred_chorten",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "gilded chorten spire standing on the spur brink",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                18,
+                13
+              ]
+            },
+            "params": {
+              "archetype": "stupa",
+              "floors": 1
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "stupa"
+            ]
+          },
+          {
+            "id": "scripture_library",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "monastery archive of woodblock sutras",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                11,
+                13,
+                13
+              ]
+            },
+            "params": {
+              "archetype": "library",
+              "floors": 1,
+              "roof": "flat"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "east",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "library"
+            ]
+          },
+          {
+            "id": "cliff_hermitage",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "austere meditation cell set into the rock",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                9,
+                10,
+                9
+              ]
+            },
+            "params": {
+              "archetype": "hermitage",
+              "floors": 1,
+              "roof": "flat"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "hermitage"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "moraine_village",
+        "kind": "district",
+        "label": "the stone settlement of the yak herders",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            130,
+            110
+          ]
+        },
+        "intent": {
+          "wealth": 0.3,
+          "character": {
+            "label": "Pastoral Yak Herders Moraine Hamlet",
+            "urbanForm": "grown",
+            "ground": "stepped",
+            "courtyards": 0.2,
+            "archetypes": {
+              "prefer": [
+                "shepherds_bothy",
+                "barn",
+                "cottage",
+                "granary",
+                "kiln"
+              ]
+            }
+          }
+        },
+        "params": {
+          "fabric": "grown",
+          "density": "low",
+          "ground": "stepped",
+          "courtyards": 0.2,
+          "mix": [
+            "shepherds_bothy",
+            "barn",
+            "cottage",
+            "granary",
+            "kiln"
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.45,
+              0.7
+            ]
+          },
+          {
+            "zone": "south"
+          }
+        ],
+        "tags": [
+          "village",
+          "herders",
+          "rural"
+        ],
+        "children": [
+          {
+            "id": "head_herder_lodge",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "hearth lodge of the chief herdsman",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                11,
+                11,
+                13
+              ]
+            },
+            "params": {
+              "archetype": "shepherds_bothy",
+              "floors": 1,
+              "roof": "flat"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "north",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "house"
+            ]
+          },
+          {
+            "id": "central_yak_byre",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "sheltered stone byre for the breeding herd",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                12,
+                17
+              ]
+            },
+            "params": {
+              "archetype": "barn",
+              "floors": 1,
+              "roof": "flat"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "north",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "stable"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "the_glacier_snout",
+        "kind": "generator",
+        "generator": "authored:glacier_ice_seracs",
+        "label": "the massive snout of the glacier in the gorge floor",
+        "params": {
+          "seat": "pad"
+        },
+        "constraints": [
+          {
+            "at": [
+              0.48,
+              0.48
+            ]
+          }
+        ],
+        "tags": [
+          "landmark",
+          "glacier"
+        ]
+      },
+      {
+        "id": "gorge_prayer_flags",
+        "kind": "generator",
+        "generator": "authored:prayer_flag_gorge_span",
+        "label": "prayer flag lines spanning the chasm between cliffs",
+        "params": {
+          "seat": "drape"
+        },
+        "constraints": [
+          {
+            "at": [
+              0.48,
+              0.39
+            ]
+          },
+          {
+            "distance": "cliff_monastery",
+            "min": 8,
+            "max": 36
+          }
+        ],
+        "tags": [
+          "landmark",
+          "prayer_flags"
+        ]
+      },
+      {
+        "id": "mani_wall_field",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "mani stone walls along the pilgrim trail",
+        "params": {
+          "program": "mani_stone_shrine",
+          "count": 6,
+          "area": {
+            "at": [
+              0.46,
+              0.58
+            ],
+            "radius": 0.28
+          },
+          "spacing": 26,
+          "maxSlope": 28,
+          "avoidTags": [
+            "road",
+            "building"
+          ]
+        }
+      },
+      {
+        "id": "monastery_retaining_wall",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "stone revetment holding the monastery terrace",
+        "params": {
+          "entry": "retaining_wall",
+          "route": {
+            "ring": "cliff_monastery",
+            "margin": 6
+          }
+        }
+      },
+      {
+        "id": "yak_paddock_walls",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "drystone walls ringing the yak holding",
+        "params": {
+          "entry": "dry_stone_wall",
+          "route": {
+            "ring": "moraine_village",
+            "margin": 8
+          }
+        }
+      },
+      {
+        "id": "mountain_trails",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "winding stone track from the moraine up to the cliff dzong",
+        "params": {
+          "anchors": [
+            "cliff_monastery",
+            "moraine_village",
+            "gorge_prayer_flags",
+            "#tag:house"
+          ],
+          "pattern": "organic",
+          "width": 2,
+          "lanterns": true,
+          "lanternSpacing": 16
+        }
+      },
+      {
+        "id": "high_pass_cairn",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "sacred stone cairn marking the high ridge",
+        "params": {
+          "prop": "cairn",
+          "zone": "north"
+        }
+      },
+      {
+        "id": "moraine_waypost_cairn",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "waymarking cairn on the lower trail",
+        "params": {
+          "prop": "cairn",
+          "zone": "south"
+        }
+      },
+      {
+        "id": "village_log_pile",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "winter fuel store by the herder huts",
+        "params": {
+          "prop": "log_pile",
+          "zone": "southwest"
+        }
+      },
+      {
+        "id": "moraine_scrub",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "hardy juniper and alpine scrub on the moraine slopes",
+        "params": {
+          "area": {
+            "at": [
+              0.45,
+              0.7
+            ],
+            "radius": 130
+          },
+          "density": 0.024,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 30,
+          "elevation": [
+            2,
+            85
+          ],
+          "edgeFalloff": 14,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "undergrowth": {
+            "grass": 0.22,
+            "flowers": 0.02,
+            "deadwood": 0.08
+          },
+          "species": [
+            {
+              "id": "juniper",
+              "shape": "juniper_scrub",
+              "weight": 3
+            },
+            {
+              "id": "scrub_spruce",
+              "shape": "spruce_squat",
+              "weight": 1
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "programs": {
+    "prayer_flag_gorge_span": {
+      "mode": "landmark",
+      "envelope": [
+        48,
+        22,
+        16
+      ],
+      "sourceHash": "b3:1ce1adac7b5ac86a214231f46023f751c5072228f2a33102679e956e10f5c5b2",
+      "outputHash": "b3:aab6d22f46c17f2a564f6a188954e7355e8935a0c87ccdec691f544ba114d6bd",
+      "conforms": false,
+      "conformHash": "b3:068cc07e1c8668377175441330a3f2a285fac98cdc7aa4145eb1495cb5551931",
+      "source": "export const envelope = [48, 22, 16];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const seatY = 4;\n\n  // 1. Palette selection from theme\n  const stonePrimary = api.theme.stone.primary || \"minecraft:stone_bricks\";\n  const stoneAccent = api.theme.stone.accent || \"minecraft:cobblestone\";\n  const stoneSlab = api.theme.stone.slab || \"minecraft:stone_brick_slab\";\n  const stoneWall = api.theme.stone.wall || \"minecraft:stone_brick_wall\";\n\n  const groundPlinth = api.theme.ground.plinth || \"minecraft:andesite\";\n  const groundPavement = api.theme.ground.pavement || \"minecraft:gravel\";\n  const groundRevetment = api.theme.ground.revetment || \"minecraft:cobblestone\";\n\n  const woodPlanks = api.theme.wood.planks || \"minecraft:spruce_planks\";\n  const woodLog = api.theme.wood.log || \"minecraft:spruce_log\";\n  const woodStripped = api.theme.wood.stripped || \"minecraft:stripped_spruce_log\";\n  const woodFence = api.theme.wood.fence || \"minecraft:spruce_fence\";\n  const woodSlab = api.theme.wood.slab || \"minecraft:spruce_slab\";\n  const woodStairs = api.theme.wood.stairs || \"minecraft:spruce_stairs\";\n  const woodTrapdoor = api.theme.wood.trapdoor || \"minecraft:spruce_trapdoor\";\n\n  const roofSolid = api.theme.roof.solid || \"minecraft:dark_oak_planks\";\n  const roofStairs = api.theme.roof.stairs || \"minecraft:dark_oak_stairs\";\n\n  // Authentic sacred Himalayan colors & materials\n  const FLAG_COLORS = [\n    \"minecraft:blue_wool\",\n    \"minecraft:white_wool\",\n    \"minecraft:red_wool\",\n    \"minecraft:lime_wool\",\n    \"minecraft:yellow_wool\",\n  ];\n\n  const calcite = \"minecraft:calcite\";\n  const smoothQuartz = \"minecraft:smooth_quartz\";\n  const goldBlock = \"minecraft:gold_block\";\n  const redTerracotta = \"minecraft:red_terracotta\";\n  const yellowTerracotta = \"minecraft:yellow_terracotta\";\n  const polishedDeepslate = \"minecraft:polished_deepslate\";\n  const deepslateSlab = \"minecraft:polished_deepslate_slab\";\n\n  // Safe voxel setter\n  function setSafe(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      api.set(x, y, z, block);\n    }\n  }\n\n  // Terrain height query\n  function getGroundY(x, z) {\n    const h = api.heightAt(x, z);\n    return Math.max(0, Math.min(H - 2, seatY + Math.round(h)));\n  }\n\n  // Foundation column builder (conforms to ground)\n  function buildFoundationColumn(x, z, topY, block, bottomLimit = 0) {\n    const gY = getGroundY(x, z);\n    const startY = Math.max(bottomLimit, Math.min(gY, seatY));\n    const endY = Math.max(topY, gY);\n    for (let y = startY; y <= endY; y++) {\n      setSafe(x, y, z, block);\n    }\n  }\n\n  // 6-Connected Bresenham 3D line\n  function line6(x1, y1, z1, x2, y2, z2, block) {\n    let cx = Math.round(x1), cy = Math.round(y1), cz = Math.round(z1);\n    const tx = Math.round(x2), ty = Math.round(y2), tz = Math.round(z2);\n    setSafe(cx, cy, cz, block);\n    while (cx !== tx || cy !== ty || cz !== tz) {\n      const dx = Math.abs(tx - cx);\n      const dy = Math.abs(ty - cy);\n      const dz = Math.abs(tz - cz);\n      if (dx >= dy && dx >= dz) {\n        cx += Math.sign(tx - cx);\n      } else if (dy >= dz) {\n        cy += Math.sign(ty - cy);\n      } else {\n        cz += Math.sign(tz - cz);\n      }\n      setSafe(cx, cy, cz, block);\n    }\n  }\n\n  // Catenary curve with suspended prayer flags\n  function drawCatenaryWithFlags(p1, p2, sag, cableBlock, flagStyle = \"dense\") {\n    const steps = Math.max(32, Math.round(Math.hypot(p2[0] - p1[0], p2[2] - p1[2]) * 2));\n    let lastPos = null;\n    let flagIndex = Math.floor(api.random() * 5);\n\n    for (let i = 0; i <= steps; i++) {\n      const t = i / steps;\n      const cx = Math.round(p1[0] + t * (p2[0] - p1[0]));\n      const cz = Math.round(p1[2] + t * (p2[2] - p1[2]));\n      const linearY = p1[1] + t * (p2[1] - p1[1]);\n      const cy = Math.round(linearY - 4 * sag * t * (1 - t));\n\n      if (lastPos) {\n        line6(lastPos[0], lastPos[1], lastPos[2], cx, cy, cz, cableBlock);\n      } else {\n        setSafe(cx, cy, cz, cableBlock);\n      }\n      lastPos = [cx, cy, cz];\n\n      // Prayer flags hanging from cable\n      if (flagStyle === \"dense\" && i > 1 && i < steps - 1) {\n        const color = FLAG_COLORS[flagIndex % 5];\n        setSafe(cx, cy - 1, cz, color);\n\n        // Fluttering tails and windward displacement\n        if ((i % 3 === 0 || i % 4 === 0) && cy - 2 >= 2) {\n          setSafe(cx, cy - 2, cz, color);\n        }\n        if (i % 5 === 2 && cx + 1 < W) {\n          setSafe(cx + 1, cy - 1, cz, color);\n        }\n\n        if (i % 2 === 0) flagIndex++;\n      } else if (flagStyle === \"sparse\" && i % 2 === 0 && i > 2 && i < steps - 2) {\n        const color = FLAG_COLORS[flagIndex % 5];\n        setSafe(cx, cy - 1, cz, color);\n        flagIndex++;\n      }\n    }\n  }\n\n  // ==========================================\n  // 1. WEST CLIFF BASTION & CHORTEN (X: 0..10)\n  // ==========================================\n  for (let x = 0; x <= 10; x++) {\n    for (let z = 1; z <= 14; z++) {\n      const isRim = (x === 10 || z === 1 || z === 14);\n      const stoneMat = isRim ? stoneAccent : ((x + z) % 3 === 0 ? groundPlinth : stonePrimary);\n      buildFoundationColumn(x, z, seatY, stoneMat);\n    }\n  }\n\n  // Paved courtyard terrace\n  for (let x = 1; x <= 9; x++) {\n    for (let z = 2; z <= 13; z++) {\n      setSafe(x, seatY, z, (x + z) % 2 === 0 ? groundPavement : stonePrimary);\n    }\n  }\n\n  // Tibetan Chorten (Stupa) on North spur (X: 2..6, Z: 2..6)\n  for (let x = 2; x <= 6; x++) {\n    for (let z = 2; z <= 6; z++) {\n      setSafe(x, seatY + 1, z, polishedDeepslate);\n      setSafe(x, seatY + 2, z, (x === 2 || x === 6 || z === 2 || z === 6) ? deepslateSlab : stonePrimary);\n    }\n  }\n  // Inset stepped terraces\n  for (let x = 3; x <= 5; x++) {\n    for (let z = 3; z <= 5; z++) {\n      setSafe(x, seatY + 3, z, smoothQuartz);\n    }\n  }\n  // Bumpa (Dome)\n  for (let x = 3; x <= 5; x++) {\n    for (let z = 3; z <= 5; z++) {\n      setSafe(x, seatY + 4, z, calcite);\n      setSafe(x, seatY + 5, z, calcite);\n    }\n  }\n  // Rounded corners of the dome\n  setSafe(3, seatY + 5, 3, smoothQuartz);\n  setSafe(5, seatY + 5, 3, smoothQuartz);\n  setSafe(3, seatY + 5, 5, smoothQuartz);\n  setSafe(5, seatY + 5, 5, smoothQuartz);\n  // Gau relic niche with butter lamp\n  setSafe(5, seatY + 4, 4, \"minecraft:lantern[hanging=false]\");\n\n  // Harmika (Spire base box)\n  for (let x = 3; x <= 5; x++) {\n    for (let z = 3; z <= 5; z++) {\n      setSafe(x, seatY + 6, z, redTerracotta);\n    }\n  }\n  setSafe(4, seatY + 6, 4, goldBlock);\n\n  // Spire Rings (13 Tiers of Enlightenment)\n  setSafe(4, seatY + 7, 4, smoothQuartz);\n  setSafe(4, seatY + 8, 4, goldBlock);\n  setSafe(4, seatY + 9, 4, smoothQuartz);\n  setSafe(4, seatY + 10, 4, goldBlock);\n  // Parasol & Sun-Moon Finial\n  setSafe(4, seatY + 11, 4, goldBlock);\n  setSafe(4, seatY + 12, 4, woodFence);\n  setSafe(4, seatY + 13, 4, \"minecraft:yellow_carpet\");\n\n  // West Pilgrim Prayer Shrine (X: 2..6, Z: 8..13)\n  for (let x = 2; x <= 6; x++) {\n    for (let z = 8; z <= 13; z++) {\n      for (let y = seatY + 1; y <= seatY + 5; y++) {\n        const isWall = (x === 2 || x === 6 || z === 8 || z === 13);\n        if (isWall) {\n          const isCorner = (x === 2 || x === 6) && (z === 8 || z === 13);\n          setSafe(x, y, z, isCorner ? woodLog : stonePrimary);\n        }\n      }\n      // Flat Tibetan slate roof with timber cornice\n      setSafe(x, seatY + 5, z, roofSolid);\n      if (x === 2 || x === 6 || z === 8 || z === 13) {\n        setSafe(x, seatY + 6, z, (x + z) % 2 === 0 ? \"minecraft:red_wool\" : \"minecraft:yellow_wool\");\n      }\n    }\n  }\n  // Open doorway facing courtyard\n  setSafe(4, seatY + 1, 8, \"minecraft:air\");\n  setSafe(4, seatY + 2, 8, \"minecraft:air\");\n  setSafe(4, seatY + 3, 8, woodStairs);\n  // Shrine prayer windows\n  setSafe(2, seatY + 2, 10, woodFence);\n  setSafe(2, seatY + 2, 11, woodFence);\n\n  // West Anchor Posts, Masts & Cable Windlasses (X: 8..10, Z: 5..9)\n  for (let z = 5; z <= 9; z++) {\n    setSafe(10, seatY + 1, z, stoneWall);\n  }\n  // Heavy timber mooring posts\n  setSafe(9, seatY + 1, 6, woodLog);\n  setSafe(9, seatY + 2, 6, woodLog);\n  setSafe(9, seatY + 1, 9, woodLog);\n  setSafe(9, seatY + 2, 9, woodLog);\n\n  // Great West Prayer Mast (Darchen) at (9, Y, 5)\n  for (let y = seatY + 1; y <= 20; y++) {\n    setSafe(9, y, 5, woodLog);\n    // Vertical streamer flags\n    if (y >= seatY + 3 && y <= 19) {\n      setSafe(9, y, 4, FLAG_COLORS[(y) % 5]);\n      setSafe(8, y, 5, FLAG_COLORS[(y + 1) % 5]);\n    }\n  }\n  setSafe(9, 21, 5, goldBlock);\n  setSafe(9, 21, 6, woodFence);\n\n  // ==========================================\n  // 2. EAST CLIFF BASTION & MANI RIDGE (X: 37..47)\n  // ==========================================\n  for (let x = 37; x <= 47; x++) {\n    for (let z = 1; z <= 14; z++) {\n      const isRim = (x === 37 || z === 1 || z === 14);\n      const stoneMat = isRim ? stoneAccent : ((x + z) % 3 === 0 ? groundPlinth : stonePrimary);\n      buildFoundationColumn(x, z, seatY, stoneMat);\n    }\n  }\n\n  // Paved path terrace\n  for (let x = 38; x <= 46; x++) {\n    for (let z = 2; z <= 13; z++) {\n      setSafe(x, seatY, z, (x + z) % 2 === 0 ? groundPavement : stonePrimary);\n    }\n  }\n\n  // East Mani Stone Cairn (Lhatse) at X: 41..45, Z: 3..7\n  for (let x = 41; x <= 45; x++) {\n    for (let z = 3; z <= 7; z++) {\n      setSafe(x, seatY + 1, z, polishedDeepslate);\n      if (x >= 42 && x <= 44 && z >= 4 && z <= 6) {\n        setSafe(x, seatY + 2, z, stoneAccent);\n        setSafe(x, seatY + 3, z, deepslateSlab);\n      }\n    }\n  }\n  // Juniper smoke burner (Sangkhang)\n  setSafe(43, seatY + 2, 5, \"minecraft:campfire[lit=true]\");\n  setSafe(43, seatY + 3, 5, stoneWall);\n\n  // 3 Sacred East Prayer Poles\n  for (let y = seatY + 1; y <= 18; y++) {\n    setSafe(42, y, 4, woodLog);\n    if (y >= seatY + 3 && y <= 17) setSafe(42, y, 3, FLAG_COLORS[y % 5]);\n  }\n  for (let y = seatY + 1; y <= 17; y++) {\n    setSafe(44, y, 6, woodLog);\n    if (y >= seatY + 3 && y <= 16) setSafe(45, y, 6, FLAG_COLORS[(y + 2) % 5]);\n  }\n\n  // East Trailhead Gateway Arch (X: 39..42, Z: 7..10)\n  for (let y = seatY + 1; y <= seatY + 4; y++) {\n    setSafe(39, y, 7, woodLog);\n    setSafe(39, y, 10, woodLog);\n  }\n  for (let z = 7; z <= 10; z++) {\n    setSafe(39, seatY + 4, z, roofSolid);\n    setSafe(39, seatY + 5, z, roofStairs);\n  }\n\n  // East Anchor Mooring Buttress (X: 37..39, Z: 5..9)\n  for (let z = 5; z <= 9; z++) {\n    setSafe(37, seatY + 1, z, stoneWall);\n  }\n  setSafe(38, seatY + 1, 6, woodLog);\n  setSafe(38, seatY + 2, 6, woodLog);\n  setSafe(38, seatY + 1, 9, woodLog);\n  setSafe(38, seatY + 2, 9, woodLog);\n\n  // Great East Prayer Mast at (38, Y, 11)\n  for (let y = seatY + 1; y <= 20; y++) {\n    setSafe(38, y, 11, woodLog);\n    if (y >= seatY + 3 && y <= 19) {\n      setSafe(38, y, 12, FLAG_COLORS[(y + 3) % 5]);\n      setSafe(39, y, 11, FLAG_COLORS[(y + 1) % 5]);\n    }\n  }\n  setSafe(38, 21, 11, goldBlock);\n\n  // ==========================================\n  // 3. SUSPENSION FOOTBRIDGE (X: 10..37, Z: 7..8)\n  // ==========================================\n  for (let x = 10; x <= 37; x++) {\n    const t = (x - 10) / 27;\n    // Walkway catenary curve\n    const yDeck = Math.round(9 - 4 * 2.0 * t * (1 - t));\n\n    // Walkway deck (2 blocks wide)\n    setSafe(x, yDeck, 7, woodPlanks);\n    setSafe(x, yDeck, 8, woodPlanks);\n\n    // Cross-beam ties and under-deck timber supports every 3 blocks\n    if (x % 3 === 1 || x === 10 || x === 37) {\n      for (let z = 6; z <= 9; z++) {\n        setSafe(x, yDeck - 1, z, woodLog);\n      }\n      // Heavy timber vertical suspension posts\n      setSafe(x, yDeck + 1, 6, woodFence);\n      setSafe(x, yDeck + 2, 6, woodFence);\n      setSafe(x, yDeck + 1, 9, woodFence);\n      setSafe(x, yDeck + 2, 9, woodFence);\n    } else {\n      // Normal handrail fences\n      setSafe(x, yDeck + 1, 6, woodFence);\n      setSafe(x, yDeck + 1, 9, woodFence);\n    }\n\n    // Direct bridge-rail prayer flags fluttering below handrails\n    if (x % 2 === 0) {\n      const col1 = FLAG_COLORS[(x) % 5];\n      const col2 = FLAG_COLORS[(x + 2) % 5];\n      setSafe(x, yDeck, 6, col1);\n      setSafe(x, yDeck, 9, col2);\n    }\n  }\n\n  // ==========================================\n  // 4. SUSPENSION CABLES & PRAYER FLAG CANOPY\n  // ==========================================\n  const catenaryLines = [\n    // [p1, p2, sag, cableBlock, flagStyle]\n    { p1: [9, 18, 3], p2: [38, 17, 3], sag: 5.5, block: woodFence, style: \"dense\" },\n    { p1: [9, 21, 5], p2: [38, 20, 7], sag: 7.0, block: \"minecraft:oak_fence\", style: \"dense\" },\n    { p1: [9, 20, 8], p2: [38, 20, 11], sag: 6.5, block: \"minecraft:oak_fence\", style: \"dense\" },\n    { p1: [9, 18, 12], p2: [38, 18, 13], sag: 5.5, block: woodFence, style: \"dense\" },\n    // Diagonal criss-cross garland webs\n    { p1: [10, 19, 4], p2: [37, 17, 11], sag: 6.0, block: \"minecraft:dark_oak_fence\", style: \"dense\" },\n    { p1: [10, 17, 11], p2: [37, 19, 4], sag: 6.0, block: \"minecraft:dark_oak_fence\", style: \"dense\" },\n    // Lower secondary suspension strands\n    { p1: [11, 14, 5], p2: [36, 14, 5], sag: 3.5, block: \"minecraft:spruce_fence\", style: \"sparse\" },\n    { p1: [11, 14, 10], p2: [36, 14, 10], sag: 3.5, block: \"minecraft:spruce_fence\", style: \"sparse\" },\n  ];\n\n  for (const line of catenaryLines) {\n    drawCatenaryWithFlags(line.p1, line.p2, line.sag, line.block, line.style);\n  }\n\n  // Vertical hanger ties connecting upper cables to bridge handrails\n  for (let x = 13; x <= 34; x += 3) {\n    const t = (x - 10) / 27;\n    const yDeck = Math.round(9 - 4 * 2.0 * t * (1 - t));\n    const upperYNorth = Math.round(18 - 4 * 5.5 * t * (1 - t));\n    const upperYSouth = Math.round(18 - 4 * 5.5 * t * (1 - t));\n\n    line6(x, yDeck + 2, 6, x, upperYNorth, 6, \"minecraft:spruce_fence\");\n    line6(x, yDeck + 2, 9, x, upperYSouth, 9, \"minecraft:spruce_fence\");\n  }\n\n  // ==========================================\n  // 5. GORGE BOTTOM, SCREE & CENTRAL CAIRN\n  // ==========================================\n  // Natural rock buttresses descending into gorge at cliff bases\n  for (let z = 1; z <= 14; z++) {\n    // West cliff slope\n    buildFoundationColumn(11, z, seatY - 1, stoneAccent);\n    buildFoundationColumn(12, z, seatY - 2, groundRevetment);\n    // East cliff slope\n    buildFoundationColumn(36, z, seatY - 1, stoneAccent);\n    buildFoundationColumn(35, z, seatY - 2, groundRevetment);\n  }\n\n  // Sacred Gorge-Floor Mani Cairn & Rising Prayer Mast (X: 23..25, Z: 4..6)\n  const cairnGroundY = getGroundY(24, 5);\n  for (let x = 23; x <= 25; x++) {\n    for (let z = 4; z <= 6; z++) {\n      buildFoundationColumn(x, z, cairnGroundY + 1, stoneAccent, cairnGroundY);\n      setSafe(x, cairnGroundY + 2, z, deepslateSlab);\n    }\n  }\n\n  // Center Gorge Darchen Mast reaching up into the lower cable canopy\n  for (let y = cairnGroundY + 1; y <= 11; y++) {\n    setSafe(24, y, 5, woodLog);\n    if (y >= cairnGroundY + 2 && y <= 10) {\n      setSafe(24, y, 4, FLAG_COLORS[(y) % 5]);\n    }\n  }\n\n  // Return structure metadata\n  return {\n    name: \"prayer_flag_gorge_span\",\n    seatY: seatY,\n    anchors: {\n      front: [24, seatY, 0],\n      door: [4, seatY + 1, 8],\n      trail_west: [1, seatY + 1, 8],\n      trail_east: [46, seatY + 1, 8],\n      chorten: [4, seatY + 7, 4],\n    },\n    interiors: [\n      {\n        min: [3, seatY + 1, 9],\n        max: [5, seatY + 3, 12],\n        kind: \"shrine\",\n      },\n    ],\n  };\n}"
+    },
+    "glacier_ice_seracs": {
+      "mode": "landmark",
+      "envelope": [
+        52,
+        24,
+        40
+      ],
+      "sourceHash": "b3:5f18de21d5bc22d1c900934f2bc24aa6947a3c894f504374965c26594b43ac26",
+      "outputHash": "b3:0c1433749da9f929d78b56f2b409c785d03952493918c005b3afe57f0dbef28c",
+      "conforms": false,
+      "conformHash": "b3:d4b175c28a0ab1fa96cf2684331d9ed666ff5ec30d31aa17f7e3cec15c81cec1",
+      "source": "export const envelope = [52, 24, 40];\n\nexport default function build(api) {\n  const W = 52, H = 24, D = 40;\n\n  // World Theme Blocks\n  const stPrimary = api.theme.stone.primary || \"minecraft:stone\";\n  const stAccent = api.theme.stone.accent || \"minecraft:andesite\";\n  const stScree = api.theme.ground.scree || api.theme.ground.pavement || stPrimary;\n  const stWall = api.theme.stone.wall || \"minecraft:cobblestone_wall\";\n\n  // Natural Glacier Materials\n  const BLUE_ICE = \"minecraft:blue_ice\";\n  const PACKED_ICE = \"minecraft:packed_ice\";\n  const ICE = \"minecraft:ice\";\n  const SNOW = \"minecraft:snow_block\";\n\n  // Deterministic Noise Helpers\n  function hash(x, y, z) {\n    const n = Math.sin(x * 127.1 + y * 311.7 + z * 74.7) * 43758.5453123;\n    return n - Math.floor(n);\n  }\n\n  function noise2D(x, z) {\n    return Math.sin(x * 0.37 + z * 0.23) * 0.5 +\n           Math.cos(x * 0.19 - z * 0.41) * 0.3 +\n           Math.sin(x * 0.73 + z * 0.81) * 0.2;\n  }\n\n  // 3D Voxel Grid\n  const grid = new Array(W * H * D).fill(null);\n  function setG(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      grid[(x * H + y) * D + z] = block;\n    }\n  }\n\n  // 1. Compute Topography & Feature Fields\n  const topSurface = new Float32Array(W * D);\n  const isMoraine = new Uint8Array(W * D);\n  const crevasseFloor = new Float32Array(W * D);\n  const isCrevasse = new Uint8Array(W * D);\n\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const idx2 = x * D + z;\n      const n = noise2D(x, z);\n\n      // Lateral Moraine Banks (Gorge Flanks)\n      let moraineH = -999;\n      if (x <= 9) {\n        const d = x;\n        moraineH = 13.5 - d * 1.35 + Math.sin(z * 0.35) * 1.5 + Math.cos(x * 0.6) * 1.0 + n * 1.2;\n      } else if (x >= 42) {\n        const d = 51 - x;\n        moraineH = 14.5 - d * 1.45 + Math.cos(z * 0.3) * 1.8 + Math.sin(x * 0.5) * 1.2 + n * 1.2;\n      }\n\n      // Base Glacier Tongue\n      const slope = 3.5 + (z / (D - 1)) * 3.5;\n      const bulge = Math.sin((x / (W - 1)) * Math.PI) * 2.2 - 0.5;\n      const ogive = Math.sin(z * 0.45 + Math.pow((x - 26) / 16, 2) * 1.8) * 1.3;\n      let iceH = slope + bulge + ogive + n * 0.8;\n\n      // Serac 1: The Cathedral Blade (East Central, x ~ 33, z ~ 18)\n      const s1DistX = x - 33.5;\n      const s1DistZ = z - 17.5;\n      const s1BladeDist = Math.abs(s1DistX * 0.7 - s1DistZ * 0.7);\n      const s1AlongBlade = Math.hypot(s1DistX * 0.7 + s1DistZ * 0.7);\n      let s1 = 22.0 - s1BladeDist * 3.2 - s1AlongBlade * 1.6;\n      if (s1DistX > 0 && s1DistZ > -2) {\n        s1 -= s1DistX * 1.8;\n      }\n      const s1b = 19.5 - Math.hypot((x - 36.5) * 1.4, (z - 21.0) * 1.2) * 2.2;\n      s1 = Math.max(s1, s1b);\n\n      // Serac 2: The Leaning Fang (Northwest Icefall, x ~ 15, z ~ 9)\n      const s2DistX = Math.abs(x - 15.0);\n      const s2DistZ = (z < 8.5) ? (8.5 - z) * 2.8 : (z - 8.5) * 1.3;\n      let s2 = 20.5 - s2DistX * 2.6 - s2DistZ * 1.6 + Math.cos(x * 1.4) * 0.7;\n      const s2NeedleA = 15.0 - Math.hypot(x - 19.0, z - 6.0) * 2.5;\n      const s2NeedleB = 14.5 - Math.hypot(x - 11.0, z - 12.0) * 2.4;\n      s2 = Math.max(s2, Math.max(s2NeedleA, s2NeedleB));\n\n      // Serac 3: Stepped Compression Ridge (South, x ~ 23, z ~ 32)\n      let s3 = -999;\n      if (x >= 13 && x <= 33 && z >= 28 && z <= 37) {\n        const teeth = Math.sin((x - 13) * 0.65) * 2.2;\n        const zProfile = (z < 32) ? (32 - z) * 2.5 : (z - 32) * 1.2;\n        s3 = 17.5 + teeth - Math.abs(x - 23) * 0.5 - zProfile * 1.8;\n      }\n\n      // Scattered Penitentes / Spires\n      const spireA = 13.0 - Math.hypot(x - 26, z - 8) * 2.6;\n      const spireB = 14.0 - Math.hypot(x - 13, z - 23) * 2.4;\n      const spireC = 13.5 - Math.hypot(x - 39, z - 8) * 2.5;\n      const spireD = 14.5 - Math.hypot(x - 20, z - 27) * 2.3;\n      const spireE = 13.0 - Math.hypot(x - 31, z - 35) * 2.5;\n      const spires = Math.max(spireA, spireB, spireC, spireD, spireE);\n\n      const totalSeracH = Math.max(s1, s2, s3, spires);\n      iceH = Math.max(iceH, totalSeracH);\n\n      // Combine Surface & Determine Moraine\n      if (moraineH > iceH + 0.5 && (x <= 7 || x >= 44)) {\n        topSurface[idx2] = Math.min(moraineH, H - 2);\n        isMoraine[idx2] = 1;\n      } else {\n        topSurface[idx2] = Math.min(Math.max(iceH, moraineH), H - 2);\n        isMoraine[idx2] = (moraineH > iceH) ? 1 : 0;\n      }\n\n      // Crevasse Network\n      const c1z = 10.5 + 0.018 * Math.pow(x - 25, 2);\n      const c1dz = Math.abs(z - c1z);\n      const c1Bridge = (x >= 22 && x <= 25);\n\n      const c2z = 23.0 - 0.012 * Math.pow(x - 27, 2);\n      const c2dz = Math.abs(z - c2z);\n      const c2Bridge = (x >= 17 && x <= 19) || (x >= 37 && x <= 39);\n\n      const c3z = 33.0 + (x - 14) * 0.35;\n      const c3dz = Math.abs(z - c3z);\n\n      let crevasseCut = 0;\n      let isCrev = false;\n\n      if (!c1Bridge && c1dz < 1.6 && x >= 8 && x <= 42) {\n        crevasseCut = Math.max(crevasseCut, (1.6 - c1dz) * 4.5);\n        isCrev = true;\n      }\n      if (!c2Bridge && c2dz < 1.8 && x >= 9 && x <= 43) {\n        crevasseCut = Math.max(crevasseCut, (1.8 - c2dz) * 5.5);\n        isCrev = true;\n      }\n      if (c3dz < 1.4 && x >= 11 && x <= 31 && z >= 28 && z <= 38) {\n        crevasseCut = Math.max(crevasseCut, (1.4 - c3dz) * 4.0);\n        isCrev = true;\n      }\n\n      if (isCrev && crevasseCut > 1.2) {\n        isCrevasse[idx2] = 1;\n        crevasseFloor[idx2] = Math.max(2.0, topSurface[idx2] - crevasseCut);\n      }\n    }\n  }\n\n  // 2. Voxel Assembly & Stratified Material Assignment\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const idx2 = x * D + z;\n      const th = api.heightAt(x, z);\n      const groundY = Math.floor(th);\n      const seatMinY = Math.min(0, groundY);\n      const topY = Math.floor(topSurface[idx2]);\n      const isMor = isMoraine[idx2] === 1;\n      const isCrev = isCrevasse[idx2] === 1;\n      const crevFY = Math.floor(crevasseFloor[idx2]);\n\n      // Sub-glacial Melt Cave Arch at Snout\n      const caveDist = Math.hypot((x - 24) * 0.9, z * 0.7);\n      const inCave = (z <= 6 && x >= 20 && x <= 28 && caveDist < 3.2);\n      const caveCeilY = inCave ? Math.floor(4.2 - Math.pow(caveDist / 3.2, 2) * 2.2) : -1;\n\n      // Medial Moraine Streamer Ribbon\n      const xMed = 24 + Math.sin(z * 0.22) * 2.8 + noise2D(z * 1.5, 7.0) * 1.2;\n      const isMedial = (Math.abs(x - xMed) < 1.6 && !isMor && x >= 10 && x <= 40);\n\n      for (let y = seatMinY; y <= topY; y++) {\n        // Foundation & Ground Conformity Course\n        if (y <= groundY) {\n          if (isMor) {\n            setG(x, y, z, (hash(x, y, z) < 0.6) ? stPrimary : stScree);\n          } else {\n            setG(x, y, z, (y < groundY - 1) ? stPrimary : BLUE_ICE);\n          }\n          continue;\n        }\n\n        // Hollow Snout Melt Cave Chamber\n        if (inCave && y > groundY && y <= caveCeilY) {\n          continue;\n        }\n\n        // Crevasse Void & Wedged Boulder\n        if (isCrev && y > crevFY && y <= topY) {\n          const bDist = Math.hypot(x - 28.5, (y - 4.5) * 1.1, z - 11.0);\n          if (bDist <= 1.8) {\n            setG(x, y, z, (hash(x, y, z) < 0.5) ? stPrimary : stAccent);\n          }\n          continue;\n        }\n\n        // Glacier Table (Massive Erratic Perched on Ice Pedestal)\n        const gtDist = Math.hypot((x - 23.0) * 0.9, (y - 8.5) * 0.9, (z - 20.0) * 0.9);\n        if (gtDist <= 2.2 && y >= 7) {\n          if (y === topY && gtDist <= 1.8) {\n            setG(x, y, z, SNOW);\n          } else {\n            setG(x, y, z, (hash(x, y, z) < 0.6) ? stPrimary : stAccent);\n          }\n          continue;\n        }\n\n        // Lateral Moraine Boulders\n        const ebWDist = Math.hypot(x - 5.5, (y - 8.5) * 0.9, z - 21.5);\n        if (ebWDist <= 2.2) {\n          setG(x, y, z, (hash(x, y, z) < 0.5) ? stPrimary : stAccent);\n          continue;\n        }\n        const ebEDist = Math.hypot(x - 45.5, (y - 9.0) * 0.9, z - 15.5);\n        if (ebEDist <= 2.3) {\n          setG(x, y, z, (hash(x, y, z) < 0.5) ? stPrimary : stAccent);\n          continue;\n        }\n\n        // Material Selection: Moraine vs Glacier Ice\n        if (isMor) {\n          const hVal = hash(x, y, z);\n          if (y === topY) {\n            if (hVal < 0.45) setG(x, y, z, SNOW);\n            else if (hVal < 0.75) setG(x, y, z, stScree);\n            else setG(x, y, z, stPrimary);\n          } else {\n            if (hVal < 0.5) setG(x, y, z, stPrimary);\n            else if (hVal < 0.8) setG(x, y, z, stAccent);\n            else setG(x, y, z, stScree);\n          }\n        } else {\n          const strata = Math.sin(y * 0.75 - z * 0.35 + Math.sin(x * 0.4) * 0.9);\n          const isDeep = (y < groundY + 3 || y < topY - 3);\n\n          if (isMedial && y === topY && hash(x, y, z) < 0.65) {\n            setG(x, y, z, (hash(x, y, z) < 0.35) ? stPrimary : stScree);\n          } else if (y === topY) {\n            const hL = (x > 0) ? topSurface[(x - 1) * D + z] : topY;\n            const hR = (x < W - 1) ? topSurface[(x + 1) * D + z] : topY;\n            const hN = (z > 0) ? topSurface[x * D + (z - 1)] : topY;\n            const hS = (z < D - 1) ? topSurface[x * D + (z + 1)] : topY;\n            const maxSlope = Math.max(Math.abs(hL - topY), Math.abs(hR - topY), Math.abs(hN - topY), Math.abs(hS - topY));\n\n            if (maxSlope <= 1.2) {\n              setG(x, y, z, SNOW);\n            } else if (maxSlope <= 2.2) {\n              setG(x, y, z, PACKED_ICE);\n            } else {\n              setG(x, y, z, (strata > 0.2) ? BLUE_ICE : PACKED_ICE);\n            }\n          } else {\n            if (isDeep || strata > 0.35) {\n              setG(x, y, z, BLUE_ICE);\n            } else if (strata < -0.4 && hash(x, y, z) < 0.25) {\n              setG(x, y, z, ICE);\n            } else {\n              setG(x, y, z, PACKED_ICE);\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // 3. Trail Cairns on High Moraine Ridges\n  const cairn1Top = Math.floor(topSurface[6 * D + 33]);\n  if (cairn1Top > 0 && cairn1Top < H - 3) {\n    setG(6, cairn1Top + 1, 33, stAccent);\n    setG(7, cairn1Top + 1, 33, stPrimary);\n    setG(6, cairn1Top + 2, 33, stWall);\n  }\n\n  const cairn2Top = Math.floor(topSurface[46 * D + 27]);\n  if (cairn2Top > 0 && cairn2Top < H - 3) {\n    setG(46, cairn2Top + 1, 27, stAccent);\n    setG(45, cairn2Top + 1, 27, stPrimary);\n    setG(46, cairn2Top + 2, 27, stWall);\n  }\n\n  // 4. Guaranteed 6-Connected Solid Component\n  const visited = new Uint8Array(W * H * D);\n  const queue = new Int32Array(W * H * D);\n  const dirs = [\n    [1, 0, 0], [-1, 0, 0],\n    [0, 1, 0], [0, -1, 0],\n    [0, 0, 1], [0, 0, -1]\n  ];\n\n  let maxComp = [];\n\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const i = (x * H + y) * D + z;\n        if (grid[i] !== null && visited[i] === 0) {\n          let head = 0, tail = 0;\n          queue[tail++] = i;\n          visited[i] = 1;\n          const comp = [i];\n\n          while (head < tail) {\n            const curr = queue[head++];\n            const cz = curr % D;\n            const cy = Math.floor(curr / D) % H;\n            const cx = Math.floor(curr / (H * D));\n\n            for (let d = 0; d < 6; d++) {\n              const nx = cx + dirs[d][0];\n              const ny = cy + dirs[d][1];\n              const nz = cz + dirs[d][2];\n\n              if (nx >= 0 && nx < W && ny >= 0 && ny < H && nz >= 0 && nz < D) {\n                const ni = (nx * H + ny) * D + nz;\n                if (grid[ni] !== null && visited[ni] === 0) {\n                  visited[ni] = 1;\n                  queue[tail++] = ni;\n                  comp.push(ni);\n                }\n              }\n            }\n          }\n\n          if (comp.length > maxComp.length) {\n            maxComp = comp;\n          }\n        }\n      }\n    }\n  }\n\n  const inMain = new Uint8Array(W * H * D);\n  for (let i = 0; i < maxComp.length; i++) {\n    inMain[maxComp[i]] = 1;\n  }\n  for (let i = 0; i < grid.length; i++) {\n    if (grid[i] !== null && inMain[i] === 0) {\n      grid[i] = null;\n    }\n  }\n\n  // 5. Emit Deterministic Output\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const b = grid[(x * H + y) * D + z];\n        if (b !== null) {\n          api.set(x, y, z, b);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"glacier_ice_seracs\",\n    seatY: 0,\n    anchors: {\n      front: [24, 4, 0],\n      snout: [24, 4, 0],\n      cairn_west: [6, cairn1Top + 2, 33],\n      cairn_east: [46, cairn2Top + 2, 27]\n    }\n  };\n}"
+    },
+    "mani_stone_shrine": {
+      "mode": "plugin",
+      "envelope": [
+        9,
+        14,
+        9
+      ],
+      "sourceHash": "b3:a252e4ef3bf546a3477e499f838cfd66299f3dca8c58cf6163ff74e8e7b1bf35",
+      "outputHash": "b3:563f54d525f3df10583a89204ed4f24ba3b3559fe8232c7c9d8562880099db4c",
+      "conforms": false,
+      "conformHash": "b3:718cf7894048613c038637b8179b1505760bce1f6e1175bb13c12ec8aeda10c8",
+      "source": "export const envelope = [9, 14, 9];\n\nexport default function build(api) {\n  const W = 9, H = 14, D = 9;\n  const seatY = 4;\n\n  // 3D voxel buffer\n  const grid = Array.from({ length: W }, () =>\n    Array.from({ length: H }, () => Array(D).fill(null))\n  );\n\n  // Palette extraction with robust fallbacks\n  const stonePrimary = api.theme.stone?.primary || \"minecraft:cobblestone\";\n  const stoneAccent = api.theme.stone?.accent || \"minecraft:stone_bricks\";\n  const stoneSlab = api.theme.stone?.slab || \"minecraft:cobblestone_slab\";\n  const stoneStairs = api.theme.stone?.stairs || \"minecraft:cobblestone_stairs\";\n  const stoneWall = api.theme.stone?.wall || \"minecraft:cobblestone_wall\";\n\n  const groundPlinth = api.theme.ground?.plinth || stonePrimary;\n  const groundPavement = api.theme.ground?.pavement || \"minecraft:andesite\";\n  const groundScree = api.theme.ground?.scree || \"minecraft:cobblestone\";\n\n  const woodLog = api.theme.wood?.log || \"minecraft:spruce_log\";\n  const woodPlanks = api.theme.wood?.planks || \"minecraft:spruce_planks\";\n  const woodFence = api.theme.wood?.fence || \"minecraft:spruce_fence\";\n  const woodSlab = api.theme.wood?.slab || \"minecraft:spruce_slab\";\n\n  // Dedicated ritual / Himalayan cultural materials\n  const slateSlabs = [\n    \"minecraft:polished_deepslate_slab\",\n    \"minecraft:deepslate_tile_slab\",\n    \"minecraft:deepslate_brick_slab\",\n    \"minecraft:smooth_stone_slab\",\n    \"minecraft:stone_slab\",\n    stoneSlab\n  ];\n  const mantraBlocks = [\n    \"minecraft:chiseled_stone_bricks\",\n    \"minecraft:chiseled_deepslate\",\n    \"minecraft:chiseled_polished_blackstone\",\n    stoneAccent\n  ];\n  const flagWools = [\n    \"minecraft:blue_wool\",\n    \"minecraft:white_wool\",\n    \"minecraft:red_wool\",\n    \"minecraft:lime_wool\",\n    \"minecraft:yellow_wool\"\n  ];\n\n  const skullBlock = \"minecraft:skeleton_skull\";\n  const boneBlock = \"minecraft:bone_block\";\n  const butterLamp = \"minecraft:lantern\";\n\n  // Track occupied columns for ground conformity\n  const occupiedTop = Array.from({ length: W }, () => Array(D).fill(-1));\n\n  function set(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      grid[x][y][z] = block;\n      if (y > occupiedTop[x][z]) {\n        occupiedTop[x][z] = y;\n      }\n    }\n  }\n\n  function get(x, y, z) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      return grid[x][y][z];\n    }\n    return null;\n  }\n\n  function pickStone() {\n    const r = api.random();\n    if (r < 0.45) return stonePrimary;\n    if (r < 0.75) return stoneAccent;\n    if (r < 0.90) return groundPlinth;\n    return groundScree;\n  }\n\n  function pickSlate() {\n    return slateSlabs[Math.floor(api.random() * slateSlabs.length)];\n  }\n\n  function pickMantra() {\n    return mantraBlocks[Math.floor(api.random() * mantraBlocks.length)];\n  }\n\n  function makeStairs(facing, half = \"bottom\") {\n    const base = stoneStairs.split(\"[\")[0];\n    return `${base}[facing=${facing},half=${half}]`;\n  }\n\n  // Draw guaranteed 6-connected 3D lines for prayer flag strings and masts\n  function drawLine6Connected(x0, y0, z0, x1, y1, z1, blockFn) {\n    let cx = x0, cy = y0, cz = z0;\n    set(cx, cy, cz, blockFn(0));\n    let step = 0;\n    while (cx !== x1 || cy !== y1 || cz !== z1) {\n      step++;\n      const dx = x1 - cx;\n      const dy = y1 - cy;\n      const dz = z1 - cz;\n      if (Math.abs(dx) >= Math.abs(dy) && Math.abs(dx) >= Math.abs(dz)) {\n        cx += Math.sign(dx);\n      } else if (Math.abs(dy) >= Math.abs(dx) && Math.abs(dy) >= Math.abs(dz)) {\n        cy += Math.sign(dy);\n      } else {\n        cz += Math.sign(dz);\n      }\n      set(cx, cy, cz, blockFn(step));\n    }\n  }\n\n  // Define the solid base plinth across all instances\n  for (let x = 1; x <= 7; x++) {\n    for (let z = 1; z <= 7; z++) {\n      set(x, seatY, z, pickStone());\n    }\n  }\n  // Stepped perimeter aprons for hill anchoring\n  for (let i = 2; i <= 6; i++) {\n    set(i, seatY, 0, groundPavement);\n    set(i, seatY, 8, groundPavement);\n    set(0, seatY, i, groundPavement);\n    set(8, seatY, i, groundPavement);\n  }\n\n  // Determine architectural variant (plugin mode with 6 distinct sacred forms)\n  const variant = api.instance.index % 6;\n\n  if (variant === 0) {\n    // VARIANT 0: Long Mendang Wall & Central Chorten\n    // Central Stupa\n    for (let x = 3; x <= 5; x++) {\n      for (let z = 3; z <= 5; z++) {\n        set(x, 5, z, pickStone());\n        set(x, 6, z, pickStone());\n      }\n    }\n    // Stupa body & mantras\n    for (let x = 3; x <= 5; x++) {\n      for (let z = 3; z <= 5; z++) {\n        set(x, 7, z, pickStone());\n      }\n    }\n    set(4, 7, 3, pickMantra());\n    set(4, 7, 5, pickMantra());\n    set(3, 7, 4, pickMantra());\n    set(5, 7, 4, pickMantra());\n\n    // Dome & Harmika\n    set(4, 8, 4, stoneAccent);\n    set(3, 8, 4, makeStairs(\"east\"));\n    set(5, 8, 4, makeStairs(\"west\"));\n    set(4, 8, 3, makeStairs(\"south\"));\n    set(4, 8, 5, makeStairs(\"north\"));\n    set(4, 9, 4, pickMantra());\n    set(4, 10, 4, stoneWall);\n    set(4, 11, 4, \"minecraft:yellow_wool\");\n\n    // Flanking Mani Tablet Racks (West: 1..2, East: 6..7)\n    for (const xs of [[1, 2], [6, 7]]) {\n      for (const x of xs) {\n        set(x, 5, 4, pickStone());\n        set(x, 6, 4, stoneWall);\n        set(x, 5, 3, pickStone());\n        set(x, 6, 3, pickSlate());\n        set(x, 5, 5, pickStone());\n        set(x, 6, 5, pickSlate());\n      }\n    }\n    // Yak Skulls\n    set(2, 7, 3, skullBlock);\n    set(6, 7, 3, skullBlock);\n\n    // Butter lamp altar\n    set(4, 5, 2, pickStone());\n    set(4, 6, 2, butterLamp);\n    set(3, 5, 2, pickSlate());\n    set(5, 5, 2, pickSlate());\n\n    // Flagpoles and horizontal bunting\n    for (let y = 4; y <= 12; y++) {\n      set(1, y, 4, woodFence);\n      set(7, y, 4, woodFence);\n    }\n    drawLine6Connected(1, 12, 4, 4, 11, 4, (s) => flagWools[s % flagWools.length]);\n    drawLine6Connected(4, 11, 4, 7, 12, 4, (s) => flagWools[(s + 2) % flagWools.length]);\n\n  } else if (variant === 1) {\n    // VARIANT 1: Great Circular Dho-Bum Cairn & Radiating Lungta Canopy\n    // Tiered circular stone mound\n    for (let x = 1; x <= 7; x++) {\n      for (let z = 1; z <= 7; z++) {\n        const d2 = (x - 4) * (x - 4) + (z - 4) * (z - 4);\n        if (d2 <= 8) set(x, 5, z, pickStone());\n        if (d2 <= 5) set(x, 6, z, pickStone());\n        if (d2 <= 3) set(x, 7, z, pickStone());\n        if (d2 <= 8 && d2 > 3 && api.random() < 0.7) {\n          set(x, 6, z, pickSlate());\n        }\n      }\n    }\n    set(4, 8, 4, pickStone());\n    set(3, 8, 4, pickSlate());\n    set(5, 8, 4, pickSlate());\n    set(4, 8, 3, pickSlate());\n    set(4, 8, 5, pickSlate());\n\n    // Central Darchen Mast\n    for (let y = 4; y <= 7; y++) set(4, y, 4, woodLog);\n    for (let y = 8; y <= 13; y++) set(4, y, 4, woodFence);\n\n    // 4 Corner marker posts\n    const corners = [[2, 2], [6, 2], [2, 6], [6, 6]];\n    for (const [cx, cz] of corners) {\n      for (let y = 5; y <= 8; y++) set(cx, y, cz, woodFence);\n    }\n\n    // Radiating 6-connected prayer flag lines\n    let offset = 0;\n    for (const [cx, cz] of corners) {\n      const startColor = offset;\n      drawLine6Connected(4, 12, 4, cx, 8, cz, (s) => flagWools[(s + startColor) % flagWools.length]);\n      offset++;\n    }\n\n    // Skulls & Juniper Hearth\n    set(4, 8, 2, skullBlock);\n    set(2, 7, 4, boneBlock);\n    set(4, 5, 1, pickStone());\n    set(4, 6, 1, butterLamp);\n\n  } else if (variant === 2) {\n    // VARIANT 2: Stepped Kadampa Stupa & Inscription Galleries\n    // Stepped square plinth\n    for (let x = 2; x <= 6; x++) {\n      for (let z = 2; z <= 6; z++) {\n        set(x, 5, z, pickStone());\n        set(x, 6, z, pickStone());\n      }\n    }\n    // Stupa body\n    for (let x = 3; x <= 5; x++) {\n      for (let z = 3; z <= 5; z++) {\n        set(x, 7, z, stoneAccent);\n        set(x, 8, z, pickStone());\n      }\n    }\n    set(4, 8, 3, makeStairs(\"south\"));\n    set(4, 8, 5, makeStairs(\"north\"));\n    set(3, 8, 4, makeStairs(\"east\"));\n    set(5, 8, 4, makeStairs(\"west\"));\n\n    // Harmika cube & spire rings\n    set(4, 9, 4, pickMantra());\n    set(4, 10, 4, stoneWall);\n    set(4, 11, 4, stoneWall);\n    // Parasol umbrella\n    set(4, 12, 4, woodSlab);\n    set(3, 12, 4, woodSlab);\n    set(5, 12, 4, woodSlab);\n    set(4, 12, 3, woodSlab);\n    set(4, 12, 5, woodSlab);\n    set(4, 13, 4, \"minecraft:yellow_wool\");\n\n    // Tablet Galleries on flanks\n    for (let z = 2; z <= 6; z++) {\n      set(1, 5, z, pickStone());\n      set(1, 6, z, pickSlate());\n      set(7, 5, z, pickStone());\n      set(7, 6, z, pickSlate());\n    }\n    set(3, 7, 2, skullBlock);\n    set(5, 7, 2, skullBlock);\n    set(4, 6, 1, butterLamp);\n\n    // Twin corner prayer masts\n    for (let y = 4; y <= 11; y++) {\n      set(1, y, 2, woodFence);\n      set(7, y, 2, woodFence);\n    }\n    set(1, 10, 2, \"minecraft:blue_wool\");\n    set(1, 9, 2, \"minecraft:white_wool\");\n    set(1, 8, 2, \"minecraft:red_wool\");\n    set(7, 10, 2, \"minecraft:red_wool\");\n    set(7, 9, 2, \"minecraft:lime_wool\");\n    set(7, 8, 2, \"minecraft:yellow_wool\");\n\n  } else if (variant === 3) {\n    // VARIANT 3: Rock-Cut Tsa-Tsa Alcove & Mani Terrace\n    // Terraced high back wall\n    for (let x = 1; x <= 7; x++) {\n      for (let z = 4; z <= 6; z++) {\n        for (let y = 5; y <= 8; y++) {\n          set(x, y, z, pickStone());\n        }\n      }\n    }\n    // Front terrace\n    for (let x = 1; x <= 7; x++) {\n      for (let z = 2; z <= 3; z++) {\n        set(x, 5, z, pickStone());\n        if (api.random() < 0.75) set(x, 6, z, pickSlate());\n      }\n    }\n\n    // Two holy arched niches carved into back wall\n    // West niche (x=2..3, z=4)\n    set(2, 6, 4, pickMantra());\n    set(3, 6, 4, boneBlock);\n    set(2, 7, 4, null);\n    set(3, 7, 4, null);\n    // East niche (x=5..6, z=4)\n    set(5, 6, 4, butterLamp);\n    set(6, 6, 4, pickMantra());\n    set(5, 7, 4, null);\n    set(6, 7, 4, null);\n\n    // Central Pillar with Yak Skull\n    set(4, 7, 4, pickStone());\n    set(4, 8, 4, stoneAccent);\n    set(4, 8, 3, skullBlock);\n\n    // Tall northwest flag mast with streaming flags\n    for (let y = 4; y <= 8; y++) set(1, y, 2, woodLog);\n    for (let y = 9; y <= 13; y++) set(1, y, 2, woodFence);\n    drawLine6Connected(1, 12, 2, 7, 8, 4, (s) => flagWools[s % flagWools.length]);\n\n  } else if (variant === 4) {\n    // VARIANT 4: Twin Pass Chortens & Sacred Tablet Gate\n    // West Chorten (x=1..3, z=3..5)\n    for (let x = 1; x <= 3; x++) {\n      for (let z = 3; z <= 5; z++) {\n        set(x, 5, z, pickStone());\n        set(x, 6, z, pickStone());\n      }\n    }\n    set(2, 7, 4, stoneAccent);\n    set(2, 8, 4, pickMantra());\n    for (let y = 9; y <= 12; y++) set(2, y, 4, woodFence);\n\n    // East Chorten (x=5..7, z=3..5)\n    for (let x = 5; x <= 7; x++) {\n      for (let z = 3; z <= 5; z++) {\n        set(x, 5, z, pickStone());\n        set(x, 6, z, pickStone());\n      }\n    }\n    set(6, 7, 4, stoneAccent);\n    set(6, 8, 4, pickMantra());\n    for (let y = 9; y <= 12; y++) set(6, y, 4, woodFence);\n\n    // Central Tablet Altar Wall (x=3..5, z=3..5)\n    for (let x = 3; x <= 5; x++) {\n      set(x, 5, 4, pickStone());\n      set(x, 6, 4, pickStone());\n      set(x, 7, 4, pickSlate());\n    }\n    set(4, 7, 3, skullBlock);\n    set(4, 7, 5, butterLamp);\n\n    // Catenary Prayer Flag Bunting between chorten spires\n    drawLine6Connected(2, 12, 4, 4, 10, 4, (s) => flagWools[s % flagWools.length]);\n    drawLine6Connected(4, 10, 4, 6, 12, 4, (s) => flagWools[(s + 2) % flagWools.length]);\n    drawLine6Connected(2, 10, 4, 4, 8, 4, (s) => flagWools[(s + 3) % flagWools.length]);\n    drawLine6Connected(4, 8, 4, 6, 10, 4, (s) => flagWools[(s + 1) % flagWools.length]);\n\n  } else {\n    // VARIANT 5: Moraine Boulder Cairn & Five-Colored Lungta Canopy\n    // Asymmetrical rugged moraine cairn\n    for (let x = 1; x <= 7; x++) {\n      for (let z = 1; z <= 7; z++) {\n        set(x, 5, z, pickStone());\n        if (x >= 2 && x <= 6 && z >= 2 && z <= 6) {\n          set(x, 6, z, pickStone());\n        }\n        if (x >= 3 && x <= 5 && z >= 3 && z <= 5) {\n          set(x, 7, z, pickStone());\n        }\n      }\n    }\n    // Scatter slate tablets over shelves\n    for (let x = 1; x <= 7; x++) {\n      for (let z = 1; z <= 7; z++) {\n        if (get(x, 6, z) === null && get(x, 5, z) !== null && api.random() < 0.7) {\n          set(x, 6, z, pickSlate());\n        }\n        if (get(x, 7, z) === null && get(x, 6, z) !== null && api.random() < 0.7) {\n          set(x, 7, z, pickSlate());\n        }\n      }\n    }\n\n    // Giant central Darchen pole\n    for (let y = 4; y <= 7; y++) set(4, y, 4, woodLog);\n    for (let y = 8; y <= 13; y++) set(4, y, 4, woodFence);\n\n    // Wooden cross-arms at y=12\n    set(4, 12, 2, woodFence);\n    set(4, 12, 3, woodFence);\n    set(4, 12, 5, woodFence);\n    set(4, 12, 6, woodFence);\n    set(2, 12, 4, woodFence);\n    set(3, 12, 4, woodFence);\n    set(5, 12, 4, woodFence);\n    set(6, 12, 4, woodFence);\n\n    // 4 Full Vertical Prayer Flag Pennants\n    drawLine6Connected(4, 11, 2, 4, 7, 2, (s) => flagWools[s % flagWools.length]);\n    drawLine6Connected(4, 11, 6, 4, 7, 6, (s) => flagWools[(s + 1) % flagWools.length]);\n    drawLine6Connected(2, 11, 4, 2, 7, 4, (s) => flagWools[(s + 2) % flagWools.length]);\n    drawLine6Connected(6, 11, 4, 6, 7, 4, (s) => flagWools[(s + 3) % flagWools.length]);\n\n    // Skulls & Sang-bum\n    set(3, 8, 3, skullBlock);\n    set(5, 8, 3, skullBlock);\n    set(4, 6, 1, butterLamp);\n  }\n\n  // BUILD GROUND FOUNDATION:\n  // For every column occupied by the structure, query heightAt(x, z)\n  // and extend foundation solidly down to terrain (or up to meet rising ground).\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const topY = occupiedTop[x][z];\n      if (topY >= 0) {\n        const th = Math.round(api.heightAt(x, z));\n        const groundY = Math.max(0, Math.min(H - 1, seatY + th));\n        const lowestY = Math.max(0, Math.min(groundY, seatY));\n        const fillUpTo = Math.max(groundY, seatY);\n\n        for (let y = 0; y <= fillUpTo; y++) {\n          if (!get(x, y, z)) {\n            if (y < groundY) {\n              set(x, y, z, (y === 0 || api.random() < 0.6) ? groundPlinth : stonePrimary);\n            } else if (y <= seatY) {\n              set(x, y, z, pickStone());\n            } else {\n              set(x, y, z, pickStone());\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // High mountain snow dusting on exposed horizontal stone ledges\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      for (let y = 5; y < H - 1; y++) {\n        const b = get(x, y, z);\n        if (b && !b.includes(\"wool\") && !b.includes(\"skull\") && !b.includes(\"lantern\") && !b.includes(\"fence\")) {\n          if (get(x, y + 1, z) === null && api.random() < 0.35) {\n            set(x, y + 1, z, \"minecraft:snow[layers=1]\");\n          }\n        }\n      }\n    }\n  }\n\n  // Emit all voxels in strictly deterministic order\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const block = grid[x][y][z];\n        if (block !== null) {\n          api.set(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"mani_stone_shrine\",\n    seatY: seatY,\n    anchors: {\n      front: [4, seatY, 0],\n      shrine: [4, seatY + 1, 4]\n    }\n  };\n}"
+    }
+  }
+}

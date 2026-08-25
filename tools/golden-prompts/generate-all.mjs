@@ -2,6 +2,7 @@
 // (intent, authoring, programs, compile-feedback rounds, emit) at the current kit
 // bytes, each to its own folder + log. Pair with record-generate-run.mjs.
 //   node tools/golden-prompts/generate-all.mjs <outDir> [concurrency=3] [only=id,id]
+//   ... [promptsFile]   a roster other than prompts.json (the Stocktake Run's probes.json)
 import { spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
@@ -11,7 +12,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..")
 const OUT = process.argv[2];
 const CONC = Number(process.argv[3] ?? 3);
 const only = process.argv[4] ? process.argv[4].split(",") : null;
-const suite = JSON.parse(fs.readFileSync(path.join(ROOT, "tools/golden-prompts/prompts.json"), "utf8"));
+const promptsFile = process.argv[5] ? path.resolve(process.argv[5]) : path.join(ROOT, "tools/golden-prompts/prompts.json");
+const suite = JSON.parse(fs.readFileSync(promptsFile, "utf8"));
 const queue = suite.prompts.filter((p) => !only || only.includes(p.id));
 const status = path.join(OUT, "status.txt");
 fs.mkdirSync(OUT, { recursive: true });
