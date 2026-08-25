@@ -1,0 +1,463 @@
+{
+  "loam": "0.1",
+  "profile": "terrain",
+  "meta": {
+    "name": "volcano_lava_field",
+    "worldSeed": "924",
+    "prompt": "A fresh lava field on a volcano's flank: black ridged flows, glowing cracks, a lava lake in the summit crater and one bright river of lava running down to the sea — no settlement of any kind.",
+    "spawn": {
+      "at": [
+        0.5,
+        0.75
+      ]
+    }
+  },
+  "intent": {
+    "climate": {
+      "temperature": 1,
+      "humidity": -1,
+      "snow": "never"
+    },
+    "character": {
+      "label": "volcanic lava field",
+      "flora": {
+        "prefer": [
+          "deadwood"
+        ],
+        "forbid": [
+          "oak_round",
+          "birch_slim",
+          "spruce_tall"
+        ]
+      }
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": {
+        "mix": [
+          [
+            "minecraft:blackstone",
+            5
+          ],
+          [
+            "minecraft:basalt",
+            4
+          ],
+          [
+            "minecraft:magma_block",
+            2
+          ],
+          [
+            "minecraft:obsidian",
+            1
+          ]
+        ]
+      },
+      "ground.subsurface": {
+        "mix": [
+          [
+            "minecraft:blackstone",
+            4
+          ],
+          [
+            "minecraft:magma_block",
+            2
+          ],
+          [
+            "minecraft:basalt",
+            2
+          ]
+        ]
+      },
+      "ground.cliff": {
+        "mix": [
+          [
+            "minecraft:basalt",
+            5
+          ],
+          [
+            "minecraft:blackstone",
+            3
+          ],
+          [
+            "minecraft:magma_block",
+            2
+          ],
+          [
+            "minecraft:crying_obsidian",
+            1
+          ]
+        ]
+      },
+      "ground.peak": {
+        "mix": [
+          [
+            "minecraft:basalt",
+            4
+          ],
+          [
+            "minecraft:magma_block",
+            3
+          ],
+          [
+            "minecraft:blackstone",
+            2
+          ]
+        ]
+      },
+      "ground.beach": {
+        "mix": [
+          [
+            "minecraft:black_concrete_powder",
+            4
+          ],
+          [
+            "minecraft:blackstone",
+            2
+          ],
+          [
+            "minecraft:basalt",
+            2
+          ],
+          [
+            "minecraft:magma_block",
+            1
+          ]
+        ]
+      },
+      "ground.underwater": {
+        "mix": [
+          [
+            "minecraft:gravel",
+            3
+          ],
+          [
+            "minecraft:blackstone",
+            3
+          ],
+          [
+            "minecraft:magma_block",
+            1
+          ]
+        ]
+      },
+      "ground.stone": {
+        "mix": [
+          [
+            "minecraft:deepslate",
+            5
+          ],
+          [
+            "minecraft:tuff",
+            3
+          ],
+          [
+            "minecraft:blackstone",
+            2
+          ]
+        ]
+      }
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Lava Field Flank",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 54,
+          "amplitude": 40,
+          "octaves": 5,
+          "frequency": 0.0035,
+          "gain": 0.55,
+          "ridged": true,
+          "warp": {
+            "amount": 28,
+            "frequency": 0.004
+          },
+          "erosionPasses": 1,
+          "continentalness": {
+            "frequency": 0.0016,
+            "seaFraction": 0.38
+          },
+          "cliffThreshold": 48,
+          "soilDepth": 1,
+          "beachWidth": 4,
+          "snowLineFraction": 0.99
+        },
+        "children": [
+          {
+            "id": "summit_cone",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the summit cone and its molten caldera",
+            "params": {
+              "verb": "volcano",
+              "at": [
+                0.5,
+                0.32
+              ],
+              "radius": 120,
+              "height": 95,
+              "caldera": true,
+              "calderaDepth": 24,
+              "lava": true,
+              "lavaFlows": 4,
+              "profile": "sharp",
+              "irregularity": 0.18
+            }
+          },
+          {
+            "id": "lava_chute",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the chute carved down the flank to the ocean",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.5,
+                  0.36
+                ],
+                [
+                  0.52,
+                  0.52
+                ],
+                [
+                  0.56,
+                  0.74
+                ],
+                [
+                  0.6,
+                  0.98
+                ]
+              ],
+              "width": 36,
+              "depth": 38,
+              "meander": 0.45,
+              "profile": "sharp"
+            }
+          },
+          {
+            "id": "east_lava_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "ridged basalt flow lobe extending east",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.52,
+                  0.34
+                ],
+                [
+                  0.68,
+                  0.44
+                ],
+                [
+                  0.84,
+                  0.58
+                ]
+              ],
+              "width": 56,
+              "height": 34,
+              "profile": "sharp",
+              "meander": 0.5
+            }
+          },
+          {
+            "id": "west_lava_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "ridged basalt flow lobe extending west",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.48,
+                  0.34
+                ],
+                [
+                  0.32,
+                  0.46
+                ],
+                [
+                  0.18,
+                  0.62
+                ]
+              ],
+              "width": 52,
+              "height": 30,
+              "profile": "sharp",
+              "meander": 0.5
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "arid",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0015,
+          "blendRadius": 8
+        }
+      },
+      {
+        "id": "glowing_fissures",
+        "kind": "generator",
+        "generator": "cave.carver@0",
+        "label": "subterranean glowing fracture channels under the flows",
+        "params": {
+          "style": "ravine",
+          "density": 0.25,
+          "radius": [
+            2,
+            4
+          ],
+          "yRange": [
+            16,
+            56
+          ],
+          "entrances": 2,
+          "decorate": true
+        }
+      },
+      {
+        "id": "caldera_lake",
+        "kind": "generator",
+        "generator": "authored:volcano_caldera_lake",
+        "label": "summit caldera lava lake landmark",
+        "constraints": [
+          {
+            "at": [
+              0.5,
+              0.32
+            ]
+          }
+        ]
+      },
+      {
+        "id": "ocean_entry",
+        "kind": "generator",
+        "generator": "authored:lava_ocean_entry",
+        "label": "lava delta ocean entry point",
+        "constraints": [
+          {
+            "at": [
+              0.6,
+              0.95
+            ]
+          }
+        ]
+      },
+      {
+        "id": "spatter_cones",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "scattered hornito spatter cones and fumaroles",
+        "params": {
+          "program": "spatter_cone_fumarole",
+          "count": 10,
+          "area": {
+            "at": [
+              0.5,
+              0.5
+            ],
+            "radius": 0.3
+          },
+          "spacing": 20,
+          "maxSlope": 35
+        }
+      },
+      {
+        "id": "collapsed_tubes",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "skylit collapsed lava tubes along flow path",
+        "params": {
+          "program": "collapsed_lava_tube",
+          "count": 6,
+          "area": {
+            "at": [
+              0.52,
+              0.58
+            ],
+            "radius": 0.28
+          },
+          "spacing": 28,
+          "maxSlope": 28
+        }
+      }
+    ]
+  },
+  "programs": {
+    "volcano_caldera_lake": {
+      "mode": "landmark",
+      "envelope": [
+        48,
+        32,
+        48
+      ],
+      "sourceHash": "b3:08f60a0f07c1b15796d1a61f4a9916c86b91b534ee828b74fee3e512cdab95a7",
+      "outputHash": "b3:aa5de933a0d16623e5d95bb5333d3015992ebf9166d07be623102be21134e047",
+      "conforms": false,
+      "conformHash": "b3:2efbaa170d397f88b9530c91e24239d14bbed6c15027c4b63ca8a2c370266e3a",
+      "source": "export const envelope = [48, 32, 48];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const seatY = 6;\n  const cx = 24.0;\n  const cz = 25.0;\n\n  // Palette from world theme with fallback to volcanic minerals\n  const stonePrimary = api.theme.stone.primary || \"minecraft:blackstone\";\n  const stoneAccent = api.theme.stone.accent || \"minecraft:polished_blackstone\";\n  const stoneWall = api.theme.stone.wall || \"minecraft:blackstone_wall\";\n  const stoneSlab = api.theme.stone.slab || \"minecraft:blackstone_slab\";\n  const groundScree = api.theme.ground.scree || \"minecraft:basalt\";\n  const groundPavement = api.theme.ground.pavement || \"minecraft:smooth_basalt\";\n  const groundPlinth = api.theme.ground.plinth || \"minecraft:polished_blackstone\";\n\n  // Specialized volcanic blocks\n  const B_BASALT_Y = \"minecraft:basalt[axis=y]\";\n  const B_POL_BASALT_Y = \"minecraft:polished_basalt[axis=y]\";\n  const B_SMOOTH_BASALT = \"minecraft:smooth_basalt\";\n  const B_BLACKSTONE = \"minecraft:blackstone\";\n  const B_MAGMA = \"minecraft:magma_block\";\n  const B_SHROOMLIGHT = \"minecraft:shroomlight\";\n  const B_CRYING_OBSIDIAN = \"minecraft:crying_obsidian\";\n  const B_OBSIDIAN = \"minecraft:obsidian\";\n  const B_GILDED_BLACKSTONE = \"minecraft:gilded_blackstone\";\n  const B_BLACKSTONE_WALL = stoneWall;\n  const B_BLACKSTONE_SLAB = stoneSlab;\n  const B_POL_SLAB = \"minecraft:polished_blackstone_slab[type=bottom]\";\n  const B_CAMPFIRE = \"minecraft:campfire[facing=north,lit=true]\";\n\n  // 3D Voxel buffer\n  const grid = new Array(W * H * D);\n\n  function getVoxel(x, y, z) {\n    if (x < 0 || x >= W || y < 0 || y >= H || z < 0 || z >= D) return null;\n    return grid[x + W * (y + H * z)] || null;\n  }\n\n  function setVoxel(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      grid[x + W * (y + H * z)] = block;\n    }\n  }\n\n  // Deterministic seedable 2D noise generator\n  const seedVal = Math.floor(api.random() * 65536);\n  const perm = new Uint8Array(512);\n  let s = (seedVal + 1337) & 0xffff;\n  for (let i = 0; i < 256; i++) {\n    s = (s * 1103515245 + 12345) & 0x7fffffff;\n    perm[i] = (s >> 16) & 255;\n  }\n  for (let i = 0; i < 256; i++) perm[256 + i] = perm[i];\n\n  function noise2D(x, z) {\n    const X = Math.floor(x) & 255;\n    const Z = Math.floor(z) & 255;\n    const xf = x - Math.floor(x);\n    const zf = z - Math.floor(z);\n    const u = xf * xf * (3 - 2 * xf);\n    const v = zf * zf * (3 - 2 * zf);\n\n    const a = perm[X] + Z;\n    const b = perm[X + 1] + Z;\n\n    const g00 = ((perm[a] & 1) === 0 ? xf : -xf) + ((perm[a] & 2) === 0 ? zf : -zf);\n    const g10 = ((perm[b] & 1) === 0 ? xf - 1 : -(xf - 1)) + ((perm[b] & 2) === 0 ? zf : -zf);\n    const g01 = ((perm[a + 1] & 1) === 0 ? xf : -xf) + ((perm[a + 1] & 2) === 0 ? zf - 1 : -(zf - 1));\n    const g11 = ((perm[b + 1] & 1) === 0 ? xf - 1 : -(xf - 1)) + ((perm[b + 1] & 2) === 0 ? zf - 1 : -(zf - 1));\n\n    const x1 = g00 + u * (g10 - g00);\n    const x2 = g01 + u * (g11 - g01);\n    return x1 + v * (x2 - x1);\n  }\n\n  function normalizeAngle(a) {\n    while (a > Math.PI) a -= 2 * Math.PI;\n    while (a < -Math.PI) a += 2 * Math.PI;\n    return a;\n  }\n\n  function getRimRadius(theta) {\n    return 15.2 + 1.8 * Math.sin(3 * theta + 0.5) + 1.2 * Math.cos(5 * theta - 0.3) + 0.7 * Math.sin(2 * theta);\n  }\n\n  function getBaseRadius(theta) {\n    return getRimRadius(theta) + 6.8 + 1.4 * Math.cos(4 * theta + 0.8);\n  }\n\n  function getRimHeight(theta) {\n    let h = 15.2 + 2.4 * Math.sin(2 * theta - 0.4) + 1.5 * Math.cos(3 * theta + 0.8);\n    const dTheta = Math.abs(normalizeAngle(theta - (-Math.PI / 2)));\n    const breachWidth = 0.46;\n    if (dTheta < breachWidth) {\n      const t = dTheta / breachWidth;\n      const ease = 0.5 - 0.5 * Math.cos(t * Math.PI);\n      h = 6.8 + (h - 6.8) * ease;\n    }\n    return Math.min(20, Math.max(6.5, h));\n  }\n\n  function riverCenterX(z) {\n    return 24.0 + 1.8 * Math.sin(z * 0.28) + 0.7 * Math.cos(z * 0.55);\n  }\n\n  function distToSegmentSq(px, pz, x1, z1, x2, z2) {\n    const dx = x2 - x1;\n    const dz = z2 - z1;\n    const l2 = dx * dx + dz * dz;\n    if (l2 === 0) return (px - x1) * (px - x1) + (pz - z1) * (pz - z1);\n    let t = ((px - x1) * dx + (pz - z1) * dz) / l2;\n    t = Math.max(0, Math.min(1, t));\n    const projX = x1 + t * dx;\n    const projZ = z1 + t * dz;\n    return (px - projX) * (px - projX) + (pz - projZ) * (pz - projZ);\n  }\n\n  // Precompute ground heights\n  const groundMap = new Int16Array(W * D);\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const rawH = api.heightAt(x, z);\n      groundMap[x + W * z] = Math.max(0, Math.min(22, seatY + Math.round(rawH)));\n    }\n  }\n\n  const riverMouthGround = groundMap[24 + W * 0];\n\n  // Pass 1: Build the primary caldera mountain, crater bowl, and outer flanks\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const dx = x - cx;\n      const dz = z - cz;\n      const r = Math.sqrt(dx * dx + dz * dz);\n      const theta = Math.atan2(dz, dx);\n\n      const rRim = getRimRadius(theta);\n      const rBase = getBaseRadius(theta);\n      const hRim = getRimHeight(theta);\n      const rLake = rRim - 3.8;\n      const colGround = groundMap[x + W * z];\n\n      let colTopY = colGround;\n      let isInsideCrater = false;\n      let isLake = false;\n\n      if (r <= rLake && z > 15) {\n        colTopY = seatY + 9;\n        isInsideCrater = true;\n        isLake = true;\n      } else if (r <= rRim) {\n        const u = Math.max(0, Math.min(1, (r - rLake) / Math.max(0.1, rRim - rLake)));\n        const innerH = seatY + 9 + (hRim - 9) * Math.pow(u, 1.35);\n        colTopY = Math.round(innerH);\n        isInsideCrater = true;\n      } else if (r <= rBase) {\n        const u = Math.max(0, Math.min(1, (rBase - r) / Math.max(0.1, rBase - rRim)));\n        const flankH = colGround + (hRim - (colGround - seatY)) * Math.pow(u, 1.25);\n        colTopY = Math.round(flankH + noise2D(x * 0.18, z * 0.18) * 1.6);\n      } else {\n        colTopY = colGround;\n      }\n\n      // Carve Northern Lava River Breach and Gorge\n      let isRiverStream = false;\n      let isRiverBed = false;\n      let riverBedY = seatY;\n      let riverSurfY = seatY + 1;\n\n      if (z <= 20) {\n        const rx = riverCenterX(z);\n        const distRivX = Math.abs(x - rx);\n        const wRiv = 2.2 + 1.2 * (1.0 - z / 20.0);\n        const wGorge = wRiv + 3.2;\n\n        const tZ = Math.max(0, Math.min(1, z / 18.0));\n        const mouthY = riverMouthGround;\n        riverBedY = Math.round(mouthY + (seatY + 8 - mouthY) * Math.pow(tZ, 1.15));\n        riverSurfY = Math.min(seatY + 9, riverBedY + 1);\n\n        if (distRivX <= wRiv) {\n          colTopY = riverSurfY;\n          isRiverStream = true;\n        } else if (distRivX <= wGorge) {\n          const v = (distRivX - wRiv) / (wGorge - wRiv);\n          const gorgeWallY = riverSurfY + (colTopY - riverSurfY) * Math.pow(v, 0.7);\n          colTopY = Math.min(colTopY, Math.round(gorgeWallY));\n        }\n      }\n\n      // Check for Glowing Magma Fissures/Dykes on outer flanks\n      const dDyke1 = Math.sqrt(distToSegmentSq(x, z, 27, 30, 41, 42));\n      const dDyke2 = Math.sqrt(distToSegmentSq(x, z, 21, 30, 7, 41));\n      const dDyke3 = Math.sqrt(distToSegmentSq(x, z, 15, 25, 4, 25));\n      const minDykeDist = Math.min(dDyke1, dDyke2, dDyke3);\n      const isDyke = !isLake && !isRiverStream && r > rRim && minDykeDist < 1.35;\n\n      // Fill Column from Ground/Foundation up to Top\n      const bottomY = Math.min(colGround, seatY);\n      for (let y = bottomY; y <= colTopY; y++) {\n        if (y < colGround) {\n          // Sub-terrain foundation skirt\n          setVoxel(x, y, z, y === bottomY ? groundPlinth : groundScree);\n        } else if (isRiverStream) {\n          if (y === riverBedY) {\n            setVoxel(x, y, z, (x + z) % 3 === 0 ? B_CRYING_OBSIDIAN : B_MAGMA);\n          } else if (y === riverSurfY) {\n            const centerDist = Math.abs(x - riverCenterX(z));\n            if (centerDist < 0.9) {\n              setVoxel(x, y, z, (z % 3 === 0) ? B_SHROOMLIGHT : B_MAGMA);\n            } else {\n              setVoxel(x, y, z, (x + z) % 4 === 0 ? B_SMOOTH_BASALT : B_MAGMA);\n            }\n          } else {\n            setVoxel(x, y, z, stonePrimary);\n          }\n        } else if (isLake && y === seatY + 9) {\n          // Lake surface handled in Pass 2\n          setVoxel(x, y, z, B_MAGMA);\n        } else if (isLake && y === seatY + 8) {\n          setVoxel(x, y, z, (x * 7 + z * 13) % 5 === 0 ? B_CRYING_OBSIDIAN : B_MAGMA);\n        } else if (isDyke && y >= colTopY - 1) {\n          if (minDykeDist < 0.65) {\n            setVoxel(x, y, z, (x + y + z) % 4 === 0 ? B_SHROOMLIGHT : B_MAGMA);\n          } else {\n            setVoxel(x, y, z, B_CRYING_OBSIDIAN);\n          }\n        } else if (y === colTopY) {\n          // Top surface decoration\n          if (r > rRim - 1.5 && r < rRim + 1.5) {\n            // Rim Crest Columnar Basalt\n            setVoxel(x, y, z, (x + z) % 2 === 0 ? B_POL_BASALT_Y : B_BASALT_Y);\n            // Occasional organ pipe vertical columns extending 1 block higher\n            if ((x * 3 + z * 5) % 7 === 0 && colTopY + 1 < H - 2) {\n              setVoxel(x, colTopY + 1, z, B_BASALT_Y);\n              if ((x + z) % 3 === 0) {\n                setVoxel(x, colTopY + 2, z, B_POL_SLAB);\n              }\n            }\n          } else {\n            const surfNoise = noise2D(x * 0.35, z * 0.35);\n            if (surfNoise > 0.35) {\n              setVoxel(x, y, z, B_GILDED_BLACKSTONE);\n            } else if (surfNoise > 0.0) {\n              setVoxel(x, y, z, B_SMOOTH_BASALT);\n            } else if (surfNoise > -0.35) {\n              setVoxel(x, y, z, stonePrimary);\n            } else {\n              setVoxel(x, y, z, groundScree);\n            }\n          }\n        } else if (y >= colTopY - 2) {\n          setVoxel(x, y, z, (x + z) % 2 === 0 ? B_BASALT_Y : stonePrimary);\n        } else {\n          setVoxel(x, y, z, stonePrimary);\n        }\n      }\n    }\n  }\n\n  // Pass 2: Magma Lake Convection Currents and Crusted Basalt Rafts\n  const lakeY = seatY + 9;\n  for (let x = 0; x < W; x++) {\n    for (let z = 16; z < D; z++) {\n      const dx = x - cx;\n      const dz = z - cz;\n      const r = Math.sqrt(dx * dx + dz * dz);\n      const theta = Math.atan2(dz, dx);\n      const rRim = getRimRadius(theta);\n      const rLake = rRim - 3.8;\n\n      if (r <= rLake) {\n        // Swirling magma fissure convection formula\n        const f = Math.sin(r * 0.72 - theta * 3.0) + noise2D(x * 0.35, z * 0.35) * 1.3;\n\n        if (Math.abs(f) < 0.22) {\n          // Searing core fissure\n          setVoxel(x, lakeY, z, B_SHROOMLIGHT);\n          setVoxel(x, lakeY - 1, z, B_MAGMA);\n        } else if (Math.abs(f) < 0.52) {\n          // Glowing magma stream\n          setVoxel(x, lakeY, z, B_MAGMA);\n          setVoxel(x, lakeY - 1, z, (x + z) % 2 === 0 ? B_MAGMA : B_CRYING_OBSIDIAN);\n        } else {\n          // Crusted Basalt Raft Plate\n          const crustChoice = (x * 11 + z * 17) % 6;\n          if (crustChoice === 0) setVoxel(x, lakeY, z, B_SMOOTH_BASALT);\n          else if (crustChoice === 1) setVoxel(x, lakeY, z, B_BASALT_Y);\n          else if (crustChoice === 2) setVoxel(x, lakeY, z, B_POL_BASALT_Y);\n          else if (crustChoice === 3) setVoxel(x, lakeY, z, B_GILDED_BLACKSTONE);\n          else setVoxel(x, lakeY, z, B_BLACKSTONE);\n\n          // Raised crust plate center slab\n          if (Math.abs(f) > 0.95 && r < rLake - 1.2) {\n            setVoxel(x, lakeY + 1, z, B_BLACKSTONE_SLAB);\n          }\n        }\n      }\n    }\n  }\n\n  // Pass 3: Procedural Volcanic Vent Horns, Chimneys, and Fumaroles\n\n  // Horn 1: The Great Summit Magma Chimney (Center South)\n  const h1x = 24;\n  const h1z = 30;\n  for (let y = lakeY; y <= lakeY + 7; y++) {\n    const dy = y - lakeY;\n    const rad = 2.4 - dy * 0.25;\n    for (let ox = -3; ox <= 3; ox++) {\n      for (let oz = -3; oz <= 3; oz++) {\n        const distSq = ox * ox + oz * oz;\n        const d = Math.sqrt(distSq);\n        const px = h1x + ox;\n        const pz = h1z + oz;\n        if (d <= rad) {\n          if (d < 0.85) {\n            if (y <= lakeY + 4) {\n              setVoxel(px, y, pz, B_SHROOMLIGHT);\n            } else if (y === lakeY + 5) {\n              setVoxel(px, y, pz, B_MAGMA);\n            } else if (y === lakeY + 6) {\n              setVoxel(px, y, pz, B_CAMPFIRE); // Summit smoke plume\n            }\n          } else {\n            // Chimney walls\n            if (y === lakeY + 7) {\n              if ((ox + oz) % 2 === 0) setVoxel(px, y, pz, B_BLACKSTONE_WALL);\n            } else if (y >= lakeY + 5) {\n              setVoxel(px, y, pz, (ox * 3 + oz * 5 + y) % 2 === 0 ? B_CRYING_OBSIDIAN : B_OBSIDIAN);\n            } else {\n              setVoxel(px, y, pz, (ox + oz) % 3 === 0 ? B_CRYING_OBSIDIAN : B_BLACKSTONE);\n            }\n          }\n        }\n      }\n    }\n  }\n  // Chimney north face magma cascade\n  setVoxel(24, lakeY + 1, 28, B_MAGMA);\n  setVoxel(24, lakeY + 2, 28, B_SHROOMLIGHT);\n  setVoxel(24, lakeY + 3, 28, B_MAGMA);\n\n  // Horn 2: Crying Obsidian Spire (East)\n  const h2x = 29;\n  const h2z = 23;\n  for (let y = lakeY; y <= lakeY + 4; y++) {\n    const dy = y - lakeY;\n    const rad = 1.6 - dy * 0.25;\n    for (let ox = -2; ox <= 2; ox++) {\n      for (let oz = -2; oz <= 2; oz++) {\n        const d = Math.sqrt(ox * ox + oz * oz);\n        if (d <= rad) {\n          const px = h2x + ox;\n          const pz = h2z + oz;\n          if (y === lakeY + 4) {\n            setVoxel(px, y, pz, B_BLACKSTONE_WALL);\n          } else if (d < 0.7 && y === lakeY + 3) {\n            setVoxel(px, y, pz, B_MAGMA);\n          } else {\n            setVoxel(px, y, pz, (ox + oz + y) % 2 === 0 ? B_CRYING_OBSIDIAN : B_GILDED_BLACKSTONE);\n          }\n        }\n      }\n    }\n  }\n\n  // Horn 3: Bubbling Horn & Lake Vent (West)\n  const h3x = 19;\n  const h3z = 24;\n  for (let y = lakeY; y <= lakeY + 3; y++) {\n    const dy = y - lakeY;\n    const rad = 1.5 - dy * 0.3;\n    for (let ox = -2; ox <= 2; ox++) {\n      for (let oz = -2; oz <= 2; oz++) {\n        const d = Math.sqrt(ox * ox + oz * oz);\n        if (d <= rad) {\n          const px = h3x + ox;\n          const pz = h3z + oz;\n          if (y === lakeY + 3) {\n            setVoxel(px, y, pz, B_BLACKSTONE_WALL);\n          } else if (d < 0.6 && y === lakeY + 2) {\n            setVoxel(px, y, pz, B_SHROOMLIGHT);\n          } else {\n            setVoxel(px, y, pz, (ox + y) % 2 === 0 ? B_OBSIDIAN : B_MAGMA);\n          }\n        }\n      }\n    }\n  }\n\n  // Rim Fumaroles (Smoking vents on outer crest)\n  function buildFumarole(fx, fz) {\n    let topY = groundMap[fx + W * fz];\n    for (let y = H - 1; y >= 0; y--) {\n      if (getVoxel(fx, y, fz) !== null) {\n        topY = y;\n        break;\n      }\n    }\n    if (topY < H - 3) {\n      setVoxel(fx, topY, fz, B_MAGMA);\n      setVoxel(fx, topY + 1, fz, B_CAMPFIRE);\n      setVoxel(fx + 1, topY + 1, fz, B_BLACKSTONE_WALL);\n      setVoxel(fx - 1, topY + 1, fz, B_BLACKSTONE_WALL);\n      setVoxel(fx, topY + 1, fz + 1, B_BLACKSTONE_WALL);\n      setVoxel(fx, topY + 1, fz - 1, B_BLACKSTONE_WALL);\n    }\n  }\n  buildFumarole(35, 27);\n  buildFumarole(13, 27);\n\n  // Pass 4: Gorge Boulders, Basalt Wall Spires, and Lava Edge Overhangs\n  for (let z = 2; z <= 17; z++) {\n    const rx = riverCenterX(z);\n    const wRiv = 2.2 + 1.2 * (1.0 - z / 20.0);\n\n    // Left bank boulder/wall\n    const lbX = Math.round(rx - wRiv - 0.7);\n    const rbX = Math.round(rx + wRiv + 0.7);\n\n    for (const bx of [lbX, rbX]) {\n      if (bx >= 0 && bx < W) {\n        for (let y = H - 1; y >= seatY; y--) {\n          if (getVoxel(bx, y, z) !== null) {\n            if ((bx * 7 + z * 11) % 5 === 0 && y + 1 < H - 2) {\n              setVoxel(bx, y + 1, z, B_BLACKSTONE_WALL);\n            } else if ((bx + z) % 4 === 0 && y + 1 < H - 2) {\n              setVoxel(bx, y + 1, z, B_POL_SLAB);\n            }\n            break;\n          }\n        }\n      }\n    }\n  }\n\n  // Pass 5: Ground Conformity Skirt Guarantee\n  // Ensure every occupied column is solidly grounded down to heightAt(x, z)\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const gH = groundMap[x + W * z];\n      // Find lowest non-null voxel in column\n      let lowestY = -1;\n      let highestY = -1;\n      for (let y = 0; y < H; y++) {\n        if (getVoxel(x, y, z) !== null) {\n          if (lowestY === -1) lowestY = y;\n          highestY = y;\n        }\n      }\n\n      if (lowestY !== -1) {\n        // Fill downwards if floating above real terrain\n        if (gH < lowestY) {\n          for (let y = gH; y < lowestY; y++) {\n            setVoxel(x, y, z, y === gH ? groundPlinth : groundScree);\n          }\n        }\n        // If terrain is higher than lowestY, fill upwards solid to avoid internal hollows\n        if (gH > lowestY) {\n          for (let y = lowestY; y <= Math.min(gH, highestY); y++) {\n            if (getVoxel(x, y, z) === null) {\n              setVoxel(x, y, z, stonePrimary);\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // Emit all voxels to the world API\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const block = grid[x + W * (y + H * z)];\n        if (block) {\n          api.set(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"Volcano Caldera Lake\",\n    seatY: seatY,\n    anchors: {\n      front: [24, riverMouthGround, 0],\n      summit: [24, seatY + 16, 30],\n    },\n  };\n}"
+    },
+    "lava_ocean_entry": {
+      "mode": "landmark",
+      "envelope": [
+        44,
+        28,
+        40
+      ],
+      "sourceHash": "b3:99acfa2461d8bd0ebaa2dbf029ed5cc501f3915bf229c6311951699cb175c736",
+      "outputHash": "b3:552116ff0ce23727a8d8e6c49ab98cb1053a52b316728744708df354b9810478",
+      "conforms": false,
+      "conformHash": "b3:8b20bbfde7de53b17e2e01ef59563fdbb61462115c331821bbf06ea574260f73",
+      "source": "export const envelope = [44, 28, 40];\n\nexport default function build(api) {\n  const [W, H, D] = api.size; // 44, 28, 40\n  const seatY = 8;\n\n  // Grid buffer for deterministic single-pass placement\n  const grid = new Uint16Array(W * H * D);\n  const setCell = (x, y, z, id) => {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      grid[x + z * W + y * (W * D)] = id;\n    }\n  };\n  const getCell = (x, y, z) => {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      return grid[x + z * W + y * (W * D)];\n    }\n    return 0;\n  };\n\n  // Palette indices\n  const ID_AIR = 0;\n  const ID_BASALT = 1;\n  const ID_POLISHED_BASALT = 2;\n  const ID_SMOOTH_BASALT = 3;\n  const ID_BLACKSTONE = 4;\n  const ID_POLISHED_BLACKSTONE = 5;\n  const ID_POLISHED_BLACKSTONE_BRICKS = 6;\n  const ID_OBSIDIAN = 7;\n  const ID_CRYING_OBSIDIAN = 8;\n  const ID_MAGMA = 9;\n  const ID_SHROOMLIGHT = 10;\n  const ID_GILDED_BLACKSTONE = 11;\n  const ID_WHITE_GLASS = 12;\n  const ID_TINTED_GLASS = 13;\n  const ID_LIGHT_GRAY_GLASS = 14;\n  const ID_COBWEB = 15;\n  const ID_BLACKSTONE_WALL = 16;\n  const ID_POLISHED_BLACKSTONE_WALL = 17;\n  const ID_BLACKSTONE_SLAB = 18;\n\n  const themeStone = api.theme?.stone?.primary || \"minecraft:blackstone\";\n  const themeAccent = api.theme?.stone?.accent || \"minecraft:polished_blackstone\";\n  const themeWall = api.theme?.stone?.wall || \"minecraft:blackstone_wall\";\n\n  const PALETTE = [\n    \"minecraft:air\",\n    \"minecraft:basalt[axis=y]\",\n    \"minecraft:polished_basalt[axis=y]\",\n    \"minecraft:smooth_basalt\",\n    themeStone,\n    themeAccent,\n    \"minecraft:polished_blackstone_bricks\",\n    \"minecraft:obsidian\",\n    \"minecraft:crying_obsidian\",\n    \"minecraft:magma_block\",\n    \"minecraft:shroomlight\",\n    \"minecraft:gilded_blackstone\",\n    \"minecraft:white_stained_glass\",\n    \"minecraft:tinted_glass\",\n    \"minecraft:light_gray_stained_glass\",\n    \"minecraft:cobweb\",\n    themeWall,\n    \"minecraft:polished_blackstone_wall\",\n    \"minecraft:blackstone_slab[type=bottom]\"\n  ];\n\n  // Fast deterministic hash for geological texture & jaggedness\n  const hash = (x, y, z = 0) => {\n    const n = Math.sin(x * 12.9898 + y * 78.233 + z * 37.719) * 43758.5453;\n    return n - Math.floor(n);\n  };\n\n  // --- 1. Base Landform & Braided Lava Channels ---\n  // Channel center lines\n  const getCentralX = (z) => 22 + Math.sin(z * 0.18) * 1.6;\n  const getWestX = (z) => (z < 12 ? 22 : 22 - 11 * Math.sin(Math.min(1, (z - 12) / 18) * (Math.PI / 2)));\n  const getEastX = (z) => (z < 15 ? 22 : 22 + 10 * Math.sin(Math.min(1, (z - 15) / 16) * (Math.PI / 2)));\n\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      // Background volcanic slope (high at North z=0, sloping down to sea at South z=39)\n      const slopeFactor = z / 39;\n      let groundH = 14.5 - slopeFactor * 8.5; // from 14.5 down to 6.0\n\n      // Jagged canyon bluffs flanking east and west\n      const leftBluff = Math.max(0, (14 - x) / 14) * 4.5 * (1 - slopeFactor * 0.7);\n      const rightBluff = Math.max(0, (x - 29) / 14) * 4.5 * (1 - slopeFactor * 0.7);\n      groundH += leftBluff + rightBluff;\n\n      // River carving\n      const cx = getCentralX(z);\n      const distCentral = Math.abs(x - cx);\n      const isUpper = z <= 15 && distCentral < 4.2;\n      const isCentralTongue = z > 15 && distCentral < 3.2;\n\n      const wx = getWestX(z);\n      const distWest = Math.abs(x - wx);\n      const isWestBranch = z >= 12 && z <= 34 && distWest < 2.6;\n\n      const ex = getEastX(z);\n      const distEast = Math.abs(x - ex);\n      const isEastBranch = z >= 15 && z <= 34 && distEast < 2.5;\n\n      let isLava = false;\n      let lavaCore = false;\n      let carve = 0;\n\n      if (isUpper) {\n        carve = (1 - distCentral / 4.2) * 2.8;\n        if (distCentral < 3.0) {\n          isLava = true;\n          if (distCentral < 1.6) lavaCore = true;\n        }\n      } else if (isCentralTongue) {\n        carve = (1 - distCentral / 3.2) * 2.4;\n        if (distCentral < 2.2) {\n          isLava = true;\n          if (distCentral < 1.2) lavaCore = true;\n        }\n      } else if (isWestBranch) {\n        carve = (1 - distWest / 2.6) * 2.2;\n        if (distWest < 1.8) {\n          isLava = true;\n          if (distWest < 1.0) lavaCore = true;\n        }\n      } else if (isEastBranch) {\n        carve = (1 - distEast / 2.5) * 2.2;\n        if (distEast < 1.7) {\n          isLava = true;\n          if (distEast < 0.9) lavaCore = true;\n        }\n      }\n\n      // Delta edge plunge into sea\n      if (z > 30) {\n        const drop = (z - 30) * 0.45;\n        groundH -= drop;\n      }\n\n      const surfaceY = Math.max(3, Math.round(groundH - carve + hash(x, z) * 0.8));\n\n      // Fill land column from seabed/base (y=0) up to surfaceY\n      for (let y = 0; y <= surfaceY; y++) {\n        let block = ID_BLACKSTONE;\n\n        if (y === surfaceY) {\n          if (isLava) {\n            // Molten lava river surface: magma blocks, crust rafts, and crying obsidian\n            const hVal = hash(x, y, z);\n            if (hVal < 0.65) {\n              block = ID_MAGMA;\n            } else if (hVal < 0.82) {\n              block = ID_CRYING_OBSIDIAN;\n            } else {\n              block = ID_SMOOTH_BASALT; // solid crust raft\n            }\n          } else {\n            // Land surface: basalt, blackstone, obsidian terraces\n            const hVal = hash(x, y, z);\n            if (hVal < 0.4) block = ID_BASALT;\n            else if (hVal < 0.7) block = ID_POLISHED_BLACKSTONE;\n            else if (hVal < 0.88) block = ID_OBSIDIAN;\n            else block = ID_GILDED_BLACKSTONE;\n          }\n        } else if (y === surfaceY - 1) {\n          if (isLava && lavaCore) {\n            block = ID_SHROOMLIGHT; // incandescent molten heat core beneath magma\n          } else if (isLava) {\n            block = ID_MAGMA;\n          } else {\n            block = hash(x, y, z) < 0.5 ? ID_SMOOTH_BASALT : ID_BLACKSTONE;\n          }\n        } else if (y <= surfaceY - 2) {\n          const hVal = hash(x, y, z);\n          if (hVal < 0.4) block = ID_BLACKSTONE;\n          else if (hVal < 0.75) block = ID_POLISHED_BLACKSTONE_BRICKS;\n          else block = ID_OBSIDIAN;\n        }\n\n        setCell(x, y, z, block);\n      }\n\n      // Slabs on dry terrain for stepped erosion\n      if (!isLava && surfaceY < H - 1 && hash(x, z, 7) > 0.68) {\n        setCell(x, surfaceY + 1, z, ID_BLACKSTONE_SLAB);\n      }\n    }\n  }\n\n  // --- 2. Basalt Sea Stacks & Columnar Palisades ---\n  const pillars = [\n    // Western Sea Stack Cluster (with dramatic natural sea arch)\n    { cx: 6, cz: 28, r: 2.0, topY: 16 },\n    { cx: 9, cz: 29, r: 1.6, topY: 14 },\n    { cx: 6, cz: 34, r: 1.9, topY: 15 },\n    { cx: 10, cz: 35, r: 1.7, topY: 16 },\n    { cx: 13, cz: 32, r: 1.4, topY: 12 },\n    { cx: 4, cz: 32, r: 1.5, topY: 13 },\n\n    // Eastern Sea Stack Cluster\n    { cx: 33, cz: 28, r: 1.8, topY: 15 },\n    { cx: 37, cz: 29, r: 2.0, topY: 17 },\n    { cx: 33, cz: 34, r: 1.8, topY: 16 },\n    { cx: 38, cz: 35, r: 1.6, topY: 14 },\n    { cx: 30, cz: 36, r: 1.4, topY: 12 },\n    { cx: 39, cz: 32, r: 1.5, topY: 13 },\n\n    // Delta Nunatak Monoliths (splitting braided streams)\n    { cx: 17, cz: 19, r: 2.1, topY: 14 },\n    { cx: 27, cz: 20, r: 2.0, topY: 14 },\n    { cx: 16, cz: 26, r: 1.7, topY: 13 },\n    { cx: 28, cz: 27, r: 1.7, topY: 12 },\n\n    // Flanking Canyon Palisades\n    { cx: 3, cz: 6, r: 2.2, topY: 18 },\n    { cx: 4, cz: 12, r: 2.0, topY: 17 },\n    { cx: 4, cz: 18, r: 1.8, topY: 16 },\n    { cx: 40, cz: 6, r: 2.2, topY: 19 },\n    { cx: 39, cz: 12, r: 2.1, topY: 18 },\n    { cx: 39, cz: 18, r: 1.8, topY: 16 }\n  ];\n\n  for (const p of pillars) {\n    const minX = Math.max(0, Math.floor(p.cx - p.r));\n    const maxX = Math.min(W - 1, Math.ceil(p.cx + p.r));\n    const minZ = Math.max(0, Math.floor(p.cz - p.r));\n    const maxZ = Math.min(D - 1, Math.ceil(p.cz + p.r));\n\n    for (let x = minX; x <= maxX; x++) {\n      for (let z = minZ; z <= maxZ; z++) {\n        const dist = Math.hypot(x - p.cx, z - p.cz);\n        if (dist <= p.r) {\n          const colHeight = Math.max(4, p.topY - Math.floor((dist / p.r) * 1.5));\n          for (let y = 0; y <= colHeight; y++) {\n            if (y >= colHeight - 1) {\n              setCell(x, y, z, ID_POLISHED_BASALT);\n            } else {\n              setCell(x, y, z, ID_BASALT);\n            }\n          }\n          // Spire tip wall accents\n          if (dist < 0.8 && colHeight + 1 < H) {\n            setCell(x, colHeight + 1, z, ID_BLACKSTONE_WALL);\n          }\n        }\n      }\n    }\n  }\n\n  // Natural Basalt Sea Arch bridging West stacks (between (6, 28) and (6, 34))\n  for (let z = 28; z <= 34; z++) {\n    for (let x = 5; x <= 7; x++) {\n      const archY = 14 + Math.round(Math.sin(((z - 28) / 6) * Math.PI) * 1.8);\n      setCell(x, archY, z, ID_SMOOTH_BASALT);\n      setCell(x, archY + 1, z, ID_POLISHED_BASALT);\n      // Carve out under-archway so sea waves pass under\n      for (let y = 6; y < archY; y++) {\n        if (z >= 30 && z <= 32) {\n          setCell(x, y, z, ID_AIR);\n        }\n      }\n    }\n  }\n\n  // --- 3. Lava Cascade Steps & Pillow Lava Shoreline ---\n  // Glowing tongues spilling over ocean edge\n  const plungePoints = [\n    { x: 22, z: 32, y: 7 },\n    { x: 21, z: 33, y: 6 },\n    { x: 23, z: 33, y: 6 },\n    { x: 22, z: 34, y: 5 },\n    { x: 21, z: 35, y: 4 },\n    { x: 22, z: 35, y: 4 },\n    { x: 23, z: 35, y: 4 },\n\n    // West plunge\n    { x: 11, z: 28, y: 7 },\n    { x: 10, z: 29, y: 6 },\n    { x: 11, z: 29, y: 6 },\n    { x: 10, z: 30, y: 5 },\n\n    // East plunge\n    { x: 31, z: 29, y: 7 },\n    { x: 32, z: 30, y: 6 },\n    { x: 31, z: 30, y: 6 },\n    { x: 32, z: 31, y: 5 }\n  ];\n\n  for (const pt of plungePoints) {\n    setCell(pt.x, pt.y, pt.z, ID_MAGMA);\n    if (pt.y > 1) setCell(pt.x, pt.y - 1, pt.z, ID_SHROOMLIGHT);\n    // Obsidian cooling rim around plunging lava\n    for (let dx = -1; dx <= 1; dx++) {\n      for (let dz = -1; dz <= 1; dz++) {\n        if (dx !== 0 || dz !== 0) {\n          const cur = getCell(pt.x + dx, pt.y, pt.z + dz);\n          if (cur === ID_AIR || cur === ID_BLACKSTONE) {\n            setCell(pt.x + dx, pt.y, pt.z + dz, ID_CRYING_OBSIDIAN);\n          }\n        }\n      }\n    }\n  }\n\n  // Pillow lava lobes along the submerged delta shelf\n  for (let x = 12; x <= 32; x += 3) {\n    const pz = 36 + Math.round(hash(x, 11) * 2);\n    if (pz < D) {\n      setCell(x, 3, pz, ID_OBSIDIAN);\n      setCell(x + 1, 3, pz, ID_SMOOTH_BASALT);\n      setCell(x, 4, pz, ID_SMOOTH_BASALT);\n    }\n  }\n\n  // Glowing magma fissures cutting through the basalt crust\n  const fissures = [\n    { x1: 15, z1: 10, x2: 20, z2: 13 },\n    { x1: 24, z1: 11, x2: 29, z2: 15 },\n    { x1: 8, z1: 20, x2: 13, z2: 23 },\n    { x1: 30, z1: 21, x2: 35, z2: 24 }\n  ];\n  for (const f of fissures) {\n    const steps = 8;\n    for (let s = 0; s <= steps; s++) {\n      const t = s / steps;\n      const fx = Math.round(f.x1 + (f.x2 - f.x1) * t);\n      const fz = Math.round(f.z1 + (f.z2 - f.z1) * t);\n      // Find top solid block\n      for (let y = H - 1; y >= 2; y--) {\n        if (getCell(fx, y, fz) !== ID_AIR) {\n          setCell(fx, y, fz, s % 2 === 0 ? ID_MAGMA : ID_CRYING_OBSIDIAN);\n          break;\n        }\n      }\n    }\n  }\n\n  // --- 4. Explosive Volumetric Steam Plumes & Fumaroles ---\n  const steamPlumes = [\n    // Primary massive central steam eruption\n    { bx: 22, bz: 34, startY: 6, maxH: 26, baseR: 1.4, maxR: 4.8, driftX: 1.8, driftZ: -4.2 },\n    // West cascade steam plume\n    { bx: 11, bz: 30, startY: 6, maxH: 22, baseR: 1.2, maxR: 3.4, driftX: 1.2, driftZ: -2.8 },\n    // East cascade steam plume\n    { bx: 31, bz: 31, startY: 6, maxH: 21, baseR: 1.2, maxR: 3.2, driftX: -1.0, driftZ: -3.0 }\n  ];\n\n  for (const sp of steamPlumes) {\n    const totalSteps = sp.maxH - sp.startY;\n    for (let y = sp.startY; y <= sp.maxH; y++) {\n      const prog = (y - sp.startY) / totalSteps;\n      const curX = sp.bx + prog * sp.driftX + Math.sin(y * 0.4) * 0.6;\n      const curZ = sp.bz + prog * sp.driftZ + Math.cos(y * 0.35) * 0.6;\n      const curR = sp.baseR + prog * (sp.maxR - sp.baseR);\n\n      const minX = Math.max(0, Math.floor(curX - curR));\n      const maxX = Math.min(W - 1, Math.ceil(curX + curR));\n      const minZ = Math.max(0, Math.floor(curZ - curR));\n      const maxZ = Math.min(D - 1, Math.ceil(curZ + curR));\n\n      for (let x = minX; x <= maxX; x++) {\n        for (let z = minZ; z <= maxZ; z++) {\n          const dist = Math.hypot(x - curX, z - curZ);\n          const turb = Math.sin(x * 1.4 + y * 0.9) * Math.cos(z * 1.3 + y * 0.8) * 0.45;\n          if (dist + turb <= curR) {\n            // Check existing cell: don't overwrite basalt pillars or glowing lava\n            const curBlock = getCell(x, y, z);\n            if (curBlock === ID_AIR || curBlock === ID_WHITE_GLASS || curBlock === ID_TINTED_GLASS || curBlock === ID_COBWEB) {\n              const coreDist = dist / curR;\n              if (coreDist < 0.5) {\n                setCell(x, y, z, ID_WHITE_GLASS);\n              } else if (coreDist < 0.8) {\n                setCell(x, y, z, hash(x, y, z) < 0.6 ? ID_WHITE_GLASS : ID_TINTED_GLASS);\n              } else {\n                setCell(x, y, z, hash(x, y, z) < 0.4 ? ID_COBWEB : ID_LIGHT_GRAY_GLASS);\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // Smaller fumarole vents on delta ridges\n  const fumaroles = [\n    { x: 16, z: 21 },\n    { x: 27, z: 23 },\n    { x: 12, z: 14 },\n    { x: 25, z: 8 }\n  ];\n  for (const fum of fumaroles) {\n    for (let y = H - 1; y >= 2; y--) {\n      if (getCell(fum.x, y, fum.z) !== ID_AIR) {\n        setCell(fum.x, y + 1, fum.z, ID_BLACKSTONE_WALL);\n        for (let vy = 2; vy <= 5; vy++) {\n          if (y + vy < H) {\n            setCell(fum.x, y + vy, fum.z, vy === 5 ? ID_COBWEB : ID_WHITE_GLASS);\n          }\n        }\n        break;\n      }\n    }\n  }\n\n  // --- 5. Foundation Skirt / Ground Conformance (Rule 6) ---\n  // Every column occupied by our structure must firmly meet the terrain heightAt(x, z)\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      let minY = -1;\n      for (let y = 0; y < H; y++) {\n        if (getCell(x, y, z) !== ID_AIR) {\n          minY = y;\n          break;\n        }\n      }\n\n      if (minY !== -1) {\n        const terrainH = api.heightAt(x, z);\n        const targetTerrainY = Math.max(0, Math.min(H - 1, seatY + terrainH));\n\n        // If structure hangs above ground, fill solid foundations down\n        if (minY > targetTerrainY) {\n          for (let y = targetTerrainY; y < minY; y++) {\n            const block = y === targetTerrainY ? ID_BLACKSTONE : ID_BASALT;\n            setCell(x, y, z, block);\n          }\n        }\n      }\n    }\n  }\n\n  // --- 6. Emit Voxels Deterministically ---\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const id = getCell(x, y, z);\n        if (id !== ID_AIR) {\n          api.set(x, y, z, PALETTE[id]);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"Lava Ocean Entry\",\n    seatY: seatY,\n    anchors: {\n      front: [22, seatY + 4, 0],\n      delta: [22, 6, 36]\n    }\n  };\n}"
+    },
+    "spatter_cone_fumarole": {
+      "mode": "plugin",
+      "envelope": [
+        13,
+        13,
+        13
+      ],
+      "sourceHash": "b3:02741218112fd171e96b17da9b069385011080a50f36540331d9dc15fbf86d07",
+      "outputHash": "b3:e7b8a0df8ac386043c37991db16c03bcee8529f60d426e045ce5ea955287e537",
+      "conforms": false,
+      "conformHash": "b3:df3e53ea3dadd8f9219f7bcdf8834303abb19ab6813430599e2252496d7cd3da",
+      "source": "export const envelope = [13, 13, 13];\n\nexport default function build(api) {\n  const [sizeX, sizeY, sizeZ] = api.size;\n  const seatY = 3;\n\n  // PRNG helper\n  const rng = () => api.random();\n\n  // Pseudo-random hash for deterministic texturing\n  function hash3(x, y, z, s) {\n    let h = (x * 374761393 + y * 668265263 + z * 314159265 + s * 999999937) | 0;\n    h = Math.imul(h ^ (h >>> 13), 1274126177);\n    return ((h ^ (h >>> 16)) >>> 0) / 4294967296;\n  }\n\n  // Instance-varying parameters\n  const instIdx = api.instance.index;\n  const cx = 6.0 + (rng() - 0.5) * 1.4;\n  const cz = 6.0 + (rng() - 0.5) * 1.4;\n  const coneHeight = 6.5 + rng() * 2.6; // Node-local height above seat plane: 6.5 to 9.1\n  const rBase = 4.6 + rng() * 0.8;\n  const rThroatBase = 0.9 + rng() * 0.45;\n\n  const leanAngle = rng() * Math.PI * 2;\n  const leanAmount = 0.3 + rng() * 0.8;\n  const leanX = Math.cos(leanAngle) * leanAmount;\n  const leanZ = Math.sin(leanAngle) * leanAmount;\n\n  const eccAngle = rng() * Math.PI;\n  const eccRatio = 0.82 + rng() * 0.36;\n\n  // Parasitic secondary vent\n  const hasSecondary = rng() < 0.65;\n  const secAngle = rng() * Math.PI * 2;\n  const secDist = 3.0 + rng() * 1.0;\n  const secCx = cx + Math.cos(secAngle) * secDist;\n  const secCz = cz + Math.sin(secAngle) * secDist;\n  const secHeight = 3.2 + rng() * 2.2;\n  const secRBase = 1.9 + rng() * 0.5;\n\n  // Glowing vent fissures\n  const fissureAngle1 = rng() * Math.PI * 2;\n  const hasFissure2 = rng() < 0.55;\n  const fissureAngle2 = (fissureAngle1 + Math.PI * (0.65 + rng() * 0.7)) % (Math.PI * 2);\n\n  // Volcanic Block Palette\n  const MAGMA = \"minecraft:magma_block\";\n  const FROGLIGHT = \"minecraft:ochre_froglight\";\n  const CRYING_OBSIDIAN = \"minecraft:crying_obsidian\";\n  const OBSIDIAN = \"minecraft:obsidian\";\n  const BLACKSTONE = \"minecraft:blackstone\";\n  const GILDED_BLACKSTONE = \"minecraft:gilded_blackstone\";\n  const SMOOTH_BASALT = \"minecraft:smooth_basalt\";\n  const BASALT_Y = \"minecraft:basalt[axis=y]\";\n  const BASALT_X = \"minecraft:basalt[axis=x]\";\n  const BASALT_Z = \"minecraft:basalt[axis=z]\";\n  const TUFF = \"minecraft:tuff\";\n\n  // Sulfur & Fumarole crust minerals\n  const SULFUR_TERRACOTTA = \"minecraft:yellow_terracotta\";\n  const SULFUR_CONCRETE = \"minecraft:yellow_concrete\";\n  const SULFUR_GOLD_ORE = \"minecraft:gold_ore\";\n  const SULFUR_RAW_GOLD = \"minecraft:raw_gold_block\";\n  const SULFUR_SPONGE = \"minecraft:sponge\";\n  const SULFUR_END_STONE = \"minecraft:end_stone\";\n  const SULFUR_GLOWSTONE = \"minecraft:glowstone\";\n\n  // 3D grid initialization [13, 13, 13]\n  const grid = Array.from({ length: sizeX }, () =>\n    Array.from({ length: sizeY }, () => new Array(sizeZ).fill(null))\n  );\n\n  // Helper to test if a column is inside the cone's base footprint\n  function isInFootprint(x, z) {\n    const d1 = Math.hypot(x - cx, z - cz);\n    if (d1 <= rBase + 0.5) return true;\n    if (hasSecondary) {\n      const d2 = Math.hypot(x - secCx, z - secCz);\n      if (d2 <= secRBase + 0.4) return true;\n    }\n    return false;\n  }\n\n  // 1. Build structure into grid\n  for (let x = 0; x < sizeX; x++) {\n    for (let z = 0; z < sizeZ; z++) {\n      const groundOffset = api.heightAt(x, z);\n      const minColY = Math.max(0, Math.min(sizeY - 1, Math.floor(seatY + groundOffset)));\n      const inBaseFootprint = isInFootprint(x, z);\n\n      // Foundation: extend downward from seat plane to ground to conform to slopes and shorelines\n      if (inBaseFootprint) {\n        for (let y = minColY; y < seatY; y++) {\n          const rVal = hash3(x, y, z, instIdx * 7 + 1);\n          if (rVal < 0.45) grid[x][y][z] = BLACKSTONE;\n          else if (rVal < 0.75) grid[x][y][z] = BASALT_Y;\n          else if (rVal < 0.90) grid[x][y][z] = SMOOTH_BASALT;\n          else grid[x][y][z] = MAGMA;\n        }\n      }\n\n      // Hornito Body (from local ground up to envelope ceiling)\n      const startY = Math.max(seatY, minColY);\n      for (let y = startY; y < sizeY; y++) {\n        const relY = y - seatY;\n\n        // --- Primary Cone Geometry ---\n        const hNorm = relY / coneHeight;\n        const curCenterX = cx + leanX * Math.pow(Math.max(0, hNorm), 1.25);\n        const curCenterZ = cz + leanZ * Math.pow(Math.max(0, hNorm), 1.25);\n\n        const dx = x - curCenterX;\n        const dz = z - curCenterZ;\n        const rotX = dx * Math.cos(eccAngle) - dz * Math.sin(eccAngle);\n        const rotZ = (dx * Math.sin(eccAngle) + dz * Math.cos(eccAngle)) * eccRatio;\n        const dCenter = Math.hypot(rotX, rotZ);\n        const angle = Math.atan2(rotZ, rotX);\n\n        // Clinker spatter ridges and ragged rim teeth\n        const spatterNoise = 0.38 * Math.sin(angle * 3 + y * 1.6) + 0.22 * Math.cos(angle * 5 - y * 0.9);\n        const rOuter = rBase * Math.pow(Math.max(0, 1.0 - hNorm * 0.82), 0.58) + spatterNoise;\n        const rimTooth = 0.75 * Math.sin(angle * 3 + 0.9) + 0.45 * Math.cos(angle * 2 - 0.5);\n        const localHeight = coneHeight + rimTooth;\n\n        // Throat flare\n        let rThroat = rThroatBase * (0.85 + 0.25 * Math.sin(angle * 2 + y * 0.7));\n        if (hNorm > 0.65) rThroat += (hNorm - 0.65) * 1.1;\n\n        const inPrimaryWall = (relY <= localHeight) && (dCenter <= rOuter) && (dCenter >= rThroat);\n        const inPrimaryThroat = (relY <= localHeight) && (dCenter < rThroat);\n\n        // --- Secondary Cone Geometry ---\n        let inSecWall = false;\n        let inSecThroat = false;\n        if (hasSecondary) {\n          const secHNorm = relY / secHeight;\n          const secDx = x - secCx;\n          const secDz = z - secCz;\n          const secDCenter = Math.hypot(secDx, secDz);\n          const secAngleLocal = Math.atan2(secDz, secDx);\n          const secSpatter = 0.28 * Math.sin(secAngleLocal * 3 + y * 2.1);\n          const secROuter = secRBase * Math.pow(Math.max(0, 1.0 - secHNorm * 0.88), 0.6) + secSpatter;\n          const secLocalHeight = secHeight + 0.4 * Math.sin(secAngleLocal * 2 + 1.1);\n          const secRThroat = 0.55 + (secHNorm > 0.6 ? 0.4 : 0);\n\n          inSecWall = (relY <= secLocalHeight) && (secDCenter <= secROuter) && (secDCenter >= secRThroat);\n          inSecThroat = (relY <= secLocalHeight) && (secDCenter < secRThroat);\n        }\n\n        // --- Voxel Classification & Palette Assignment ---\n        if (inPrimaryThroat || inSecThroat) {\n          // Hot glowing core visible at the bottom of the throat\n          if (relY <= 1) {\n            const magmaHash = hash3(x, y, z, instIdx * 11 + 3);\n            if (magmaHash < 0.50) grid[x][y][z] = MAGMA;\n            else if (magmaHash < 0.78) grid[x][y][z] = FROGLIGHT;\n            else grid[x][y][z] = CRYING_OBSIDIAN;\n          }\n          // Air above throat floor leaves an open chimney/crater\n        } else if (inPrimaryWall || inSecWall) {\n          // Check for glowing vent fissures cutting across the hornito wall\n          const rawAngle = Math.atan2(z - cz, x - cx);\n          const dFissure1 = Math.abs((rawAngle - fissureAngle1 + 3 * Math.PI) % (Math.PI * 2) - Math.PI);\n          const dFissure2 = hasFissure2\n            ? Math.abs((rawAngle - fissureAngle2 + 3 * Math.PI) % (Math.PI * 2) - Math.PI)\n            : 999;\n          const isFissure = (dFissure1 < 0.22) || (dFissure2 < 0.20);\n\n          const hFrac = relY / localHeight;\n          const isRim = hFrac >= 0.78;\n          const blockHash = hash3(x, y, z, instIdx * 17 + 5);\n\n          if (isFissure && relY < localHeight - 0.5) {\n            // Glowing fissure with magma, glowing froglight & sulfur encrustation\n            if (blockHash < 0.38) grid[x][y][z] = MAGMA;\n            else if (blockHash < 0.60) grid[x][y][z] = FROGLIGHT;\n            else if (blockHash < 0.80) grid[x][y][z] = SULFUR_TERRACOTTA;\n            else grid[x][y][z] = CRYING_OBSIDIAN;\n          } else if (isRim) {\n            // Sulfur-tinted steaming rim deposits\n            if (blockHash < 0.28) grid[x][y][z] = SULFUR_TERRACOTTA;\n            else if (blockHash < 0.48) grid[x][y][z] = SULFUR_CONCRETE;\n            else if (blockHash < 0.64) grid[x][y][z] = SULFUR_GOLD_ORE;\n            else if (blockHash < 0.76) grid[x][y][z] = SULFUR_END_STONE;\n            else if (blockHash < 0.86) grid[x][y][z] = SULFUR_SPONGE;\n            else if (blockHash < 0.94) grid[x][y][z] = SULFUR_RAW_GOLD;\n            else grid[x][y][z] = SULFUR_GLOWSTONE;\n          } else {\n            // Layered basaltic hornito crust & welded scoria\n            const radialDx = Math.abs(x - curCenterX);\n            const radialDz = Math.abs(z - curCenterZ);\n            let basaltRadial = radialDx > radialDz ? BASALT_X : BASALT_Z;\n\n            if (blockHash < 0.25) grid[x][y][z] = BLACKSTONE;\n            else if (blockHash < 0.45) grid[x][y][z] = basaltRadial;\n            else if (blockHash < 0.62) grid[x][y][z] = BASALT_Y;\n            else if (blockHash < 0.76) grid[x][y][z] = SMOOTH_BASALT;\n            else if (blockHash < 0.86) grid[x][y][z] = GILDED_BLACKSTONE;\n            else if (blockHash < 0.94) grid[x][y][z] = TUFF;\n            else grid[x][y][z] = OBSIDIAN;\n          }\n        }\n      }\n    }\n  }\n\n  // 2. Connectivity verification: Flood-fill from solid base to guarantee 1 connected body\n  const visited = Array.from({ length: sizeX }, () =>\n    Array.from({ length: sizeY }, () => new Uint8Array(sizeZ))\n  );\n\n  const queue = [];\n  // Find a solid root voxel at the seat plane near the center\n  let rootFound = false;\n  for (let r = 0; r <= 6 && !rootFound; r++) {\n    for (let dx = -r; dx <= r && !rootFound; dx++) {\n      for (let dz = -r; dz <= r && !rootFound; dz++) {\n        const qx = Math.round(cx) + dx;\n        const qz = Math.round(cz) + dz;\n        if (qx >= 0 && qx < sizeX && qz >= 0 && qz < sizeZ) {\n          if (grid[qx][seatY][qz] !== null) {\n            queue.push([qx, seatY, qz]);\n            visited[qx][seatY][qz] = 1;\n            rootFound = true;\n          }\n        }\n      }\n    }\n  }\n\n  // 6-connected breadth-first search\n  const dirs = [\n    [1, 0, 0], [-1, 0, 0],\n    [0, 1, 0], [0, -1, 0],\n    [0, 0, 1], [0, 0, -1]\n  ];\n\n  let head = 0;\n  while (head < queue.length) {\n    const [vx, vy, vz] = queue[head++];\n    for (let i = 0; i < 6; i++) {\n      const nx = vx + dirs[i][0];\n      const ny = vy + dirs[i][1];\n      const nz = vz + dirs[i][2];\n      if (nx >= 0 && nx < sizeX && ny >= 0 && ny < sizeY && nz >= 0 && nz < sizeZ) {\n        if (!visited[nx][ny][nz] && grid[nx][ny][nz] !== null) {\n          visited[nx][ny][nz] = 1;\n          queue.push([nx, ny, nz]);\n        }\n      }\n    }\n  }\n\n  // 3. Emit connected voxels to the world\n  for (let x = 0; x < sizeX; x++) {\n    for (let y = 0; y < sizeY; y++) {\n      for (let z = 0; z < sizeZ; z++) {\n        if (visited[x][y][z]) {\n          api.set(x, y, z, grid[x][y][z]);\n        }\n      }\n    }\n  }\n\n  const topY = Math.min(sizeY - 1, Math.round(seatY + coneHeight));\n\n  return {\n    name: \"spatter_cone_fumarole\",\n    seatY: seatY,\n    anchors: {\n      crater: [Math.round(cx), topY, Math.round(cz)],\n      vent: [Math.round(cx), seatY + 1, Math.round(cz)]\n    }\n  };\n}"
+    },
+    "collapsed_lava_tube": {
+      "mode": "plugin",
+      "envelope": [
+        20,
+        11,
+        16
+      ],
+      "sourceHash": "b3:a56916aa19bceb03ccf93c98b221bd96392906008671f49868b0696f3acb4e7c",
+      "outputHash": "b3:123241b2ba20b59e1e8413822b00dc9016f2479e75341fada7cc8e8d4642f042",
+      "conforms": false,
+      "conformHash": "b3:57cf301c29fda9be6fcc5109505a2bea4057deee2945e39d1e1db627627d3dab",
+      "source": "export const envelope = [20, 11, 16];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const seatY = 3;\n  const rng = () => api.random();\n  const idx = api.instance.index % 8;\n\n  // 1. Grid representation for geometry & connectivity\n  const grid = new Map();\n  function key(x, y, z) {\n    return `${x},${y},${z}`;\n  }\n  function set(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      grid.set(key(x, y, z), block);\n    }\n  }\n  function get(x, y, z) {\n    return grid.get(key(x, y, z)) || null;\n  }\n  function has(x, y, z) {\n    return grid.has(key(x, y, z));\n  }\n\n  // 2. Palette from theme with volcanic rock defaults\n  const stonePrimary = api.theme.stone.primary || \"minecraft:blackstone\";\n  const stoneSlab = api.theme.stone.slab || \"minecraft:blackstone_slab\";\n  const stoneStairs = api.theme.stone.stairs || \"minecraft:blackstone_stairs\";\n  const stoneWall = api.theme.stone.wall || \"minecraft:blackstone_wall\";\n  const scree = api.theme.ground.scree || \"minecraft:basalt[axis=y]\";\n  const smoothBasalt = \"minecraft:smooth_basalt\";\n  const basaltY = \"minecraft:basalt[axis=y]\";\n  const basaltX = \"minecraft:basalt[axis=x]\";\n  const basaltZ = \"minecraft:basalt[axis=z]\";\n  const polishedBasalt = \"minecraft:polished_basalt[axis=y]\";\n  const blackstone = \"minecraft:blackstone\";\n  const magma = \"minecraft:magma_block\";\n  const obsidian = \"minecraft:obsidian\";\n  const cryingObsidian = \"minecraft:crying_obsidian\";\n  const shroomlight = \"minecraft:shroomlight\";\n\n  function stair(facing, half = \"bottom\") {\n    if (stoneStairs.includes(\"[\")) {\n      return stoneStairs.replace(/facing=\\w+/, `facing=${facing}`).replace(/half=\\w+/, `half=${half}`);\n    }\n    return `${stoneStairs}[facing=${facing},half=${half},shape=straight]`;\n  }\n  function slab(type = \"bottom\") {\n    if (stoneSlab.includes(\"[\")) {\n      return stoneSlab.replace(/type=\\w+/, `type=${type}`);\n    }\n    return `${stoneSlab}[type=${type}]`;\n  }\n\n  // 3. Tube Path & Meander Parameters per instance\n  const curveAmp = 1.3 + rng() * 2.1;\n  const curveFreq = 0.85 + rng() * 0.55;\n  const curvePhase = rng() * Math.PI * 2;\n  const slant = (rng() - 0.5) * 0.3;\n  const baseCenter = W * 0.5 + (rng() - 0.5) * 1.6;\n\n  function getTubeCenter(z) {\n    const normZ = z / (D - 1);\n    return baseCenter + curveAmp * Math.sin(normZ * Math.PI * curveFreq + curvePhase) + slant * (z - D * 0.5);\n  }\n\n  const baseWidth = 6.8 + rng() * 1.6;\n  function getTubeWidth(z) {\n    const normZ = z / (D - 1);\n    return baseWidth + 1.2 * Math.cos(normZ * Math.PI * 2 + curvePhase);\n  }\n\n  // 4. Skylight Collapse Mode & Features\n  const mode = idx;\n  let archZ1 = -1, archZ2 = -1;\n  let islandX = -1, islandZ = -1;\n  let hornitoX = -1, hornitoZ = -1;\n\n  if (mode === 0) {\n    archZ1 = 7;\n  } else if (mode === 1) {\n    archZ1 = 7;\n    archZ2 = 8;\n    hornitoX = Math.min(W - 2, Math.max(1, Math.floor(getTubeCenter(3) + 4.5)));\n    hornitoZ = 3;\n  } else if (mode === 3) {\n    islandX = Math.floor(getTubeCenter(7));\n    islandZ = 7;\n  } else if (mode === 4) {\n    archZ1 = 4;\n    archZ2 = 11;\n  } else if (mode === 5) {\n    hornitoX = Math.min(W - 2, Math.max(1, Math.floor(getTubeCenter(12) - 4.5)));\n    hornitoZ = 12;\n  } else if (mode === 7) {\n    hornitoX = Math.min(W - 2, Math.max(1, Math.floor(getTubeCenter(4) + 4.0)));\n    hornitoZ = 4;\n  }\n\n  function isSkylight(x, z) {\n    if (z <= 1 || z >= D - 2) return false;\n    if (archZ1 >= 0 && Math.abs(z - archZ1) <= 0.5) return false;\n    if (archZ2 >= 0 && Math.abs(z - archZ2) <= 0.5) return false;\n    if (islandX >= 0 && Math.abs(x - islandX) <= 1 && Math.abs(z - islandZ) <= 1) return false;\n\n    const cx = getTubeCenter(z);\n    const hw = getTubeWidth(z) * (mode === 2 ? 0.56 : 0.46);\n    const jag = 0.75 * Math.sin(x * 1.8 + z * 2.1) + 0.45 * Math.cos(z * 3.2 - x * 1.1);\n    return Math.abs(x - cx) < (hw + jag);\n  }\n\n  // 5. Build Subterranean Lava Channel Bed (y = 0 to 2)\n  for (let z = 0; z < D; z++) {\n    const cx = getTubeCenter(z);\n    const hw = getTubeWidth(z) * 0.5;\n\n    for (let x = 0; x < W; x++) {\n      const dist = Math.abs(x - cx);\n\n      // Deep foundation floor\n      set(x, 0, z, blackstone);\n\n      if (dist < hw * 0.6) {\n        // Active molten magma core\n        const subR = rng();\n        if (subR < 0.25) set(x, 1, z, shroomlight);\n        else if (subR < 0.65) set(x, 1, z, magma);\n        else set(x, 1, z, obsidian);\n\n        const lavaR = rng();\n        if (lavaR < 0.62) {\n          set(x, 2, z, magma);\n        } else if (lavaR < 0.82) {\n          set(x, 2, z, cryingObsidian);\n        } else if (lavaR < 0.94) {\n          set(x, 2, z, obsidian);\n        } else {\n          set(x, 2, z, smoothBasalt);\n        }\n      } else if (dist <= hw) {\n        // Cooled rock riverbanks\n        set(x, 1, z, obsidian);\n        const bankR = rng();\n        if (bankR < 0.5) set(x, 2, z, smoothBasalt);\n        else if (bankR < 0.8) set(x, 2, z, blackstone);\n        else set(x, 2, z, obsidian);\n\n        if (rng() < 0.35) {\n          set(x, 3, z, slab(\"bottom\"));\n        }\n      }\n    }\n  }\n\n  // 6. Central Basalt Island (mode 3)\n  if (islandX >= 0) {\n    for (let ix = islandX - 1; ix <= islandX + 1; ix++) {\n      for (let iz = islandZ - 1; iz <= islandZ + 1; iz++) {\n        for (let iy = 1; iy <= 6; iy++) {\n          set(ix, iy, iz, iy === 6 ? polishedBasalt : basaltY);\n        }\n        set(ix, 7, iz, slab(\"bottom\"));\n      }\n    }\n  }\n\n  // 7. Cavern Sidewalls & Strata (y = 3 to 5)\n  for (let z = 0; z < D; z++) {\n    const cx = getTubeCenter(z);\n    const hw = getTubeWidth(z) * 0.5;\n\n    for (let x = 0; x < W; x++) {\n      const dist = Math.abs(x - cx);\n\n      for (let y = 3; y <= 5; y++) {\n        const wallInner = hw * (0.62 + (y - 3) * 0.08);\n        if (dist >= wallInner) {\n          const r = rng();\n          if (r < 0.45) set(x, y, z, basaltY);\n          else if (r < 0.75) set(x, y, z, blackstone);\n          else if (r < 0.9) set(x, y, z, smoothBasalt);\n          else set(x, y, z, obsidian);\n        }\n      }\n    }\n  }\n\n  // 8. Basalt Crust, Cantilevers & Broken Skylight (y = 6 to 8)\n  for (let z = 0; z < D; z++) {\n    const cx = getTubeCenter(z);\n    const hw = getTubeWidth(z) * 0.5;\n\n    for (let x = 0; x < W; x++) {\n      const dist = Math.abs(x - cx);\n      const collapsed = isSkylight(x, z);\n\n      if (!collapsed) {\n        // Intact volcanic roof crust\n        const ceilR = rng();\n        if (ceilR < 0.5) set(x, 6, z, basaltY);\n        else if (ceilR < 0.8) set(x, 6, z, blackstone);\n        else set(x, 6, z, smoothBasalt);\n\n        // Surface layer with magma fissures\n        const isFissure = (Math.sin(x * 1.5 + z * 2.7) > 0.65) && dist < hw + 2.5;\n        if (isFissure) {\n          set(x, 7, z, rng() < 0.7 ? magma : cryingObsidian);\n        } else {\n          const surfR = rng();\n          if (surfR < 0.4) set(x, 7, z, blackstone);\n          else if (surfR < 0.7) set(x, 7, z, smoothBasalt);\n          else if (surfR < 0.9) set(x, 7, z, basaltY);\n          else set(x, 7, z, scree);\n        }\n\n        // Pressure ridges & rock shelves\n        const ridgeVal = Math.sin(x * 0.8 + z * 0.6 + curvePhase);\n        if (ridgeVal > 0.55 && dist > hw * 0.6) {\n          if (rng() < 0.5) set(x, 8, z, slab(\"bottom\"));\n          else set(x, 8, z, scree);\n        }\n      } else {\n        // Open Skylight!\n        if (dist >= hw * 0.9) {\n          set(x, 6, z, basaltY);\n          set(x, 7, z, blackstone);\n          if (rng() < 0.3) set(x, 8, z, slab(\"bottom\"));\n        } else if (dist >= hw * 0.5) {\n          // Cantilevered rock slabs projecting over the void\n          const facing = x < cx ? \"east\" : \"west\";\n          const logAxis = Math.abs(x - cx) > 1 ? basaltX : basaltZ;\n\n          if (rng() < 0.5) {\n            set(x, 6, z, logAxis);\n            set(x, 7, z, stair(facing, \"bottom\"));\n          } else if (rng() < 0.75) {\n            set(x, 6, z, stair(facing, \"top\"));\n            set(x, 7, z, slab(\"bottom\"));\n          } else {\n            set(x, 6, z, slab(\"top\"));\n            set(x, 7, z, blackstone);\n          }\n\n          // Fractured cantilever eave steps\n          if (rng() < 0.35) {\n            const stepX = x < cx ? x + 1 : x - 1;\n            if (isSkylight(stepX, z) && !has(stepX, 6, z)) {\n              set(stepX, 6, z, slab(\"top\"));\n              if (rng() < 0.4) set(stepX, 7, z, stoneWall);\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // 9. Natural Stone Arches Spanning the Skylight\n  const archList = [];\n  if (archZ1 >= 0) archList.push(archZ1);\n  if (archZ2 >= 0) archList.push(archZ2);\n\n  for (const az of archList) {\n    const cx = Math.round(getTubeCenter(az));\n    const hw = Math.round(getTubeWidth(az) * 0.45);\n\n    for (let x = cx - hw; x <= cx + hw; x++) {\n      if (x < 1 || x >= W - 1) continue;\n      const isCenter = Math.abs(x - cx) <= 1;\n      const facing = x < cx ? \"east\" : \"west\";\n\n      if (isCenter) {\n        set(x, 5, az, smoothBasalt);\n      } else {\n        set(x, 5, az, stair(facing, \"top\"));\n      }\n\n      set(x, 6, az, basaltX);\n      set(x, 7, az, isCenter ? blackstone : slab(\"bottom\"));\n\n      if (rng() < 0.4) {\n        set(x, 8, az, stoneWall);\n      }\n    }\n  }\n\n  // 10. Fallen Basalt Boulders in the Trench\n  const numBoulders = 3 + Math.floor(rng() * 4);\n  for (let b = 0; b < numBoulders; b++) {\n    const bz = 2 + Math.floor(rng() * (D - 4));\n    const bcx = getTubeCenter(bz);\n    const bx = Math.floor(bcx + (rng() - 0.5) * 3.5);\n\n    if (bx >= 1 && bx < W - 1 && isSkylight(bx, bz)) {\n      set(bx, 2, bz, obsidian);\n      set(bx, 3, bz, rng() < 0.6 ? blackstone : basaltY);\n      if (rng() < 0.6) {\n        set(bx, 4, bz, slab(\"bottom\"));\n      }\n    }\n  }\n\n  // 11. Volcanic Spatter Cone / Hornito Fumarole\n  if (hornitoX >= 1 && hornitoX < W - 1 && hornitoZ >= 1 && hornitoZ < D - 1) {\n    set(hornitoX, 7, hornitoZ, magma);\n    set(hornitoX, 8, hornitoZ, magma);\n    set(hornitoX, 9, hornitoZ, cryingObsidian);\n\n    const neighbors = [\n      [1, 0, \"west\"],\n      [-1, 0, \"east\"],\n      [0, 1, \"north\"],\n      [0, -1, \"south\"]\n    ];\n    for (const [dx, dz, fac] of neighbors) {\n      const nx = hornitoX + dx;\n      const nz = hornitoZ + dz;\n      if (nx >= 0 && nx < W && nz >= 0 && nz < D) {\n        set(nx, 7, nz, blackstone);\n        set(nx, 8, nz, stair(fac, \"bottom\"));\n        if (rng() < 0.7) {\n          set(nx, 9, nz, stoneWall);\n        }\n      }\n    }\n  }\n\n  // 12. Ground Conformance & Skirt (Rule 6)\n  for (let z = 0; z < D; z++) {\n    for (let x = 0; x < W; x++) {\n      let minY = H;\n      let maxY = -1;\n      for (let y = 0; y < H; y++) {\n        if (has(x, y, z)) {\n          if (y < minY) minY = y;\n          if (y > maxY) maxY = y;\n        }\n      }\n\n      if (maxY >= 0) {\n        const h = api.heightAt(x, z);\n        const groundY = Math.max(0, Math.min(H - 1, seatY + h));\n        const targetMin = Math.min(minY, groundY, 1);\n\n        for (let y = targetMin; y < minY; y++) {\n          set(x, y, z, y <= 1 ? blackstone : basaltY);\n        }\n\n        if (groundY > maxY) {\n          for (let y = maxY + 1; y <= groundY; y++) {\n            set(x, y, z, y === groundY ? smoothBasalt : blackstone);\n          }\n        }\n      }\n    }\n  }\n\n  // Emit all placed blocks\n  for (const [k, block] of grid.entries()) {\n    const [sx, sy, sz] = k.split(\",\").map(Number);\n    api.set(sx, sy, sz, block);\n  }\n\n  return {\n    name: \"collapsed_lava_tube\",\n    seatY: seatY,\n    anchors: {\n      front: [Math.floor(W / 2), seatY, 0],\n      skylight: [Math.floor(W / 2), seatY + 3, Math.floor(D / 2)]\n    }\n  };\n}"
+    }
+  }
+}

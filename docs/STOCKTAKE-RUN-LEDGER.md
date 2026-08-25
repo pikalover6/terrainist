@@ -7,19 +7,11 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 34 (F29: a fit-out that skips its own roof
-  work now says so, `LOAM-W524`) is committed.
-- **Next unit:** unit 35 — **probe pass 4**: six new prompts for G4,
-  pre-registered (one per spec §6 category, none of passes 1 and 3),
-  through the program stage (≈ $1.70, cap $3.00), scored by the metric and
-  read from full-height renders; a probe fails only on a read; a failure
-  whose cause is an open F-number (F27's remainder) is not a new class. G4
-  is met when these six surface no new failure class. Then F17, census
-  1.21 and the `roofPlan` ×25 duplicate (class 3, new row), P5/P6/P7; the
-  remaining verdict stations, G2, the final deck and closing report.
-- **Last commit:** cbe412f (unit 33). Convention: this line names the
+- **In flight:** nothing — unit 35 (probe pass 4: six of six one-shot, every icon present, zero boxes; four of six pass by read — the pueblos and their bridge, the lava field, the windmill (dominant by rule; its fit-out ran), the meteorite (dominant, though demoted out of its square); the frontier water tower fails on F27's remainder and the flood delta on a new cause, F30, no seat over water (P8) — G4 not met. Pass 3's "thin yurt rings" corrected: seven yurts placed) is committed.
+- **Next unit:** unit 36 — **P6, the terrace decay mode, part one** — the road to DONE runs through it: G2 (the fresh metropolis matches r5 on T6) and G3 (the metropolis anchor read WORSE, D6) both need a grid district that can ruin, and unit 26 showed none of its 132 terrace lots can (F22). Part one: the `terrace` archetype in `stdlib` takes `decay` (bays lose storeys and roofs, party walls stand as the fallen-tower silhouette; `W511` stops firing for terraces), behind a switch, byte-identical off, unit-tested on a terrace at decay 0/0.5/0.9. Part two (unit 37): `ruinDecayOf` rolled per terrace run in `district.ts`, attributed on the two metropolis documents, flipped. Then the road (D77): G2 fresh named worlds (≈ $1), G1 the eleven golden fresh at final bytes (≈ $2.6, repeats where contested), G6 kit 3×3 (≈ $2), G4 six probes at final bytes (≈ $1.5), G5/G7 census dispositions, the final deck with walk cards, the closing report, `STATUS: DONE`.
+- **Last commit:** 243dce0 (unit 34). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
-- **Spend:** $13.47 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
+- **Spend:** $14.96 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
 - **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19, D25,
   D32.)
 - **Findings queue (law 1: bugs before anything else):**
@@ -42,6 +34,9 @@ running state. The NOW block is rewritten at the end of every turn.
     column): the two-villages fjord, 14 % of its floor wet, up to 31 blocks
     dry. Fixed (unit 30): `LOAM-I502 CARVE_MOSTLY_DRY`, measured along the
     floor samples, below half wet.
+  - F30 — **no seat over water**: a building or market whose pad falls on
+    water has no piles to the bed; the flood-delta author raised two
+    plateaus and built land (`PROBE-PASS-4`). A feature, P8; not a unit.
   - F29 — fixed (unit 34): the lighthouse's `roofPlan` was null — a flat
     roof leaves one course above the eave where the rebuild needs two — and
     every archetype file's private `roofPlan` skipped in silence; the
@@ -554,6 +549,19 @@ running state. The NOW block is rewritten at the end of every turn.
   it". `dominant` itself is unchanged, so every score in every run stays
   comparable; the verdict on a program-carried centrepiece is the read's,
   as D70 already ruled. Undo: revert the tool.
+- **D77 (unit 35):** the road to DONE, with the budget: every gate but
+  G4 and G5 is still open, and G2 and G3 share one cause (F22 — the
+  metropolis cannot ruin), so P6 is taken up as the next two units rather
+  than left a proposal. Probe passes pause until the compiler and kit
+  bytes are final, because G4 counts the *last* six and a probe against
+  moving bytes measures the wrong thing; the four passes so far ($6.14)
+  found F24, F26, F27, F29 and F30, and each is fixed or filed. Reserve:
+  ≈ $8 for G1, G2 and G6 measurements, ≈ $1.5 for the final six probes,
+  from the $20.04 left. Undo: n/a.
+- **D78 (unit 35):** F30 is filed as a feature (P8), not fixed: seating a
+  building on piles over water is a new pad class and a grammar change,
+  and the author's own answer (raise the land) is what the product does
+  today. The stilt village stays a fail on the record. Undo: n/a.
 - **D73 (unit 33):** pass 3 does not close G4: four of six read as their
   prompts, the mammoth fails on a known cause, and the lighthouse on a new
   one (F29). The rule is the pre-registered one — a new cause gets its
@@ -614,6 +622,7 @@ running state. The NOW block is rewritten at the end of every turn.
 | 32 | F28 — the metric re-scored on `runs/probe-2b`, no authoring | 0.00 | 11.77 |
 | 33 | probe pass 3 — six new worlds generated end to end (`runs/probe-3`), the icon metric | 1.70 | 13.47 |
 | 34 | F29 — one in-process compile, one bi14 run, the FULL suite | 0.00 | 13.47 |
+| 35 | probe pass 4 — six new worlds generated end to end (`runs/probe-4`), the icon metric | 1.49 | 14.96 |
 
 ## VERDICTS
 
@@ -739,9 +748,35 @@ surface no new failure class.
 | `probe_hollow_tree` | bespoke (T8) | a colossal baobab program, walkways, platforms | — | dominant by rule and by read | no — pass |
 | `probe_river_forts` | two places, a broken bridge | two forts, a river that holds, a bridge program ending mid-stream | — | pass by read (span ×7.6); F26 works end to end | no — pass |
 | `probe_karst` | terrain-only | towers, a sinkhole, a cave mouth | — | pass by read | no — pass |
-| `probe_horde_camp` | steppe_nomad at 0 % | the pack, the great tent, six `prop.place` yurts | the yurt rings thin | the centerpiece reads; saturation is props that mostly did not place | no — pass |
+| `probe_horde_camp` | steppe_nomad at 0 % | the pack, the great tent, seven yurt props placed | — | the centerpiece reads (the yurts are small at render scale; corrected in unit 35) | no — pass |
 | `probe_mammoth_camp` | Stone Age, an ice sheet | the ice sheet, hide huts, a kill-site program | the skeleton is three blocks | F27 remainder (icon at prop scale) | after F27's remainder |
 | `probe_lighthouse` | an icon in the packs | the `lighthouse` archetype (`floors: 2, roof: flat`) | a flat-roofed box, no lantern | **F29** (new): the archetype's fit-out defeated silently | after F29 |
+
+**Pass 4 — pre-registered (unit 35, 2026-08-25), before any spend.** Six
+new prompts (`tools/golden-prompts/probes-4.json`), none of passes 1 and
+3: `probe_frontier_town` (frontier_west at 0 %; a water tower — a tower's
+dominance is height), `probe_twin_pueblos` (two places across a canyon, a
+rope bridge), `probe_flood_delta` (a stilt village on water in flood),
+`probe_lava_field` (terrain-only, the volcano verb), `probe_polder_mill`
+(a windmill — the catalog's, does its fit-out run), `probe_meteorite`
+(bespoke, sunk rather than tall). Through the program stage
+(`generate-all.mjs`, ≈ $1.70 the pass; cap $3.00), `runs/probe-4`, the
+icon metric, full-height renders; the verdict is the read's. **Prediction:**
+6 of 6 generate; icons present 6 of 6; by read ≥ 4 pass; the water tower
+and the windmill fail the AND-rule and read as their prompts ("read it");
+the stilt village is the likely fail (houses seated over water) and the
+likely new cause if there is one. **Decision rule** as pass 3: a failure
+whose cause is an open F-number is not a new class; a new cause gets an
+F-number; G4 is met if these six surface no new failure class.
+
+| probe | targeted | exercised | failed | cause | promoted? |
+|---|---|---|---|---|---|
+| `probe_twin_pueblos` | two places across a canyon | a canyon, two rim towns, a rope-bridge program | — | pass by read (span ×3.7) | no — pass |
+| `probe_lava_field` | terrain-only | the volcano verb, a crater lake, flows to the sea | — | pass by read | no — pass |
+| `probe_polder_mill` | an icon in the catalog | the `windmill` archetype, its fit-out ran (no `W524`) | — | dominant by rule and by read | no — pass |
+| `probe_meteorite` | bespoke, sunk | the meteorite program, forges | the square relationship (constraint demoted, `E404`) | pass on the icon; the solver's designed demotion | no — pass |
+| `probe_frontier_town` | frontier_west at 0 % | the pack, a linear street, a water-tower program (973 blocks on 16 × 15) | no tower you would point to | F27 remainder (an icon program written wide and low) | after F27's remainder |
+| `probe_flood_delta` | a village on water | `stilt_house_*` buildings on two plateaus the author raised above the sea | not a stilt village | **F30** (new): no seat over water — a feature gap, P8 | after P8 |
 
 ## PROPOSALS
 
@@ -783,6 +818,12 @@ surface no new failure class.
   first at x,y,z") so the model that wrote the railing beside the deck is
   told, and the kit's program section can teach "every block of a program
   stands on the program or the ground". Report-only; payload-identical.
+- **P8 — a seat over water** (unit 35, `PROBE-PASS-4-2026-08-25.md` §B).
+  A `seat: "piles"` (or a water-pad claim class) for a building or a
+  market whose footprint falls on water: piles from the footprint to the
+  bed, the floor at the requested height above the water, the pad
+  contract's `waterFloor` rule as its floor, and kit-teaching after the
+  feature. Until then a prompt for a stilt village gets islands.
 - **P4 — a wet-neighbour constraint in the ground contract** (unit 14). A
   pad or platform whose ground claim would lower a column beside standing
   water below that water's surface is refused or raised to it — the rule
@@ -1270,3 +1311,10 @@ surface no new failure class.
   Tests: FULL suite COUNTS Test Files 348 passed | 1 skipped (349), Tests 5686 passed | 31 skipped (5717). Files: `archetypes-civic.ts`,
   `archetypes.ts`, `core.ts`, 25 archetype files, `buildings.ts`, the
   registry, the test, the census, the ledger. Spend $0.
+- **unit 35 — probe pass 4 (2026-08-25):** six new prompts
+  (`tools/golden-prompts/probes-4.json`), pre-registered, through
+  `terrainist generate` (worlds in the scratchpad, records in
+  `runs/probe-4`, $1.49), scored by the icon metric and read from
+  full-height renders (`docs/decks/probes/PROBE-PASS-4-2026-08-25.md`).
+  six of six one-shot, every icon present, zero boxes; four of six pass by read — the pueblos and their bridge, the lava field, the windmill (dominant by rule; its fit-out ran), the meteorite (dominant, though demoted out of its square); the frontier water tower fails on F27's remainder and the flood delta on a new cause, F30, no seat over water (P8) — G4 not met. Pass 3's "thin yurt rings" corrected: seven yurts placed Tests: FULL suite COUNTS none run — no compiler, stdlib or tool code moved in this unit. Files: the roster,
+  `runs/probe-4`, the record, the ledger. Spend $1.49.

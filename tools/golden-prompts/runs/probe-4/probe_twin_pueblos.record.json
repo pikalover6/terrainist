@@ -1,0 +1,140 @@
+{
+  "id": "probe_twin_pueblos",
+  "family": "probe",
+  "kit": "settlement",
+  "prompt": "Two cliff-dwelling pueblos facing each other across a narrow desert canyon, adobe rooms stacked up the rock, joined by a single rope-and-plank bridge over the drop.",
+  "seed": 922,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "era": "ancient",
+    "wealth": 0.35,
+    "decline": 0.1,
+    "formality": 0.1,
+    "climate": {
+      "biome": "minecraft:badlands",
+      "temperature": 0.9,
+      "humidity": -0.8,
+      "snow": "never"
+    },
+    "character": {
+      "label": "cliff dwelling pueblos",
+      "materialTheme": "sun_clay",
+      "urbanForm": "hillside",
+      "ground": "stepped",
+      "motifs": {
+        "roofType": "flat",
+        "massing": "stepped"
+      }
+    },
+    "tokens": {
+      "terrain": "two sheer rock cliff faces on opposite sides of a narrow, deep desert canyon",
+      "icons": "adobe pueblo dwellings stacked up cliff alcoves on both canyon walls; timber ladders linking flat roofs; round sunken kivas; a single rope-and-plank bridge spanning the drop between the two cliffs"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 526589,
+    "completionTokens": 67840,
+    "cost": 0.2929
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 18,
+    "maxDepth": 2,
+    "generators": [
+      "authored:canyon_rope_bridge",
+      "building.grammar@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "adobe_pueblo",
+      "cistern",
+      "cottage",
+      "courtyard_house",
+      "granary",
+      "kiln"
+    ],
+    "archetypesInCatalog": 6,
+    "formPacks": [],
+    "props": [
+      "cairn",
+      "log_pile"
+    ],
+    "species": [
+      "ironwood",
+      "juniper"
+    ],
+    "envelopes": [
+      "512x512",
+      "130x150",
+      "13x12x11",
+      "130x150",
+      "13x12x11"
+    ],
+    "constraints": 5,
+    "constraintKinds": [
+      "at",
+      "distance",
+      "max",
+      "min"
+    ],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 1,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 2,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 16,
+    "eras": [
+      "ancient"
+    ],
+    "bytes": 34037
+  },
+  "wallMs": 690000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 3,
+    "feedbackRounds": 2,
+    "programs": [
+      "ok canyon_rope_bridge [landmark] 2 attempt(s), 52413 tokens ($0.0693), 26 warning(s)",
+      "ok sunken_kiva [plugin] 1 attempt(s), 26225 tokens ($0.0442), 7 warning(s)"
+    ],
+    "programCost": 0.1135,
+    "totalCost": 0.4064,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/probe4/gen/probe_twin_pueblos/out/canyon_cliff_pueblos",
+    "finalDiagnostics": {
+      "LOAM-T208": 1,
+      "LOAM-W520": 1,
+      "LOAM-T222": 2,
+      "LOAM-T242": 2,
+      "LOAM-I512": 2,
+      "LOAM-T224": 2,
+      "LOAM-W524": 2,
+      "LOAM-W413": 2,
+      "LOAM-I412": 2,
+      "LOAM-I463": 5,
+      "LOAM-E170": 2,
+      "LOAM-I497": 1,
+      "LOAM-T341": 1,
+      "LOAM-I525": 1,
+      "LOAM-W472": 1,
+      "LOAM-W470": 1,
+      "LOAM-T107": 1
+    },
+    "crash": [],
+    "docName": "canyon_cliff_pueblos.loam.json"
+  }
+}

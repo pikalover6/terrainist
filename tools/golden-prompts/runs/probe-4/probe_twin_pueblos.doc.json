@@ -1,0 +1,534 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "canyon_cliff_pueblos",
+    "worldSeed": "922",
+    "prompt": "Two cliff-dwelling pueblos facing each other across a narrow desert canyon, adobe rooms stacked up the rock, joined by a single rope-and-plank bridge over the drop.",
+    "spawn": {
+      "at": [
+        0.5,
+        0.78
+      ]
+    }
+  },
+  "intent": {
+    "era": "ancient",
+    "wealth": 0.35,
+    "decline": 0.1,
+    "formality": 0.1,
+    "climate": {
+      "biome": "minecraft:badlands",
+      "temperature": 0.9,
+      "humidity": -0.8,
+      "snow": "never"
+    },
+    "character": {
+      "label": "cliff dwelling pueblos",
+      "materialTheme": "sun_clay",
+      "urbanForm": "hillside",
+      "ground": "stepped",
+      "motifs": {
+        "roofType": "flat",
+        "massing": "stepped"
+      },
+      "archetypes": {
+        "prefer": [
+          "adobe_pueblo",
+          "courtyard_house",
+          "cistern",
+          "kiln",
+          "granary"
+        ],
+        "forbid": [
+          "townhouse",
+          "terraced_row",
+          "office",
+          "skyscraper",
+          "shop_row"
+        ]
+      },
+      "props": {
+        "forbid": [
+          "lamp_post"
+        ]
+      },
+      "programs": [
+        {
+          "id": "canyon_rope_bridge",
+          "mode": "landmark",
+          "brief": "A long rope-and-plank suspension bridge spanning across the deep desert canyon between two cliffs, with sagging timber catwalk, twisted rope railings, and heavy log anchor pylons embedded in the rock on both sides.",
+          "envelope": [
+            48,
+            20,
+            15
+          ]
+        },
+        {
+          "id": "sunken_kiva",
+          "mode": "plugin",
+          "brief": "A circular subterranean stone kiva ceremonial pit set flush into the cliff ledge, with flat log ceiling beams, a central roof opening with an upright timber ladder protruding, and a low ritual stone bench.",
+          "envelope": [
+            9,
+            6,
+            9
+          ],
+          "count": 4
+        }
+      ]
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": "minecraft:red_sand",
+      "ground.subsurface": "minecraft:terracotta",
+      "ground.cliff": "minecraft:terracotta",
+      "ground.stone": "minecraft:smooth_red_sandstone",
+      "road.surface": "minecraft:packed_mud",
+      "road.shoulder": "minecraft:coarse_dirt"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "arid high mesa country cut by a sheer canyon",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 112,
+          "amplitude": 24,
+          "octaves": 4,
+          "frequency": 0.003,
+          "gain": 0.45,
+          "erosionPasses": 2,
+          "cliffThreshold": 38,
+          "soilDepth": 3,
+          "beachWidth": 2,
+          "snowLineFraction": 1,
+          "warp": {
+            "amount": 16,
+            "frequency": 0.0035
+          }
+        },
+        "children": [
+          {
+            "id": "canyon_chasm",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the deep, narrow desert canyon slicing north to south",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.5,
+                  0.02
+                ],
+                [
+                  0.49,
+                  0.35
+                ],
+                [
+                  0.51,
+                  0.65
+                ],
+                [
+                  0.5,
+                  0.98
+                ]
+              ],
+              "width": 46,
+              "depth": 54,
+              "profile": "sharp",
+              "flooded": "never",
+              "meander": 0.25
+            }
+          },
+          {
+            "id": "west_cliff_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the stepped mesa shelf on the west canyon rim",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.35,
+                0.5
+              ],
+              "radius": 95,
+              "height": 10,
+              "rim": 6,
+              "profile": "sharp",
+              "irregularity": 0.2
+            }
+          },
+          {
+            "id": "east_cliff_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the stepped mesa shelf on the east canyon rim",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.65,
+                0.5
+              ],
+              "radius": 95,
+              "height": 10,
+              "rim": 6,
+              "profile": "sharp",
+              "irregularity": 0.2
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "arid",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0012,
+          "latitudeGradient": 0
+        }
+      },
+      {
+        "id": "desert_scrub",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse desert ironwood and dry juniper scrub",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 5,
+          "clumping": 0.5,
+          "maxSlope": 30,
+          "elevation": [
+            2,
+            120
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "undergrowth": {
+            "grass": 0.03,
+            "flowers": 0,
+            "deadwood": 0.16
+          },
+          "species": [
+            {
+              "id": "ironwood",
+              "shape": "desert_ironwood",
+              "weight": 1
+            },
+            {
+              "id": "juniper",
+              "shape": "juniper_scrub",
+              "weight": 3
+            }
+          ]
+        }
+      },
+      {
+        "id": "kiva_scatter",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "sunken ceremonial kivas along the mesa edges",
+        "params": {
+          "program": "sunken_kiva",
+          "count": 4,
+          "area": {
+            "all": true
+          },
+          "spacing": 36,
+          "maxSlope": 20,
+          "avoidTags": [
+            "road",
+            "building"
+          ]
+        }
+      },
+      {
+        "id": "west_pueblo",
+        "kind": "district",
+        "label": "the west cliff pueblo stacked along the canyon wall",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            130,
+            150
+          ]
+        },
+        "params": {
+          "fabric": "hillside",
+          "density": "medium",
+          "mix": [
+            "adobe_pueblo",
+            "courtyard_house",
+            "granary",
+            "kiln",
+            "cistern"
+          ],
+          "blockSize": 34,
+          "ground": "stepped",
+          "courtyards": 0.4
+        },
+        "constraints": [
+          {
+            "at": [
+              0.35,
+              0.5
+            ]
+          }
+        ],
+        "tags": [
+          "pueblo",
+          "settlement"
+        ],
+        "children": [
+          {
+            "id": "west_great_kiva_house",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the great communal pueblo on the western terraces",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                12,
+                11
+              ]
+            },
+            "params": {
+              "archetype": "adobe_pueblo",
+              "floors": 2,
+              "roof": "flat"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "east",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "pueblo",
+              "house"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "east_pueblo",
+        "kind": "district",
+        "label": "the east cliff pueblo facing across the chasm",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            130,
+            150
+          ]
+        },
+        "params": {
+          "fabric": "hillside",
+          "density": "medium",
+          "mix": [
+            "adobe_pueblo",
+            "courtyard_house",
+            "granary",
+            "kiln",
+            "cistern"
+          ],
+          "blockSize": 34,
+          "ground": "stepped",
+          "courtyards": 0.4
+        },
+        "constraints": [
+          {
+            "at": [
+              0.65,
+              0.5
+            ]
+          }
+        ],
+        "tags": [
+          "pueblo",
+          "settlement"
+        ],
+        "children": [
+          {
+            "id": "east_watch_pueblo",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the tiered watch pueblo overlooking the canyon",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                12,
+                11
+              ]
+            },
+            "params": {
+              "archetype": "adobe_pueblo",
+              "floors": 2,
+              "roof": "flat"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "west",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "pueblo",
+              "house"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "canyon_rope_bridge",
+        "kind": "generator",
+        "generator": "authored:canyon_rope_bridge",
+        "label": "the rope-and-plank bridge spanning the canyon drop",
+        "params": {
+          "seat": "drape",
+          "face": {
+            "toward": "east_pueblo"
+          }
+        },
+        "constraints": [
+          {
+            "at": [
+              0.5,
+              0.5
+            ]
+          },
+          {
+            "distance": "west_pueblo",
+            "min": 8,
+            "max": 30
+          },
+          {
+            "distance": "east_pueblo",
+            "min": 8,
+            "max": 30
+          }
+        ],
+        "tags": [
+          "landmark",
+          "bridge"
+        ]
+      },
+      {
+        "id": "canyon_trails",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "beaten earth paths connecting the cliff dwellings to the bridge",
+        "params": {
+          "anchors": [
+            "west_pueblo",
+            "east_pueblo",
+            "canyon_rope_bridge"
+          ],
+          "pattern": "organic",
+          "width": 2,
+          "lanterns": false
+        }
+      },
+      {
+        "id": "timber_beams_west",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "stacked roof vigas and firewood in the west village",
+        "params": {
+          "prop": "log_pile",
+          "zone": "west"
+        }
+      },
+      {
+        "id": "timber_beams_east",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "stacked roof vigas and firewood in the east village",
+        "params": {
+          "prop": "log_pile",
+          "zone": "east"
+        }
+      },
+      {
+        "id": "rim_cairn_north",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "stone trail marker on the north canyon rim",
+        "params": {
+          "prop": "cairn",
+          "zone": "north"
+        }
+      },
+      {
+        "id": "rim_cairn_south",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "stone trail marker on the south canyon rim",
+        "params": {
+          "prop": "cairn",
+          "zone": "south"
+        }
+      }
+    ]
+  },
+  "programs": {
+    "canyon_rope_bridge": {
+      "mode": "landmark",
+      "envelope": [
+        48,
+        20,
+        15
+      ],
+      "sourceHash": "b3:6bdc2c98f35511673bbbe85eb1d1439f7087de4bb17e2e807afb3a9182c4b8ee",
+      "outputHash": "b3:4e84f298fa71280e754b2187174b9107c1bc7db6ddb2b8b7aac532f610fe66e5",
+      "conforms": false,
+      "conformHash": "b3:0b58c5d7cb62c4bc2ad4852e8ada0f944c88e88414ec463ea1032f6b384f223e",
+      "source": "export const envelope = [48, 20, 15];\n\nexport default function build(api) {\n  const { size } = api;\n  const seatY = 5;\n\n  // Palette resolution from theme with robust fallbacks\n  const woodPlanks = api.theme.wood?.planks ?? \"minecraft:spruce_planks\";\n  const woodLog = api.theme.wood?.log ?? \"minecraft:spruce_log\";\n  const woodStripped = api.theme.wood?.stripped ?? \"minecraft:stripped_spruce_log\";\n  const woodStairs = api.theme.wood?.stairs ?? \"minecraft:spruce_stairs\";\n  const woodSlab = api.theme.wood?.slab ?? \"minecraft:spruce_slab\";\n  const woodFence = api.theme.wood?.fence ?? \"minecraft:spruce_fence\";\n  const woodTrapdoor = api.theme.wood?.trapdoor ?? \"minecraft:spruce_trapdoor\";\n\n  const stonePrimary = api.theme.stone?.primary ?? \"minecraft:terracotta\";\n  const stoneAccent = api.theme.stone?.accent ?? \"minecraft:smooth_sandstone\";\n  const stoneStairs = api.theme.stone?.stairs ?? \"minecraft:sandstone_stairs\";\n  const stoneSlab = api.theme.stone?.slab ?? \"minecraft:sandstone_slab\";\n  const stoneWall = api.theme.stone?.wall ?? \"minecraft:sandstone_wall\";\n\n  const groundPlinth = api.theme.ground?.plinth ?? stonePrimary;\n  const groundPavement = api.theme.ground?.pavement ?? \"minecraft:cut_sandstone\";\n  const groundScree = api.theme.ground?.scree ?? \"minecraft:gravel\";\n  const wallCore = api.theme.wall?.core ?? stonePrimary;\n  const wallParapet = api.theme.wall?.parapet ?? stoneWall;\n\n  function getBaseId(blockStr) {\n    return blockStr.split(\"[\")[0];\n  }\n\n  function logBlock(axis = \"y\") {\n    return `${getBaseId(woodLog)}[axis=${axis}]`;\n  }\n\n  function strippedLog(axis = \"y\") {\n    return `${getBaseId(woodStripped)}[axis=${axis}]`;\n  }\n\n  function stairBlock(facing = \"north\", half = \"bottom\", shape = \"straight\") {\n    return `${getBaseId(woodStairs)}[facing=${facing},half=${half},shape=${shape}]`;\n  }\n\n  function stoneStairBlock(facing = \"north\", half = \"bottom\", shape = \"straight\") {\n    return `${getBaseId(stoneStairs)}[facing=${facing},half=${half},shape=${shape}]`;\n  }\n\n  function slabBlock(type = \"bottom\") {\n    return `${getBaseId(woodSlab)}[type=${type}]`;\n  }\n\n  function stoneSlabBlock(type = \"bottom\") {\n    return `${getBaseId(stoneSlab)}[type=${type}]`;\n  }\n\n  function trapdoorBlock(facing = \"north\", half = \"bottom\", open = false) {\n    return `${getBaseId(woodTrapdoor)}[facing=${facing},half=${half},open=${open}]`;\n  }\n\n  function setBlock(x, y, z, block) {\n    if (x >= 0 && x < size[0] && y >= 0 && y < size[1] && z >= 0 && z < size[2]) {\n      api.set(x, y, z, block);\n    }\n  }\n\n  // Banded desert adobe / masonry stratification\n  function getMasonry(x, y, z) {\n    const layer = (y + Math.floor(x / 3) + Math.floor(z / 3)) % 5;\n    if (layer === 0 || layer === 2) return stonePrimary;\n    if (layer === 1) return stoneAccent;\n    if (layer === 3) return wallCore;\n    return groundPlinth;\n  }\n\n  // --- 1. CLIFF ABUTMENT FOUNDATIONS (Following Ground) ---\n  function buildAbutmentGround(minX, maxX, minZ, maxZ) {\n    for (let x = minX; x <= maxX; x++) {\n      for (let z = minZ; z <= maxZ; z++) {\n        const h = api.heightAt(x, z);\n        const gy = Math.max(0, Math.min(18, Math.round(seatY + h)));\n\n        // Solid downward foundation skirt to terrain\n        for (let y = gy; y <= seatY; y++) {\n          setBlock(x, y, z, getMasonry(x, y, z));\n        }\n\n        // If ground rises above seat plane, build upward to seat with the hillside\n        if (gy > seatY) {\n          for (let y = seatY + 1; y <= gy; y++) {\n            // Keep doorways and bridge corridor clear\n            if (z === 7 && y <= 9) continue;\n            if (x >= 2 && x <= 5 && z >= 5 && z <= 9 && y <= 10) continue;\n            if (x >= 42 && x <= 45 && z >= 5 && z <= 9 && y <= 10) continue;\n            setBlock(x, y, z, getMasonry(x, y, z));\n          }\n        }\n      }\n    }\n  }\n\n  buildAbutmentGround(0, 8, 2, 12);\n  buildAbutmentGround(39, 47, 2, 12);\n\n  // --- 2. WEST PUEBLO CLIFF STATION (X: 0 to 8, Z: 2 to 12) ---\n  // Sub-platform floors\n  for (let x = 0; x <= 8; x++) {\n    for (let z = 2; z <= 12; z++) {\n      setBlock(x, 6, z, z === 7 ? groundPavement : getMasonry(x, 6, z));\n    }\n  }\n\n  // West pueblo guardhouse walls\n  for (let y = 7; y <= 10; y++) {\n    for (let z = 3; z <= 11; z++) {\n      setBlock(1, y, z, getMasonry(1, y, z)); // Back wall\n      // Front wall facing bridge\n      if (z === 7 && y <= 9) {\n        // Doorway\n      } else if ((z === 4 || z === 10) && y === 8) {\n        setBlock(6, y, z, stoneWall); // Window slit\n      } else {\n        setBlock(6, y, z, getMasonry(6, y, z));\n      }\n    }\n    for (let x = 2; x <= 5; x++) {\n      if (x === 3 && y === 8) {\n        setBlock(x, y, 3, stoneWall);\n        setBlock(x, y, 11, stoneWall);\n      } else {\n        setBlock(x, y, 3, getMasonry(x, y, 3));\n        setBlock(x, y, 11, getMasonry(x, y, 11));\n      }\n    }\n  }\n\n  // Doorway timber framing\n  setBlock(6, 7, 6, logBlock(\"y\"));\n  setBlock(6, 8, 6, logBlock(\"y\"));\n  setBlock(6, 7, 8, logBlock(\"y\"));\n  setBlock(6, 8, 8, logBlock(\"y\"));\n  setBlock(6, 10, 7, logBlock(\"z\"));\n\n  // Pueblo flat roof and vigas (Y = 11)\n  for (let x = 1; x <= 6; x++) {\n    for (let z = 3; z <= 11; z++) {\n      setBlock(x, 11, z, stonePrimary);\n    }\n  }\n  // Protruding timber vigas (log ends sticking through adobe)\n  setBlock(7, 11, 4, logBlock(\"x\"));\n  setBlock(7, 11, 6, logBlock(\"x\"));\n  setBlock(7, 11, 8, logBlock(\"x\"));\n  setBlock(7, 11, 10, logBlock(\"x\"));\n  setBlock(2, 11, 2, logBlock(\"z\"));\n  setBlock(4, 11, 2, logBlock(\"z\"));\n  setBlock(2, 11, 12, logBlock(\"z\"));\n  setBlock(4, 11, 12, logBlock(\"z\"));\n\n  // Roof terrace walk and parapets (Y = 12, 13)\n  for (let x = 1; x <= 6; x++) {\n    for (let z = 3; z <= 11; z++) {\n      setBlock(x, 12, z, groundPavement);\n    }\n  }\n  for (let z = 3; z <= 11; z++) {\n    setBlock(1, 13, z, z % 2 === 0 ? wallParapet : stonePrimary);\n    setBlock(6, 13, z, z % 2 === 0 ? wallParapet : stonePrimary);\n  }\n  for (let x = 2; x <= 5; x++) {\n    setBlock(x, 13, 3, x % 2 === 0 ? wallParapet : stonePrimary);\n    setBlock(x, 13, 11, x % 2 === 0 ? wallParapet : stonePrimary);\n  }\n\n  // Interior access ladder\n  for (let y = 7; y <= 11; y++) {\n    setBlock(2, y, 4, \"minecraft:ladder[facing=south]\");\n  }\n\n  // West Deadmen Cable Windlasses (Anchorage turnstiles in rock)\n  setBlock(2, 7, 5, logBlock(\"z\"));\n  setBlock(2, 7, 9, logBlock(\"z\"));\n  setBlock(1, 7, 5, \"minecraft:chain[axis=x]\");\n  setBlock(1, 7, 9, \"minecraft:chain[axis=x]\");\n  setBlock(2, 8, 5, \"minecraft:chain[axis=y]\");\n  setBlock(2, 8, 9, \"minecraft:chain[axis=y]\");\n\n  // --- 3. EAST PUEBLO CLIFF STATION (X: 39 to 47, Z: 2 to 12) ---\n  // Sub-platform floors\n  for (let x = 39; x <= 47; x++) {\n    for (let z = 2; z <= 12; z++) {\n      setBlock(x, 6, z, z === 7 ? groundPavement : getMasonry(x, 6, z));\n    }\n  }\n\n  // East pueblo guardhouse walls\n  for (let y = 7; y <= 10; y++) {\n    for (let z = 3; z <= 11; z++) {\n      setBlock(46, y, z, getMasonry(46, y, z)); // Back wall\n      // Front wall facing bridge\n      if (z === 7 && y <= 9) {\n        // Doorway\n      } else if ((z === 4 || z === 10) && y === 8) {\n        setBlock(41, y, z, stoneWall);\n      } else {\n        setBlock(41, y, z, getMasonry(41, y, z));\n      }\n    }\n    for (let x = 42; x <= 45; x++) {\n      if (x === 44 && y === 8) {\n        setBlock(x, y, 3, stoneWall);\n        setBlock(x, y, 11, stoneWall);\n      } else {\n        setBlock(x, y, 3, getMasonry(x, y, 3));\n        setBlock(x, y, 11, getMasonry(x, y, 11));\n      }\n    }\n  }\n\n  // Doorway timber framing\n  setBlock(41, 7, 6, logBlock(\"y\"));\n  setBlock(41, 8, 6, logBlock(\"y\"));\n  setBlock(41, 7, 8, logBlock(\"y\"));\n  setBlock(41, 8, 8, logBlock(\"y\"));\n  setBlock(41, 10, 7, logBlock(\"z\"));\n\n  // Pueblo flat roof and vigas (Y = 11)\n  for (let x = 41; x <= 46; x++) {\n    for (let z = 3; z <= 11; z++) {\n      setBlock(x, 11, z, stonePrimary);\n    }\n  }\n  setBlock(40, 11, 4, logBlock(\"x\"));\n  setBlock(40, 11, 6, logBlock(\"x\"));\n  setBlock(40, 11, 8, logBlock(\"x\"));\n  setBlock(40, 11, 10, logBlock(\"x\"));\n  setBlock(43, 11, 2, logBlock(\"z\"));\n  setBlock(45, 11, 2, logBlock(\"z\"));\n  setBlock(43, 11, 12, logBlock(\"z\"));\n  setBlock(45, 11, 12, logBlock(\"z\"));\n\n  // Roof terrace walk and parapets (Y = 12, 13)\n  for (let x = 41; x <= 46; x++) {\n    for (let z = 3; z <= 11; z++) {\n      setBlock(x, 12, z, groundPavement);\n    }\n  }\n  for (let z = 3; z <= 11; z++) {\n    setBlock(41, 13, z, z % 2 === 0 ? wallParapet : stonePrimary);\n    setBlock(46, 13, z, z % 2 === 0 ? wallParapet : stonePrimary);\n  }\n  for (let x = 42; x <= 45; x++) {\n    setBlock(x, 13, 3, x % 2 === 0 ? wallParapet : stonePrimary);\n    setBlock(x, 13, 11, x % 2 === 0 ? wallParapet : stonePrimary);\n  }\n\n  // Interior access ladder\n  for (let y = 7; y <= 11; y++) {\n    setBlock(45, y, 10, \"minecraft:ladder[facing=north]\");\n  }\n\n  // East Deadmen Cable Windlasses\n  setBlock(45, 7, 5, logBlock(\"z\"));\n  setBlock(45, 7, 9, logBlock(\"z\"));\n  setBlock(46, 7, 5, \"minecraft:chain[axis=x]\");\n  setBlock(46, 7, 9, \"minecraft:chain[axis=x]\");\n  setBlock(45, 8, 5, \"minecraft:chain[axis=y]\");\n  setBlock(45, 8, 9, \"minecraft:chain[axis=y]\");\n\n  // --- 4. TIMBER A-FRAME GALLOWS PYLONS (X: 8 & 39) ---\n  function buildGallowsPylon(px, approachDir) {\n    // Heavy upright timber masts\n    for (let y = 6; y <= 16; y++) {\n      setBlock(px, y, 5, strippedLog(\"y\"));\n      setBlock(px, y, 9, strippedLog(\"y\"));\n    }\n\n    // Outer support buttress posts\n    for (let y = 6; y <= 9; y++) {\n      setBlock(px, y, 4, logBlock(\"y\"));\n      setBlock(px, y, 10, logBlock(\"y\"));\n    }\n\n    // Base footing plinths\n    setBlock(px, 6, 4, stoneStairBlock(\"south\", \"bottom\"));\n    setBlock(px, 6, 10, stoneStairBlock(\"north\", \"bottom\"));\n    setBlock(px + approachDir, 6, 5, stoneStairBlock(approachDir > 0 ? \"west\" : \"east\", \"bottom\"));\n    setBlock(px + approachDir, 6, 9, stoneStairBlock(approachDir > 0 ? \"west\" : \"east\", \"bottom\"));\n\n    // Lower portal arch header\n    for (let z = 5; z <= 9; z++) {\n      setBlock(px, 10, z, logBlock(\"z\"));\n    }\n    setBlock(px, 9, 6, stairBlock(\"south\", \"top\"));\n    setBlock(px, 9, 8, stairBlock(\"north\", \"top\"));\n    setBlock(px, 9, 7, \"minecraft:lantern[hanging=true]\");\n\n    // Mid cross tie\n    for (let z = 5; z <= 9; z++) {\n      setBlock(px, 13, z, strippedLog(\"z\"));\n    }\n\n    // Crown mast beam\n    for (let z = 4; z <= 10; z++) {\n      setBlock(px, 16, z, logBlock(\"z\"));\n    }\n    // Saddle caps for suspension cables\n    setBlock(px, 17, 5, slabBlock(\"bottom\"));\n    setBlock(px, 17, 9, slabBlock(\"bottom\"));\n\n    // A-frame diagonal timber back-braces\n    const bx = px + approachDir;\n    for (let y = 7; y <= 11; y++) {\n      setBlock(bx, y, 5, strippedLog(\"y\"));\n      setBlock(bx, y, 9, strippedLog(\"y\"));\n    }\n    setBlock(bx, 12, 5, stairBlock(approachDir > 0 ? \"west\" : \"east\", \"top\"));\n    setBlock(bx, 12, 9, stairBlock(approachDir > 0 ? \"west\" : \"east\", \"top\"));\n  }\n\n  buildGallowsPylon(8, -1);\n  buildGallowsPylon(39, 1);\n\n  // --- 5. CANYON CATWALK & SAGGING SUSPENSION BRIDGE (X: 8 to 39) ---\n  function getDeckLevel(x) {\n    if (x <= 9 || x >= 38) return 7;\n    if (x <= 14 || x >= 33) return 6;\n    return 5;\n  }\n\n  // Smooth stepping Catwalk deck\n  for (let x = 8; x <= 39; x++) {\n    const curY = getDeckLevel(x);\n\n    // Crossjoist needle beams on alternating columns\n    if (x % 2 === 0 || x === 39) {\n      for (let z = 5; z <= 9; z++) {\n        setBlock(x, curY - 1, z, strippedLog(\"z\"));\n      }\n    } else {\n      setBlock(x, curY - 1, 6, strippedLog(\"x\"));\n      setBlock(x, curY - 1, 8, strippedLog(\"x\"));\n    }\n\n    // Catwalk floor blocks & stairs for seamless transition\n    if (x === 10) {\n      setBlock(x, 6, 6, stairBlock(\"west\", \"bottom\"));\n      setBlock(x, 6, 7, stairBlock(\"west\", \"bottom\"));\n      setBlock(x, 6, 8, stairBlock(\"west\", \"bottom\"));\n    } else if (x === 15) {\n      setBlock(x, 5, 6, stairBlock(\"west\", \"bottom\"));\n      setBlock(x, 5, 7, stairBlock(\"west\", \"bottom\"));\n      setBlock(x, 5, 8, stairBlock(\"west\", \"bottom\"));\n    } else if (x === 32) {\n      setBlock(x, 5, 6, stairBlock(\"east\", \"bottom\"));\n      setBlock(x, 5, 7, stairBlock(\"east\", \"bottom\"));\n      setBlock(x, 5, 8, stairBlock(\"east\", \"bottom\"));\n    } else if (x === 37) {\n      setBlock(x, 6, 6, stairBlock(\"east\", \"bottom\"));\n      setBlock(x, 6, 7, stairBlock(\"east\", \"bottom\"));\n      setBlock(x, 6, 8, stairBlock(\"east\", \"bottom\"));\n    } else {\n      for (let z = 6; z <= 8; z++) {\n        const prng = api.random();\n        if (prng < 0.7) {\n          setBlock(x, curY, z, woodPlanks);\n        } else if (prng < 0.88) {\n          setBlock(x, curY, z, slabBlock(\"top\"));\n        } else {\n          setBlock(x, curY, z, trapdoorBlock(\"north\", \"bottom\", false));\n        }\n      }\n    }\n\n    // Continuous handrail ropes along bridge edges\n    setBlock(x, curY + 1, 6, woodFence);\n    setBlock(x, curY + 1, 8, woodFence);\n  }\n\n  // --- 6. SUSPENSION CABLES & VERTICAL HANGER ROPES ---\n  const midX = 23.5;\n  const halfSpan = 15.5;\n\n  for (let x = 8; x <= 39; x++) {\n    const t = (x - midX) / halfSpan;\n    const cableY = Math.round(9.0 + 7.0 * t * t);\n    const deckY = getDeckLevel(x);\n\n    // Main suspension cable at Z = 5 and Z = 9\n    setBlock(x, cableY, 5, woodFence);\n    setBlock(x, cableY, 9, woodFence);\n\n    // Vertical suspension hanger ropes linking overhead cable down to needle beams\n    if (x % 2 === 0 || x === 39) {\n      for (let y = deckY; y < cableY; y++) {\n        setBlock(x, y, 5, \"minecraft:chain[axis=y]\");\n        setBlock(x, y, 9, \"minecraft:chain[axis=y]\");\n      }\n    }\n  }\n\n  // West Backstay Anchors (Pylon top at X=8, Y=16 down to Deadman at X=2, Y=7)\n  const westBackstays = [\n    [2, 8], [3, 9], [3, 10], [4, 11], [5, 12], [6, 13], [6, 14], [7, 15]\n  ];\n  for (const [bx, by] of westBackstays) {\n    setBlock(bx, by, 5, woodFence);\n    setBlock(bx, by, 9, woodFence);\n  }\n\n  // East Backstay Anchors (Pylon top at X=39, Y=16 down to Deadman at X=45, Y=7)\n  const eastBackstays = [\n    [45, 8], [44, 9], [44, 10], [43, 11], [42, 12], [41, 13], [41, 14], [40, 15]\n  ];\n  for (const [bx, by] of eastBackstays) {\n    setBlock(bx, by, 5, woodFence);\n    setBlock(bx, by, 9, woodFence);\n  }\n\n  // Cantilever cliff brackets under bridge landings\n  for (let z = 5; z <= 9; z++) {\n    setBlock(9, 5, z, stoneStairBlock(\"west\", \"top\"));\n    setBlock(9, 4, z, getMasonry(9, 4, z));\n    setBlock(38, 5, z, stoneStairBlock(\"east\", \"top\"));\n    setBlock(38, 4, z, getMasonry(38, 4, z));\n  }\n\n  // Wind stabilizer sway guy-wires underneath the bridge\n  setBlock(8, 4, 3, woodFence);\n  setBlock(9, 4, 4, woodFence);\n  setBlock(10, 4, 5, woodFence);\n  setBlock(8, 4, 11, woodFence);\n  setBlock(9, 4, 10, woodFence);\n  setBlock(10, 4, 9, woodFence);\n\n  setBlock(39, 4, 3, woodFence);\n  setBlock(38, 4, 4, woodFence);\n  setBlock(37, 4, 5, woodFence);\n  setBlock(39, 4, 11, woodFence);\n  setBlock(38, 4, 10, woodFence);\n  setBlock(37, 4, 9, woodFence);\n\n  return {\n    name: \"canyon_rope_bridge\",\n    seatY,\n    anchors: {\n      front: [24, 6, 0],\n      west_approach: [0, 6, 7],\n      east_approach: [47, 6, 7],\n      span_mid: [24, 5, 7],\n      west_tower: [8, 16, 7],\n      east_tower: [39, 16, 7]\n    },\n    interiors: [\n      {\n        min: [2, 7, 5],\n        max: [5, 10, 9],\n        kind: \"quarters\"\n      },\n      {\n        min: [42, 7, 5],\n        max: [45, 10, 9],\n        kind: \"quarters\"\n      }\n    ]\n  };\n}"
+    },
+    "sunken_kiva": {
+      "mode": "plugin",
+      "envelope": [
+        11,
+        14,
+        11
+      ],
+      "sourceHash": "b3:6f13c7d14bbf95551314ec1010e843833368c20f30057fe399ec4818bfb43813",
+      "outputHash": "b3:b2f6b83c58399b76b315721e7f91c450954a3755c69d682c0634b1f55256db5d",
+      "conforms": false,
+      "conformHash": "b3:27e26825f108b24751f92ef81744826a3ac26518b239cd30df2fceaac3bbe395",
+      "source": "export const envelope = [11, 14, 11];\n\nexport default function build(api) {\n  const { size, theme, instance } = api;\n  const rng = () => api.random();\n  const inst = instance.index % 4;\n  const seatY = 4;\n\n  const cx = 5;\n  const cz = 5;\n\n  // Resolve palette from theme with reliable ancient Pueblo fallbacks\n  const stonePrimary = theme.stone?.primary || theme.ground?.plinth || \"minecraft:cut_sandstone\";\n  const stoneAccent = theme.stone?.accent || theme.ground?.pavement || stonePrimary;\n  const stoneSlab = theme.stone?.slab || theme.ground?.slab || \"minecraft:sandstone_slab\";\n  const stoneWall = theme.stone?.wall || theme.wall?.parapet || \"minecraft:sandstone_wall\";\n\n  const groundPavement = theme.ground?.pavement || stonePrimary;\n  const groundPlinth = theme.ground?.plinth || stonePrimary;\n  const groundScree = theme.ground?.scree || stoneAccent;\n\n  const woodLog = theme.wood?.log || \"minecraft:oak_log\";\n  const woodStripped = theme.wood?.stripped || woodLog;\n  const woodPlanks = theme.wood?.planks || \"minecraft:oak_planks\";\n  const woodFence = theme.wood?.fence || \"minecraft:oak_fence\";\n  const woodSlab = theme.wood?.slab || \"minecraft:oak_slab\";\n  const woodTrapdoor = theme.wood?.trapdoor || \"minecraft:oak_trapdoor\";\n\n  const roofSolid = theme.roof?.solid || stonePrimary;\n  const roofSlab = theme.roof?.slab || stoneSlab;\n  const wallParapet = theme.wall?.parapet || stoneWall;\n  const wallMerlon = theme.wall?.merlon || stonePrimary;\n\n  function setBlock(x, y, z, block) {\n    if (x >= 0 && x < size[0] && y >= 0 && y < size[1] && z >= 0 && z < size[2] && block) {\n      api.set(x, y, z, block);\n    }\n  }\n\n  function setLogAxis(logStr, axis) {\n    if (!logStr) return logStr;\n    if (logStr.includes(\"axis=\")) {\n      return logStr.replace(/axis=[xyz]/, `axis=${axis}`);\n    }\n    if (logStr.includes(\"[\")) {\n      return logStr.replace(\"]\", `,axis=${axis}]`);\n    }\n    return `${logStr}[axis=${axis}]`;\n  }\n\n  function setSlab(slabStr, type) {\n    if (!slabStr) return slabStr;\n    if (slabStr.includes(\"type=\")) {\n      return slabStr.replace(/type=[a-z]+/, `type=${type}`);\n    }\n    if (slabStr.includes(\"[\")) {\n      return slabStr.replace(\"]\", `,type=${type}]`);\n    }\n    return `${slabStr}[type=${type}]`;\n  }\n\n  // Instance specific geometry variations\n  const radiusProfiles = [\n    { rOuter: 4.8, rInner: 3.6, pilasters: 6, vigaDir: \"z\", hatchSize: 2, ladderH: 13 },\n    { rOuter: 4.5, rInner: 3.3, pilasters: 4, vigaDir: \"x\", hatchSize: 1, ladderH: 12 },\n    { rOuter: 4.9, rInner: 3.7, pilasters: 6, vigaDir: \"cribbed\", hatchSize: 2, ladderH: 13 },\n    { rOuter: 4.6, rInner: 3.4, pilasters: 8, vigaDir: \"cross\", hatchSize: 1, ladderH: 12 },\n  ];\n  const cfg = radiusProfiles[inst];\n  const rOuter = cfg.rOuter;\n  const rInner = cfg.rInner;\n\n  // 1. Foundation & Subterranean Skirt (conforming to real terrain)\n  for (let x = 0; x < size[0]; x++) {\n    for (let z = 0; z < size[2]; z++) {\n      const dx = x - cx;\n      const dz = z - cz;\n      const dist = Math.sqrt(dx * dx + dz * dz);\n      if (dist <= rOuter + 0.35) {\n        const h = api.heightAt(x, z);\n        const groundY = Math.max(0, Math.min(size[1] - 1, seatY + h));\n        const minY = Math.min(groundY, seatY);\n        for (let y = minY; y <= seatY; y++) {\n          const r = rng();\n          const block = r < 0.6 ? groundPlinth : r < 0.85 ? stonePrimary : groundPavement;\n          setBlock(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  // 2. Kiva Flagstone Floor at seatY\n  for (let x = 0; x < size[0]; x++) {\n    for (let z = 0; z < size[2]; z++) {\n      const dx = x - cx;\n      const dz = z - cz;\n      const dist = Math.sqrt(dx * dx + dz * dz);\n      if (dist <= rOuter) {\n        let floorBlock = groundPavement;\n        const r = rng();\n        if (r < 0.5) floorBlock = groundPavement;\n        else if (r < 0.8) floorBlock = stonePrimary;\n        else floorBlock = groundPlinth;\n\n        if (x === cx && z === cz + 1) {\n          floorBlock = stoneAccent; // fire hearth base\n        } else if (x === cx && z === cz - 2) {\n          floorBlock = groundScree; // sipapu indentation\n        }\n        setBlock(x, seatY, z, floorBlock);\n      }\n    }\n  }\n\n  // 3. Masonry Outer Drum Wall (y = 5 to 9)\n  for (let y = seatY + 1; y <= seatY + 5; y++) {\n    for (let x = 0; x < size[0]; x++) {\n      for (let z = 0; z < size[2]; z++) {\n        const dx = x - cx;\n        const dz = z - cz;\n        const dist = Math.sqrt(dx * dx + dz * dz);\n\n        let isWall = dist <= rOuter && dist > rInner;\n        if (inst === 2 && z >= 8 && Math.abs(dx) <= 1 && y < seatY + 4) {\n          // Keyhole southern alcove\n          if (z === 9 && dist <= rOuter + 0.5) isWall = true;\n          else if (z === 8) isWall = false;\n        }\n\n        if (isWall) {\n          const r = rng();\n          const wallBlock = r < 0.65 ? stonePrimary : r < 0.85 ? stoneAccent : groundPlinth;\n          setBlock(x, y, z, wallBlock);\n        }\n      }\n    }\n  }\n\n  // 4. Ritual Stone Bench (Banquette) along inside perimeter at y = 5\n  for (let x = 0; x < size[0]; x++) {\n    for (let z = 0; z < size[2]; z++) {\n      const dx = x - cx;\n      const dz = z - cz;\n      const dist = Math.sqrt(dx * dx + dz * dz);\n      if (dist <= rInner && dist > rInner - 0.95) {\n        if (!(inst === 2 && z >= 7 && Math.abs(dx) <= 1)) {\n          const benchBlock = inst === 1 && rng() < 0.4 ? setSlab(woodSlab, \"bottom\") : setSlab(stoneSlab, \"bottom\");\n          setBlock(x, seatY + 1, z, benchBlock);\n        }\n      }\n    }\n  }\n\n  // 5. Pilasters (Masonry pillars supporting roof vigas)\n  const numPilasters = cfg.pilasters;\n  for (let i = 0; i < numPilasters; i++) {\n    const angle = (i * (360 / numPilasters) + (inst === 1 ? 45 : 0)) * (Math.PI / 180);\n    const px = Math.round(cx + (rInner - 0.25) * Math.cos(angle));\n    const pz = Math.round(cz + (rInner - 0.25) * Math.sin(angle));\n    for (let y = seatY + 1; y <= seatY + 3; y++) {\n      setBlock(px, y, pz, stoneAccent);\n    }\n  }\n\n  // 6. Hearth & Deflector Slab at y = 5\n  setBlock(cx, seatY + 1, cz + 2, stoneWall);\n  setBlock(cx, seatY + 1, cz + 1, setSlab(stoneSlab, \"bottom\"));\n\n  // 7. Heavy Timber Roof Beams (Vigas) at y = 8\n  const vigaY = seatY + 4;\n  if (cfg.vigaDir === \"z\" || cfg.vigaDir === \"cross\") {\n    for (const bx of [3, 5, 7]) {\n      for (let z = 0; z < size[2]; z++) {\n        const dx = bx - cx;\n        const dz = z - cz;\n        const dist = Math.sqrt(dx * dx + dz * dz);\n        if (dist <= rOuter || (cfg.vigaDir === \"cross\" && bx === 5 && (z === 0 || z === 10))) {\n          if (!(bx === cx && z === cz)) {\n            setBlock(bx, vigaY, z, setLogAxis(woodLog, \"z\"));\n          }\n        }\n      }\n    }\n  }\n  if (cfg.vigaDir === \"x\" || cfg.vigaDir === \"cross\") {\n    for (const bz of [3, 5, 7]) {\n      for (let x = 0; x < size[0]; x++) {\n        const dx = x - cx;\n        const dz = bz - cz;\n        const dist = Math.sqrt(dx * dx + dz * dz);\n        if (dist <= rOuter || (cfg.vigaDir === \"cross\" && bz === 5 && (x === 0 || x === 10))) {\n          if (!(x === cx && bz === cz)) {\n            setBlock(x, vigaY, bz, setLogAxis(woodLog, \"x\"));\n          }\n        }\n      }\n    }\n  }\n  if (cfg.vigaDir === \"cribbed\") {\n    const cribBeams = [\n      [3, 2], [4, 2], [7, 2], [8, 3],\n      [8, 7], [7, 8], [3, 8], [2, 7],\n      [2, 4], [2, 6], [8, 4], [8, 6],\n    ];\n    for (const [bx, bz] of cribBeams) {\n      setBlock(bx, vigaY, bz, setLogAxis(woodStripped, \"x\"));\n    }\n  }\n\n  // Latillas / secondary ceiling slats closing roof gaps at y = 8\n  for (let x = 0; x < size[0]; x++) {\n    for (let z = 0; z < size[2]; z++) {\n      const dx = x - cx;\n      const dz = z - cz;\n      const dist = Math.sqrt(dx * dx + dz * dz);\n      if (dist <= rInner) {\n        if (!(x === cx && z === cz) && !(cfg.hatchSize === 2 && x === cx + 1 && z === cz)) {\n          setBlock(x, vigaY, z, setSlab(woodSlab, \"top\"));\n        }\n      }\n    }\n  }\n\n  // 8. Flat Roof Deck at y = 9\n  const deckY = seatY + 5;\n  for (let x = 0; x < size[0]; x++) {\n    for (let z = 0; z < size[2]; z++) {\n      const dx = x - cx;\n      const dz = z - cz;\n      const dist = Math.sqrt(dx * dx + dz * dz);\n      if (dist <= rOuter) {\n        const isHatch = (x === cx && z === cz) || (cfg.hatchSize === 2 && x === cx + 1 && z === cz);\n        if (!isHatch) {\n          const r = rng();\n          const deckBlock = r < 0.6 ? roofSolid : r < 0.85 ? groundPavement : woodPlanks;\n          setBlock(x, deckY, z, deckBlock);\n        }\n      }\n    }\n  }\n\n  // 9. Parapet Rim & Hatch Frame at y = 10\n  const rimY = seatY + 6;\n  for (let x = 0; x < size[0]; x++) {\n    for (let z = 0; z < size[2]; z++) {\n      const dx = x - cx;\n      const dz = z - cz;\n      const dist = Math.sqrt(dx * dx + dz * dz);\n      if (dist <= rOuter + 0.25 && dist > rInner) {\n        let rimBlock;\n        if (inst === 0) {\n          rimBlock = wallParapet;\n        } else if (inst === 1) {\n          rimBlock = setSlab(stoneSlab, \"bottom\");\n        } else if (inst === 2) {\n          rimBlock = (x + z) % 2 === 0 ? wallMerlon : setSlab(stoneSlab, \"bottom\");\n        } else {\n          rimBlock = rng() < 0.7 ? setSlab(roofSlab, \"bottom\") : wallParapet;\n        }\n        setBlock(x, rimY, z, rimBlock);\n      }\n    }\n  }\n  setBlock(cx, rimY, cz - 1, woodTrapdoor);\n  setBlock(cx, rimY, cz + 1, woodTrapdoor);\n\n  // 10. Central Upright Timber Ladder (Floor to Sky)\n  // Support timber behind ladder\n  for (let y = seatY; y <= deckY; y++) {\n    setBlock(cx, y, cz - 1, setLogAxis(woodStripped, \"y\"));\n  }\n  // Ladder rungs facing South\n  for (let y = seatY; y <= deckY; y++) {\n    setBlock(cx, y, cz, \"minecraft:ladder[facing=south]\");\n  }\n  // Protruding ladder stiles (poles) sticking out above the roof\n  const ladderTop = cfg.ladderH;\n  for (let y = deckY; y <= ladderTop; y++) {\n    setBlock(cx - 1, y, cz, woodFence);\n    setBlock(cx + 1, y, cz, woodFence);\n  }\n  if (inst === 0 || inst === 2) {\n    setBlock(cx, ladderTop, cz, woodFence);\n  }\n\n  return {\n    name: \"sunken_kiva\",\n    seatY: 4,\n    anchors: {\n      front: [5, 4, 0],\n      entry: [5, 10, 5],\n      hearth: [5, 5, 7],\n    },\n    interiors: [\n      {\n        min: [3, 5, 3],\n        max: [7, 8, 7],\n        kind: \"vault\",\n      },\n    ],\n  };\n}"
+    }
+  }
+}

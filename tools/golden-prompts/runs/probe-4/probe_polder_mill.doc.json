@@ -1,0 +1,676 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "polder_village",
+    "worldSeed": "925",
+    "prompt": "A flat polder village of dykes and drainage canals, with one great brick windmill pumping the water out, its sails turning over the reed beds.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "intent": {
+    "era": "renaissance",
+    "wealth": 0.45,
+    "decline": 0.1,
+    "formality": 0.35,
+    "climate": {
+      "temperature": 0.2,
+      "humidity": 0.7,
+      "snow": "never"
+    },
+    "character": {
+      "label": "dutch polder village",
+      "materialTheme": "temperate_timber",
+      "formPacks": [
+        "agrarian"
+      ],
+      "urbanForm": "canal",
+      "archetypes": {
+        "prefer": [
+          "windmill",
+          "dutch_gable_house",
+          "cottage",
+          "barn",
+          "dairy"
+        ]
+      },
+      "props": {
+        "prefer": [
+          "cart",
+          "well_head",
+          "barge",
+          "rowboat"
+        ]
+      },
+      "motifs": {
+        "roofType": "gable"
+      },
+      "programs": [
+        {
+          "id": "great_brick_windmill",
+          "mode": "landmark",
+          "brief": "A monumental octagonal brick drainage windmill with a thatched rotating cap, massive four-blade lattice sails, and an arched brick culvert scoop wheel pumping canal water out into the drainage basin.",
+          "envelope": [
+            25,
+            42,
+            27
+          ]
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "flat reclaimed polder land crisscrossed by drainage canals and bounded by dykes, with shallow reed beds",
+      "infra": "drainage_canal network separating the fields; earthen dyke along the perimeter water; cart_track along the dyke crest",
+      "icons": "a great brick drainage windmill with revolving sails set at the water junction; sluice gates; reed beds fringing the ditch lines"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:dirt_path",
+      "road.shoulder": "minecraft:coarse_dirt",
+      "plaza.path": "minecraft:bricks",
+      "plaza.cobble": "minecraft:stone_bricks",
+      "plaza.border": "minecraft:polished_andesite"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "flat low-lying polder landscape bounded by water and dykes",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 65,
+          "amplitude": 6,
+          "octaves": 4,
+          "frequency": 0.003,
+          "gain": 0.45,
+          "erosionPasses": 2,
+          "continentalness": {
+            "frequency": 0.001,
+            "seaFraction": 0.35
+          },
+          "soilDepth": 4,
+          "beachWidth": 3,
+          "cliffThreshold": 60
+        },
+        "children": [
+          {
+            "id": "perimeter_sea_dyke",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the earthen sea dyke holding back the outer waters",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.1,
+                  0.24
+                ],
+                [
+                  0.36,
+                  0.28
+                ],
+                [
+                  0.66,
+                  0.32
+                ],
+                [
+                  0.92,
+                  0.36
+                ]
+              ],
+              "width": 26,
+              "height": 8,
+              "profile": "rounded",
+              "meander": 0.3
+            }
+          },
+          {
+            "id": "canal_basin",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "wide canal basin and outfall pool at the pumping station",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.38,
+                0.34
+              ],
+              "radius": 36,
+              "depth": 6,
+              "water": true,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "windmill_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "elevated earthen footing for the drainage windmill",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.48,
+                0.38
+              ],
+              "radius": 36,
+              "height": 4,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "main_drainage_canal",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the primary drainage canal flowing toward the outfall dyke",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.5,
+                  0.88
+                ],
+                [
+                  0.5,
+                  0.56
+                ],
+                [
+                  0.44,
+                  0.38
+                ],
+                [
+                  0.38,
+                  0.34
+                ],
+                "coast"
+              ],
+              "width": 18,
+              "depth": 5,
+              "profile": "sharp",
+              "meander": 0.25
+            }
+          },
+          {
+            "id": "cross_canal_east",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "lateral drainage ditch draining the eastern polder fields",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.5,
+                  0.56
+                ],
+                [
+                  0.78,
+                  0.56
+                ],
+                "coast"
+              ],
+              "width": 12,
+              "depth": 4,
+              "profile": "sharp",
+              "meander": 0.2
+            }
+          },
+          {
+            "id": "cross_canal_west",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "lateral drainage ditch draining the western polder fields",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.5,
+                  0.56
+                ],
+                [
+                  0.22,
+                  0.56
+                ],
+                "coast"
+              ],
+              "width": 12,
+              "depth": 4,
+              "profile": "sharp",
+              "meander": 0.2
+            }
+          },
+          {
+            "id": "village_polder_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the level polder bench for the village settlement",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.6
+              ],
+              "radius": 120,
+              "height": 3,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0014,
+          "humidityFrequency": 0.0016
+        }
+      },
+      {
+        "id": "reed_and_willow_beds",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "lush reed beds, willow thickets and marsh plants fringing the canals",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.05,
+          "spacing": 4,
+          "clumping": 0.75,
+          "maxSlope": 18,
+          "elevation": [
+            1,
+            7
+          ],
+          "edgeFalloff": 12,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "undergrowth": {
+            "grass": 0.65,
+            "flowers": 0.18,
+            "deadwood": 0.02
+          },
+          "species": [
+            {
+              "id": "polder_willow",
+              "shape": "willow_weeping",
+              "weight": 3
+            },
+            {
+              "id": "marsh_hazel",
+              "shape": "hazel_shrub",
+              "weight": 2
+            }
+          ]
+        }
+      },
+      {
+        "id": "sparse_polder_woods",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse oaks and birches scattered along field boundaries",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 6,
+          "clumping": 0.5,
+          "maxSlope": 24,
+          "elevation": [
+            2,
+            30
+          ],
+          "edgeFalloff": 12,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "undergrowth": {
+            "grass": 0.4,
+            "flowers": 0.08,
+            "deadwood": 0.02
+          },
+          "species": [
+            {
+              "id": "dyke_oak",
+              "shape": "oak_round",
+              "weight": 2
+            },
+            {
+              "id": "dyke_birch",
+              "shape": "birch_slim",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "great_windmill",
+        "kind": "generator",
+        "generator": "authored:great_brick_windmill",
+        "label": "the great brick drainage windmill pumping canal water over the dyke",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            25,
+            42,
+            27
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.48,
+              0.38
+            ]
+          },
+          {
+            "distance": "polder_village",
+            "min": 10,
+            "max": 80,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "params": {
+          "face": {
+            "toward": "polder_village"
+          }
+        },
+        "tags": [
+          "landmark",
+          "windmill"
+        ]
+      },
+      {
+        "id": "polder_village",
+        "kind": "district",
+        "label": "the canal village quarter with brick step-gabled houses",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            180,
+            160
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.5,
+              0.6
+            ]
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6
+          }
+        ],
+        "params": {
+          "fabric": "canal",
+          "density": "medium",
+          "mix": [
+            "dutch_gable_house",
+            "cottage",
+            "dairy",
+            "barn",
+            "tavern",
+            "general_store"
+          ],
+          "blockSize": 36,
+          "plaza": true
+        },
+        "tags": [
+          "village",
+          "urban"
+        ],
+        "children": [
+          {
+            "id": "polder_moot_hall",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the water board moot hall and council chamber",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                16,
+                13
+              ]
+            },
+            "params": {
+              "archetype": "town_hall",
+              "floors": 2,
+              "roof": "gable"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "civic"
+            ]
+          },
+          {
+            "id": "polder_church",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the village church overlooking the canal basin",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                16,
+                17
+              ]
+            },
+            "params": {
+              "archetype": "church",
+              "floors": 1,
+              "roof": "gable"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "west",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "church"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "polder_farms",
+        "kind": "generator",
+        "generator": "precinct.farm@0",
+        "label": "reclaimed polder farm holding with pastures and crop fields",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            140,
+            120
+          ]
+        },
+        "constraints": [
+          {
+            "adjacent_to": "polder_village",
+            "gap": [
+              2,
+              28
+            ],
+            "strength": "soft"
+          },
+          {
+            "distance": "polder_village",
+            "min": 6,
+            "max": 60,
+            "strength": "soft"
+          }
+        ],
+        "params": {
+          "parcels": 6,
+          "parcelSize": 18,
+          "crops": [
+            "pasture",
+            "wheat",
+            "carrots",
+            "potatoes"
+          ],
+          "edge": "fence"
+        },
+        "ports": {
+          "gate": {
+            "type": "road_stub",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "farm",
+          "rural",
+          "precinct"
+        ]
+      },
+      {
+        "id": "canal_sluice_lock",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "the timber and stone lock gates regulating water levels",
+        "params": {
+          "entry": "canal_lock",
+          "route": {
+            "across": "polder_village"
+          }
+        }
+      },
+      {
+        "id": "dyke_cart_track",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "worn cart track running along the dyke shoulder",
+        "params": {
+          "entry": "cart_track",
+          "route": {
+            "along": "lanes",
+            "offset": 2,
+            "side": "right"
+          }
+        }
+      },
+      {
+        "id": "village_pier",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the stone loading quay for canal vessels",
+        "params": {
+          "prop": "pier",
+          "zone": "north",
+          "length": 12,
+          "width": 3
+        }
+      },
+      {
+        "id": "canal_freight_barge",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a loaded cargo barge moored in the canal basin",
+        "params": {
+          "prop": "barge",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "canal_rowboat",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a small wooden rowboat by the reed beds",
+        "params": {
+          "prop": "rowboat",
+          "zone": "north",
+          "on": "water"
+        }
+      },
+      {
+        "id": "hay_cart",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a farm cart parked near the holding",
+        "params": {
+          "prop": "cart",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "gravel lanes and dyke crest paths joining village, farm, and windmill",
+        "params": {
+          "anchors": [
+            "polder_village",
+            "polder_farms",
+            "great_windmill"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 16
+        }
+      }
+    ]
+  },
+  "programs": {
+    "great_brick_windmill": {
+      "mode": "landmark",
+      "envelope": [
+        25,
+        42,
+        27
+      ],
+      "sourceHash": "b3:d890d44c6ae011289d05c995d25c645655549b95e4ec49f460ea806d6b34d8d0",
+      "outputHash": "b3:f514165b514b5d45a744e21f45e95ac90b52a0ff7b3bbabba0007c4310dc740d",
+      "conforms": false,
+      "conformHash": "b3:c976bbbe2ddd5c21e4ba9687e5d6a8c325a68546c75c03652492d2e788313a2d",
+      "source": "export const envelope = [25, 42, 27];\n\nexport default function build(api) {\n  const [sizeX, sizeY, sizeZ] = api.size;\n  const seatY = 7;\n  const cx = 12;\n  const cz = 13;\n\n  // World theme palette extraction with safe fallbacks\n  const woodPlanks = api.theme.wood?.planks ?? \"minecraft:oak_planks\";\n  const woodLog = api.theme.wood?.log ?? \"minecraft:oak_log\";\n  const woodStripped = api.theme.wood?.stripped ?? \"minecraft:stripped_oak_log\";\n  const woodStairs = api.theme.wood?.stairs ?? \"minecraft:oak_stairs\";\n  const woodSlab = api.theme.wood?.slab ?? \"minecraft:oak_slab\";\n  const woodFence = api.theme.wood?.fence ?? \"minecraft:oak_fence\";\n  const woodTrapdoor = api.theme.wood?.trapdoor ?? \"minecraft:oak_trapdoor\";\n  const woodDoor = api.theme.wood?.door ?? \"minecraft:oak_door\";\n\n  const stonePrimary = api.theme.stone?.primary ?? \"minecraft:bricks\";\n  const stoneAccent = api.theme.stone?.accent ?? \"minecraft:stone_bricks\";\n  const stoneStairs = api.theme.stone?.stairs ?? \"minecraft:stone_brick_stairs\";\n  const stoneSlab = api.theme.stone?.slab ?? \"minecraft:stone_brick_slab\";\n  const stoneWall = api.theme.stone?.wall ?? \"minecraft:stone_brick_wall\";\n\n  const roofSolid = api.theme.roof?.solid ?? \"minecraft:mud_bricks\";\n  const roofStairs = api.theme.roof?.stairs ?? \"minecraft:mud_brick_stairs\";\n  const roofSlab = api.theme.roof?.slab ?? \"minecraft:mud_brick_slab\";\n\n  const groundPlinth = api.theme.ground?.plinth ?? \"minecraft:polished_andesite\";\n  const groundPavement = api.theme.ground?.pavement ?? \"minecraft:cobblestone\";\n\n  // Helpers for block states\n  function logAxis(baseLog, axis) {\n    const base = baseLog.replace(/\\[.*\\]/, \"\");\n    return `${base}[axis=${axis}]`;\n  }\n\n  function stairsState(baseStairs, facing, half = \"bottom\", shape = \"straight\") {\n    const base = baseStairs.replace(/\\[.*\\]/, \"\");\n    return `${base}[facing=${facing},half=${half},shape=${shape}]`;\n  }\n\n  function slabType(baseSlab, type = \"bottom\") {\n    const base = baseSlab.replace(/\\[.*\\]/, \"\");\n    return `${base}[type=${type}]`;\n  }\n\n  function trapdoorState(baseTrapdoor, facing = \"north\", half = \"bottom\", open = false) {\n    const base = baseTrapdoor.replace(/\\[.*\\]/, \"\");\n    return `${base}[facing=${facing},half=${half},open=${open}]`;\n  }\n\n  // Track occupied columns to guarantee ground conformance\n  const groundFootprint = new Map(); // key \"x,z\" -> lowest nominal Y\n\n  function setBlock(x, y, z, block) {\n    if (x < 0 || x >= sizeX || y < 0 || y >= sizeY || z < 0 || z >= sizeZ) return;\n    api.set(x, y, z, block);\n    const key = `${x},${z}`;\n    const curr = groundFootprint.get(key);\n    if (curr === undefined || y < curr) {\n      groundFootprint.set(key, y);\n    }\n  }\n\n  function octDist(dx, dz) {\n    return Math.max(Math.abs(dx), Math.abs(dz), (Math.abs(dx) + Math.abs(dz)) * 0.7071);\n  }\n\n  // -------------------------------------------------------------\n  // 1. BASE APRON & DYKE PLATFORM\n  // -------------------------------------------------------------\n  for (let x = 0; x < sizeX; x++) {\n    for (let z = 0; z < sizeZ; z++) {\n      const d = octDist(x - cx, z - cz);\n      if (d <= 8.2) {\n        setBlock(x, seatY, z, d > 7.4 ? groundPlinth : groundPavement);\n      }\n    }\n  }\n\n  // -------------------------------------------------------------\n  // 2. DRAINAGE CULVERT & SCOOP WHEEL (SCHERPRAD)\n  // -------------------------------------------------------------\n  // Culvert race along x = 4..7 from z = 1 to z = 25\n  for (let z = 1; z <= 25; z++) {\n    // Water race floor\n    for (let x = 4; x <= 7; x++) {\n      setBlock(x, seatY - 1, z, groundPavement);\n    }\n    // Masonry retaining side walls\n    for (let y = seatY - 1; y <= seatY + 2; y++) {\n      setBlock(3, y, z, stonePrimary);\n      setBlock(8, y, z, stonePrimary);\n    }\n    // Wall coping\n    setBlock(3, seatY + 3, z, stoneSlab);\n    setBlock(8, seatY + 3, z, stoneSlab);\n  }\n\n  // North Culvert Arched Outflow Hood (z = 2..5)\n  for (let z = 2; z <= 5; z++) {\n    setBlock(4, seatY + 3, z, stairsState(stoneStairs, \"west\", \"bottom\"));\n    setBlock(5, seatY + 3, z, stoneSlab);\n    setBlock(6, seatY + 3, z, stoneSlab);\n    setBlock(7, seatY + 3, z, stairsState(stoneStairs, \"east\", \"bottom\"));\n  }\n\n  // Sluice Gate Mechanism at z = 5\n  setBlock(3, seatY + 4, 5, logAxis(woodLog, \"y\"));\n  setBlock(8, seatY + 4, 5, logAxis(woodLog, \"y\"));\n  setBlock(3, seatY + 5, 5, woodFence);\n  setBlock(8, seatY + 5, 5, woodFence);\n  for (let x = 4; x <= 7; x++) {\n    setBlock(x, seatY + 5, 5, logAxis(woodLog, \"x\"));\n    setBlock(x, seatY + 1, 5, woodPlanks);\n    setBlock(x, seatY + 2, 5, woodFence);\n  }\n\n  // Scoop Wheel (Scheprad) in Chamber (x = 5..6, z = 11..15, y = seatY..seatY+4)\n  // Axle connecting through tower wall into internal gears\n  for (let x = 4; x <= 11; x++) {\n    setBlock(x, seatY + 2, 13, logAxis(woodLog, \"x\"));\n  }\n  setBlock(5, seatY + 2, 13, woodStripped);\n  setBlock(6, seatY + 2, 13, woodStripped);\n\n  // Scoop spokes and paddle blades\n  for (let dy = -2; dy <= 2; dy++) {\n    for (let dz = -2; dz <= 2; dz++) {\n      const dist = Math.sqrt(dy * dy + dz * dz);\n      if (dist > 0.8 && dist <= 2.2) {\n        const y = seatY + 2 + dy;\n        const z = 13 + dz;\n        setBlock(5, y, z, woodFence);\n        setBlock(6, y, z, woodTrapdoor);\n      }\n    }\n  }\n\n  // Inspection timber deck over the wheel chamber\n  for (let z = 10; z <= 16; z++) {\n    for (let x = 4; x <= 7; x++) {\n      setBlock(x, seatY + 4, z, slabType(woodSlab, \"top\"));\n    }\n  }\n\n  // -------------------------------------------------------------\n  // 3. OCTAGONAL BRICK TOWER SHAFT (y = seatY to seatY + 19)\n  // -------------------------------------------------------------\n  for (let y = seatY; y <= seatY + 19; y++) {\n    const isBase = y <= seatY + 4;\n    const t = isBase ? 0 : (y - (seatY + 4)) / 15.0;\n    const rOut = isBase ? 6.2 : 6.0 - t * 2.0; // from 6.2 down to 4.0\n    const rIn = Math.max(1.8, rOut - 1.25);\n\n    const isCorbelLevel = y === seatY + 11 || y === seatY + 15 || y === seatY + 19;\n\n    for (let x = cx - 8; x <= cx + 8; x++) {\n      for (let z = cz - 8; z <= cz + 8; z++) {\n        const d = octDist(x - cx, z - cz);\n\n        // Tower walls\n        if (d <= rOut && d >= rIn) {\n          if (y === seatY) {\n            setBlock(x, y, z, groundPlinth);\n          } else if (isCorbelLevel && d >= rOut - 0.4) {\n            setBlock(x, y, z, stoneAccent);\n          } else {\n            setBlock(x, y, z, stonePrimary);\n          }\n        }\n      }\n    }\n  }\n\n  // -------------------------------------------------------------\n  // 4. FLOORS & INTERNAL STRUCTURE\n  // -------------------------------------------------------------\n  // Ground floor pavement\n  for (let x = cx - 5; x <= cx + 5; x++) {\n    for (let z = cz - 5; z <= cz + 5; z++) {\n      if (octDist(x - cx, z - cz) < 4.8) {\n        setBlock(x, seatY, z, groundPavement);\n      }\n    }\n  }\n\n  // Intermediate wooden floors at y = seatY + 5 and y = seatY + 11\n  const floorLevels = [seatY + 5, seatY + 11];\n  for (const fy of floorLevels) {\n    for (let x = cx - 5; x <= cx + 5; x++) {\n      for (let z = cz - 5; z <= cz + 5; z++) {\n        if (octDist(x - cx, z - cz) < 4.0) {\n          // Leave hatch for ladder at (cx - 2, cz - 2)\n          if (x === cx - 2 && z === cz - 2) continue;\n          setBlock(x, fy, z, woodPlanks);\n        }\n      }\n    }\n  }\n\n  // Vertical King Shaft (koningsspil) running through tower center\n  for (let y = seatY + 1; y <= seatY + 21; y++) {\n    setBlock(cx, y, cz, logAxis(woodLog, \"y\"));\n  }\n\n  // Lower pit gear on ground floor\n  setBlock(cx + 1, seatY + 2, cz, stairsState(woodStairs, \"east\", \"top\"));\n  setBlock(cx - 1, seatY + 2, cz, stairsState(woodStairs, \"west\", \"top\"));\n  setBlock(cx, seatY + 2, cz + 1, stairsState(woodStairs, \"south\", \"top\"));\n  setBlock(cx, seatY + 2, cz - 1, stairsState(woodStairs, \"north\", \"top\"));\n\n  // Ladders between floors\n  for (let y = seatY + 1; y <= seatY + 18; y++) {\n    setBlock(cx - 2, y, cz - 2, \"minecraft:ladder[facing=south]\");\n  }\n\n  // -------------------------------------------------------------\n  // 5. DOORS & WINDOWS\n  // -------------------------------------------------------------\n  // Ground Front Door (North, z = cz - 6, x = cx)\n  for (let y = seatY + 1; y <= seatY + 3; y++) {\n    setBlock(cx, y, cz - 6, \"minecraft:air\");\n    setBlock(cx, y, cz - 5, \"minecraft:air\");\n  }\n  setBlock(cx, seatY + 1, cz - 6, \"minecraft:oak_door[facing=north,half=lower,open=false]\");\n  setBlock(cx, seatY + 2, cz - 6, \"minecraft:oak_door[facing=north,half=upper,open=false]\");\n  setBlock(cx, seatY + 4, cz - 6, stairsState(stoneStairs, \"north\", \"bottom\"));\n\n  // Ground Back Door (South, z = cz + 6, x = cx)\n  for (let y = seatY + 1; y <= seatY + 3; y++) {\n    setBlock(cx, y, cz + 6, \"minecraft:air\");\n    setBlock(cx, y, cz + 5, \"minecraft:air\");\n  }\n  setBlock(cx, seatY + 1, cz + 6, \"minecraft:oak_door[facing=south,half=lower,open=false]\");\n  setBlock(cx, seatY + 2, cz + 6, \"minecraft:oak_door[facing=south,half=upper,open=false]\");\n  setBlock(cx, seatY + 4, cz + 6, stairsState(stoneStairs, \"south\", \"bottom\"));\n\n  // Arched Windows at intermediate levels\n  const windowSpecs = [\n    { x: cx - 5, y: seatY + 7, z: cz, facing: \"west\" },\n    { x: cx + 5, y: seatY + 7, z: cz, facing: \"east\" },\n    { x: cx, y: seatY + 14, z: cz - 4, facing: \"north\" },\n    { x: cx, y: seatY + 14, z: cz + 4, facing: \"south\" },\n  ];\n  for (const win of windowSpecs) {\n    setBlock(win.x, win.y, win.z, \"minecraft:glass_pane\");\n    setBlock(win.x, win.y + 1, win.z, \"minecraft:glass_pane\");\n    setBlock(win.x, win.y - 1, win.z, stairsState(stoneStairs, win.facing, \"top\"));\n    setBlock(win.x, win.y + 2, win.z, stairsState(stoneStairs, win.facing, \"bottom\"));\n  }\n\n  // -------------------------------------------------------------\n  // 6. STAGING GALLERY (STELLING) at y = seatY + 11..13\n  // -------------------------------------------------------------\n  const stageBeamY = seatY + 11;\n  const stageDeckY = seatY + 12;\n  const stageR = 7.6;\n\n  // Cantilever radial beams & underneath diagonal braces\n  const beamAngles = [0, 45, 90, 135, 180, 225, 270, 315];\n  for (const deg of beamAngles) {\n    const rad = (deg * Math.PI) / 180;\n    const cos = Math.cos(rad);\n    const sin = Math.sin(rad);\n\n    for (let r = 4.5; r <= stageR; r += 0.8) {\n      const bx = Math.round(cx + cos * r);\n      const bz = Math.round(cz + sin * r);\n      setBlock(bx, stageBeamY, bz, logAxis(woodLog, Math.abs(cos) > Math.abs(sin) ? \"x\" : \"z\"));\n    }\n\n    // Diagonal support strut from tower wall\n    const strutX = Math.round(cx + cos * (stageR - 1.2));\n    const strutZ = Math.round(cz + sin * (stageR - 1.2));\n    setBlock(strutX, stageBeamY - 1, strutZ, woodFence);\n    setBlock(strutX, stageBeamY - 2, strutZ, woodFence);\n    setBlock(Math.round(cx + cos * 4.2), stageBeamY - 3, Math.round(cz + sin * 4.2), stairsState(woodStairs, cos > 0 ? \"west\" : \"east\", \"top\"));\n  }\n\n  // Stage Deck & Perimeter Railing\n  for (let x = cx - 9; x <= cx + 9; x++) {\n    for (let z = cz - 9; z <= cz + 9; z++) {\n      const d = octDist(x - cx, z - cz);\n      if (d <= stageR && d >= 4.8) {\n        setBlock(x, stageDeckY, z, slabType(woodSlab, \"bottom\"));\n\n        // Perimeter fence\n        if (d >= stageR - 0.7) {\n          setBlock(x, stageDeckY + 1, z, woodFence);\n        }\n      }\n    }\n  }\n\n  // Door onto the Stage at South facet (y = seatY + 12..14, z = cz + 4, x = cx)\n  for (let y = stageDeckY + 1; y <= stageDeckY + 3; y++) {\n    setBlock(cx, y, cz + 4, \"minecraft:air\");\n    setBlock(cx, y, cz + 5, \"minecraft:air\");\n  }\n  setBlock(cx, stageDeckY + 1, cz + 5, \"minecraft:oak_door[facing=south,half=lower,open=false]\");\n  setBlock(cx, stageDeckY + 2, cz + 5, \"minecraft:oak_door[facing=south,half=upper,open=false]\");\n\n  // -------------------------------------------------------------\n  // 7. ROTATING THATCHED CAP (KAP) (y = seatY + 19 to seatY + 26)\n  // -------------------------------------------------------------\n  const capBaseY = seatY + 19;\n  // Wooden / Stone slip ring (kruiwerk)\n  for (let x = cx - 5; x <= cx + 5; x++) {\n    for (let z = cz - 5; z <= cz + 5; z++) {\n      const d = octDist(x - cx, z - cz);\n      if (d <= 4.4 && d >= 3.6) {\n        setBlock(x, capBaseY, z, stoneAccent);\n      }\n    }\n  }\n\n  // Boat-shaped Ogee Thatched Cap Body\n  const czCap = cz - 0.5;\n  const capHeight = 7;\n\n  for (let h = 0; h <= capHeight; h++) {\n    const y = capBaseY + 1 + h;\n    const t = h / capHeight;\n    const rx = 3.8 * (1.0 - t * 0.85);\n    const rzFront = 4.5 * (1.0 - t * 0.65);\n    const rzBack = 5.2 * (1.0 - t * 0.75);\n\n    for (let x = cx - 5; x <= cx + 5; x++) {\n      for (let z = cz - 7; z <= cz + 7; z++) {\n        const dx = (x - cx) / rx;\n        const dz = (z < czCap) ? (z - czCap) / rzFront : (z - czCap) / rzBack;\n        const dCap = Math.sqrt(dx * dx + dz * dz);\n\n        if (dCap <= 1.05) {\n          if (h === capHeight) {\n            // Ridge Line\n            setBlock(x, y, z, slabType(roofSlab, \"bottom\"));\n          } else if (dCap >= 0.72) {\n            // Roof Shell\n            if (z === Math.round(czCap - rzFront) && h <= 3) {\n              // Front Timber Breast (Borst)\n              setBlock(x, y, z, woodStripped);\n            } else {\n              setBlock(x, y, z, (h === 0 || dCap > 0.95) ? roofStairs : roofSolid);\n            }\n          } else if (h === 0) {\n            // Cap floor deck\n            setBlock(x, y, z, woodPlanks);\n          }\n        }\n      }\n    }\n  }\n\n  // Cap Ridge Finials & Weathervane Mast\n  for (let z = cz - 3; z <= cz + 2; z++) {\n    setBlock(cx, capBaseY + capHeight + 1, z, slabType(stoneSlab, \"bottom\"));\n  }\n  setBlock(cx, capBaseY + capHeight + 2, cz - 1, woodFence);\n  setBlock(cx, capBaseY + capHeight + 3, cz - 1, stoneWall);\n  setBlock(cx, capBaseY + capHeight + 4, cz - 1, \"minecraft:iron_bars\");\n\n  // -------------------------------------------------------------\n  // 8. WINDSHAFT, HUB & 4 MASSIVE LATTICE SAILS (WIEKEN)\n  // -------------------------------------------------------------\n  const hubY = seatY + 22;\n  const hubZ = cz - 7;\n\n  // Windshaft (bovenas) extending from cap center forward\n  for (let z = cz - 3; z >= hubZ; z--) {\n    setBlock(cx, hubY, z, logAxis(woodLog, \"z\"));\n  }\n  // Iron Hub Block (askop)\n  setBlock(cx, hubY, hubZ, stoneAccent);\n\n  // Sail Arm Length = 9 blocks (spanning diameter ~19 blocks)\n  const sailLen = 9;\n\n  // 1. TOP SAIL ARM (+Y)\n  for (let i = 1; i <= sailLen; i++) {\n    const sy = hubY + i;\n    setBlock(cx, sy, hubZ, logAxis(woodLog, \"y\"));\n    // Lattice crossbars on East side (+X)\n    setBlock(cx + 1, sy, hubZ, woodFence);\n    setBlock(cx + 2, sy, hubZ, woodTrapdoor);\n    // Unfurled Canvas on mid section\n    if (i >= 2 && i <= 8) {\n      setBlock(cx + 1, sy, hubZ, \"minecraft:white_wool\");\n    }\n    // Leading edge windboard on West side (-X)\n    setBlock(cx - 1, sy, hubZ, trapdoorState(woodTrapdoor, \"east\", \"bottom\", false));\n  }\n\n  // 2. BOTTOM SAIL ARM (-Y)\n  for (let i = 1; i <= sailLen; i++) {\n    const sy = hubY - i;\n    setBlock(cx, sy, hubZ, logAxis(woodLog, \"y\"));\n    // Lattice crossbars on West side (-X)\n    setBlock(cx - 1, sy, hubZ, woodFence);\n    setBlock(cx - 2, sy, hubZ, woodTrapdoor);\n    // Unfurled Canvas\n    if (i >= 2 && i <= 8) {\n      setBlock(cx - 1, sy, hubZ, \"minecraft:white_wool\");\n    }\n    // Leading edge windboard on East side (+X)\n    setBlock(cx + 1, sy, hubZ, trapdoorState(woodTrapdoor, \"west\", \"bottom\", false));\n  }\n\n  // 3. WEST SAIL ARM (-X)\n  for (let i = 1; i <= sailLen; i++) {\n    const sx = cx - i;\n    setBlock(sx, hubY, hubZ, logAxis(woodLog, \"x\"));\n    // Lattice crossbars on Top side (+Y)\n    setBlock(sx, hubY + 1, hubZ, woodFence);\n    setBlock(sx, hubY + 2, hubZ, woodTrapdoor);\n    // Unfurled Canvas\n    if (i >= 2 && i <= 8) {\n      setBlock(sx, hubY + 1, hubZ, \"minecraft:white_wool\");\n    }\n    // Leading edge windboard on Bottom side (-Y)\n    setBlock(sx, hubY - 1, hubZ, trapdoorState(woodTrapdoor, \"north\", \"top\", false));\n  }\n\n  // 4. EAST SAIL ARM (+X)\n  for (let i = 1; i <= sailLen; i++) {\n    const sx = cx + i;\n    setBlock(sx, hubY, hubZ, logAxis(woodLog, \"x\"));\n    // Lattice crossbars on Bottom side (-Y)\n    setBlock(sx, hubY - 1, hubZ, woodFence);\n    setBlock(sx, hubY - 2, hubZ, woodTrapdoor);\n    // Unfurled Canvas\n    if (i >= 2 && i <= 8) {\n      setBlock(sx, hubY - 1, hubZ, \"minecraft:white_wool\");\n    }\n    // Leading edge windboard on Top side (+Y)\n    setBlock(sx, hubY + 1, hubZ, trapdoorState(woodTrapdoor, \"south\", \"bottom\", false));\n  }\n\n  // -------------------------------------------------------------\n  // 9. CAP TURNING TAIL STRUCTURE (STAARTWERK & KRUIHASPEL)\n  // -------------------------------------------------------------\n  // Main tail pole sloping from cap rear (y=seatY+22, z=cz+5) to stage (y=seatY+12, z=cz+11)\n  const tailSteps = 6;\n  for (let s = 0; s <= tailSteps; s++) {\n    const t = s / tailSteps;\n    const ty = Math.round((seatY + 23) - t * 10);\n    const tz = Math.round((cz + 4) + t * 7);\n    setBlock(cx, ty, tz, logAxis(woodLog, \"z\"));\n  }\n\n  // Diagonal lateral braces (spruiten) from cap sides to tail pole\n  for (let s = 1; s <= 4; s++) {\n    const t = s / 4;\n    const by = Math.round((seatY + 22) - t * 4);\n    const bz = Math.round((cz + 2) + t * 6);\n    const bxOffset = Math.round(3.5 * (1 - t));\n    setBlock(cx - bxOffset, by, bz, woodFence);\n    setBlock(cx + bxOffset, by, bz, woodFence);\n  }\n\n  // Winch Wheel (kruilier) at bottom of the tail pole\n  setBlock(cx, stageDeckY + 1, cz + 11, woodFence);\n  setBlock(cx, stageDeckY + 2, cz + 11, woodTrapdoor);\n  setBlock(cx - 1, stageDeckY + 1, cz + 11, woodFence);\n  setBlock(cx + 1, stageDeckY + 1, cz + 11, woodFence);\n\n  // -------------------------------------------------------------\n  // 10. GROUND CONFORMANCE PASS (RULE 6)\n  // -------------------------------------------------------------\n  // Fill foundations downwards to heightAt(x, z) on slopes/shores,\n  // or reinforce upward if terrain rises above nominal seat plane.\n  for (const [key, nominalBaseY] of groundFootprint.entries()) {\n    const [sx, sz] = key.split(\",\").map(Number);\n    const gh = api.heightAt(sx, sz);\n    const terrainY = Math.max(0, Math.min(sizeY - 1, Math.round(seatY + gh)));\n\n    if (terrainY < nominalBaseY) {\n      // Ground falls away: step foundation down to meet terrain\n      for (let y = terrainY; y < nominalBaseY; y++) {\n        const d = octDist(sx - cx, sz - cz);\n        const mat = d <= 6.5 ? stonePrimary : groundPlinth;\n        api.set(sx, y, sz, mat);\n      }\n    } else if (terrainY > nominalBaseY && terrainY < sizeY) {\n      // Ground rises: extend wall / plinth upward to meet rising ground\n      for (let y = nominalBaseY; y <= terrainY; y++) {\n        const d = octDist(sx - cx, sz - cz);\n        if (d >= 4.5 && d <= 7.5) {\n          api.set(sx, y, sz, stonePrimary);\n        }\n      }\n    }\n  }\n\n  // Return complete landmark metadata\n  return {\n    name: \"great_brick_windmill\",\n    seatY,\n    anchors: {\n      front: [cx, seatY, 0],\n      door: [cx, seatY + 1, cz - 6],\n      culvert: [5, seatY, 2],\n    },\n    interiors: [\n      {\n        min: [cx - 3, seatY + 1, cz - 3],\n        max: [cx + 3, seatY + 4, cz + 3],\n        kind: \"vault\",\n      },\n      {\n        min: [cx - 2, seatY + 12, cz - 2],\n        max: [cx + 2, seatY + 16, cz + 2],\n        kind: \"quarters\",\n      },\n    ],\n  };\n}"
+    }
+  }
+}

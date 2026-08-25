@@ -1,0 +1,1158 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "starmetal_crater",
+    "worldSeed": "926",
+    "prompt": "A market town grown around a crashed star-metal meteorite half-buried in its central square, still glowing in its crater, with the smiths' forges ringed around the rim.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:cobblestone",
+      "road.shoulder": "minecraft:gravel",
+      "plaza.cobble": "minecraft:stone_bricks",
+      "plaza.border": "minecraft:deepslate_bricks"
+    }
+  },
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.65,
+    "decline": 0.1,
+    "formality": 0.35,
+    "character": {
+      "label": "meteorite forge market town",
+      "materialTheme": "temperate_timber",
+      "urbanForm": "radial",
+      "archetypes": {
+        "prefer": [
+          "smithy",
+          "foundry",
+          "armory",
+          "workshop",
+          "market_stall",
+          "tavern",
+          "inn",
+          "warehouse",
+          "townhouse",
+          "cottage"
+        ]
+      },
+      "props": {
+        "prefer": [
+          "cart",
+          "market_barrow",
+          "notice_board",
+          "hitching_post",
+          "anvil"
+        ]
+      },
+      "programs": [
+        {
+          "id": "starmetal_meteorite",
+          "mode": "landmark",
+          "brief": "A colossal jagged celestial meteorite of black meteoric iron, crying obsidian, and radiant crystalline star-metal veins glowing with purple and cyan heat, half-buried nose-down in the impact crater with fracture crusts flaring outward.",
+          "envelope": [
+            26,
+            20,
+            26
+          ]
+        },
+        {
+          "id": "starmetal_cluster",
+          "mode": "plugin",
+          "brief": "A smoking cluster of star-metal slag and glowing amethyst and copper crystal shards embedded into the churned ground.",
+          "envelope": [
+            5,
+            4,
+            5
+          ],
+          "count": 8
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "a market town arranged radially around a central impact crater holding a glowing star-metal meteorite half-buried in the ground",
+      "icons": "a half-buried star-metal meteorite glowing in the central crater; smithies, smelting hearths, and forges ringed directly around the rim; market stalls and trader wagons filling the adjoining avenues"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "The Crater Market of Aethelfall",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "temperate basin and hills surrounding the meteorite shelf",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 72,
+          "amplitude": 24,
+          "octaves": 5,
+          "frequency": 0.0035,
+          "gain": 0.48,
+          "erosionPasses": 2,
+          "cliffThreshold": 55,
+          "soilDepth": 4,
+          "beachWidth": 3,
+          "snowLineFraction": 0.95
+        },
+        "children": [
+          {
+            "id": "town_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "elevated ground supporting the radial market town",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 130,
+              "height": 6,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "impact_crater",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the steep impact crater excavated by the falling star-metal meteorite",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 34,
+              "depth": 10,
+              "water": false,
+              "flooded": "never",
+              "profile": "sharp",
+              "irregularity": 0.15
+            }
+          },
+          {
+            "id": "north_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "sheltering ridge to the north of the crater valley",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.15,
+                  0.2
+                ],
+                [
+                  0.5,
+                  0.12
+                ],
+                [
+                  0.85,
+                  0.18
+                ]
+              ],
+              "width": 55,
+              "height": 32,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "south_valley",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "gentle southern valley leading away from the town",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.2,
+                  0.85
+                ],
+                [
+                  0.5,
+                  0.88
+                ],
+                [
+                  0.8,
+                  0.82
+                ]
+              ],
+              "width": 45,
+              "depth": 14,
+              "flooded": "never",
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0012
+        }
+      },
+      {
+        "id": "crater_rim_woods",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "spruce and oak woodland ringing the settlement plateau",
+        "params": {
+          "area": {
+            "at": [
+              0.5,
+              0.5
+            ],
+            "radius": 190
+          },
+          "density": 0.08,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 32,
+          "elevation": [
+            2,
+            90
+          ],
+          "edgeFalloff": 20,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "meteorite"
+          ],
+          "undergrowth": {
+            "grass": 0.4,
+            "flowers": 0.04,
+            "deadwood": 0.06
+          },
+          "strata": true,
+          "species": [
+            {
+              "id": "tall_spruce",
+              "weight": 3,
+              "shape": "spruce_tall"
+            },
+            {
+              "id": "spreading_oak",
+              "weight": 2,
+              "shape": "oak_spreading"
+            }
+          ]
+        }
+      },
+      {
+        "id": "wilderness",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse background woods across the region",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 4,
+          "clumping": 0.4,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "meteorite"
+          ],
+          "species": [
+            {
+              "id": "field_oak",
+              "weight": 1,
+              "shape": "oak_round"
+            }
+          ]
+        }
+      },
+      {
+        "id": "the_meteorite",
+        "kind": "generator",
+        "generator": "authored:starmetal_meteorite",
+        "label": "the glowing star-metal meteorite embedded in the crater heart",
+        "params": {
+          "seat": "embed",
+          "embedDepth": 6
+        },
+        "constraints": [
+          {
+            "at": [
+              0.5,
+              0.5
+            ]
+          }
+        ],
+        "tags": [
+          "landmark",
+          "meteorite"
+        ]
+      },
+      {
+        "id": "impact_furrow",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "the scorched impact trench gouged into the earth towards the meteorite",
+        "params": {
+          "entry": "crash_furrow",
+          "route": {
+            "into": "the_meteorite",
+            "run": 46
+          }
+        }
+      },
+      {
+        "id": "scattered_shards",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "smoking shards and fragments of star-metal slag",
+        "params": {
+          "program": "starmetal_cluster",
+          "count": 8,
+          "area": {
+            "at": [
+              0.5,
+              0.5
+            ],
+            "radius": 0.18
+          },
+          "spacing": 16,
+          "seat": "embed",
+          "embedDepth": 2,
+          "avoidTags": [
+            "road",
+            "plaza"
+          ]
+        }
+      },
+      {
+        "id": "crater_square",
+        "kind": "primitive",
+        "label": "the market square ringed around the crater rim",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            40,
+            40
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public",
+          "market"
+        ]
+      },
+      {
+        "id": "great_foundry",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the great star-metal smelting foundry on the rim",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            15
+          ]
+        },
+        "params": {
+          "archetype": "foundry",
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "crater_square",
+            "gap": [
+              1,
+              6
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "crater_square"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "craft",
+          "smithy"
+        ]
+      },
+      {
+        "id": "star_forge_north",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the northern star-iron smithy",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            10,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "smithy",
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "crater_square",
+            "gap": [
+              1,
+              6
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "crater_square"
+          },
+          {
+            "distance": "#tag:craft",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "craft",
+          "smithy"
+        ]
+      },
+      {
+        "id": "weaponsmith_east",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the star-blade weaponsmith's forge on the east rim",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "smithy",
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "crater_square",
+            "gap": [
+              1,
+              6
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "crater_square"
+          },
+          {
+            "distance": "#tag:craft",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "craft",
+          "smithy"
+        ]
+      },
+      {
+        "id": "armorsmith_west",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the plate-armourer's shop and armory on the west rim",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            17
+          ]
+        },
+        "params": {
+          "archetype": "armory",
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "crater_square",
+            "gap": [
+              1,
+              6
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "crater_square"
+          },
+          {
+            "distance": "#tag:craft",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "craft",
+          "smithy"
+        ]
+      },
+      {
+        "id": "bellows_forge_south",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the blast-bellows smithy on the south rim",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            9,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "smithy",
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "crater_square",
+            "gap": [
+              1,
+              6
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "crater_square"
+          },
+          {
+            "distance": "#tag:craft",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "craft",
+          "smithy"
+        ]
+      },
+      {
+        "id": "guildhall",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the smiths' and merchants' guildhall overlooking the square",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            14,
+            17
+          ]
+        },
+        "params": {
+          "archetype": "guildhall",
+          "floors": 1,
+          "roof": "hip",
+          "windowRhythm": "paired"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "crater_square",
+            "gap": [
+              2,
+              8
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "crater_square"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "civic",
+          "public"
+        ]
+      },
+      {
+        "id": "meteor_inn",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The Starfall Inn facing the crater square",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            13
+          ]
+        },
+        "params": {
+          "archetype": "inn",
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "dense"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "crater_square",
+            "gap": [
+              1,
+              8
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "crater_square"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "trade",
+          "house"
+        ]
+      },
+      {
+        "id": "ore_warehouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the secured star-metal ore storehouse",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            10,
+            15
+          ]
+        },
+        "params": {
+          "archetype": "warehouse",
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse",
+          "basement": {
+            "depth": 4,
+            "style": "vault"
+          }
+        },
+        "constraints": [
+          {
+            "distance": "crater_square",
+            "min": 8,
+            "max": 45,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:craft",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "warehouse",
+          "store"
+        ]
+      },
+      {
+        "id": "starlight_tavern",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the alehouse for visiting ore traders and teamsters",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "archetype": "tavern",
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "distance": "crater_square",
+            "min": 8,
+            "max": 50,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "trade",
+          "house"
+        ]
+      },
+      {
+        "id": "market_stall_hub",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the covered star-iron traders' bazaar stall",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "market_stall",
+          "floors": 1,
+          "roof": "flat",
+          "windowRhythm": "dense"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "crater_square",
+            "gap": [
+              1,
+              4
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "crater_square"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 3
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "market",
+          "trade"
+        ]
+      },
+      {
+        "id": "blacksmith_quarters",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the master metalworker's townhouse along the north lane",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            14,
+            15
+          ]
+        },
+        "params": {
+          "archetype": "townhouse",
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "distance": "crater_square",
+            "min": 14,
+            "max": 65,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "trader_cottage",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a merchant's cottage along the outer ring",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "cottage",
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "distance": "crater_square",
+            "min": 16,
+            "max": 75,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "miner_cottage",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a quarryman's cottage on the eastern road",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            11,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "cottage",
+          "floors": 2,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "crater_square",
+            "min": 18,
+            "max": 80,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "prop_market_barrow",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "trader's barrow on the square",
+        "params": {
+          "prop": "market_barrow",
+          "zone": "center",
+          "jitter": 0.08
+        }
+      },
+      {
+        "id": "prop_cart_square",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "ore cart laden with raw fragments",
+        "params": {
+          "prop": "cart",
+          "zone": "center",
+          "jitter": 0.12
+        }
+      },
+      {
+        "id": "prop_cart_south",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "freight wagon on the southern avenue",
+        "params": {
+          "prop": "cart",
+          "zone": "south",
+          "jitter": 0.15
+        }
+      },
+      {
+        "id": "prop_notice_board",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the guild bounty and price board",
+        "params": {
+          "prop": "notice_board",
+          "zone": "center",
+          "jitter": 0.05
+        }
+      },
+      {
+        "id": "prop_hitching_post",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "hitching post outside the inn",
+        "params": {
+          "prop": "hitching_post",
+          "zone": "center",
+          "jitter": 0.1
+        }
+      },
+      {
+        "id": "radial_lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "radial cobblestone avenues and ring lanes reaching every forge and door",
+        "params": {
+          "anchors": [
+            "crater_square",
+            "#tag:craft",
+            "#tag:house",
+            "the_meteorite"
+          ],
+          "pattern": "radial",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 14
+        }
+      }
+    ]
+  },
+  "programs": {
+    "starmetal_meteorite": {
+      "mode": "landmark",
+      "envelope": [
+        27,
+        26,
+        27
+      ],
+      "sourceHash": "b3:cbbc396acba058c95050296338c0d52dccbf0dc084d1b243183a0adcc52dec39",
+      "outputHash": "b3:4517dfd0d6dc4c7a7f2322855b32922984cacd9784219b8e8cb9bcaba8ad0bb4",
+      "conforms": false,
+      "conformHash": "b3:4a40049637359547f6ca5c06a500fb8c7b514ac64a3c0654c7b46634420f10cb",
+      "source": "export const envelope = [27, 26, 27];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const cx = 13;\n  const cz = 13;\n  const sy = 5; // Seat plane at y = 5 allows 5 blocks of terrain conformity below seat\n\n  // 3D voxel buffer for deterministic composition\n  const grid = new Array(W * H * D).fill(null);\n\n  function setV(x, y, z, b) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      grid[x + y * W + z * W * H] = b;\n    }\n  }\n\n  function getV(x, y, z) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      return grid[x + y * W + z * W * H];\n    }\n    return null;\n  }\n\n  // Deterministic coordinate-based hash for material variation\n  function coordHash(x, y, z) {\n    let h = (x * 374761393 + y * 668265263 + z * 127412617) ^ 0x5bf03635;\n    h = Math.imul(h ^ (h >>> 13), 1274126177);\n    return ((h ^ (h >>> 16)) >>> 0) / 4294967296;\n  }\n\n  // Theme helper utilities\n  const stonePrimary = api.theme.stone.primary;\n  const stoneAccent = api.theme.stone.accent || stonePrimary;\n  const pavement = api.theme.ground.pavement || stonePrimary;\n  const plinth = api.theme.ground.plinth || stonePrimary;\n  const kerb = api.theme.ground.kerb || pavement;\n  const stoneWall = api.theme.stone.wall ? api.theme.stone.wall.split(\"[\")[0] : \"minecraft:stone_brick_wall\";\n\n  function makeStairs(stairBase, facing, half = \"bottom\", shape = \"straight\") {\n    const base = stairBase.split(\"[\")[0];\n    return `${base}[facing=${facing},half=${half},shape=${shape}]`;\n  }\n\n  function makeSlab(slabBase, type = \"bottom\") {\n    const base = slabBase.split(\"[\")[0];\n    return `${base}[type=${type}]`;\n  }\n\n  const themeStair = api.theme.stone.stairs || \"minecraft:stone_brick_stairs\";\n  const themeSlab = api.theme.stone.slab || \"minecraft:stone_brick_slab\";\n\n  // -------------------------------------------------------------\n  // 1. IMPACT CRATER BASIN & CONFORMING FOUNDATION\n  // -------------------------------------------------------------\n  const floorHeights = new Map();\n\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const dist = Math.hypot(x - cx, z - cz);\n      if (dist <= 13.0) {\n        const rawH = api.heightAt(x, z);\n        const terrainY = Math.max(0, Math.min(H - 2, Math.round(sy + rawH)));\n\n        // Crater rim profile: sunken center, raised rim ring, outer apron\n        let craterOffset = 0;\n        if (dist < 3.8) {\n          craterOffset = -1; // Central impact depression\n        } else if (dist < 7.5) {\n          craterOffset = 0; // Inner floor\n        } else if (dist < 9.5) {\n          craterOffset = 1; // Inner rim step\n        } else if (dist < 11.8) {\n          // Raised ejecta rim with undulating crest\n          const angle = Math.atan2(z - cz, x - cx);\n          const rimNoise = 0.5 * Math.sin(4 * angle) + 0.3 * Math.cos(7 * angle);\n          craterOffset = 2 + Math.round(rimNoise);\n        } else {\n          craterOffset = 1; // Outer drop to street\n        }\n\n        const surfaceY = Math.max(terrainY, Math.min(H - 4, sy + craterOffset));\n        const startY = Math.max(0, Math.min(terrainY, sy - 2));\n\n        floorHeights.set(`${x},${z}`, surfaceY);\n\n        // Fill column from ground up to crater surface\n        for (let y = startY; y <= surfaceY; y++) {\n          const rnd = coordHash(x, y, z);\n          if (y === surfaceY) {\n            if (dist < 5.0) {\n              // Impact center scorched crust\n              if (rnd < 0.35) setV(x, y, z, \"minecraft:crying_obsidian\");\n              else if (rnd < 0.6) setV(x, y, z, \"minecraft:blackstone\");\n              else if (rnd < 0.8) setV(x, y, z, \"minecraft:magma_block\");\n              else setV(x, y, z, \"minecraft:smooth_basalt\");\n            } else if (dist < 9.5) {\n              // Inner plaza pavement cracked by impact\n              if (rnd < 0.45) setV(x, y, z, pavement);\n              else if (rnd < 0.7) setV(x, y, z, \"minecraft:cracked_deepslate_tiles\");\n              else if (rnd < 0.85) setV(x, y, z, \"minecraft:blackstone\");\n              else setV(x, y, z, stonePrimary);\n            } else if (dist <= 11.8) {\n              // Rim retaining wall & forge apron\n              if (rnd < 0.5) setV(x, y, z, stonePrimary);\n              else if (rnd < 0.8) setV(x, y, z, stoneAccent);\n              else setV(x, y, z, kerb);\n            } else {\n              setV(x, y, z, pavement);\n            }\n          } else {\n            // Sub-crater masonry & scorched rock\n            if (rnd < 0.5) setV(x, y, z, stonePrimary);\n            else if (rnd < 0.8) setV(x, y, z, \"minecraft:blackstone\");\n            else setV(x, y, z, \"minecraft:smooth_basalt\");\n          }\n        }\n      }\n    }\n  }\n\n  // -------------------------------------------------------------\n  // 2. RADIANT FRACTURE CREVASSES (Impact fissures)\n  // -------------------------------------------------------------\n  const fissures = [\n    { angle: -2.35, len: 10.5, mat: [\"minecraft:crying_obsidian\", \"minecraft:amethyst_block\"] },\n    { angle: -0.75, len: 11.0, mat: [\"minecraft:gilded_blackstone\", \"minecraft:sea_lantern\"] },\n    { angle: 0.85, len: 10.0, mat: [\"minecraft:magma_block\", \"minecraft:crying_obsidian\"] },\n    { angle: 2.30, len: 10.8, mat: [\"minecraft:amethyst_block\", \"minecraft:crying_obsidian\"] },\n  ];\n\n  for (const f of fissures) {\n    const cosA = Math.cos(f.angle);\n    const sinA = Math.sin(f.angle);\n    for (let d = 2.5; d <= f.len; d += 0.5) {\n      const fx = Math.round(cx + d * cosA + 0.3 * Math.sin(d * 1.5));\n      const fz = Math.round(cz + d * sinA + 0.3 * Math.cos(d * 1.5));\n      const fy = floorHeights.get(`${fx},${fz}`);\n      if (fy !== undefined) {\n        const rnd = coordHash(fx, fy, fz);\n        const block = rnd < 0.6 ? f.mat[0] : f.mat[1];\n        setV(fx, fy, fz, block);\n        setV(fx, fy - 1, fz, f.mat[0]);\n      }\n    }\n  }\n\n  // -------------------------------------------------------------\n  // 3. MAIN STAR-METAL METEORITE MONOLITH (Tilted Celestial Core)\n  // -------------------------------------------------------------\n  // Leaning axis from nose buried deep (P0) to soaring jagged peak (P1)\n  const P0 = { x: 11.2, y: sy - 1.0, z: 11.0 };\n  const P1 = { x: 15.6, y: sy + 15.6, z: 14.8 };\n  const Lx = P1.x - P0.x;\n  const Ly = P1.y - P0.y;\n  const Lz = P1.z - P0.z;\n  const Lsq = Lx * Lx + Ly * Ly + Lz * Lz;\n\n  for (let x = 6; x <= 21; x++) {\n    for (let y = sy - 2; y <= sy + 17; y++) {\n      for (let z = 6; z <= 21; z++) {\n        const vx = x - P0.x;\n        const vy = y - P0.y;\n        const vz = z - P0.z;\n        const dot = vx * Lx + vy * Ly + vz * Lz;\n        const t = dot / Lsq;\n\n        if (t >= -0.1 && t <= 1.06) {\n          const qx = P0.x + t * Lx;\n          const qy = P0.y + t * Ly;\n          const qz = P0.z + t * Lz;\n          const distAxis = Math.hypot(x - qx, y - qy, z - qz);\n\n          // Meteorite radius profile: bulbous center, tapering at peak\n          const tClamped = Math.max(0, Math.min(1, t));\n          let baseR = 5.3 * Math.sin(Math.PI * Math.pow(tClamped, 0.65) * 0.86 + 0.18);\n          if (t < 0) baseR += t * 2.5;\n          if (t > 0.8) baseR *= 1.0 - ((t - 0.8) / 0.26) * 0.72;\n\n          // Angular crystalline facet harmonics\n          const theta = Math.atan2(z - qz, x - qx);\n          const facet1 = 1.05 * Math.cos(3 * theta + t * 2.2);\n          const facet2 = 0.75 * Math.sin(5 * theta - t * 1.6);\n          const facet3 = 0.45 * Math.cos(2 * theta + (y - sy) * 0.45);\n          const maxR = baseR + facet1 + facet2 + facet3;\n\n          // Cleavage planes (celestial crystalline cut facets)\n          const cut1 = (x - cx) * 0.58 - (y - (sy + 7.5)) * 0.42 - (z - cz) * 0.68;\n          const cut2 = -(x - cx) * 0.68 + (y - (sy + 9.5)) * 0.48 + (z - cz) * 0.48;\n          const cut3 = (y - (sy + 13.8)) * 0.88 + (x - 14) * 0.32 + (z - 14) * 0.32;\n\n          if (distAxis <= maxR && cut1 < 4.7 && cut2 < 4.8 && cut3 < 4.3) {\n            // Star-metal internal rifts / radiant veins\n            // Vein 1: Purple Star-Metal (Amethyst & Crying Obsidian)\n            const v1 = Math.abs((x - cx) * 0.55 + (y - (sy + 7)) * -0.45 + (z - cz) * 0.7 - 0.4);\n            // Vein 2: Cyan Radiant Heat (Sea Lantern & Gilded Blackstone)\n            const v2 = Math.abs((x - 12.5) * -0.68 + (y - (sy + 9)) * -0.35 + (z - 13.5) * 0.64 + 0.8);\n            // Vein 3: Meteoric Iron Seam (Raw Iron & Ancient Ore)\n            const v3 = Math.abs((x - 13.5) * 0.35 + (y - (sy + 5)) * 0.8 + (z - 12.5) * 0.48 - 1.2);\n\n            const rnd = coordHash(x, y, z);\n\n            if (v1 < 0.65) {\n              // Purple Vein Core\n              if (rnd < 0.45) setV(x, y, z, \"minecraft:amethyst_block\");\n              else if (rnd < 0.75) setV(x, y, z, \"minecraft:budding_amethyst\");\n              else setV(x, y, z, \"minecraft:crying_obsidian\");\n            } else if (v1 < 1.35) {\n              // Purple Vein Sheath\n              if (rnd < 0.55) setV(x, y, z, \"minecraft:crying_obsidian\");\n              else if (rnd < 0.8) setV(x, y, z, \"minecraft:amethyst_block\");\n              else setV(x, y, z, \"minecraft:gilded_blackstone\");\n            } else if (v2 < 0.55) {\n              // Cyan Thermal Core\n              if (rnd < 0.6) setV(x, y, z, \"minecraft:sea_lantern\");\n              else setV(x, y, z, \"minecraft:prismarine_bricks\");\n            } else if (v2 < 1.25) {\n              // Cyan Sheath\n              if (rnd < 0.5) setV(x, y, z, \"minecraft:gilded_blackstone\");\n              else if (rnd < 0.8) setV(x, y, z, \"minecraft:prismarine_bricks\");\n              else setV(x, y, z, \"minecraft:polished_blackstone_bricks\");\n            } else if (v3 < 1.1) {\n              // Meteoric Iron Seam\n              if (rnd < 0.5) setV(x, y, z, \"minecraft:raw_iron_block\");\n              else if (rnd < 0.8) setV(x, y, z, \"minecraft:deepslate_iron_ore\");\n              else setV(x, y, z, \"minecraft:gilded_blackstone\");\n            } else {\n              // Meteoric Iron Crust & Outer Shell\n              if (distAxis > maxR - 1.25 || cut1 > 3.8 || cut2 > 3.8) {\n                if (rnd < 0.3) setV(x, y, z, \"minecraft:obsidian\");\n                else if (rnd < 0.55) setV(x, y, z, \"minecraft:crying_obsidian\");\n                else if (rnd < 0.75) setV(x, y, z, \"minecraft:gilded_blackstone\");\n                else if (rnd < 0.9) setV(x, y, z, \"minecraft:polished_blackstone\");\n                else setV(x, y, z, \"minecraft:cracked_deepslate_tiles\");\n              } else {\n                // Dense inner core\n                if (rnd < 0.45) setV(x, y, z, \"minecraft:blackstone\");\n                else if (rnd < 0.75) setV(x, y, z, \"minecraft:deepslate_iron_ore\");\n                else setV(x, y, z, \"minecraft:obsidian\");\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // -------------------------------------------------------------\n  // 4. SATELLITE CRYSTAL SHARDS & IMPACT EJECTA SPINES\n  // -------------------------------------------------------------\n  const shards = [\n    // North-West Star-Shard\n    { rx: 7.2, rz: 7.8, tx: 5.0, tz: 5.5, h: 7, baseR: 1.7, core: \"minecraft:amethyst_block\", crust: \"minecraft:crying_obsidian\" },\n    // South-East Radiant Spine\n    { rx: 18.5, rz: 18.2, tx: 21.0, tz: 20.2, h: 8, baseR: 1.8, core: \"minecraft:sea_lantern\", crust: \"minecraft:gilded_blackstone\" },\n    // South-West Crystal Spur\n    { rx: 7.8, rz: 18.0, tx: 6.2, tz: 20.0, h: 6, baseR: 1.6, core: \"minecraft:crying_obsidian\", crust: \"minecraft:obsidian\" },\n    // North-East Ore Monolith\n    { rx: 18.2, rz: 7.5, tx: 20.2, tz: 5.8, h: 7, baseR: 1.7, core: \"minecraft:raw_iron_block\", crust: \"minecraft:deepslate_iron_ore\" },\n  ];\n\n  for (const s of shards) {\n    for (let y = sy - 1; y <= sy + s.h; y++) {\n      const prog = (y - sy) / s.h;\n      if (prog <= 1.0) {\n        const curX = s.rx + (s.tx - s.rx) * Math.max(0, prog);\n        const curZ = s.rz + (s.tz - s.rz) * Math.max(0, prog);\n        const curR = s.baseR * (1.0 - prog * 0.75);\n\n        for (let dx = -Math.ceil(curR); dx <= Math.ceil(curR); dx++) {\n          for (let dz = -Math.ceil(curR); dz <= Math.ceil(curR); dz++) {\n            const x = Math.round(curX + dx);\n            const z = Math.round(curZ + dz);\n            const d = Math.hypot(x - curX, z - curZ);\n            if (d <= curR) {\n              const rnd = coordHash(x, y, z);\n              if (d <= curR * 0.5) {\n                setV(x, y, z, s.core);\n              } else {\n                setV(x, y, z, rnd < 0.6 ? s.crust : \"minecraft:polished_blackstone\");\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // -------------------------------------------------------------\n  // 5. SMITHS' FORGES & EXTRACTION HEARTHS RINGED AROUND THE RIM\n  // -------------------------------------------------------------\n  // North Smelting Station (x: 12..14, z: 2..4)\n  const nFloorY = floorHeights.get(\"13,3\") || sy + 2;\n  setV(13, nFloorY, 3, \"minecraft:magma_block\");\n  setV(12, nFloorY, 3, makeStairs(themeStair, \"east\"));\n  setV(14, nFloorY, 3, makeStairs(themeStair, \"west\"));\n  setV(13, nFloorY, 2, makeStairs(themeStair, \"south\"));\n  setV(12, nFloorY + 1, 2, stoneWall);\n  setV(12, nFloorY + 2, 2, stoneWall);\n  setV(12, nFloorY + 3, 2, \"minecraft:soul_lantern[hanging=false]\");\n  setV(14, nFloorY + 1, 2, stoneWall);\n  setV(14, nFloorY + 2, 2, stoneWall);\n  setV(14, nFloorY + 3, 2, \"minecraft:soul_lantern[hanging=false]\");\n  // Anvil block for star-metal forging\n  setV(13, nFloorY, 4, \"minecraft:raw_iron_block\");\n  setV(13, nFloorY + 1, 4, makeSlab(themeSlab, \"bottom\"));\n\n  // South Smelting Station (x: 12..14, z: 22..24)\n  const sFloorY = floorHeights.get(\"13,23\") || sy + 2;\n  setV(13, sFloorY, 23, \"minecraft:crying_obsidian\");\n  setV(12, sFloorY, 23, makeStairs(themeStair, \"east\"));\n  setV(14, sFloorY, 23, makeStairs(themeStair, \"west\"));\n  setV(13, sFloorY, 24, makeStairs(themeStair, \"north\"));\n  setV(12, sFloorY + 1, 24, stoneWall);\n  setV(12, sFloorY + 2, 24, stoneWall);\n  setV(12, sFloorY + 3, 24, \"minecraft:soul_lantern[hanging=false]\");\n  setV(14, sFloorY + 1, 24, stoneWall);\n  setV(14, sFloorY + 2, 24, stoneWall);\n  setV(14, sFloorY + 3, 24, \"minecraft:soul_lantern[hanging=false]\");\n  setV(13, sFloorY, 22, \"minecraft:deepslate_iron_ore\");\n  setV(13, sFloorY + 1, 22, makeSlab(themeSlab, \"bottom\"));\n\n  // East Smelting Station (x: 22..24, z: 12..14)\n  const eFloorY = floorHeights.get(\"23,13\") || sy + 2;\n  setV(23, eFloorY, 13, \"minecraft:sea_lantern\");\n  setV(23, eFloorY, 12, makeStairs(themeStair, \"south\"));\n  setV(23, eFloorY, 14, makeStairs(themeStair, \"north\"));\n  setV(24, eFloorY, 13, makeStairs(themeStair, \"west\"));\n  setV(24, eFloorY + 1, 12, stoneWall);\n  setV(24, eFloorY + 2, 12, stoneWall);\n  setV(24, eFloorY + 3, 12, \"minecraft:lantern[hanging=false]\");\n  setV(24, eFloorY + 1, 14, stoneWall);\n  setV(24, eFloorY + 2, 14, stoneWall);\n  setV(24, eFloorY + 3, 14, \"minecraft:lantern[hanging=false]\");\n  setV(22, eFloorY, 13, \"minecraft:gilded_blackstone\");\n  setV(22, eFloorY + 1, 13, makeSlab(themeSlab, \"bottom\"));\n\n  // West Smelting Station (x: 2..4, z: 12..14)\n  const wFloorY = floorHeights.get(\"3,13\") || sy + 2;\n  setV(3, wFloorY, 13, \"minecraft:amethyst_block\");\n  setV(3, wFloorY, 12, makeStairs(themeStair, \"south\"));\n  setV(3, wFloorY, 14, makeStairs(themeStair, \"north\"));\n  setV(2, wFloorY, 13, makeStairs(themeStair, \"east\"));\n  setV(2, wFloorY + 1, 12, stoneWall);\n  setV(2, wFloorY + 2, 12, stoneWall);\n  setV(2, wFloorY + 3, 12, \"minecraft:soul_lantern[hanging=false]\");\n  setV(2, wFloorY + 1, 14, stoneWall);\n  setV(2, wFloorY + 2, 14, stoneWall);\n  setV(2, wFloorY + 3, 14, \"minecraft:soul_lantern[hanging=false]\");\n  setV(4, wFloorY, 13, \"minecraft:cracked_deepslate_tiles\");\n  setV(4, wFloorY + 1, 13, makeSlab(themeSlab, \"bottom\"));\n\n  // -------------------------------------------------------------\n  // 6. PROTRUDING AMETHYST CLUSTERS ON EXPOSED VEINS\n  // -------------------------------------------------------------\n  const clusterDirs = [\n    { dx: 0, dy: 1, dz: 0, state: \"minecraft:amethyst_cluster[facing=up]\" },\n    { dx: 0, dy: -1, dz: 0, state: \"minecraft:amethyst_cluster[facing=down]\" },\n    { dx: 0, dy: 0, dz: -1, state: \"minecraft:amethyst_cluster[facing=north]\" },\n    { dx: 0, dy: 0, dz: 1, state: \"minecraft:amethyst_cluster[facing=south]\" },\n    { dx: -1, dy: 0, dz: 0, state: \"minecraft:amethyst_cluster[facing=west]\" },\n    { dx: 1, dy: 0, dz: 0, state: \"minecraft:amethyst_cluster[facing=east]\" },\n  ];\n\n  for (let x = 7; x <= 20; x++) {\n    for (let y = sy; y <= sy + 16; y++) {\n      for (let z = 7; z <= 20; z++) {\n        const block = getV(x, y, z);\n        if (block === \"minecraft:amethyst_block\" || block === \"minecraft:budding_amethyst\") {\n          for (const c of clusterDirs) {\n            const nx = x + c.dx;\n            const ny = y + c.dy;\n            const nz = z + c.dz;\n            if (getV(nx, ny, nz) === null) {\n              const rnd = coordHash(nx, ny, nz);\n              if (rnd < 0.35) {\n                setV(nx, ny, nz, c.state);\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // -------------------------------------------------------------\n  // 7. EMIT GRID DETERMINISTICALLY\n  // -------------------------------------------------------------\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const b = getV(x, y, z);\n        if (b !== null) {\n          api.set(x, y, z, b);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"Star-Metal Meteorite\",\n    seatY: sy,\n    anchors: {\n      front: [cx, sy + 1, 0],\n      approach_north: [cx, sy + 1, 0],\n      approach_south: [cx, sy + 1, 26],\n      north_forge: [13, nFloorY, 3],\n      south_forge: [13, sFloorY, 23],\n      east_forge: [23, eFloorY, 13],\n      west_forge: [3, wFloorY, 13],\n      meteorite_apex: [16, sy + 16, 15],\n    },\n  };\n}"
+    },
+    "starmetal_cluster": {
+      "mode": "plugin",
+      "envelope": [
+        11,
+        14,
+        11
+      ],
+      "sourceHash": "b3:7307e93d17f0c46a2c75e84e33689248533e33d8defe1bfa9448b6e6eeb192e5",
+      "outputHash": "b3:a57330f4693823d8b0c48b2db60171b2ed466eea442abfeba499f0287a945c01",
+      "conforms": false,
+      "conformHash": "b3:f4c4340bb687c088989409a276ee7b72a9eac90dde7872c58a226f1f61aa016a",
+      "source": "export const envelope = [11, 14, 11];\n\nexport default function build(api) {\n  const W = 11;\n  const H = 14;\n  const D = 11;\n  const seatY = 3;\n\n  const grid = new Array(W * H * D);\n  for (let i = 0; i < grid.length; i++) {\n    grid[i] = \"\";\n  }\n\n  function getIdx(x, y, z) {\n    return (x * H + y) * D + z;\n  }\n\n  function setBlock(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      grid[getIdx(x, y, z)] = block;\n    }\n  }\n\n  function getBlock(x, y, z) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      return grid[getIdx(x, y, z)];\n    }\n    return \"\";\n  }\n\n  function deleteBlock(x, y, z) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      grid[getIdx(x, y, z)] = \"\";\n    }\n  }\n\n  const themeStonePrimary = (api.theme && api.theme.stone && api.theme.stone.primary) ? api.theme.stone.primary : \"minecraft:cobblestone\";\n  const themeStoneAccent = (api.theme && api.theme.stone && api.theme.stone.accent) ? api.theme.stone.accent : \"minecraft:deepslate\";\n  const themeGroundScree = (api.theme && api.theme.ground && api.theme.ground.scree) ? api.theme.ground.scree : \"minecraft:tuff\";\n\n  const COPPER_FAMILY = [\n    \"minecraft:raw_copper_block\",\n    \"minecraft:copper_block\",\n    \"minecraft:cut_copper\",\n    \"minecraft:exposed_copper\",\n    \"minecraft:oxidized_copper\"\n  ];\n\n  const AMETHYST_FAMILY = [\n    \"minecraft:amethyst_block\",\n    \"minecraft:budding_amethyst\",\n    \"minecraft:amethyst_block\"\n  ];\n\n  const instanceStyle = api.instance.index % 8;\n\n  const leanAngle = api.random() * Math.PI * 2;\n  const leanDist = 0.8 + api.random() * 1.2;\n  const spireHeight = seatY + 7 + Math.floor(api.random() * 3);\n  const baseSpireRadius = 2.0 + api.random() * 0.4;\n  const craterRadius = 4.4 + (api.random() - 0.5) * 0.4;\n\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const dx = x - 5;\n      const dz = z - 5;\n      const dist = Math.hypot(dx, dz);\n\n      if (dist <= craterRadius) {\n        const localGround = seatY + api.heightAt(x, z);\n        const rimLift = Math.max(0, (1 - dist / craterRadius) * 2.6 + Math.sin(dx * 1.8 + dz * 1.5) * 0.4);\n        const topY = Math.round(seatY + rimLift);\n        const bottomY = Math.max(0, Math.min(seatY, localGround - 1));\n\n        for (let y = bottomY; y <= topY; y++) {\n          if (y < seatY) {\n            const fRoll = api.random();\n            if (fRoll < 0.4) {\n              setBlock(x, y, z, themeStoneAccent);\n            } else if (fRoll < 0.7) {\n              setBlock(x, y, z, \"minecraft:deepslate\");\n            } else {\n              setBlock(x, y, z, \"minecraft:tuff\");\n            }\n          } else if (dist > craterRadius - 1.2) {\n            const rRoll = api.random();\n            if (rRoll < 0.35) {\n              setBlock(x, y, z, themeStonePrimary);\n            } else if (rRoll < 0.65) {\n              setBlock(x, y, z, themeGroundScree);\n            } else if (rRoll < 0.85) {\n              setBlock(x, y, z, \"minecraft:basalt[axis=y]\");\n            } else {\n              setBlock(x, y, z, \"minecraft:blackstone\");\n            }\n          } else {\n            const sRoll = api.random();\n            if (sRoll < 0.35) {\n              setBlock(x, y, z, \"minecraft:gilded_blackstone\");\n            } else if (sRoll < 0.6) {\n              setBlock(x, y, z, \"minecraft:polished_blackstone\");\n            } else if (sRoll < 0.8) {\n              setBlock(x, y, z, \"minecraft:crying_obsidian\");\n            } else {\n              setBlock(x, y, z, \"minecraft:magma_block\");\n            }\n          }\n        }\n      }\n    }\n  }\n\n  function pickSpireBlock(y, distRatio, angle) {\n    const r = api.random();\n\n    if (instanceStyle === 0) {\n      if (r < 0.55) return AMETHYST_FAMILY[Math.floor(api.random() * AMETHYST_FAMILY.length)];\n      if (r < 0.75) return \"minecraft:crying_obsidian\";\n      return \"minecraft:gilded_blackstone\";\n    }\n    if (instanceStyle === 1) {\n      if (r < 0.38) return \"minecraft:crying_obsidian\";\n      if (r < 0.70) return \"minecraft:magma_block\";\n      if (r < 0.88) return \"minecraft:gilded_blackstone\";\n      return \"minecraft:smooth_basalt\";\n    }\n    if (instanceStyle === 2) {\n      if (r < 0.55) return COPPER_FAMILY[Math.floor(api.random() * COPPER_FAMILY.length)];\n      if (r < 0.80) return \"minecraft:lodestone\";\n      return \"minecraft:gilded_blackstone\";\n    }\n    if (instanceStyle === 3) {\n      if (r < 0.45) return \"minecraft:raw_iron_block\";\n      if (r < 0.75) return \"minecraft:lodestone\";\n      if (r < 0.90) return \"minecraft:amethyst_block\";\n      return \"minecraft:crying_obsidian\";\n    }\n    if (instanceStyle === 4) {\n      if (r < 0.30) return \"minecraft:gilded_blackstone\";\n      if (r < 0.55) return \"minecraft:amethyst_block\";\n      if (r < 0.80) return \"minecraft:magma_block\";\n      return \"minecraft:crying_obsidian\";\n    }\n    if (instanceStyle === 5) {\n      const band = Math.floor(y + angle * 1.5) % 4;\n      if (band === 0) return \"minecraft:budding_amethyst\";\n      if (band === 1) return \"minecraft:lodestone\";\n      if (band === 2) return \"minecraft:crying_obsidian\";\n      return \"minecraft:gilded_blackstone\";\n    }\n    if (instanceStyle === 6) {\n      if (angle < Math.PI) {\n        return r < 0.65 ? \"minecraft:amethyst_block\" : \"minecraft:crying_obsidian\";\n      }\n      return r < 0.65 ? COPPER_FAMILY[Math.floor(api.random() * COPPER_FAMILY.length)] : \"minecraft:gilded_blackstone\";\n    }\n    if (r < 0.35) return \"minecraft:lodestone\";\n    if (r < 0.65) return \"minecraft:oxidized_copper\";\n    if (r < 0.85) return \"minecraft:gilded_blackstone\";\n    return \"minecraft:crying_obsidian\";\n  }\n\n  for (let y = seatY; y <= spireHeight; y++) {\n    const t = (y - seatY) / (spireHeight - seatY);\n    const cx = 5 + Math.cos(leanAngle) * leanDist * t;\n    const cz = 5 + Math.sin(leanAngle) * leanDist * t;\n    const curRadius = baseSpireRadius * (1 - t * 0.72);\n\n    const minX = Math.floor(cx - curRadius - 1);\n    const maxX = Math.ceil(cx + curRadius + 1);\n    const minZ = Math.floor(cz - curRadius - 1);\n    const maxZ = Math.ceil(cz + curRadius + 1);\n\n    for (let x = minX; x <= maxX; x++) {\n      for (let z = minZ; z <= maxZ; z++) {\n        const d = Math.hypot(x - cx, z - cz);\n        if (d <= curRadius) {\n          const angle = Math.atan2(z - cz, x - cx) + Math.PI;\n          setBlock(x, y, z, pickSpireBlock(y, d / curRadius, angle));\n        }\n      }\n    }\n  }\n\n  const shardCount = 2 + (instanceStyle % 2);\n  for (let i = 0; i < shardCount; i++) {\n    const shardAngle = leanAngle + (Math.PI * 2 * (i + 1)) / shardCount + (api.random() - 0.5) * 0.5;\n    const shardHeight = seatY + 4 + Math.floor(api.random() * 4);\n    const shardOffset = 1.8 + api.random() * 0.7;\n    const shardBaseRadius = 1.0 + api.random() * 0.4;\n\n    for (let y = seatY + 1; y <= shardHeight; y++) {\n      const st = (y - seatY - 1) / (shardHeight - seatY);\n      const sx = 5 + Math.cos(shardAngle) * (shardOffset * (0.4 + 0.7 * st));\n      const sz = 5 + Math.sin(shardAngle) * (shardOffset * (0.4 + 0.7 * st));\n      const sr = shardBaseRadius * (1 - st * 0.75);\n\n      const minX = Math.floor(sx - sr - 1);\n      const maxX = Math.ceil(sx + sr + 1);\n      const minZ = Math.floor(sz - sr - 1);\n      const maxZ = Math.ceil(sz + sr + 1);\n\n      for (let x = minX; x <= maxX; x++) {\n        for (let z = minZ; z <= maxZ; z++) {\n          if (Math.hypot(x - sx, z - sz) <= sr) {\n            setBlock(x, y, z, pickSpireBlock(y, 0.5, shardAngle));\n          }\n        }\n      }\n    }\n  }\n\n  const ventX = 5 + (instanceStyle % 2 === 0 ? 0 : 1);\n  const ventZ = 5 + (instanceStyle % 3 === 0 ? 0 : -1);\n  const ventY = seatY;\n\n  setBlock(ventX - 1, ventY, ventZ, \"minecraft:gilded_blackstone\");\n  setBlock(ventX + 1, ventY, ventZ, \"minecraft:crying_obsidian\");\n  setBlock(ventX, ventY, ventZ - 1, \"minecraft:magma_block\");\n  setBlock(ventX, ventY, ventZ + 1, \"minecraft:lodestone\");\n\n  const isSoulSmoke = instanceStyle === 1 || instanceStyle === 4 || instanceStyle === 6;\n  if (isSoulSmoke) {\n    setBlock(ventX, ventY, ventZ, \"minecraft:soul_campfire[lit=true,signal_fire=true]\");\n  } else {\n    setBlock(ventX, ventY, ventZ, \"minecraft:campfire[lit=true,signal_fire=true]\");\n  }\n\n  setBlock(ventX, ventY + 1, ventZ, \"minecraft:iron_bars\");\n  deleteBlock(ventX, ventY + 2, ventZ);\n  deleteBlock(ventX, ventY + 3, ventZ);\n\n  const directions = [\n    { dx: 0, dy: 1, dz: 0, facing: \"up\" },\n    { dx: 0, dy: -1, dz: 0, facing: \"down\" },\n    { dx: 0, dy: 0, dz: -1, facing: \"north\" },\n    { dx: 0, dy: 0, dz: 1, facing: \"south\" },\n    { dx: -1, dy: 0, dz: 0, facing: \"west\" },\n    { dx: 1, dy: 0, dz: 0, facing: \"east\" }\n  ];\n\n  for (let x = 0; x < W; x++) {\n    for (let y = seatY; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const block = getBlock(x, y, z);\n        if (block !== \"\") {\n          for (let d = 0; d < 6; d++) {\n            const dir = directions[d];\n            const nx = x + dir.dx;\n            const ny = y + dir.dy;\n            const nz = z + dir.dz;\n\n            if (nx >= 0 && nx < W && ny >= seatY && ny < H && nz >= 0 && nz < D) {\n              if (getBlock(nx, ny, nz) === \"\") {\n                const roll = api.random();\n                if (block.indexOf(\"amethyst\") !== -1 && roll < 0.28) {\n                  if (roll < 0.12) {\n                    setBlock(nx, ny, nz, \"minecraft:amethyst_cluster[facing=\" + dir.facing + \"]\");\n                  } else if (roll < 0.20) {\n                    setBlock(nx, ny, nz, \"minecraft:large_amethyst_bud[facing=\" + dir.facing + \"]\");\n                  } else {\n                    setBlock(nx, ny, nz, \"minecraft:small_amethyst_bud[facing=\" + dir.facing + \"]\");\n                  }\n                } else if (block.indexOf(\"blackstone\") !== -1 && dir.dy === 0 && roll < 0.14) {\n                  setBlock(nx, ny, nz, \"minecraft:polished_blackstone_stairs[facing=\" + dir.facing + \",half=bottom]\");\n                }\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n\n  let solidCount = 0;\n  for (let i = 0; i < grid.length; i++) {\n    if (grid[i] !== \"\") solidCount++;\n  }\n\n  if (solidCount < 520) {\n    for (let x = 1; x < W - 1; x++) {\n      for (let z = 1; z < D - 1; z++) {\n        if (Math.hypot(x - 5, z - 5) <= 4.2) {\n          for (let y = 1; y <= 2; y++) {\n            if (getBlock(x, y, z) === \"\") {\n              setBlock(x, y, z, themeStoneAccent);\n            }\n          }\n        }\n      }\n    }\n  }\n\n  const visited = new Uint8Array(W * H * D);\n  const queueX = new Int32Array(W * H * D);\n  const queueY = new Int32Array(W * H * D);\n  const queueZ = new Int32Array(W * H * D);\n  let qHead = 0;\n  let qTail = 0;\n\n  const rootIdx = getIdx(5, seatY, 5);\n  if (grid[rootIdx] !== \"\") {\n    visited[rootIdx] = 1;\n    queueX[qTail] = 5;\n    queueY[qTail] = seatY;\n    queueZ[qTail] = 5;\n    qTail++;\n  }\n\n  const dxs = [1, -1, 0, 0, 0, 0];\n  const dys = [0, 0, 1, -1, 0, 0];\n  const dzs = [0, 0, 0, 0, 1, -1];\n\n  while (qHead < qTail) {\n    const cx = queueX[qHead];\n    const cy = queueY[qHead];\n    const cz = queueZ[qHead];\n    qHead++;\n\n    for (let d = 0; d < 6; d++) {\n      const nx = cx + dxs[d];\n      const ny = cy + dys[d];\n      const nz = cz + dzs[d];\n      if (nx >= 0 && nx < W && ny >= 0 && ny < H && nz >= 0 && nz < D) {\n        const nIdx = getIdx(nx, ny, nz);\n        if (grid[nIdx] !== \"\" && visited[nIdx] === 0) {\n          visited[nIdx] = 1;\n          queueX[qTail] = nx;\n          queueY[qTail] = ny;\n          queueZ[qTail] = nz;\n          qTail++;\n        }\n      }\n    }\n  }\n\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const i = getIdx(x, y, z);\n        if (grid[i] !== \"\" && visited[i] === 0) {\n          grid[i] = \"\";\n        }\n      }\n    }\n  }\n\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const blk = getBlock(x, y, z);\n        if (blk !== \"\") {\n          api.set(x, y, z, blk);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"starmetal_cluster\",\n    seatY: seatY,\n    anchors: {\n      center: [5, seatY, 5]\n    }\n  };\n}"
+    }
+  }
+}

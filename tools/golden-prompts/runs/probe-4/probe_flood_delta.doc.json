@@ -1,0 +1,956 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "monsoon_stilt_village",
+    "worldSeed": "923",
+    "prompt": "A monsoon-season stilt village on a river delta in flood: houses on tall stilts above the brown water, boats moored to the verandas, a floating market at the confluence.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": "minecraft:mud",
+      "ground.subsurface": "minecraft:mud",
+      "ground.beach": "minecraft:coarse_dirt",
+      "road.surface": "minecraft:spruce_planks",
+      "road.shoulder": "minecraft:stripped_spruce_wood",
+      "plaza.path": "minecraft:jungle_planks",
+      "plaza.border": "minecraft:stripped_jungle_log"
+    }
+  },
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.35,
+    "decline": 0.15,
+    "formality": 0.1,
+    "event": {
+      "kind": "flood",
+      "severity": 0.75,
+      "recency": 0
+    },
+    "climate": {
+      "biome": "minecraft:mangrove_swamp",
+      "temperature": 0.85,
+      "humidity": 0.95,
+      "snow": "never"
+    },
+    "character": {
+      "label": "monsoon stilt village",
+      "materialTheme": "temperate_timber",
+      "urbanForm": "canal",
+      "motifs": {
+        "roofType": "gable",
+        "massing": "sprawling"
+      },
+      "archetypes": {
+        "prefer": [
+          "stilt_house",
+          "boathouse",
+          "tea_house",
+          "trading_post",
+          "market_stall"
+        ],
+        "forbid": [
+          "skyscraper",
+          "office",
+          "castle",
+          "townhouse"
+        ]
+      },
+      "props": {
+        "prefer": [
+          "pier",
+          "rowboat",
+          "houseboat",
+          "barge",
+          "gondola",
+          "junk",
+          "market_barrow"
+        ]
+      },
+      "programs": [
+        {
+          "id": "floating_market_bazaar",
+          "mode": "landmark",
+          "brief": "A sprawling floating market cluster of connected wooden rafts, canopied trade sampans, bamboo walkways, and produce stalls floating directly on the flooded confluence.",
+          "envelope": [
+            36,
+            12,
+            36
+          ]
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "a braided river delta in heavy monsoon flood with a wide water confluence; brown floodwaters surrounding all dwelling foundations",
+      "icons": "timber houses raised high on stilts above flood stage; longtail and dugout boats tied off to veranda posts; a floating market of laden trade boats at the main river confluence; connecting elevated plank walkways"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "monsoon stilt village on the flooded delta",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "flat tropical delta lowland in seasonal flood",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 65,
+          "amplitude": 10,
+          "octaves": 4,
+          "frequency": 0.003,
+          "gain": 0.45,
+          "erosionPasses": 2,
+          "continentalness": {
+            "frequency": 0.001,
+            "seaFraction": 0.4
+          },
+          "cliffThreshold": 60,
+          "soilDepth": 4,
+          "beachWidth": 6,
+          "snowLineFraction": 1
+        },
+        "children": [
+          {
+            "id": "river_northwest",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the flooded northwest river arm",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.05,
+                  0.2
+                ],
+                [
+                  0.25,
+                  0.35
+                ],
+                [
+                  0.46,
+                  0.48
+                ]
+              ],
+              "width": 24,
+              "depth": 7,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "river_northeast",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the flooded northeast river arm",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.95,
+                  0.15
+                ],
+                [
+                  0.75,
+                  0.32
+                ],
+                [
+                  0.54,
+                  0.48
+                ]
+              ],
+              "width": 22,
+              "depth": 7,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "confluence_basin",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the wide flooded confluence pool",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 85,
+              "depth": 9,
+              "profile": "rounded",
+              "flooded": "auto"
+            }
+          },
+          {
+            "id": "delta_outlet_main",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the broad southern delta channel heading out to sea",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.5,
+                  0.52
+                ],
+                [
+                  0.44,
+                  0.76
+                ],
+                "coast"
+              ],
+              "width": 38,
+              "depth": 8,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "delta_outlet_east",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the secondary eastern flood channel",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.54,
+                  0.52
+                ],
+                [
+                  0.74,
+                  0.72
+                ],
+                "coast"
+              ],
+              "width": 26,
+              "depth": 7,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "village_stilt_shelf_west",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "shallow delta bank for western stilt footings",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.42,
+                0.46
+              ],
+              "radius": 55,
+              "height": 3,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "village_stilt_shelf_east",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "shallow delta bank for eastern stilt footings",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.58,
+                0.52
+              ],
+              "radius": 50,
+              "height": 3,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "tropical",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0015
+        }
+      },
+      {
+        "id": "delta_swamp_jungle",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "dense flooded mangrove and tropical wetland forest",
+        "params": {
+          "area": {
+            "at": [
+              0.5,
+              0.5
+            ],
+            "radius": 240
+          },
+          "density": 0.07,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 28,
+          "elevation": [
+            0,
+            25
+          ],
+          "edgeFalloff": 20,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.5,
+            "flowers": 0.08,
+            "deadwood": 0.08
+          },
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "giant_kapok",
+                  "shape": "kapok_emergent"
+                }
+              ]
+            },
+            "understory": {
+              "species": [
+                {
+                  "id": "tree_fern_shrub",
+                  "shape": "tree_fern"
+                }
+              ],
+              "density": 0.12
+            },
+            "floor": "default"
+          },
+          "species": [
+            {
+              "id": "jungle_canopy",
+              "shape": "jungle_broadleaf",
+              "weight": 3
+            },
+            {
+              "id": "flood_willow",
+              "shape": "willow_weeping",
+              "weight": 2
+            }
+          ]
+        }
+      },
+      {
+        "id": "wilderness_fringe",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse wetland trees across outer margins",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 5,
+          "clumping": 0.6,
+          "maxSlope": 30,
+          "elevation": [
+            1,
+            50
+          ],
+          "edgeFalloff": 12,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "species": [
+            {
+              "id": "fringe_willow",
+              "shape": "willow_weeping",
+              "weight": 2
+            },
+            {
+              "id": "fringe_jungle",
+              "shape": "jungle_broadleaf",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "central_deck",
+        "kind": "primitive",
+        "label": "the central elevated timber landing deck and crossroads",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            22,
+            22
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "stilt_house_chief",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "two-storey village stilt house above the flood",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            13,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "stilt_house",
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "central_deck",
+            "gap": [
+              2,
+              10
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "central_deck"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 3
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house",
+          "stilt_house"
+        ]
+      },
+      {
+        "id": "stilt_house_fisher_west",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "stilt cottage facing the western river arm",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "stilt_house",
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "central_deck",
+            "min": 6,
+            "max": 42,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 3
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house",
+          "stilt_house"
+        ]
+      },
+      {
+        "id": "stilt_house_fisher_east",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "two-storey stilt dwelling on the eastern bank",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            13,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "stilt_house",
+          "floors": 2,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "central_deck",
+            "min": 8,
+            "max": 48,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 3
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house",
+          "stilt_house"
+        ]
+      },
+      {
+        "id": "stilt_house_channel",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "single-storey stilt house along the water channel",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "stilt_house",
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "central_deck",
+            "min": 10,
+            "max": 56,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 3
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house",
+          "stilt_house"
+        ]
+      },
+      {
+        "id": "village_boathouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "communal boathouse and repair slip over the water",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            14,
+            17
+          ]
+        },
+        "params": {
+          "archetype": "boathouse",
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "on": "@terrain:coastline",
+            "band": 32
+          },
+          {
+            "distance": "central_deck",
+            "min": 8,
+            "max": 50,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "craft",
+          "trade"
+        ]
+      },
+      {
+        "id": "delta_trading_post",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "river trade counter and dry-goods store on stilts",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "archetype": "trading_post",
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "central_deck",
+            "gap": [
+              1,
+              8
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "central_deck"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "trade"
+        ]
+      },
+      {
+        "id": "river_tea_house",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "elevated tea house overlooking the water confluence",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "archetype": "tea_house",
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "central_deck",
+            "min": 6,
+            "max": 44,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "trade"
+        ]
+      },
+      {
+        "id": "confluence_floating_market",
+        "kind": "generator",
+        "generator": "authored:floating_market_bazaar",
+        "label": "the floating market complex at the river confluence",
+        "params": {
+          "seat": "wade"
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "central_deck",
+            "min": 8,
+            "max": 80,
+            "strength": "soft"
+          }
+        ],
+        "tags": [
+          "landmark",
+          "market",
+          "trade"
+        ]
+      },
+      {
+        "id": "veranda_pier_north",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "wooden landing stage and boat mooring",
+        "params": {
+          "prop": "pier",
+          "zone": "center",
+          "length": 14,
+          "width": 3
+        }
+      },
+      {
+        "id": "veranda_pier_south",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "southern wooden boardwalk pier reaching into the water",
+        "params": {
+          "prop": "pier",
+          "zone": "center",
+          "length": 12,
+          "width": 3
+        }
+      },
+      {
+        "id": "moored_veranda_boat_1",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "dugout boat tied to the veranda landing",
+        "params": {
+          "prop": "rowboat",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "moored_veranda_boat_2",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "longtail fishing boat moored alongside the pier",
+        "params": {
+          "prop": "fishing_sloop",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "confluence_houseboat",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "moored family houseboat resting in the flooded channel",
+        "params": {
+          "prop": "houseboat",
+          "zone": "center",
+          "on": "water"
+        }
+      },
+      {
+        "id": "market_trade_barge",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "laden produce barge trading at the water confluence",
+        "params": {
+          "prop": "barge",
+          "zone": "center",
+          "on": "water"
+        }
+      },
+      {
+        "id": "market_gondola_skiff",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "narrow merchant skiff plying the flooded riverway",
+        "params": {
+          "prop": "gondola",
+          "zone": "center",
+          "on": "water"
+        }
+      },
+      {
+        "id": "river_trader_junk",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "battened lugsail trading junk anchored downstream",
+        "params": {
+          "prop": "junk",
+          "zone": "south",
+          "on": "water"
+        }
+      },
+      {
+        "id": "deck_market_barrow_1",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "market_barrow",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "deck_market_barrow_2",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "market_barrow",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "walkway_lamp_north",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "lamp_post",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "walkway_lamp_south",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "lamp_post",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "stilt_walkways",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "elevated wooden plank walkways joining stilt verandas and the landing deck",
+        "params": {
+          "anchors": [
+            "central_deck",
+            "#tag:house",
+            "village_boathouse",
+            "delta_trading_post",
+            "river_tea_house",
+            "confluence_floating_market"
+          ],
+          "pattern": "organic",
+          "width": 2,
+          "lanterns": true,
+          "lanternSpacing": 10
+        }
+      },
+      {
+        "id": "elevated_boardwalk_flank",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "plank boardwalk sidewalk along the main stilt highway",
+        "params": {
+          "entry": "boardwalk",
+          "route": {
+            "along": "stilt_walkways",
+            "offset": 1,
+            "side": "left"
+          }
+        }
+      }
+    ]
+  },
+  "programs": {
+    "floating_market_bazaar": {
+      "mode": "landmark",
+      "envelope": [
+        38,
+        18,
+        38
+      ],
+      "sourceHash": "b3:e8371000b8184b5ee0615e6e02cd5d420b470a5d90a43e8192e90d714eb1e321",
+      "outputHash": "b3:4d762862b01349599c08427a76a47bd16172ad802a765b952a0ea77e34467c21",
+      "conforms": false,
+      "conformHash": "b3:62616bc5114be011819cb51b9bd0415adec9229d4e15bae1699aa5cda573b0aa",
+      "source": "export const envelope = [38, 18, 38];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const theme = api.theme;\n  const seatY = 5;\n\n  // Theme palettes with safe fallbacks\n  const woodPlanks = theme.wood?.planks || \"minecraft:mangrove_planks\";\n  const woodLog = theme.wood?.log || \"minecraft:mangrove_log\";\n  const woodStripped = theme.wood?.stripped || \"minecraft:stripped_mangrove_log\";\n  const woodStairs = theme.wood?.stairs || \"minecraft:mangrove_stairs\";\n  const woodSlab = theme.wood?.slab || \"minecraft:mangrove_slab\";\n  const woodFence = theme.wood?.fence || \"minecraft:mangrove_fence\";\n  const woodTrapdoor = theme.wood?.trapdoor || \"minecraft:mangrove_trapdoor\";\n\n  const roofStairs = theme.roof?.stairs || woodStairs;\n  const roofSlab = theme.roof?.slab || woodSlab;\n  const roofSolid = theme.roof?.solid || woodPlanks;\n\n  const stonePrimary = theme.stone?.primary || \"minecraft:stone_bricks\";\n  const groundPlinth = theme.ground?.plinth || stonePrimary;\n\n  // Block state helper functions\n  function stair(base, facing, half = \"bottom\", shape = \"straight\") {\n    const clean = base.split(\"[\")[0];\n    return `${clean}[facing=${facing},half=${half},shape=${shape}]`;\n  }\n\n  function slab(base, type = \"bottom\") {\n    const clean = base.split(\"[\")[0];\n    return `${clean}[type=${type}]`;\n  }\n\n  function log(base, axis = \"y\") {\n    const clean = base.split(\"[\")[0];\n    return `${clean}[axis=${axis}]`;\n  }\n\n  function trapdoor(base, facing = \"north\", half = \"bottom\", open = \"false\") {\n    const clean = base.split(\"[\")[0];\n    return `${clean}[facing=${facing},half=${half},open=${open}]`;\n  }\n\n  // 3D Voxel buffer\n  const world = Array.from({ length: W }, () =>\n    Array.from({ length: H }, () => new Array(D).fill(null))\n  );\n\n  function set(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      world[x][y][z] = block;\n    }\n  }\n\n  function get(x, y, z) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      return world[x][y][z];\n    }\n    return null;\n  }\n\n  function fillBox(x1, y1, z1, x2, y2, z2, block) {\n    const minX = Math.min(x1, x2), maxX = Math.max(x1, x2);\n    const minY = Math.min(y1, y2), maxY = Math.max(y1, y2);\n    const minZ = Math.min(z1, z2), maxZ = Math.max(z1, z2);\n    for (let x = minX; x <= maxX; x++) {\n      for (let y = minY; y <= maxY; y++) {\n        for (let z = minZ; z <= maxZ; z++) {\n          set(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  // ==========================================\n  // 1. FLOATING PLATFORMS & BOARDWALK NETWORKS\n  // ==========================================\n\n  // Central Market Plaza (Y = 5)\n  fillBox(12, 5, 10, 26, 5, 26, woodPlanks);\n  // Log border framing under the plaza (Y = 4)\n  for (let x = 12; x <= 26; x++) {\n    set(x, 4, 10, log(woodStripped, \"x\"));\n    set(x, 4, 26, log(woodStripped, \"x\"));\n  }\n  for (let z = 10; z <= 26; z++) {\n    set(12, 4, z, log(woodStripped, \"z\"));\n    set(26, 4, z, log(woodStripped, \"z\"));\n  }\n\n  // North Landing Jetty / Entry Pier (X: 17..21, Z: 0..10)\n  fillBox(17, 5, 0, 21, 5, 10, woodPlanks);\n  for (let z = 0; z <= 10; z++) {\n    set(17, 4, z, log(woodStripped, \"z\"));\n    set(21, 4, z, log(woodStripped, \"z\"));\n  }\n\n  // South Mooring Pier (X: 17..21, Z: 26..30)\n  fillBox(17, 5, 26, 21, 5, 30, woodPlanks);\n\n  // West Boardwalk Branch (X: 6..12, Z: 17..19)\n  fillBox(6, 5, 17, 12, 5, 19, woodPlanks);\n\n  // East Boardwalk Branch (X: 26..32, Z: 17..19)\n  fillBox(26, 5, 17, 32, 5, 19, woodPlanks);\n\n  // North-West Produce Raft (X: 4..12, Z: 5..14)\n  fillBox(4, 5, 5, 12, 5, 14, woodPlanks);\n  fillBox(10, 5, 9, 13, 5, 11, woodPlanks); // Link to plaza\n  for (let x = 4; x <= 12; x++) {\n    set(x, 4, 5, log(woodStripped, \"x\"));\n    set(x, 4, 14, log(woodStripped, \"x\"));\n  }\n  for (let z = 5; z <= 14; z++) {\n    set(4, 4, z, log(woodStripped, \"z\"));\n    set(12, 4, z, log(woodStripped, \"z\"));\n  }\n\n  // North-East Tea & Spice Raft (X: 26..34, Z: 5..14)\n  fillBox(26, 5, 5, 34, 5, 14, woodPlanks);\n  fillBox(25, 5, 9, 27, 5, 11, woodPlanks); // Link to plaza\n  for (let x = 26; x <= 34; x++) {\n    set(x, 4, 5, log(woodStripped, \"x\"));\n    set(x, 4, 14, log(woodStripped, \"x\"));\n  }\n  for (let z = 5; z <= 14; z++) {\n    set(26, 4, z, log(woodStripped, \"z\"));\n    set(34, 4, z, log(woodStripped, \"z\"));\n  }\n\n  // South-West Artisan & Pottery Raft (X: 4..12, Z: 26..35)\n  fillBox(4, 5, 26, 12, 5, 35, woodPlanks);\n  fillBox(10, 5, 24, 13, 5, 26, woodPlanks); // Link to plaza\n  for (let x = 4; x <= 12; x++) {\n    set(x, 4, 26, log(woodStripped, \"x\"));\n    set(x, 4, 35, log(woodStripped, \"x\"));\n  }\n  for (let z = 26; z <= 35; z++) {\n    set(4, 4, z, log(woodStripped, \"z\"));\n    set(12, 4, z, log(woodStripped, \"z\"));\n  }\n\n  // South-East Fisher's Raft (X: 25..35, Z: 26..35)\n  fillBox(25, 5, 26, 35, 5, 35, woodPlanks);\n  fillBox(24, 5, 24, 27, 5, 26, woodPlanks); // Link to plaza\n  for (let x = 25; x <= 35; x++) {\n    set(x, 4, 26, log(woodStripped, \"x\"));\n    set(x, 4, 35, log(woodStripped, \"x\"));\n  }\n  for (let z = 26; z <= 35; z++) {\n    set(25, 4, z, log(woodStripped, \"z\"));\n    set(35, 4, z, log(woodStripped, \"z\"));\n  }\n\n  // ==========================================\n  // 2. CENTRAL GRAND BAZAAR PAVILION\n  // ==========================================\n  // 8 Main Timber Stilt Pillars (X: 13, 19, 25; Z: 12, 18, 24)\n  const pavilionPillars = [\n    [13, 12], [19, 12], [25, 12],\n    [13, 18],           [25, 18],\n    [13, 24], [19, 24], [25, 24]\n  ];\n  for (const [px, pz] of pavilionPillars) {\n    for (let y = 5; y <= 10; y++) {\n      set(px, y, pz, log(woodLog, \"y\"));\n    }\n  }\n\n  // Horizontal Tie Beams at Y = 9 and Y = 10\n  for (const z of [12, 18, 24]) {\n    for (let x = 13; x <= 25; x++) {\n      set(x, 9, z, log(woodLog, \"x\"));\n      set(x, 10, z, log(woodLog, \"x\"));\n    }\n  }\n  for (const x of [13, 19, 25]) {\n    for (let z = 12; z <= 24; z++) {\n      set(x, 9, z, log(woodLog, \"z\"));\n      set(x, 10, z, log(woodLog, \"z\"));\n    }\n  }\n\n  // Lower Tier Roof Eaves (Y = 10) around the pavilion\n  for (let x = 11; x <= 27; x++) {\n    set(x, 10, 11, stair(roofStairs, \"north\"));\n    set(x, 10, 25, stair(roofStairs, \"south\"));\n  }\n  for (let z = 11; z <= 25; z++) {\n    set(11, 10, z, stair(roofStairs, \"west\"));\n    set(27, 10, z, stair(roofStairs, \"east\"));\n  }\n  // Roof corners at Y = 10\n  set(11, 10, 11, slab(roofSlab, \"bottom\"));\n  set(27, 10, 11, slab(roofSlab, \"bottom\"));\n  set(11, 10, 25, slab(roofSlab, \"bottom\"));\n  set(27, 10, 25, slab(roofSlab, \"bottom\"));\n\n  // Lower roof slope at Y = 11\n  for (let x = 12; x <= 26; x++) {\n    set(x, 11, 12, stair(roofStairs, \"north\"));\n    set(x, 11, 24, stair(roofStairs, \"south\"));\n  }\n  for (let z = 12; z <= 24; z++) {\n    set(12, 11, z, stair(roofStairs, \"west\"));\n    set(26, 11, z, stair(roofStairs, \"east\"));\n  }\n\n  // Clerestory Posts & Upper Gable Roof (Y = 11..14)\n  const clerestoryPosts = [[15, 14], [23, 14], [15, 22], [23, 22]];\n  for (const [cx, cz] of clerestoryPosts) {\n    for (let y = 11; y <= 13; y++) {\n      set(cx, y, cz, log(woodLog, \"y\"));\n    }\n  }\n\n  // Upper Roof Tier (Y = 12..14)\n  for (let z = 13; z <= 23; z++) {\n    // Y = 12 outer slope\n    set(14, 12, z, stair(roofStairs, \"west\"));\n    set(24, 12, z, stair(roofStairs, \"east\"));\n    // Y = 13 inner slope\n    set(16, 13, z, stair(roofStairs, \"west\"));\n    set(22, 13, z, stair(roofStairs, \"east\"));\n    // Y = 14 central ridge\n    set(18, 14, z, roofSolid);\n    set(19, 14, z, roofSolid);\n    set(20, 14, z, roofSolid);\n    set(19, 15, z, slab(roofSlab, \"bottom\"));\n  }\n\n  // Asian-style flared gable horn finials at ridge ends\n  set(19, 15, 12, stair(roofStairs, \"south\", \"top\"));\n  set(19, 16, 11, stair(roofStairs, \"north\"));\n  set(19, 15, 24, stair(roofStairs, \"north\", \"top\"));\n  set(19, 16, 25, stair(roofStairs, \"south\"));\n\n  // Pavilion Interior Hanging Lanterns\n  const lanternLocs = [[16, 15], [22, 15], [16, 21], [22, 21]];\n  for (const [lx, lz] of lanternLocs) {\n    set(lx, 9, lz, \"minecraft:chain[axis=y]\");\n    set(lx, 8, lz, \"minecraft:lantern[hanging=true]\");\n  }\n\n  // ==========================================\n  // 3. MOORED BOATS & SAMPANS\n  // ==========================================\n\n  function buildSampan(xMin, xMax, zMin, zMax, yBase, wool1, wool2, isNorthFacing) {\n    const xMid = Math.floor((xMin + xMax) / 2);\n\n    // Keel\n    for (let z = zMin; z <= zMax; z++) {\n      set(xMid, yBase, z, log(woodStripped, \"z\"));\n    }\n\n    // Hull Floor (Y = yBase)\n    for (let x = xMin + 1; x <= xMax - 1; x++) {\n      for (let z = zMin + 1; z <= zMax - 1; z++) {\n        set(x, yBase, z, woodPlanks);\n      }\n    }\n\n    // Gunwales (Y = yBase + 1)\n    for (let z = zMin + 2; z <= zMax - 2; z++) {\n      set(xMin, yBase + 1, z, stair(woodStairs, \"east\"));\n      set(xMax, yBase + 1, z, stair(woodStairs, \"west\"));\n    }\n\n    // Tapered Prow and Stern\n    const bowZ = isNorthFacing ? zMin : zMax;\n    const sternZ = isNorthFacing ? zMax : zMin;\n\n    // Bow\n    set(xMid, yBase + 1, bowZ, slab(woodSlab, \"top\"));\n    set(xMid - 1, yBase + 1, bowZ + (isNorthFacing ? 1 : -1), stair(woodStairs, isNorthFacing ? \"south\" : \"north\"));\n    set(xMid, yBase + 1, bowZ + (isNorthFacing ? 1 : -1), stair(woodStairs, isNorthFacing ? \"south\" : \"north\"));\n    set(xMid + 1, yBase + 1, bowZ + (isNorthFacing ? 1 : -1), stair(woodStairs, isNorthFacing ? \"south\" : \"north\"));\n\n    // Stern & Rudder tiller\n    set(xMid, yBase + 1, sternZ, woodPlanks);\n    set(xMid, yBase + 2, sternZ, woodFence);\n    set(xMid, yBase + 3, sternZ, woodFence);\n    set(xMid, yBase + 3, sternZ + (isNorthFacing ? 1 : -1), woodFence);\n\n    // Midship Canopy (Z: zMin + 4 to zMax - 4)\n    const canZ1 = zMin + 4;\n    const canZ2 = zMax - 4;\n\n    // Canopy corner posts\n    set(xMin, yBase + 2, canZ1, woodFence);\n    set(xMax, yBase + 2, canZ1, woodFence);\n    set(xMin, yBase + 2, canZ2, woodFence);\n    set(xMax, yBase + 2, canZ2, woodFence);\n\n    // Arched Canopy Roof\n    for (let z = canZ1; z <= canZ2; z++) {\n      const wool = (z % 2 === 0) ? wool1 : wool2;\n      set(xMin, yBase + 3, z, slab(woodSlab, \"top\"));\n      set(xMax, yBase + 3, z, slab(woodSlab, \"top\"));\n      for (let x = xMin + 1; x <= xMax - 1; x++) {\n        set(x, yBase + 4, z, wool);\n      }\n    }\n  }\n\n  // Sampan 1 (West Merchant Boat, X: 2..6, Z: 16..27)\n  buildSampan(2, 6, 16, 27, 4, \"minecraft:cyan_wool\", \"minecraft:white_wool\", true);\n  // Cargo in Sampan 1\n  set(3, 5, 19, \"minecraft:barrel[facing=up]\");\n  set(4, 5, 19, \"minecraft:melon\");\n  set(5, 5, 19, \"minecraft:barrel[facing=up]\");\n  set(3, 5, 20, \"minecraft:terracotta\");\n  set(4, 5, 21, \"minecraft:lantern[hanging=false]\");\n  // Mooring ropes to West Boardwalk\n  set(6, 5, 18, woodFence);\n  set(7, 5, 18, woodPlanks);\n  set(6, 5, 23, woodFence);\n  set(7, 5, 23, woodPlanks);\n\n  // Sampan 2 (East Fish & Rice Boat, X: 31..35, Z: 16..27)\n  buildSampan(31, 35, 16, 27, 4, \"minecraft:red_wool\", \"minecraft:white_wool\", true);\n  // Cargo in Sampan 2\n  set(32, 5, 19, \"minecraft:barrel[facing=up]\");\n  set(33, 5, 19, \"minecraft:hay_block[axis=y]\");\n  set(34, 5, 19, \"minecraft:barrel[facing=up]\");\n  set(33, 5, 21, \"minecraft:lantern[hanging=false]\");\n  set(32, 5, 22, \"minecraft:barrel[facing=up]\");\n  // Mooring ropes to East Boardwalk\n  set(31, 5, 18, woodFence);\n  set(30, 5, 18, woodPlanks);\n  set(31, 5, 23, woodFence);\n  set(30, 5, 23, woodPlanks);\n\n  // Sampan 3 (South Longtail Boat, X: 16..20, Z: 29..37)\n  buildSampan(16, 20, 29, 37, 4, \"minecraft:orange_wool\", \"minecraft:yellow_wool\", false);\n  // Longtail propeller shaft extension\n  set(18, 7, 37, woodFence);\n  set(18, 6, 37, \"minecraft:iron_bars\");\n  // Cargo in Sampan 3\n  set(17, 5, 31, \"minecraft:barrel[facing=up]\");\n  set(19, 5, 31, \"minecraft:barrel[facing=up]\");\n  set(18, 5, 33, \"minecraft:lantern[hanging=false]\");\n\n  // North Dugout Canoe (X: 10..13, Z: 2..7)\n  for (let z = 2; z <= 7; z++) {\n    set(11, 4, z, log(woodStripped, \"z\"));\n    set(12, 4, z, log(woodStripped, \"z\"));\n  }\n  for (let z = 3; z <= 6; z++) {\n    set(10, 5, z, stair(woodStairs, \"east\"));\n    set(13, 5, z, stair(woodStairs, \"west\"));\n  }\n  set(11, 5, 2, slab(woodSlab, \"top\"));\n  set(12, 5, 2, slab(woodSlab, \"top\"));\n  set(11, 5, 7, slab(woodSlab, \"top\"));\n  set(12, 5, 7, slab(woodSlab, \"top\"));\n  set(11, 5, 4, \"minecraft:barrel[facing=up]\");\n  set(12, 5, 5, \"minecraft:lantern[hanging=false]\");\n  // Mooring tie to North Jetty\n  set(14, 5, 4, woodFence);\n  set(15, 5, 4, woodFence);\n  set(16, 5, 4, woodFence);\n\n  // ==========================================\n  // 4. FLOATING PRODUCE STALLS & VENDORS\n  // ==========================================\n\n  // NW Produce Raft Canopies & Stalls (X: 4..12, Z: 5..14)\n  const nwPosts = [[5, 6], [11, 6], [5, 9], [11, 9], [5, 13], [11, 13]];\n  for (const [px, pz] of nwPosts) {\n    for (let y = 6; y <= 8; y++) {\n      set(px, y, pz, woodFence);\n    }\n  }\n  // Stall 1 Canopy (Fruit): Yellow and Lime Wool (Y = 8)\n  for (let x = 5; x <= 11; x++) {\n    for (let z = 6; z <= 9; z++) {\n      const wool = ((x + z) % 2 === 0) ? \"minecraft:yellow_wool\" : \"minecraft:lime_wool\";\n      set(x, 8, z, wool);\n    }\n  }\n  // Stall 2 Canopy (Grains & Dry Goods): Orange Wool (Y = 8)\n  for (let x = 5; x <= 11; x++) {\n    for (let z = 10; z <= 13; z++) {\n      const wool = ((x + z) % 2 === 0) ? \"minecraft:orange_wool\" : \"minecraft:white_wool\";\n      set(x, 8, z, wool);\n    }\n  }\n  // Produce Goods on NW Raft\n  set(6, 6, 7, \"minecraft:melon\");\n  set(7, 6, 7, \"minecraft:melon\");\n  set(8, 6, 7, \"minecraft:carved_pumpkin[facing=south]\");\n  set(9, 6, 7, \"minecraft:pumpkin\");\n  set(10, 6, 7, \"minecraft:melon\");\n  set(6, 6, 11, \"minecraft:hay_block[axis=y]\");\n  set(7, 6, 11, \"minecraft:hay_block[axis=y]\");\n  set(8, 6, 11, \"minecraft:barrel[facing=up]\");\n  set(9, 6, 11, \"minecraft:barrel[facing=up]\");\n  set(10, 6, 11, \"minecraft:hay_block[axis=y]\");\n  set(5, 9, 6, \"minecraft:lantern[hanging=false]\");\n  set(11, 9, 6, \"minecraft:lantern[hanging=false]\");\n  set(5, 9, 13, \"minecraft:lantern[hanging=false]\");\n  set(11, 9, 13, \"minecraft:lantern[hanging=false]\");\n\n  // NE Tea & Spice House Shelter (X: 26..34, Z: 5..14)\n  const nePosts = [[27, 6], [33, 6], [27, 13], [33, 13]];\n  for (const [px, pz] of nePosts) {\n    for (let y = 6; y <= 9; y++) {\n      set(px, y, pz, log(woodLog, \"y\"));\n    }\n  }\n  // Low tea counter railings\n  for (let x = 28; x <= 32; x++) {\n    set(x, 6, 6, woodFence);\n    set(x, 6, 13, woodFence);\n  }\n  for (let z = 7; z <= 12; z++) {\n    set(33, 6, z, woodFence);\n  }\n  // Tea House Hipped Thatch Roof (Y = 9..11)\n  for (let x = 26; x <= 34; x++) {\n    set(x, 9, 5, stair(roofStairs, \"north\"));\n    set(x, 9, 14, stair(roofStairs, \"south\"));\n  }\n  for (let z = 5; z <= 14; z++) {\n    set(26, 9, z, stair(roofStairs, \"west\"));\n    set(34, 9, z, stair(roofStairs, \"east\"));\n  }\n  for (let x = 27; x <= 33; x++) {\n    set(x, 10, 6, stair(roofStairs, \"north\"));\n    set(x, 10, 13, stair(roofStairs, \"south\"));\n  }\n  for (let z = 6; z <= 13; z++) {\n    set(27, 10, z, stair(roofStairs, \"west\"));\n    set(33, 10, z, stair(roofStairs, \"east\"));\n  }\n  for (let x = 28; x <= 32; x++) {\n    for (let z = 7; z <= 12; z++) {\n      set(x, 11, z, slab(roofSlab, \"bottom\"));\n    }\n  }\n  // Hanging lanterns under tea house eaves\n  set(28, 9, 7, \"minecraft:lantern[hanging=true]\");\n  set(32, 9, 7, \"minecraft:lantern[hanging=true]\");\n  set(28, 9, 12, \"minecraft:lantern[hanging=true]\");\n  set(32, 9, 12, \"minecraft:lantern[hanging=true]\");\n\n  // SW Artisan Craft Stall (X: 4..12, Z: 26..35)\n  const swPosts = [[5, 28], [11, 28], [5, 33], [11, 33]];\n  for (const [px, pz] of swPosts) {\n    for (let y = 6; y <= 8; y++) {\n      set(px, y, pz, woodFence);\n    }\n  }\n  // Craft Awning (Red & Cyan Wool)\n  for (let x = 5; x <= 11; x++) {\n    for (let z = 28; z <= 33; z++) {\n      const wool = ((x + z) % 2 === 0) ? \"minecraft:red_wool\" : \"minecraft:cyan_wool\";\n      set(x, 8, z, wool);\n    }\n  }\n  // Craft Goods: Pots, Terracotta, Barrels\n  set(6, 6, 29, \"minecraft:orange_terracotta\");\n  set(7, 6, 29, \"minecraft:terracotta\");\n  set(8, 6, 29, \"minecraft:barrel[facing=up]\");\n  set(9, 6, 29, \"minecraft:terracotta\");\n  set(10, 6, 29, \"minecraft:orange_terracotta\");\n  set(6, 6, 32, \"minecraft:barrel[facing=up]\");\n  set(10, 6, 32, \"minecraft:barrel[facing=up]\");\n  set(5, 9, 28, \"minecraft:lantern[hanging=false]\");\n  set(11, 9, 28, \"minecraft:lantern[hanging=false]\");\n\n  // SE Fisher's Shed & Drying Racks (X: 25..35, Z: 26..35)\n  const sePosts = [[27, 28], [33, 28], [27, 33], [33, 33]];\n  for (const [px, pz] of sePosts) {\n    for (let y = 6; y <= 8; y++) {\n      set(px, y, pz, log(woodLog, \"y\"));\n    }\n  }\n  // Shed Roof (Y = 8)\n  for (let x = 26; x <= 34; x++) {\n    for (let z = 27; z <= 34; z++) {\n      set(x, 8, z, slab(roofSlab, \"bottom\"));\n    }\n  }\n  // Fish drying racks (fences and chains)\n  set(26, 6, 26, woodFence);\n  set(26, 7, 26, woodFence);\n  set(27, 7, 26, \"minecraft:chain[axis=x]\");\n  set(28, 7, 26, \"minecraft:chain[axis=x]\");\n  set(29, 7, 26, woodFence);\n  set(29, 6, 26, woodFence);\n  // Barrels and tackle\n  set(28, 6, 29, \"minecraft:barrel[facing=up]\");\n  set(29, 6, 29, \"minecraft:barrel[facing=up]\");\n  set(32, 6, 29, \"minecraft:barrel[facing=up]\");\n  set(28, 6, 32, \"minecraft:barrel[facing=up]\");\n  set(32, 6, 32, \"minecraft:barrel[facing=up]\");\n  set(27, 9, 28, \"minecraft:lantern[hanging=false]\");\n  set(33, 9, 28, \"minecraft:lantern[hanging=false]\");\n\n  // ==========================================\n  // 5. RAILINGS, POSTS & BEACONS\n  // ==========================================\n\n  // North Landing Jetty Mooring Posts & Lanterns\n  for (const z of [0, 3, 6, 9]) {\n    set(17, 6, z, log(woodStripped, \"y\"));\n    set(21, 6, z, log(woodStripped, \"y\"));\n  }\n  // Fences along jetty edges\n  for (let z = 1; z <= 8; z++) {\n    if (z % 3 !== 0) {\n      set(17, 6, z, woodFence);\n      set(21, 6, z, woodFence);\n    }\n  }\n  // Entrance Beacon Lanterns at the north landing tip (Z = 0)\n  set(17, 7, 0, \"minecraft:lantern[hanging=false]\");\n  set(21, 7, 0, \"minecraft:lantern[hanging=false]\");\n\n  // Mooring Bollards around Central Plaza corners\n  const bollards = [\n    [12, 10], [26, 10], [12, 26], [26, 26],\n    [17, 30], [21, 30]\n  ];\n  for (const [bx, bz] of bollards) {\n    set(bx, 6, bz, log(woodStripped, \"y\"));\n    set(bx, 7, bz, woodFence);\n    set(bx, 8, bz, \"minecraft:lantern[hanging=false]\");\n  }\n\n  // ==========================================\n  // 6. TERRAIN CONFORMATION (RULE 6)\n  // ==========================================\n  // Scan all occupied columns and sink structural stilts/pilings down to seabed\n\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      let minY = -1;\n      let maxY = -1;\n      for (let y = 0; y < H; y++) {\n        if (world[x][y][z] !== null) {\n          if (minY === -1) minY = y;\n          maxY = y;\n        }\n      }\n\n      if (minY !== -1) {\n        // Compute node-local ground height from terrain query\n        const localTerrainH = Math.round(api.heightAt(x, z));\n        const groundY = Math.max(0, Math.min(H - 1, seatY + localTerrainH));\n\n        if (groundY < minY) {\n          // Terrain falls away into water: build stilts down to riverbed\n          const isPillar = (\n            (x === 13 || x === 19 || x === 25 || x === 17 || x === 21) ||\n            (z === 12 || z === 18 || z === 24 || z === 10 || z === 26) ||\n            (x % 4 === 0 && z % 4 === 0)\n          );\n          const stiltBlock = isPillar ? log(woodLog, \"y\") : log(woodStripped, \"y\");\n\n          for (let y = groundY + 1; y < minY; y++) {\n            set(x, y, z, stiltBlock);\n          }\n          // Firm stone plinth footing on the riverbed / seabed\n          set(x, groundY, z, groundPlinth);\n        } else if (groundY > minY) {\n          // Terrain rises up into hill/ridge: step plinth up to meet ground\n          for (let y = minY; y <= groundY; y++) {\n            if (world[x][y][z] === null || y < seatY) {\n              set(x, y, z, groundPlinth);\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // Submerged horizontal cross-bracing ties at Y = 2 and Y = 3\n  for (let x = 2; x <= 35; x += 4) {\n    for (let z = 2; z <= 35; z++) {\n      if (get(x, 2, z) !== null && get(x, 2, z) !== groundPlinth) {\n        if (get(x, 2, z - 1) === null && get(x, 4, z) !== null) {\n          set(x, 2, z, log(woodStripped, \"z\"));\n        }\n      }\n    }\n  }\n\n  // ==========================================\n  // 7. EMIT TO API (DETERMINISTIC FLUSH)\n  // ==========================================\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const block = world[x][y][z];\n        if (block !== null) {\n          api.set(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"Floating Market Bazaar\",\n    seatY: 5,\n    anchors: {\n      front: [19, 5, 0],\n      pier: [19, 5, 0],\n      hall: [19, 5, 18],\n      market: [19, 5, 18],\n      dock_west: [4, 5, 22],\n      dock_east: [33, 5, 22]\n    },\n    interiors: [\n      {\n        min: [14, 6, 13],\n        max: [24, 9, 23],\n        kind: \"hall\"\n      },\n      {\n        min: [28, 6, 7],\n        max: [32, 8, 12],\n        kind: \"quarters\"\n      }\n    ]\n  };\n}"
+    }
+  }
+}

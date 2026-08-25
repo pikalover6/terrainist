@@ -1,0 +1,160 @@
+{
+  "id": "probe_meteorite",
+  "family": "probe",
+  "kit": "settlement",
+  "prompt": "A market town grown around a crashed star-metal meteorite half-buried in its central square, still glowing in its crater, with the smiths' forges ringed around the rim.",
+  "seed": 926,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.65,
+    "decline": 0.1,
+    "formality": 0.35,
+    "character": {
+      "label": "meteorite forge market town",
+      "materialTheme": "temperate_timber",
+      "urbanForm": "radial",
+      "archetypes": {
+        "prefer": [
+          "workshop",
+          "tavern",
+          "cottage",
+          "inn",
+          "warehouse"
+        ]
+      },
+      "props": {
+        "prefer": [
+          "cart",
+          "market_barrow",
+          "notice_board"
+        ]
+      }
+    },
+    "tokens": {
+      "terrain": "a market town arranged radially around a central impact crater holding a glowing star-metal meteorite half-buried in the ground",
+      "icons": "a half-buried star-metal meteorite glowing in the central crater; smithies, smelting hearths, and forges ringed directly around the rim; market stalls and trader wagons filling the adjoining avenues"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 184891,
+    "completionTokens": 33769,
+    "cost": 0.1327
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 32,
+    "maxDepth": 2,
+    "generators": [
+      "authored:starmetal_meteorite",
+      "building.grammar@0",
+      "infra.entry@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "armory",
+      "cottage",
+      "foundry",
+      "guildhall",
+      "inn",
+      "market_stall",
+      "smithy",
+      "tavern",
+      "townhouse",
+      "warehouse"
+    ],
+    "archetypesInCatalog": 10,
+    "formPacks": [],
+    "props": [
+      "cart",
+      "hitching_post",
+      "market_barrow",
+      "notice_board"
+    ],
+    "species": [
+      "field_oak",
+      "spreading_oak",
+      "tall_spruce"
+    ],
+    "envelopes": [
+      "512x512",
+      "40x40",
+      "13x12x15",
+      "11x10x11",
+      "9x8x9",
+      "11x12x17",
+      "9x9x9",
+      "13x14x17",
+      "13x12x13",
+      "13x10x15",
+      "13x11x13",
+      "11x8x9",
+      "9x14x15",
+      "9x8x9",
+      "9x11x9"
+    ],
+    "constraints": 46,
+    "constraintKinds": [
+      "adjacent_to",
+      "at",
+      "blend",
+      "distance",
+      "facing",
+      "gap",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform",
+      "zone"
+    ],
+    "constraintsWithStrength": 22,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 13,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 31,
+    "eras": [
+      "medieval"
+    ],
+    "bytes": 45358
+  },
+  "wallMs": 526000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 2,
+    "feedbackRounds": 1,
+    "programs": [
+      "ok starmetal_meteorite [landmark] 1 attempt(s), 25289 tokens ($0.0425), 1 warning(s)",
+      "ok starmetal_cluster [plugin] 2 attempt(s), 42061 tokens ($0.0554), 2 warning(s)"
+    ],
+    "programCost": 0.0979,
+    "totalCost": 0.2306,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/probe4/gen/probe_meteorite/out/starmetal_crater",
+    "finalDiagnostics": {
+      "LOAM-T208": 1,
+      "LOAM-W522": 1,
+      "LOAM-W483": 1,
+      "LOAM-W485": 1,
+      "LOAM-I497": 1,
+      "LOAM-W337": 1,
+      "LOAM-W470": 1
+    },
+    "crash": [],
+    "docName": "starmetal_crater.loam.json"
+  }
+}

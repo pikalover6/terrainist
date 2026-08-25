@@ -1,0 +1,172 @@
+{
+  "id": "probe_polder_mill",
+  "family": "probe",
+  "kit": "settlement",
+  "prompt": "A flat polder village of dykes and drainage canals, with one great brick windmill pumping the water out, its sails turning over the reed beds.",
+  "seed": 925,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "era": "renaissance",
+    "wealth": 0.45,
+    "decline": 0.1,
+    "formality": 0.35,
+    "climate": {
+      "temperature": 0.2,
+      "humidity": 0.7,
+      "snow": "never"
+    },
+    "character": {
+      "label": "dutch polder village",
+      "materialTheme": "temperate_timber",
+      "formPacks": [
+        "agrarian"
+      ],
+      "urbanForm": "canal",
+      "archetypes": {
+        "prefer": [
+          "windmill",
+          "cottage",
+          "byre",
+          "hay_barn",
+          "dairy"
+        ]
+      },
+      "props": {
+        "prefer": [
+          "cart",
+          "well_head"
+        ]
+      },
+      "motifs": {
+        "roofType": "gable"
+      }
+    },
+    "tokens": {
+      "terrain": "flat reclaimed polder land crisscrossed by drainage canals and bounded by dykes, with shallow reed beds",
+      "infra": "drainage_canal network separating the fields; earthen dyke along the perimeter water; cart_track along the dyke crest",
+      "icons": "a great brick drainage windmill with revolving sails set at the water junction; sluice gates; reed beds fringing the ditch lines"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 273503,
+    "completionTokens": 37264,
+    "cost": 0.1724
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 24,
+    "maxDepth": 2,
+    "generators": [
+      "authored:great_brick_windmill",
+      "building.grammar@0",
+      "infra.entry@0",
+      "precinct.farm@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "barn",
+      "church",
+      "cottage",
+      "dairy",
+      "dutch_gable_house",
+      "general_store",
+      "tavern",
+      "town_hall",
+      "windmill"
+    ],
+    "archetypesInCatalog": 9,
+    "formPacks": [
+      "agrarian"
+    ],
+    "props": [
+      "barge",
+      "cart",
+      "pier",
+      "rowboat"
+    ],
+    "species": [
+      "dyke_birch",
+      "dyke_oak",
+      "marsh_hazel",
+      "polder_willow"
+    ],
+    "envelopes": [
+      "512x512",
+      "25x42x27",
+      "180x160",
+      "13x16x13",
+      "13x16x17",
+      "140x120"
+    ],
+    "constraints": 7,
+    "constraintKinds": [
+      "adjacent_to",
+      "at",
+      "blend",
+      "distance",
+      "gap",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform"
+    ],
+    "constraintsWithStrength": 3,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 1,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 2,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 22,
+    "eras": [
+      "renaissance"
+    ],
+    "bytes": 28983
+  },
+  "wallMs": 365000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 3,
+    "feedbackRounds": 2,
+    "programs": [
+      "ok great_brick_windmill [landmark] 1 attempt(s), 25232 tokens ($0.0423), 26 warning(s)"
+    ],
+    "programCost": 0.0423,
+    "totalCost": 0.2147,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/probe4/gen/probe_polder_mill/out/polder_village",
+    "finalDiagnostics": {
+      "LOAM-W330": 1,
+      "LOAM-T208": 1,
+      "LOAM-T222": 1,
+      "LOAM-I526": 21,
+      "LOAM-T242": 1,
+      "LOAM-I512": 1,
+      "LOAM-W413": 7,
+      "LOAM-I412": 2,
+      "LOAM-I463": 5,
+      "LOAM-T239": 11,
+      "LOAM-I504": 1,
+      "LOAM-T228": 1,
+      "LOAM-I497": 1,
+      "LOAM-T232": 1,
+      "LOAM-T233": 1,
+      "LOAM-T341": 1,
+      "LOAM-W470": 1,
+      "LOAM-T107": 1
+    },
+    "crash": [],
+    "docName": "polder_village.loam.json"
+  }
+}

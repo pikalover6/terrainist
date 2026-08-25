@@ -1,0 +1,868 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "dusty_frontier_town",
+    "worldSeed": "921",
+    "prompt": "A dusty frontier town on a single main street — saloon, bank, sheriff's office, a livery stable — with a tall wooden water tower over the rail depot at the end of the street.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": {
+        "mix": [
+          [
+            "minecraft:coarse_dirt",
+            5
+          ],
+          [
+            "minecraft:packed_mud",
+            2
+          ],
+          [
+            "minecraft:dirt",
+            2
+          ]
+        ]
+      },
+      "ground.cliff": "minecraft:terracotta",
+      "road.surface": "minecraft:dirt_path",
+      "road.shoulder": "minecraft:coarse_dirt",
+      "plaza.path": "minecraft:dirt_path",
+      "plaza.gravel": "minecraft:coarse_dirt",
+      "plaza.cobble": "minecraft:coarse_dirt"
+    }
+  },
+  "intent": {
+    "era": "industrial",
+    "wealth": 0.35,
+    "decline": 0.2,
+    "formality": 0.2,
+    "climate": {
+      "temperature": 0.8,
+      "humidity": -0.7,
+      "snow": "never"
+    },
+    "character": {
+      "label": "dusty frontier town",
+      "materialTheme": "temperate_timber",
+      "formPacks": [
+        "frontier_west"
+      ],
+      "archetypes": {
+        "prefer": [
+          "tavern",
+          "bank",
+          "police_station",
+          "stable",
+          "train_station",
+          "general_store",
+          "water_tower"
+        ],
+        "forbid": [
+          "townhouse",
+          "apartment_block",
+          "office",
+          "manor"
+        ]
+      },
+      "props": {
+        "prefer": [
+          "hitching_post",
+          "horse_trough",
+          "stagecoach",
+          "cart",
+          "notice_board",
+          "well_head"
+        ]
+      },
+      "motifs": {
+        "roofType": "shed",
+        "massing": "blocky",
+        "ornamentDensity": 0.1
+      }
+    },
+    "tokens": {
+      "terrain": "a flat, dusty arid plain with scrubland",
+      "infra": "boardwalk along the main street; rail_line running into the depot at the end of town",
+      "icons": "tall wooden water tower over the rail depot at the terminus of the single main street; false-fronted wooden storefronts, hitching posts, and dusty dirt road"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "the frontier territory",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "arid open plateau with mesas and dry washes",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 72,
+          "amplitude": 22,
+          "octaves": 5,
+          "frequency": 0.0035,
+          "warp": {
+            "amount": 20,
+            "frequency": 0.003
+          },
+          "erosionPasses": 2,
+          "cliffThreshold": 55,
+          "soilDepth": 3,
+          "beachWidth": 4,
+          "snowLineFraction": 0.95
+        },
+        "children": [
+          {
+            "id": "town_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the flat dusty ground under the settlement",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 95,
+              "height": 6,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "red_mesa",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the red butte looming in the northwest",
+            "params": {
+              "verb": "plateau",
+              "zone": "northwest",
+              "radius": 75,
+              "height": 38,
+              "rim": 8,
+              "profile": "sharp"
+            }
+          },
+          {
+            "id": "dry_gully",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "a dry arroyo cutting down the eastern flank",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.78,
+                  0.15
+                ],
+                [
+                  0.82,
+                  0.5
+                ],
+                [
+                  0.85,
+                  0.85
+                ]
+              ],
+              "width": 30,
+              "depth": 14,
+              "flooded": "never",
+              "profile": "sharp"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "arid",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0015
+        }
+      },
+      {
+        "id": "arid_scrub",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "stunted ironwood and scrub across the north",
+        "params": {
+          "area": {
+            "zone": "north"
+          },
+          "density": 0.03,
+          "spacing": 6,
+          "clumping": 0.35,
+          "maxSlope": 30,
+          "elevation": [
+            2,
+            80
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.1,
+            "flowers": 0.02,
+            "deadwood": 0.25
+          },
+          "species": [
+            {
+              "id": "ironwood",
+              "shape": "desert_ironwood",
+              "weight": 2
+            },
+            {
+              "id": "scrub_juniper",
+              "shape": "juniper_scrub",
+              "weight": 3
+            },
+            {
+              "id": "acacia",
+              "shape": "acacia_umbrella",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "sparse_wilderness",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse desert scrub in open country",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.008,
+          "spacing": 8,
+          "clumping": 0.5,
+          "maxSlope": 34,
+          "elevation": [
+            2,
+            100
+          ],
+          "edgeFalloff": 10,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.05,
+            "flowers": 0.01,
+            "deadwood": 0.15
+          },
+          "species": [
+            {
+              "id": "wild_scrub",
+              "shape": "juniper_scrub",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "main_street",
+        "kind": "primitive",
+        "label": "the wide dusty main thoroughfare",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            18,
+            90
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "saloon",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the frontier saloon on main street",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "archetype": "tavern",
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "dense"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "main_street",
+            "gap": [
+              1,
+              6
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "main_street"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "saloon",
+          "trade",
+          "house"
+        ]
+      },
+      {
+        "id": "bank",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the frontier bank with iron strongroom",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            13,
+            13
+          ]
+        },
+        "params": {
+          "archetype": "bank",
+          "floors": 1,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "main_street",
+            "gap": [
+              1,
+              6
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "main_street"
+          },
+          {
+            "distance": "saloon",
+            "min": 6,
+            "max": 32,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "bank",
+          "civic"
+        ]
+      },
+      {
+        "id": "sheriffs_office",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the sheriff office and holding cells",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "archetype": "police_station",
+          "floors": 1,
+          "roof": "gable",
+          "basement": {
+            "depth": 4,
+            "style": "dungeon_room"
+          }
+        },
+        "constraints": [
+          {
+            "adjacent_to": "main_street",
+            "gap": [
+              1,
+              6
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "main_street"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "police_station",
+          "civic"
+        ]
+      },
+      {
+        "id": "livery_stable",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the livery stable with horse stalls and tack room",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            13,
+            19
+          ]
+        },
+        "params": {
+          "archetype": "stable",
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "main_street",
+            "gap": [
+              2,
+              8
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "main_street"
+          },
+          {
+            "distance": "sheriffs_office",
+            "min": 8,
+            "max": 40,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "stable",
+          "craft"
+        ]
+      },
+      {
+        "id": "general_store",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the dry goods general store",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            10,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "general_store",
+          "floors": 2,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "main_street",
+            "gap": [
+              1,
+              6
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "main_street"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "general_store",
+          "trade"
+        ]
+      },
+      {
+        "id": "frontier_hotel",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the two-storey frontier boarding house hotel",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            13,
+            17
+          ]
+        },
+        "params": {
+          "archetype": "boarding_house",
+          "floors": 2,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "main_street",
+            "gap": [
+              1,
+              8
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "main_street"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "hotel",
+          "house"
+        ]
+      },
+      {
+        "id": "rail_depot",
+        "kind": "generator",
+        "generator": "authored:rail_depot_water_tower",
+        "label": "the rail depot terminus and wooden water tower at the end of main street",
+        "params": {
+          "face": {
+            "toward": "main_street"
+          }
+        },
+        "constraints": [
+          {
+            "distance": "main_street",
+            "min": 4,
+            "max": 20,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "tags": [
+          "station",
+          "landmark"
+        ]
+      },
+      {
+        "id": "smithy",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the town wheelwright and blacksmith",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "smithy",
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "main_street",
+            "gap": [
+              2,
+              8
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "main_street"
+          },
+          {
+            "distance": "livery_stable",
+            "min": 6,
+            "max": 24,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "craft"
+        ]
+      },
+      {
+        "id": "boardwalk_west",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "the raised plank boardwalk along the west storefronts",
+        "params": {
+          "entry": "boardwalk",
+          "route": {
+            "along": "lanes",
+            "offset": 3,
+            "side": "left"
+          }
+        }
+      },
+      {
+        "id": "boardwalk_east",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "the raised plank boardwalk along the east storefronts",
+        "params": {
+          "entry": "boardwalk",
+          "route": {
+            "along": "lanes",
+            "offset": 3,
+            "side": "right"
+          }
+        }
+      },
+      {
+        "id": "telegraph",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "telegraph wire connecting the depot to town",
+        "params": {
+          "entry": "telegraph_line",
+          "route": {
+            "between": [
+              "rail_depot",
+              "sheriffs_office"
+            ]
+          }
+        }
+      },
+      {
+        "id": "hitching_post_saloon",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "hitching_post",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "horse_trough_stable",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "horse_trough",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "stagecoach",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "stagecoach",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "covered_wagon",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "covered_wagon",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "town_well",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "well_head",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "bulletin_board",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "notice_board",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "locomotive_train",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "steam locomotive at the terminus",
+        "params": {
+          "prop": "locomotive",
+          "zone": "south"
+        }
+      },
+      {
+        "id": "freight_wagon",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "freight car on the siding",
+        "params": {
+          "prop": "freight_car",
+          "zone": "south"
+        }
+      },
+      {
+        "id": "lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "the dirt street connecting the storefronts, depot, and water tower",
+        "params": {
+          "anchors": [
+            "main_street",
+            "rail_depot",
+            "saloon",
+            "bank",
+            "sheriffs_office",
+            "livery_stable",
+            "#tag:house"
+          ],
+          "pattern": "ribbon",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 16
+        }
+      }
+    ]
+  },
+  "programs": {
+    "rail_depot_water_tower": {
+      "mode": "landmark",
+      "envelope": [
+        15,
+        18,
+        16
+      ],
+      "sourceHash": "b3:d0e6e04f910d659369fd4786d78b734b60d43c3450bf282362accc664ae0d0b2",
+      "outputHash": "b3:1c230257b67e065c8223f2c1538e72dd4abf1f89f7de4402f1281fea221e8166",
+      "conforms": false,
+      "conformHash": "b3:fcbc109c8ba40a1b4f6302efa983570e2e118bed5f250cfc82ae9f84bf2d9337",
+      "source": "export const envelope = [15, 18, 16];\n\nexport default function build(api) {\n  const { set, heightAt, theme } = api;\n\n  // 1. Resolve Theme Palette with reliable fallbacks\n  const woodPlanks = theme.wood?.planks || \"minecraft:spruce_planks\";\n  const woodLog = theme.wood?.log || \"minecraft:dark_oak_log\";\n  const woodStripped = theme.wood?.stripped || \"minecraft:stripped_spruce_log\";\n  const woodStairs = theme.wood?.stairs || \"minecraft:spruce_stairs\";\n  const woodSlab = theme.wood?.slab || \"minecraft:spruce_slab\";\n  const woodFence = theme.wood?.fence || \"minecraft:spruce_fence\";\n  const woodTrapdoor = theme.wood?.trapdoor || \"minecraft:spruce_trapdoor\";\n  const woodDoor = theme.wood?.door || \"minecraft:spruce_door\";\n\n  const stonePlinth = theme.ground?.plinth || theme.stone?.primary || \"minecraft:stone_bricks\";\n  const stonePrimary = theme.stone?.primary || \"minecraft:cobblestone\";\n  const stoneWall = theme.stone?.wall || \"minecraft:cobblestone_wall\";\n  const stoneSlab = theme.stone?.slab || \"minecraft:cobblestone_slab\";\n\n  const roofStairs = theme.roof?.stairs || woodStairs;\n  const roofSlab = theme.roof?.slab || woodSlab;\n  const roofSolid = theme.roof?.solid || woodPlanks;\n\n  // Utility helpers\n  function safeSet(x, y, z, block) {\n    if (x >= 0 && x < envelope[0] && y >= 0 && y < envelope[1] && z >= 0 && z < envelope[2]) {\n      set(x, y, z, block);\n    }\n  }\n\n  // Rule 6: Ground conformity helper — builds foundation down to real terrain\n  function groundPillar(x, z, topY, material) {\n    const h = heightAt(x, z);\n    const minY = Math.min(h, topY);\n    const maxY = Math.max(h, topY);\n    for (let y = minY; y <= maxY; y++) {\n      safeSet(x, y, z, material);\n    }\n  }\n\n  // ==========================================\n  // 2. FOUNDATIONS & BOARDWALK PLATFORM\n  // ==========================================\n\n  // Depot Office Foundation (X: 1..7, Z: 6..14)\n  for (let x = 1; x <= 7; x++) {\n    for (let z = 6; z <= 14; z++) {\n      const isPerimeter = (x === 1 || x === 7 || z === 6 || z === 14);\n      groundPillar(x, z, 0, isPerimeter ? stonePlinth : stonePrimary);\n      // Floor plane at Y=0\n      safeSet(x, 0, z, woodPlanks);\n    }\n  }\n\n  // Boardwalk Platform (X: 0..14, Z: 1..5) and Tower Walkway (X: 9..13, Z: 5..8)\n  for (let x = 0; x <= 14; x++) {\n    for (let z = 1; z <= 5; z++) {\n      // Platform pilings under structural grid\n      if (x % 3 === 0 || x === 14 || z === 1 || z === 5) {\n        groundPillar(x, z, 0, stonePlinth);\n      } else {\n        groundPillar(x, z, 0, stonePrimary);\n      }\n      // Wooden boardwalk walking deck at Y=1\n      safeSet(x, 1, z, woodPlanks);\n    }\n  }\n\n  // Connector walkway between boardwalk and water tower base\n  for (let x = 9; x <= 13; x++) {\n    for (let z = 6; z <= 7; z++) {\n      groundPillar(x, z, 0, stonePlinth);\n      safeSet(x, 1, z, woodPlanks);\n    }\n  }\n\n  // Boardwalk front steps down to ground (Z=0, X: 1..13)\n  for (let x = 1; x <= 13; x++) {\n    groundPillar(x, 0, 0, stonePlinth);\n    safeSet(x, 0, 0, `${woodStairs}[facing=south,half=bottom]`);\n  }\n\n  // Railway track terminus ballast & ties (X: 14, Z: 0..5)\n  for (let z = 0; z <= 5; z++) {\n    groundPillar(14, z, 0, stonePrimary);\n    safeSet(14, 1, z, `${woodSlab}[type=bottom]`);\n  }\n  // Track buffer bumper at end of rail spur\n  safeSet(14, 1, 5, `${woodLog}[axis=z]`);\n  safeSet(14, 2, 5, `${woodStairs}[facing=north,half=bottom]`);\n  safeSet(14, 2, 4, \"minecraft:iron_bars\");\n\n  // ==========================================\n  // 3. DEPOT BUILDING (X: 1..7, Z: 6..14)\n  // ==========================================\n\n  // Vertical timber log posts at corners and bays\n  const depotPosts = [\n    [1, 6], [7, 6], [1, 14], [7, 14],\n    [1, 10], [7, 10], [4, 14]\n  ];\n  for (const [px, pz] of depotPosts) {\n    for (let y = 1; y <= 5; y++) {\n      safeSet(px, y, pz, `${woodLog}[axis=y]`);\n    }\n  }\n\n  // North wall (Z=6) - Front facade with ticket office door & windows\n  for (let x = 2; x <= 6; x++) {\n    for (let y = 1; y <= 4; y++) {\n      if (x === 4) {\n        // Doorway\n        if (y === 1) safeSet(x, y, 6, `${woodDoor}[facing=north,half=lower]`);\n        else if (y === 2) safeSet(x, y, 6, `${woodDoor}[facing=north,half=upper]`);\n        else safeSet(x, y, 6, woodPlanks);\n      } else if (x === 2 || x === 6) {\n        // Ticket / waiting room windows\n        if (y === 2 || y === 3) safeSet(x, y, 6, woodFence);\n        else safeSet(x, y, 6, woodPlanks);\n      } else {\n        safeSet(x, y, 6, woodPlanks);\n      }\n    }\n  }\n\n  // South wall (Z=14)\n  for (let x = 2; x <= 6; x++) {\n    if (x === 4) continue; // Skip post\n    for (let y = 1; y <= 4; y++) {\n      if ((x === 3 || x === 5) && (y === 2 || y === 3)) {\n        safeSet(x, y, 14, woodFence);\n      } else {\n        safeSet(x, y, 14, woodPlanks);\n      }\n    }\n  }\n\n  // West wall (X=1) and East wall (X=7)\n  for (let z = 7; z <= 13; z++) {\n    if (z === 10) continue; // Skip post\n    for (let y = 1; y <= 4; y++) {\n      // West wall\n      if ((z === 8 || z === 12) && y === 2) {\n        safeSet(1, y, z, woodFence);\n      } else {\n        safeSet(1, y, z, woodPlanks);\n      }\n\n      // East wall\n      if ((z === 8 || z === 12) && y === 2) {\n        safeSet(7, y, z, woodFence);\n      } else {\n        safeSet(7, y, z, woodPlanks);\n      }\n    }\n  }\n\n  // Ceiling over depot room at Y=5\n  for (let x = 2; x <= 6; x++) {\n    for (let z = 7; z <= 13; z++) {\n      safeSet(x, 5, z, woodPlanks);\n    }\n  }\n\n  // Gabled Roof over depot (Y=5..8, X: 0..8, Z: 5..15)\n  for (let z = 5; z <= 15; z++) {\n    // Eaves course (Y=5)\n    safeSet(0, 5, z, `${roofStairs}[facing=east,half=bottom]`);\n    safeSet(0, 4, z, `${roofStairs}[facing=west,half=top]`);\n    safeSet(8, 5, z, `${roofStairs}[facing=west,half=bottom]`);\n    safeSet(8, 4, z, `${roofStairs}[facing=east,half=top]`);\n\n    // Slope course 1 (Y=6)\n    safeSet(1, 6, z, `${roofStairs}[facing=east,half=bottom]`);\n    safeSet(7, 6, z, `${roofStairs}[facing=west,half=bottom]`);\n\n    // Slope course 2 (Y=7)\n    safeSet(2, 7, z, `${roofStairs}[facing=east,half=bottom]`);\n    safeSet(6, 7, z, `${roofStairs}[facing=west,half=bottom]`);\n\n    // Ridge slope (Y=8)\n    safeSet(3, 8, z, `${roofStairs}[facing=east,half=bottom]`);\n    safeSet(5, 8, z, `${roofStairs}[facing=west,half=bottom]`);\n    safeSet(4, 8, z, `${roofSlab}[type=top]`);\n  }\n\n  // Gable end walls (fill under roof at Z=6 and Z=14)\n  for (const gz of [6, 14]) {\n    safeSet(2, 5, gz, woodPlanks);\n    safeSet(3, 5, gz, woodPlanks);\n    safeSet(4, 5, gz, woodPlanks);\n    safeSet(5, 5, gz, woodPlanks);\n    safeSet(6, 5, gz, woodPlanks);\n\n    safeSet(3, 6, gz, woodPlanks);\n    safeSet(4, 6, gz, woodPlanks);\n    safeSet(5, 6, gz, woodPlanks);\n\n    safeSet(4, 7, gz, woodPlanks);\n  }\n\n  // Platform Canopy over front boardwalk (X: 1..7, Z: 2..5)\n  const canopyPosts = [[1, 2], [4, 2], [7, 2]];\n  for (const [cpx, cpz] of canopyPosts) {\n    for (let y = 2; y <= 4; y++) {\n      safeSet(cpx, y, cpz, woodFence);\n    }\n  }\n  for (let x = 1; x <= 7; x++) {\n    safeSet(x, 4, 2, `${woodLog}[axis=x]`);\n    safeSet(x, 5, 3, `${roofStairs}[facing=south,half=bottom]`);\n    safeSet(x, 4, 2, `${roofStairs}[facing=south,half=bottom]`);\n    safeSet(x, 5, 4, `${roofSlab}[type=top]`);\n  }\n\n  // Telegraph Mast & Line on rear depot corner (X=1, Z=14)\n  for (let y = 5; y <= 12; y++) {\n    safeSet(1, y, 14, `${woodStripped}[axis=y]`);\n  }\n  // Crossarms with insulators\n  safeSet(0, 10, 14, woodFence);\n  safeSet(2, 10, 14, woodFence);\n  safeSet(0, 11, 14, \"minecraft:iron_bars\");\n  safeSet(2, 11, 14, \"minecraft:iron_bars\");\n  safeSet(0, 12, 14, woodFence);\n  safeSet(2, 12, 14, woodFence);\n  // Simulated wire chains running North along depot roof\n  for (let z = 6; z <= 13; z++) {\n    if (z % 2 === 0) {\n      safeSet(1, 9, z, \"minecraft:chain\");\n    }\n  }\n\n  // ==========================================\n  // 4. WATER TOWER ON BRACED STILTS\n  // ==========================================\n  // Center of tower is at X=11, Z=10\n\n  const stiltPillars = [\n    [9, 8], [13, 8],\n    [9, 12], [13, 12]\n  ];\n\n  // Heavy Stilt Pier Foundations & Posts (Y=0..7)\n  for (const [sx, sz] of stiltPillars) {\n    groundPillar(sx, sz, 0, stonePlinth);\n    safeSet(sx, 1, sz, stoneWall);\n    for (let y = 2; y <= 7; y++) {\n      safeSet(sx, y, sz, `${woodLog}[axis=y]`);\n    }\n  }\n\n  // Heavy horizontal tie beams at Y=4 and Y=7\n  for (const ty of [4, 7]) {\n    for (let x = 9; x <= 13; x++) {\n      safeSet(x, ty, 8, `${woodLog}[axis=x]`);\n      safeSet(x, ty, 12, `${woodLog}[axis=x]`);\n    }\n    for (let z = 8; z <= 12; z++) {\n      safeSet(9, ty, z, `${woodLog}[axis=z]`);\n      safeSet(13, ty, z, `${woodLog}[axis=z]`);\n    }\n  }\n\n  // Cross-bracing (diagonal X-fences) between tower legs\n  for (let y = 2; y <= 6; y++) {\n    if (y === 4) continue; // Tie beam level\n    // North & South stilt faces\n    safeSet(10, y, 8, woodFence);\n    safeSet(11, y, 8, woodFence);\n    safeSet(12, y, 8, woodFence);\n\n    safeSet(10, y, 12, woodFence);\n    safeSet(11, y, 12, woodFence);\n    safeSet(12, y, 12, woodFence);\n\n    // East & West stilt faces\n    safeSet(9, y, 9, woodFence);\n    safeSet(9, y, 10, woodFence);\n    safeSet(9, y, 11, woodFence);\n\n    safeSet(13, y, 9, woodFence);\n    safeSet(13, y, 10, woodFence);\n    safeSet(13, y, 11, woodFence);\n  }\n\n  // Central vertical water supply riser / standpipe\n  groundPillar(11, 10, 0, stonePlinth);\n  for (let y = 1; y <= 7; y++) {\n    safeSet(11, y, 10, `${woodStripped}[axis=y]`);\n  }\n\n  // Maintenance ladder on West stilt leg\n  for (let y = 1; y <= 7; y++) {\n    safeSet(8, y, 10, `${woodStairs}[facing=east,half=bottom]`);\n    safeSet(9, y, 10, \"minecraft:ladder[facing=west]\");\n  }\n\n  // Tower Deck Platform & Support Brackets (Y=7)\n  for (let x = 8; x <= 14; x++) {\n    for (let z = 7; z <= 13; z++) {\n      const dx = Math.abs(x - 11);\n      const dz = Math.abs(z - 10);\n      if (dx + dz <= 4) {\n        safeSet(x, 7, z, woodPlanks);\n      }\n    }\n  }\n  // Under-deck inverted stair brackets\n  for (let x = 9; x <= 13; x++) {\n    safeSet(x, 6, 7, `${woodStairs}[facing=south,half=top]`);\n    safeSet(x, 6, 13, `${woodStairs}[facing=north,half=top]`);\n  }\n  for (let z = 8; z <= 12; z++) {\n    safeSet(8, 6, z, `${woodStairs}[facing=east,half=top]`);\n    safeSet(14, 6, z, `${woodStairs}[facing=west,half=top]`);\n  }\n\n  // Octagonal Wooden Water Tank Body (Y=8 to Y=12)\n  for (let y = 8; y <= 12; y++) {\n    // Octagonal ring: Center (11, 10)\n    for (let x = 9; x <= 13; x++) {\n      for (let z = 8; z <= 12; z++) {\n        const isCorner = (x === 9 || x === 13) && (z === 8 || z === 12);\n        if (!isCorner) {\n          safeSet(x, y, z, woodPlanks);\n        }\n      }\n    }\n\n    // Iron reinforcement tension bands around tank at Y=8 and Y=11\n    if (y === 8 || y === 11) {\n      safeSet(10, y, 7, `${woodTrapdoor}[facing=south,half=bottom]`);\n      safeSet(11, y, 7, `${woodTrapdoor}[facing=south,half=bottom]`);\n      safeSet(12, y, 7, `${woodTrapdoor}[facing=south,half=bottom]`);\n\n      safeSet(10, y, 13, `${woodTrapdoor}[facing=north,half=bottom]`);\n      safeSet(11, y, 13, `${woodTrapdoor}[facing=north,half=bottom]`);\n      safeSet(12, y, 13, `${woodTrapdoor}[facing=north,half=bottom]`);\n\n      safeSet(8, y, 9, `${woodTrapdoor}[facing=east,half=bottom]`);\n      safeSet(8, y, 10, `${woodTrapdoor}[facing=east,half=bottom]`);\n      safeSet(8, y, 11, `${woodTrapdoor}[facing=east,half=bottom]`);\n\n      safeSet(14, y, 9, `${woodTrapdoor}[facing=west,half=bottom]`);\n      safeSet(14, y, 10, `${woodTrapdoor}[facing=west,half=bottom]`);\n      safeSet(14, y, 11, `${woodTrapdoor}[facing=west,half=bottom]`);\n    }\n  }\n\n  // Trackside Refill Water Spout Mechanism (Front/Trackside at Z: 5..7, X=11)\n  // Boom timber arm extending out towards track\n  safeSet(11, 10, 7, `${woodLog}[axis=z]`);\n  safeSet(11, 10, 6, `${woodLog}[axis=z]`);\n  safeSet(11, 9, 6, \"minecraft:iron_bars\");\n  safeSet(11, 8, 6, \"minecraft:hopper\");\n  safeSet(11, 7, 5, `${woodStairs}[facing=south,half=bottom]`);\n  safeSet(11, 8, 5, \"minecraft:chain\");\n  safeSet(11, 9, 5, \"minecraft:chain\");\n  safeSet(11, 10, 5, `${woodTrapdoor}[facing=south,half=top]`);\n\n  // Water level indicator board on tank side\n  for (let y = 8; y <= 12; y++) {\n    safeSet(9, y, 7, \"minecraft:ladder[facing=north]\");\n  }\n\n  // Conical / Pyramidal Tank Roof (Y=13 to Y=16)\n  // Tier 1 - Overhanging Eaves (Y=13)\n  for (let x = 8; x <= 14; x++) {\n    safeSet(x, 13, 7, `${roofStairs}[facing=south,half=bottom]`);\n    safeSet(x, 13, 13, `${roofStairs}[facing=north,half=bottom]`);\n  }\n  for (let z = 8; z <= 12; z++) {\n    safeSet(8, 13, z, `${roofStairs}[facing=east,half=bottom]`);\n    safeSet(14, 13, z, `${roofStairs}[facing=west,half=bottom]`);\n  }\n  // Fill inside Tier 1\n  for (let x = 9; x <= 13; x++) {\n    for (let z = 8; z <= 12; z++) {\n      safeSet(x, 13, z, roofSolid);\n    }\n  }\n\n  // Tier 2 - Middle Slope (Y=14)\n  for (let x = 9; x <= 13; x++) {\n    safeSet(x, 14, 8, `${roofStairs}[facing=south,half=bottom]`);\n    safeSet(x, 14, 12, `${roofStairs}[facing=north,half=bottom]`);\n  }\n  for (let z = 9; z <= 11; z++) {\n    safeSet(9, 14, z, `${roofStairs}[facing=east,half=bottom]`);\n    safeSet(13, 14, z, `${roofStairs}[facing=west,half=bottom]`);\n  }\n  for (let x = 10; x <= 12; x++) {\n    for (let z = 9; z <= 11; z++) {\n      safeSet(x, 14, z, roofSolid);\n    }\n  }\n\n  // Tier 3 - Upper Peak (Y=15)\n  safeSet(11, 15, 9, `${roofStairs}[facing=south,half=bottom]`);\n  safeSet(11, 15, 11, `${roofStairs}[facing=north,half=bottom]`);\n  safeSet(10, 15, 10, `${roofStairs}[facing=east,half=bottom]`);\n  safeSet(12, 15, 10, `${roofStairs}[facing=west,half=bottom]`);\n  safeSet(11, 15, 10, roofSolid);\n\n  // Finial Weather Vane / Spire (Y=16)\n  safeSet(11, 16, 10, woodFence);\n\n  // ==========================================\n  // 5. FRONTIER DETAILS & LIGHTING\n  // ==========================================\n\n  // Hitching post at platform edge (X=2..3, Z=1)\n  safeSet(2, 2, 1, woodFence);\n  safeSet(3, 2, 1, woodFence);\n  safeSet(2, 3, 1, `${woodTrapdoor}[facing=south,half=top]`);\n  safeSet(3, 3, 1, `${woodTrapdoor}[facing=south,half=top]`);\n\n  // Platform baggage bench & freight cargo\n  safeSet(6, 2, 4, `${woodLog}[axis=y]`);\n  safeSet(6, 3, 4, `${woodTrapdoor}[facing=south,half=bottom]`);\n  safeSet(5, 2, 5, `${woodStairs}[facing=north,half=bottom]`);\n  safeSet(6, 2, 5, `${woodStairs}[facing=north,half=bottom]`);\n\n  // Station master oil lanterns\n  safeSet(4, 3, 1, \"minecraft:lantern[hanging=false]\");\n  safeSet(1, 3, 2, \"minecraft:lantern[hanging=false]\");\n  safeSet(7, 3, 2, \"minecraft:lantern[hanging=false]\");\n  safeSet(11, 3, 7, \"minecraft:lantern[hanging=false]\");\n\n  // 6. Return Landmark Specification\n  return {\n    name: \"Rail Depot & Frontier Water Tower\",\n    seatY: 0,\n    anchors: {\n      front: [4, 1, 0],\n      door: [4, 1, 6],\n      track: [14, 1, 0]\n    },\n    interiors: [\n      {\n        min: [2, 1, 7],\n        max: [6, 4, 13],\n        kind: \"office\"\n      }\n    ]\n  };\n}"
+    }
+  }
+}

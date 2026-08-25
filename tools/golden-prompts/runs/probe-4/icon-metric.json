@@ -1,0 +1,790 @@
+{
+  "run": "probe-4",
+  "scoredAt": "2026-08-25",
+  "thresholds": {
+    "dominantHeight": 1.5,
+    "dominantFootprint": 2
+  },
+  "scores": [
+    {
+      "id": "probe_frontier_town",
+      "icons": [
+        {
+          "id": "water_tower",
+          "dominantRequired": true,
+          "inDocument": [
+            "world.rail_depot",
+            "world.lanes",
+            "intent.tokens",
+            "program:rail_depot_water_tower"
+          ],
+          "inWorld": [
+            "rail_depot",
+            "program:world.rail_depot"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": false,
+            "by": "rail_depot",
+            "height": 18,
+            "footprint": 240,
+            "medianHeight": 12,
+            "medianFootprint": 169,
+            "heightRatio": 1.5,
+            "footprintRatio": 1.42,
+            "base": 78,
+            "medianBase": 78,
+            "elevation": 0,
+            "spanRatio": 1.23
+          }
+        },
+        {
+          "id": "main_street",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.saloon",
+            "world.hitching_post_saloon",
+            "world.bank",
+            "world.sheriffs_office",
+            "world.livery_stable",
+            "world.rail_depot",
+            "intent.tokens",
+            "world.boardwalk_west",
+            "world.boardwalk_east"
+          ],
+          "inWorld": [
+            "saloon",
+            "world.saloon",
+            "prop:world.hitching_post_saloon",
+            "bank",
+            "world.bank",
+            "sheriffs_office",
+            "world.sheriffs_office",
+            "livery_stable",
+            "world.livery_stable"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "depot",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.rail_depot",
+            "world.telegraph",
+            "world.lanes",
+            "program:rail_depot_water_tower",
+            "intent.tokens",
+            "world.sheriffs_office"
+          ],
+          "inWorld": [
+            "rail_depot",
+            "program:world.rail_depot",
+            "marker:world.rail_depot",
+            "world.sheriffs_office"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "buildings-hull",
+        "lots": 7,
+        "blocks": 0,
+        "envelope": 11284,
+        "lotsPer10k": 6.2,
+        "floor": 3,
+        "ok": true
+      },
+      "boxes": {
+        "era": "industrial",
+        "preModern": false,
+        "count": 0,
+        "of": 7,
+        "sample": []
+      },
+      "era": {
+        "era": "industrial",
+        "forbidden": [
+          "townhouse",
+          "apartment_block",
+          "office",
+          "manor"
+        ],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 0,
+        "diagnostics": 8
+      },
+      "alarms": [
+        "icon water_tower not dominant (h×1.5, a×1.42)"
+      ]
+    },
+    {
+      "id": "probe_twin_pueblos",
+      "icons": [
+        {
+          "id": "bridge",
+          "dominantRequired": true,
+          "inDocument": [
+            "world.canyon_rope_bridge",
+            "world.canyon_trails",
+            "program:canyon_rope_bridge"
+          ],
+          "inWorld": [
+            "canyon_rope_bridge",
+            "program:world.canyon_rope_bridge",
+            "marker:world.canyon_rope_bridge"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": false,
+            "by": "canyon_rope_bridge",
+            "height": 20,
+            "footprint": 720,
+            "medianHeight": 15,
+            "medianFootprint": 156,
+            "heightRatio": 1.33,
+            "footprintRatio": 4.62,
+            "base": 101,
+            "medianBase": 114,
+            "elevation": -13,
+            "spanRatio": 3.69,
+            "readRequired": true
+          }
+        },
+        {
+          "id": "pueblos",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.west_pueblo",
+            "world.west_pueblo.west_great_kiva_house",
+            "world.east_pueblo",
+            "world.east_pueblo.east_watch_pueblo",
+            "world.terrain.west_cliff_shelf",
+            "world.terrain.east_cliff_shelf",
+            "world.canyon_trails"
+          ],
+          "inWorld": [
+            "west_pueblo",
+            "east_pueblo",
+            "west_great_kiva_house",
+            "terrace_-62_-49",
+            "terrace_-96_3",
+            "terrace_-62_18",
+            "terrace_-94_19",
+            "infill_-113_-76",
+            "infill_-62_-66",
+            "infill_-82_-61",
+            "infill_-94_-44",
+            "infill_-128_-43"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "canyon",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.terrain",
+            "world.terrain.canyon_chasm",
+            "world.terrain.west_cliff_shelf",
+            "world.terrain.east_cliff_shelf",
+            "world.west_pueblo",
+            "world.east_pueblo.east_watch_pueblo",
+            "world.canyon_rope_bridge",
+            "world.canyon_trails",
+            "world.rim_cairn_north",
+            "world.rim_cairn_south",
+            "program:canyon_rope_bridge",
+            "world.east_pueblo"
+          ],
+          "inWorld": [
+            "canyon_rope_bridge",
+            "program:world.canyon_rope_bridge",
+            "marker:canyon_chasm.head",
+            "marker:canyon_chasm.mouth",
+            "marker:world.canyon_rope_bridge",
+            "marker:west_cliff_shelf.center",
+            "marker:west_cliff_shelf.peak",
+            "marker:west_cliff_shelf.foot",
+            "marker:east_cliff_shelf.center",
+            "marker:east_cliff_shelf.peak",
+            "marker:east_cliff_shelf.foot"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "districts",
+        "lots": 104,
+        "blocks": 38,
+        "envelope": 39000,
+        "lotsPer10k": 26.7,
+        "floor": 3,
+        "ok": true
+      },
+      "boxes": {
+        "era": "ancient",
+        "preModern": true,
+        "count": 0,
+        "of": 58,
+        "sample": []
+      },
+      "era": {
+        "era": "ancient",
+        "forbidden": [
+          "townhouse",
+          "terraced_row",
+          "office",
+          "skyscraper",
+          "shop_row"
+        ],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 2,
+        "diagnostics": 29
+      },
+      "alarms": [
+        "icon bridge not dominant by the rule (h×1.33, a×4.62) — read it: span ×3.69"
+      ]
+    },
+    {
+      "id": "probe_flood_delta",
+      "icons": [
+        {
+          "id": "stilt_houses",
+          "dominantRequired": true,
+          "inDocument": [
+            "world",
+            "world.terrain.village_stilt_shelf_west",
+            "world.terrain.village_stilt_shelf_east",
+            "world.stilt_house_chief",
+            "world.stilt_house_fisher_west",
+            "world.stilt_house_fisher_east",
+            "world.stilt_house_channel",
+            "world.delta_trading_post",
+            "world.stilt_walkways",
+            "world.elevated_boardwalk_flank",
+            "intent.tokens",
+            "world.veranda_pier_north"
+          ],
+          "inWorld": [
+            "stilt_house_chief",
+            "stilt_house_fisher_west",
+            "stilt_house_fisher_east",
+            "stilt_house_channel",
+            "world.stilt_house_chief",
+            "world.stilt_house_fisher_west",
+            "world.stilt_house_fisher_east",
+            "world.stilt_house_channel",
+            "marker:village_stilt_shelf_west.center",
+            "marker:village_stilt_shelf_west.peak",
+            "marker:village_stilt_shelf_west.foot",
+            "marker:village_stilt_shelf_east.center"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": false,
+            "by": "world.stilt_house_chief",
+            "height": 15,
+            "footprint": 121,
+            "medianHeight": 15,
+            "medianFootprint": 121,
+            "heightRatio": 1,
+            "footprintRatio": 1,
+            "base": 66,
+            "medianBase": 65,
+            "elevation": 1,
+            "spanRatio": 1
+          }
+        },
+        {
+          "id": "floating_market",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.confluence_floating_market",
+            "program:floating_market_bazaar",
+            "intent.tokens",
+            "world.market_trade_barge",
+            "world.market_gondola_skiff",
+            "world.deck_market_barrow_1",
+            "world.deck_market_barrow_2",
+            "world.village_boathouse",
+            "world.veranda_pier_north",
+            "world.moored_veranda_boat_1",
+            "world.moored_veranda_boat_2",
+            "world.confluence_houseboat"
+          ],
+          "inWorld": [
+            "confluence_floating_market",
+            "program:world.confluence_floating_market",
+            "marker:world.confluence_floating_market",
+            "prop:world.market_trade_barge",
+            "prop:world.market_gondola_skiff",
+            "prop:world.deck_market_barrow_1",
+            "prop:world.deck_market_barrow_2",
+            "village_boathouse",
+            "world.village_boathouse",
+            "prop:world.moored_veranda_boat_1",
+            "prop:world.moored_veranda_boat_2",
+            "prop:world.confluence_houseboat"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "flood",
+          "dominantRequired": false,
+          "inDocument": [
+            "world",
+            "world.terrain",
+            "world.terrain.river_northwest",
+            "world.terrain.river_northeast",
+            "world.terrain.confluence_basin",
+            "world.terrain.delta_outlet_east",
+            "world.delta_swamp_jungle",
+            "world.stilt_house_chief",
+            "world.confluence_houseboat",
+            "world.market_gondola_skiff",
+            "intent.tokens",
+            "world.terrain.delta_outlet_main"
+          ],
+          "inWorld": [
+            "delta_trading_post",
+            "world.delta_trading_post",
+            "forest:delta_swamp_jungle",
+            "marker:delta_outlet_main.head",
+            "marker:delta_outlet_main.mouth",
+            "marker:delta_outlet_east.head",
+            "marker:delta_outlet_east.mouth",
+            "river_tea_house",
+            "world.river_tea_house",
+            "prop:world.river_trader_junk",
+            "marker:river_northwest.head",
+            "marker:river_northwest.mouth"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "buildings-hull",
+        "lots": 7,
+        "blocks": 0,
+        "envelope": 12648,
+        "lotsPer10k": 5.5,
+        "floor": 3,
+        "ok": true
+      },
+      "boxes": {
+        "era": "medieval",
+        "preModern": true,
+        "count": 0,
+        "of": 7,
+        "sample": []
+      },
+      "era": {
+        "era": "medieval",
+        "forbidden": [
+          "skyscraper",
+          "office",
+          "castle",
+          "townhouse"
+        ],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 0,
+        "diagnostics": 9
+      },
+      "alarms": [
+        "icon stilt_houses not dominant (h×1, a×1)"
+      ]
+    },
+    {
+      "id": "probe_lava_field",
+      "icons": [
+        {
+          "id": "lava_lake",
+          "dominantRequired": true,
+          "inDocument": [
+            "world",
+            "world.terrain.lava_chute",
+            "world.terrain.east_lava_ridge",
+            "world.terrain.west_lava_ridge",
+            "world.caldera_lake",
+            "world.ocean_entry",
+            "world.collapsed_tubes",
+            "program:lava_ocean_entry",
+            "program:collapsed_lava_tube",
+            "world.terrain.summit_cone",
+            "program:volcano_caldera_lake"
+          ],
+          "inWorld": [
+            "program:world.ocean_entry",
+            "program:world.collapsed_tubes",
+            "marker:east_lava_ridge.head",
+            "marker:east_lava_ridge.mouth",
+            "marker:east_lava_ridge.peak",
+            "marker:west_lava_ridge.head",
+            "marker:west_lava_ridge.mouth",
+            "marker:west_lava_ridge.peak",
+            "marker:lava_chute.head",
+            "marker:lava_chute.mouth",
+            "marker:world.spatter_cones",
+            "program:world.caldera_lake"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": true,
+            "by": "world.ocean_entry",
+            "blocks": 23498,
+            "footprint": 1760,
+            "hovering": false,
+            "medianBlocks": 0,
+            "medianFootprint": 0,
+            "volumeRatio": null,
+            "footprintRatio": null
+          }
+        },
+        {
+          "id": "lava_river",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.terrain.east_lava_ridge",
+            "world.terrain.west_lava_ridge",
+            "world.glowing_fissures",
+            "world.collapsed_tubes",
+            "world",
+            "world.terrain.lava_chute",
+            "world.caldera_lake",
+            "world.ocean_entry",
+            "program:lava_ocean_entry",
+            "program:collapsed_lava_tube"
+          ],
+          "inWorld": [
+            "program:world.ocean_entry",
+            "program:world.collapsed_tubes",
+            "marker:east_lava_ridge.head",
+            "marker:east_lava_ridge.mouth",
+            "marker:east_lava_ridge.peak",
+            "marker:west_lava_ridge.head",
+            "marker:west_lava_ridge.mouth",
+            "marker:west_lava_ridge.peak",
+            "marker:lava_chute.head",
+            "marker:lava_chute.mouth"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "black_field",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.terrain.east_lava_ridge",
+            "world.terrain.west_lava_ridge",
+            "world",
+            "world.terrain.lava_chute"
+          ],
+          "inWorld": [
+            "marker:east_lava_ridge.head",
+            "marker:east_lava_ridge.mouth",
+            "marker:east_lava_ridge.peak",
+            "marker:west_lava_ridge.head",
+            "marker:west_lava_ridge.mouth",
+            "marker:west_lava_ridge.peak"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "none",
+        "lots": 0,
+        "blocks": 0,
+        "envelope": 0,
+        "lotsPer10k": 0,
+        "floor": 0,
+        "ok": true
+      },
+      "boxes": {
+        "era": "",
+        "preModern": false,
+        "count": 0,
+        "of": 0,
+        "sample": []
+      },
+      "era": {
+        "era": "",
+        "forbidden": [],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 0,
+        "diagnostics": 8
+      },
+      "alarms": []
+    },
+    {
+      "id": "probe_polder_mill",
+      "icons": [
+        {
+          "id": "windmill",
+          "dominantRequired": true,
+          "inDocument": [
+            "world.terrain.windmill_shelf",
+            "world.great_windmill",
+            "world.lanes",
+            "program:great_brick_windmill",
+            "intent.tokens"
+          ],
+          "inWorld": [
+            "great_windmill",
+            "program:world.great_windmill",
+            "marker:windmill_shelf.center",
+            "marker:windmill_shelf.peak",
+            "marker:windmill_shelf.foot",
+            "marker:world.great_windmill"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": true,
+            "by": "great_windmill",
+            "height": 42,
+            "footprint": 675,
+            "medianHeight": 15,
+            "medianFootprint": 152,
+            "heightRatio": 2.8,
+            "footprintRatio": 4.44,
+            "base": 68,
+            "medianBase": 68,
+            "elevation": 0,
+            "spanRatio": 1.59
+          }
+        },
+        {
+          "id": "canals",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.terrain.canal_basin",
+            "world.terrain.main_drainage_canal",
+            "world.terrain.cross_canal_east",
+            "world.terrain.cross_canal_west",
+            "world.reed_and_willow_beds",
+            "world.great_windmill",
+            "world.polder_village",
+            "world.polder_village.polder_church",
+            "world.canal_sluice_lock",
+            "world.village_pier",
+            "world.canal_freight_barge",
+            "world.canal_rowboat"
+          ],
+          "inWorld": [
+            "prop:world.canal_freight_barge",
+            "prop:world.canal_rowboat",
+            "marker:canal_basin.center",
+            "marker:canal_basin.peak",
+            "marker:canal_basin.foot",
+            "marker:main_drainage_canal.head",
+            "marker:main_drainage_canal.mouth",
+            "marker:cross_canal_east.head",
+            "marker:cross_canal_east.mouth",
+            "marker:cross_canal_west.head",
+            "marker:cross_canal_west.mouth",
+            "marker:perimeter_sea_dyke.head"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "reeds",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.reed_and_willow_beds",
+            "world.canal_rowboat",
+            "intent.tokens"
+          ],
+          "inWorld": [
+            "forest:reed_and_willow_beds"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "districts",
+        "lots": 74,
+        "blocks": 21,
+        "envelope": 28800,
+        "lotsPer10k": 25.7,
+        "floor": 3,
+        "ok": true
+      },
+      "boxes": {
+        "era": "renaissance",
+        "preModern": true,
+        "count": 0,
+        "of": 39,
+        "sample": []
+      },
+      "era": {
+        "era": "renaissance",
+        "forbidden": [],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 0,
+        "diagnostics": 59
+      },
+      "alarms": []
+    },
+    {
+      "id": "probe_meteorite",
+      "icons": [
+        {
+          "id": "meteorite",
+          "dominantRequired": true,
+          "inDocument": [
+            "world.terrain",
+            "world.terrain.impact_crater",
+            "world.the_meteorite",
+            "world.impact_furrow",
+            "world.meteor_inn",
+            "program:starmetal_meteorite",
+            "intent.tokens",
+            "world.scattered_shards",
+            "world.great_foundry",
+            "world.star_forge_north",
+            "world.weaponsmith_east",
+            "world.ore_warehouse"
+          ],
+          "inWorld": [
+            "the_meteorite",
+            "meteor_inn",
+            "world.meteor_inn",
+            "program:world.the_meteorite",
+            "marker:world.the_meteorite",
+            "star_forge_north",
+            "starlight_tavern",
+            "world.star_forge_north",
+            "world.starlight_tavern",
+            "program:world.scattered_shards",
+            "crater_square",
+            "forest:crater_rim_woods"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": true,
+            "by": "the_meteorite",
+            "height": 26,
+            "footprint": 729,
+            "medianHeight": 12,
+            "medianFootprint": 135,
+            "heightRatio": 2.17,
+            "footprintRatio": 5.4,
+            "base": 71,
+            "medianBase": 78,
+            "elevation": -7,
+            "spanRatio": 2.08
+          }
+        },
+        {
+          "id": "forges",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.star_forge_north",
+            "world.weaponsmith_east",
+            "world.bellows_forge_south",
+            "world.radial_lanes",
+            "intent.tokens",
+            "world.great_foundry",
+            "world.armorsmith_west",
+            "world.guildhall",
+            "world.blacksmith_quarters"
+          ],
+          "inWorld": [
+            "star_forge_north",
+            "bellows_forge_south",
+            "world.star_forge_north",
+            "world.bellows_forge_south",
+            "marker:world.the_meteorite",
+            "weaponsmith_east",
+            "armorsmith_west",
+            "blacksmith_quarters",
+            "world.weaponsmith_east",
+            "world.armorsmith_west",
+            "world.blacksmith_quarters"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "market",
+          "dominantRequired": false,
+          "inDocument": [
+            "world",
+            "world.terrain.town_shelf",
+            "world.crater_square",
+            "world.market_stall_hub",
+            "world.prop_market_barrow",
+            "intent.tokens",
+            "world.guildhall",
+            "world.meteor_inn",
+            "world.prop_cart_square"
+          ],
+          "inWorld": [
+            "market_stall_hub",
+            "world.market_stall_hub",
+            "prop:world.prop_market_barrow",
+            "crater_square",
+            "prop:world.prop_cart_square"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "buildings-hull",
+        "lots": 13,
+        "blocks": 0,
+        "envelope": 20280,
+        "lotsPer10k": 6.4,
+        "floor": 3,
+        "ok": true
+      },
+      "boxes": {
+        "era": "medieval",
+        "preModern": true,
+        "count": 0,
+        "of": 13,
+        "sample": []
+      },
+      "era": {
+        "era": "medieval",
+        "forbidden": [],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 0,
+        "diagnostics": 7
+      },
+      "alarms": []
+    }
+  ]
+}

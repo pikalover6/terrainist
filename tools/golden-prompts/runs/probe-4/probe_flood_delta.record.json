@@ -1,0 +1,157 @@
+{
+  "id": "probe_flood_delta",
+  "family": "probe",
+  "kit": "settlement",
+  "prompt": "A monsoon-season stilt village on a river delta in flood: houses on tall stilts above the brown water, boats moored to the verandas, a floating market at the confluence.",
+  "seed": 923,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.35,
+    "decline": 0.15,
+    "formality": 0.1,
+    "event": {
+      "kind": "flood",
+      "severity": 0.75,
+      "recency": 0
+    },
+    "climate": {
+      "biome": "minecraft:mangrove_swamp",
+      "temperature": 0.85,
+      "humidity": 0.95,
+      "snow": "never"
+    },
+    "character": {
+      "label": "monsoon stilt village",
+      "materialTheme": "temperate_timber",
+      "urbanForm": "canal",
+      "motifs": {
+        "roofType": "gable",
+        "massing": "sprawling"
+      }
+    },
+    "tokens": {
+      "terrain": "a braided river delta in heavy monsoon flood with a wide water confluence; brown floodwaters surrounding all dwelling foundations",
+      "icons": "timber houses raised high on stilts above flood stage; longtail and dugout boats tied off to veranda posts; a floating market of laden trade boats at the main river confluence; connecting elevated plank walkways"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 279661,
+    "completionTokens": 42351,
+    "cost": 0.1843
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 35,
+    "maxDepth": 2,
+    "generators": [
+      "authored:floating_market_bazaar",
+      "building.grammar@0",
+      "infra.entry@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "boathouse",
+      "cottage",
+      "inn",
+      "market_stall",
+      "stilt_house",
+      "tea_house",
+      "trading_post"
+    ],
+    "archetypesInCatalog": 7,
+    "formPacks": [],
+    "props": [
+      "barge",
+      "fishing_sloop",
+      "gondola",
+      "houseboat",
+      "junk",
+      "lamp_post",
+      "market_barrow",
+      "pier",
+      "rowboat"
+    ],
+    "species": [
+      "flood_willow",
+      "fringe_jungle",
+      "fringe_willow",
+      "jungle_canopy"
+    ],
+    "envelopes": [
+      "512x512",
+      "22x22",
+      "11x13x11",
+      "11x12x11",
+      "11x13x11",
+      "11x12x11",
+      "13x14x17",
+      "13x11x13",
+      "13x11x13"
+    ],
+    "constraints": 24,
+    "constraintKinds": [
+      "adjacent_to",
+      "band",
+      "blend",
+      "distance",
+      "facing",
+      "gap",
+      "max",
+      "min",
+      "on",
+      "reference",
+      "terrain_conform",
+      "zone"
+    ],
+    "constraintsWithStrength": 11,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 7,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 30,
+    "eras": [
+      "medieval"
+    ],
+    "bytes": 34601
+  },
+  "wallMs": 393000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 3,
+    "feedbackRounds": 2,
+    "programs": [
+      "ok floating_market_bazaar [landmark] 1 attempt(s), 32577 tokens ($0.0561), 22 warning(s)"
+    ],
+    "programCost": 0.0561,
+    "totalCost": 0.2404,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/probe4/gen/probe_flood_delta/out/monsoon_stilt_village",
+    "finalDiagnostics": {
+      "LOAM-T208": 1,
+      "LOAM-W520": 1,
+      "LOAM-W522": 1,
+      "LOAM-I463": 1,
+      "LOAM-I497": 1,
+      "LOAM-T233": 1,
+      "LOAM-W472": 1,
+      "LOAM-W470": 1,
+      "LOAM-T107": 1
+    },
+    "crash": [],
+    "docName": "monsoon_stilt_village.loam.json"
+  }
+}

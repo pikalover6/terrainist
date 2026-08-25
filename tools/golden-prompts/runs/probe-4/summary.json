@@ -1,0 +1,985 @@
+{
+  "label": "probe-4",
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "intentPrepass": true,
+  "source": "terrainist generate (full pipeline: intent, authoring, programs, compile-feedback rounds, emit)",
+  "kits": {
+    "settlement": {
+      "path": "docs/kits/settlement-author.md",
+      "sha256": "34e3a176aa3e5af5aa781a9354f42b966531581b8db75c6fd5ad169a543f268b",
+      "bytes": 285375,
+      "envelopeLiterals": [
+        "11x11x9",
+        "11x14x9",
+        "11x8x9",
+        "120x120",
+        "13x10x11",
+        "13x11x13",
+        "13x11x9",
+        "13x16x13",
+        "13x9x11",
+        "140x120",
+        "140x24x92",
+        "15x17x21",
+        "16x52x14",
+        "180x160",
+        "18x18",
+        "18x44x15",
+        "200x180",
+        "21x76x19",
+        "21x78x19",
+        "220x200",
+        "22x22",
+        "25x22x19",
+        "288x288",
+        "30x30",
+        "440x400",
+        "512x512",
+        "5x4",
+        "7x19x7",
+        "8x8x8",
+        "96x16x72",
+        "96x80",
+        "9x11x9",
+        "9x12x9",
+        "9x8x8",
+        "9x8x9"
+      ]
+    },
+    "terrain": {
+      "path": "docs/kits/terrain-author.md",
+      "sha256": "0adfac8d77042820afec8495258497e5cd44aa2a4391a585ac942518717f331b",
+      "bytes": 41193,
+      "envelopeLiterals": [
+        "384x384",
+        "512x512"
+      ]
+    }
+  },
+  "totals": {
+    "ok": 6,
+    "attempts": 6,
+    "oneShot": 6,
+    "promptTokens": 1495948,
+    "completionTokens": 247313,
+    "cost": 0.993,
+    "generateCost": 1.4942
+  },
+  "records": [
+    {
+      "id": "probe_frontier_town",
+      "family": "probe",
+      "kit": "settlement",
+      "prompt": "A dusty frontier town on a single main street — saloon, bank, sheriff's office, a livery stable — with a tall wooden water tower over the rail depot at the end of the street.",
+      "seed": 921,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "era": "industrial",
+        "wealth": 0.35,
+        "decline": 0.2,
+        "formality": 0.2,
+        "climate": {
+          "temperature": 0.8,
+          "humidity": -0.7,
+          "snow": "never"
+        },
+        "character": {
+          "label": "dusty frontier town",
+          "materialTheme": "temperate_timber",
+          "formPacks": [
+            "frontier_west"
+          ],
+          "archetypes": {
+            "prefer": [
+              "saloon",
+              "bank",
+              "jail",
+              "livery_stable",
+              "train_station",
+              "general_store",
+              "hotel"
+            ],
+            "forbid": [
+              "townhouse",
+              "apartment_block",
+              "office",
+              "manor"
+            ]
+          },
+          "props": {
+            "prefer": [
+              "water_tower",
+              "cart",
+              "notice_board",
+              "well_head"
+            ]
+          },
+          "urbanForm": "linear",
+          "motifs": {
+            "roofType": "shed",
+            "massing": "blocky",
+            "ornamentDensity": 0.1
+          }
+        },
+        "tokens": {
+          "terrain": "a flat, dusty arid plain with scrubland",
+          "infra": "boardwalk along the main street; rail_line running into the depot at the end of town",
+          "icons": "tall wooden water tower over the rail depot at the terminus of the single main street; false-fronted wooden storefronts, hitching posts, and dusty dirt road"
+        }
+      },
+      "attempts": 1,
+      "diagnostics": [],
+      "usage": {
+        "promptTokens": 178771,
+        "completionTokens": 31762,
+        "cost": 0.1266
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 29,
+        "maxDepth": 2,
+        "generators": [
+          "authored:rail_depot_water_tower",
+          "building.grammar@0",
+          "infra.entry@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "bank",
+          "barn",
+          "boarding_house",
+          "cottage",
+          "false_front_saloon",
+          "general_store",
+          "hotel",
+          "police_station",
+          "smithy",
+          "stable",
+          "tavern",
+          "train_station"
+        ],
+        "archetypesInCatalog": 12,
+        "formPacks": [
+          "frontier_west"
+        ],
+        "props": [
+          "covered_wagon",
+          "freight_car",
+          "hitching_post",
+          "horse_trough",
+          "locomotive",
+          "notice_board",
+          "stagecoach",
+          "well_head"
+        ],
+        "species": [
+          "acacia",
+          "ironwood",
+          "scrub_juniper",
+          "wild_scrub"
+        ],
+        "envelopes": [
+          "512x512",
+          "18x90",
+          "13x11x13",
+          "13x13x13",
+          "13x11x13",
+          "13x13x19",
+          "13x10x11",
+          "13x13x17",
+          "9x8x9"
+        ],
+        "constraints": 29,
+        "constraintKinds": [
+          "adjacent_to",
+          "blend",
+          "distance",
+          "facing",
+          "gap",
+          "max",
+          "min",
+          "reference",
+          "terrain_conform",
+          "zone"
+        ],
+        "constraintsWithStrength": 12,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 7,
+        "programReferences": 1,
+        "conformsTrue": 0,
+        "labels": 22,
+        "eras": [
+          "industrial"
+        ],
+        "bytes": 25987
+      },
+      "wallMs": 277000,
+      "generate": {
+        "exit": "0",
+        "modelRuns": 2,
+        "feedbackRounds": 0,
+        "programs": [
+          "ok rail_depot_water_tower [landmark] 1 attempt(s), 20120 tokens ($0.0327), 23 warning(s)"
+        ],
+        "programCost": 0.0338,
+        "totalCost": 0.1604,
+        "compiled": true,
+        "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/probe4/gen/probe_frontier_town/out/dusty_frontier_town",
+        "finalDiagnostics": {
+          "LOAM-T208": 1,
+          "LOAM-W483": 1,
+          "LOAM-I497": 1,
+          "LOAM-T233": 2,
+          "LOAM-T341": 1,
+          "LOAM-I525": 1,
+          "LOAM-W470": 1
+        },
+        "crash": [],
+        "docName": "dusty_frontier_town.loam.json"
+      }
+    },
+    {
+      "id": "probe_twin_pueblos",
+      "family": "probe",
+      "kit": "settlement",
+      "prompt": "Two cliff-dwelling pueblos facing each other across a narrow desert canyon, adobe rooms stacked up the rock, joined by a single rope-and-plank bridge over the drop.",
+      "seed": 922,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "era": "ancient",
+        "wealth": 0.35,
+        "decline": 0.1,
+        "formality": 0.1,
+        "climate": {
+          "biome": "minecraft:badlands",
+          "temperature": 0.9,
+          "humidity": -0.8,
+          "snow": "never"
+        },
+        "character": {
+          "label": "cliff dwelling pueblos",
+          "materialTheme": "sun_clay",
+          "urbanForm": "hillside",
+          "ground": "stepped",
+          "motifs": {
+            "roofType": "flat",
+            "massing": "stepped"
+          }
+        },
+        "tokens": {
+          "terrain": "two sheer rock cliff faces on opposite sides of a narrow, deep desert canyon",
+          "icons": "adobe pueblo dwellings stacked up cliff alcoves on both canyon walls; timber ladders linking flat roofs; round sunken kivas; a single rope-and-plank bridge spanning the drop between the two cliffs"
+        }
+      },
+      "attempts": 1,
+      "diagnostics": [],
+      "usage": {
+        "promptTokens": 526589,
+        "completionTokens": 67840,
+        "cost": 0.2929
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 18,
+        "maxDepth": 2,
+        "generators": [
+          "authored:canyon_rope_bridge",
+          "building.grammar@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "scatter.program@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "adobe_pueblo",
+          "cistern",
+          "cottage",
+          "courtyard_house",
+          "granary",
+          "kiln"
+        ],
+        "archetypesInCatalog": 6,
+        "formPacks": [],
+        "props": [
+          "cairn",
+          "log_pile"
+        ],
+        "species": [
+          "ironwood",
+          "juniper"
+        ],
+        "envelopes": [
+          "512x512",
+          "130x150",
+          "13x12x11",
+          "130x150",
+          "13x12x11"
+        ],
+        "constraints": 5,
+        "constraintKinds": [
+          "at",
+          "distance",
+          "max",
+          "min"
+        ],
+        "constraintsWithStrength": 0,
+        "hardConstraints": 0,
+        "forests": 1,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 2,
+        "programReferences": 1,
+        "conformsTrue": 0,
+        "labels": 16,
+        "eras": [
+          "ancient"
+        ],
+        "bytes": 34037
+      },
+      "wallMs": 690000,
+      "generate": {
+        "exit": "0",
+        "modelRuns": 3,
+        "feedbackRounds": 2,
+        "programs": [
+          "ok canyon_rope_bridge [landmark] 2 attempt(s), 52413 tokens ($0.0693), 26 warning(s)",
+          "ok sunken_kiva [plugin] 1 attempt(s), 26225 tokens ($0.0442), 7 warning(s)"
+        ],
+        "programCost": 0.1135,
+        "totalCost": 0.4064,
+        "compiled": true,
+        "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/probe4/gen/probe_twin_pueblos/out/canyon_cliff_pueblos",
+        "finalDiagnostics": {
+          "LOAM-T208": 1,
+          "LOAM-W520": 1,
+          "LOAM-T222": 2,
+          "LOAM-T242": 2,
+          "LOAM-I512": 2,
+          "LOAM-T224": 2,
+          "LOAM-W524": 2,
+          "LOAM-W413": 2,
+          "LOAM-I412": 2,
+          "LOAM-I463": 5,
+          "LOAM-E170": 2,
+          "LOAM-I497": 1,
+          "LOAM-T341": 1,
+          "LOAM-I525": 1,
+          "LOAM-W472": 1,
+          "LOAM-W470": 1,
+          "LOAM-T107": 1
+        },
+        "crash": [],
+        "docName": "canyon_cliff_pueblos.loam.json"
+      }
+    },
+    {
+      "id": "probe_flood_delta",
+      "family": "probe",
+      "kit": "settlement",
+      "prompt": "A monsoon-season stilt village on a river delta in flood: houses on tall stilts above the brown water, boats moored to the verandas, a floating market at the confluence.",
+      "seed": 923,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "era": "medieval",
+        "wealth": 0.35,
+        "decline": 0.15,
+        "formality": 0.1,
+        "event": {
+          "kind": "flood",
+          "severity": 0.75,
+          "recency": 0
+        },
+        "climate": {
+          "biome": "minecraft:mangrove_swamp",
+          "temperature": 0.85,
+          "humidity": 0.95,
+          "snow": "never"
+        },
+        "character": {
+          "label": "monsoon stilt village",
+          "materialTheme": "temperate_timber",
+          "urbanForm": "canal",
+          "motifs": {
+            "roofType": "gable",
+            "massing": "sprawling"
+          }
+        },
+        "tokens": {
+          "terrain": "a braided river delta in heavy monsoon flood with a wide water confluence; brown floodwaters surrounding all dwelling foundations",
+          "icons": "timber houses raised high on stilts above flood stage; longtail and dugout boats tied off to veranda posts; a floating market of laden trade boats at the main river confluence; connecting elevated plank walkways"
+        }
+      },
+      "attempts": 1,
+      "diagnostics": [],
+      "usage": {
+        "promptTokens": 279661,
+        "completionTokens": 42351,
+        "cost": 0.1843
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 35,
+        "maxDepth": 2,
+        "generators": [
+          "authored:floating_market_bazaar",
+          "building.grammar@0",
+          "infra.entry@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "boathouse",
+          "cottage",
+          "inn",
+          "market_stall",
+          "stilt_house",
+          "tea_house",
+          "trading_post"
+        ],
+        "archetypesInCatalog": 7,
+        "formPacks": [],
+        "props": [
+          "barge",
+          "fishing_sloop",
+          "gondola",
+          "houseboat",
+          "junk",
+          "lamp_post",
+          "market_barrow",
+          "pier",
+          "rowboat"
+        ],
+        "species": [
+          "flood_willow",
+          "fringe_jungle",
+          "fringe_willow",
+          "jungle_canopy"
+        ],
+        "envelopes": [
+          "512x512",
+          "22x22",
+          "11x13x11",
+          "11x12x11",
+          "11x13x11",
+          "11x12x11",
+          "13x14x17",
+          "13x11x13",
+          "13x11x13"
+        ],
+        "constraints": 24,
+        "constraintKinds": [
+          "adjacent_to",
+          "band",
+          "blend",
+          "distance",
+          "facing",
+          "gap",
+          "max",
+          "min",
+          "on",
+          "reference",
+          "terrain_conform",
+          "zone"
+        ],
+        "constraintsWithStrength": 11,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 7,
+        "programReferences": 1,
+        "conformsTrue": 0,
+        "labels": 30,
+        "eras": [
+          "medieval"
+        ],
+        "bytes": 34601
+      },
+      "wallMs": 393000,
+      "generate": {
+        "exit": "0",
+        "modelRuns": 3,
+        "feedbackRounds": 2,
+        "programs": [
+          "ok floating_market_bazaar [landmark] 1 attempt(s), 32577 tokens ($0.0561), 22 warning(s)"
+        ],
+        "programCost": 0.0561,
+        "totalCost": 0.2404,
+        "compiled": true,
+        "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/probe4/gen/probe_flood_delta/out/monsoon_stilt_village",
+        "finalDiagnostics": {
+          "LOAM-T208": 1,
+          "LOAM-W520": 1,
+          "LOAM-W522": 1,
+          "LOAM-I463": 1,
+          "LOAM-I497": 1,
+          "LOAM-T233": 1,
+          "LOAM-W472": 1,
+          "LOAM-W470": 1,
+          "LOAM-T107": 1
+        },
+        "crash": [],
+        "docName": "monsoon_stilt_village.loam.json"
+      }
+    },
+    {
+      "id": "probe_lava_field",
+      "family": "probe",
+      "kit": "terrain",
+      "prompt": "A fresh lava field on a volcano's flank: black ridged flows, glowing cracks, a lava lake in the summit crater and one bright river of lava running down to the sea — no settlement of any kind.",
+      "seed": 924,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "climate": {
+          "temperature": 1,
+          "humidity": -1,
+          "snow": "never"
+        },
+        "character": {
+          "label": "volcanic lava field",
+          "flora": {
+            "prefer": [
+              "deadwood"
+            ],
+            "forbid": [
+              "oak_round",
+              "birch_slim",
+              "spruce_tall"
+            ]
+          }
+        },
+        "tokens": {
+          "terrain": "a volcanic peak with a summit crater meeting the sea along its flank; a river of lava cutting down from summit to ocean",
+          "icons": "a glowing lava lake filling the summit crater; black ridged basalt crust with glowing magma fissures; a molten lava river pouring into the sea with billows of steam; total absence of buildings or settlement"
+        }
+      },
+      "attempts": 1,
+      "diagnostics": [],
+      "usage": {
+        "promptTokens": 52533,
+        "completionTokens": 34327,
+        "cost": 0.0841
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 12,
+        "maxDepth": 2,
+        "generators": [
+          "authored:lava_ocean_entry",
+          "authored:volcano_caldera_lake",
+          "cave.carver@0",
+          "scatter.program@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [],
+        "archetypesInCatalog": 0,
+        "formPacks": [],
+        "props": [],
+        "species": [],
+        "envelopes": [
+          "512x512"
+        ],
+        "constraints": 2,
+        "constraintKinds": [
+          "at"
+        ],
+        "constraintsWithStrength": 0,
+        "hardConstraints": 0,
+        "forests": 0,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 0,
+        "programReferences": 2,
+        "conformsTrue": 0,
+        "labels": 10,
+        "eras": [],
+        "bytes": 62246
+      },
+      "wallMs": 708000,
+      "generate": {
+        "exit": "0",
+        "modelRuns": 2,
+        "feedbackRounds": 0,
+        "programs": [
+          "ok volcano_caldera_lake [landmark] 1 attempt(s), 29059 tokens ($0.0496), 1 warning(s)",
+          "ok lava_ocean_entry [landmark] 1 attempt(s), 22191 tokens ($0.0367), 1 warning(s)",
+          "ok spatter_cone_fumarole [plugin] 1 attempt(s), 17507 tokens ($0.0279), 2 warning(s)",
+          "ok collapsed_lava_tube [plugin] 1 attempt(s), 24943 tokens ($0.0419), 1 warning(s)"
+        ],
+        "programCost": 0.1576,
+        "totalCost": 0.2417,
+        "compiled": true,
+        "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/probe4/gen/probe_lava_field/out/volcano_lava_field",
+        "finalDiagnostics": {
+          "LOAM-T341": 4,
+          "LOAM-W337": 3,
+          "LOAM-T107": 1
+        },
+        "crash": [],
+        "docName": "volcano_lava_field.loam.json"
+      }
+    },
+    {
+      "id": "probe_polder_mill",
+      "family": "probe",
+      "kit": "settlement",
+      "prompt": "A flat polder village of dykes and drainage canals, with one great brick windmill pumping the water out, its sails turning over the reed beds.",
+      "seed": 925,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "era": "renaissance",
+        "wealth": 0.45,
+        "decline": 0.1,
+        "formality": 0.35,
+        "climate": {
+          "temperature": 0.2,
+          "humidity": 0.7,
+          "snow": "never"
+        },
+        "character": {
+          "label": "dutch polder village",
+          "materialTheme": "temperate_timber",
+          "formPacks": [
+            "agrarian"
+          ],
+          "urbanForm": "canal",
+          "archetypes": {
+            "prefer": [
+              "windmill",
+              "cottage",
+              "byre",
+              "hay_barn",
+              "dairy"
+            ]
+          },
+          "props": {
+            "prefer": [
+              "cart",
+              "well_head"
+            ]
+          },
+          "motifs": {
+            "roofType": "gable"
+          }
+        },
+        "tokens": {
+          "terrain": "flat reclaimed polder land crisscrossed by drainage canals and bounded by dykes, with shallow reed beds",
+          "infra": "drainage_canal network separating the fields; earthen dyke along the perimeter water; cart_track along the dyke crest",
+          "icons": "a great brick drainage windmill with revolving sails set at the water junction; sluice gates; reed beds fringing the ditch lines"
+        }
+      },
+      "attempts": 1,
+      "diagnostics": [],
+      "usage": {
+        "promptTokens": 273503,
+        "completionTokens": 37264,
+        "cost": 0.1724
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 24,
+        "maxDepth": 2,
+        "generators": [
+          "authored:great_brick_windmill",
+          "building.grammar@0",
+          "infra.entry@0",
+          "precinct.farm@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "barn",
+          "church",
+          "cottage",
+          "dairy",
+          "dutch_gable_house",
+          "general_store",
+          "tavern",
+          "town_hall",
+          "windmill"
+        ],
+        "archetypesInCatalog": 9,
+        "formPacks": [
+          "agrarian"
+        ],
+        "props": [
+          "barge",
+          "cart",
+          "pier",
+          "rowboat"
+        ],
+        "species": [
+          "dyke_birch",
+          "dyke_oak",
+          "marsh_hazel",
+          "polder_willow"
+        ],
+        "envelopes": [
+          "512x512",
+          "25x42x27",
+          "180x160",
+          "13x16x13",
+          "13x16x17",
+          "140x120"
+        ],
+        "constraints": 7,
+        "constraintKinds": [
+          "adjacent_to",
+          "at",
+          "blend",
+          "distance",
+          "gap",
+          "max",
+          "min",
+          "reference",
+          "terrain_conform"
+        ],
+        "constraintsWithStrength": 3,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 1,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 2,
+        "programReferences": 1,
+        "conformsTrue": 0,
+        "labels": 22,
+        "eras": [
+          "renaissance"
+        ],
+        "bytes": 28983
+      },
+      "wallMs": 365000,
+      "generate": {
+        "exit": "0",
+        "modelRuns": 3,
+        "feedbackRounds": 2,
+        "programs": [
+          "ok great_brick_windmill [landmark] 1 attempt(s), 25232 tokens ($0.0423), 26 warning(s)"
+        ],
+        "programCost": 0.0423,
+        "totalCost": 0.2147,
+        "compiled": true,
+        "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/probe4/gen/probe_polder_mill/out/polder_village",
+        "finalDiagnostics": {
+          "LOAM-W330": 1,
+          "LOAM-T208": 1,
+          "LOAM-T222": 1,
+          "LOAM-I526": 21,
+          "LOAM-T242": 1,
+          "LOAM-I512": 1,
+          "LOAM-W413": 7,
+          "LOAM-I412": 2,
+          "LOAM-I463": 5,
+          "LOAM-T239": 11,
+          "LOAM-I504": 1,
+          "LOAM-T228": 1,
+          "LOAM-I497": 1,
+          "LOAM-T232": 1,
+          "LOAM-T233": 1,
+          "LOAM-T341": 1,
+          "LOAM-W470": 1,
+          "LOAM-T107": 1
+        },
+        "crash": [],
+        "docName": "polder_village.loam.json"
+      }
+    },
+    {
+      "id": "probe_meteorite",
+      "family": "probe",
+      "kit": "settlement",
+      "prompt": "A market town grown around a crashed star-metal meteorite half-buried in its central square, still glowing in its crater, with the smiths' forges ringed around the rim.",
+      "seed": 926,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "era": "medieval",
+        "wealth": 0.65,
+        "decline": 0.1,
+        "formality": 0.35,
+        "character": {
+          "label": "meteorite forge market town",
+          "materialTheme": "temperate_timber",
+          "urbanForm": "radial",
+          "archetypes": {
+            "prefer": [
+              "workshop",
+              "tavern",
+              "cottage",
+              "inn",
+              "warehouse"
+            ]
+          },
+          "props": {
+            "prefer": [
+              "cart",
+              "market_barrow",
+              "notice_board"
+            ]
+          }
+        },
+        "tokens": {
+          "terrain": "a market town arranged radially around a central impact crater holding a glowing star-metal meteorite half-buried in the ground",
+          "icons": "a half-buried star-metal meteorite glowing in the central crater; smithies, smelting hearths, and forges ringed directly around the rim; market stalls and trader wagons filling the adjoining avenues"
+        }
+      },
+      "attempts": 1,
+      "diagnostics": [],
+      "usage": {
+        "promptTokens": 184891,
+        "completionTokens": 33769,
+        "cost": 0.1327
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 32,
+        "maxDepth": 2,
+        "generators": [
+          "authored:starmetal_meteorite",
+          "building.grammar@0",
+          "infra.entry@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "scatter.program@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "armory",
+          "cottage",
+          "foundry",
+          "guildhall",
+          "inn",
+          "market_stall",
+          "smithy",
+          "tavern",
+          "townhouse",
+          "warehouse"
+        ],
+        "archetypesInCatalog": 10,
+        "formPacks": [],
+        "props": [
+          "cart",
+          "hitching_post",
+          "market_barrow",
+          "notice_board"
+        ],
+        "species": [
+          "field_oak",
+          "spreading_oak",
+          "tall_spruce"
+        ],
+        "envelopes": [
+          "512x512",
+          "40x40",
+          "13x12x15",
+          "11x10x11",
+          "9x8x9",
+          "11x12x17",
+          "9x9x9",
+          "13x14x17",
+          "13x12x13",
+          "13x10x15",
+          "13x11x13",
+          "11x8x9",
+          "9x14x15",
+          "9x8x9",
+          "9x11x9"
+        ],
+        "constraints": 46,
+        "constraintKinds": [
+          "adjacent_to",
+          "at",
+          "blend",
+          "distance",
+          "facing",
+          "gap",
+          "max",
+          "min",
+          "reference",
+          "terrain_conform",
+          "zone"
+        ],
+        "constraintsWithStrength": 22,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 13,
+        "programReferences": 1,
+        "conformsTrue": 0,
+        "labels": 31,
+        "eras": [
+          "medieval"
+        ],
+        "bytes": 45358
+      },
+      "wallMs": 526000,
+      "generate": {
+        "exit": "0",
+        "modelRuns": 2,
+        "feedbackRounds": 1,
+        "programs": [
+          "ok starmetal_meteorite [landmark] 1 attempt(s), 25289 tokens ($0.0425), 1 warning(s)",
+          "ok starmetal_cluster [plugin] 2 attempt(s), 42061 tokens ($0.0554), 2 warning(s)"
+        ],
+        "programCost": 0.0979,
+        "totalCost": 0.2306,
+        "compiled": true,
+        "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/probe4/gen/probe_meteorite/out/starmetal_crater",
+        "finalDiagnostics": {
+          "LOAM-T208": 1,
+          "LOAM-W522": 1,
+          "LOAM-W483": 1,
+          "LOAM-W485": 1,
+          "LOAM-I497": 1,
+          "LOAM-W337": 1,
+          "LOAM-W470": 1
+        },
+        "crash": [],
+        "docName": "starmetal_crater.loam.json"
+      }
+    }
+  ]
+}

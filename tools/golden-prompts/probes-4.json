@@ -1,0 +1,85 @@
+{
+  "$comment": "Probe pass 4 (Stocktake Run unit 35): six new prompts, one per spec §6 category, none of probes.json's or probes-3.json's. G4 counts these six after pass 3 surfaced F29. Same tooling as pass 3 with this roster.",
+  "defaults": { "kit": "settlement", "size": 512 },
+  "prompts": [
+    {
+      "id": "probe_frontier_town",
+      "family": "probe",
+      "seed": 921,
+      "prompt": "A dusty frontier town on a single main street — saloon, bank, sheriff's office, a livery stable — with a tall wooden water tower over the rail depot at the end of the street.",
+      "watches": ["frontier_west pack at 0 % reach", "a linear form (one street), not a grid", "the water tower: a tower's dominance is height, not footprint (F28's read-it case)"],
+      "icons": [
+        { "id": "water_tower", "terms": ["water tower", "water_tower", "tower", "tank"], "dominant": true },
+        { "id": "main_street", "terms": ["saloon", "bank", "sheriff", "livery", "main street", "boardwalk"] },
+        { "id": "depot", "terms": ["depot", "rail", "station", "platform"] }
+      ],
+      "densityFloor": 3
+    },
+    {
+      "id": "probe_twin_pueblos",
+      "family": "probe",
+      "seed": 922,
+      "prompt": "Two cliff-dwelling pueblos facing each other across a narrow desert canyon, adobe rooms stacked up the rock, joined by a single rope-and-plank bridge over the drop.",
+      "watches": ["two places, with a canyon authored between them (F26's note fires if it stays shallow)", "buildings against a cliff — the hillside/cliff seat", "the bridge: a program that must meet both rims"],
+      "icons": [
+        { "id": "bridge", "terms": ["bridge", "rope", "plank", "span"], "dominant": true },
+        { "id": "pueblos", "terms": ["pueblo", "adobe", "cliff", "dwelling", "terrace"] },
+        { "id": "canyon", "terms": ["canyon", "gorge", "ravine", "cliff"] }
+      ],
+      "densityFloor": 3
+    },
+    {
+      "id": "probe_flood_delta",
+      "family": "probe",
+      "seed": 923,
+      "prompt": "A monsoon-season stilt village on a river delta in flood: houses on tall stilts above the brown water, boats moored to the verandas, a floating market at the confluence.",
+      "watches": ["a settlement whose ground is water — seating over water, T110", "an unusual climate and season", "the floating market as a program on water"],
+      "icons": [
+        { "id": "stilt_houses", "terms": ["stilt", "pile", "raised", "veranda"], "dominant": true },
+        { "id": "floating_market", "terms": ["floating", "market", "boat", "barge"] },
+        { "id": "flood", "terms": ["flood", "delta", "river", "water", "monsoon"] }
+      ],
+      "densityFloor": 3
+    },
+    {
+      "id": "probe_lava_field",
+      "family": "probe",
+      "seed": 924,
+      "kit": "terrain",
+      "prompt": "A fresh lava field on a volcano's flank: black ridged flows, glowing cracks, a lava lake in the summit crater and one bright river of lava running down to the sea — no settlement of any kind.",
+      "watches": ["terrain-only, the terrain kit, a third time", "the volcano verb and its lava flows (DEFAULT_LAVA_FLOWS)", "lava that must not flow (T110 on lava)"],
+      "icons": [
+        { "id": "lava_lake", "terms": ["lava", "crater", "caldera", "summit", "lake"], "dominant": true },
+        { "id": "lava_river", "terms": ["flow", "river", "channel", "lava"] },
+        { "id": "black_field", "terms": ["basalt", "black", "field", "flank", "ridge"] }
+      ],
+      "densityFloor": 0
+    },
+    {
+      "id": "probe_polder_mill",
+      "family": "probe",
+      "seed": 925,
+      "prompt": "A flat polder village of dykes and drainage canals, with one great brick windmill pumping the water out, its sails turning over the reed beds.",
+      "watches": ["the icon lives in the catalog (a windmill) — reached for, and does its fit-out run (W524)", "canals as authored water on flat land", "a windmill's dominance is height and its sails — a read-it case"],
+      "icons": [
+        { "id": "windmill", "terms": ["windmill", "mill", "sails"], "dominant": true },
+        { "id": "canals", "terms": ["canal", "dyke", "dike", "ditch", "drain", "polder"] },
+        { "id": "reeds", "terms": ["reed", "marsh", "wetland", "bed"] }
+      ],
+      "densityFloor": 3
+    },
+    {
+      "id": "probe_meteorite",
+      "family": "probe",
+      "seed": 926,
+      "prompt": "A market town grown around a crashed star-metal meteorite half-buried in its central square, still glowing in its crater, with the smiths' forges ringed around the rim.",
+      "watches": ["T8: a bespoke thing the town is built around, sunk rather than tall (dominance by footprint and glow — a read)", "a crater in the square: a program that carves", "forges as a ring — placement facing the icon"],
+      "icons": [
+        { "id": "meteorite", "terms": ["meteor", "meteorite", "star", "crater", "impact"], "dominant": true },
+        { "id": "forges", "terms": ["forge", "smith", "smithy", "anvil", "furnace"] },
+        { "id": "market", "terms": ["market", "square", "stall"] }
+      ],
+      "densityFloor": 3
+    }
+  ]
+}
