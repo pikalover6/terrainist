@@ -1830,7 +1830,12 @@ export function layDistrict(
   // every quarter that did not opt in — which is the second half of the
   // byte-identity argument (the first is that `levelY[at()]` equals
   // `benchLevels`' answer, column for column).
+  //
+  // A seam shallower than {@link SEAM_BLOCK_MIN_DROP} is dressed but does not
+  // bound a block: a kerb is a step a lot walks over, not a wall between two
+  // lots (see the constant).
   for (const seam of seams) {
+    if (seam.drop < SEAM_BLOCK_MIN_DROP) continue;
     for (const point of seam.cells) {
       const k = grid.index(point.x, point.z);
       if (k >= 0) blocked[k] = 1;
@@ -2363,6 +2368,9 @@ export function layDistrict(
   // of size zero and one `has` per building.
   const seamColumns = new Set<number>();
   for (const seam of seams) {
+    // The guard protects a wall; a seam below {@link SEAM_BLOCK_MIN_DROP} has
+    // none and may run under a lot, whose apron blends as any lot's does.
+    if (seam.drop < SEAM_BLOCK_MIN_DROP) continue;
     for (const point of seam.cells) {
       const k = grid.index(point.x, point.z);
       if (k >= 0) seamColumns.add(k);
@@ -3203,6 +3211,33 @@ function alleyThrough(
  * have. `false` restores the `terraced`-only gate exactly.
  */
 export const BLOCK_MULTI_RECT = true;
+
+/**
+ * How far a platform seam must drop before it splits the block it runs through.
+ *
+ * `1` is the world as it shipped after the election flip: every seam, kerb
+ * included, goes into `blocked` before `blocksOf` (§3.3 step 4 below) and the
+ * block subdivides on each side of it. On gently rolling ground the election
+ * prices one kerb atom per pristine contour — `EDGE(1) = 1` per contact column
+ * against `CUT_W = 3` per column of area (`docs/ELECTION-SOLVE-v0.md` §1.3) —
+ * so a grid quarter on a shelf is cut into a kerb-bounded mosaic and no
+ * terrace run survives it. That is the r5 metropolis at HEAD: 68 terraces →
+ * 45, a third of its fallen towers, sixteen kerb seams through the lost
+ * footprints (`docs/decks/anchors/METROPOLIS-R5-BISECTION-2026-08-25.md`).
+ *
+ * `2` says what {@link TERRACE_STEP_SPAN}'s own comment says: one step is what
+ * a kerb, a doorstep and `FRONTAGE_RISE` already absorb. A kerb seam is still
+ * a seam — {@link levelSeams} lists it and `kerbSeam` lays its coping, skipping
+ * every occupied column — but it no longer bounds a lot: a lot or a terrace
+ * run that spans it takes its min-corner platform (`levels.at(rect.x0,
+ * rect.z0)`) and the pad grades the one-block difference, which is the kerb.
+ *
+ * Staged under the Run's law 5: landed at `1`, byte-identical on the three
+ * baselines and the six k1 documents; flipped in its own commit with every
+ * moved baseline attributed. One line to undo, the shape `BLOCK_MULTI_RECT`
+ * and `SEAM_TIERS` have.
+ */
+export const SEAM_BLOCK_MIN_DROP = 1;
 
 /**
  * Most rectangles a curved block is cut into. `subdivide` is cheap and

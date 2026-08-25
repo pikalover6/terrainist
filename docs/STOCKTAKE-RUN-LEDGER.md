@@ -7,23 +7,27 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 2 (the r5 metropolis bisection) landed.
-- **Next unit:** unit 3 — fix F2-metropolis code-first. The r5 document at
-  HEAD plans 45 terrace lots where its anchor planned 68 (envelope −27 %),
-  pinned to six ratified commits (`docs/decks/anchors/METROPOLIS-R5-
-  BISECTION-2026-08-25.md`; the largest step is the `TERRACE_BY_TERRAIN`
-  flip `651278f`, then the election flip `7df3bb3`, `BLOCK_MULTI_RECT`
-  `047dee2`). Reproduce at HEAD (`terrainist compile` of the r5 doc with
-  `--report`, count `terrace_*` placements), find why the district's flat
-  shelf blocks are split into levels the anchor kept whole, and land the fix
-  behind a switch with law 5's staging (shasums on the three baselines + six
-  k1 docs off; FULL suite; every moved baseline attributed). Gate: r5 at
-  HEAD back to 68 terraces or every remaining loss read not-worse. The
-  9b4dd50 worktree (own node_modules, clean build) is at
-  `<scratchpad>/anchors/wt-9b4dd50`. After that: the `I512` ruined-shell
-  street probe (F4), then montfort's hillside replan and hellenist's density
-  (§10.2), then the icon metric (§10.3).
-- **Last commit:** 2ac680a (unit 1). Convention: this line names the
+- **In flight:** nothing — unit 3 (the lever, landed off) is committed.
+- **Next unit:** unit 4 — flip `SEAM_BLOCK_MIN_DROP` 1 → 2
+  (`packages/compiler/src/layout/district.ts`, beside `BLOCK_MULTI_RECT`).
+  The trial says the r5 document goes 45 → 55 terraces (buildingBlocks
+  +18 %, physics clean); 3 is out (a 2-block seam holds water — `T110`).
+  The flip commit must carry: (a) a test pinning "a kerb seam does not
+  split a block" on a synthetic field (style of
+  `packages/compiler/test/deep-blocks.test.ts`); (b) the nine law-5
+  shasums (`<scratchpad>/bi/bi.sh <out>` compiles them; `bi/before/SHASUMS`
+  is the reference) with every moved world attributed — expect the
+  `stepped` and relief-elected quarters to move; (c) regenerated
+  ground-probe baselines only where their worlds moved, each attributed;
+  (d) a before/after render pair for r5 and for each moved k1 world, read
+  not-worse by the instrument; (e) the 13 terraces still lost at 2
+  attributed (7 on `retaining@2` seams — walls, correct; 3 single-level:
+  `terrace_122_-132` → two infills, `terrace_16_-57` → four infills + an
+  alley, `terrace_53_-57` → a bare block/plaza; the rest across 1–5 blocks
+  of election relief); (f) FULL suite. Then the `I512` ruined-shell probe
+  (F4), montfort's hillside replan and hellenist's density (§10.2), then the
+  icon metric (§10.3).
+- **Last commit:** 19fb6ce (unit 2). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
 - **Spend:** $2.29 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
 - **Open decisions for Kai:** none.
@@ -32,9 +36,11 @@ running state. The NOW block is rewritten at the end of every turn.
     the emit refused with `LOAM-T110 UNSTABLE_FLUID` (71 canal-water blocks
     would flow); the CLI labels it a compiler bug. Document and an
     `--allow-unstable` world are recorded. Fix code-first in its own unit.
-  - F2 — all four anchors differ at HEAD. **Metropolis: attributed and read
-    WORSE** (terraces 68→45; unit 2) → unit 3 fixes it. Hellenist (4
-    regions), troy (2), pirates (3): unattributed until their stations.
+  - F2 — all four anchors differ at HEAD. **Metropolis: attributed, read
+    WORSE, lever found** (unit 3: kerb seams from the election split blocks
+    before subdivision; `SEAM_BLOCK_MIN_DROP` landed at 1) → unit 4 flips
+    it. Hellenist (4 regions), troy (2), pirates (3): unattributed until
+    their stations.
   - F3 — authoring regression on the metropolis prompt, lost 3-of-3 at kit
     c22cb4fe: the program-backed skyscraper-skeleton field, the river,
     `era: modern` (now `far_future`), unnamed decayed generators (now six
@@ -85,6 +91,17 @@ running state. The NOW block is rewritten at the end of every turn.
   the session scratchpad (`anchors/renders/`, `b0/renders/`); the verdict
   cites them by path and the worlds regenerate from (commit, document).
   Undo: n/a.
+- **D9 (unit 3):** the lever for F2-metropolis is a minimum drop for a
+  platform seam to split a block (`SEAM_BLOCK_MIN_DROP`), NOT a change to
+  the election's weights or partition — the weights are walk-pinned and
+  `docs/ELECTION-SOLVE-v0.md` §1.3.2 forbids a non-convex churn term, and
+  the codebase's own `TERRACE_STEP_SPAN` comment already calls a one-block
+  step absorbed by kerb, doorstep and `FRONTAGE_RISE`. `3` was tried and
+  rejected by the physics lint (a 2-block seam holds water). Undo: delete
+  the constant and the two `continue`s (byte-identical at 1 anyway).
+- **D10 (unit 3):** the switch lands in its own commit at the off-state
+  (law 5), FULL suite run for it; the flip gets its own commit, test,
+  shasums, renders and suite (unit 4). Undo: n/a.
 
 ## SPEND
 
@@ -92,6 +109,7 @@ running state. The NOW block is rewritten at the end of every turn.
 |---|---|---|---|
 | 1 | before-sample: 11 golden generates (10 worlds + 1 document), 4 anchor recompiles (free) | 2.19 | 2.19 |
 | 2 | metropolis bisection: one authoring-only roll (metro-roll3); recompiles, renders, bisect free | 0.10 | 2.29 |
+| 3 | the lever landed off — compiles and the FULL suite only | 0.00 | 2.29 |
 
 ## VERDICTS
 
@@ -146,3 +164,16 @@ running state. The NOW block is rewritten at the end of every turn.
   `tools/golden-prompts/runs/metro-roll3/`. Subagents: 4 (doc diff, world
   diff, bisect ×3 ranges, all opus-5-low). Tests: none touched (no compiler
   code changed). Spend $0.10.
+- **unit 3 — the lever, landed off (2026-08-25):** mechanism probed from the
+  published `levels`/`seams`: the r5 quarter is `stepped` by relief election;
+  the block election prices a kerb atom per contour (86 → 148 platforms,
+  38 → 91 seams, 62 of them 1–2-block drops), and every seam cell goes into
+  `blocked` before `blocksOf`, so 23 seams (16 kerb-1, 7 retaining-2) run
+  through the 23 lost terrace footprints where 0 anchor seams did. New
+  switch `SEAM_BLOCK_MIN_DROP = 1` in `layout/district.ts` gating the
+  `blocked` loop and the seam-apron guard. Trial at 2: r5 45 → 55 terraces,
+  physics clean; at 3: `T110` (rejected). Byte-identity at 1: nine of nine
+  worlds identical (`bi/before` vs `bi/after-off`). Tests: FULL suite
+  COUNTS `Test Files 332 passed | 1 skipped (333)`, `Tests 5622 passed | 31
+  skipped (5653)`. Files: `packages/compiler/src/layout/district.ts`,
+  `docs/decks/anchors/METROPOLIS-R5-BISECTION-2026-08-25.md` (§C). Spend $0.

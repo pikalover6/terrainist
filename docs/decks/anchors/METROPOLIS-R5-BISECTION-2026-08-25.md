@@ -104,3 +104,47 @@ asked for; E3: the pre-pass classifying "apocalyptic metropolis" as
 - **`I512` "ruined shells" → street-level probe** (slop class 1 candidate):
   what a ruined shell puts in the voxels, and whether it reads.
 - G3 for this anchor stays **open**.
+
+## C. The lever (unit 3, 2026-08-25)
+
+**Mechanism, probed.** The district is `stepped` by the relief election
+(`districtGroundPolicy`: no document said so; the shelf's relief crosses
+`STEP_RELIEF`). The election prices a kerb atom per pristine contour on
+gently rolling ground (`EDGE(1) = 1` per contact column against `CUT_W = 3`
+per column of area), so the district's platform count went 86 → 148 and its
+seams 38 → 91, of which 62 are 1–2-block drops (the anchor had only whole-
+storey drops of 4 and 8). Every seam cell then goes into `blocked` before
+`blocksOf` (`district.ts`, "the platform boundary goes into `blocked`"), so
+each kerb platform is its own block, `terraceRuns` cannot cross it, and the
+lot falls through to infill. 23 HEAD seams (16 kerb-1, 7 retaining-2) run
+through the 23 lost terrace footprints; 0 anchor seams do.
+
+**The switch.** `SEAM_BLOCK_MIN_DROP` (`layout/district.ts`, beside
+`BLOCK_MULTI_RECT`): a seam must drop at least this much to split the block
+it runs through; below it the seam is still listed and dressed (`kerbSeam`
+lays its coping and skips occupied columns) but bounds no lot. Landed at
+**1** — every seam blocks, today's bytes.
+
+**Trial on the r5 document at HEAD (local, not committed):**
+
+| `SEAM_BLOCK_MIN_DROP` | terraces | placements | buildingCount | buildingBlocks | greenSkin | physics |
+|---:|---:|---:|---:|---:|---:|---|
+| 1 (shipped) | 45 | 90 | 88 | 283,976 | 5,171 | clean |
+| **2** | **55** | 101 | 99 | 334,052 | 7,376 | clean; diagnostics identical but W511 16→15 |
+| 3 | — | — | — | — | — | **`LOAM-T110`: 121 water blocks would flow** — a 2-block seam was holding water; it stays a wall |
+| anchor 9b4dd50 | 68 | 103 | 101 | 384,674 | 6,207 | clean |
+
+At 2, 13 anchor terraces stay lost: seven sit across `retaining@2` seams
+(walls, correctly), three (`terrace_122_-132`, `terrace_16_-57`,
+`terrace_53_-57`) sit on a single level and were lost to the subdivision
+changes (`BLOCK_MULTI_RECT`, the empty-block law, floor-harmonise), not to
+seams; the rest span 1–5 blocks of election relief. Attribution and the
+not-worse read of those 13 belong to the flip unit.
+
+**Byte-identity proof at 1** (law 5): the three baselines and the six k1
+documents compiled before and after the edit at the same dist —
+sha-of-shas identical on all nine (troy_r22 198ea9f1…, thalassa_polis
+56e7db7a…, pirates_r22 80be448c…, alien_farm_invasion_k1 04c23ed9…,
+hellenist_sea_siege_k1 d4f8c454…, montfort_hill_k1 2a60ca7c…,
+overgrown_metropolis_hideout_k1 04265b12…, pirates_vs_unicorns_k1
+c215780c…, troy_k1 af3dc5e3…). FULL suite: see the ledger's unit 3 entry.
