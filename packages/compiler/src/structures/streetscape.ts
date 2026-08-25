@@ -60,7 +60,7 @@ import { warning, type LoamDiagnostic } from "@terrainist/spec";
 import type { PrismarineStack } from "../emit/prismarine.js";
 import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
 import { detailSeed, hash2, hashInt } from "../terrain/detail.js";
-import type { Palette } from "../terrain/palette.js";
+import { streetMaterials, type Palette } from "../terrain/palette.js";
 
 import type { GroundClaim, GroundView } from "../layout/ground-contract.js";
 import { driverForPlan, type GroundDriver } from "../layout/ground-driver.js";
@@ -238,8 +238,6 @@ export const VILLAGE_FURNITURE: readonly PropName[] = [
 
 /** Sidewalk paving, when the palette declares no `street.*` symbols. */
 export const DEFAULT_SIDEWALK_BLOCK = "smooth_stone";
-/** Curb course — the contrasting edge against the carriageway. */
-export const DEFAULT_CURB_BLOCK = "stone_bricks";
 /** Sidewalk subsurface, so a cut sidewalk shows stone and not dirt. */
 export const DEFAULT_SIDEWALK_SUB_BLOCK = "stone";
 /** The pale stripe of a crossing. */
@@ -307,6 +305,14 @@ export interface StreetscapeContext {
   readonly furniture?: FurnitureKit;
   /** Palette overrides for `street.sidewalk`, `street.curb`, … */
   readonly palette?: Palette;
+  /**
+   * The **root** settlement's material theme id, the second authority for
+   * `street.curb` when the palette declares none — the same table `roads.ts`
+   * resolves the carriageway's border course from (census
+   * `docs/STOCKTAKE-SLOP-CENSUS.md` §3, M1). Deliberately the root theme and
+   * not the district's: the kerb line is one continuous course of one material.
+   */
+  readonly theme?: string;
   /** Node path for diagnostics. */
   readonly nodePath?: string;
   /**
@@ -506,19 +512,37 @@ interface StreetStates {
   readonly dark: number;
 }
 
+/**
+ * Resolve the sidewalk's material class.
+ *
+ * **One authority order, and it is the road's**: palette symbol, then the
+ * theme table, then the hard-coded default. `street.curb` is the kerb line the
+ * carriageway's border course is also cut from, so its second authority is now
+ * `streetMaterials(theme).kerb` — the very table `roads.ts`'s own
+ * `resolveStreetStates` reads — and not a block name written down twice. The
+ * other roles keep their constants because {@link StreetMaterials} has no
+ * field for them: the table answers for carriageway, worn, marking, lane, kerb
+ * and course, and a sidewalk's paving, subsurface and crossing stripes are not
+ * among them.
+ *
+ * Byte-identical in every compile: the root palette always fills `street.curb`,
+ * so the fallback is only ever reached by callers that hand over no palette at
+ * all (the unit tests). Census `docs/STOCKTAKE-SLOP-CENSUS.md` §3, M1.
+ */
 function resolveStreetStates(
   stack: PrismarineStack,
   palette: Palette | undefined,
+  theme: string | undefined,
 ): StreetStates {
   const fallback = (name: string): number =>
-    stack.blockByName(name)?.stateId ?? 0;
+    stack.blockByName(name.replace(/^minecraft:/, ""))?.stateId ?? 0;
   const at = (symbol: string, name: string): number =>
     palette !== undefined && palette.has(symbol)
       ? palette.state(symbol)
       : fallback(name);
   return {
     sidewalk: at("street.sidewalk", DEFAULT_SIDEWALK_BLOCK),
-    curb: at("street.curb", DEFAULT_CURB_BLOCK),
+    curb: at("street.curb", streetMaterials(theme).kerb),
     subsurface: at("street.subsurface", DEFAULT_SIDEWALK_SUB_BLOCK),
     pale: at("street.crossing.pale", DEFAULT_CROSSING_PALE_BLOCK),
     dark: at("street.crossing.dark", DEFAULT_CROSSING_DARK_BLOCK),
@@ -552,7 +576,7 @@ export function dressStreets(
 ): StreetscapeResult {
   const { plan } = ctx;
   const region = plan.region;
-  const states = resolveStreetStates(ctx.stack, ctx.palette);
+  const states = resolveStreetStates(ctx.stack, ctx.palette, ctx.theme);
   const diagnostics: LoamDiagnostic[] = [];
   const blocks: StructureBlock[] = [];
   const props: StreetscapeProp[] = [];

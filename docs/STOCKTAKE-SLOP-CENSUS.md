@@ -49,7 +49,7 @@ probes of unit 16 (`CLASS-1/2/3.md`, appended below in §8).
 | 2.1 | the declare/build split (`structures/index.ts` `declareStructures`; GROUND-CONTRACT §1.6 pass 5b) | every pass declares, then builds, in tier order | a statement-order cut only: `enterTier` has no caller, so a bare pre-freeze `view()` is the baseline, and 79 % of structure blocks (121,277 of 153,720 on troy) are emitted at absolute y before `freeze()` | fix the inverted comment (S, done unit 16) or call `enterTier` at the tier (M) | comment done; `pad.record` dropped (unit 17, payload-identical); M open |
 | 2.2 | report `blockSpans` vs the emitted world | "a return value nothing downstream reads" | read by `emit/walkability.ts` and the compile report; the blocks themselves match the world (120/120 sampled on troy, 0 mismatch) — the divergence is attribution: 363 positions double-written with 14 emitter flips, and 1,185 program blocks (the horse) outside every span | fix comment (S, done unit 16); record first-writer attribution + the excluded programs in `BlockSpan`'s doc (S, open); §12: fix or document, never assume away | partly done |
 | 2.3 | the driver write-through (`layout/ground-driver.ts`) | "the mixture-period driver" whose `commit` writes through | `GROUND_V1_FREEZE = true`: `commit`'s write-through is dead; `plan.surface` is written outside the `write` guard by `structures/props.ts` and `programs/site-treatment.ts` | keep-with-note (S) now; rewrite (M) when `driverForPlan`'s users retire; the outside writes → proposal (M) | open |
-| 2.4 | the kit files vs the compiler registries | "every archetype the building grammar knows" is in the kit | one-directional: **175 of 428 building archetypes (41 %) and 253 of 654 catalog entries (39 %) are never named in `settlement-author.md`**; 0 kit ids the registry lacks; form packs 18/18, fabrics and terrain verbs in step (E7's question, answered the other way: the kit under-names, F18) | add the missing rows (M); a kit-vs-registry drift check in the doc lint (S) | open |
+| 2.4 | the kit files vs the compiler registries | "every archetype the building grammar knows" is in the kit | one-directional: **175 of 428 building archetypes (41 %) and 253 of 654 catalog entries (39 %) are never named in `settlement-author.md`**; 0 kit ids the registry lacks; form packs 18/18, fabrics and terrain verbs in step (E7's question, answered the other way: the kit under-names, F18) | add the missing rows (M); a kit-vs-registry drift check in the doc lint (S) | open — ratchet test pins 175 / 253 (unit 22); the table fill (M) and the generator (proposal) stay open |
 
 ## 3. Duplicated authorities — two places deciding one thing
 
@@ -464,7 +464,11 @@ staleable copy of the same tables; `packages/agents/src/kit.ts:31` loads only
    — done (unit 17): payload-identical on the fourteen.
 5. `structures/props.ts:977` + `programs/site-treatment.ts:283` — note that
    `plan.surface` is written outside the `write` guard and outside the contract.
+   — done (unit 22): four-line notes at both writes.
 6. A kit-vs-registry drift check in the doc lint, red at 175.
+   — done (unit 22) as a vitest ratchet, `packages/compiler/test/kit-registry-drift.test.ts`:
+   ceilings 175 / 253 (archetypes / implemented catalog entries never named), red
+   when a registry grows without a kit line, lowered when the kit grows.
 7. `docs/kits/settlement-author.md` header — name `settlement-core.md` and
    `modules/` as generated artifacts of `split-kit.mjs`.
 
@@ -645,9 +649,12 @@ reversible default is to correct the five comments and file the precedence quest
 1. **M4** — replace the four inlined `materialKey` literals with `materialKey(r.materials)`. — done (unit 17).
 2. **P2** — one `makePlacement(...)` helper; seven call sites. — done (unit 17).
 3. **M1** — collapse the two `resolveStreetStates` ground-role branches onto one resolver.
+   — done (unit 22): `streetscape.ts` resolves `street.curb` as palette symbol > `streetMaterials(theme).kerb` > default, `theme` threaded from `structures/index.ts`; `DEFAULT_CURB_BLOCK` deleted; payload-identical. Sidewalk/subsurface/crossing keep their constants (the table has no such roles).
 4. **D4** — correct every "`FRONTAGE_TIE` is off, which is every compile" comment. — done (unit 17): 8 comments.
 5. **M5 (doc half)** — correct the five "`style.palettes` is the last word" docblocks and
    the contradictory comment at `themes-intent.ts:193`. — done (unit 17); `palette.ts:958,:999` carry the same claim, untouched.
 6. **M3** — the table-vs-derivation agreement test over `ALL_MATERIAL_THEMES`.
-7. **M2** — exempt `street.curb` from the `scoped` palette skip (`roads.ts:3587`).
+   — done (unit 22): `packages/compiler/test/ground-materials-tables.test.ts` (5). The table now covers 7 of 7 themes, so the derivation is unreachable in a compile; and it diverges from the table in **every** theme (ten solid roles each; `boreal_pine` + `bank`, `xeno_resin` + `bank` + `scree`) — pinned as the finding, not a design. No street derivation exists.
+7. **M2** — exempt `street.curb` from the `scoped` palette skip (`roads.ts:3587`). — switch
+   `KERB_SYMBOL_UNSCOPED` landed off (unit 22), attributed on the fourteen; flip pending.
 8. **D3 (note half)** — a post-freeze `foundationY` vs `resolved.ground` delta note.

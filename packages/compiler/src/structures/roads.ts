@@ -166,6 +166,22 @@ export const ROAD_SLOPE_COST = 8;
  * rejoined) and the grader's test in `test/route-pins.test.ts`.
  */
 export const ROUTE_PINS_HELD_GROUND = true;
+/**
+ * **The kerb is one course, whoever themes the district.**
+ *
+ * Off — `false` is today's bytes — {@link resolveStreetStates} under `scoped`
+ * (a district with its own theme, F10) skips every `street.*` palette symbol,
+ * the kerb's included, so a scoped district's carriageway lays its border
+ * course from the district theme's table while the sidewalk pass beside it
+ * (`streetscape.ts` `resolveStreetStates`) resolves `street.curb` from the
+ * root palette — two materials in what `palette.ts` calls "one continuous
+ * course of one material" (the slop census's class-3 M2). On, `street.curb`
+ * alone is exempt from the skip: the kerb follows the palette symbol wherever
+ * the sidewalk's does, and the two courses are one line again. Staged under
+ * the Stocktake Run's law 5: landed `false`; attributed on the fourteen and
+ * flipped in its own unit.
+ */
+export const KERB_SYMBOL_UNSCOPED = false;
 /** Extra cost for a 90° change of heading; a 45° kink costs half of it. */
 export const ROAD_TURN_COST = 6;
 /** Longest straight a smoothing pass will pull, in cells. */
@@ -3628,7 +3644,10 @@ function resolveStreetStates(
     name: string,
     fallback: number,
   ): ((x: number, z: number) => number) => {
-    if (!scoped && palette.has(symbol)) return (x, z) => palette.stateAt(symbol, x, z);
+    // {@link KERB_SYMBOL_UNSCOPED}: the kerb symbol is read even when scoped,
+    // because the sidewalk pass reads it unscoped and the two share a course.
+    const exempt = KERB_SYMBOL_UNSCOPED && symbol === STREET_KERB_SYMBOL;
+    if ((!scoped || exempt) && palette.has(symbol)) return (x, z) => palette.stateAt(symbol, x, z);
     const id = named(name, fallback);
     return () => id;
   };

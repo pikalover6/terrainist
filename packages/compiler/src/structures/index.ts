@@ -1570,6 +1570,9 @@ export function declareStructures(input: StructurePassInput): StructurePlan {
           today: district.streets.sidewalk >= 2 ? "downtown" : "village",
         }) as FurnitureKit,
         palette: input.palette,
+        // The root theme, so an undeclared `street.curb` falls back to the very
+        // table the carriageway's border course uses (census §3, M1).
+        theme: theme.id,
         nodePath: district.nodePath,
         // What there is to light. Street lighting scales with the buildings on
         // a quarter, not with the pavement the fabric spent on it — see

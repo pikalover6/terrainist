@@ -7,22 +7,19 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 21 (`LOT_PARCEL_OWN_STATIONS` retried on
-  the fourteen, attributed, kept off; F21 opened) is committed.
-- **Next unit:** unit 22 — **census batch two**: M2 exempt `street.curb`
-  from the `scoped` palette skip (`roads.ts:3587`; byte-moving — switch
-  landed off, attributed on the fourteen, flipped in its own unit if
-  clean), M1 collapse the two `resolveStreetStates` ground-role branches
-  (byte-identical refactor, payload identity), M3 the table-vs-derivation
-  agreement test over `ALL_MATERIAL_THEMES`, class-2 S5 (`plan.surface`
-  written outside the `write` guard — note), S6 (kit-vs-registry drift
-  check in the doc lint, red at 175), D3's post-freeze `foundationY` vs
-  `resolved.ground` delta note. One opus-5-low batch for the
-  byte-identical items, the M2 switch by hand; FULL suite once. Then F21
-  (the parcel that takes the orchard — a reservation for scattered
-  programs, or a diagnostic), F4, F14, F17; §10.5 probe prompts; the
-  remaining stations.
-- **Last commit:** 25e154d (unit 20). Convention: this line names the
+- **In flight:** nothing — unit 22 (census batch two: M1, M3, S5, S6
+  landed; the M2 kerb switch landed off and attributed) is committed.
+- **Next unit:** unit 23 — **flip `KERB_SYMBOL_UNSCOPED`** (law 5's second
+  half): the attribution is two documents, pirates_r22 and
+  pirates_vs_unicorns_k1, {KERB} — a kerb course changing material where a
+  scoped district meets the root palette's sidewalk. Render the pirate
+  city's kerb before/after (`shot.mjs`, the district bounds), read it, flip
+  the constant, re-check the twelve identical, FULL suite, the census M2
+  row. Then D3's note (probe first: how often does a footprint's
+  `foundationY` disagree with the frozen ground, on the fourteen — a
+  report stat before a diagnostic), F21 (the parcel that takes the
+  orchard), F4, F14, F17; §10.5 probe prompts; the remaining stations.
+- **Last commit:** 1ef869b (unit 21). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
 - **Spend:** $8.19 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
 - **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19, D25,
@@ -373,6 +370,22 @@ running state. The NOW block is rewritten at the end of every turn.
   and force-pushed with lease on this branch (nobody else commits to it)
   rather than followed by a ledger-only commit, keeping one commit per
   unit. Scripts now substitute by token, not `%`. Undo: n/a.
+- **D51 (unit 22):** the kit-vs-registry drift check (class-2 S6) lands
+  as a vitest **ratchet** with the census's numbers as ceilings (175 / 253
+  never named), not as a red gate: a gate red at 175 on the day it lands is
+  a gate everyone learns to ignore, and a ceiling that fails only when a
+  registry grows without a kit line is the check the seam needs. Lowering
+  it is the kit's work (F18). Undo: delete the test.
+- **D52 (unit 22):** M3's agreement test pins the *divergence* between
+  `GROUND_MATERIALS_BY_THEME` and `deriveGroundMaterials` (every theme,
+  ten roles) rather than asserting agreement or fixing either: the table
+  now covers all seven themes, so the derivation is unreachable in a
+  compile and its disagreement is a finding for the census (class 3 M3,
+  now measured), not a behaviour to move. Undo: n/a.
+- **D53 (unit 22):** D3's "note half" is deferred out of the batch: a
+  diagnostic about `foundationY` vs the frozen ground needs the disagreement
+  measured first (law 4) — how many footprint columns, on which documents,
+  won by which class — and that probe is its own unit. Undo: n/a.
 
 ## SPEND
 
@@ -399,6 +412,7 @@ running state. The NOW block is rewritten at the end of every turn.
 | 19 | F20 in code — dist-patched measurements, two bi14 runs, the FULL suite | 0.00 | 8.19 |
 | 20 | the pins flip — one bi14 run, the FULL suite | 0.00 | 8.19 |
 | 21 | own stations retried — two bi14 runs, renders, censuses, the FULL suite twice | 0.00 | 8.19 |
+| 22 | census batch two — two bi14 runs, the FULL suite | 0.00 | 8.19 |
 
 ## VERDICTS
 
@@ -759,3 +773,18 @@ running state. The NOW block is rewritten at the end of every turn.
   23 assertions moved in 3 files (`site-plan-hillside`, `site-plan-transitions`, `walkability`) within the first 61 of 343 files, then stopped. Source reverted; the fourteen payload-identical to `u10`. Tests:
   FULL suite COUNTS Test Files 342 passed | 1 skipped (343), Tests 5668 passed | 31 skipped (5699). Files: `layout/district.ts` (comment), the record
   §H, the census. Spend $0.
+- **unit 22 — census batch two (2026-08-25):** class-3 M2 `KERB_SYMBOL_UNSCOPED`
+  landed off in `structures/roads.ts` (a scoped district's kerb follows the
+  palette symbol the sidewalk pass reads) and attributed in the dist: two
+  of fourteen move, pirates_r22 and pirates_vs_unicorns_k1 — on pirates_r22 the scoped district's kerb course is 2,686 glass panes today and becomes andesite (+3,600 states) — the root palette's `street.curb`; on pirates_vs_unicorns_k1 1,014 polished diorite → andesite; nothing else moves (block census, two ids per world); flip
+  is unit 23. Class-2 S6 as a ratchet test (`kit-registry-drift.test.ts`,
+  3; D51). By opus-5-low (`scratchpad/census/S-BATCH-2.md`): M1 the
+  streetscape resolver's `street.curb` fallback is now the theme table
+  roads read, `theme` threaded through `StreetscapeContext` from
+  `structures/index.ts`, `DEFAULT_CURB_BLOCK` deleted; M3
+  `ground-materials-tables.test.ts` (5) pins the table's 7-of-7 coverage
+  and the derivation's divergence in every theme (D52); S5 notes at both
+  `plan.surface` writes. D3's note deferred (D53). Payload-identical on the
+  fourteen with the switch off. Tests: FULL suite COUNTS Test Files 344 passed | 1 skipped (345), Tests 5676 passed | 31 skipped (5707). Files:
+  `roads.ts`, `streetscape.ts`, `structures/index.ts`, `props.ts`,
+  `site-treatment.ts`, two tests, the census. Spend $0.

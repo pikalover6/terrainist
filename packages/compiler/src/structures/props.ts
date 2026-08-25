@@ -977,6 +977,10 @@ export function paintPropPad(
     for (let y = g + 1; y <= want; y++) {
       out.push({ x, y, z, stateId: y === want ? cap : fill });
     }
+    // Outside the guard on purpose — and outside the contract. The ground
+    // contract's three arrays are ground/fluidTop/fluidKind
+    // (`docs/GROUND-CONTRACT-v0.md`); `surface` is not one of them, so this
+    // write is never arbitrated and never reported. Census class 2, S5.
     plan.surface[idx] = cap;
     if (!write) continue;
     plan.ground[idx] = want;
