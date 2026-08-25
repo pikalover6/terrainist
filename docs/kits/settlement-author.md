@@ -2458,12 +2458,21 @@ plaza rather than one big one.
 water to sit on, a `shore` prop needs dry land with water in front of it. Ask
 for a rowboat in a landlocked hamlet and the prop is dropped.
 
-**A big prop needs big flat ground, and it will not make its own.** A prop has
-no `terrain_conform` — the spiral search either finds a patch level enough for
-its whole footprint or gives up. Anything marked *flat* above (a `galleon` is
-46 long, a `campsite` 19, an `airliner` 52) wants a `plateau` edit under it or
-a genuinely flat shore. When in doubt put the big prop where the terrain is
-already flat and use the small ones everywhere else.
+**A big prop needs a big patch of the right base, and it will not make its
+own.** A prop has no `terrain_conform` — the spiral search either finds a patch
+its whole footprint agrees with or gives up. Read the **base** column before you
+help it, because the help differs:
+
+- a large **ground** prop (a `campsite` at 19, an `airliner` at 52, anything
+  marked *flat*) wants a `plateau` edit under it, or a genuinely flat shore;
+- a large **water** prop (a `galleon` at 46, a `container_ship` at 46) wants
+  enough connected open water to sit in, and deep enough — **never** a
+  `plateau`, which raises land into the basin the hull needs and beaches the
+  ship you asked for;
+- a **shore** prop wants both: a dry apron to stand on and water against it.
+
+When in doubt put the big prop where the terrain already suits it, and use the
+small ones everywhere else.
 
 Placement is the profile's usual coarse vocabulary. `{"zone": "south"}` aims at
 a nine-grid cell, jittered by `jitter` (0..1, default 0.15). `yaw` is `0`,
@@ -2821,8 +2830,12 @@ document with no `intent` compiles exactly as it always did.
 `intent` is legal in exactly three places:
 
 - at the **top level** of the document, beside `style` — world scope;
-- on the **root composite**;
-- on a **`district`** or **`city`** node — region scope.
+- on the **root composite** — also world scope, and it **wins**: the root's
+  `intent` is merged over the top-level one key by key, so a dial set in both
+  places takes the root's value. Write one or the other, and prefer the top
+  level;
+- on a **`district`** or **`city`** node — region scope, merged over the world
+  scope the same way.
 
 Written on a building, a prop or a terrain generator it is ignored with a
 warning. Per-building overrides are what `params` are for.
@@ -3053,7 +3066,9 @@ inside the gates, the mothership in the dunes. That centerpiece should be a
 bespoke landmark **even when an archetype could approximate it**: the
 archetype version is a stock part wearing the right label; the program
 version is the prompt's own. A `castle` archetype makes *a* castle — only a
-program makes **the** castle the prompt described. When in doubt, ask.
+program makes **the** castle the prompt described. You are authoring in one
+pass and cannot ask anyone: when in doubt, write the program. A centerpiece the
+catalog can only approximate is the case this tier exists for.
 
 Beyond the centerpiece, ask for a program when **either** is true:
 
@@ -3212,6 +3227,11 @@ one that matters most first**.
 Each program is written, executed, hashed and linted **before** the world is
 compiled. A program that cannot pass its gate is dropped and the world compiles
 without it — so never make a world's legibility depend on a program existing.
+This is not in tension with making the centerpiece bespoke: ask for the program
+*and* give its icon a second delivery that costs nothing if the program lands —
+the archetype it would otherwise have been, a prop, a palette, a terrain form.
+If the citadel program is dropped, a `keep` on the same hill still says citadel;
+if nothing does, the prompt leaves with the program.
 Place the ones you request as ordinary generator nodes:
 
 ```json
@@ -3242,8 +3262,14 @@ and every column of it is already spoken for, so a landmark aimed into it is
 refused at every site the target offers. The solver then seats it at the
 nearest ground it *can* take, which is a compromise, not your composition; the
 compile says `LOAM-W521 LANDMARK_COARSE_ABANDONED` and prints how far it
-walked. If the piece belongs *in* the town, make it a **child of the district**
-(the district's own landmark list) instead of a sibling with an `at`.
+walked. If the piece belongs *in* the town, the fix depends on what it is. A
+**grammar** landmark can become a child of the district — that is the district's
+own landmark list, and its children are `building.grammar@0` nodes and nothing
+else. A **bespoke** `authored:` node cannot: a district takes no program
+children, and one written there is an error. Keep it under the root and bind it
+to the fabric instead — `{"distance": "<the district's id>", "min": 8,
+"max": 24}` puts it hard against the quarter without asking the solver to find
+room inside it.
 
 **A prompt's protagonists go on the front, not the back.** When the prompt is
 `X versus Y` — pirates and unicorns, a horse at the gates of Troy, two
@@ -3675,7 +3701,10 @@ of it, and it never moves a road to meet a house. Combine it with a
 
 Notes that matter:
 
-- **Every building needs a `terrain_conform`.** `"cut_fill"` (with
+- **Every building the solver places needs a `terrain_conform`** — which means
+  every building under the root. A `district`'s or `city`'s own children are
+  seated by their parent's frontage and their constraints are ignored, so they
+  neither need one nor gain anything from one. `"cut_fill"` (with
   `"reference": "median"`, `"blend"` 3–5) is right for a house: it cuts the
   high side and fills the low. `"flatten"` is for a plaza or a tower pad. Add
   `"maxSlope": 26..34` to refuse ground steeper than that.
