@@ -86,6 +86,19 @@ Seed findings already in hand:
   1.2 pts, **kitLiteralEnvelopePct 7.7 pts — the parroting metric must
   move ~8 points to mean anything**; summed metrics scale by √n). Kit FROZEN at 58e7d2e0 /
   f98c5e85 for the menu measurement (Kai: the complete ~$1.00 pair).
+- **Cluster 3 pinned (archetype identity) — two audit re-grades from the
+  code:** C3's "preferred architectural fix" (explicit canonical archetype)
+  ALREADY SHIPPED with fabric v2 — validate.ts:2526-2536 says
+  `params.archetype` is canonical and tags are the fallback; the kit says
+  the inverse at :816 and :1464 ("writing one is an error") while its own
+  fences write `params.archetype` 4×. Documentation reconciliation, not an
+  API change. C3's opera sub-claim (3 floors / 25×19 vs the catalog column)
+  is a consistency nit — the "envelope that works" column is guidance the
+  compiler does not enforce (HIGHRISE_FLOOR_CAPS binds the high-rise table
+  only); a document with that fence validates clean. **Reading key for the
+  menu measurement:** it runs against a kit that forbids naming the ids the
+  menu offers, so a weak result implicates the kit sentence before the
+  menu; re-measure after cluster 3 (~$0.64) is the honest test.
 
 ## WS-B — Terrain-kit audit
 
