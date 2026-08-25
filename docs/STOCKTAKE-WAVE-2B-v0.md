@@ -157,6 +157,26 @@ others — each a different teaching, none to be taught before a census of
 Third time this campaign that probing overturned a plausible story (C17's
 misfiled rule, C3's unenforced "violation", this).
 
+**Correction to the probe's evidence (kit-fix, same day):** the alpine
+probe read `res.diagnostics`, a field `compileTerrain` does not have
+(diagnostics live at `res.report.diagnostics`), so its "zero demotions all
+three ways" was an empty read — caught because the same script returned
+zero for all 22 golden documents and for a control built to fail. Re-run
+correctly: **37 demotions (13 terrain_conform) with maxSlope omitted / 55
+/ 30 — identical**, so the conclusion stands on real numbers; and the
+control's four hard constraints were demoted terrain_conform[3] →
+adjacent_to[2] → distance[1] → distance[0], last-written first among
+equal weights — the mechanism confirmed by experiment, not just read.
+The real before-state the blind instrument hid: redwood_camp demotes
+(E404 11/4/10; terrain_conform 5/2/4) and troy does not (0/0/0) —
+redwood_camp is the conform lever's test prompt. Note for every reader
+of the golden scoreboards: their `LOAM-E404 0` is structural (authoring-
+only; E404 is a compile diagnostic), never a result. Fourth overturn of
+the campaign, the first of the prober's own finding. **Kai's ruling on
+the lever: teach `distance` soft in the fences** (25 tether constraints,
+none soft) — kit-only, reversible, verified redwood_camp ×3 authored and
+compiled.
+
 **"What else was hard" census (orchestrator, zero spend, 227 demotions
 matched to their nodes in the battery docs):** the conform was LAST in the
 constraints array in 86/100 of its demotions; the nodes carried 2 hard
