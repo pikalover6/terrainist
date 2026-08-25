@@ -68,6 +68,9 @@ import {
   PropCounter,
   ROOF_FLOURISH_RISE,
   type FitOutContext,
+  roofPlan,
+  wallPlan,
+  type RebuildPlan,
 } from "./archetypes-civic.js";
 import { pottedAt } from "./archetypes-wave2.js";
 import { cardinalStep, type Cardinal, type LocalRect } from "./core.js";
@@ -198,61 +201,8 @@ export function homesteadFacadeDefaults(
 /* the exterior plan                                                           */
 /* -------------------------------------------------------------------------- */
 
-/**
- * What an exterior rebuild needs to know, or `null` when it may not run.
- *
- * Wave three's `RegionalPlan` in every respect, restated here rather than
- * imported because the two waves are separate seams and a shared private
- * helper is a shared edit. The refusals are the same: a **plain rect** only,
- * and at least two courses of room above the eave plate before a roof may be
- * rebuilt.
- */
-interface HomesteadPlan {
-  /** Envelope extents. */
-  readonly sx: number;
-  readonly sz: number;
-  /** Y of the roof's lowest course — one above the eave plate. */
-  readonly base: number;
-  /** Highest Y anything may occupy: the shell's roof top plus the allowance. */
-  readonly top: number;
-  /** The footprint, as an inclusive rect. */
-  readonly rect: LocalRect;
-}
-
-/** The plan for work on the **walls**: the rect condition, and nothing else. */
-function wallPlan(ctx: FitOutContext): HomesteadPlan | null {
-  const sx = ctx.size[0];
-  const sz = ctx.size[2];
-  const it = ctx.interior;
-  if (it.x0 !== 1 || it.z0 !== 1 || it.x1 !== sx - 2 || it.z1 !== sz - 2) return null;
-  return {
-    sx,
-    sz,
-    base: ctx.wallTop + 1,
-    top: ctx.roofTop + ROOF_FLOURISH_RISE,
-    rect: { x0: 0, z0: 0, x1: sx - 1, z1: sz - 1 },
-  };
-}
-
-/** The plan for a **roof rebuild**: a wall plan that also has room to build in. */
-function roofPlan(ctx: FitOutContext): HomesteadPlan | null {
-  const plan = wallPlan(ctx);
-  if (plan === null) {
-    ctx.skipped?.push("roof work: the interior is not the one-block inset the rebuild plans over");
-    return null;
-  }
-  const courses = plan.top - plan.base;
-  if (courses < 2) {
-    ctx.skipped?.push(
-      `roof work: ${courses} course${courses === 1 ? "" : "s"} above the eave where the rebuild needs 2 — a flat or low roof leaves no room`,
-    );
-    return null;
-  }
-  return plan;
-}
-
 /** Clear everything the shell built above the eave plate, apron included. */
-function clearRoof(ctx: FitOutContext, plan: HomesteadPlan): void {
+function clearRoof(ctx: FitOutContext, plan: RebuildPlan): void {
   for (let y = plan.base; y <= plan.top + 2; y++) {
     for (let x = -1; x <= plan.sx; x++) {
       for (let z = -1; z <= plan.sz; z++) ctx.put(x, y, z, "air");
@@ -337,7 +287,7 @@ const PRESERVE = /(_door$|^ladder$|^campfire$|_sign$|torch$|^bell$|glass|_pane$|
  */
 function reclad(
   ctx: FitOutContext,
-  plan: HomesteadPlan,
+  plan: RebuildPlan,
   yFrom: number,
   yTo: number,
   block: (x: number, y: number, z: number) => string,
@@ -387,7 +337,7 @@ function degenerate(x0: number, x1: number, z0: number, z1: number): boolean {
  */
 function corbel(
   ctx: FitOutContext,
-  plan: HomesteadPlan,
+  plan: RebuildPlan,
   block: (x: number, y: number, z: number) => string,
   cap: string,
   courses = 1,
@@ -483,7 +433,7 @@ function opposite(facing: Cardinal): Cardinal {
 }
 
 /** The apron cell's outward cardinal — which way it faces away from the wall. */
-function apronFacing(plan: HomesteadPlan, x: number, z: number): Cardinal {
+function apronFacing(plan: RebuildPlan, x: number, z: number): Cardinal {
   if (z === -1) return "north";
   if (z === plan.sz) return "south";
   if (x === -1) return "west";
@@ -500,7 +450,7 @@ function apronFacing(plan: HomesteadPlan, x: number, z: number): Cardinal {
 function trapdoorGrid(
   ctx: FitOutContext,
   c: PropCounter,
-  plan: HomesteadPlan,
+  plan: RebuildPlan,
   ys: readonly number[],
   step: number,
 ): void {

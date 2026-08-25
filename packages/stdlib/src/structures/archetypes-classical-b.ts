@@ -53,6 +53,8 @@ import {
   PropCounter,
   ROOF_FLOURISH_RISE,
   type FitOutContext,
+  type RebuildPlan,
+  wallPlan,
 } from "./archetypes-civic.js";
 import { pottedAt } from "./archetypes-wave2.js";
 import { cardinalStep, type Cardinal, type LocalRect } from "./core.js";
@@ -155,39 +157,6 @@ export function classicalBFacadeDefaults(archetype: string): {
 /* the shared plan                                                             */
 /* -------------------------------------------------------------------------- */
 
-/**
- * What an exterior rebuild needs to know, or `null` when it may not run.
- *
- * The sanctum pack's `SanctumPlan`, restated here rather than imported for the
- * reason that file gives for restating wave 4B's: the two are separate seams,
- * and a shared private helper is a shared edit. The refusal is the same — a
- * **plain rect** only.
- */
-interface ClassicalPlan {
-  readonly sx: number;
-  readonly sz: number;
-  /** Y of the roof's lowest course — one above the eave plate. */
-  readonly base: number;
-  /** Highest Y anything may occupy: the shell's roof top plus the allowance. */
-  readonly top: number;
-  readonly rect: LocalRect;
-}
-
-/** The plan for work on the walls: the rect condition, and nothing else. */
-function wallPlan(ctx: FitOutContext): ClassicalPlan | null {
-  const sx = ctx.size[0];
-  const sz = ctx.size[2];
-  const it = ctx.interior;
-  if (it.x0 !== 1 || it.z0 !== 1 || it.x1 !== sx - 2 || it.z1 !== sz - 2) return null;
-  return {
-    sx,
-    sz,
-    base: ctx.wallTop + 1,
-    top: ctx.roofTop + ROOF_FLOURISH_RISE,
-    rect: { x0: 0, z0: 0, x1: sx - 1, z1: sz - 1 },
-  };
-}
-
 /** The footprint perimeter of a rect plan, in canonical (z, x) order. */
 function ringOf(sx: number, sz: number): { x: number; z: number }[] {
   const out: { x: number; z: number }[] = [];
@@ -231,7 +200,7 @@ const PRESERVE = /(_door$|^ladder$|^campfire$|_sign$|torch$|^bell$|glass|_pane$|
 /** Re-clad the wall ring between two courses. `block` is a pure function of position. */
 function reclad(
   ctx: FitOutContext,
-  plan: ClassicalPlan,
+  plan: RebuildPlan,
   yFrom: number,
   yTo: number,
   block: (x: number, y: number, z: number) => string,
@@ -461,7 +430,7 @@ function fitShipShed(ctx: FitOutContext, c: PropCounter): void {
  *   in from it, so a fit-out that removes a door does not make a building with
  *   a wide entrance — it makes a building with no entrance at all.
  */
-function openFront(ctx: FitOutContext, c: PropCounter, plan: ClassicalPlan): void {
+function openFront(ctx: FitOutContext, c: PropCounter, plan: RebuildPlan): void {
   const face: Cardinal = ctx.door === null ? "south" : opposite(ctx.door.face);
   const head = Math.max(1, ctx.wallTop - 1);
   const piers = 2;

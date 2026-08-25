@@ -48,6 +48,8 @@ import {
   PropCounter,
   ROOF_FLOURISH_RISE,
   type FitOutContext,
+  wallPlan,
+  type RebuildPlan,
 } from "./archetypes-civic.js";
 
 /* -------------------------------------------------------------------------- */
@@ -120,46 +122,6 @@ export function townFacadeDefaults(
 /* -------------------------------------------------------------------------- */
 /* the exterior plan                                                           */
 /* -------------------------------------------------------------------------- */
-
-/**
- * What exterior work needs to know, or `null` when it may not run.
- *
- * The blitz file's {@link ExteriorPlan} in miniature, and deliberately a local
- * copy rather than an import of a private helper: the two conditions are the
- * same, and both are refusals rather than approximations. The plan has to be a
- * **plain rect** — every routine below reasons about one box, and an L has a
- * reflex corner none of them has a rule for — and a roof flourish additionally
- * needs **room**, at least three courses between the eave plate and the ceiling
- * it may reach.
- */
-interface TownPlan {
-  /** Envelope extents. */
-  readonly sx: number;
-  readonly sz: number;
-  /** Y of the roof's lowest course — one above the eave plate. */
-  readonly base: number;
-  /** Highest Y anything may occupy: the shell's roof top plus the allowance. */
-  readonly top: number;
-  /** The footprint, as an inclusive rect. */
-  readonly rect: LocalRect;
-}
-
-/** The plan for work on the walls. No headroom condition: a re-clad needs none. */
-function wallPlan(ctx: FitOutContext): TownPlan | null {
-  const sx = ctx.size[0];
-  const sz = ctx.size[2];
-  const it = ctx.interior;
-  // A plain rect, and nothing else: the interior of one is exactly the box
-  // inset by one on all four sides.
-  if (it.x0 !== 1 || it.z0 !== 1 || it.x1 !== sx - 2 || it.z1 !== sz - 2) return null;
-  return {
-    sx,
-    sz,
-    base: ctx.wallTop + 1,
-    top: ctx.roofTop + ROOF_FLOURISH_RISE,
-    rect: { x0: 0, z0: 0, x1: sx - 1, z1: sz - 1 },
-  };
-}
 
 /**
  * Blocks a re-clad may never overwrite.
@@ -243,7 +205,7 @@ export function furnishTown(ctx: FitOutContext): number {
  * plinth, stone corners and a string course under the eave is a civic building
  * in a village of timber ones, which is exactly the read wanted.
  */
-function trimWalls(ctx: FitOutContext, plan: TownPlan, c: PropCounter): void {
+function trimWalls(ctx: FitOutContext, plan: RebuildPlan, c: PropCounter): void {
   const stone = masonry(ctx);
   for (const cell of ringOf(plan.sx, plan.sz)) {
     const corner =
@@ -270,7 +232,7 @@ function trimWalls(ctx: FitOutContext, plan: TownPlan, c: PropCounter): void {
  * or too flat to carry one — a gable that has to overshoot is a building that
  * lied about its size.
  */
-function emitClockGable(ctx: FitOutContext, plan: TownPlan, c: PropCounter): number {
+function emitClockGable(ctx: FitOutContext, plan: RebuildPlan, c: PropCounter): number {
   if (plan.sx < 7 || plan.sz < 7) return 0;
   if (plan.top - plan.base < 3) return 0;
   const before = c.n;

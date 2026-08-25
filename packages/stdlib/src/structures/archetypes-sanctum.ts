@@ -69,6 +69,9 @@ import {
   PropCounter,
   ROOF_FLOURISH_RISE,
   type FitOutContext,
+  roofPlan,
+  wallPlan,
+  type RebuildPlan,
 } from "./archetypes-civic.js";
 import { pottedAt } from "./archetypes-wave2.js";
 import { cardinalStep, type Cardinal, type LocalRect } from "./core.js";
@@ -213,60 +216,8 @@ export function sanctumFacadeDefaults(archetype: string): {
 /* the exterior plan                                                           */
 /* -------------------------------------------------------------------------- */
 
-/**
- * What an exterior rebuild needs to know, or `null` when it may not run.
- *
- * Wave 4B's `FaithPlan` in every respect, restated here rather than imported
- * because the two waves are separate seams and a shared private helper is a
- * shared edit. The refusals are the same: a **plain rect** only, and at least
- * two courses of room above the eave plate before a roof may be rebuilt.
- */
-interface SanctumPlan {
-  /** Envelope extents. */
-  readonly sx: number;
-  readonly sz: number;
-  /** Y of the roof's lowest course — one above the eave plate. */
-  readonly base: number;
-  /** Highest Y anything may occupy: the shell's roof top plus the allowance. */
-  readonly top: number;
-  /** The footprint, as an inclusive rect. */
-  readonly rect: LocalRect;
-}
-
-/** The plan for work on the **walls**: the rect condition, and nothing else. */
-function wallPlan(ctx: FitOutContext): SanctumPlan | null {
-  const sx = ctx.size[0];
-  const sz = ctx.size[2];
-  const it = ctx.interior;
-  if (it.x0 !== 1 || it.z0 !== 1 || it.x1 !== sx - 2 || it.z1 !== sz - 2) return null;
-  return {
-    sx,
-    sz,
-    base: ctx.wallTop + 1,
-    top: ctx.roofTop + ROOF_FLOURISH_RISE,
-    rect: { x0: 0, z0: 0, x1: sx - 1, z1: sz - 1 },
-  };
-}
-
-/** The plan for a **roof rebuild**: a wall plan that also has room to build in. */
-function roofPlan(ctx: FitOutContext): SanctumPlan | null {
-  const plan = wallPlan(ctx);
-  if (plan === null) {
-    ctx.skipped?.push("roof work: the interior is not the one-block inset the rebuild plans over");
-    return null;
-  }
-  const courses = plan.top - plan.base;
-  if (courses < 2) {
-    ctx.skipped?.push(
-      `roof work: ${courses} course${courses === 1 ? "" : "s"} above the eave where the rebuild needs 2 — a flat or low roof leaves no room`,
-    );
-    return null;
-  }
-  return plan;
-}
-
 /** Clear everything the shell built above the eave plate, apron included. */
-function clearRoof(ctx: FitOutContext, plan: SanctumPlan): void {
+function clearRoof(ctx: FitOutContext, plan: RebuildPlan): void {
   for (let y = plan.base; y <= plan.top + 2; y++) {
     for (let x = -1; x <= plan.sx; x++) {
       for (let z = -1; z <= plan.sz; z++) ctx.put(x, y, z, "air");
@@ -327,7 +278,7 @@ const PRESERVE = /(_door$|^ladder$|^campfire$|_sign$|torch$|^bell$|glass|_pane$|
  */
 function reclad(
   ctx: FitOutContext,
-  plan: SanctumPlan,
+  plan: RebuildPlan,
   yFrom: number,
   yTo: number,
   block: (x: number, y: number, z: number) => string,
@@ -470,7 +421,7 @@ function bowlTier(dx: number, dz: number, rx: number, rz: number, tiers: number)
 }
 
 /** How many courses of seating there is room for over the eave plate. */
-function bowlTiers(plan: SanctumPlan): number {
+function bowlTiers(plan: RebuildPlan): number {
   return Math.max(1, Math.min(4, plan.top - plan.base - 1));
 }
 
@@ -488,7 +439,7 @@ function bowlTiers(plan: SanctumPlan): number {
 function bowl(
   ctx: FitOutContext,
   c: PropCounter,
-  plan: SanctumPlan,
+  plan: RebuildPlan,
   keep: (x: number, z: number) => boolean,
 ): { readonly cx: number; readonly cz: number; readonly rx: number; readonly rz: number } {
   const cx = (plan.sx - 1) / 2;
@@ -526,7 +477,7 @@ function bowl(
  * dressed as the arcaded base it is, and a slab cornice in the apron draws the
  * shadow line the bank sits behind.
  */
-function podium(ctx: FitOutContext, c: PropCounter, plan: SanctumPlan): void {
+function podium(ctx: FitOutContext, c: PropCounter, plan: RebuildPlan): void {
   c.n += reclad(ctx, plan, 1, ctx.wallTop, masonry(ctx));
   const slabBlock = ctx.style["stone.slab"] as string;
   for (const cell of apronOf(plan.sx, plan.sz)) {
@@ -536,7 +487,7 @@ function podium(ctx: FitOutContext, c: PropCounter, plan: SanctumPlan): void {
 }
 
 /** The solid lid a rebuilt roof always starts with — a ceiling, and a floor. */
-function lid(ctx: FitOutContext, c: PropCounter, plan: SanctumPlan): void {
+function lid(ctx: FitOutContext, c: PropCounter, plan: RebuildPlan): void {
   const stone = ashlar(ctx);
   deck(c, plan.base, 0, plan.sx - 1, 0, plan.sz - 1, (x, z) => stone(x, plan.base, z));
 }
@@ -776,7 +727,7 @@ function fitChapel(ctx: FitOutContext, c: PropCounter): void {
 function emitBellcote(
   ctx: FitOutContext,
   c: PropCounter,
-  plan: SanctumPlan,
+  plan: RebuildPlan,
   gableZ: number,
 ): void {
   const mx = Math.floor(plan.sx / 2);

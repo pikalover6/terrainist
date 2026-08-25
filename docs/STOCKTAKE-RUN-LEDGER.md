@@ -7,22 +7,23 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 37 (P6 part two: the roll over terrace
-  runs, and the flip — `TERRACE_DECAY_ROLL` + `TERRACE_DECAY` on, shipped by
-  read on the k1 metropolis) is committed.
-- **Next unit:** unit 38 — **census 3.4: one `roofPlan`.** The 25 private
-  copies in `stdlib/structures/archetypes-*.ts` consolidate onto one
-  exported `roofPlan` (the sink of unit 34 stays), byte-identical on the
-  thirteen (`bi14.sh` against `bi/u37on/PAYLOADS`, which is now HEAD's
-  bytes); an opus-5-low batch does the mechanical part, the FULL suite
-  gates. It goes before any final-bytes run because it is the last open
-  class-3 row (G5) that changes code. Then unit 39: the census sweep — the
-  open S rows executed (1.19 probe, 1.21 `stats.ground`), the open M/L rows
-  given a written disposition each (2.1–2.4, 3.1, 3.3), and the census's
-  classes 1–3 read against G5's letter in the spec. Then the road (D77): G2
-  the three named worlds fresh, G1 the eleven golden fresh, G6 kit 3×3, G4
-  six probes at final bytes, G7 deck and closing report, `STATUS: DONE`.
-- **Last commit:** 7db56b9 (unit 36). Convention: this line names the
+- **In flight:** nothing — unit 38 (census 3.4: one `roofPlan`, one
+  `wallPlan`, one `RebuildPlan`, byte-identical on the thirteen) is
+  committed.
+- **Next unit:** unit 39 — **the census sweep against G5's letter** ("every
+  finding in classes 1–7 has a disposition … and classes 1–3 are executed,
+  not just listed"). Execute the open S rows: 1.19 (the classical head-course
+  probe), 1.21 (`stats.ground` wired from the frozen resolve), 2.2's
+  first-writer attribution if it is S; give every open M/L row a written
+  disposition — 1.5 (staged off under Kai's veto: executed as a switch),
+  2.1, 2.3, 2.4, 3.1, 3.3 become proposals (P9+) with the text a future unit
+  needs, or are done if they turn out small; then re-read classes 1–3 row by
+  row and mark the census's G5 line. Byte-identity on the thirteen for any
+  code change (`bi14.sh` against `bi/u38/PAYLOADS`). Then the road (D77):
+  G2 the three named worlds fresh, G1 the eleven golden fresh, G6 kit 3×3
+  (and WS-A–D read against the spec's line), G4 six probes at final bytes,
+  G7 deck and closing report, `STATUS: DONE`.
+- **Last commit:** 4065277 (unit 37). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
 - **Spend:** $14.96 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
 - **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19, D25,
@@ -114,6 +115,16 @@ running state. The NOW block is rewritten at the end of every turn.
 
 (every fork taken: the reversible default chosen, why, and how to undo it)
 
+- **D83 (unit 38):** the consolidation takes `wallPlan` with `roofPlan`
+  (32 copies and 25: the roof plan is the wall plan plus the two-course
+  check) and one `RebuildPlan` that is the superset of every file's private
+  plan type — a file that read only `sx`/`sz`/`top` now receives `base`
+  and `rect` too, which changes no byte (structural typing, no caller
+  enumerates the fields). Five `wallPlan` shapes differed only in the
+  fields returned and one comment; any copy whose logic differed was to be
+  left in place and named — none was. The 24 files' mechanics were an
+  opus-5-low batch of four (type-check only; no builds in parallel), the
+  civic module and terminus by hand. Undo: n/a (a refactor, byte-identical).
 - **D82 (unit 37):** the two pirates documents move with the flip (one
   terrace run each ruins: share 0.16 over 3 runs, 0.25 over 2) and that is
   the roll's design, not a side effect — a terrace is a lot like any
@@ -671,6 +682,7 @@ running state. The NOW block is rewritten at the end of every turn.
 | 35 | probe pass 4 — six new worlds generated end to end (`runs/probe-4`), the icon metric | 1.49 | 14.96 |
 | 36 | P6 part one — one bi14 run, the FULL suite | 0.00 | 14.96 |
 | 37 | P6 part two — two bi14 runs (off, dist-patched on), three renders, the FULL suite | 0.00 | 14.96 |
+| 38 | census 3.4 — one bi14 run, the FULL suite | 0.00 | 14.96 |
 
 ## VERDICTS
 
@@ -1392,3 +1404,9 @@ F-number; G4 is met if these six surface no new failure class.
   Files: `district.ts`, `terrace.ts`, two tests, the `pirates` ground-probe
   baseline, the metropolis record §F, the census (1.14, 1.22), the ledger.
   Spend $0.
+- **unit 38 — census 3.4, one `roofPlan` (2026-08-25):** `RebuildPlan`,
+  `wallPlan`, `roofPlan` exported from `archetypes-civic.ts`; 34
+  archetype files drop their private copies (−1,623/+315 across 35 files lines), every plan
+  type a subset of the shared one; byte-identical on the thirteen
+  (`bi/u38` ≡ `bi/u37on`). Tests: FULL suite Test Files 350 passed | 1 skipped (351), Tests 5690 passed | 31 skipped (5721). Files: the
+  archetype files, the census (3.4), the ledger. Spend $0.

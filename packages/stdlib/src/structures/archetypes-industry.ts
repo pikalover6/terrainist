@@ -56,7 +56,12 @@
  */
 
 import type { Cardinal, LocalRect } from "./core.js";
-import { PropCounter, ROOF_FLOURISH_RISE, type FitOutContext } from "./archetypes-civic.js";
+import {
+  PropCounter,
+  ROOF_FLOURISH_RISE,
+  type FitOutContext,
+  wallPlan,
+} from "./archetypes-civic.js";
 import { pottedAt } from "./archetypes-wave2.js";
 
 /* -------------------------------------------------------------------------- */
@@ -187,31 +192,6 @@ export function industryFacadeDefaults(
 /* -------------------------------------------------------------------------- */
 /* exterior primitives                                                         */
 /* -------------------------------------------------------------------------- */
-
-/**
- * What exterior work needs to know, or `null` when it may not run.
- *
- * The blitz file's `ExteriorPlan`, restated rather than imported because the
- * waves are separate seams and a shared private helper is a shared edit. The
- * refusal is the same: a **plain rect** only — an L has a reflex corner none of
- * these routines has a rule for.
- */
-interface IndustryPlan {
-  /** Envelope extents. */
-  readonly sx: number;
-  readonly sz: number;
-  /** Highest Y anything may occupy: the shell's roof top plus the allowance. */
-  readonly top: number;
-}
-
-/** The plan for work on the walls and in the apron. */
-function wallPlan(ctx: FitOutContext): IndustryPlan | null {
-  const sx = ctx.size[0];
-  const sz = ctx.size[2];
-  const it = ctx.interior;
-  if (it.x0 !== 1 || it.z0 !== 1 || it.x1 !== sx - 2 || it.z1 !== sz - 2) return null;
-  return { sx, sz, top: ctx.roofTop + ROOF_FLOURISH_RISE };
-}
 
 /** Blocks a re-clad may never overwrite: the way in, the way up, the lights. */
 const KEEP_AS_IS =

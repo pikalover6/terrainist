@@ -94,7 +94,12 @@
  *    forever.
  */
 
-import { PropCounter, type FitOutContext } from "./archetypes-civic.js";
+import {
+  PropCounter,
+  type FitOutContext,
+  wallPlan,
+  type RebuildPlan,
+} from "./archetypes-civic.js";
 import { cardinalStep, type Cardinal, type LocalRect } from "./core.js";
 import { cellHash, decayShell, protectedColumn, settleDecayedFixtures, type DecayProfile } from "./decay.js";
 
@@ -540,21 +545,6 @@ function swampJitter(a: number, b: number, c: number, n: number): number {
 /* the exterior: the wall ring and the stilt apron                             */
 /* -------------------------------------------------------------------------- */
 
-/** What an exterior pass needs to know, or `null` when it may not run. */
-interface SwampPlan {
-  readonly sx: number;
-  readonly sz: number;
-}
-
-/** The plan for work on the walls: the rect condition, and nothing else. */
-function wallPlan(ctx: FitOutContext): SwampPlan | null {
-  const sx = ctx.size[0];
-  const sz = ctx.size[2];
-  const it = ctx.interior;
-  if (it.x0 !== 1 || it.z0 !== 1 || it.x1 !== sx - 2 || it.z1 !== sz - 2) return null;
-  return { sx, sz };
-}
-
 /** The footprint perimeter of a rect plan, in canonical (z, x) order. */
 function ringOf(sx: number, sz: number): { x: number; z: number }[] {
   const out: { x: number; z: number }[] = [];
@@ -614,7 +604,7 @@ function onWayIn(ctx: FitOutContext, x: number, z: number): boolean {
 /** Re-clad the wall ring between two courses. `block` is a pure function of position. */
 function reclad(
   ctx: FitOutContext,
-  plan: SwampPlan,
+  plan: RebuildPlan,
   yFrom: number,
   yTo: number,
   block: (x: number, y: number, z: number) => string,

@@ -67,6 +67,8 @@ import {
   PropCounter,
   ROOF_FLOURISH_RISE,
   type FitOutContext,
+  roofPlan,
+  type RebuildPlan,
 } from "./archetypes-civic.js";
 import { cardinalStep, type LocalRect } from "./core.js";
 
@@ -220,46 +222,8 @@ const BOTTOM_SLAB: Record<string, string> = { type: "bottom", waterlogged: "fals
 /* the shared machinery                                                        */
 /* -------------------------------------------------------------------------- */
 
-/**
- * What an exterior rebuild needs to know, or `null` when it may not run.
- *
- * The arcane pack's plan in every respect. The refusals are the same — a
- * **plain rect** only, and two courses of room over the plate before a roof
- * may be rebuilt.
- */
-interface EasternPlan {
-  /** Envelope extents. */
-  readonly sx: number;
-  readonly sz: number;
-  /** Y of the roof's lowest course — one above the eave plate. */
-  readonly base: number;
-  /** Highest Y anything may occupy: the shell's roof top plus the allowance. */
-  readonly top: number;
-}
-
-/** The plan for a **roof rebuild**: the rect condition, plus room to build in. */
-function roofPlan(ctx: FitOutContext): EasternPlan | null {
-  const sx = ctx.size[0];
-  const sz = ctx.size[2];
-  const it = ctx.interior;
-  if (it.x0 !== 1 || it.z0 !== 1 || it.x1 !== sx - 2 || it.z1 !== sz - 2) {
-    ctx.skipped?.push("roof work: the interior is not the one-block inset the rebuild plans over");
-    return null;
-  }
-  const base = ctx.wallTop + 1;
-  const top = ctx.roofTop + ROOF_FLOURISH_RISE;
-  const courses = top - base;
-  if (courses < 2) {
-    ctx.skipped?.push(
-      `roof work: ${courses} course${courses === 1 ? "" : "s"} above the eave where the rebuild needs 2 — a flat or low roof leaves no room`,
-    );
-    return null;
-  }
-  return { sx, sz, base, top };
-}
-
 /** Clear everything the shell built above the eave plate, apron included. */
-function clearRoof(ctx: FitOutContext, plan: EasternPlan): void {
+function clearRoof(ctx: FitOutContext, plan: RebuildPlan): void {
   for (let y = plan.base; y <= plan.top + 2; y++) {
     for (let x = -1; x <= plan.sx; x++) {
       for (let z = -1; z <= plan.sz; z++) ctx.put(x, y, z, "air");
@@ -274,7 +238,7 @@ function clearRoof(ctx: FitOutContext, plan: EasternPlan): void {
  * roof away, and the room below needs a ceiling while everything above needs a
  * floor to stand on.
  */
-function lid(c: PropCounter, plan: EasternPlan, block: string): void {
+function lid(c: PropCounter, plan: RebuildPlan, block: string): void {
   for (let z = 0; z < plan.sz; z++) {
     for (let x = 0; x < plan.sx; x++) c.raw(x, plan.base, z, block);
   }
@@ -294,7 +258,7 @@ function lid(c: PropCounter, plan: EasternPlan, block: string): void {
  */
 function eaveSkirt(
   c: PropCounter,
-  plan: EasternPlan,
+  plan: RebuildPlan,
   y: number,
   x0: number,
   z0: number,
@@ -333,7 +297,7 @@ function eaveSkirt(
  */
 function tierBox(
   c: PropCounter,
-  plan: EasternPlan,
+  plan: RebuildPlan,
   from: number,
   to: number,
   x0: number,
@@ -369,7 +333,7 @@ function tierBox(
  */
 function tieredStack(
   c: PropCounter,
-  plan: EasternPlan,
+  plan: RebuildPlan,
   tierHeight: number,
   gable: boolean,
 ): void {

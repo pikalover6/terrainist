@@ -62,6 +62,9 @@ import {
   PropCounter,
   ROOF_FLOURISH_RISE,
   type FitOutContext,
+  roofPlan,
+  type RebuildPlan,
+  wallPlan,
 } from "./archetypes-civic.js";
 import { pottedAt } from "./archetypes-wave2.js";
 import { cardinalStep, type Cardinal, type LocalRect } from "./core.js";
@@ -215,61 +218,8 @@ export function classicalFacadeDefaults(archetype: string): {
 /* the exterior plan                                                           */
 /* -------------------------------------------------------------------------- */
 
-/**
- * What an exterior rebuild needs to know, or `null` when it may not run.
- *
- * The sanctum pack's `SanctumPlan` in every respect, restated rather than
- * imported for the reason that wave restated wave 4B's: two packs are two
- * seams, and a shared private helper is a shared edit. The refusals are the
- * same — a **plain rect** only, and two courses of room over the plate before
- * a roof may be rebuilt.
- */
-interface ClassicalPlan {
-  /** Envelope extents. */
-  readonly sx: number;
-  readonly sz: number;
-  /** Y of the roof's lowest course — one above the eave plate. */
-  readonly base: number;
-  /** Highest Y anything may occupy: the shell's roof top plus the allowance. */
-  readonly top: number;
-  /** The footprint, as an inclusive rect. */
-  readonly rect: LocalRect;
-}
-
-/** The plan for work on the **walls**: the rect condition, and nothing else. */
-function wallPlan(ctx: FitOutContext): ClassicalPlan | null {
-  const sx = ctx.size[0];
-  const sz = ctx.size[2];
-  const it = ctx.interior;
-  if (it.x0 !== 1 || it.z0 !== 1 || it.x1 !== sx - 2 || it.z1 !== sz - 2) return null;
-  return {
-    sx,
-    sz,
-    base: ctx.wallTop + 1,
-    top: ctx.roofTop + ROOF_FLOURISH_RISE,
-    rect: { x0: 0, z0: 0, x1: sx - 1, z1: sz - 1 },
-  };
-}
-
-/** The plan for a **roof rebuild**: a wall plan that also has room to build in. */
-function roofPlan(ctx: FitOutContext): ClassicalPlan | null {
-  const plan = wallPlan(ctx);
-  if (plan === null) {
-    ctx.skipped?.push("roof work: the interior is not the one-block inset the rebuild plans over");
-    return null;
-  }
-  const courses = plan.top - plan.base;
-  if (courses < 2) {
-    ctx.skipped?.push(
-      `roof work: ${courses} course${courses === 1 ? "" : "s"} above the eave where the rebuild needs 2 — a flat or low roof leaves no room`,
-    );
-    return null;
-  }
-  return plan;
-}
-
 /** Clear everything the shell built above the eave plate, apron included. */
-function clearRoof(ctx: FitOutContext, plan: ClassicalPlan): void {
+function clearRoof(ctx: FitOutContext, plan: RebuildPlan): void {
   for (let y = plan.base; y <= plan.top + 2; y++) {
     for (let x = -1; x <= plan.sx; x++) {
       for (let z = -1; z <= plan.sz; z++) ctx.put(x, y, z, "air");
@@ -354,7 +304,7 @@ function columnProtected(ctx: FitOutContext, x: number, z: number): boolean {
  */
 function reclad(
   ctx: FitOutContext,
-  plan: ClassicalPlan,
+  plan: RebuildPlan,
   yFrom: number,
   yTo: number,
   block: (x: number, y: number, z: number) => string,
@@ -475,7 +425,7 @@ type Face = "north" | "south" | "east" | "west";
 const ALL_FACES: readonly Face[] = ["north", "south", "east", "west"];
 
 /** The faces an apron cell lies on: a corner lies on two. */
-function facesOf(plan: ClassicalPlan, x: number, z: number): readonly Face[] {
+function facesOf(plan: RebuildPlan, x: number, z: number): readonly Face[] {
   const out: Face[] = [];
   if (x === -1) out.push("west");
   if (x === plan.sx) out.push("east");
@@ -493,7 +443,7 @@ function facesOf(plan: ClassicalPlan, x: number, z: number): readonly Face[] {
  * grows out of the dirt, which is the single thing that most makes a columned
  * building look like a shed with poles round it.
  */
-function stylobate(ctx: FitOutContext, c: PropCounter, plan: ClassicalPlan, courses = 0): void {
+function stylobate(ctx: FitOutContext, c: PropCounter, plan: RebuildPlan, courses = 0): void {
   const step = ctx.style["foundation.accent"] as string;
   for (const cell of apronOf(plan.sx, plan.sz)) {
     if (onWayIn(ctx, cell.x, cell.z)) continue;
@@ -523,7 +473,7 @@ function stylobate(ctx: FitOutContext, c: PropCounter, plan: ClassicalPlan, cour
 function colonnade(
   ctx: FitOutContext,
   c: PropCounter,
-  plan: ClassicalPlan,
+  plan: RebuildPlan,
   faces: readonly Face[],
   interval = 2,
   banded = false,
@@ -574,7 +524,7 @@ function colonnade(
 function openFace(
   ctx: FitOutContext,
   c: PropCounter,
-  plan: ClassicalPlan,
+  plan: RebuildPlan,
   face: Face,
   interval = 2,
 ): void {
@@ -601,7 +551,7 @@ function openFace(
 /**
  * The solid lid a rebuilt roof always starts with — a ceiling, and a floor.
  */
-function lid(ctx: FitOutContext, c: PropCounter, plan: ClassicalPlan): void {
+function lid(ctx: FitOutContext, c: PropCounter, plan: RebuildPlan): void {
   const stone = ashlar(ctx);
   deck(c, plan.base, 0, plan.sx - 1, 0, plan.sz - 1, (x, z) => stone(x, plan.base, z));
 }
@@ -622,7 +572,7 @@ function lid(ctx: FitOutContext, c: PropCounter, plan: ClassicalPlan): void {
 function courtDeck(
   ctx: FitOutContext,
   c: PropCounter,
-  plan: ClassicalPlan,
+  plan: RebuildPlan,
   court: LocalRect,
 ): LocalRect {
   const stone = ashlar(ctx);
@@ -695,7 +645,7 @@ function cultFigure(ctx: FitOutContext, c: PropCounter, x: number, z: number): v
  * A slab cornice goes in the apron at the eave course, standing on the
  * entablature the colonnade has already carried.
  */
-function pediment(ctx: FitOutContext, c: PropCounter, plan: ClassicalPlan): void {
+function pediment(ctx: FitOutContext, c: PropCounter, plan: RebuildPlan): void {
   const stone = ashlar(ctx);
   for (let y = plan.base; y <= plan.top; y++) {
     const k = y - plan.base;
@@ -768,7 +718,7 @@ export function furnishClassical(ctx: FitOutContext): number {
 /* -------------------------------------------------------------------------- */
 
 /** The long face a stoa opens: the door's, so the colonnade faces the square. */
-function doorFace(ctx: FitOutContext, plan: ClassicalPlan): Face {
+function doorFace(ctx: FitOutContext, plan: RebuildPlan): Face {
   if (ctx.door === null) return "south";
   if (ctx.door.z === 0) return "north";
   if (ctx.door.z === plan.sz - 1) return "south";
@@ -1313,7 +1263,7 @@ function fitTreasury(ctx: FitOutContext, c: PropCounter): void {
 function sandCourt(
   ctx: FitOutContext,
   c: PropCounter,
-  roof: ClassicalPlan | null,
+  roof: RebuildPlan | null,
   court: LocalRect,
 ): void {
   for (let z = court.z0; z <= court.z1; z++) {

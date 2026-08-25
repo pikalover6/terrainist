@@ -54,6 +54,9 @@ import {
   PropCounter,
   ROOF_FLOURISH_RISE,
   type FitOutContext,
+  roofPlan,
+  wallPlan,
+  type RebuildPlan,
 } from "./archetypes-civic.js";
 
 /* -------------------------------------------------------------------------- */
@@ -160,66 +163,13 @@ export function wave2FacadeDefaults(
 /* -------------------------------------------------------------------------- */
 
 /**
- * What an exterior rebuild needs to know, or `null` when it may not run.
- *
- * The blitz file's {@link ExteriorPlan} in every respect; it is restated here
- * rather than imported because the two waves are separate seams and a shared
- * private helper is a shared edit. The two refusals are the same:
- * a **plain rect** only (an L has a reflex corner none of these routines has a
- * rule for), and at least two courses of room above the eave plate.
- */
-interface Wave2Plan {
-  /** Envelope extents. */
-  readonly sx: number;
-  readonly sz: number;
-  /** Y of the roof's lowest course — one above the eave plate. */
-  readonly base: number;
-  /** Highest Y anything may occupy: the shell's roof top plus the allowance. */
-  readonly top: number;
-  /** The footprint, as an inclusive rect. */
-  readonly rect: LocalRect;
-}
-
-/** The plan for work on the **walls**: the rect condition, and nothing else. */
-function wallPlan(ctx: FitOutContext): Wave2Plan | null {
-  const sx = ctx.size[0];
-  const sz = ctx.size[2];
-  const it = ctx.interior;
-  if (it.x0 !== 1 || it.z0 !== 1 || it.x1 !== sx - 2 || it.z1 !== sz - 2) return null;
-  return {
-    sx,
-    sz,
-    base: ctx.wallTop + 1,
-    top: ctx.roofTop + ROOF_FLOURISH_RISE,
-    rect: { x0: 0, z0: 0, x1: sx - 1, z1: sz - 1 },
-  };
-}
-
-/** The plan for a **roof rebuild**: a wall plan that also has room to build in. */
-function roofPlan(ctx: FitOutContext): Wave2Plan | null {
-  const plan = wallPlan(ctx);
-  if (plan === null) {
-    ctx.skipped?.push("roof work: the interior is not the one-block inset the rebuild plans over");
-    return null;
-  }
-  const courses = plan.top - plan.base;
-  if (courses < 2) {
-    ctx.skipped?.push(
-      `roof work: ${courses} course${courses === 1 ? "" : "s"} above the eave where the rebuild needs 2 — a flat or low roof leaves no room`,
-    );
-    return null;
-  }
-  return plan;
-}
-
-/**
  * Clear everything the shell built above the eave plate, apron included.
  *
  * Two courses past `top` as well, for the chimney corbel and its chimney-pot
  * campfire: a replacement roof that cleared only to its own ceiling would
  * leave a fire burning over the ridge it deleted.
  */
-function clearRoof(ctx: FitOutContext, plan: Wave2Plan): void {
+function clearRoof(ctx: FitOutContext, plan: RebuildPlan): void {
   for (let y = plan.base; y <= plan.top + 2; y++) {
     for (let x = -1; x <= plan.sx; x++) {
       for (let z = -1; z <= plan.sz; z++) ctx.put(x, y, z, "air");
@@ -258,7 +208,7 @@ const PRESERVE = /(_door$|^ladder$|^campfire$|_sign$|torch$|^bell$|glass|_pane$|
  */
 function reclad(
   ctx: FitOutContext,
-  plan: Wave2Plan,
+  plan: RebuildPlan,
   yFrom: number,
   yTo: number,
   block: (x: number, y: number, z: number) => string,

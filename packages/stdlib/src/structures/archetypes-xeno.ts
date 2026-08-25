@@ -69,6 +69,9 @@ import {
   PropCounter,
   ROOF_FLOURISH_RISE,
   type FitOutContext,
+  roofPlan,
+  wallPlan,
+  type RebuildPlan,
 } from "./archetypes-civic.js";
 import { cardinalStep, type Cardinal, type LocalRect } from "./core.js";
 
@@ -196,61 +199,8 @@ export function xenoFacadeDefaults(archetype: string): {
 /* the shared machinery                                                        */
 /* -------------------------------------------------------------------------- */
 
-/**
- * What an exterior rebuild needs to know, or `null` when it may not run.
- *
- * The classical pack's `ClassicalPlan` in every respect, restated rather than
- * imported for the reason that pack restated the sanctum's: two packs are two
- * seams, and a shared private helper is a shared edit. The refusals are the
- * same — a **plain rect** only, and two courses of room over the plate before
- * a roof may be rebuilt.
- */
-interface XenoPlan {
-  /** Envelope extents. */
-  readonly sx: number;
-  readonly sz: number;
-  /** Y of the roof's lowest course — one above the eave plate. */
-  readonly base: number;
-  /** Highest Y anything may occupy: the shell's roof top plus the allowance. */
-  readonly top: number;
-  /** The footprint, as an inclusive rect. */
-  readonly rect: LocalRect;
-}
-
-/** The plan for work on the **walls**: the rect condition, and nothing else. */
-function wallPlan(ctx: FitOutContext): XenoPlan | null {
-  const sx = ctx.size[0];
-  const sz = ctx.size[2];
-  const it = ctx.interior;
-  if (it.x0 !== 1 || it.z0 !== 1 || it.x1 !== sx - 2 || it.z1 !== sz - 2) return null;
-  return {
-    sx,
-    sz,
-    base: ctx.wallTop + 1,
-    top: ctx.roofTop + ROOF_FLOURISH_RISE,
-    rect: { x0: 0, z0: 0, x1: sx - 1, z1: sz - 1 },
-  };
-}
-
-/** The plan for a **roof rebuild**: a wall plan that also has room to build in. */
-function roofPlan(ctx: FitOutContext): XenoPlan | null {
-  const plan = wallPlan(ctx);
-  if (plan === null) {
-    ctx.skipped?.push("roof work: the interior is not the one-block inset the rebuild plans over");
-    return null;
-  }
-  const courses = plan.top - plan.base;
-  if (courses < 2) {
-    ctx.skipped?.push(
-      `roof work: ${courses} course${courses === 1 ? "" : "s"} above the eave where the rebuild needs 2 — a flat or low roof leaves no room`,
-    );
-    return null;
-  }
-  return plan;
-}
-
 /** Clear everything the shell built above the eave plate, apron included. */
-function clearRoof(ctx: FitOutContext, plan: XenoPlan): void {
+function clearRoof(ctx: FitOutContext, plan: RebuildPlan): void {
   for (let y = plan.base; y <= plan.top + 2; y++) {
     for (let x = -1; x <= plan.sx; x++) {
       for (let z = -1; z <= plan.sz; z++) ctx.put(x, y, z, "air");
@@ -468,7 +418,7 @@ function shellAt(c: PropCounter, x: number, y: number, z: number): void {
  * Same contract as the classical pack's `reclad`: protected cells are skipped,
  * everything else is overwritten, and the block is a pure function of position.
  */
-function encase(ctx: FitOutContext, c: PropCounter, plan: XenoPlan, yFrom: number, yTo: number): void {
+function encase(ctx: FitOutContext, c: PropCounter, plan: RebuildPlan, yFrom: number, yTo: number): void {
   for (const cell of ringOf(plan.sx, plan.sz)) {
     for (let y = yFrom; y <= yTo; y++) {
       if (protectedAt(ctx, cell.x, y, cell.z)) continue;
@@ -484,7 +434,7 @@ function encase(ctx: FitOutContext, c: PropCounter, plan: XenoPlan, yFrom: numbe
  * roof away, and the room below needs a ceiling while everything above needs a
  * floor to stand on.
  */
-function lid(c: PropCounter, plan: XenoPlan): void {
+function lid(c: PropCounter, plan: RebuildPlan): void {
   for (let z = 0; z < plan.sz; z++) {
     for (let x = 0; x < plan.sx; x++) shellAt(c, x, plan.base, z);
   }
@@ -720,7 +670,7 @@ function fitXenoSpire(ctx: FitOutContext, c: PropCounter): void {
  * head takes its point, and whatever is left is the body — so a short envelope
  * yields a shorter spire rather than a spire with no top.
  */
-function growStalk(ctx: FitOutContext, c: PropCounter, plan: XenoPlan, wallTop: number): void {
+function growStalk(ctx: FitOutContext, c: PropCounter, plan: RebuildPlan, wallTop: number): void {
   const h = plan.top - plan.base;
   if (h < 1) return;
   const mx = (plan.sx - 1) >> 1;
@@ -870,7 +820,7 @@ function fitHiveMound(ctx: FitOutContext, c: PropCounter): void {
  * it touches carries something {@link PRESERVE} names, because a mouth that
  * ate half a door is worse than a mound with two mouths.
  */
-function tunnelMouth(ctx: FitOutContext, c: PropCounter, plan: XenoPlan, face: Cardinal): boolean {
+function tunnelMouth(ctx: FitOutContext, c: PropCounter, plan: RebuildPlan, face: Cardinal): boolean {
   const along = face === "north" || face === "south" ? plan.sx : plan.sz;
   /** A wall-ring cell, `k` along the face. */
   const ring = (k: number): { x: number; z: number } => {
@@ -968,7 +918,7 @@ interface MoundShape {
  * so every course rests on the one below it and the floating rule is met by
  * construction rather than by check.
  */
-function growMound(c: PropCounter, plan: XenoPlan): MoundShape {
+function growMound(c: PropCounter, plan: RebuildPlan): MoundShape {
   const hx = (plan.sx - 1) >> 1;
   const hz = (plan.sz - 1) >> 1;
   const room = plan.top - plan.base;
@@ -1011,7 +961,7 @@ function growMound(c: PropCounter, plan: XenoPlan): MoundShape {
  * air. Each closes on a lit head. Three, because two reads as a mistake and
  * four reads as a machine.
  */
-function ventCrown(ctx: FitOutContext, c: PropCounter, plan: XenoPlan, mound: MoundShape): void {
+function ventCrown(ctx: FitOutContext, c: PropCounter, plan: RebuildPlan, mound: MoundShape): void {
   const mx = (plan.sx - 1) >> 1;
   const mz = (plan.sz - 1) >> 1;
   const spread = Math.max(1, Math.min(mx, mz) >> 1);

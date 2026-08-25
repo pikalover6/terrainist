@@ -72,6 +72,9 @@ import {
   PropCounter,
   ROOF_FLOURISH_RISE,
   type FitOutContext,
+  roofPlan,
+  wallPlan,
+  type RebuildPlan,
 } from "./archetypes-civic.js";
 import { pottedAt } from "./archetypes-wave2.js";
 
@@ -216,61 +219,6 @@ export function terminusFacadeDefaults(
 /* the exterior plan                                                           */
 /* -------------------------------------------------------------------------- */
 
-/**
- * What exterior work needs to know, or `null` when it may not run.
- *
- * The blitz file's `ExteriorPlan`, restated rather than imported because the
- * waves are separate seams and a shared private helper is a shared edit. The
- * refusals are the same: a **plain rect** only — an L has a reflex corner none
- * of these routines has a rule for — and, for a rebuild, room above the plate.
- */
-interface TerminusPlan {
-  /** Envelope extents. */
-  readonly sx: number;
-  readonly sz: number;
-  /** Y of the roof's lowest course — one above the eave plate. */
-  readonly base: number;
-  /** Highest Y anything may occupy: the shell's roof top plus the allowance. */
-  readonly top: number;
-  /** The footprint, as an inclusive rect. */
-  readonly rect: LocalRect;
-}
-
-/** The plan for work on the walls. No headroom condition: a re-clad needs none. */
-function wallPlan(ctx: FitOutContext): TerminusPlan | null {
-  const sx = ctx.size[0];
-  const sz = ctx.size[2];
-  const it = ctx.interior;
-  if (it.x0 !== 1 || it.z0 !== 1 || it.x1 !== sx - 2 || it.z1 !== sz - 2) return null;
-  return {
-    sx,
-    sz,
-    base: ctx.wallTop + 1,
-    top: ctx.roofTop + ROOF_FLOURISH_RISE,
-    rect: { x0: 0, z0: 0, x1: sx - 1, z1: sz - 1 },
-  };
-}
-
-/** The plan for work that rebuilds the roof: a wall plan with room over it. */
-function roofPlan(ctx: FitOutContext): TerminusPlan | null {
-  const plan = wallPlan(ctx);
-  if (plan === null) {
-    ctx.skipped?.push("roof work: the interior is not the one-block inset the rebuild plans over");
-    return null;
-  }
-  if (plan.top - plan.base < 2) {
-    // The Stocktake Run's probe pass 3 (2026-08-25): a lighthouse asked for
-    // with `roof: "flat"` had one course above its eave, and its bands,
-    // gallery and lamp were skipped in silence. Say so (`LOAM-W524`).
-    const courses = plan.top - plan.base;
-    ctx.skipped?.push(
-      `roof work: ${courses} course${courses === 1 ? "" : "s"} above the eave where the rebuild needs 2 — a flat or low roof leaves no room`,
-    );
-    return null;
-  }
-  return plan;
-}
-
 /** Blocks a re-clad may never overwrite: the way in, the way up, the fire, the lights. */
 const KEEP_AS_IS =
   /(_door$|^ladder$|^campfire$|_sign$|torch$|^bell$|glass|_pane$|lantern$|banner$)/;
@@ -340,7 +288,7 @@ function clad(ctx: FitOutContext, x: number, y: number, z: number, block: string
 /** Re-clad the whole wall ring between two courses, from a position function. */
 function reclad(
   ctx: FitOutContext,
-  plan: TerminusPlan,
+  plan: RebuildPlan,
   yFrom: number,
   yTo: number,
   block: (x: number, y: number, z: number) => string,
@@ -361,7 +309,7 @@ function reclad(
  * campfire: a replacement roof that cleared only to its own ceiling would leave
  * a fire burning over the ridge it deleted.
  */
-function clearRoof(ctx: FitOutContext, plan: TerminusPlan): void {
+function clearRoof(ctx: FitOutContext, plan: RebuildPlan): void {
   for (let y = plan.base; y <= plan.top + 2; y++) {
     for (let x = -1; x <= plan.sx; x++) {
       for (let z = -1; z <= plan.sz; z++) ctx.put(x, y, z, "air");
@@ -394,7 +342,7 @@ function slabRect(
  */
 function terrace(
   ctx: FitOutContext,
-  plan: TerminusPlan,
+  plan: RebuildPlan,
   deck: string,
   parapet: (x: number, z: number) => { readonly block: string; readonly height: number },
 ): number {
@@ -424,7 +372,7 @@ function terrace(
 function mast(
   ctx: FitOutContext,
   c: PropCounter,
-  plan: TerminusPlan,
+  plan: RebuildPlan,
   x: number,
   z: number,
   column: string,

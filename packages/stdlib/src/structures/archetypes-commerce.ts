@@ -58,6 +58,7 @@ import {
   PropCounter,
   ROOF_FLOURISH_RISE,
   type FitOutContext,
+  wallPlan,
 } from "./archetypes-civic.js";
 import { pottedAt } from "./archetypes-wave2.js";
 
@@ -185,41 +186,6 @@ export function commerceFacadeDefaults(
 /* -------------------------------------------------------------------------- */
 /* the exterior plan                                                           */
 /* -------------------------------------------------------------------------- */
-
-/**
- * What exterior work needs to know, or `null` when it may not run.
- *
- * The blitz file's `ExteriorPlan`, restated rather than imported because the
- * waves are separate seams and a shared private helper is a shared edit. The
- * refusals are the same: a **plain rect** only — an L has a reflex corner none
- * of these routines has a rule for.
- */
-interface CommercePlan {
-  /** Envelope extents. */
-  readonly sx: number;
-  readonly sz: number;
-  /** Y of the roof's lowest course — one above the eave plate. */
-  readonly base: number;
-  /** Highest Y anything may occupy: the shell's roof top plus the allowance. */
-  readonly top: number;
-  /** The footprint, as an inclusive rect. */
-  readonly rect: LocalRect;
-}
-
-/** The plan for work on the walls. No headroom condition: a re-clad needs none. */
-function wallPlan(ctx: FitOutContext): CommercePlan | null {
-  const sx = ctx.size[0];
-  const sz = ctx.size[2];
-  const it = ctx.interior;
-  if (it.x0 !== 1 || it.z0 !== 1 || it.x1 !== sx - 2 || it.z1 !== sz - 2) return null;
-  return {
-    sx,
-    sz,
-    base: ctx.wallTop + 1,
-    top: ctx.roofTop + ROOF_FLOURISH_RISE,
-    rect: { x0: 0, z0: 0, x1: sx - 1, z1: sz - 1 },
-  };
-}
 
 /** Blocks a re-clad may never overwrite: the way in, the way up, the fire, the lights. */
 const KEEP_AS_IS =

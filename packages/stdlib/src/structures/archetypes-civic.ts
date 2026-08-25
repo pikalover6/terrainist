@@ -1070,6 +1070,65 @@ export function furnishWing(ctx: FitOutContext): number {
 export const ROOF_FLOURISH_RISE = 1;
 
 /**
+ * The rebuild plan a roof fit-out works over — one shape for every
+ * archetype file (the Stocktake Run's census row 3.4, unit 38: 32 private
+ * `wallPlan` copies and 25 `roofPlan` copies consolidated here, byte-identical
+ * on the thirteen). Files that read only `sx`/`sz`/`top` take the superset.
+ */
+export interface RebuildPlan {
+  /** Envelope extents. */
+  readonly sx: number;
+  readonly sz: number;
+  /** Y of the roof's lowest course — one above the eave plate. */
+  readonly base: number;
+  /** Highest Y anything may occupy: the shell's roof top plus the allowance. */
+  readonly top: number;
+  /** The footprint, as an inclusive rect. */
+  readonly rect: LocalRect;
+}
+
+/**
+ * The plan over a plain shell — one whose interior is exactly the box inset
+ * by one on all four sides — or null when the interior is anything else.
+ */
+export function wallPlan(ctx: FitOutContext): RebuildPlan | null {
+  const sx = ctx.size[0];
+  const sz = ctx.size[2];
+  const it = ctx.interior;
+  if (it.x0 !== 1 || it.z0 !== 1 || it.x1 !== sx - 2 || it.z1 !== sz - 2) return null;
+  return {
+    sx,
+    sz,
+    base: ctx.wallTop + 1,
+    top: ctx.roofTop + ROOF_FLOURISH_RISE,
+    rect: { x0: 0, z0: 0, x1: sx - 1, z1: sz - 1 },
+  };
+}
+
+/**
+ * {@link wallPlan}, and at least two courses above the eave for the roof work
+ * to live in; either refusal is named in `ctx.skipped` (`LOAM-W524`).
+ */
+export function roofPlan(ctx: FitOutContext): RebuildPlan | null {
+  const plan = wallPlan(ctx);
+  if (plan === null) {
+    ctx.skipped?.push("roof work: the interior is not the one-block inset the rebuild plans over");
+    return null;
+  }
+  if (plan.top - plan.base < 2) {
+    // The Stocktake Run's probe pass 3 (2026-08-25): a lighthouse asked for
+    // with `roof: "flat"` had one course above its eave, and its bands,
+    // gallery and lamp were skipped in silence. Say so (`LOAM-W524`).
+    const courses = plan.top - plan.base;
+    ctx.skipped?.push(
+      `roof work: ${courses} course${courses === 1 ? "" : "s"} above the eave where the rebuild needs 2 — a flat or low roof leaves no room`,
+    );
+    return null;
+  }
+  return plan;
+}
+
+/**
  * A bell tower over the nave.
  *
  * Built with the watchtower's machinery — a hollow shaft of the wall material,

@@ -64,6 +64,9 @@ import {
   PropCounter,
   ROOF_FLOURISH_RISE,
   type FitOutContext,
+  roofPlan,
+  wallPlan,
+  type RebuildPlan,
 } from "./archetypes-civic.js";
 import { pottedAt } from "./archetypes-wave2.js";
 
@@ -191,58 +194,6 @@ export function garrisonFacadeDefaults(archetype: string): {
 /* the exterior plan                                                           */
 /* -------------------------------------------------------------------------- */
 
-/**
- * What an exterior rebuild needs to know, or `null` when it may not run.
- *
- * The earlier waves' plan in every respect; restated here rather than imported
- * because the two waves are separate seams and a shared private helper is a
- * shared edit. The refusal is the same: a **plain rect** only — an L has a
- * reflex corner none of these routines has a rule for.
- */
-interface GarrisonPlan {
-  /** Envelope extents. */
-  readonly sx: number;
-  readonly sz: number;
-  /** Y of the roof's lowest course — one above the eave plate. */
-  readonly base: number;
-  /** Highest Y anything may occupy: the shell's roof top plus the allowance. */
-  readonly top: number;
-  /** The footprint, as an inclusive rect. */
-  readonly rect: LocalRect;
-}
-
-/** The plan for work on the **walls and the apron**: the rect condition only. */
-function wallPlan(ctx: FitOutContext): GarrisonPlan | null {
-  const sx = ctx.size[0];
-  const sz = ctx.size[2];
-  const it = ctx.interior;
-  if (it.x0 !== 1 || it.z0 !== 1 || it.x1 !== sx - 2 || it.z1 !== sz - 2) return null;
-  return {
-    sx,
-    sz,
-    base: ctx.wallTop + 1,
-    top: ctx.roofTop + ROOF_FLOURISH_RISE,
-    rect: { x0: 0, z0: 0, x1: sx - 1, z1: sz - 1 },
-  };
-}
-
-/** The plan for a **roof rebuild**: a wall plan that also has room to build in. */
-function roofPlan(ctx: FitOutContext): GarrisonPlan | null {
-  const plan = wallPlan(ctx);
-  if (plan === null) {
-    ctx.skipped?.push("roof work: the interior is not the one-block inset the rebuild plans over");
-    return null;
-  }
-  const courses = plan.top - plan.base;
-  if (courses < 2) {
-    ctx.skipped?.push(
-      `roof work: ${courses} course${courses === 1 ? "" : "s"} above the eave where the rebuild needs 2 — a flat or low roof leaves no room`,
-    );
-    return null;
-  }
-  return plan;
-}
-
 /** The footprint perimeter of a rect plan, in canonical (z, x) order. */
 function ringOf(sx: number, sz: number): { x: number; z: number }[] {
   const out: { x: number; z: number }[] = [];
@@ -322,7 +273,7 @@ const PRESERVE = /(_door$|^ladder$|^campfire$|_sign$|torch$|^bell$|glass|_pane$|
  */
 function reclad(
   ctx: FitOutContext,
-  plan: GarrisonPlan,
+  plan: RebuildPlan,
   yFrom: number,
   yTo: number,
   block: (x: number, y: number, z: number) => string,
@@ -355,7 +306,7 @@ function masonry(ctx: FitOutContext): (x: number, y: number, z: number) => strin
  * its own ceiling would leave a fire burning in mid-air over the ridge it
  * deleted.
  */
-function clearRoof(ctx: FitOutContext, plan: GarrisonPlan): void {
+function clearRoof(ctx: FitOutContext, plan: RebuildPlan): void {
   for (let y = plan.base; y <= plan.top + 2; y++) {
     for (let x = -1; x <= plan.sx; x++) {
       for (let z = -1; z <= plan.sz; z++) ctx.put(x, y, z, "air");
@@ -387,7 +338,7 @@ function fill(
  */
 function crenellate(
   ctx: FitOutContext,
-  plan: GarrisonPlan,
+  plan: RebuildPlan,
   deckY: number,
   block: (x: number, y: number, z: number) => string,
 ): number | null {
@@ -411,7 +362,7 @@ function crenellate(
  * it is a **solid cap** — the roof-rebuild rule: partial blocks only where
  * something supports them. Returns the deck's Y.
  */
-function battlement(ctx: FitOutContext, plan: GarrisonPlan): number {
+function battlement(ctx: FitOutContext, plan: RebuildPlan): number {
   const stone = masonry(ctx);
   clearRoof(ctx, plan);
   fill(ctx, plan.base, 0, plan.sx - 1, 0, plan.sz - 1, ctx.style["foundation.accent"] as string);

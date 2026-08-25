@@ -45,6 +45,7 @@ import {
   ROOF_FLOURISH_RISE,
   emitBlades,
   type FitOutContext,
+  wallPlan,
 } from "./archetypes-civic.js";
 
 /* -------------------------------------------------------------------------- */
@@ -174,29 +175,6 @@ export interface ExteriorPlan {
   readonly top: number;
   /** The footprint, as an inclusive rect. */
   readonly rect: LocalRect;
-}
-
-/**
- * The plan for work on the **walls** — a re-clad, a glazing, a cornice.
- *
- * Only the rect condition applies: none of those needs headroom, and a gym
- * under a flat roof would lose its mirror wall to a guard that exists for the
- * roof's sake.
- */
-function wallPlan(ctx: FitOutContext): ExteriorPlan | null {
-  const sx = ctx.size[0];
-  const sz = ctx.size[2];
-  const it = ctx.interior;
-  // A plain rect, and nothing else: the interior of one is exactly the box
-  // inset by one on all four sides.
-  if (it.x0 !== 1 || it.z0 !== 1 || it.x1 !== sx - 2 || it.z1 !== sz - 2) return null;
-  return {
-    sx,
-    sz,
-    base: ctx.wallTop + 1,
-    top: ctx.roofTop + ROOF_FLOURISH_RISE,
-    rect: { x0: 0, z0: 0, x1: sx - 1, z1: sz - 1 },
-  };
 }
 
 /** The plan for a **roof rebuild**: a wall plan that also has room to build in. */

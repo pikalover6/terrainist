@@ -39,7 +39,14 @@
  */
 
 import type { Cardinal, LocalRect } from "./core.js";
-import { PropCounter, ROOF_FLOURISH_RISE, type FitOutContext } from "./archetypes-civic.js";
+import {
+  PropCounter,
+  ROOF_FLOURISH_RISE,
+  type FitOutContext,
+  roofPlan,
+  wallPlan,
+  type RebuildPlan,
+} from "./archetypes-civic.js";
 
 /* -------------------------------------------------------------------------- */
 /* the archetypes                                                              */
@@ -123,62 +130,6 @@ export function vernacularFacadeDefaults(
 /* -------------------------------------------------------------------------- */
 
 /**
- * What an exterior rebuild needs to know, or `null` when it may not run.
- *
- * The same two refusals `archetypes-blitz.ts` makes, for the same reasons: the
- * plan has to be a **plain rect** (every routine below reasons about one box,
- * and an L has a reflex corner none of them has a rule for — a wing therefore
- * keeps the shell's own roof, which is a correct building), and there has to
- * be **room** between the eave plate and the ceiling the replacement may
- * reach.
- */
-interface VernacularPlan {
-  /** Envelope extents. */
-  readonly sx: number;
-  readonly sz: number;
-  /** Y of the roof's lowest course — one above the eave plate. */
-  readonly base: number;
-  /** Highest Y anything may occupy: the shell's roof top plus the allowance. */
-  readonly top: number;
-  /** The footprint, as an inclusive rect. */
-  readonly rect: LocalRect;
-}
-
-/** The plan for work on the **walls**: a re-clad needs no headroom. */
-function wallPlan(ctx: FitOutContext): VernacularPlan | null {
-  const sx = ctx.size[0];
-  const sz = ctx.size[2];
-  const it = ctx.interior;
-  // A plain rect, and nothing else: the interior of one is exactly the box
-  // inset by one on all four sides.
-  if (it.x0 !== 1 || it.z0 !== 1 || it.x1 !== sx - 2 || it.z1 !== sz - 2) return null;
-  return {
-    sx,
-    sz,
-    base: ctx.wallTop + 1,
-    top: ctx.roofTop + ROOF_FLOURISH_RISE,
-    rect: { x0: 0, z0: 0, x1: sx - 1, z1: sz - 1 },
-  };
-}
-
-/** The plan for a **roof rebuild**: a wall plan that also has room to build in. */
-function roofPlan(ctx: FitOutContext): VernacularPlan | null {
-  const plan = wallPlan(ctx);
-  if (plan === null) {
-    ctx.skipped?.push("roof work: the interior is not the one-block inset the rebuild plans over");
-    return null;
-  }
-  const courses = plan.top - plan.base;
-  if (courses < 2) {
-    ctx.skipped?.push(
-      `roof work: ${courses} course${courses === 1 ? "" : "s"} above the eave where the rebuild needs 2 — a flat or low roof leaves no room`,
-    );
-    return null;
-  }
-  return plan;
-}
-
-/**
  * Clear everything the shell built above the eave plate, apron included.
  *
  * Two courses past `top` as well, because the chimney's corbel and its
@@ -186,7 +137,7 @@ function roofPlan(ctx: FitOutContext): VernacularPlan | null {
  * its own ceiling would leave a fire burning in mid-air over the ridge it
  * deleted. The flue *below* the plate is wall and stays wall.
  */
-function clearRoof(ctx: FitOutContext, plan: VernacularPlan): void {
+function clearRoof(ctx: FitOutContext, plan: RebuildPlan): void {
   for (let y = plan.base; y <= plan.top + 2; y++) {
     for (let x = -1; x <= plan.sx; x++) {
       for (let z = -1; z <= plan.sz; z++) ctx.put(x, y, z, "air");
@@ -226,7 +177,7 @@ const KEEP_AS_IS = /(_door$|^ladder$|^campfire$|_sign$|torch$|^bell$|_pane$|^gla
  */
 function recladRing(
   ctx: FitOutContext,
-  plan: VernacularPlan,
+  plan: RebuildPlan,
   yFrom: number,
   yTo: number,
   block: (x: number, y: number, z: number) => string,
@@ -245,7 +196,7 @@ function recladRing(
 }
 
 /** True at one of the four corner columns of the footprint. */
-function isCorner(plan: VernacularPlan, x: number, z: number): boolean {
+function isCorner(plan: RebuildPlan, x: number, z: number): boolean {
   return (x === 0 || x === plan.sx - 1) && (z === 0 || z === plan.sz - 1);
 }
 
@@ -259,7 +210,7 @@ function isCorner(plan: VernacularPlan, x: number, z: number): boolean {
  * air on every side — the physics lint's `floating.stair`. Drawn as a closed
  * ring, every cell has a neighbour in the ring.
  */
-function apronEave(ctx: FitOutContext, plan: VernacularPlan, stairs: string): number {
+function apronEave(ctx: FitOutContext, plan: RebuildPlan, stairs: string): number {
   let n = 0;
   const y = ctx.wallTop;
   for (let x = -1; x <= plan.sx; x++) {

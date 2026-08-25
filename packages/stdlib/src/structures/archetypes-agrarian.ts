@@ -86,8 +86,10 @@ import {
   PropCounter,
   ROOF_FLOURISH_RISE,
   type FitOutContext,
+  type RebuildPlan,
+  wallPlan,
 } from "./archetypes-civic.js";
-import { cardinalStep, type Cardinal, type LocalRect } from "./core.js";
+import { cardinalStep, type Cardinal } from "./core.js";
 
 /* -------------------------------------------------------------------------- */
 /* the archetypes                                                              */
@@ -210,40 +212,6 @@ export function agrarianFacadeDefaults(
 /* the exterior plan                                                           */
 /* -------------------------------------------------------------------------- */
 
-/**
- * What an exterior rebuild needs to know, or `null` when it may not run.
- *
- * Wave four D's `HomesteadPlan` in every respect, restated here rather than
- * imported because the two packs are separate seams and a shared private
- * helper is a shared edit. The refusal is the same: a **plain rect** only.
- */
-interface AgrarianPlan {
-  /** Envelope extents. */
-  readonly sx: number;
-  readonly sz: number;
-  /** Y of the roof's lowest course — one above the eave plate. */
-  readonly base: number;
-  /** Highest Y anything may occupy: the shell's roof top plus the allowance. */
-  readonly top: number;
-  /** The footprint, as an inclusive rect. */
-  readonly rect: LocalRect;
-}
-
-/** The plan for work on the **walls**: the rect condition, and nothing else. */
-function wallPlan(ctx: FitOutContext): AgrarianPlan | null {
-  const sx = ctx.size[0];
-  const sz = ctx.size[2];
-  const it = ctx.interior;
-  if (it.x0 !== 1 || it.z0 !== 1 || it.x1 !== sx - 2 || it.z1 !== sz - 2) return null;
-  return {
-    sx,
-    sz,
-    base: ctx.wallTop + 1,
-    top: ctx.roofTop + ROOF_FLOURISH_RISE,
-    rect: { x0: 0, z0: 0, x1: sx - 1, z1: sz - 1 },
-  };
-}
-
 /** The footprint perimeter of a rect plan, in canonical (z, x) order. */
 function ringOf(sx: number, sz: number): { x: number; z: number }[] {
   const out: { x: number; z: number }[] = [];
@@ -322,7 +290,7 @@ const PRESERVE = /(_door$|^ladder$|^campfire$|_sign$|torch$|^bell$|glass|_pane$|
  */
 function reclad(
   ctx: FitOutContext,
-  plan: AgrarianPlan,
+  plan: RebuildPlan,
   yFrom: number,
   yTo: number,
   block: (x: number, y: number, z: number) => string | null,
@@ -357,7 +325,7 @@ function opposite(facing: Cardinal): Cardinal {
 }
 
 /** The apron cell's outward cardinal — which way it faces away from the wall. */
-function apronFacing(plan: AgrarianPlan, x: number, z: number): Cardinal {
+function apronFacing(plan: RebuildPlan, x: number, z: number): Cardinal {
   if (z === -1) return "north";
   if (z === plan.sz) return "south";
   if (x === -1) return "west";
@@ -383,7 +351,7 @@ function farEnd(ctx: FitOutContext): { readonly z: number } {
 }
 
 /** True when an apron cell is one of the ring's four corners. */
-function apronCorner(plan: AgrarianPlan, x: number, z: number): boolean {
+function apronCorner(plan: RebuildPlan, x: number, z: number): boolean {
   return (x === -1 || x === plan.sx) && (z === -1 || z === plan.sz);
 }
 
@@ -408,7 +376,7 @@ function gateOf(fence: string): string | null {
 function penRing(
   ctx: FitOutContext,
   c: PropCounter,
-  plan: AgrarianPlan,
+  plan: RebuildPlan,
   post: string,
   height: number,
   corner?: string,
@@ -718,7 +686,7 @@ function fitCattlePen(ctx: FitOutContext, c: PropCounter): void {
 function plantRow(
   ctx: FitOutContext,
   c: PropCounter,
-  plan: AgrarianPlan,
+  plan: RebuildPlan,
   step: number,
   phase: number,
   stem: string,
