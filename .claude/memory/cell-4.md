@@ -79,6 +79,23 @@ troy W413, quay 118, S8 crown, levelNear §7.1, glow-lichen lint, side
 branches (packs d3d4193, freerect 24cb2c1), §15.1 + W337 + dev-app.
 Funnel compression: paid 08-23 (cell-4 distilled into cell-3).
 
+**STOCKTAKE WAVE 1 LANDED (08-24, docs/STOCKTAKE-v0.md; reports in
+scratchpad {behavior-audit,perf}/REPORT.md + audit-terrain-kit.md):**
+compile is **5.4s not minutes** (ladder retired; sub-second reachable;
+node canonical, Bun declined; BLAKE3=15.8% of wall); **parroting
+CONFIRMED** (84% of docs use kit-spelled vocab only; envelopes 84% kit-
+verbatim; reach 23% of 428 archetypes; 6/7 form packs at 0%; reach is
+RETRIEVAL not capability); citadel answered (9/10 troys = archetype-less
+15×21 box; landmark budget chases the prompt noun 11/11); price = loop
+cost ($0.34/world; T118 units = 53% of retries); authored layer barely
+binds (`hard` never written, conforms 1/108). Smells for F: resolveGround
+×5 vs "1 resolve(s)"; retaining.ts 9% of wall computing refused seams.
+Terrain kit: correctness pass only + silent forest-biome bug; settlement
+C17 re-graded (code sides with examples). STAIR_DRESS off by walked
+verdict (gate PASSED, taste retired it; stairs = flight architecture
+only). Wave 2 = Kai-driven parallel sessions, this session = MASTER
+ORCHESTRATOR (scopes disjoint, briefs via inter-session messaging).
+
 **STANDING:** caps 4/≤2med/≤1high; delegation economics; implementers
 opus-5-low; orchestrator commits, single-sentence subjects; probe-first;
 byte-identity staging; screening install-anyway; popups liberally;

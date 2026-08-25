@@ -21,8 +21,10 @@ Seed findings already in hand:
   parrots the worked examples; it does not explore the registry. (Kai's
   citadel instinct, confirmed: no castle/keep/gatehouse/acropolis_terrace
   in either mix.)
-- Compile wall time is ~3–4 minutes for a 512² world (37.5M blocks),
-  unprofiled. LLM authoring adds ~1–3 minutes and ~$0.30.
+- ~~Compile wall time is ~3–4 minutes~~ **WRONG, corrected by E1
+  (2026-08-24): the compile is 5.4 s.** The minutes were `generate` (LLM
+  latency × a median 3 model runs) and the probe harness. LLM authoring is
+  the e2e wall AND the cost (~$0.34/world median, ~378k input tokens).
 
 ## WS-A — Settlement-kit remediation (input: Kai's audit)
 
@@ -79,24 +81,29 @@ analysis harness over it:
   diagnostics + schema fragments, per the audit), prompt caching where the
   provider supports it, program-author call consolidation.
 
-## WS-E — Performance campaign ("a few seconds": not insane, staged)
+## WS-E — Performance (REBASED on E1's measurements, 2026-08-24)
 
-Verdict on the target: **compile-side seconds is a legitimate end state,
-not fantasy** — a world is embarrassingly parallel per chunk/region for
-emit, and most passes are O(cells) typed-array sweeps; but nobody has ever
-profiled it, and some passes are global (election/resolve, routing).
-Staged, measurement-first:
+**E1 ran; the original ladder is retired** — its ≤60s and ≤10s rungs were
+built on a 3–4 minute premise that measured the wrong thing. Measured
+truth: **5.4 s today**, single-threaded, never previously profiled
+(emit 31% / structures 27% / scatter 18% / layout 9%; BLAKE3 alone 15.8%
+of wall; full report: scratchpad perf/REPORT.md + battery of scripts).
 
-- **E1:** instrument phase timers + one flame profile of a troy compile.
-  Deliverable: the honest breakdown (terrain field / layout / structures /
-  resolve / emit / zip) before any promise.
-- **E2:** the cheap 80%: worker-parallel emit (region files are
-  independent), obvious hot-loop fixes, dead re-derivations found by E1.
-  Target: **≤60s** wall.
-- **E3:** deep cuts where E1 points: parallel structure passes where
-  claims allow, incremental/cached terrain fields per (doc,seed), native
-  (wasm/napi) hot kernels only if still needed. Target: **≤10s**; "a few
-  seconds" is E3's asymptote, decided by E1's data, not by hope.
+- **"A few seconds" is the status quo. The live question is sub-second:**
+  ~2.7 s from contained wins (allocation-free positionFloat — 1.40×
+  measured, byte-identity asserted; memoised ground resolves; indexed
+  boundary scans), **~1.25 s with ordinary engineering** (worker-parallel
+  emit/scatter/field — all provably order-independent, one guaranteed by
+  the determinism contract itself; specialised single-block BLAKE3; run-
+  filled emit path), ~0.4 s native-extreme, where the layout solver —
+  correctly sequential by definition — becomes the asymptote.
+- **Runtime verdict: node stays canonical; Bun declined.** It would run
+  (~2 dev-only native addons) but wins ~5–10% (startup) while doubling the
+  byte-identity surface the shipping model rests on. Its one draw (native
+  BLAKE3) is available on node via napi/wasm.
+- The real e2e wall is LLM latency (median 3 model runs × ~99k input
+  tokens) — **kit slimming (WS-A/D) is the speed lever as well as the
+  price lever.**
 - Byte-identity discipline binds throughout: every optimization proves
   output-identical worlds (shasums vs pre-change build) — performance work
   is the one place regressions hide silently.
