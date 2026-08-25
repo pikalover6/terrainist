@@ -67,6 +67,10 @@ DEFERRED to Wave 2b/A3 (B staged behind A). Harness wrinkle: resume
 skips failed records (fix scheduled). radiusBlocks/radiusFraction rename
 → WS-F.
 
+**Cluster 4 LANDED 8cb1578:** desert forests [1,1,1,1]→[0,0,0] across four
+kit versions (no forest-count law exists); envelope half suggestive only.
+Rule: collect before-samples BEFORE bytes move. Clusters 5–6 = Kai's pick.
+
 **WAVE 2b CONSULT drafted (docs/STOCKTAKE-WAVE-2B-v0.md, e891c43+):** B1
 citadel = fence the civic set-piece (a)+(c), 3×3 ~$0.35; B2 A3 = core kit +
 per-pack EXAMPLE modules (fences, not ids; named-pack selection; region
