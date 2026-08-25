@@ -94,8 +94,10 @@ describe("what the run prints about itself", () => {
 
   it("distinguishes on-with-nothing from on-with-a-menu", () => {
     expect(formatCandidateMenu(undefined, true)).toContain("nothing to show");
-    const line = formatCandidateMenu(assembleCandidateMenu({ enabled: true, intent: TROY }), true);
-    expect(line).toContain("60 ids");
+    const menu = assembleCandidateMenu({ enabled: true, intent: TROY });
+    const line = formatCandidateMenu(menu, true);
+    // The pack's implemented members, whole — not a magic number.
+    expect(line).toContain(`${menu?.entries.length ?? 0} ids`);
     expect(line).toContain("classical_mediterranean");
     expect(line).toContain("ancient");
   });
@@ -121,7 +123,9 @@ describe("terrainist catalog --menu", () => {
     expect(code).toBe(0);
     expect(out).toContain("CANDIDATE STRUCTURES");
     expect(out).toContain("acropolis_terrace");
-    expect(out).toMatch(/60 ids, \d+ chars, ~\d+ tokens\./);
+    expect(out).toMatch(/\d+ ids, \d+ chars, ~\d+ tokens\./);
+    // Era alone selects nothing now: the pack is what is on the menu.
+    expect(captured(["--menu", "--era", "ancient"]).out).toContain("no candidates");
   });
 
   it("prints the same bytes the run would inject — not a second rendering", () => {

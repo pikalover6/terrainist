@@ -26,23 +26,35 @@
  * produces the same bytes, which is what lets a run's injected context be
  * archived next to its document and compared.
  *
- * ## Two tiers, and why there is no third
+ * ## One tier, and the two that were cut
  *
- * 1. **Named packs** — every implemented member of every pack the intent asked
- *    for, in the pack's own order. These are never rationed: a pack that a
- *    prompt named and that the world then does not spend is the exact failure
- *    the audit measured.
- * 2. **Era-affine packs** — packs whose `eras` include the intent's resolved
- *    era class, **round-robin** across packs rather than pack-by-pack. Ancient
- *    pulls six affine packs (~94 implemented members) and medieval eight
- *    (~110); taken in order, one pack would eat the whole budget and the rest
- *    would stay as unreachable as they are today.
+ * The menu is **the packs the intent named, and nothing else** — every
+ * implemented member of each, in the pack's own order, never rationed. A pack a
+ * prompt named and the world then does not spend is the exact failure the audit
+ * measured, so those ids are what the budget is for.
  *
- * A third "everyday fabric" tier was prototyped and cut (Kai, 2026-08-24): the
- * catalog's oldest entries — `cottage`, `church`, `inn`, `barn` — carry no
- * `note`, so the tier rendered as bare names, and they are precisely the ids the
- * kit already spells out in its worked examples. A request that names no pack
- * and resolves no era therefore gets an **empty** menu, and an empty menu is
+ * Two other tiers were built, measured and removed. Both removals are results,
+ * not opinions.
+ *
+ * - An **era-affine** tier (packs whose `eras` include the intent's resolved
+ *   era class, round-robin) shipped in the first build and was cut by
+ *   measurement (Kai, 2026-08-24). Across both candidate-menu measurements — 19
+ *   menu-bearing authoring runs, four eras — it was shown **580 ids and adopted
+ *   0**, against tier one's 198 shown and 49 adopted. It was ~75% of the menu's
+ *   tokens and never once used. Worse than useless: `medieval` spans eleven
+ *   culturally incompatible packs, so "a walled medieval city on a hill" was
+ *   offered `torii`, `ger_round_tent`, `dzong_hall` and `machiya_shop_row`, and
+ *   the model correctly ignored all sixty ids and wrote a European town. Gating
+ *   it on the affinity `FORM_PACKS` already carries does not rescue it: those
+ *   fields are advice for `LOAM-W517`, too coarse to separate cultures —
+ *   `temperate_timber` is an affinity of the Japanese, Mongolian, Norse,
+ *   swamp-witch, arcane and agrarian packs alike.
+ * - An **everyday fabric** tier was prototyped and cut before shipping: the
+ *   catalog's oldest entries — `cottage`, `church`, `inn`, `barn` — carry no
+ *   `note`, so it rendered as bare names, and they are precisely the ids the kit
+ *   already spells out in its worked examples.
+ *
+ * So a request that names no pack gets an **empty** menu, and an empty menu is
  * injected as nothing at all: the no-intent path and the flag's off-state are
  * the same path, which is one fewer behaviour to prove.
  *
@@ -77,7 +89,14 @@ export const DEFAULT_MENU_STATUSES: readonly StructureStatus[] = Object.freeze([
 
 /** What to assemble a menu for. Every field is advice from the pre-pass. */
 export interface CandidateMenuRequest {
-  /** The intent's open `era` string; resolved through `eraClassOf`. */
+  /**
+   * The intent's open `era` string; resolved through `eraClassOf`.
+   *
+   * **Reported, never selective.** It names the era the chosen packs sit in, on
+   * the menu's header line and in {@link CandidateMenu.eraClass} for a run's
+   * record — it does not put anything on the menu. Era-affine selection was
+   * measured and cut; see the file header.
+   */
   readonly era?: string;
   /** Pack ids the classifier named. Unknown ids are ignored, never fatal. */
   readonly formPacks?: readonly string[];
@@ -93,8 +112,14 @@ export interface CandidateMenuRequest {
   readonly statuses?: readonly StructureStatus[];
 }
 
-/** Why an entry is on the menu. */
-export type CandidateSource = "pack" | "era";
+/**
+ * Why an entry is on the menu.
+ *
+ * One value, kept as a named type rather than dropped: it is written into every
+ * entry and into the run records a measurement reads, and a second source would
+ * have to earn its place the way the era tier failed to.
+ */
+export type CandidateSource = "pack";
 
 /** One line of the menu, before it is rendered. */
 export interface CandidateMenuEntry {
@@ -223,27 +248,13 @@ export function buildCandidateMenu(request: CandidateMenuRequest = {}): Candidat
     });
   };
 
-  // Tier 1 — the packs the prompt named, whole and unrationed.
+  // The packs the prompt named, whole and unrationed. Nothing else: see the
+  // file header for the 580-shown/0-adopted measurement that removed the rest.
   const namedPacks = FORM_PACKS.filter((pack) => named.has(pack.id));
   for (const pack of namedPacks) {
     for (const id of pack.members) {
       const entry = showable(id);
       if (entry !== undefined) take(entry, "pack", pack.id);
-    }
-  }
-
-  // Tier 2 — era-affine packs, round-robin so no pack starves the others.
-  const affinePacks = FORM_PACKS.filter(
-    (pack) => eraClass !== undefined && pack.eras.includes(eraClass) && !named.has(pack.id),
-  );
-  const queues = affinePacks.map((pack) =>
-    pack.members.map(showable).filter((entry): entry is StructureEntry => entry !== undefined),
-  );
-  const deepest = queues.reduce((max, queue) => Math.max(max, queue.length), 0);
-  for (let rank = 0; rank < deepest && entries.length < maxEntries; rank++) {
-    for (let k = 0; k < queues.length && entries.length < maxEntries; k++) {
-      const entry = queues[k]?.[rank];
-      if (entry !== undefined) take(entry, "era", affinePacks[k]?.id ?? "");
     }
   }
 
@@ -281,19 +292,11 @@ export function renderCandidateMenu(
     "",
   ];
   for (const packId of packIds) {
-    const rows = entries.filter((entry) => entry.source === "pack" && entry.pack === packId);
+    const rows = entries.filter((entry) => entry.pack === packId);
     if (rows.length === 0) continue;
-    lines.push(`${nameOf.get(packId) ?? packId} — the pack this prompt asked for:`);
+    const era = eraClass === undefined ? "" : ` (${eraClass})`;
+    lines.push(`${nameOf.get(packId) ?? packId}${era} — the pack this prompt asked for:`);
     lines.push(...rows.map(renderEntry), "");
-  }
-  const affine = entries.filter((entry) => entry.source === "era");
-  if (affine.length > 0) {
-    lines.push(
-      eraClass === undefined
-        ? "Also at home in this world:"
-        : `Also at home in a world of the ${eraClass} era:`,
-    );
-    lines.push(...affine.map(renderEntry), "");
   }
   return lines.join("\n").trimEnd();
 }
@@ -301,8 +304,9 @@ export function renderCandidateMenu(
 /**
  * The menu for a classified intent — the form the production pipeline calls.
  *
- * Reads only `era` and `character.formPacks`, which are the two dials that say
- * what a world is made of. Everything else the classifier decides (wealth,
+ * Reads `character.formPacks` to choose the ids and `era` only to name them;
+ * see {@link CandidateMenuRequest.era}. Historically both selected, which is
+ * why both are still read. Everything else the classifier decides (wealth,
  * decline, formality, climate) steers *how* a form is built, not *which* forms
  * exist, and is left to the kit.
  */

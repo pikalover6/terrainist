@@ -38,7 +38,7 @@ const pirate = { era: "renaissance", formPacks: ["nautical_pirate"] };
 
 describe("the candidate menu", () => {
   it("shows only ids a generator answers today", () => {
-    for (const request of [troy, pirate, { era: "medieval" }, { era: "far_future" }]) {
+    for (const request of [troy, pirate, { formPacks: ["swamp_witch"] }, { formPacks: ["nile_egypt"] }]) {
       const menu = buildCandidateMenu(request);
       expect(menu.ids.length, JSON.stringify(request)).toBeGreaterThan(0);
       for (const id of menu.ids) {
@@ -116,13 +116,30 @@ describe("the candidate menu", () => {
     expect(menu.text).toContain("jolly_roger_mast");
   });
 
-  it("rations the era tier round-robin, so one pack cannot eat the budget", () => {
-    // Ancient pulls six affine packs; a pack-by-pack fill would show one or two.
-    const menu = buildCandidateMenu({ era: "ancient" });
-    const packs = new Set(
-      menu.entries.filter((entry) => entry.source === "era").map((entry) => entry.pack),
-    );
-    expect(packs.size).toBeGreaterThanOrEqual(4);
+  /**
+   * The measured removal. An era-affine tier shipped in the first build and was
+   * cut after two measurements showed it 580 ids and 0 adoptions (19
+   * menu-bearing runs, four eras) — `medieval` alone spans eleven packs, so it
+   * offered a European walled city a torii and a ger. This test is the guard
+   * that it does not come back by accident: an era with no pack names nothing.
+   */
+  it("never selects on era alone — the tier that was measured and cut", () => {
+    for (const era of ["ancient", "medieval", "far_future", "industrial", "renaissance"]) {
+      const menu = buildCandidateMenu({ era });
+      expect(menu.entries, era).toEqual([]);
+      expect(menu.text, era).toBe("");
+    }
+    // And an era beside a named pack adds nothing to that pack's own members.
+    const withEra = buildCandidateMenu({ era: "ancient", formPacks: ["nile_egypt"] });
+    const without = buildCandidateMenu({ formPacks: ["nile_egypt"] });
+    expect(withEra.ids).toEqual(without.ids);
+    expect(withEra.entries.every((e) => e.pack === "nile_egypt")).toBe(true);
+  });
+
+  it("names the era on the header without letting it choose anything", () => {
+    const menu = buildCandidateMenu({ era: "classical", formPacks: ["classical_mediterranean"] });
+    expect(menu.eraClass).toBe("ancient");
+    expect(menu.text).toContain("Classical Mediterranean (ancient)");
   });
 
   it("respects the entry budget and reports its own size", () => {
@@ -141,7 +158,13 @@ describe("the candidate menu", () => {
   });
 
   it("answers an unclassifiable prompt with an empty menu, not an error", () => {
-    for (const request of [{}, { era: "" }, { formPacks: ["no_such_pack"] }, { maxEntries: 0 }]) {
+    for (const request of [
+      {},
+      { era: "" },
+      { era: "medieval" },
+      { formPacks: ["no_such_pack"] },
+      { maxEntries: 0 },
+    ]) {
       const menu = buildCandidateMenu(request);
       expect(menu.entries, JSON.stringify(request)).toEqual([]);
       expect(menu.text).toBe("");
@@ -158,7 +181,6 @@ describe("the candidate menu", () => {
     const menu = buildCandidateMenu(troy);
     expect(menu.text).toContain("CANDIDATE STRUCTURES");
     expect(menu.text).toContain("Classical Mediterranean");
-    expect(menu.text).toContain("the ancient era");
     expect(menu.packs).toEqual(["classical_mediterranean"]);
     expect(menu.eraClass).toBe("ancient");
     // The whole point of the exercise: it is small next to the 70k-token kit.

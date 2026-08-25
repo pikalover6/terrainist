@@ -238,11 +238,14 @@ catalog options:
   --status <name>   Show one status only.
   --menu            Print the per-run candidate menu instead of the table —
                     the exact bytes "terrainist generate --candidate-menu"
-                    injects as its second system message, for the era and
-                    packs given. Reads the live registries; no model is called.
-  --era <name>      The era the menu is conditioned on ("classical", "ancient",
-                    "medieval", …; aliases resolve as the classifier's do).
-  --packs <a,b>     Form-pack ids the menu spends first and whole.
+                    injects as its second system message, for the packs given.
+                    Reads the live registries; no model is called.
+  --packs <a,b>     Form-pack ids to put on the menu, whole. Without at least
+                    one there is no menu: era-affine selection was measured
+                    (580 ids shown, 0 adopted) and cut.
+  --era <name>      Names the era the packs sit in, on the header line. It does
+                    not select anything ("classical", "ancient", "medieval", …;
+                    aliases resolve as the classifier's do).
   --max <N>         Entry cap (default 60).
 
 emit options:
@@ -326,8 +329,9 @@ export function runCatalog(args: readonly string[]): number {
     }
     if (menu.entries.length === 0) {
       console.log(
-        "no candidates: name a form pack with --packs or an era with --era.\n" +
-          "A run in this state injects no menu at all, which is the flag's off state.",
+        "no candidates: name a form pack with --packs (--era names an era, it does\n" +
+          "not select one). A run in this state injects no menu at all, which is\n" +
+          "the flag's off state.",
       );
       return 0;
     }
