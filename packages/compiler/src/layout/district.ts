@@ -3314,6 +3314,41 @@ export function inLotSpan(station: number, from: number, size: number): boolean 
 export const PLANNED_SITE_WHOLE_STRIP = true;
 
 /**
+ * **A block face fronts the street anywhere along it, not only at its
+ * midpoint.**
+ *
+ * Off — `false` is today's bytes — `streetBehind` probes outward from the
+ * middle of a side for `sidewalkWidth + STREET_PROBE_SLACK` columns and calls
+ * the side the district edge when that one column finds no carriageway. In a
+ * city cell rotated 45° (`city.ts` `orientationOf`) the blocks are
+ * axis-aligned chords of diamonds and the carriageway runs diagonally past
+ * the midpoint probe: measured 2026-08-25 (`scratchpad/block-probe/
+ * BLOCK-PROBE.md`), 20 of hellenist_sea_siege_k1's 46 blocks — 68 % of the
+ * block land it cut — front nothing by this probe and yield no lot, all in
+ * the 45° cells, none in the 0° cells. On, the probe walks the side's
+ * columns middle-out and returns the first street any of them reaches, so a
+ * side whose midpoint already found a street is byte-identical and a side
+ * whose corner is the only column facing the diagonal street is a face.
+ * Staged under the Run's law 5: landed `false`; flipped in its own commit.
+ */
+export const STREET_FACE_ALONG_SIDE = false;
+
+/**
+ * The positions along a side, middle first, then alternately outward —
+ * {@link STREET_FACE_ALONG_SIDE}'s scan order as a pure function so a test can
+ * read it. `[lo, hi]` inclusive.
+ */
+export function middleOut(lo: number, hi: number): number[] {
+  const mid = Math.floor((lo + hi) / 2);
+  const out = [mid];
+  for (let d = 1; mid - d >= lo || mid + d <= hi; d++) {
+    if (mid - d >= lo) out.push(mid - d);
+    if (mid + d <= hi) out.push(mid + d);
+  }
+  return out;
+}
+
+/**
  * Most rectangles a curved block is cut into. `subdivide` is cheap and
  * `largestFreeRect` is O(area), so this is a guard against a pathological
  * component rather than a shape decision.
@@ -4003,13 +4038,27 @@ function streetBehind(
 ): string | undefined {
   const midX = Math.floor((rect.x0 + rect.x1) / 2);
   const midZ = Math.floor((rect.z0 + rect.z1) / 2);
-  for (let step = 1; step <= sidewalkWidth + STREET_PROBE_SLACK; step++) {
-    const x = side === "west" ? rect.x0 - step : side === "east" ? rect.x1 + step : midX;
-    const z = side === "north" ? rect.z0 - step : side === "south" ? rect.z1 + step : midZ;
-    const k = grid.index(x, z);
-    if (k < 0) return undefined;
-    const found = owner[k];
-    if (found !== undefined) return found;
+  const along = side === "north" || side === "south";
+  // See {@link STREET_FACE_ALONG_SIDE}: the midpoint alone, or every column of
+  // the side middle-out — the midpoint is still asked first, so a side it
+  // answers is byte-identical.
+  const positions = STREET_FACE_ALONG_SIDE
+    ? along
+      ? middleOut(rect.x0, rect.x1)
+      : middleOut(rect.z0, rect.z1)
+    : [along ? midX : midZ];
+  for (const at of positions) {
+    for (let step = 1; step <= sidewalkWidth + STREET_PROBE_SLACK; step++) {
+      const x = side === "west" ? rect.x0 - step : side === "east" ? rect.x1 + step : at;
+      const z = side === "north" ? rect.z0 - step : side === "south" ? rect.z1 + step : at;
+      const k = grid.index(x, z);
+      if (k < 0) break;
+      const found = owner[k];
+      if (found !== undefined) return found;
+    }
+    // The midpoint's own answer for the district edge: off the grid means the
+    // edge. On, a later column may still find a street, so keep scanning.
+    if (!STREET_FACE_ALONG_SIDE) return undefined;
   }
   return undefined;
 }

@@ -7,46 +7,47 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 7 is committed.
-- **Next unit:** unit 8 — spec §10.2, third item: **hellenist's density**
-  (T7: a city is a city — troy_k1 19.7 lots per 10k envelope cells is a
-  city; 2.2 and 3.2 are not). Probe first: the fresh `hellenist_harbour`
-  before-sample (17 nodes, 11 archetypes; `docs/decks/before-sample/`) and
-  `hellenist_sea_siege_k1` vs the r5 anchor `modern_hellenist_assault` —
-  lots per 10k envelope cells, district form/density/blocks/lots/dropped
-  from the compile reports, the anchor's own diff at HEAD (RECOMPILE §:
-  4 regions, `I463`/`W521`/`W413` deltas) attributed, and the document diff
-  (what the author asked for — density, envelope, form). Separate compiler
-  from author as in unit 2. Bug → code-first under law 5; author → E1/E2
-  pre-registration. Open station 3 in the before-sample verdict. After
-  that: F10 (two-phase parcel growth) and F6/F7 (`W527` on the planned path
-  + `SITE_STRIP_DISSOLVED`) as small units; the `I512` street probe (F4);
-  then §10.3 — the icon metric, the rules-only kit, E1's three arms.
-- **Last commit:** c5eb436 (unit 6). Convention: this line names the
+- **In flight:** nothing — unit 8 (hellenist's density: cause found, two
+  switches landed off) is committed.
+- **Next unit:** unit 9 — flip `STREET_FACE_ALONG_SIDE`
+  (`layout/district.ts`) and `PARK_BUDGET_BY_AREA` (`layout/city.ts`).
+  Trial at both on: hellenist_k1 3.3 → 14.3 lots/10k (23 → 63 buildings),
+  the fresh harbour 4.3 → 12.7 (31 → 68), the r5 anchor 3.1 → 7.1, the
+  hellenist_r22 baseline 12.0 → 14.8; troy and metropolis controls
+  unmoved. The flip commit must carry: the fourteen payload shas
+  (`bi/bi14.sh`; reference `bi/off8/PAYLOADS`) — expect hellenist_r22 and
+  hellenist_k1 to move, every other document identical — with each moved
+  world attributed (cell characters before → after, lots per cell,
+  diagnostics); the ground-probe `hellenist` baseline regenerated and
+  attributed; renders read (the park cell becomes fabric); tests re-pinned
+  with cause if any pin those documents; FULL suite; station 3 re-read.
+  After that: F10 (two-phase parcel growth), F6/F7 (`W527` on the planned
+  path + `SITE_STRIP_DISSOLVED`), the `I512` street probe (F4); then §10.3
+  — the icon metric, the rules-only kit, E1's three arms.
+- **Last commit:** f73da43 (unit 7). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
 - **Spend:** $2.29 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
 - **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19.)
 - **Findings queue (law 1: bugs before anything else):**
-  - F1 — `railway_town` `LOAM-T110 UNSTABLE_FLUID` at emit (compiler bug by
-    the CLI's own label; document + `--allow-unstable` world recorded).
-  - F2 — anchors differ at HEAD: metropolis fixed as far as ratified laws
-    allow (units 3–4); troy/pirates moved better with the kerb flip;
-    hellenist unattributed until its station (unit 8).
+  - F1 — `railway_town` `LOAM-T110 UNSTABLE_FLUID` at emit.
+  - F2 — anchors at HEAD: metropolis fixed as far as ratified laws allow;
+    troy/pirates better with the kerb flip; **hellenist attributed
+    not-worse** (unit 8: +9 buildings, two landmarks relocated by the
+    solver's soft `at` cost, `W521`).
   - F3 — metropolis authoring regression, lost 3-of-3. E2/E3.
   - F4 — `LOAM-I512` "ruined shells" vs intact boxes — street-level probe.
-  - F5 — hillside `held` raster artefact — **fixed** (units 5–6).
+  - F5 — hillside `held` raster artefact — fixed (units 5–6).
   - F6 — `W527` gated `planned === undefined`; F7 — `SITE_STRIP_DISSOLVED`
     never existed. One small unit.
-  - F8 — `frontageLots` drops: ~70 % starvation (switch exists, off — see
-    F10), ~30 % diagonal geometry (P1).
-  - F9 — new hillside lots' cut faces undressed (steep fixture reachability
-    0.966 → 0.850) — the parked shoulder/verge item (P2); and the
-    walkability audit reads zero entrance reach on montfort and the walled
-    city — instrument gap.
-  - F10 — `LOT_PARCEL_OWN_STATIONS` on leaves the strip's leftover ground
-    unowned between pads: orphan walkable columns 14 → 898 (24 %) on
-    site-plan-hillside. Needs two-phase growth (own stations first, then
-    the leftovers). Off until then; the walled city's church stays `E170`.
+  - F8 — `frontageLots` drops (~70 % starvation → F10, ~30 % geometry → P1).
+  - F9 — new hillside lots' cut faces undressed (P2); walkability audit
+    reads zero entrance reach on montfort/walled — instrument gap.
+  - F10 — `LOT_PARCEL_OWN_STATIONS` orphans 24 % of the plane; two-phase
+    growth needed; off.
+  - F11 — **city cells: the park budget counts cells, not land** (65 % of
+    the fresh Hellenist city is park with no fabric) — switch landed off.
+  - F12 — **`streetBehind` misses diagonal carriageways** in 45° cells (68 %
+    of hellenist_k1's block land fronts "nothing") — switch landed off.
 ## DECISIONS
 
 (every fork taken: the reversible default chosen, why, and how to undo it)
@@ -163,6 +164,17 @@ running state. The NOW block is rewritten at the end of every turn.
   law-5 document moves (diagonal geometry, P1), so it lands on its
   correctness, not on numbers; the walled city's church stays `E170` until
   P1 or F10. Undo: one constant.
+- **D23 (unit 8):** the Hellenist density fixes are two switches, both off
+  (law 5), trialled alone and together on six documents: the fixes are the
+  probe-named causes (park budget by land; a side scanned middle-out for
+  its street), not a change to the cell kits' densities or block sizes,
+  the arterial take, or the lot rhythm — none of which the probe found
+  binding. The 45° block geometry is a proposal (P3). Undo: delete the two
+  constants and their branches.
+- **D24 (unit 8):** the hellenist anchor's diff at HEAD is read not-worse
+  (+9 buildings; the colossus moved 116 blocks by the solver's documented
+  soft `at` cost) and the E2 placement question goes to the icon metric
+  rather than to a compiler change. Undo: Kai's veto.
 
 ## SPEND
 
@@ -175,14 +187,15 @@ running state. The NOW block is rewritten at the end of every turn.
 | 5 | montfort's cause — instrumented probe, switch landed off, the FULL suite | 0.00 | 2.29 |
 | 6 | the frontage flip — compiles, probes, renders, re-pins, the FULL suite | 0.00 | 2.29 |
 | 7 | the second flip — compiles, audits, the FULL suite | 0.00 | 2.29 |
+| 8 | hellenist's density — instrumented probe, two switches off, trials, the FULL suite | 0.00 | 2.29 |
 
 ## VERDICTS
 
 (pointers to `docs/decks/<deck>/VERDICT.md`)
 
 - `docs/decks/before-sample/VERDICT.md` — station 1 metropolis_hideout:
-  **FAIL** (T6, T9); station 7 walled_medieval_city: **FAIL** (T4, T7);
-  stations 2–6, 8–11 pending.
+  **FAIL** (T6, T9); station 3 hellenist_harbour: **FAIL** (T7); station 7
+  walled_medieval_city: **FAIL** (T4, T7); stations 2, 4–6, 8–11 pending.
 
 ## REACH
 
@@ -199,6 +212,12 @@ running state. The NOW block is rewritten at the end of every turn.
   9 lots, 665 free columns, nothing built). SITE-PLAN §4.2 keeps rectangular
   axis-aligned buildings "for v0"; the grammar takes a rectangle. Seating
   at the street's yaw is a grammar-facing change of more than a day.
+- **P3 — blocks in a 45° city cell as diamonds, not chords** (unit 8). A
+  `grid` pitch rotated with its boulevard (`orientationOf`) makes every
+  block an axis-aligned chord of a diamond: median block 143–198 columns
+  against 900 in an unrotated control, `rectsOf` recovering 72 % of block
+  land, one lot per block. Rotated blocks and rotated lots are the same
+  grammar-facing change as P1.
 - **P2 — shoulders/verges on planned lots** (unit 6). A lot seated on steep
   claimed ground cuts its own platform and its cut face is undressed — the
   steep fixture's cut-offs are 100 % undressed before and after the flip and
@@ -318,3 +337,18 @@ running state. The NOW block is rewritten at the end of every turn.
   `test/frontage-lots.test.ts`, `tools/worlds/world-payload-sha.mjs`,
   `AGENTS.md`, `MONTFORT-HILLSIDE-2026-08-25.md` §I, VERDICT station 7.
   Subagent: 1 (opus-5-medium, the both-on re-pin pass, discarded). Spend $0.
+- **unit 8 — hellenist's density (2026-08-25):** T7 numbers on every
+  Hellenist (3.1–4.3 lots/10k vs controls 20.5–22.8); the anchor's HEAD
+  diff attributed not-worse (D24); an instrumented probe (opus-5-medium,
+  verbatim in `HELLENIST-DENSITY-2026-08-25.md` §E) found three multiplying
+  causes — park cells with no fabric (65 % of the fresh city's land, F11),
+  `streetBehind` missing diagonal carriageways in 45° cells (68 % of the
+  walked city's block land, F12), and shredded 45° blocks (P3) — and
+  cleared the lot rhythm. Switches `STREET_FACE_ALONG_SIDE` + `middleOut()`
+  and `PARK_BUDGET_BY_AREA`, pinned by `test/city-density.test.ts`, landed
+  off; payload-identical on all fourteen; trialled alone and together on
+  six documents (both: 3.3 → 14.3, 4.3 → 12.7, 3.1 → 7.1, 12.0 → 14.8;
+  controls unmoved). Station 3 opened FAIL (T7). Tests: FULL suite COUNTS
+  `Test Files 336 passed | 1 skipped (337)`, `Tests 5641 passed | 31 skipped
+  (5672)`. Files: `layout/district.ts`, `layout/city.ts`,
+  `test/city-density.test.ts`, the record, VERDICT station 3. Spend $0.

@@ -250,6 +250,26 @@ export const PARK_RELIEF_RATIO = 1.6;
  */
 export const PARK_MAX_SHARE = 0.34;
 
+/**
+ * **The park budget counts land, not cells.**
+ *
+ * Off — `false` is today's bytes — `assign` may make up to
+ * `max(1, floor(cells × PARK_MAX_SHARE))` cells parks, steepest first, and a
+ * park cell gets no fabric at all (`hasFabric` in `city-pass.ts`). Two of six
+ * cells is inside that budget — and on the fresh Hellenist city those two
+ * cells are 43,385 of 66,750 cell columns, **65 % of the city's own land**,
+ * which is the whole of why it reads 4.7 lots per 10k envelope cells against
+ * the metropolis control's 23.7 (2026-08-25, `scratchpad/block-probe/
+ * BLOCK-PROBE.md`; T7). On, the same rules run in the same order but the
+ * budget is `PARK_MAX_SHARE` of the cells' total area: a steep or wedge cell
+ * becomes a park while the parks' land stays under that share, and a cell
+ * that would push it over is skipped for the next candidate rather than
+ * ending the pass. A city whose only steep cell is half of it keeps that half
+ * as fabric. Staged under the Run's law 5: landed `false`; flipped in its own
+ * commit.
+ */
+export const PARK_BUDGET_BY_AREA = false;
+
 /** Below this fraction of its own bounding box a cell is an awkward shape. */
 export const PARK_COMPACTNESS = 0.5;
 
@@ -1284,16 +1304,21 @@ function assign(metrics: readonly CellMetrics[], size: string): DistrictCharacte
   const medianRelief = reliefs.length === 0 ? 0 : (reliefs[reliefs.length >> 1] as number);
   const reliefBar = Math.max(PARK_RELIEF, medianRelief * PARK_RELIEF_RATIO);
   const parkBudget = Math.max(1, Math.floor(metrics.length * PARK_MAX_SHARE));
+  const totalArea = metrics.reduce((sum, m) => sum + m.area, 0);
   // Steepest first, so when the budget binds it is the worst ground that goes.
   const byRelief = metrics
     .map((m, i) => ({ m, i }))
     .sort((a, b) => (a.m.relief !== b.m.relief ? b.m.relief - a.m.relief : a.i - b.i));
   let parks = 0;
+  let parkArea = 0;
   for (const { m, i } of byRelief) {
-    if (parks >= parkBudget) break;
+    if (!PARK_BUDGET_BY_AREA && parks >= parkBudget) break;
     if (m.relief >= reliefBar || (m.compactness < PARK_COMPACTNESS && m.area < LANES_AREA * 3)) {
+      // See {@link PARK_BUDGET_BY_AREA}: land, not cells; skip, not stop.
+      if (PARK_BUDGET_BY_AREA && parkArea + m.area > totalArea * PARK_MAX_SHARE) continue;
       out[i] = "park";
       parks++;
+      parkArea += m.area;
     }
   }
 

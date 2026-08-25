@@ -103,8 +103,34 @@ the walk decides.
 
 ---
 
-## Stations 2–6, 8–11 — pending
+## Station 3 — hellenist_harbour (seed 305) — **FAIL** (T7)
 
-troy_horse, pirate_unicorn_isles, hellenist_harbour, alien_farm, redwood_camp,
-glowcap_vale, railway_town (document only — F1), desert_wilderness,
-fjord_terrain. First looks are in this folder's README.
+**Prompt:** "A modern Hellenist city being invaded by sea monsters."
+
+**Icons (from the prompt, before the document was read):** (1) a *city* —
+dense, modern, with Hellenic forms; (2) sea monsters, in the act of
+invading — from the water, at the shore, dominant; (3) the sea and a
+harbour for them to come out of.
+
+| # | question | read | backed by |
+|---|---|---|---|
+| 1 | A city? | **4.3 lots per 10k envelope cells** (troy_k1 20.5, metropolis_k1 22.8); 31 buildings on a 340 × 240 `city` node whose two `park` cells are **65 % of its land** and get no fabric, and whose 45° cells lose most blocks to a midpoint street probe. Not a city. | `docs/decks/anchors/HELLENIST-DENSITY-2026-08-25.md` (probe verbatim); compile report |
+| 2 | Sea monsters invading? | `the_leviathan` (landmark program `colossal_leviathan`) and `monster_pack` (plugin scatter `sea_monster`) both authored and kept (2 of 2); `waterfront_barricade`, `tokens.icons` "breached seawalls … towering aquatic monsters". Present; dominance and placement not yet measured (icon metric). | generate log; document |
+| 3 | The sea and a harbour? | `deep_harbour_reach`, `grand_harbour`, the city on a `metropolis_shelf` by the coast. Present. | document; top-down render |
+| 4 | Era (T9)? | `era: modern` with the `classical_mediterranean` form pack (`W517`, "used as written") — Hellenic forms in a modern city is the prompt; `opera_house`, `skyscraper`, `museum` named. Consistent. | document; compile log |
+
+**Verdict: FAIL** on T7 — the icons are there, the city is not. Cause
+established by probe (unit 8): the `city` node's park budget counts cells
+not land, and its 45° cells' blocks front nothing by the midpoint probe.
+Two switches landed off; trial at both on: **4.3 → 12.7 lots per 10k,
+31 → 68 buildings** here, 3.3 → 14.3 on the walked hellenist_k1. **What the
+Run will do:** flip both (next unit), then re-read; the residual is the
+45° block geometry (P3).
+
+---
+
+## Stations 2, 4–6, 8–11 — pending
+
+troy_horse, alien_farm, redwood_camp, glowcap_vale, railway_town (document
+only — F1), desert_wilderness, fjord_terrain, pirate_unicorn_isles. First
+looks are in this folder's README.
