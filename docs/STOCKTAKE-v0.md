@@ -158,6 +158,16 @@ Seed findings already in hand:
   retry round (~80k tokens, ~$0.05, ~60 s). Audit C13; the third fence-
   teaches-an-error (forest radius, farm example, this). Two-line fix,
   verified by counting T204 across a 3-prompt pass.
+- **T204 FIXED (`t204-after`):** 30 → 0 across the pass; pirate and troy
+  now author one-shot with zero diagnostics (attempts 2 → 1); a saved
+  round is a re-send of the ~80k-token kit on most worlds. **The pattern,
+  stated for the record: all four fence-teaches-an-error finds were
+  invisible to prose review and obvious the moment something counted what
+  the model emitted — the audits could not have found them; the suite did,
+  four times.** Lead left for later: LOAM-T008 UNKNOWN_KEY on
+  metropolis_hideout's solar_farm.params, recurring across three byte-
+  states (costs that prompt its retry round; looks like model invention,
+  but so did T204 until counted).
 - **Wave 2b RULED (Kai, 2026-08-24): B1 now, B2 next wave** — see
   docs/STOCKTAKE-WAVE-2B-v0.md. kit-fix's queue after Phase 1: B1 (fence
   the civic set-piece + name the acropolis class, 3×3 on troy, ~$0.35) and
