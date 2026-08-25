@@ -1,0 +1,146 @@
+{
+  "id": "montfort_hill",
+  "family": "g2",
+  "kit": "settlement",
+  "prompt": "A walled medieval city on a hill, its castle keep above the rooftops.",
+  "seed": 311,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.5,
+    "decline": 0,
+    "formality": 0.4,
+    "character": {
+      "label": "walled hill city",
+      "materialTheme": "temperate_timber",
+      "fortification": "walled",
+      "urbanForm": "hillside",
+      "ground": "stepped",
+      "courtyards": 0.5,
+      "motifs": {
+        "roofType": "gable",
+        "massing": "stepped"
+      },
+      "archetypes": {
+        "prefer": [
+          "keep",
+          "watchtower",
+          "gatehouse",
+          "tavern",
+          "church",
+          "manor"
+        ]
+      }
+    },
+    "tokens": {
+      "terrain": "a prominent hill rising above the countryside",
+      "icons": "a castle keep overlooking the town from the summit; defensive curtain walls with towers enclosing the settlement on the slopes"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 169880,
+    "completionTokens": 11865,
+    "cost": 0.086
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 17,
+    "maxDepth": 2,
+    "generators": [
+      "building.grammar@0",
+      "infra.entry@0",
+      "precinct.farm@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "bakery",
+      "barracks",
+      "church",
+      "cottage",
+      "general_store",
+      "guard_post",
+      "guildhall",
+      "keep",
+      "smithy",
+      "tavern",
+      "townhouse",
+      "tudor_row",
+      "watchtower"
+    ],
+    "archetypesInCatalog": 13,
+    "formPacks": [],
+    "props": [
+      "cart",
+      "signpost"
+    ],
+    "species": [
+      "field_oak",
+      "slim_birch",
+      "spreading_oak"
+    ],
+    "envelopes": [
+      "512x512",
+      "220x200",
+      "11x18x11",
+      "11x14x13",
+      "7x19x7",
+      "96x80"
+    ],
+    "constraints": 3,
+    "constraintKinds": [
+      "distance",
+      "max",
+      "min",
+      "zone"
+    ],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 3,
+    "programReferences": 0,
+    "conformsTrue": 0,
+    "labels": 14,
+    "eras": [
+      "medieval"
+    ],
+    "bytes": 5471
+  },
+  "wallMs": 113000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 2,
+    "feedbackRounds": 1,
+    "programs": [],
+    "programCost": 0,
+    "totalCost": 0.086,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g2/out/montfort_hill/out/walled_hill_city",
+    "finalDiagnostics": {
+      "LOAM-T208": 1,
+      "LOAM-T242": 1,
+      "LOAM-I499": 1,
+      "LOAM-W527": 1,
+      "LOAM-I463": 3,
+      "LOAM-T237": 1,
+      "LOAM-I504": 1,
+      "LOAM-I497": 1,
+      "LOAM-I412": 1,
+      "LOAM-W489": 1,
+      "LOAM-W470": 1
+    },
+    "crash": [],
+    "docName": "walled_hill_city.loam.json"
+  }
+}

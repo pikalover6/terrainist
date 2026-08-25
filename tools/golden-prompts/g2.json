@@ -1,0 +1,45 @@
+{
+  "$comment": "G2, the three named worlds (Stocktake Run unit 40): the k1 decks' prompts and seeds, generated fresh end to end at HEAD's bytes. `generate-all.mjs <out> 3 \"\" tools/golden-prompts/g2.json`, then `record-generate-run.mjs <out> runs/g2 g2 tools/golden-prompts/g2.json` and `icon-metric.mjs runs/g2 --prompts tools/golden-prompts/g2.json`.",
+  "defaults": { "kit": "settlement", "size": 512 },
+  "prompts": [
+    {
+      "id": "montfort_hill",
+      "family": "g2",
+      "seed": 311,
+      "prompt": "A walled medieval city on a hill, its castle keep above the rooftops.",
+      "watches": ["T4: a town inside the wall — buildings dominate walls (k1 had one keep and five houses)", "the keep above the rooftops (k1: E170 CANNOT_FIT, the keep pushed to the summit outside the circuit)", "T5: flattened terraces that follow the hill"],
+      "icons": [
+        { "id": "keep", "terms": ["keep", "castle", "donjon", "citadel"], "dominant": true },
+        { "id": "wall", "terms": ["wall", "circuit", "gate", "rampart", "tower"] },
+        { "id": "town", "terms": ["house", "market", "church", "guild", "tavern", "square", "street", "town"] }
+      ],
+      "densityFloor": 3
+    },
+    {
+      "id": "overgrown_metropolis_hideout",
+      "family": "g2",
+      "seed": 304,
+      "prompt": "A high-tech apocalyptic hideout in the massively overgrown ruins of a metropolis.",
+      "watches": ["T6 against r5: fallen towers, vines, trees in the streets, the ruined palette — now with P6 (terrace runs ruin)", "the decline the model authors (k1: 0.92) drives the ruin share", "the hideout as the bespoke (sunk — a read-it case)"],
+      "icons": [
+        { "id": "hideout", "terms": ["hideout", "bunker", "shelter", "lab", "base", "vault"], "dominant": true },
+        { "id": "ruins", "terms": ["ruin", "ruined", "collapsed", "overgrown", "vine", "derelict", "wreck"] },
+        { "id": "towers", "terms": ["skyscraper", "tower", "highrise", "office", "block"] }
+      ],
+      "densityFloor": 3
+    },
+    {
+      "id": "hellenist_sea_siege",
+      "family": "g2",
+      "seed": 305,
+      "prompt": "A modern Hellenist city being invaded by sea monsters.",
+      "watches": ["T7: a city is a city — lots per 10k envelope cells at the anchor's order", "the monsters as programs that must meet the water", "a Hellenist palette on a modern plan"],
+      "icons": [
+        { "id": "sea_monsters", "terms": ["monster", "kraken", "leviathan", "tentacle", "serpent", "beast"], "dominant": true },
+        { "id": "city", "terms": ["agora", "temple", "stoa", "colonnade", "theatre", "forum", "city", "boulevard"] },
+        { "id": "harbour", "terms": ["harbour", "harbor", "quay", "pier", "port", "sea"] }
+      ],
+      "densityFloor": 3
+    }
+  ]
+}

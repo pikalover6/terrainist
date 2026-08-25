@@ -1,0 +1,778 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "overgrown_metro_hideout",
+    "worldSeed": "304",
+    "prompt": "A high-tech apocalyptic hideout in the massively overgrown ruins of a metropolis.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": {
+        "mix": [
+          [
+            "minecraft:coarse_dirt",
+            3
+          ],
+          [
+            "minecraft:moss_block",
+            2
+          ],
+          [
+            "minecraft:rooted_dirt",
+            1
+          ]
+        ]
+      },
+      "road.surface": {
+        "mix": [
+          [
+            "minecraft:cracked_stone_bricks",
+            3
+          ],
+          [
+            "minecraft:mossy_cobblestone",
+            2
+          ],
+          [
+            "minecraft:cobblestone",
+            1
+          ]
+        ]
+      },
+      "road.shoulder": "minecraft:mossy_cobblestone"
+    }
+  },
+  "intent": {
+    "era": "far_future",
+    "wealth": 0.5,
+    "decline": 0.9,
+    "formality": 0.6,
+    "climate": {
+      "biome": "minecraft:jungle",
+      "humidity": 0.6,
+      "temperature": 0.2,
+      "snow": "never"
+    },
+    "character": {
+      "label": "overgrown ruined metropolis with high-tech survivor hideout",
+      "materialTheme": "modern_city",
+      "urbanForm": "grid",
+      "archetypes": {
+        "prefer": [
+          "bunker_complex",
+          "laboratory",
+          "battery_shed",
+          "data_center",
+          "skyscraper",
+          "office",
+          "apartment_block"
+        ]
+      },
+      "flora": {
+        "prefer": [
+          "kapok_emergent",
+          "jungle_broadleaf",
+          "tree_fern"
+        ]
+      },
+      "motifs": {
+        "roofType": "flat",
+        "massing": "blocky",
+        "windowRhythm": "dense"
+      },
+      "programs": [
+        {
+          "id": "jury_rigged_comm_spire",
+          "mode": "landmark",
+          "brief": "A massive salvaged communications dish and phased-array radar superstructure jury-rigged onto a cracked concrete tower base, laced with high-voltage cabling, solar cell clusters, and blinking warning beacons.",
+          "envelope": [
+            24,
+            44,
+            24
+          ]
+        }
+      ]
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "the overgrown metropolis ruins and high-tech enclave",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "shattered urban terrain with structural plateaus and collapse faults",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 71,
+          "amplitude": 24,
+          "octaves": 5,
+          "frequency": 0.0032,
+          "gain": 0.48,
+          "erosionPasses": 2,
+          "warp": {
+            "amount": 20,
+            "frequency": 0.004
+          },
+          "cliffThreshold": 56,
+          "soilDepth": 3,
+          "beachWidth": 2,
+          "snowLineFraction": 0.98
+        },
+        "children": [
+          {
+            "id": "city_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "wide leveled plateau supporting the metropolis grid",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 210,
+              "height": 7,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "collapsed_avenue_fissure",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "cracked infrastructure trench splitting the lower sector",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.15,
+                  0.42
+                ],
+                [
+                  0.48,
+                  0.48
+                ],
+                [
+                  0.86,
+                  0.54
+                ]
+              ],
+              "width": 26,
+              "depth": 14,
+              "profile": "sharp",
+              "flooded": "never"
+            }
+          },
+          {
+            "id": "subway_sinkhole",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "collapsed underground transit crater",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.32,
+                0.36
+              ],
+              "radius": 42,
+              "depth": 15,
+              "water": false,
+              "profile": "sharp",
+              "flooded": "never"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "label": "warm humid climate feeding dense vegetative reclaim",
+        "params": {
+          "forceTheme": "tropical",
+          "temperatureFrequency": 0.0014,
+          "humidityFrequency": 0.0014,
+          "blendRadius": 10
+        }
+      },
+      {
+        "id": "metropolis_jungle_overgrowth",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "massive jungle canopy climbing and reclaiming the concrete ruins",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.19,
+          "spacing": 4,
+          "clumping": 0.55,
+          "maxSlope": 38,
+          "elevation": [
+            2,
+            95
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.55,
+            "flowers": 0.12,
+            "deadwood": 0.08
+          },
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "canopy_kapok",
+                  "shape": "kapok_emergent"
+                }
+              ]
+            },
+            "understory": {
+              "species": [
+                {
+                  "id": "jungle_fern",
+                  "shape": "tree_fern"
+                }
+              ],
+              "density": 0.12
+            },
+            "floor": "default"
+          },
+          "species": [
+            {
+              "id": "dense_broadleaf",
+              "shape": "jungle_broadleaf",
+              "weight": 3
+            },
+            {
+              "id": "spreading_overgrowth_oak",
+              "shape": "oak_spreading",
+              "weight": 2
+            },
+            {
+              "id": "curtain_willow",
+              "shape": "willow_weeping",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "ruined_metropolis",
+        "kind": "district",
+        "label": "the sprawling decaying grid of the abandoned metropolis",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            280,
+            260
+          ]
+        },
+        "intent": {
+          "wealth": 0.5,
+          "decline": 0.92,
+          "character": {
+            "label": "overgrown ruined commercial core",
+            "materialTheme": "modern_city",
+            "archetypes": {
+              "prefer": [
+                "skyscraper",
+                "apartment_block",
+                "office",
+                "parking_garage",
+                "data_center",
+                "subway_station"
+              ]
+            }
+          }
+        },
+        "params": {
+          "fabric": "grid",
+          "density": "high",
+          "mix": [
+            "skyscraper",
+            "apartment_block",
+            "office",
+            "parking_garage",
+            "data_center",
+            "subway_station"
+          ],
+          "blockSize": 44,
+          "plaza": true
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 8
+          }
+        ],
+        "tags": [
+          "district",
+          "urban",
+          "ruins"
+        ],
+        "children": [
+          {
+            "id": "shattered_tower",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "gutted corporate skyscraper standing above the forest canopy",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                20,
+                68,
+                20
+              ]
+            },
+            "params": {
+              "archetype": "skyscraper",
+              "floors": 16,
+              "roof": "flat",
+              "windowRhythm": "dense",
+              "decay": 0.85
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "skyscraper"
+            ]
+          },
+          {
+            "id": "decayed_office_block",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "partially collapsed multi-story office building",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                18,
+                52,
+                18
+              ]
+            },
+            "params": {
+              "archetype": "office",
+              "floors": 12,
+              "roof": "flat",
+              "windowRhythm": "dense",
+              "decay": 0.8
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "north",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "office"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "hideout_plaza",
+        "kind": "primitive",
+        "label": "fortified operations terrace and staging square",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            26,
+            26
+          ]
+        },
+        "constraints": [
+          {
+            "distance": "ruined_metropolis",
+            "min": 14,
+            "max": 48,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "tags": [
+          "plaza",
+          "hideout_core"
+        ]
+      },
+      {
+        "id": "hideout_bunker",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "hardened subterranean survivor command post with hydraulic blast door",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            12,
+            15
+          ]
+        },
+        "params": {
+          "archetype": "bunker_complex",
+          "floors": 1,
+          "roof": "flat",
+          "entrance": {
+            "treatment": "blast_door"
+          },
+          "basement": {
+            "depth": 5,
+            "style": "bunker_hold"
+          },
+          "decay": 0.05
+        },
+        "constraints": [
+          {
+            "adjacent_to": "hideout_plaza",
+            "gap": [
+              1,
+              14
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "hideout_plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "bunker",
+          "house",
+          "secure"
+        ]
+      },
+      {
+        "id": "pressurized_lab",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "decontaminated bio-synthesis laboratory and sealed hydroponics center",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            12,
+            17
+          ]
+        },
+        "params": {
+          "archetype": "laboratory",
+          "floors": 1,
+          "roof": "flat",
+          "entrance": {
+            "treatment": "airlock_vestibule"
+          },
+          "decay": 0
+        },
+        "constraints": [
+          {
+            "adjacent_to": "hideout_plaza",
+            "gap": [
+              1,
+              14
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "hideout_plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "lab",
+          "secure"
+        ]
+      },
+      {
+        "id": "power_substation",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "reinforced energy storage depot with high-density battery arrays",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            15
+          ]
+        },
+        "params": {
+          "archetype": "battery_shed",
+          "floors": 1,
+          "roof": "flat",
+          "decay": 0.05
+        },
+        "constraints": [
+          {
+            "distance": "hideout_bunker",
+            "min": 4,
+            "max": 36,
+            "strength": "soft"
+          },
+          {
+            "adjacent_to": "hideout_plaza",
+            "gap": [
+              1,
+              16
+            ],
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "power",
+          "utility"
+        ]
+      },
+      {
+        "id": "defense_checkpoint",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "automated sentry gate guarding the access road into the ruins",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "checkpoint",
+          "floors": 1,
+          "roof": "flat",
+          "decay": 0.1
+        },
+        "constraints": [
+          {
+            "distance": "hideout_plaza",
+            "min": 8,
+            "max": 36,
+            "strength": "soft"
+          },
+          {
+            "facing": "ruined_metropolis"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "defense",
+          "security"
+        ]
+      },
+      {
+        "id": "comm_spire",
+        "kind": "generator",
+        "generator": "authored:jury_rigged_comm_spire",
+        "label": "the jury-rigged high-tech comm spire tapping into metropolis relay lines",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            24,
+            44,
+            24
+          ]
+        },
+        "constraints": [
+          {
+            "distance": "hideout_bunker",
+            "min": 6,
+            "max": 48,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "params": {
+          "face": {
+            "toward": "ruined_metropolis"
+          }
+        },
+        "tags": [
+          "landmark",
+          "tech"
+        ]
+      },
+      {
+        "id": "solar_power_array",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "salvaged photovoltaic solar array generating clean enclave power",
+        "params": {
+          "prop": "solar_array",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "backup_turbine",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "high-mast auxiliary wind turbine above the canopy",
+        "params": {
+          "prop": "wind_turbine",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "hideout_helipad",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "reinforced VTOL extraction landing pad",
+        "params": {
+          "prop": "helipad",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "perimeter_cordon",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "high-voltage security perimeter fence ringing the survivor enclave",
+        "params": {
+          "entry": "quarantine_fence",
+          "route": {
+            "ring": "hideout_plaza",
+            "margin": 18
+          }
+        }
+      },
+      {
+        "id": "sector_barricade",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "fortified rubble barricade sealing off the main metropolis avenue",
+        "params": {
+          "entry": "barricade_line",
+          "route": {
+            "across": "ruined_metropolis"
+          }
+        }
+      },
+      {
+        "id": "cracked_thoroughfares",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "cracked transit lanes linking the hideout to salvage routes",
+        "params": {
+          "anchors": [
+            "ruined_metropolis",
+            "hideout_plaza",
+            "hideout_bunker",
+            "pressurized_lab",
+            "comm_spire"
+          ],
+          "pattern": "grid",
+          "width": 3,
+          "lanterns": false
+        }
+      }
+    ]
+  },
+  "programs": {
+    "jury_rigged_comm_spire": {
+      "mode": "landmark",
+      "envelope": [
+        25,
+        54,
+        25
+      ],
+      "sourceHash": "b3:07a3d40285776798bcaa4520cb1c9422393f55422a6953cb0deab76675554018",
+      "outputHash": "b3:145f8a0d100b520f5828a0e369abab71aed27666466710dbddb78004c595b85c",
+      "conforms": false,
+      "conformHash": "b3:f2e0e4c5e3723c5436e776c9071631328f51975b7fcf33c37b704a02ba2f6958",
+      "source": "export const envelope = [25, 54, 25];\n\nexport default function build(api) {\n  const SEAT_Y = 8;\n  const DECK_Y = 18;\n\n  // Resolve palette from world theme with robust fallbacks\n  const stonePrimary = api.theme?.stone?.primary || \"minecraft:stone_bricks\";\n  const stoneAccent = api.theme?.stone?.accent || \"minecraft:cracked_stone_bricks\";\n  const stoneStairs = api.theme?.stone?.stairs || \"minecraft:stone_brick_stairs\";\n  const stoneSlab = api.theme?.stone?.slab || \"minecraft:stone_brick_slab\";\n  const stoneWall = api.theme?.stone?.wall || \"minecraft:stone_brick_wall\";\n  const groundPlinth = api.theme?.ground?.plinth || stonePrimary;\n  const groundPave = api.theme?.ground?.pavement || \"minecraft:smooth_stone\";\n  const wallParapet = api.theme?.wall?.parapet || stoneWall;\n  const wallWalk = api.theme?.wall?.walk || \"minecraft:polished_andesite\";\n\n  // Safe setter within envelope bounds\n  function set(x, y, z, block) {\n    if (x >= 0 && x < 25 && y >= 0 && y < 54 && z >= 0 && z < 25) {\n      api.set(Math.floor(x), Math.floor(y), Math.floor(z), block);\n    }\n  }\n\n  // 3D Bresenham line drawing\n  function drawLine(x0, y0, z0, x1, y1, z1, block) {\n    const dx = Math.abs(x1 - x0);\n    const dy = Math.abs(y1 - y0);\n    const dz = Math.abs(z1 - z0);\n    const sx = x0 < x1 ? 1 : -1;\n    const sy = y0 < y1 ? 1 : -1;\n    const sz = z0 < z1 ? 1 : -1;\n    const n = Math.max(dx, dy, dz);\n    if (n === 0) {\n      set(x0, y0, z0, block);\n      return;\n    }\n    let x = x0, y = y0, z = z0;\n    let ex = 0, ey = 0, ez = 0;\n    for (let i = 0; i <= n; i++) {\n      set(Math.round(x), Math.round(y), Math.round(z), block);\n      ex += dx;\n      ey += dy;\n      ez += dz;\n      if (ex >= n) { x += sx; ex -= n; }\n      if (ey >= n) { y += sy; ey -= n; }\n      if (ez >= n) { z += sz; ez -= n; }\n    }\n  }\n\n  // Determine if column (x, z) belongs to bunker base footprint\n  function isBaseFootprint(x, z) {\n    if (x >= 7 && x <= 17 && z >= 7 && z <= 17) return true;\n    if (x >= 5 && x <= 8 && z >= 5 && z <= 8) return true;\n    if (x >= 16 && x <= 19 && z >= 5 && z <= 8) return true;\n    if (x >= 5 && x <= 8 && z >= 16 && z <= 19) return true;\n    if (x >= 16 && x <= 19 && z >= 16 && z <= 19) return true;\n    if (x >= 10 && x <= 14 && z >= 3 && z <= 6) return true;\n    if (x >= 11 && x <= 13 && (z === 6 || z === 18 || z === 19)) return true;\n    if (z >= 11 && z <= 13 && (x === 5 || x === 6 || x === 18 || x === 19)) return true;\n    return false;\n  }\n\n  // --- 1. GROUND CONFORMANCE & CRACKED CONCRETE BUNKER BASE ---\n  for (let x = 0; x < 25; x++) {\n    for (let z = 0; z < 25; z++) {\n      if (!isBaseFootprint(x, z)) continue;\n\n      const gh = api.heightAt(x, z);\n      const groundY = Math.max(0, Math.min(20, SEAT_Y + gh));\n\n      const isInterior = (x >= 9 && x <= 15 && z >= 9 && z <= 15);\n      const isCorridor = (x >= 11 && x <= 13 && z >= 4 && z <= 8);\n\n      // Buttress height profile\n      let topY = DECK_Y;\n      if (x <= 5 || x >= 19 || z <= 5 || z >= 19) {\n        topY = SEAT_Y + 4;\n      } else if (x === 6 || x === 18 || z === 6 || z === 18) {\n        topY = SEAT_Y + 7;\n      }\n\n      if (isInterior) {\n        // Subfloor foundation up to seat plane\n        for (let y = groundY; y < SEAT_Y; y++) {\n          set(x, y, z, groundPlinth);\n        }\n        set(x, SEAT_Y, z, groundPave);\n        // Leave y = SEAT_Y + 1 (9) to 14 EMPTY for compiler fit-out!\n        set(x, 15, z, stonePrimary);\n        set(x, 16, z, wallWalk);\n      } else if (isCorridor) {\n        // Entrance passage\n        for (let y = groundY; y < SEAT_Y; y++) {\n          set(x, y, z, groundPlinth);\n        }\n        set(x, SEAT_Y, z, groundPave);\n        // Roof over corridor\n        set(x, SEAT_Y + 4, z, stonePrimary);\n      } else {\n        // Solid reinforced concrete walls / buttresses\n        for (let y = groundY; y <= topY; y++) {\n          let b = stonePrimary;\n          const r = api.random();\n          if (r < 0.28) b = stoneAccent;\n          else if (r < 0.42) b = \"minecraft:mossy_stone_bricks\";\n          else if (r < 0.52 && y <= SEAT_Y + 3) b = \"minecraft:moss_block\";\n\n          set(x, y, z, b);\n        }\n\n        // Buttress step-ins\n        if (topY < DECK_Y) {\n          set(x, topY + 1, z, stoneSlab);\n        }\n      }\n    }\n  }\n\n  // Reinforced blast door frame at bunker entrance (z = 6)\n  for (let y = SEAT_Y + 1; y <= SEAT_Y + 3; y++) {\n    set(10, y, 6, \"minecraft:iron_block\");\n    set(14, y, 6, \"minecraft:iron_block\");\n  }\n  set(11, SEAT_Y + 3, 6, \"minecraft:iron_block\");\n  set(12, SEAT_Y + 3, 6, \"minecraft:iron_block\");\n  set(13, SEAT_Y + 3, 6, \"minecraft:iron_block\");\n  set(11, SEAT_Y + 1, 6, \"minecraft:iron_bars\");\n  set(13, SEAT_Y + 1, 6, \"minecraft:iron_bars\");\n  set(11, SEAT_Y + 2, 6, \"minecraft:iron_bars\");\n  set(13, SEAT_Y + 2, 6, \"minecraft:iron_bars\");\n\n  // Parapet & Mezzanine Walkway on Bunker Roof (y = 17)\n  for (let x = 7; x <= 17; x++) {\n    for (let z = 7; z <= 17; z++) {\n      if (x === 7 || x === 17 || z === 7 || z === 17) {\n        set(x, 17, z, wallParapet);\n      }\n    }\n  }\n  // Corner observation beacons on the deck\n  const deckCorners = [[7, 7], [17, 7], [7, 17], [17, 17]];\n  for (const [cx, cz] of deckCorners) {\n    set(cx, 17, cz, \"minecraft:iron_block\");\n    set(cx, 18, cz, \"minecraft:sea_lantern\");\n    set(cx, 19, cz, \"minecraft:iron_bars\");\n  }\n\n  // Backup battery bank & transformer on bunker deck\n  set(8, 17, 9, \"minecraft:iron_block\");\n  set(8, 17, 10, \"minecraft:iron_block\");\n  set(8, 18, 9, \"minecraft:daylight_detector\");\n  set(8, 18, 10, \"minecraft:daylight_detector\");\n\n  set(16, 17, 14, \"minecraft:iron_block\");\n  set(16, 17, 15, \"minecraft:iron_block\");\n  set(16, 18, 14, \"minecraft:copper_grate\");\n  set(16, 18, 15, \"minecraft:redstone_torch\");\n\n  // Creeping apocalyptic foliage\n  for (let y = SEAT_Y + 2; y <= 17; y++) {\n    if (api.random() < 0.45) set(6, y, 7, \"minecraft:oak_leaves[persistent=true]\");\n    if (api.random() < 0.45) set(18, y, 7, \"minecraft:oak_leaves[persistent=true]\");\n    if (api.random() < 0.45) set(6, y, 17, \"minecraft:oak_leaves[persistent=true]\");\n    if (api.random() < 0.45) set(18, y, 17, \"minecraft:oak_leaves[persistent=true]\");\n  }\n\n  // --- 2. STEEL LATTICE MAST & OUTRIGGER STRUTS (y = 18 to 47) ---\n  const mastCols = [[11, 11], [13, 11], [11, 13], [13, 13]];\n  for (let y = 17; y <= 47; y++) {\n    const isJoint = (y % 4 === 2 || y === 18 || y === 47);\n    for (const [mx, mz] of mastCols) {\n      if (isJoint) {\n        set(mx, y, mz, \"minecraft:iron_block\");\n      } else {\n        set(mx, y, mz, \"minecraft:polished_basalt\");\n      }\n    }\n\n    // Mast cross-bracing\n    if (isJoint) {\n      set(12, y, 11, \"minecraft:iron_bars\");\n      set(12, y, 13, \"minecraft:iron_bars\");\n      set(11, y, 12, \"minecraft:iron_bars\");\n      set(13, y, 12, \"minecraft:iron_bars\");\n    } else {\n      set(12, y, 11, \"minecraft:iron_bars\");\n      set(12, y, 13, \"minecraft:iron_bars\");\n    }\n\n    // Vertical service cable / ladder core\n    set(12, y, 12, \"minecraft:ladder[facing=north]\");\n  }\n\n  // Heavy diagonal outrigger legs from bunker to mast\n  drawLine(7, 18, 7, 10, 28, 10, stoneWall);\n  drawLine(17, 18, 7, 14, 28, 10, stoneWall);\n  drawLine(7, 18, 17, 10, 28, 14, stoneWall);\n  drawLine(17, 18, 17, 14, 28, 14, stoneWall);\n\n  // Mid-mast service catwalk platform at y = 28..29\n  for (let x = 9; x <= 15; x++) {\n    for (let z = 9; z <= 15; z++) {\n      if (x >= 11 && x <= 13 && z >= 11 && z <= 13) continue;\n      set(x, 28, z, \"minecraft:copper_grate\");\n      if (x === 9 || x === 15 || z === 9 || z === 15) {\n        set(x, 29, z, \"minecraft:iron_bars\");\n      }\n    }\n  }\n\n  // Blinking obstruction warning beacons on catwalk corners\n  set(9, 28, 9, \"minecraft:redstone_block\");\n  set(9, 29, 9, \"minecraft:redstone_lamp\");\n  set(15, 28, 15, \"minecraft:redstone_block\");\n  set(15, 29, 15, \"minecraft:redstone_lamp\");\n\n  // --- 3. PHASED-ARRAY RADAR & SECONDARY UPLINK ---\n  // Phased-array rectangular grid on East face (y = 22 to 27)\n  for (let y = 22; y <= 27; y++) {\n    for (let z = 10; z <= 14; z++) {\n      set(14, y, z, \"minecraft:iron_bars\");\n      set(15, y, z, \"minecraft:iron_block\");\n      if (y === 24 && z === 12) {\n        set(15, y, z, \"minecraft:redstone_block\");\n        set(16, y, z, \"minecraft:redstone_lamp\");\n      } else if ((y + z) % 2 === 0) {\n        set(16, y, z, \"minecraft:daylight_detector\");\n      } else {\n        set(16, y, z, \"minecraft:smooth_quartz\");\n      }\n    }\n  }\n\n  // Secondary small uplink dish on West face (y = 22 to 26)\n  drawLine(11, 24, 12, 8, 24, 12, \"minecraft:iron_block\");\n  for (let dy = -1; dy <= 1; dy++) {\n    for (let dz = -1; dz <= 1; dz++) {\n      if (dy === 0 && dz === 0) {\n        set(8, 24, 12, \"minecraft:iron_block\");\n      } else {\n        set(8, 24 + dy, 12 + dz, \"minecraft:smooth_quartz\");\n      }\n    }\n  }\n  set(7, 24, 12, \"minecraft:lightning_rod[facing=west]\");\n\n  // Solar cell cluster wings (y = 20 West, y = 32 East)\n  drawLine(11, 20, 12, 6, 20, 12, \"minecraft:iron_bars\");\n  for (let x = 6; x <= 9; x++) {\n    for (let z = 11; z <= 13; z++) {\n      set(x, 20, z, \"minecraft:iron_bars\");\n      set(x, 21, z, \"minecraft:daylight_detector\");\n    }\n  }\n\n  drawLine(13, 32, 12, 18, 32, 12, \"minecraft:iron_bars\");\n  for (let x = 15; x <= 18; x++) {\n    for (let z = 11; z <= 13; z++) {\n      set(x, 32, z, \"minecraft:iron_bars\");\n      set(x, 33, z, \"minecraft:daylight_detector\");\n    }\n  }\n\n  // --- 4. MASSIVE SALVAGED COMMUNICATIONS DISH (y = 30 to 44) ---\n  // Dish pivot hub & gantry mount\n  const hubX = 12, hubY = 33, hubZ = 13;\n  set(10, 31, 13, \"minecraft:iron_block\");\n  set(10, 32, 13, \"minecraft:iron_block\");\n  set(14, 31, 13, \"minecraft:iron_block\");\n  set(14, 32, 13, \"minecraft:iron_block\");\n  set(11, 33, 13, \"minecraft:iron_block\");\n  set(12, 33, 13, \"minecraft:iron_block\");\n  set(13, 33, 13, \"minecraft:iron_block\");\n\n  // Dish aim direction vector (tilted North-Northwest & upward)\n  const nx = -0.32, ny = 0.58, nz = -0.75;\n  const nLen = Math.sqrt(nx * nx + ny * ny + nz * nz);\n  const unx = nx / nLen, uny = ny / nLen, unz = nz / nLen;\n\n  // Parabolic dish bowl voxelization\n  for (let x = 3; x <= 21; x++) {\n    for (let y = 29; y <= 44; y++) {\n      for (let z = 3; z <= 21; z++) {\n        const vx = x - hubX;\n        const vy = y - hubY;\n        const vz = z - hubZ;\n        const dPar = vx * unx + vy * uny + vz * unz;\n        const vPerpX = vx - dPar * unx;\n        const vPerpY = vy - dPar * uny;\n        const vPerpZ = vz - dPar * unz;\n        const r = Math.sqrt(vPerpX * vPerpX + vPerpY * vPerpY + vPerpZ * vPerpZ);\n\n        if (r <= 6.8) {\n          const targetD = 0.055 * r * r;\n          if (Math.abs(dPar - targetD) <= 0.62) {\n            let b = \"minecraft:smooth_quartz\";\n            if (r >= 6.0) {\n              b = \"minecraft:iron_block\";\n            } else if (r >= 3.8 && r <= 4.4) {\n              b = \"minecraft:copper_grate\";\n            } else if (api.random() < 0.12) {\n              const rnd = api.random();\n              if (rnd < 0.4) b = \"minecraft:oxidized_copper\";\n              else if (rnd < 0.7) b = stoneAccent;\n              else b = \"minecraft:iron_bars\";\n            }\n            set(x, y, z, b);\n          }\n        }\n      }\n    }\n  }\n\n  // 8 Structural Ribs behind the dish bowl\n  const uBasisX = 0.92, uBasisY = 0, uBasisZ = -0.39;\n  const wBasisX = -0.23, wBasisY = -0.82, wBasisZ = -0.53;\n  for (let k = 0; k < 8; k++) {\n    const theta = (k * Math.PI) / 4;\n    const erX = Math.cos(theta) * uBasisX + Math.sin(theta) * wBasisX;\n    const erY = Math.cos(theta) * uBasisY + Math.sin(theta) * wBasisY;\n    const erZ = Math.cos(theta) * uBasisZ + Math.sin(theta) * wBasisZ;\n\n    const rimX = Math.round(hubX + 2.1 * unx + 6.2 * erX);\n    const rimY = Math.round(hubY + 2.1 * uny + 6.2 * erY);\n    const rimZ = Math.round(hubZ + 2.1 * unz + 6.2 * erZ);\n\n    drawLine(hubX, hubY, hubZ, rimX, rimY, rimZ, \"minecraft:iron_bars\");\n  }\n\n  // Transceiver Feed Horn at focal point (f = 4.6 blocks along axis)\n  const fx = Math.round(hubX + 4.6 * unx); // ~10\n  const fy = Math.round(hubY + 4.6 * uny); // ~36\n  const fz = Math.round(hubZ + 4.6 * unz); // ~10\n\n  set(fx, fy, fz, \"minecraft:sea_lantern\");\n  set(fx, fy + 1, fz, \"minecraft:copper_grate\");\n  set(fx, fy - 1, fz, \"minecraft:copper_grate\");\n  set(fx + 1, fy, fz, \"minecraft:lightning_rod[facing=south]\");\n\n  // Tripod support struts connecting rim to receiver\n  const tripodAngles = [Math.PI / 2, (7 * Math.PI) / 6, (11 * Math.PI) / 6];\n  for (const theta of tripodAngles) {\n    const erX = Math.cos(theta) * uBasisX + Math.sin(theta) * wBasisX;\n    const erY = Math.cos(theta) * uBasisY + Math.sin(theta) * wBasisY;\n    const erZ = Math.cos(theta) * uBasisZ + Math.sin(theta) * wBasisZ;\n\n    const rimX = Math.round(hubX + 2.1 * unx + 6.2 * erX);\n    const rimY = Math.round(hubY + 2.1 * uny + 6.2 * erY);\n    const rimZ = Math.round(hubZ + 2.1 * unz + 6.2 * erZ);\n\n    drawLine(rimX, rimY, rimZ, fx, fy, fz, \"minecraft:iron_bars\");\n  }\n\n  // --- 5. TOP SPIRE, WARNING BEACONS & HV CONDUITS ---\n  // High-voltage snaking cables from dish down mast to bunker\n  drawLine(fx, fy, fz, hubX, hubY, hubZ, \"minecraft:chain\");\n  drawLine(hubX, hubY, hubZ, 11, 28, 14, \"minecraft:chain\");\n  drawLine(11, 28, 14, 10, 22, 14, \"minecraft:chain\");\n  drawLine(10, 22, 14, 10, 18, 14, \"minecraft:chain\");\n\n  // Mast Top Aviation Obstruction Light & Lightning Rod Spire (y = 45 to 49)\n  set(12, 45, 12, \"minecraft:redstone_block\");\n  set(12, 46, 12, \"minecraft:redstone_lamp\");\n  set(11, 46, 12, \"minecraft:redstone_torch\");\n  set(13, 46, 12, \"minecraft:redstone_torch\");\n  set(12, 46, 11, \"minecraft:redstone_torch\");\n  set(12, 46, 13, \"minecraft:redstone_torch\");\n\n  set(12, 47, 12, \"minecraft:iron_block\");\n  set(11, 47, 12, \"minecraft:lightning_rod[facing=west]\");\n  set(13, 47, 12, \"minecraft:lightning_rod[facing=east]\");\n  set(12, 47, 11, \"minecraft:lightning_rod[facing=north]\");\n  set(12, 47, 13, \"minecraft:lightning_rod[facing=south]\");\n\n  set(12, 48, 12, \"minecraft:lightning_rod[facing=up]\");\n  set(12, 49, 12, \"minecraft:lightning_rod[facing=up]\");\n\n  return {\n    name: \"jury_rigged_comm_spire\",\n    seatY: SEAT_Y,\n    anchors: {\n      front: [12, SEAT_Y + 1, 0],\n      door: [12, SEAT_Y + 1, 4],\n      spire: [12, 49, 12],\n      dish_hub: [hubX, hubY, hubZ]\n    },\n    interiors: [\n      {\n        min: [9, SEAT_Y + 1, 9],\n        max: [15, 14, 15],\n        kind: \"vault\"\n      }\n    ]\n  };\n}"
+    }
+  }
+}

@@ -1,0 +1,173 @@
+{
+  "id": "overgrown_metropolis_hideout",
+  "family": "g2",
+  "kit": "settlement",
+  "prompt": "A high-tech apocalyptic hideout in the massively overgrown ruins of a metropolis.",
+  "seed": 304,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "era": "far_future",
+    "wealth": 0.5,
+    "decline": 0.9,
+    "formality": 0.6,
+    "climate": {
+      "humidity": 0.6,
+      "temperature": 0.2
+    },
+    "character": {
+      "label": "overgrown ruined metropolis with high-tech survivor hideout",
+      "materialTheme": "modern_city",
+      "urbanForm": "grid",
+      "archetypes": {
+        "prefer": [
+          "bunker",
+          "laboratory",
+          "hydroponics_bay",
+          "watchtower",
+          "apartment_block",
+          "office"
+        ]
+      },
+      "flora": {
+        "prefer": [
+          "emergent",
+          "understory",
+          "old_growth"
+        ]
+      },
+      "motifs": {
+        "roofType": "flat",
+        "massing": "blocky",
+        "windowRhythm": "dense"
+      }
+    },
+    "tokens": {
+      "terrain": "a sprawling grid of ruined skyscrapers heavily overtaken by massive forest and creeping vegetation; collapsed transit flyovers and cracked asphalt lanes",
+      "fittings": "blast_door on the bunker_complex; airlock_vestibule on the laboratory",
+      "infra": "perimeter_fence and tripwire_sensors securing the hideout; collapsed_overpass across the main avenue",
+      "icons": "reinforced bunker entrance tucked into a skyscraper basement; jury-rigged solar panels and communication dish arrays on vine-covered concrete ledges; overgrown hollow high-rises"
+    }
+  },
+  "attempts": 2,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 273390,
+    "completionTokens": 28690,
+    "cost": 0.1287
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 22,
+    "maxDepth": 2,
+    "generators": [
+      "authored:jury_rigged_comm_spire",
+      "building.grammar@0",
+      "infra.entry@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "apartment_block",
+      "battery_shed",
+      "bunker",
+      "bunker_complex",
+      "checkpoint",
+      "cottage",
+      "data_center",
+      "laboratory",
+      "office",
+      "parking_garage",
+      "ruined_cottage",
+      "skyscraper",
+      "subway_station"
+    ],
+    "archetypesInCatalog": 13,
+    "formPacks": [],
+    "props": [
+      "helipad",
+      "solar_array",
+      "wind_turbine"
+    ],
+    "species": [
+      "curtain_willow",
+      "dense_broadleaf",
+      "spreading_overgrowth_oak"
+    ],
+    "envelopes": [
+      "512x512",
+      "280x260",
+      "20x68x20",
+      "18x52x18",
+      "26x26",
+      "15x12x15",
+      "15x12x17",
+      "13x12x15",
+      "11x11x11",
+      "24x44x24"
+    ],
+    "constraints": 18,
+    "constraintKinds": [
+      "adjacent_to",
+      "blend",
+      "distance",
+      "facing",
+      "gap",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform",
+      "zone"
+    ],
+    "constraintsWithStrength": 7,
+    "hardConstraints": 0,
+    "forests": 1,
+    "forestFillsAtOrAboveCoverage": 1,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 6,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 22,
+    "eras": [
+      "far_future"
+    ],
+    "bytes": 24922
+  },
+  "wallMs": 349000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 2,
+    "feedbackRounds": 1,
+    "programs": [
+      "ok jury_rigged_comm_spire [landmark] 1 attempt(s), 27944 tokens ($0.0474), 26 warning(s)"
+    ],
+    "programCost": 0.0474,
+    "totalCost": 0.1761,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g2/out/overgrown_metropolis_hideout/out/overgrown_metro_hideout",
+    "finalDiagnostics": {
+      "LOAM-W330": 1,
+      "LOAM-T208": 1,
+      "LOAM-W522": 1,
+      "LOAM-T242": 1,
+      "LOAM-I512": 1,
+      "LOAM-W511": 16,
+      "LOAM-I412": 2,
+      "LOAM-I463": 5,
+      "LOAM-I497": 1,
+      "LOAM-W413": 1,
+      "LOAM-I514": 1,
+      "LOAM-W513": 1,
+      "LOAM-T341": 1,
+      "LOAM-W470": 1
+    },
+    "crash": [],
+    "docName": "overgrown_metro_hideout.loam.json"
+  }
+}

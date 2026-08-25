@@ -1,0 +1,564 @@
+{
+  "label": "g2",
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "intentPrepass": true,
+  "source": "terrainist generate (full pipeline: intent, authoring, programs, compile-feedback rounds, emit)",
+  "kits": {
+    "settlement": {
+      "path": "docs/kits/settlement-author.md",
+      "sha256": "34e3a176aa3e5af5aa781a9354f42b966531581b8db75c6fd5ad169a543f268b",
+      "bytes": 285375,
+      "envelopeLiterals": [
+        "11x11x9",
+        "11x14x9",
+        "11x8x9",
+        "120x120",
+        "13x10x11",
+        "13x11x13",
+        "13x11x9",
+        "13x16x13",
+        "13x9x11",
+        "140x120",
+        "140x24x92",
+        "15x17x21",
+        "16x52x14",
+        "180x160",
+        "18x18",
+        "18x44x15",
+        "200x180",
+        "21x76x19",
+        "21x78x19",
+        "220x200",
+        "22x22",
+        "25x22x19",
+        "288x288",
+        "30x30",
+        "440x400",
+        "512x512",
+        "5x4",
+        "7x19x7",
+        "8x8x8",
+        "96x16x72",
+        "96x80",
+        "9x11x9",
+        "9x12x9",
+        "9x8x8",
+        "9x8x9"
+      ]
+    },
+    "terrain": {
+      "path": "docs/kits/terrain-author.md",
+      "sha256": "0adfac8d77042820afec8495258497e5cd44aa2a4391a585ac942518717f331b",
+      "bytes": 41193,
+      "envelopeLiterals": [
+        "384x384",
+        "512x512"
+      ]
+    }
+  },
+  "totals": {
+    "ok": 3,
+    "attempts": 4,
+    "oneShot": 2,
+    "promptTokens": 746915,
+    "completionTokens": 107379,
+    "cost": 0.4539,
+    "generateCost": 0.6466
+  },
+  "records": [
+    {
+      "id": "montfort_hill",
+      "family": "g2",
+      "kit": "settlement",
+      "prompt": "A walled medieval city on a hill, its castle keep above the rooftops.",
+      "seed": 311,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "era": "medieval",
+        "wealth": 0.5,
+        "decline": 0,
+        "formality": 0.4,
+        "character": {
+          "label": "walled hill city",
+          "materialTheme": "temperate_timber",
+          "fortification": "walled",
+          "urbanForm": "hillside",
+          "ground": "stepped",
+          "courtyards": 0.5,
+          "motifs": {
+            "roofType": "gable",
+            "massing": "stepped"
+          },
+          "archetypes": {
+            "prefer": [
+              "keep",
+              "watchtower",
+              "gatehouse",
+              "tavern",
+              "church",
+              "manor"
+            ]
+          }
+        },
+        "tokens": {
+          "terrain": "a prominent hill rising above the countryside",
+          "icons": "a castle keep overlooking the town from the summit; defensive curtain walls with towers enclosing the settlement on the slopes"
+        }
+      },
+      "attempts": 1,
+      "diagnostics": [],
+      "usage": {
+        "promptTokens": 169880,
+        "completionTokens": 11865,
+        "cost": 0.086
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 17,
+        "maxDepth": 2,
+        "generators": [
+          "building.grammar@0",
+          "infra.entry@0",
+          "precinct.farm@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "bakery",
+          "barracks",
+          "church",
+          "cottage",
+          "general_store",
+          "guard_post",
+          "guildhall",
+          "keep",
+          "smithy",
+          "tavern",
+          "townhouse",
+          "tudor_row",
+          "watchtower"
+        ],
+        "archetypesInCatalog": 13,
+        "formPacks": [],
+        "props": [
+          "cart",
+          "signpost"
+        ],
+        "species": [
+          "field_oak",
+          "slim_birch",
+          "spreading_oak"
+        ],
+        "envelopes": [
+          "512x512",
+          "220x200",
+          "11x18x11",
+          "11x14x13",
+          "7x19x7",
+          "96x80"
+        ],
+        "constraints": 3,
+        "constraintKinds": [
+          "distance",
+          "max",
+          "min",
+          "zone"
+        ],
+        "constraintsWithStrength": 0,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 3,
+        "programReferences": 0,
+        "conformsTrue": 0,
+        "labels": 14,
+        "eras": [
+          "medieval"
+        ],
+        "bytes": 5471
+      },
+      "wallMs": 113000,
+      "generate": {
+        "exit": "0",
+        "modelRuns": 2,
+        "feedbackRounds": 1,
+        "programs": [],
+        "programCost": 0,
+        "totalCost": 0.086,
+        "compiled": true,
+        "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g2/out/montfort_hill/out/walled_hill_city",
+        "finalDiagnostics": {
+          "LOAM-T208": 1,
+          "LOAM-T242": 1,
+          "LOAM-I499": 1,
+          "LOAM-W527": 1,
+          "LOAM-I463": 3,
+          "LOAM-T237": 1,
+          "LOAM-I504": 1,
+          "LOAM-I497": 1,
+          "LOAM-I412": 1,
+          "LOAM-W489": 1,
+          "LOAM-W470": 1
+        },
+        "crash": [],
+        "docName": "walled_hill_city.loam.json"
+      }
+    },
+    {
+      "id": "overgrown_metropolis_hideout",
+      "family": "g2",
+      "kit": "settlement",
+      "prompt": "A high-tech apocalyptic hideout in the massively overgrown ruins of a metropolis.",
+      "seed": 304,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "era": "far_future",
+        "wealth": 0.5,
+        "decline": 0.9,
+        "formality": 0.6,
+        "climate": {
+          "humidity": 0.6,
+          "temperature": 0.2
+        },
+        "character": {
+          "label": "overgrown ruined metropolis with high-tech survivor hideout",
+          "materialTheme": "modern_city",
+          "urbanForm": "grid",
+          "archetypes": {
+            "prefer": [
+              "bunker",
+              "laboratory",
+              "hydroponics_bay",
+              "watchtower",
+              "apartment_block",
+              "office"
+            ]
+          },
+          "flora": {
+            "prefer": [
+              "emergent",
+              "understory",
+              "old_growth"
+            ]
+          },
+          "motifs": {
+            "roofType": "flat",
+            "massing": "blocky",
+            "windowRhythm": "dense"
+          }
+        },
+        "tokens": {
+          "terrain": "a sprawling grid of ruined skyscrapers heavily overtaken by massive forest and creeping vegetation; collapsed transit flyovers and cracked asphalt lanes",
+          "fittings": "blast_door on the bunker_complex; airlock_vestibule on the laboratory",
+          "infra": "perimeter_fence and tripwire_sensors securing the hideout; collapsed_overpass across the main avenue",
+          "icons": "reinforced bunker entrance tucked into a skyscraper basement; jury-rigged solar panels and communication dish arrays on vine-covered concrete ledges; overgrown hollow high-rises"
+        }
+      },
+      "attempts": 2,
+      "diagnostics": [],
+      "usage": {
+        "promptTokens": 273390,
+        "completionTokens": 28690,
+        "cost": 0.1287
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 22,
+        "maxDepth": 2,
+        "generators": [
+          "authored:jury_rigged_comm_spire",
+          "building.grammar@0",
+          "infra.entry@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "apartment_block",
+          "battery_shed",
+          "bunker",
+          "bunker_complex",
+          "checkpoint",
+          "cottage",
+          "data_center",
+          "laboratory",
+          "office",
+          "parking_garage",
+          "ruined_cottage",
+          "skyscraper",
+          "subway_station"
+        ],
+        "archetypesInCatalog": 13,
+        "formPacks": [],
+        "props": [
+          "helipad",
+          "solar_array",
+          "wind_turbine"
+        ],
+        "species": [
+          "curtain_willow",
+          "dense_broadleaf",
+          "spreading_overgrowth_oak"
+        ],
+        "envelopes": [
+          "512x512",
+          "280x260",
+          "20x68x20",
+          "18x52x18",
+          "26x26",
+          "15x12x15",
+          "15x12x17",
+          "13x12x15",
+          "11x11x11",
+          "24x44x24"
+        ],
+        "constraints": 18,
+        "constraintKinds": [
+          "adjacent_to",
+          "blend",
+          "distance",
+          "facing",
+          "gap",
+          "max",
+          "min",
+          "reference",
+          "terrain_conform",
+          "zone"
+        ],
+        "constraintsWithStrength": 7,
+        "hardConstraints": 0,
+        "forests": 1,
+        "forestFillsAtOrAboveCoverage": 1,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 6,
+        "programReferences": 1,
+        "conformsTrue": 0,
+        "labels": 22,
+        "eras": [
+          "far_future"
+        ],
+        "bytes": 24922
+      },
+      "wallMs": 349000,
+      "generate": {
+        "exit": "0",
+        "modelRuns": 2,
+        "feedbackRounds": 1,
+        "programs": [
+          "ok jury_rigged_comm_spire [landmark] 1 attempt(s), 27944 tokens ($0.0474), 26 warning(s)"
+        ],
+        "programCost": 0.0474,
+        "totalCost": 0.1761,
+        "compiled": true,
+        "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g2/out/overgrown_metropolis_hideout/out/overgrown_metro_hideout",
+        "finalDiagnostics": {
+          "LOAM-W330": 1,
+          "LOAM-T208": 1,
+          "LOAM-W522": 1,
+          "LOAM-T242": 1,
+          "LOAM-I512": 1,
+          "LOAM-W511": 16,
+          "LOAM-I412": 2,
+          "LOAM-I463": 5,
+          "LOAM-I497": 1,
+          "LOAM-W413": 1,
+          "LOAM-I514": 1,
+          "LOAM-W513": 1,
+          "LOAM-T341": 1,
+          "LOAM-W470": 1
+        },
+        "crash": [],
+        "docName": "overgrown_metro_hideout.loam.json"
+      }
+    },
+    {
+      "id": "hellenist_sea_siege",
+      "family": "g2",
+      "kit": "settlement",
+      "prompt": "A modern Hellenist city being invaded by sea monsters.",
+      "seed": 305,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "era": "modern",
+        "wealth": 0.8,
+        "decline": 0.2,
+        "formality": 0.75,
+        "event": {
+          "kind": "siege",
+          "severity": 0.85,
+          "recency": 0
+        },
+        "climate": {
+          "temperature": 0.7,
+          "humidity": 0.2,
+          "snow": "never"
+        },
+        "character": {
+          "label": "modern Hellenist metropolis under sea monster assault",
+          "materialTheme": "modern_city",
+          "formPacks": [
+            "classical_mediterranean"
+          ],
+          "archetypes": {
+            "prefer": [
+              "stoa",
+              "peripteral_temple",
+              "propylaea",
+              "bouleuterion",
+              "odeon",
+              "nymphaeum"
+            ]
+          },
+          "motifs": {
+            "roofType": "flat",
+            "massing": "blocky",
+            "windowRhythm": "regular",
+            "ornamentDensity": 0.6
+          },
+          "urbanForm": "grid"
+        },
+        "tokens": {
+          "terrain": "a grand coastal metropolis fronting a wide deep sea bay and harbour",
+          "event_direction": "colossal sea monsters emerge from the open sea attacking the waterfront and harbour",
+          "infra": "barricade_line along the coastal boulevard; emergency cordon sealing the harbour promenade",
+          "icons": "monumental classical colonnades, stoas and temples integrated into modern city blocks; colossal tentacled sea leviathans crashing onto the piers and avenues"
+        }
+      },
+      "attempts": 1,
+      "diagnostics": [],
+      "usage": {
+        "promptTokens": 303645,
+        "completionTokens": 66824,
+        "cost": 0.2392
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 23,
+        "maxDepth": 2,
+        "generators": [
+          "authored:colossal_kraken",
+          "authored:hellenist_colossus_statue",
+          "building.grammar@0",
+          "infra.entry@0",
+          "precinct.harbour@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "scatter.program@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "apartment_block",
+          "cathedral",
+          "cottage",
+          "department_store",
+          "museum",
+          "office",
+          "opera_house",
+          "shop_row",
+          "skyscraper",
+          "townhouse",
+          "university_hall"
+        ],
+        "archetypesInCatalog": 11,
+        "formPacks": [
+          "classical_mediterranean"
+        ],
+        "props": [
+          "buoy",
+          "tugboat"
+        ],
+        "species": [
+          "cypress_spire",
+          "hellenic_oak",
+          "stone_pine",
+          "wild_oak",
+          "wild_pine"
+        ],
+        "envelopes": [
+          "512x512",
+          "340x200",
+          "21x24x25",
+          "18x68x16",
+          "19x18x21",
+          "130x16x60"
+        ],
+        "constraints": 7,
+        "constraintKinds": [
+          "at",
+          "band",
+          "distance",
+          "max",
+          "min",
+          "on"
+        ],
+        "constraintsWithStrength": 1,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 3,
+        "programReferences": 2,
+        "conformsTrue": 0,
+        "labels": 19,
+        "eras": [
+          "modern"
+        ],
+        "bytes": 57424
+      },
+      "wallMs": 805000,
+      "generate": {
+        "exit": "0",
+        "modelRuns": 3,
+        "feedbackRounds": 2,
+        "programs": [
+          "ok colossal_kraken [landmark] 1 attempt(s), 28915 tokens ($0.0492), 12 warning(s)",
+          "ok hellenist_colossus_statue [landmark] 1 attempt(s), 32389 tokens ($0.0557), 1 warning(s)",
+          "ok kraken_tentacle [plugin] 1 attempt(s), 24250 tokens ($0.0404), 16 warning(s)"
+        ],
+        "programCost": 0.1453,
+        "totalCost": 0.3845,
+        "compiled": true,
+        "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g2/out/hellenist_sea_siege/out/neopolis_invasion",
+        "finalDiagnostics": {
+          "LOAM-T208": 1,
+          "LOAM-W520": 1,
+          "LOAM-I512": 2,
+          "LOAM-W409": 1,
+          "LOAM-W517": 1,
+          "LOAM-T228": 2,
+          "LOAM-I463": 2,
+          "LOAM-I497": 1,
+          "LOAM-I412": 1,
+          "LOAM-W413": 1,
+          "LOAM-T234": 1,
+          "LOAM-T341": 1,
+          "LOAM-W337": 1,
+          "LOAM-W470": 1
+        },
+        "crash": [],
+        "docName": "neopolis_invasion.loam.json"
+      }
+    }
+  ]
+}

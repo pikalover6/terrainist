@@ -1,0 +1,87 @@
+prompt     A walled medieval city on a hill, its castle keep above the rooftops.
+seed       311
+size       512x512
+model      google/gemini-3.7-flash
+effort     high
+kit        settlement
+
+intent     {"era":"medieval","wealth":0.5,"decline":0,"formality":0.4,"character":{"label":"walled hill city","materialTheme":"temperate_timber","fortification":"walled","urbanForm":"hillside","ground":"stepped","courtyards":0.5,"motifs":{"roofType":"gable","massing":"stepped"},"archetypes":{"prefer":["keep","watchtower","gatehouse","tavern","church","manor"]}},"tokens":{"terrain":"a prominent hill rising above the countryside","icons":"a castle keep overlooking the town from the summit; defensive curtain walls with towers enclosing the settlement on the slopes"}}
+           1 attempt(s), 8236 tokens
+
+authored with google/gemini-3.7-flash in 1 attempt(s)
+  attempt 1   valid
+  tokens     84019 in + 8747 out = 92766  ($0.0479)
+programs   none (budget 3 landmark / 3 plugin)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g2/out/montfort_hill/out/walled_hill_city.loam.json
+
+
+compile feedback, round 1 of 2:
+
+The compiler reported 2 problem(s) with the compiled world:
+
+warning LOAM-E170 CANNOT_FIT at world.hill_city.city_church: no lot or block in "world.hill_city" is big enough for this landmark's 15 × 21 footprint
+  fix: shrink "envelope.size", raise the district's "params.blockSize" so its blocks are bigger, or move this building out of the district and let the solver place it
+warning LOAM-E170 CANNOT_FIT at world.hill_city.the_keep: no lot or block in "world.hill_city" is big enough for this landmark's 15 × 15 footprint
+  fix: shrink "envelope.size", raise the district's "params.blockSize" so its blocks are bigger, or move this building out of the district and let the solver place it
+
+  revision 1 authored in 1 attempt(s)
+  tokens     85861 in + 3118 out = 88979  ($0.0380)
+
+compiled "walled_hill_city" — 1.21.11 (DataVersion 4671)
+  world      /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g2/out/montfort_hill/out/walled_hill_city
+  seed       311
+  region     512x512 at (-256, -256)
+  heights    56.8..107.3  sea 63  snow line 105.1
+  land       87.0% of columns above sea level
+  biomes     plains 74.9%, ocean 12.5%, forest 10.0%, windswept_hills 1.3%, beach 1.3%
+  trees      3099 (valley_woods=2046, wilderness_trees=1160)
+  chunks     1024
+  blocks     37289887 (477314 vegetation)
+  markers    74
+  spawn      [0, 107, 0]
+  timings    validate 0ms  field 380ms  layout 2386ms  climate 81ms  columns 55ms  caves 0ms  structures 2642ms  programs 0ms  scatter 1097ms  biomes 117ms  validators 9ms  emit 6570ms  total 13543ms
+  doc        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g2/out/montfort_hill/out/walled_hill_city.loam.json
+  report     /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g2/out/montfort_hill/out/walled_hill_city.report.json
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.approach_roads: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+note LOAM-T242 GROUND_PLANE_DRIFT at world.hill_city: 2382 of 13503 platform column(s) in "world.hill_city" within 12 block(s) of a graded carriageway stand off the street's own storey lattice, the worst by -10 block(s)
+  fix: Nothing to change in the document — a document cannot move its own storey lattice. A non-zero count is a compiler finding: the anchor did not hold on this quarter.
+
+note LOAM-I499 SITE_STRIP_DISSOLVED at world.hill_city: strip "hs1_0" (uphill side of the contour street at 106) held 19 usable station(s) against the 30 two lots need, and gave 166 column(s) of claimed terrace back to natural ground
+  fix: Nothing to change if the hill is simply too broken for a terrace here. If the town is sparse, give the quarter a broader, gentler slope ("zone"/"at"), a smaller "envelope.size" so it sits across fewer contours, or a lower "density" so a strip needs less frontage.
+
+warning LOAM-W527 WALLED_QUARTER_SPARSE at world.hill_city: "world.hill_city" is walled and built 3502 of its 35783 column(s) of land inside the streets — 10 %, under the 50 % a walled quarter needs before the circuit reads as a town wall rather than as a fence round open ground
+  fix: Raise "density", lower "params.blockSize" so the fabric draws more streets and shallower blocks, or shrink "envelope.size" so the wall encloses the fabric that was actually built.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.hill_city: transitions by context (§5): 211 edge column(s) — fill 0 (none), cut 211 (211 retaining)
+  fix: No action needed.
+
+note LOAM-T237 FRONTAGE_TIE_DRIFT at world.hill_city: street segment "segment:dn1_84!world.hill_city" was surfaced above its datum at 1 of 39 station(s), by up to 1 block(s); the lots seated against that datum keep the level the datum gave them
+  fix: No change needed if the run crosses or skirts water — a deck and a shore rim are the one legal cause, and a street that rose out of the water is a street doing the right thing. A large drift away from water means the datum and the surfacer have become two graders: report it.
+
+note LOAM-I504 FARM_TRACK at world.lowland_farm: "world.lowland_farm" publishes a road_stub at its gate: a road.network@0 node anchored on "world.lowland_farm" runs the lane to it
+  fix: add "lowland_farm" to the "anchors" of the document's road.network@0 node, or give that node a "lanes" entry naming it
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.hill_city: every cut face finished: 337 column(s) faced in the hill's own rock, of which 211 were declared cut edges (§5.4); 211 of those wanted masonry (§5.2 rule 9) and got rock — an uphill wall is v1
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world: face finish: 377 column(s) striped in the hill's own rock, 57 paved face(s) footed, 5 crown notch(es) closed
+  fix: No action needed.
+
+note LOAM-I497 GROUND_STAGE at world: ground stage: 350 intent(s) (building.footprint 44, farm.parcel 6, quarter.plane 276, retaining.skirt 13, street.network 8, street.sidewalk 1, verge 2), 5 resolve(s), 2042 column(s) moved, 520 transition(s) (bank 73, kerb 351, retaining 1, rock 95), 180 of them unbuilt by any pass; coverage 1673 boundary pair(s) — 1405 in a transition, 119 suppressed by request, 149 by a face, 0 a kerb, 0 uncovered (excluded: 44938 natural, 0 wet)
+  fix: Nothing — this is the stage's own golden, and it is a note so that a count moving is visible in a diff before a block moves in a world.
+
+note LOAM-I412 SEAM_SERVED at world: terminal seam builder (§3.3): 6 derived transition(s) built (retaining 1, revetted 4, tiered 1) over 55 column(s) of face, 0 of graded bank (0 eased under §7.2's natural blend) and 0 finished in the hill's own rock; 167 absorbed under S7, 0 refused
+  fix: No action needed.
+
+warning LOAM-W489 INTENT_FORTIFICATION_UNKNOWN at world: intent.character.fortification asks for a wall and 1 node(s) already declare "params.walls" — the authored walls are built and no second circuit is added
+  fix: this is the intended precedence; delete "params.walls" if you want the dial to decide the wall, or leave it if the parameters are what you meant
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 45851 footprint columns (plus 23740 feathered over 40 columns) to minecraft:plains, from the ambient majority (minecraft:plains, 57% of 13691 ring columns); snow policy auto resolved to "never" on a 0/45851 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+  authoring  2 model run(s), 1 compile-feedback round(s), 169880 in + 11865 out = 181745 tokens (7326 of the out reasoning) ($0.0860)
+
+next: terrainist install /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g2/out/montfort_hill/out/walled_hill_city

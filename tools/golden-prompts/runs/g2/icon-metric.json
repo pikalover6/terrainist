@@ -1,0 +1,363 @@
+{
+  "run": "g2",
+  "scoredAt": "2026-08-25",
+  "thresholds": {
+    "dominantHeight": 1.5,
+    "dominantFootprint": 2
+  },
+  "scores": [
+    {
+      "id": "montfort_hill",
+      "icons": [
+        {
+          "id": "keep",
+          "dominantRequired": true,
+          "inDocument": [
+            "world.terrain.keep_knoll",
+            "world.hill_city.the_keep",
+            "intent.tokens"
+          ],
+          "inWorld": [
+            "the_keep",
+            "world.hill_city.the_keep",
+            "world.hill_city.infill_-14_-60",
+            "marker:keep_knoll.center",
+            "marker:keep_knoll.peak",
+            "marker:keep_knoll.foot"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": false,
+            "by": "world.hill_city.the_keep",
+            "height": 22,
+            "footprint": 121,
+            "medianHeight": 13,
+            "medianFootprint": 80,
+            "heightRatio": 1.69,
+            "footprintRatio": 1.51,
+            "base": 97,
+            "medianBase": 97,
+            "elevation": 0,
+            "spanRatio": 1.22
+          }
+        },
+        {
+          "id": "wall",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.hill_city",
+            "world.lowland_farm",
+            "intent.tokens",
+            "world.approach_roads",
+            "world.hill_city.watch_turret"
+          ],
+          "inWorld": [
+            "wall:world.hill_city",
+            "world.hill_city.infill_-46_-63",
+            "world.hill_city.watch_turret"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "town",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.hill_city.city_church",
+            "world.hill_city.the_keep",
+            "intent.tokens"
+          ],
+          "inWorld": [
+            "world.hill_city.infill_-46_-63",
+            "world.hill_city.infill_-26_6",
+            "world.hill_city.infill_-54_14",
+            "world.lowland_farm.farmhouse",
+            "city_church",
+            "world.hill_city.city_church",
+            "world.hill_city.infill_-62_-49",
+            "world.hill_city.infill_-4_-16",
+            "world.hill_city.infill_-35_-74",
+            "world.hill_city.infill_15_-54",
+            "world.hill_city.infill_-38_-36",
+            "world.hill_city.infill_-67_0"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "districts",
+        "lots": 34,
+        "blocks": 3,
+        "envelope": 44000,
+        "lotsPer10k": 7.7,
+        "floor": 3,
+        "ok": true
+      },
+      "boxes": {
+        "era": "medieval",
+        "preModern": true,
+        "count": 0,
+        "of": 24,
+        "sample": []
+      },
+      "era": {
+        "era": "medieval",
+        "forbidden": [],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 0,
+        "diagnostics": 13
+      },
+      "alarms": [
+        "icon keep not dominant (h×1.69, a×1.51)"
+      ]
+    },
+    {
+      "id": "overgrown_metropolis_hideout",
+      "icons": [
+        {
+          "id": "hideout",
+          "dominantRequired": true,
+          "inDocument": [
+            "world.hideout_plaza",
+            "world.hideout_bunker",
+            "world.hideout_helipad",
+            "world.cracked_thoroughfares",
+            "world.pressurized_lab"
+          ],
+          "inWorld": [
+            "hideout_plaza",
+            "hideout_bunker",
+            "world.hideout_bunker",
+            "prop:world.hideout_helipad",
+            "pressurized_lab",
+            "world.pressurized_lab"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": false,
+            "by": "pressurized_lab",
+            "height": 12,
+            "footprint": 255,
+            "medianHeight": 34,
+            "medianFootprint": 416,
+            "heightRatio": 0.35,
+            "footprintRatio": 0.61,
+            "base": 78,
+            "medianBase": 78,
+            "elevation": 0,
+            "spanRatio": 0.53
+          }
+        },
+        {
+          "id": "ruins",
+          "dominantRequired": false,
+          "inDocument": [
+            "world",
+            "world.metropolis_jungle_overgrowth",
+            "world.ruined_metropolis",
+            "world.defense_checkpoint",
+            "world.terrain.collapsed_avenue_fissure",
+            "world.terrain.subway_sinkhole",
+            "world.ruined_metropolis.decayed_office_block"
+          ],
+          "inWorld": [
+            "ruined_metropolis",
+            "shattered_tower",
+            "decayed_office_block",
+            "terrace_31_-111",
+            "terrace_74_-111",
+            "terrace_118_-111",
+            "terrace_165_-111",
+            "terrace_74_-92",
+            "terrace_118_-92",
+            "terrace_31_-91",
+            "terrace_165_-91",
+            "terrace_-53_-67"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "towers",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.ruined_metropolis.shattered_tower",
+            "world.ruined_metropolis.decayed_office_block"
+          ],
+          "inWorld": [
+            "world.ruined_metropolis.shattered_tower",
+            "world.ruined_metropolis.infill_31_-30",
+            "world.ruined_metropolis.infill_-18_-23",
+            "world.ruined_metropolis.infill_15_-23",
+            "world.ruined_metropolis.infill_101_-22",
+            "world.ruined_metropolis.infill_165_29",
+            "world.ruined_metropolis.infill_147_30",
+            "shattered_tower",
+            "decayed_office_block",
+            "world.ruined_metropolis.decayed_office_block",
+            "world.ruined_metropolis.infill_177_17",
+            "world.ruined_metropolis.infill_136_39"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "districts",
+        "lots": 168,
+        "blocks": 43,
+        "envelope": 72800,
+        "lotsPer10k": 23.1,
+        "floor": 3,
+        "ok": true
+      },
+      "boxes": {
+        "era": "far_future",
+        "preModern": false,
+        "count": 0,
+        "of": 89,
+        "sample": []
+      },
+      "era": {
+        "era": "far_future",
+        "forbidden": [],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 0,
+        "diagnostics": 34
+      },
+      "alarms": [
+        "icon hideout not dominant (h×0.35, a×0.61)"
+      ]
+    },
+    {
+      "id": "hellenist_sea_siege",
+      "icons": [
+        {
+          "id": "sea_monsters",
+          "dominantRequired": true,
+          "inDocument": [
+            "world.coastal_defense_barricade",
+            "world.leviathan_prime",
+            "intent.tokens",
+            "world.kraken_tentacle_swarm",
+            "program:colossal_kraken",
+            "program:kraken_tentacle",
+            "world",
+            "world.terrain.grand_bay"
+          ],
+          "inWorld": [
+            "leviathan_prime",
+            "program:world.leviathan_prime",
+            "program:world.kraken_tentacle_swarm",
+            "marker:world.kraken_tentacle_swarm",
+            "marker:world.leviathan_prime"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": true,
+            "by": "leviathan_prime",
+            "height": 42,
+            "footprint": 2304,
+            "medianHeight": 15,
+            "medianFootprint": 195,
+            "heightRatio": 2.8,
+            "footprintRatio": 11.82,
+            "base": 64,
+            "medianBase": 73,
+            "elevation": -9,
+            "spanRatio": 3.2
+          }
+        },
+        {
+          "id": "city",
+          "dominantRequired": false,
+          "inDocument": [
+            "intent.tokens",
+            "world.terrain.city_plateau",
+            "world.southern_hills_forest",
+            "world.neopolis",
+            "world.coastal_boulevard_net"
+          ],
+          "inWorld": [
+            "world.neopolis.cell_0.infill_10_76",
+            "world.neopolis.cell_3.infill_85_96",
+            "world.neopolis.cell_0.infill_-27_70",
+            "world.neopolis.cell_3.infill_-20_183",
+            "marker:city_plateau.center",
+            "marker:city_plateau.peak",
+            "marker:city_plateau.foot"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "harbour",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.terrain.east_cape",
+            "world.neopolis_harbour",
+            "world.harbour_artillery_battery",
+            "world.guardian_poseidon",
+            "world.coastal_boulevard_net",
+            "intent.tokens",
+            "world.neopolis",
+            "world.coastal_defense_barricade",
+            "world.leviathan_prime"
+          ],
+          "inWorld": [
+            "neopolis_harbour",
+            "world.neopolis_harbour.warehouse_0",
+            "world.neopolis_harbour.boathouse_1",
+            "prop:world.neopolis_harbour.pier_0",
+            "prop:world.neopolis_harbour.ship_0",
+            "prop:world.neopolis_harbour.pier_1",
+            "prop:world.neopolis_harbour.ship_1",
+            "prop:world.neopolis_harbour.pier_2",
+            "prop:world.neopolis_harbour.ship_2",
+            "prop:world.neopolis_harbour.pier_3",
+            "prop:world.neopolis_harbour.ship_3"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "districts",
+        "lots": 116,
+        "blocks": 47,
+        "envelope": 67808,
+        "lotsPer10k": 17.1,
+        "floor": 3,
+        "ok": true
+      },
+      "boxes": {
+        "era": "modern",
+        "preModern": false,
+        "count": 0,
+        "of": 65,
+        "sample": []
+      },
+      "era": {
+        "era": "modern",
+        "forbidden": [],
+        "violations": [],
+        "packEraMismatch": 1
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 0,
+        "diagnostics": 17
+      },
+      "alarms": []
+    }
+  ]
+}
