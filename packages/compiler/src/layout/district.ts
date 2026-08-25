@@ -3323,9 +3323,26 @@ export function boundingSeams(seams: readonly LevelSeam[]): readonly LevelSeam[]
  * over twenty columns); the router takes the lane west around it to x −5,
  * where the terrace's retaining edge is a six-block drop over two columns,
  * and the road emitter lays nothing on those two columns. Parcel growth is
- * innocent; the finding is F20 (a routed lane crossing a retaining edge it
- * cannot descend). This flag stays off until F20 is served, because the
- * extra buildings it seats are exactly what pushes lanes onto such edges.
+ * innocent; the finding is F20 — a lane's cutting through ground a higher
+ * tier holds, refused by the resolver and painted as a cliff — served by
+ * `ROUTE_PINS_HELD_GROUND` (`structures/roads.ts`, units 19–20).
+ *
+ * **Retried and kept `false`** (2026-08-25, unit 21), on the fourteen with
+ * the pins in place (`docs/decks/anchors/F10-LOWER-SQUARE-2026-08-25.md`
+ * §H). Four documents move. The fixtures gain: site-plan-hillside 16 → 20
+ * buildings with the island gone (14 → 23 orphan columns), -steep 14 → 17.
+ * The walled city goes 24 → 20 buildings on +7 % footprint and seats its
+ * 13 × 17 church at last (`LOAM-E170` 1 → 0). Montfort goes 13 → 12 on
+ * +44 % footprint — and its parcels, now grown across the compound, take
+ * the orchard inside the wall (cherry leaves 476 → 140, acacia 476 → 98,
+ * jungle 322 → 112, `life` props 259 → 179) and re-dress that ground as
+ * yards and paving (grass −5.8k columns; path, coarse dirt, gravel, cobble
+ * +9k blocks): the green inhabited interior becomes a brown one with
+ * bigger houses — T5's wrong shape on a named world, by the Run's
+ * pre-registered rule a regression that keeps the flag off. The finding is
+ * F21: a parcel grows through the ground a scatter program dressed, and
+ * the scatter yields without a word. Kai's post-hoc veto stands open on
+ * the render pair (`scratchpad/u21/renders/`).
  */
 export const LOT_PARCEL_OWN_STATIONS = false;
 

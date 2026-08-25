@@ -178,3 +178,60 @@ refused and painted at its own height (unmeasured; no such column on the
 fixture). `LOT_PARCEL_OWN_STATIONS` is retried on the fourteen under law 5
 once the pins ship — its 24 % was this bug, and its remaining cost is what
 that re-pin measures.
+
+## §H Unit 21 — own stations retried with the pins in place: attributed, and kept off
+
+`LOT_PARCEL_OWN_STATIONS` flipped in the built dist (D42) against the
+unit-10 baseline: **four of the fourteen move** — montfort_hill_k1,
+site-plan-hillside, site-plan-hillside-steep, walled_medieval_city; the
+other ten are payload-identical. Per mover, the walk audit
+(`scratchpad/f10/orphans.mjs`, `walk-audit.mjs`), the report, the block
+census (`tools/worlds/block-census.mjs`) and, for the two named worlds, an
+isometric render pair (`scratchpad/shot.mjs`, `scratchpad/u21/renders/`,
+deterministic: the u10 and u20 renders of montfort differ in 0 pixels).
+
+| document | buildings | footprint | orphans (share) | entrance reach | else |
+|---|---|---|---|---|---|
+| site-plan-hillside | 16 → 20 | 2,703 → 3,426 | 14 → 23 (0.4 → 0.6 %) | 0.999 → 0.999 | `W413` 1 → 0; the island gone |
+| site-plan-hillside-steep | 14 → 17 | 1,990 → 1,991 | 3,289 → 3,245 (79 %) | 0.85 → 0.848 | — |
+| walled_medieval_city | 24 → 20 | 3,304 → 3,532 | 4,932 → 5,394 (69 → 75 %) | 0 → 0 | `E170` 1 → 0 (the church seats); refused doorsteps 2 → 0; icons 3/3 present both, dominance unchanged; lots 47 → 53 |
+| montfort_hill_k1 | 13 → 12 | 1,484 → 2,134 | 1,448 → 1,612 (32 → 37 %) | 0 → 0 | dwellings 11 → 14; terraces 1 → 3; `life` 259 → 179 |
+
+**The walled city's and montfort's orphans are not cuts.** Their orphan
+components are whole street segments (`street:segment:hs0_0`, `sp1`,
+`hs1_3`, …) that stand more than four columns from any main paving in
+*both* states; the flag reshuffles which piece is largest. That is the
+audit's paving-only graph reading a terraced town as pieces — F9's
+instrument question, entrance reach 0 either way — and it decides nothing
+here.
+
+**What decides it is montfort's interior.** The render pair shows the
+compound's green, orchard-planted interior become a brown one with bigger
+houses; the census says exactly what moved: grass −5,816 columns; dirt path
++2,117, coarse dirt +1,828, gravel +1,149, cobblestone +2,366, mossy
+cobblestone +2,413; cherry leaves 476 → 140, acacia 476 → 98, jungle 322 →
+112, stripped logs −467; `life` props 259 → 179. The own-station parcels,
+no longer starved, grow across the compound; the orchard the document's
+scatter planted there yields to them without a diagnostic, and the parcel
+dressing paints the ground as yards. Bigger dwellings, and the thing that
+made the interior read as inhabited is gone — T5's "sparse dome with a
+handful of houses" from the other direction.
+
+**Verdict.** By the rule pre-registered in unit 20's NOW block — *ship only
+if no document loses a walk or an icon; if a mover regresses, keep it off
+and write the attribution as the finding* — montfort regresses on the one
+instrument that reads there (the census and the render, T5), the walled
+city trades four houses for its church, and the fixtures gain. **Kept
+off.** The gain is real and the flag is one constant; Kai's walk of the
+pair (T10) can overturn this, and the finding that would make the flip
+clean is:
+
+- **F21 — a parcel grows through ground a scatter program dressed, and the
+  scatter yields silently.** The orchard is the document's; the parcel
+  should stop at it (a reservation, as `withoutReserved` already does for
+  named things) or the compile should say it took it. Until then every
+  document with a planted compound pays the flag's price.
+
+The three golden fixtures were not re-pinned (nothing shipped). The FULL
+suite at own-stations on was run once to size the re-pin for a later flip:
+see the ledger's unit entry.

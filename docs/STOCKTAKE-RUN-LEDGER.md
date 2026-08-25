@@ -7,23 +7,22 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 20 (`ROUTE_PINS_HELD_GROUND` flipped; the
-  fourteen identical) is committed.
-- **Next unit:** unit 21 — **re-try `LOT_PARCEL_OWN_STATIONS` on the
-  fourteen** under law 5 with the pins shipped. Its 24 % orphans were F20;
-  what remains is a byte-moving flip to attribute. Method: flip in the dist
-  first (D42), `bi14` against `u10` to name the movers, then for each mover
-  the walk audit before/after (`scratchpad/f10/orphans.mjs`: buildings,
-  network, orphans, entrance reach, components by emitter) and the icon
-  metric where the document has icons; the three golden fixtures re-pinned
-  in the tests' own convention (`scratchpad/REPIN-UNIT7.md` is the
-  template — its numbers are stale, its method stands). Ship only if no
-  document loses a walk or an icon; the walled city's church (`E170`, D22)
-  is the thing to look for. If a mover regresses, keep it off and write the
-  attribution as the finding. Then census batch two (M1, M2 by law 5, M3,
-  class-2 S5/S6, D3 note), F4, F14, F17; §10.5 probe prompts; the
+- **In flight:** nothing — unit 21 (`LOT_PARCEL_OWN_STATIONS` retried on
+  the fourteen, attributed, kept off; F21 opened) is committed.
+- **Next unit:** unit 22 — **census batch two**: M2 exempt `street.curb`
+  from the `scoped` palette skip (`roads.ts:3587`; byte-moving — switch
+  landed off, attributed on the fourteen, flipped in its own unit if
+  clean), M1 collapse the two `resolveStreetStates` ground-role branches
+  (byte-identical refactor, payload identity), M3 the table-vs-derivation
+  agreement test over `ALL_MATERIAL_THEMES`, class-2 S5 (`plan.surface`
+  written outside the `write` guard — note), S6 (kit-vs-registry drift
+  check in the doc lint, red at 175), D3's post-freeze `foundationY` vs
+  `resolved.ground` delta note. One opus-5-low batch for the
+  byte-identical items, the M2 switch by hand; FULL suite once. Then F21
+  (the parcel that takes the orchard — a reservation for scattered
+  programs, or a diagnostic), F4, F14, F17; §10.5 probe prompts; the
   remaining stations.
-- **Last commit:** 9e3f737 (unit 19). Convention: this line names the
+- **Last commit:** 25e154d (unit 20). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
 - **Spend:** $8.19 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
 - **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19, D25,
@@ -37,8 +36,9 @@ running state. The NOW block is rewritten at the end of every turn.
   - F8 — `frontageLots` drops (~70 % starvation → F10, ~30 % geometry → P1).
   - F9 — new hillside lots' cut faces undressed (P2); walkability audit
     reads zero entrance reach on montfort/walled — instrument gap.
-  - F10 — probed (unit 18): the 24 % is one island, `lower_square` and its
-    lanes, cut by F20; two-phase growth withdrawn; the flag stays off.
+  - F10 — closed (unit 21): the 24 % was F20; retried with the pins, the
+    flag moves four documents, gains on the fixtures and the walled city's
+    church, and takes montfort's orchard (F21) — kept off, Kai's veto open.
   - F14 — pre-existing physics findings on shipped worlds; one physics
     unit, probe first.
   - F15 — the icon metric's before-sample alarms (horse/citadel dominance,
@@ -58,6 +58,11 @@ running state. The NOW block is rewritten at the end of every turn.
     fixed behind `ROUTE_PINS_HELD_GROUND` (unit 19): pinned, the fixture's
     island joins main (898 → 23 orphans), the fourteen identical. Flipped
     (unit 20): shipped.
+  - F21 — **a parcel grows through ground a scatter program dressed, and
+    the scatter yields silently** (montfort's orchard at own-stations on:
+    cherry leaves 476 → 140, `life` 259 → 179, grass −5.8k columns, no
+    diagnostic). A reservation for scattered programs, or a note; the
+    thing that makes `LOT_PARCEL_OWN_STATIONS` shippable.
 ## DECISIONS
 
 (every fork taken: the reversible default chosen, why, and how to undo it)
@@ -344,6 +349,30 @@ running state. The NOW block is rewritten at the end of every turn.
   has nothing to attribute, and D22 is the precedent. The hillside fixture
   is not a law-5 document; it is the one where the bug lives, and its
   numbers at own-stations on are unit 21's baseline. Undo: one constant.
+- **D47 (unit 21):** `LOT_PARCEL_OWN_STATIONS` stays off after the
+  retry, by the rule pre-registered in unit 20's NOW block: a mover
+  regressed. Montfort's compound loses its orchard and turns brown (the
+  census and the render pair agree; T5), the walled city trades four houses
+  for its church; the fixtures gain. The gain is one constant away and the
+  attribution is written (`F10-LOWER-SQUARE` §H). Kai's post-hoc veto is
+  open on the render pair in `scratchpad/u21/renders/` (regenerable:
+  `shot.mjs` on the `bi/u10` and `bi/u21-lot` worlds, D8's convention).
+  Undo: flip the constant and re-pin the three fixtures.
+- **D48 (unit 21):** the walled city's and montfort's audit orphans are
+  not read as walk losses: their orphan components are whole street
+  segments more than four columns from any main paving in both states
+  (F9's instrument question), and entrance reach is 0 both ways. The
+  verdict rests on the census, the report and the renders instead. Undo:
+  n/a.
+- **D49 (unit 21):** the source was flipped for the measurement and
+  reverted before the commit, so the tree's bytes are HEAD's; the four
+  movers' worlds live in `bi/u21-lot`. No golden was re-pinned. Undo: n/a.
+- **D50 (unit 21):** the ledger-rewrite script died on a literal `%` in
+  its format string after the commit command had already been chained, so
+  `c45c469` was pushed without the ledger; the commit was amended in place
+  and force-pushed with lease on this branch (nobody else commits to it)
+  rather than followed by a ledger-only commit, keeping one commit per
+  unit. Scripts now substitute by token, not `%`. Undo: n/a.
 
 ## SPEND
 
@@ -369,6 +398,7 @@ running state. The NOW block is rewritten at the end of every turn.
 | 18 | F10 probe — compiles only, the FULL suite | 0.00 | 8.19 |
 | 19 | F20 in code — dist-patched measurements, two bi14 runs, the FULL suite | 0.00 | 8.19 |
 | 20 | the pins flip — one bi14 run, the FULL suite | 0.00 | 8.19 |
+| 21 | own stations retried — two bi14 runs, renders, censuses, the FULL suite twice | 0.00 | 8.19 |
 
 ## VERDICTS
 
@@ -713,3 +743,19 @@ running state. The NOW block is rewritten at the end of every turn.
   `test/route-pins.test.ts` ("ships on") updated, census 1.20 closed. The
   fourteen payload-identical to `u10` on the real build (D46). Tests: FULL
   suite COUNTS Test Files 342 passed | 1 skipped (343), Tests 5668 passed | 31 skipped (5699). Files: `roads.ts`, the test, the census. Spend $0.
+- **unit 21 — own stations retried with the pins, attributed, kept off
+  (2026-08-25):** `LOT_PARCEL_OWN_STATIONS` on in the dist against the
+  unit-10 baseline moves four of fourteen (montfort, both hillside
+  fixtures, the walled city). Attributed per mover with the walk audit,
+  the report, the block census and a deterministic isometric render pair
+  for the two named worlds (`F10-LOWER-SQUARE` §H): hillside 16 → 20
+  buildings with the island gone, steep 14 → 17, the walled city 24 → 20
+  on +7 % footprint with `E170` 1 → 0 (the church seats), montfort 13 → 12
+  on +44 % footprint — and montfort's parcels take the compound's orchard
+  (cherry 476 → 140, `life` 259 → 179) and re-dress its ground (grass
+  −5.8k; path/coarse dirt/gravel/cobble +9k). Kept off (D47); F21 opened;
+  F10 closed; the switch's docblock and census 1.19 carry the attribution.
+  The FULL suite at own-stations on, run once to size a future re-pin:
+  23 assertions moved in 3 files (`site-plan-hillside`, `site-plan-transitions`, `walkability`) within the first 61 of 343 files, then stopped. Source reverted; the fourteen payload-identical to `u10`. Tests:
+  FULL suite COUNTS Test Files 342 passed | 1 skipped (343), Tests 5668 passed | 31 skipped (5699). Files: `layout/district.ts` (comment), the record
+  §H, the census. Spend $0.
