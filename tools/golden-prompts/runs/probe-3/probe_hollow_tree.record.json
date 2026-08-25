@@ -1,0 +1,164 @@
+{
+  "id": "probe_hollow_tree",
+  "family": "probe",
+  "kit": "settlement",
+  "prompt": "A village built in and around one colossal hollow baobab: the market inside its trunk, rope bridges from its branches to platform houses, ladders and lanterns up the bark.",
+  "seed": 916,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.45,
+    "formality": 0.1,
+    "climate": {
+      "biome": "minecraft:savanna",
+      "temperature": 0.8,
+      "humidity": -0.4,
+      "snow": "never"
+    },
+    "character": {
+      "label": "colossal baobab village",
+      "materialTheme": "temperate_timber",
+      "urbanForm": "radial",
+      "flora": {
+        "prefer": [
+          "emergent",
+          "acacia_umbrella"
+        ]
+      },
+      "props": {
+        "prefer": [
+          "market_barrow",
+          "well_head",
+          "notice_board"
+        ]
+      },
+      "motifs": {
+        "roofType": "shed",
+        "massing": "sprawling"
+      }
+    },
+    "tokens": {
+      "terrain": "a warm, open savanna plain centered on one colossal ancient hollow baobab tree",
+      "icons": "a lively village market sheltered inside the vast hollow trunk; wooden platform houses hung from high boughs; rope bridges spanning between canopy branches; winding ladders, walkways, and hanging lanterns ascending the outer bark"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 295264,
+    "completionTokens": 64392,
+    "cost": 0.2315
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 26,
+    "maxDepth": 2,
+    "generators": [
+      "authored:colossal_baobab",
+      "building.grammar@0",
+      "precinct.farm@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "apothecary",
+      "cottage",
+      "granary",
+      "hall",
+      "market_stall",
+      "stilt_house",
+      "tavern"
+    ],
+    "archetypesInCatalog": 7,
+    "formPacks": [],
+    "props": [
+      "hitching_post",
+      "market_barrow",
+      "notice_board",
+      "treehouse",
+      "well_head"
+    ],
+    "species": [
+      "desert_hardwood",
+      "umbrella_acacia",
+      "wild_acacia"
+    ],
+    "envelopes": [
+      "512x512",
+      "64x52x64",
+      "20x20",
+      "13x11x13",
+      "9x10x9",
+      "13x12x11",
+      "9x9x9",
+      "9x7x7",
+      "11x12x11",
+      "9x8x9",
+      "9x8x9",
+      "84x80"
+    ],
+    "constraints": 29,
+    "constraintKinds": [
+      "adjacent_to",
+      "blend",
+      "distance",
+      "facing",
+      "gap",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform",
+      "zone"
+    ],
+    "constraintsWithStrength": 11,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 8,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 23,
+    "eras": [
+      "medieval"
+    ],
+    "bytes": 55638
+  },
+  "wallMs": 647000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 3,
+    "feedbackRounds": 2,
+    "programs": [
+      "ok colossal_baobab [landmark] 1 attempt(s), 29368 tokens ($0.0500), 27 warning(s)",
+      "ok canopy_platform_house [plugin] 1 attempt(s), 22827 tokens ($0.0378), 27 warning(s)"
+    ],
+    "programCost": 0.0879,
+    "totalCost": 0.3194,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/probe3/gen/probe_hollow_tree/out/baobab_village",
+    "finalDiagnostics": {
+      "LOAM-W330": 1,
+      "LOAM-T105": 1,
+      "LOAM-T208": 1,
+      "LOAM-E404": 1,
+      "LOAM-W522": 1,
+      "LOAM-I500": 1,
+      "LOAM-I504": 1,
+      "LOAM-I497": 1,
+      "LOAM-T341": 1,
+      "LOAM-W337": 1,
+      "LOAM-W470": 1
+    },
+    "crash": [],
+    "docName": "baobab_village.loam.json"
+  }
+}

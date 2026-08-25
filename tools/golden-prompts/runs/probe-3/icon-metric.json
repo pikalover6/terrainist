@@ -1,0 +1,785 @@
+{
+  "run": "probe-3",
+  "scoredAt": "2026-08-25",
+  "thresholds": {
+    "dominantHeight": 1.5,
+    "dominantFootprint": 2
+  },
+  "scores": [
+    {
+      "id": "probe_horde_camp",
+      "icons": [
+        {
+          "id": "great_tent",
+          "dominantRequired": true,
+          "inDocument": [
+            "intent.tokens",
+            "world.khans_great_tent",
+            "program:khans_great_tent",
+            "world.horde_armory"
+          ],
+          "inWorld": [
+            "khans_great_tent",
+            "program:world.khans_great_tent",
+            "marker:world.khans_great_tent"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": false,
+            "by": "khans_great_tent",
+            "height": 18,
+            "footprint": 729,
+            "medianHeight": 15,
+            "medianFootprint": 81,
+            "heightRatio": 1.2,
+            "footprintRatio": 9,
+            "base": 71,
+            "medianBase": 71,
+            "elevation": 0,
+            "spanRatio": 3,
+            "readRequired": true
+          }
+        },
+        {
+          "id": "yurts",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.yurt_inner_east",
+            "world.yurt_inner_west",
+            "world.yurt_inner_north",
+            "world.yurt_outer_nw",
+            "world.yurt_outer_ne",
+            "world.yurt_outer_sw",
+            "world.yurt_outer_se",
+            "world.steppe_tracks",
+            "intent.tokens",
+            "world.khans_great_tent",
+            "world.horde_armory",
+            "program:khans_great_tent"
+          ],
+          "inWorld": [
+            "prop:world.yurt_inner_east",
+            "prop:world.yurt_inner_west",
+            "prop:world.yurt_inner_north",
+            "prop:world.yurt_outer_nw",
+            "prop:world.yurt_outer_ne",
+            "prop:world.yurt_outer_sw",
+            "prop:world.yurt_outer_se",
+            "khans_great_tent",
+            "program:world.khans_great_tent",
+            "marker:world.khans_great_tent"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "horses",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.horse_picket_south",
+            "world.horse_water_trough",
+            "world.horse_picket_west",
+            "world.horsetail_standard",
+            "intent.tokens"
+          ],
+          "inWorld": [
+            "prop:world.horse_picket_south",
+            "prop:world.horse_water_trough",
+            "prop:world.horse_picket_west",
+            "prop:world.horsetail_standard"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "buildings-hull",
+        "lots": 4,
+        "blocks": 0,
+        "envelope": 5265,
+        "lotsPer10k": 7.6,
+        "floor": 3,
+        "ok": true
+      },
+      "boxes": {
+        "era": "medieval",
+        "preModern": true,
+        "count": 0,
+        "of": 4,
+        "sample": []
+      },
+      "era": {
+        "era": "medieval",
+        "forbidden": [
+          "townhouse",
+          "terraced_row",
+          "shop_row",
+          "apartment_block",
+          "office"
+        ],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 0,
+        "diagnostics": 6
+      },
+      "alarms": [
+        "icon great_tent not dominant by the rule (h×1.2, a×9) — read it: span ×3"
+      ]
+    },
+    {
+      "id": "probe_river_forts",
+      "icons": [
+        {
+          "id": "broken_bridge",
+          "dominantRequired": true,
+          "inDocument": [
+            "world.west_river_fort.west_bridgehead_gate",
+            "world.east_river_fort.east_bridgehead_gate",
+            "world.broken_bridge_span",
+            "world.west_bridge_barricade",
+            "world.east_bridge_barricade",
+            "world.west_timber_reserve",
+            "world.east_timber_reserve",
+            "world.fort_roads",
+            "program:half_built_bridge",
+            "intent.tokens",
+            "world.west_landing_pier",
+            "world.west_patrol_boat"
+          ],
+          "inWorld": [
+            "broken_bridge_span",
+            "west_bridgehead_gate",
+            "east_bridgehead_gate",
+            "world.west_river_fort.west_bridgehead_gate",
+            "world.east_river_fort.east_bridgehead_gate",
+            "program:world.broken_bridge_span",
+            "marker:world.broken_bridge_span",
+            "prop:world.west_landing_pier",
+            "prop:world.east_landing_pier"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": false,
+            "by": "broken_bridge_span",
+            "height": 26,
+            "footprint": 5120,
+            "medianHeight": 22,
+            "medianFootprint": 189,
+            "heightRatio": 1.18,
+            "footprintRatio": 27.09,
+            "base": 70,
+            "medianBase": 77,
+            "elevation": -7,
+            "spanRatio": 7.62,
+            "readRequired": true
+          }
+        },
+        {
+          "id": "forts",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.terrain.west_bank_shelf",
+            "world.terrain.east_bank_shelf",
+            "world.east_woodland",
+            "world.west_river_fort",
+            "world.west_river_fort.west_bridgehead_gate",
+            "world.east_river_fort",
+            "world.east_river_fort.east_stronghold_citadel",
+            "world.east_landing_pier",
+            "world.fort_roads",
+            "intent.tokens",
+            "world.west_river_fort.west_command_keep"
+          ],
+          "inWorld": [
+            "west_river_fort",
+            "east_river_fort",
+            "west_command_keep",
+            "west_bridgehead_gate",
+            "terrace_-187_-18",
+            "terrace_-154_-18",
+            "terrace_-154_-4",
+            "terrace_-187_-3",
+            "terrace_-187_17",
+            "terrace_-154_17",
+            "terrace_-187_30",
+            "terrace_-154_30"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "river",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.terrain",
+            "world.terrain.wide_river",
+            "world.wilderness_trees",
+            "world.west_river_fort",
+            "world.west_river_fort.west_bridgehead_gate",
+            "world.east_river_fort",
+            "world.east_river_fort.east_stronghold_citadel",
+            "world.broken_bridge_span",
+            "world.west_river_defenses",
+            "world.east_river_defenses",
+            "world.west_patrol_boat",
+            "world.east_patrol_boat"
+          ],
+          "inWorld": [
+            "west_river_fort",
+            "east_river_fort",
+            "west_command_keep",
+            "west_bridgehead_gate",
+            "terrace_-187_-18",
+            "terrace_-154_-18",
+            "terrace_-154_-4",
+            "terrace_-187_-3",
+            "terrace_-187_17",
+            "terrace_-154_17",
+            "terrace_-187_30",
+            "terrace_-154_30"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "districts",
+        "lots": 68,
+        "blocks": 18,
+        "envelope": 24200,
+        "lotsPer10k": 28.1,
+        "floor": 3,
+        "ok": true
+      },
+      "boxes": {
+        "era": "medieval",
+        "preModern": true,
+        "count": 0,
+        "of": 34,
+        "sample": []
+      },
+      "era": {
+        "era": "medieval",
+        "forbidden": [
+          "skyscraper",
+          "office",
+          "apartment_block",
+          "modern_villa",
+          "shopping_mall",
+          "gas_station"
+        ],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 0,
+        "diagnostics": 20
+      },
+      "alarms": [
+        "icon broken_bridge not dominant by the rule (h×1.18, a×27.09) — read it: span ×7.62"
+      ]
+    },
+    {
+      "id": "probe_mammoth_camp",
+      "icons": [
+        {
+          "id": "mammoth",
+          "dominantRequired": true,
+          "inDocument": [
+            "world.mammoth_kill_site",
+            "world.ice_totem",
+            "world.bone_heaps",
+            "program:mammoth_kill_site",
+            "intent.tokens",
+            "world.chieftain_lodge",
+            "world.hunters_shelter_west",
+            "world.hunters_shelter_east",
+            "world.shaman_dwelling",
+            "world.meat_cache_cairns",
+            "program:bone_totem_shrine",
+            "program:bone_heap"
+          ],
+          "inWorld": [
+            "mammoth_kill_site",
+            "program:world.mammoth_kill_site",
+            "marker:world.mammoth_kill_site",
+            "ice_totem",
+            "program:world.ice_totem",
+            "program:world.bone_heaps",
+            "marker:world.bone_heaps"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": false,
+            "by": "mammoth_kill_site",
+            "height": 16,
+            "footprint": 728,
+            "medianHeight": 14,
+            "medianFootprint": 81,
+            "heightRatio": 1.14,
+            "footprintRatio": 8.99,
+            "base": 79,
+            "medianBase": 79,
+            "elevation": 0,
+            "spanRatio": 3.11,
+            "readRequired": true
+          }
+        },
+        {
+          "id": "bone_huts",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.elder_sod_hut",
+            "world.hunters_shelter_west",
+            "world.hunters_shelter_east",
+            "world.chieftain_lodge",
+            "world.drying_racks",
+            "intent.tokens",
+            "world.sheltered_thicket",
+            "world.hunter_trails"
+          ],
+          "inWorld": [
+            "elder_sod_hut",
+            "world.elder_sod_hut",
+            "world.hunters_shelter_west",
+            "world.hunters_shelter_east",
+            "hunters_shelter_west",
+            "hunters_shelter_east",
+            "forest:sheltered_thicket"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "ice_sheet",
+          "dominantRequired": false,
+          "inDocument": [
+            "world",
+            "world.terrain",
+            "world.terrain.ice_sheet_plateau",
+            "world.terrain.glacier_terminal_moraine",
+            "world.ice_totem",
+            "intent.tokens",
+            "world.spirit_monolith",
+            "world.mammoth_kill_site",
+            "world.terrain.camp_tundra_shelf",
+            "world.terrain.meltwater_channel",
+            "world.tundra_scrub",
+            "world.sheltered_thicket"
+          ],
+          "inWorld": [
+            "ice_totem",
+            "program:world.ice_totem",
+            "marker:ice_sheet_plateau.center",
+            "marker:ice_sheet_plateau.peak",
+            "marker:ice_sheet_plateau.foot",
+            "marker:world.ice_totem",
+            "marker:glacier_terminal_moraine.head",
+            "marker:glacier_terminal_moraine.mouth",
+            "marker:glacier_terminal_moraine.peak",
+            "forest:tundra_scrub",
+            "marker:camp_tundra_shelf.center",
+            "marker:camp_tundra_shelf.peak"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "buildings-hull",
+        "lots": 5,
+        "blocks": 0,
+        "envelope": 3010,
+        "lotsPer10k": 16.6,
+        "floor": 2,
+        "ok": true
+      },
+      "boxes": {
+        "era": "primitive",
+        "preModern": true,
+        "count": 0,
+        "of": 5,
+        "sample": []
+      },
+      "era": {
+        "era": "primitive",
+        "forbidden": [
+          "townhouse",
+          "terraced_row",
+          "shop_row",
+          "office",
+          "apartment_block",
+          "church",
+          "manor",
+          "warehouse"
+        ],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 0,
+        "diagnostics": 12
+      },
+      "alarms": [
+        "icon mammoth not dominant by the rule (h×1.14, a×8.99) — read it: span ×3.11"
+      ]
+    },
+    {
+      "id": "probe_karst",
+      "icons": [
+        {
+          "id": "karst_towers",
+          "dominantRequired": true,
+          "inDocument": [
+            "world.terrain.karst_tower_nw",
+            "world.terrain.karst_tower_north",
+            "world.terrain.karst_tower_east",
+            "world.terrain.karst_tower_swallow",
+            "world.terrain.karst_tower_sw",
+            "world.terrain.karst_tower_se",
+            "world.terrain.vanishing_river",
+            "world.karst_jungle",
+            "world.river_cave_mouth",
+            "world.sinkhole_cenote",
+            "world.karst_pinnacles",
+            "program:karst_ponor_cave_mouth"
+          ],
+          "inWorld": [
+            "forest:karst_jungle",
+            "program:world.river_cave_mouth",
+            "program:world.karst_pinnacles",
+            "marker:karst_tower_nw.center",
+            "marker:karst_tower_nw.peak",
+            "marker:karst_tower_nw.foot",
+            "marker:karst_tower_north.center",
+            "marker:karst_tower_north.peak",
+            "marker:karst_tower_north.foot",
+            "marker:karst_tower_east.center",
+            "marker:karst_tower_east.peak",
+            "marker:karst_tower_east.foot"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": true,
+            "by": "world.karst_pinnacles",
+            "blocks": 34472,
+            "footprint": 484,
+            "hovering": false,
+            "medianBlocks": 0,
+            "medianFootprint": 0,
+            "volumeRatio": null,
+            "footprintRatio": null
+          }
+        },
+        {
+          "id": "sinkhole",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.terrain.karst_tower_swallow",
+            "world.terrain.cenote_sinkhole",
+            "world.sinkhole_cenote",
+            "program:cenote_sinkhole",
+            "world.terrain.karst_tower_east"
+          ],
+          "inWorld": [
+            "program:world.sinkhole_cenote",
+            "marker:cenote_sinkhole.center",
+            "marker:cenote_sinkhole.peak",
+            "marker:cenote_sinkhole.foot",
+            "marker:world.sinkhole_cenote"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "cave_river",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.terrain.vanishing_river",
+            "world.subterranean_river_caves",
+            "world.river_cave_mouth",
+            "program:karst_ponor_cave_mouth",
+            "world.terrain.karst_tower_swallow"
+          ],
+          "inWorld": [
+            "program:world.river_cave_mouth",
+            "marker:world.river_cave_mouth",
+            "marker:vanishing_river.head",
+            "marker:vanishing_river.mouth"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "none",
+        "lots": 0,
+        "blocks": 0,
+        "envelope": 0,
+        "lotsPer10k": 0,
+        "floor": 0,
+        "ok": true
+      },
+      "boxes": {
+        "era": "",
+        "preModern": false,
+        "count": 0,
+        "of": 0,
+        "sample": []
+      },
+      "era": {
+        "era": "",
+        "forbidden": [],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 0,
+        "diagnostics": 6
+      },
+      "alarms": []
+    },
+    {
+      "id": "probe_lighthouse",
+      "icons": [
+        {
+          "id": "lighthouse",
+          "dominantRequired": true,
+          "inDocument": [
+            "world.terrain.lighthouse_point_peak",
+            "world.lighthouse_tower",
+            "world.headland_cairn",
+            "world.harbour_lanes",
+            "intent.tokens"
+          ],
+          "inWorld": [
+            "lighthouse_tower",
+            "world.lighthouse_tower",
+            "marker:lighthouse_point_peak.center",
+            "marker:lighthouse_point_peak.peak",
+            "marker:lighthouse_point_peak.foot"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": false,
+            "by": "lighthouse_tower",
+            "height": 22,
+            "footprint": 121,
+            "medianHeight": 12,
+            "medianFootprint": 143,
+            "heightRatio": 1.83,
+            "footprintRatio": 0.85,
+            "base": 88,
+            "medianBase": 76,
+            "elevation": 12,
+            "spanRatio": 0.85,
+            "readRequired": true
+          }
+        },
+        {
+          "id": "harbour",
+          "dominantRequired": false,
+          "inDocument": [
+            "world",
+            "world.terrain.sheltered_harbour_cove",
+            "world.terrain.harbour_village_shelf",
+            "world.the_fog_tavern",
+            "world.fishers_cottage_two",
+            "world.fish_smokehouse",
+            "world.net_drying_frames",
+            "world.harbour_skiff",
+            "world.channel_buoy",
+            "world.harbour_lanes",
+            "intent.tokens",
+            "world.quay"
+          ],
+          "inWorld": [
+            "prop:world.harbour_skiff",
+            "marker:harbour_village_shelf.center",
+            "marker:harbour_village_shelf.peak",
+            "marker:harbour_village_shelf.foot",
+            "marker:sheltered_harbour_cove.head",
+            "marker:sheltered_harbour_cove.mouth",
+            "quay",
+            "prop:world.quay_notice_board",
+            "prop:world.quay_woodpile",
+            "prop:world.main_pier",
+            "net_loft_north",
+            "net_loft_south"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "chapel",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.drowned_chapel",
+            "world.harbour_lanes",
+            "program:chapel_for_the_drowned",
+            "intent.tokens"
+          ],
+          "inWorld": [
+            "drowned_chapel",
+            "program:world.drowned_chapel",
+            "marker:world.drowned_chapel"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "buildings-hull",
+        "lots": 7,
+        "blocks": 0,
+        "envelope": 22630,
+        "lotsPer10k": 3.1,
+        "floor": 3,
+        "ok": true
+      },
+      "boxes": {
+        "era": "medieval",
+        "preModern": true,
+        "count": 0,
+        "of": 7,
+        "sample": []
+      },
+      "era": {
+        "era": "medieval",
+        "forbidden": [],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 0,
+        "diagnostics": 11
+      },
+      "alarms": [
+        "icon lighthouse not dominant by the rule (h×1.83, a×0.85) — read it:  base +12 over the buildings"
+      ]
+    },
+    {
+      "id": "probe_hollow_tree",
+      "icons": [
+        {
+          "id": "baobab",
+          "dominantRequired": true,
+          "inDocument": [
+            "world.terrain.village_rise",
+            "world.baobab_grove",
+            "world.the_great_baobab",
+            "world.canopy_huts",
+            "world.baobab_market",
+            "world.trunk_well",
+            "world.lanes",
+            "program:colossal_baobab",
+            "intent.tokens",
+            "world.savanna_wilderness",
+            "world.lookout_treehouse",
+            "world.ground_market_stall"
+          ],
+          "inWorld": [
+            "the_great_baobab",
+            "baobab_market",
+            "forest:baobab_grove",
+            "program:world.the_great_baobab",
+            "marker:world.the_great_baobab",
+            "prop:world.lookout_treehouse",
+            "prop:world.trunk_well"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": true,
+            "by": "the_great_baobab",
+            "height": 52,
+            "footprint": 4096,
+            "medianHeight": 12,
+            "medianFootprint": 99,
+            "heightRatio": 4.33,
+            "footprintRatio": 41.37,
+            "base": 73,
+            "medianBase": 73,
+            "elevation": 0,
+            "spanRatio": 5.82
+          }
+        },
+        {
+          "id": "platforms",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.canopy_huts",
+            "program:canopy_platform_house",
+            "intent.tokens",
+            "world.lookout_treehouse"
+          ],
+          "inWorld": [
+            "program:world.canopy_huts",
+            "prop:world.lookout_treehouse"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "market",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.baobab_market",
+            "world.ground_market_stall",
+            "world.market_barrow_prop",
+            "world.lanes",
+            "intent.tokens"
+          ],
+          "inWorld": [
+            "baobab_market",
+            "ground_market_stall",
+            "world.ground_market_stall",
+            "prop:world.market_barrow_prop",
+            "marker:world.the_great_baobab"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "buildings-hull",
+        "lots": 10,
+        "blocks": 0,
+        "envelope": 33735,
+        "lotsPer10k": 3,
+        "floor": 3,
+        "ok": true
+      },
+      "boxes": {
+        "era": "medieval",
+        "preModern": true,
+        "count": 0,
+        "of": 10,
+        "sample": []
+      },
+      "era": {
+        "era": "medieval",
+        "forbidden": [
+          "skyscraper",
+          "office",
+          "apartment_block",
+          "factory_hall"
+        ],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 1,
+        "diagnostics": 11
+      },
+      "alarms": []
+    }
+  ]
+}

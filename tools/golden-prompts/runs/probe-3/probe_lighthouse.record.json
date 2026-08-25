@@ -1,0 +1,159 @@
+{
+  "id": "probe_lighthouse",
+  "family": "probe",
+  "kit": "settlement",
+  "prompt": "A fog-bound fishing harbour on a rocky Atlantic headland: a stone lighthouse on the point above the boats, net lofts along the quay, a chapel for the drowned.",
+  "seed": 915,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.35,
+    "decline": 0.2,
+    "formality": 0.15,
+    "climate": {
+      "temperature": -0.2,
+      "humidity": 0.8
+    },
+    "character": {
+      "label": "fog-bound fishing harbour",
+      "materialTheme": "temperate_timber",
+      "archetypes": {
+        "prefer": [
+          "lighthouse",
+          "cottage",
+          "tavern",
+          "warehouse",
+          "church"
+        ]
+      },
+      "urbanForm": "grown",
+      "motifs": {
+        "roofType": "gable",
+        "massing": "blocky"
+      }
+    },
+    "tokens": {
+      "terrain": "a rocky Atlantic headland jutting into open cold sea with a sheltered fishing harbour below",
+      "icons": "a stone lighthouse on the high rocky point above the moored boats; weathered net lofts and fish houses along the stone quay; a small stone chapel for the drowned overlooking the water"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 186382,
+    "completionTokens": 31300,
+    "cost": 0.1286
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 28,
+    "maxDepth": 2,
+    "generators": [
+      "authored:chapel_for_the_drowned",
+      "building.grammar@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "cannery",
+      "chapel",
+      "church",
+      "cottage",
+      "inn",
+      "lighthouse",
+      "tavern",
+      "warehouse"
+    ],
+    "archetypesInCatalog": 8,
+    "formPacks": [],
+    "props": [
+      "buoy",
+      "cairn",
+      "fishing_sloop",
+      "fishing_trawler",
+      "log_pile",
+      "notice_board",
+      "pier",
+      "rowboat"
+    ],
+    "species": [
+      "bent_oak",
+      "lone_pine",
+      "squat_pine",
+      "tall_pine"
+    ],
+    "envelopes": [
+      "512x512",
+      "26x22",
+      "11x22x11",
+      "13x11x11",
+      "11x10x13",
+      "13x11x13",
+      "9x10x9",
+      "9x8x9",
+      "11x11x13"
+    ],
+    "constraints": 25,
+    "constraintKinds": [
+      "adjacent_to",
+      "at",
+      "blend",
+      "distance",
+      "facing",
+      "gap",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform"
+    ],
+    "constraintsWithStrength": 11,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 7,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 27,
+    "eras": [
+      "medieval"
+    ],
+    "bytes": 44246
+  },
+  "wallMs": 489000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 2,
+    "feedbackRounds": 0,
+    "programs": [
+      "ok chapel_for_the_drowned [landmark] 1 attempt(s), 30645 tokens ($0.0525), 7 warning(s)",
+      "ok drying_racks_and_net_frames [plugin] 1 attempt(s), 28112 tokens ($0.0478), 3 warning(s)"
+    ],
+    "programCost": 0.1017,
+    "totalCost": 0.2303,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/probe3/gen/probe_lighthouse/out/fog_headland_harbour",
+    "finalDiagnostics": {
+      "LOAM-I502": 1,
+      "LOAM-T208": 1,
+      "LOAM-W522": 1,
+      "LOAM-T228": 1,
+      "LOAM-I463": 1,
+      "LOAM-I497": 1,
+      "LOAM-T341": 1,
+      "LOAM-W337": 2,
+      "LOAM-T342": 1,
+      "LOAM-W470": 1
+    },
+    "crash": [],
+    "docName": "fog_headland_harbour.loam.json"
+  }
+}

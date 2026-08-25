@@ -1,0 +1,150 @@
+{
+  "id": "probe_river_forts",
+  "family": "probe",
+  "kit": "settlement",
+  "prompt": "Two rival river forts on opposite banks of a wide river, each with its own bridgehead, and a half-built stone bridge that stops in the middle of the water.",
+  "seed": 912,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "era": "medieval",
+    "climate": {
+      "humidity": 0.2
+    },
+    "tokens": {
+      "terrain": "a wide river separating two opposite riverbanks; a fortified river fort and bridgehead on each bank facing each other; a half-built stone bridge extending into the water from the banks and breaking off in the middle",
+      "event_direction": "two rival forts facing off across the wide river toward the half-built bridge between them",
+      "region_river_fort_alpha": "era medieval, wealth 0.5, formality 0.7, materialTheme temperate_timber; fortification walled; prefer archetypes watchtower, gatehouse, barracks, armoury, dock; props ballista, crane, scaffolding, brazier, banner; heavily fortified bridgehead on the riverbank",
+      "region_river_fort_beta": "era medieval, wealth 0.5, formality 0.7, materialTheme temperate_timber; fortification walled; prefer archetypes watchtower, gatehouse, barracks, armoury, dock; props ballista, crane, scaffolding, brazier, banner; rival fortified bridgehead on the opposing bank",
+      "icons": "half-finished stone bridge piers and arches ending abruptly mid-stream with abandoned scaffolding; fortified bridgehead gatehouses on each shore; rival watchtowers and artillery emplacements pointed across the water"
+    }
+  },
+  "attempts": 2,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 388759,
+    "completionTokens": 69599,
+    "cost": 0.2763
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 31,
+    "maxDepth": 2,
+    "generators": [
+      "authored:half_built_bridge",
+      "building.grammar@0",
+      "infra.entry@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "armory",
+      "arsenal",
+      "barracks",
+      "beacon_tower",
+      "castle",
+      "checkpoint",
+      "cottage",
+      "gatehouse",
+      "granary",
+      "guard_post",
+      "inn",
+      "keep",
+      "smithy",
+      "tavern",
+      "warehouse",
+      "watchtower"
+    ],
+    "archetypesInCatalog": 16,
+    "formPacks": [],
+    "props": [
+      "cart",
+      "covered_wagon",
+      "log_pile",
+      "pier",
+      "rowboat"
+    ],
+    "species": [
+      "boreal_spruce",
+      "plain_oak",
+      "scrub_spruce",
+      "slim_birch",
+      "spreading_oak"
+    ],
+    "envelopes": [
+      "512x512",
+      "110x110",
+      "13x16x11",
+      "15x18x15",
+      "110x110",
+      "13x16x11",
+      "15x18x15",
+      "160x26x32"
+    ],
+    "constraints": 7,
+    "constraintKinds": [
+      "at",
+      "blend",
+      "distance",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform"
+    ],
+    "constraintsWithStrength": 2,
+    "hardConstraints": 0,
+    "forests": 3,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 4,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 29,
+    "eras": [
+      "medieval",
+      "medieval",
+      "medieval"
+    ],
+    "bytes": 54287
+  },
+  "wallMs": 692000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 3,
+    "feedbackRounds": 2,
+    "programs": [
+      "ok half_built_bridge [landmark] 1 attempt(s), 28012 tokens ($0.0474), 26 warning(s)",
+      "ok river_ballista [plugin] 1 attempt(s), 28830 tokens ($0.0490), 28 warning(s)"
+    ],
+    "programCost": 0.0964,
+    "totalCost": 0.3727,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/probe3/gen/probe_river_forts/out/rival_river_forts",
+    "finalDiagnostics": {
+      "LOAM-W330": 1,
+      "LOAM-T208": 1,
+      "LOAM-W520": 1,
+      "LOAM-T242": 1,
+      "LOAM-T223": 1,
+      "LOAM-W483": 1,
+      "LOAM-I412": 2,
+      "LOAM-I463": 4,
+      "LOAM-T228": 1,
+      "LOAM-I497": 1,
+      "LOAM-W413": 1,
+      "LOAM-I524": 1,
+      "LOAM-T234": 1,
+      "LOAM-T341": 2,
+      "LOAM-W470": 1
+    },
+    "crash": [],
+    "docName": "rival_river_forts.loam.json"
+  }
+}

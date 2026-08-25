@@ -1,0 +1,85 @@
+{
+  "$comment": "Probe pass 3 (Stocktake Run unit 33): six new prompts, one per spec §6 category, none of probes.json's. G4 counts these six. Run through the program stage: `generate-all.mjs <out> 3 \"\" tools/golden-prompts/probes-3.json`, then `record-generate-run.mjs <out> runs/probe-3 probe-3 tools/golden-prompts/probes-3.json` and `icon-metric.mjs runs/probe-3 --prompts tools/golden-prompts/probes-3.json`.",
+  "defaults": { "kit": "settlement", "size": 512 },
+  "prompts": [
+    {
+      "id": "probe_horde_camp",
+      "family": "probe",
+      "seed": 911,
+      "prompt": "A nomad horde's camp on the open steppe: rings of felt yurts around the khan's great tent, horse lines and a wooden watch tower, the grass stretching to every horizon.",
+      "watches": ["steppe_nomad pack at 0 % reach", "a settlement with no streets — rings, not a grid", "the great tent as the centerpiece (F27's paragraph, fresh)"],
+      "icons": [
+        { "id": "great_tent", "terms": ["great tent", "khan", "ger", "pavilion", "tent"], "dominant": true },
+        { "id": "yurts", "terms": ["yurt", "ger", "felt", "tent"] },
+        { "id": "horses", "terms": ["horse", "picket", "corral", "paddock"] }
+      ],
+      "densityFloor": 3
+    },
+    {
+      "id": "probe_river_forts",
+      "family": "probe",
+      "seed": 912,
+      "prompt": "Two rival river forts on opposite banks of a wide river, each with its own bridgehead, and a half-built stone bridge that stops in the middle of the water.",
+      "watches": ["two places again, with the water authored between them — F26's note now fires", "the broken bridge — a bespoke program that must meet water", "two fortifications facing each other"],
+      "icons": [
+        { "id": "broken_bridge", "terms": ["bridge", "span", "pier", "arch"], "dominant": true },
+        { "id": "forts", "terms": ["fort", "bastion", "keep", "tower", "wall"] },
+        { "id": "river", "terms": ["river", "bank", "ford", "water"] }
+      ],
+      "densityFloor": 3
+    },
+    {
+      "id": "probe_mammoth_camp",
+      "family": "probe",
+      "seed": 913,
+      "prompt": "A Stone Age mammoth-hunters' camp at the foot of an ice sheet: huts of mammoth bone and hide, drying racks, a kill site on the tundra with the skeleton still in the snow.",
+      "watches": ["an era before any pack — what the model reaches for", "T9 with no pack to lean on", "the skeleton as a bespoke program on open ground"],
+      "icons": [
+        { "id": "mammoth", "terms": ["mammoth", "tusk", "skeleton", "bone", "kill"], "dominant": true },
+        { "id": "bone_huts", "terms": ["hut", "tent", "hide", "shelter"] },
+        { "id": "ice_sheet", "terms": ["ice", "glacier", "sheet", "snow", "tundra"] }
+      ],
+      "densityFloor": 2
+    },
+    {
+      "id": "probe_karst",
+      "family": "probe",
+      "seed": 914,
+      "kit": "terrain",
+      "prompt": "A tropical karst landscape: limestone towers rising out of a flooded plain, a sinkhole lake, and a river that vanishes into the mouth of a cave — no settlement of any kind.",
+      "watches": ["terrain-only, the terrain kit, a second time", "towers as raises, a sinkhole as a basin, the river into a cave (cave.carver)", "water that must hold (T110)"],
+      "icons": [
+        { "id": "karst_towers", "terms": ["karst", "tower", "pinnacle", "limestone", "pillar"], "dominant": true },
+        { "id": "sinkhole", "terms": ["sinkhole", "cenote", "basin", "lake"] },
+        { "id": "cave_river", "terms": ["cave", "river", "vanish", "underground"] }
+      ],
+      "densityFloor": 0
+    },
+    {
+      "id": "probe_lighthouse",
+      "family": "probe",
+      "seed": 915,
+      "prompt": "A fog-bound fishing harbour on a rocky Atlantic headland: a stone lighthouse on the point above the boats, net lofts along the quay, a chapel for the drowned.",
+      "watches": ["the icon lives in a pack or the catalog (a lighthouse) — reached for, or written as a program", "a harbour precinct on a headland", "the lighthouse must stand above the roofs (F27)"],
+      "icons": [
+        { "id": "lighthouse", "terms": ["lighthouse", "beacon", "light", "tower"], "dominant": true },
+        { "id": "harbour", "terms": ["harbour", "harbor", "quay", "pier", "boat", "net"] },
+        { "id": "chapel", "terms": ["chapel", "church", "shrine"] }
+      ],
+      "densityFloor": 3
+    },
+    {
+      "id": "probe_hollow_tree",
+      "family": "probe",
+      "seed": 916,
+      "prompt": "A village built in and around one colossal hollow baobab: the market inside its trunk, rope bridges from its branches to platform houses, ladders and lanterns up the bark.",
+      "watches": ["T8, a bespoke the town lives in (the sky-whale's cousin)", "the tree must dominate by height — the clean case for the rule", "bridges and platforms as programs that must meet the tree"],
+      "icons": [
+        { "id": "baobab", "terms": ["baobab", "tree", "trunk", "hollow", "colossal"], "dominant": true },
+        { "id": "platforms", "terms": ["platform", "treehouse", "branch", "bridge", "rope"] },
+        { "id": "market", "terms": ["market", "bazaar", "stall"] }
+      ],
+      "densityFloor": 3
+    }
+  ]
+}

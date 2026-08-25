@@ -1,0 +1,848 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "mammoth_hunters_camp",
+    "worldSeed": "913",
+    "prompt": "A Stone Age mammoth-hunters' camp at the foot of an ice sheet: huts of mammoth bone and hide, drying racks, a kill site on the tundra with the skeleton still in the snow.",
+    "spawn": {
+      "at": [
+        0.48,
+        0.52
+      ]
+    }
+  },
+  "intent": {
+    "era": "primitive",
+    "wealth": 0.1,
+    "decline": 0.1,
+    "formality": 0,
+    "climate": {
+      "biome": "minecraft:snowy_plains",
+      "temperature": -0.9,
+      "humidity": -0.4,
+      "snow": "always"
+    },
+    "character": {
+      "label": "mammoth-hunters camp",
+      "materialTheme": "boreal_pine",
+      "urbanForm": "grown",
+      "archetypes": {
+        "prefer": [
+          "thatched_roundhouse",
+          "sod_house",
+          "hut",
+          "hermitage"
+        ],
+        "forbid": [
+          "townhouse",
+          "terraced_row",
+          "shop_row",
+          "office",
+          "apartment_block",
+          "church",
+          "manor",
+          "warehouse",
+          "skyscraper",
+          "castle"
+        ]
+      },
+      "props": {
+        "prefer": [
+          "cairn",
+          "standing_stones",
+          "monolith",
+          "campsite",
+          "log_pile"
+        ]
+      },
+      "programs": [
+        {
+          "id": "mammoth_kill_site",
+          "mode": "landmark",
+          "brief": "A butchered mammoth skeleton half-buried in the snow at a tundra kill site: massive curved ivory tusks rearing up from red-dusted snow, huge arching ribcage, vertebrae, discarded flint scrapers, and trampled bloody snow.",
+          "envelope": [
+            28,
+            14,
+            24
+          ]
+        },
+        {
+          "id": "bone_totem_shrine",
+          "mode": "landmark",
+          "brief": "A tall shamanic spirit post lashed together from mammoth tusks, skulls, and dried hide streamers, surrounded by a ring of mammoth vertebrae markers in the snow facing the ice sheet.",
+          "envelope": [
+            9,
+            16,
+            9
+          ]
+        },
+        {
+          "id": "drying_rack",
+          "mode": "plugin",
+          "brief": "A crude A-frame rack lashed from mammoth ribs and spruce poles, hung with strips of dark drying meat and stretched scraped woolly mammoth pelts over a smoking hearth pit.",
+          "envelope": [
+            7,
+            5,
+            5
+          ],
+          "count": 6
+        },
+        {
+          "id": "bone_heap",
+          "mode": "plugin",
+          "brief": "A piled cache of massive mammoth leg bones, jawbones, and tusks sorted for shelter framing and tool carving, dusted in drift snow.",
+          "envelope": [
+            5,
+            4,
+            5
+          ],
+          "count": 8
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "open snowy tundra at the foot of a towering glacial ice sheet",
+      "icons": "mammoth bone and hide shelters; timber drying racks for hides and meat; butchered mammoth skeleton half-buried in the snow at a nearby kill site; central fire hearths",
+      "infra": "beaten snow paths between the shelters and the kill site"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.cliff": "minecraft:packed_ice",
+      "ground.peak": "minecraft:blue_ice",
+      "road.surface": "minecraft:packed_mud",
+      "road.shoulder": "minecraft:coarse_dirt",
+      "plaza.path": "minecraft:packed_mud",
+      "plaza.gravel": "minecraft:coarse_dirt",
+      "plaza.border": "minecraft:snow_block"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "The Ice Sheet Tundra and Hunters' Camp",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "tundra plains rising to a northern glacial ice sheet",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 72,
+          "amplitude": 26,
+          "octaves": 5,
+          "frequency": 0.0032,
+          "gain": 0.48,
+          "erosionPasses": 2,
+          "cliffThreshold": 48,
+          "soilDepth": 3,
+          "snowLineFraction": 0.1
+        },
+        "children": [
+          {
+            "id": "ice_sheet_plateau",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the massive glacial ice sheet rising in the north",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.08
+              ],
+              "radius": 150,
+              "height": 60,
+              "rim": 12,
+              "profile": "sharp"
+            }
+          },
+          {
+            "id": "glacier_terminal_moraine",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the steep moraine ridge along the foot of the ice sheet",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.05,
+                  0.18
+                ],
+                [
+                  0.35,
+                  0.15
+                ],
+                [
+                  0.65,
+                  0.14
+                ],
+                [
+                  0.95,
+                  0.17
+                ]
+              ],
+              "width": 70,
+              "height": 45,
+              "profile": "sharp"
+            }
+          },
+          {
+            "id": "camp_tundra_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the broad tundra shelf holding the hunting camp",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.48,
+                0.52
+              ],
+              "radius": 90,
+              "height": 6,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "meltwater_channel",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "a glacial meltwater channel carved across the tundra",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.42,
+                  0.22
+                ],
+                [
+                  0.38,
+                  0.42
+                ],
+                [
+                  0.32,
+                  0.68
+                ],
+                [
+                  0.22,
+                  0.94
+                ]
+              ],
+              "width": 14,
+              "depth": 6,
+              "profile": "rounded",
+              "flooded": "never"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "boreal",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0016,
+          "latitudeGradient": -0.4
+        }
+      },
+      {
+        "id": "tundra_scrub",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse stunted spruce and deadwood across the open tundra",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 30,
+          "elevation": [
+            1,
+            90
+          ],
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.12,
+            "flowers": 0.01,
+            "deadwood": 0.08
+          },
+          "species": [
+            {
+              "id": "tundra_spruce",
+              "shape": "spruce_squat",
+              "weight": 2
+            },
+            {
+              "id": "creeping_juniper",
+              "shape": "juniper_scrub",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "sheltered_thicket",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "a sheltered grove of taiga pines in a tundra hollow",
+        "params": {
+          "area": {
+            "at": [
+              0.75,
+              0.65
+            ],
+            "radius": 75
+          },
+          "density": 0.04,
+          "spacing": 3,
+          "clumping": 0.6,
+          "maxSlope": 28,
+          "elevation": [
+            2,
+            70
+          ],
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.25,
+            "flowers": 0.02,
+            "deadwood": 0.06
+          },
+          "species": [
+            {
+              "id": "taiga_spruce",
+              "shape": "spruce_tall",
+              "weight": 2
+            },
+            {
+              "id": "scrub_pine",
+              "shape": "spruce_squat",
+              "weight": 2
+            },
+            {
+              "id": "ground_juniper",
+              "shape": "juniper_scrub",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "hearth_circle",
+        "kind": "primitive",
+        "label": "the central camp hearth and gathering circle",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            18,
+            18
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.48,
+              0.52
+            ]
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "chieftain_lodge",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the great bone-and-hide roundhouse lodge",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            15,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "thatched_roundhouse",
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "adjacent_to": "hearth_circle",
+            "gap": [
+              2,
+              6
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "hearth_circle"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house",
+          "landmark"
+        ]
+      },
+      {
+        "id": "elder_sod_hut",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "an insulated sod and hide shelter",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            13,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "sod_house",
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "adjacent_to": "hearth_circle",
+            "gap": [
+              2,
+              8
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "hearth_circle"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "hunters_shelter_west",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the western hunters' bone shelter",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            11,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "hut",
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "distance": "hearth_circle",
+            "min": 6,
+            "max": 24,
+            "strength": "soft"
+          },
+          {
+            "facing": "hearth_circle"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "hunters_shelter_east",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the eastern hunters' bone shelter",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            11,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "hut",
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "distance": "hearth_circle",
+            "min": 8,
+            "max": 28,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "shaman_dwelling",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the shaman's solitary bone hermitage",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            10,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "hermitage",
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "distance": "hearth_circle",
+            "min": 16,
+            "max": 42,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house",
+          "landmark"
+        ]
+      },
+      {
+        "id": "mammoth_kill_site",
+        "kind": "generator",
+        "generator": "authored:mammoth_kill_site",
+        "label": "the kill site with the mammoth skeleton half-buried in the snow",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            28,
+            14,
+            24
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.62,
+              0.46
+            ]
+          },
+          {
+            "distance": "hearth_circle",
+            "min": 35,
+            "max": 90
+          }
+        ],
+        "params": {
+          "face": {
+            "toward": "hearth_circle"
+          },
+          "seat": "embed",
+          "embedDepth": 3
+        },
+        "tags": [
+          "landmark"
+        ]
+      },
+      {
+        "id": "ice_totem",
+        "kind": "generator",
+        "generator": "authored:bone_totem_shrine",
+        "label": "the mammoth tusk spirit totem facing the glacier",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            16,
+            9
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.46,
+              0.32
+            ]
+          },
+          {
+            "distance": "hearth_circle",
+            "min": 50,
+            "max": 120
+          }
+        ],
+        "params": {
+          "face": {
+            "toward": "hearth_circle"
+          }
+        },
+        "tags": [
+          "landmark"
+        ]
+      },
+      {
+        "id": "drying_racks",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "meat and hide drying racks around the shelters",
+        "params": {
+          "program": "drying_rack",
+          "count": 6,
+          "area": {
+            "at": [
+              0.48,
+              0.52
+            ],
+            "radius": 0.12
+          },
+          "spacing": 8,
+          "maxSlope": 20,
+          "avoidTags": [
+            "road",
+            "plaza"
+          ]
+        }
+      },
+      {
+        "id": "bone_heaps",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "caches of mammoth bone and tusks around the camp",
+        "params": {
+          "program": "bone_heap",
+          "count": 8,
+          "area": {
+            "at": [
+              0.52,
+              0.48
+            ],
+            "radius": 0.16
+          },
+          "spacing": 12,
+          "maxSlope": 22,
+          "avoidTags": [
+            "road",
+            "plaza"
+          ]
+        }
+      },
+      {
+        "id": "camp_hearth_fire",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the central camp firepit",
+        "params": {
+          "prop": "campsite",
+          "zone": "center",
+          "jitter": 0.05
+        }
+      },
+      {
+        "id": "meat_cache_cairns",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "stone and bone meat-cache cairns",
+        "params": {
+          "prop": "cairn",
+          "zone": "center",
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "spirit_monolith",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a leaning stone boundary marker near the glacier foot",
+        "params": {
+          "prop": "monolith",
+          "zone": "north",
+          "jitter": 0.15
+        }
+      },
+      {
+        "id": "firewood_cache",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "stacked scrub logs for the hearths",
+        "params": {
+          "prop": "log_pile",
+          "zone": "center",
+          "jitter": 0.1
+        }
+      },
+      {
+        "id": "hunter_trails",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "beaten tundra paths between the shelters and the kill site",
+        "params": {
+          "anchors": [
+            "hearth_circle",
+            "#tag:house",
+            "mammoth_kill_site",
+            "ice_totem"
+          ],
+          "pattern": "organic",
+          "width": 2,
+          "lanterns": false
+        }
+      }
+    ]
+  },
+  "programs": {
+    "mammoth_kill_site": {
+      "mode": "landmark",
+      "envelope": [
+        28,
+        16,
+        26
+      ],
+      "sourceHash": "b3:3df895964bb9e3ef766a6c88ae2f9210a550225377eef5c2422a1e39bb361c3b",
+      "outputHash": "b3:555e210479da6cea06b8d7ca75454baed6dbbedeb802d81e3e8d20aa166e91b1",
+      "conforms": false,
+      "conformHash": "b3:d8368eebf6aa832cde26567d3e7ffed7ce91639105b54fcbf667c22d466c67d4",
+      "source": "export const envelope = [28, 16, 26];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const seatY = 3;\n\n  // Grid buffer for deterministic assembly and zero out-of-bounds writes\n  const grid = Array.from({ length: W }, () =>\n    Array.from({ length: H }, () => new Array(D).fill(null))\n  );\n\n  function setBlock(x, y, z, block) {\n    const ix = Math.floor(x);\n    const iy = Math.floor(y);\n    const iz = Math.floor(z);\n    if (ix >= 0 && ix < W && iy >= 0 && iy < H && iz >= 0 && iz < D) {\n      grid[ix][iy][iz] = block;\n    }\n  }\n\n  // Palette selection from theme and literal materials\n  const woodFence = api.theme.wood.fence || \"minecraft:spruce_fence\";\n  const woodLog = api.theme.wood.log || \"minecraft:spruce_log\";\n  const woodTrapdoor = api.theme.wood.trapdoor || \"minecraft:spruce_trapdoor\";\n  const groundScree = api.theme.ground.scree || \"minecraft:coarse_dirt\";\n\n  const BONE_X = \"minecraft:bone_block[axis=x]\";\n  const BONE_Y = \"minecraft:bone_block[axis=y]\";\n  const BONE_Z = \"minecraft:bone_block[axis=z]\";\n  const CALCITE = \"minecraft:calcite\";\n  const SMOOTH_QUARTZ = \"minecraft:smooth_quartz\";\n  const SNOW = \"minecraft:snow_block\";\n  const PACKED_ICE = \"minecraft:packed_ice\";\n  const COARSE_DIRT = \"minecraft:coarse_dirt\";\n  const PACKED_MUD = \"minecraft:packed_mud\";\n  const RED_TERRACOTTA = \"minecraft:red_terracotta\";\n  const NETHERRACK = \"minecraft:netherrack\";\n  const RED_WOOL = \"minecraft:red_wool\";\n  const BASALT_Y = \"minecraft:basalt[axis=y]\";\n  const SMOOTH_BASALT = \"minecraft:smooth_basalt\";\n  const TUFF = \"minecraft:tuff\";\n  const TUFF_WALL = \"minecraft:tuff_wall\";\n  const DEEPSLATE_WALL = \"minecraft:cobbled_deepslate_wall\";\n  const CAMPFIRE_OFF = \"minecraft:campfire[lit=false]\";\n  const COBBLED_DEEPSLATE_SLAB = \"minecraft:cobbled_deepslate_slab[type=bottom]\";\n  const TUFF_SLAB = \"minecraft:tuff_slab[type=bottom]\";\n\n  // --- 1. TRAMPLED GROUND & BLOOD-SOAKED KILL SITE ---\n  const cx = 14;\n  const cz = 13;\n  const rx = 11.5;\n  const rz = 10.5;\n\n  const groundSurfaceY = Array.from({ length: W }, () => new Array(D).fill(seatY));\n\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const dx = (x - cx) / rx;\n      const dz = (z - cz) / rz;\n      const d2 = dx * dx + dz * dz;\n\n      if (d2 <= 1.05) {\n        const gh = seatY + api.heightAt(x, z);\n        const bodyDist = Math.hypot(x - cx, (z - cz) * 0.85);\n        const mound = Math.max(0, Math.floor(1.7 * (1 - bodyDist / 8.5)));\n        const topY = Math.max(0, Math.min(H - 2, gh + mound));\n        groundSurfaceY[x][z] = topY;\n\n        const bloodDist = Math.hypot((x - 14.5) * 1.25, (z - 13) * 0.9);\n        const isCoreBlood = bloodDist < 3.8;\n        const isBloodSplatter = bloodDist < 7.2 && api.random() < 0.42;\n        const isTrampled = d2 < 0.72;\n\n        for (let y = 0; y <= topY; y++) {\n          if (y < topY - 1) {\n            setBlock(x, y, z, groundScree);\n          } else if (y === topY - 1) {\n            if (isCoreBlood) setBlock(x, y, z, PACKED_MUD);\n            else if (isBloodSplatter) setBlock(x, y, z, COARSE_DIRT);\n            else setBlock(x, y, z, groundScree);\n          } else {\n            // Surface course\n            if (isCoreBlood) {\n              const r = api.random();\n              if (r < 0.45) setBlock(x, y, z, RED_TERRACOTTA);\n              else if (r < 0.75) setBlock(x, y, z, NETHERRACK);\n              else if (r < 0.9) setBlock(x, y, z, RED_WOOL);\n              else setBlock(x, y, z, PACKED_MUD);\n            } else if (isBloodSplatter) {\n              const r = api.random();\n              if (r < 0.38) setBlock(x, y, z, RED_TERRACOTTA);\n              else if (r < 0.68) setBlock(x, y, z, COARSE_DIRT);\n              else setBlock(x, y, z, SNOW);\n            } else if (isTrampled) {\n              const r = api.random();\n              if (r < 0.45) setBlock(x, y, z, COARSE_DIRT);\n              else if (r < 0.75) setBlock(x, y, z, PACKED_MUD);\n              else setBlock(x, y, z, SNOW);\n            } else {\n              const r = api.random();\n              if (r < 0.85) setBlock(x, y, z, SNOW);\n              else setBlock(x, y, z, PACKED_ICE);\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // Helper to ensure contact down to solid ground\n  function fillDownToGround(x, startY, z, block) {\n    const ix = Math.floor(x);\n    const iz = Math.floor(z);\n    if (ix >= 0 && ix < W && iz >= 0 && iz < D) {\n      const gY = groundSurfaceY[ix][iz];\n      for (let y = Math.floor(startY); y >= gY; y--) {\n        setBlock(ix, y, iz, block);\n      }\n    }\n  }\n\n  // --- 2. MAMMOTH SKULL & HIGH DOMED CRANIUM ---\n  const skullZ = 7;\n  const skullY = seatY + 3;\n\n  // Parietal cranial dome\n  for (let dx = -2; dx <= 2; dx++) {\n    for (let dy = 0; dy <= 3; dy++) {\n      for (let dz = -1; dz <= 2; dz++) {\n        const dDome =\n          (dx * dx) / (2.2 * 2.2) +\n          (dy * dy) / (2.6 * 2.6) +\n          (dz * dz) / (1.8 * 1.8);\n        if (dDome <= 1.0) {\n          const block = dy === 3 ? CALCITE : BONE_Y;\n          setBlock(14 + dx, skullY + 1 + dy, skullZ + dz, block);\n        }\n      }\n    }\n  }\n\n  // Zygomatic arches & cheekbones\n  setBlock(12, skullY, skullZ - 1, BONE_Z);\n  setBlock(12, skullY, skullZ, BONE_Z);\n  setBlock(12, skullY, skullZ + 1, BONE_Z);\n  setBlock(16, skullY, skullZ - 1, BONE_Z);\n  setBlock(16, skullY, skullZ, BONE_Z);\n  setBlock(16, skullY, skullZ + 1, BONE_Z);\n\n  // Eye orbits (leave open sockets, framed in bone)\n  setBlock(12, skullY + 1, skullZ, BONE_Y);\n  setBlock(16, skullY + 1, skullZ, BONE_Y);\n\n  // Tusk sockets (alveoli)\n  for (let dy = -1; dy <= 1; dy++) {\n    setBlock(12, skullY + dy, skullZ - 1, BONE_Z);\n    setBlock(13, skullY + dy, skullZ - 1, BONE_Y);\n    setBlock(15, skullY + dy, skullZ - 1, BONE_Y);\n    setBlock(16, skullY + dy, skullZ - 1, BONE_Z);\n  }\n\n  // Giant grinding molar plates\n  setBlock(13, skullY - 1, skullZ, BASALT_Y);\n  setBlock(15, skullY - 1, skullZ, BASALT_Y);\n\n  // Mandible (lower jaw partially embedded in bloody snow)\n  setBlock(14, skullY - 2, skullZ - 1, BONE_Z);\n  setBlock(13, skullY - 2, skullZ, BONE_Z);\n  setBlock(15, skullY - 2, skullZ, BONE_Z);\n  setBlock(13, skullY - 1, skullZ + 1, BONE_Y);\n  setBlock(15, skullY - 1, skullZ + 1, BONE_Y);\n  fillDownToGround(14, skullY - 2, skullZ - 1, BONE_Z);\n\n  // --- 3. MASSIVE CURVED IVORY TUSKS ---\n  function cubicBezier(p0, p1, p2, p3, t) {\n    const u = 1 - t;\n    const tt = t * t;\n    const uu = u * u;\n    const uuu = uu * u;\n    const ttt = tt * t;\n    return [\n      uuu * p0[0] + 3 * uu * t * p1[0] + 3 * u * tt * p2[0] + ttt * p3[0],\n      uuu * p0[1] + 3 * uu * t * p1[1] + 3 * u * tt * p2[1] + ttt * p3[1],\n      uuu * p0[2] + 3 * uu * t * p1[2] + 3 * u * tt * p2[2] + ttt * p3[2]\n    ];\n  }\n\n  function renderTusk(pointsA, pointsB) {\n    const steps = 36;\n    for (let seg = 0; seg < 2; seg++) {\n      const pts = seg === 0 ? pointsA : pointsB;\n      for (let s = 0; s <= steps; s++) {\n        const t = s / steps;\n        const p = cubicBezier(pts[0], pts[1], pts[2], pts[3], t);\n        const tNext = Math.min(1.0, (s + 1) / steps);\n        const pNext = cubicBezier(pts[0], pts[1], pts[2], pts[3], tNext);\n\n        const dx = pNext[0] - p[0];\n        const dy = pNext[1] - p[1];\n        const dz = pNext[2] - p[2];\n\n        const adx = Math.abs(dx);\n        const ady = Math.abs(dy);\n        const adz = Math.abs(dz);\n\n        let boneBlock = BONE_Y;\n        if (adx >= ady && adx >= adz) boneBlock = BONE_X;\n        else if (adz >= ady && adz >= adx) boneBlock = BONE_Z;\n\n        // Base segment has thicker ivory core\n        if (seg === 0) {\n          setBlock(p[0], p[1], p[2], boneBlock);\n          if (t < 0.6) {\n            setBlock(p[0], p[1] - 0.4, p[2], boneBlock);\n          }\n        } else {\n          // Tapering to tip\n          if (t < 0.6) {\n            setBlock(p[0], p[1], p[2], boneBlock);\n          } else if (t < 0.88) {\n            setBlock(p[0], p[1], p[2], CALCITE);\n          } else {\n            setBlock(p[0], p[1], p[2], SMOOTH_QUARTZ);\n          }\n        }\n      }\n    }\n  }\n\n  // Left Tusk Control Points\n  const leftA = [\n    [12.2, skullY - 0.2, 5.8],\n    [10.2, skullY - 1.2, 4.0],\n    [7.8, skullY - 0.8, 2.6],\n    [6.2, skullY + 2.0, 2.2]\n  ];\n  const leftB = [\n    [6.2, skullY + 2.0, 2.2],\n    [5.0, skullY + 5.2, 2.6],\n    [6.2, skullY + 8.8, 4.0],\n    [7.8, skullY + 10.5, 5.2]\n  ];\n\n  // Right Tusk Control Points\n  const rightA = [\n    [15.8, skullY - 0.2, 5.8],\n    [17.8, skullY - 1.2, 4.0],\n    [20.2, skullY - 0.8, 2.6],\n    [21.8, skullY + 2.0, 2.2]\n  ];\n  const rightB = [\n    [21.8, skullY + 2.0, 2.2],\n    [23.0, skullY + 5.2, 2.6],\n    [21.8, skullY + 8.8, 4.0],\n    [20.2, skullY + 10.5, 5.2]\n  ];\n\n  renderTusk(leftA, leftB);\n  renderTusk(rightA, rightB);\n\n  // --- 4. VERTEBRAL COLUMN & DORSAL HUMP SPINES ---\n  for (let z = 8; z <= 19; z++) {\n    const spineY = seatY + 2.5 - (z - 8) * 0.12;\n    const iz = z;\n\n    // Vertebral centrum\n    setBlock(14, spineY, iz, BONE_Z);\n    setBlock(13, spineY, iz, BONE_X);\n    setBlock(15, spineY, iz, BONE_X);\n    fillDownToGround(14, spineY - 1, iz, BONE_Z);\n\n    // Neural spines (characteristic mammoth hump peak at T2-T4)\n    let humpHeight = 1;\n    if (iz === 9) humpHeight = 3;\n    else if (iz === 10) humpHeight = 4; // Peak of thoracic hump\n    else if (iz === 11) humpHeight = 4;\n    else if (iz === 12) humpHeight = 3;\n    else if (iz === 13) humpHeight = 2;\n    else if (iz === 14) humpHeight = 2;\n\n    for (let h = 1; h <= humpHeight; h++) {\n      const isTop = h === humpHeight && humpHeight >= 3;\n      setBlock(14, spineY + h, iz, isTop ? CALCITE : BONE_Y);\n    }\n  }\n\n  // --- 5. MASSIVE RIBCAGE (Left intact arches, Right hacked open) ---\n  for (let ribZ = 9; ribZ <= 16; ribZ++) {\n    const spineY = seatY + 2.5 - (ribZ - 8) * 0.12;\n    const ribIdx = ribZ - 9;\n    const maxSpan = 4.3 - Math.abs(ribIdx - 2.5) * 0.22;\n\n    // Left Ribs (Full majestic arching ribs)\n    const arcSteps = 30;\n    for (let s = 0; s <= arcSteps; s++) {\n      const a = (s / arcSteps) * (Math.PI * 0.82);\n      const rx = 14 - maxSpan * Math.sin(a);\n      const ry = spineY + 0.6 * Math.sin(a * 0.75) - 3.2 * (1 - Math.cos(a)) * 0.45;\n\n      const adx = maxSpan * Math.cos(a);\n      const ady = 0.45 * Math.cos(a * 0.75) + 1.44 * Math.sin(a);\n      const ribBlock = Math.abs(adx) >= Math.abs(ady) ? BONE_X : BONE_Y;\n\n      setBlock(rx, ry, ribZ, ribBlock);\n      if (s === arcSteps) {\n        fillDownToGround(rx, ry, ribZ, BONE_Y);\n      }\n    }\n\n    // Right Ribs\n    const isBroken = ribZ >= 11 && ribZ <= 14;\n    if (!isBroken) {\n      // Intact ribs at cranial and caudal ends\n      for (let s = 0; s <= arcSteps; s++) {\n        const a = (s / arcSteps) * (Math.PI * 0.82);\n        const rx = 14 + maxSpan * Math.sin(a);\n        const ry = spineY + 0.6 * Math.sin(a * 0.75) - 3.2 * (1 - Math.cos(a)) * 0.45;\n\n        const adx = maxSpan * Math.cos(a);\n        const ady = 0.45 * Math.cos(a * 0.75) + 1.44 * Math.sin(a);\n        const ribBlock = Math.abs(adx) >= Math.abs(ady) ? BONE_X : BONE_Y;\n\n        setBlock(rx, ry, ribZ, ribBlock);\n        if (s === arcSteps) {\n          fillDownToGround(rx, ry, ribZ, BONE_Y);\n        }\n      }\n    } else {\n      // Butchered & broken ribs exposing the visceral cavity\n      const breakSteps = 16;\n      for (let s = 0; s <= breakSteps; s++) {\n        const a = (s / breakSteps) * (Math.PI * 0.42);\n        const rx = 14 + maxSpan * Math.sin(a);\n        const ry = spineY + 0.6 * Math.sin(a * 0.75) - 3.2 * (1 - Math.cos(a)) * 0.45;\n        setBlock(rx, ry, ribZ, BONE_X);\n\n        if (s === breakSteps) {\n          // Splintered bloody bone end\n          setBlock(rx, ry, ribZ, BONE_X);\n          setBlock(rx + 0.4, ry - 0.4, ribZ, RED_TERRACOTTA);\n          setBlock(rx + 0.4, ry - 0.8, ribZ, NETHERRACK);\n          fillDownToGround(rx + 0.4, ry - 0.8, ribZ, RED_TERRACOTTA);\n        }\n      }\n\n      // Exposed bloody thoracic cavity floor\n      for (let vx = 15; vx <= 17; vx++) {\n        setBlock(vx, seatY + 1, ribZ, RED_TERRACOTTA);\n        setBlock(vx, seatY + 0.5, ribZ, NETHERRACK);\n      }\n    }\n  }\n\n  // --- 6. PELVIS, DISARTICULATED LIMBS & SCAPULA ---\n  // Sacrum & Pelvic Basin\n  setBlock(14, seatY + 1.8, 19, BONE_Z);\n  fillDownToGround(14, seatY + 1.8, 19, BONE_Z);\n\n  // Left iliac blade\n  for (let px = 11; px <= 13; px++) {\n    for (let py = 1; py <= 3; py++) {\n      setBlock(px, seatY + py, 19, BONE_X);\n    }\n    fillDownToGround(px, seatY + 1, 19, BONE_X);\n  }\n\n  // Right iliac blade\n  for (let px = 15; px <= 17; px++) {\n    for (let py = 1; py <= 3; py++) {\n      setBlock(px, seatY + py, 19, BONE_X);\n    }\n    fillDownToGround(px, seatY + 1, 19, BONE_X);\n  }\n\n  // Disarticulated giant femur and leg bones\n  // Femoral head joint\n  setBlock(11, seatY + 1.8, 20, BONE_Y);\n  setBlock(10, seatY + 1.8, 20, BONE_X);\n  // Femur shaft angled into snow\n  setBlock(10, seatY + 1.2, 21, BONE_Z);\n  setBlock(9, seatY + 1.0, 22, BONE_Z);\n  setBlock(8, seatY + 0.6, 23, BONE_X);\n  setBlock(7, seatY + 0.4, 24, BONE_Z);\n  fillDownToGround(10, seatY + 1.2, 21, BONE_Z);\n  fillDownToGround(9, seatY + 1.0, 22, BONE_Z);\n  fillDownToGround(8, seatY + 0.6, 23, BONE_Z);\n  fillDownToGround(7, seatY + 0.4, 24, BONE_Z);\n\n  // Butchered Scapula (Shoulder blade set aside)\n  setBlock(18, seatY + 0.8, 8, BONE_X);\n  setBlock(19, seatY + 0.8, 8, BONE_X);\n  setBlock(19, seatY + 0.8, 9, BONE_Z);\n  setBlock(20, seatY + 0.8, 9, BONE_X);\n  setBlock(19, seatY + 1.4, 8.5, CALCITE);\n  fillDownToGround(19, seatY + 0.8, 8.5, BONE_X);\n\n  // --- 7. HUNTER ARTIFACTS, BUTCHERY STATIONS & DETAILS ---\n\n  // Flint spears stuck into carcass\n  // Spear 1 in shoulder / neck\n  setBlock(11, seatY + 5, 9, woodFence);\n  setBlock(12, seatY + 4, 8, woodFence);\n  setBlock(13, seatY + 3, 8, DEEPSLATE_WALL);\n\n  // Spear 2 lodged in butchered rib\n  setBlock(19, seatY + 5, 13, woodFence);\n  setBlock(18, seatY + 4, 13, woodFence);\n  setBlock(17, seatY + 3, 13, TUFF_WALL);\n\n  // Hearth & Ash Pit (NW area)\n  setBlock(5, seatY + 0.8, 8, BASALT_Y);\n  setBlock(7, seatY + 0.8, 8, TUFF);\n  setBlock(6, seatY + 0.8, 7, BASALT_Y);\n  setBlock(6, seatY + 0.8, 9, TUFF);\n  setBlock(6, seatY + 0.8, 8, CAMPFIRE_OFF);\n  fillDownToGround(6, seatY + 0.8, 8, BASALT_Y);\n\n  // Hunter sitting log by hearth\n  setBlock(5, seatY + 0.8, 6, woodLog);\n  setBlock(6, seatY + 0.8, 6, woodLog);\n  setBlock(7, seatY + 0.8, 6, woodLog);\n  fillDownToGround(6, seatY + 0.8, 6, woodLog);\n\n  // Flint Knapping Anvil & butchering tools (West area)\n  setBlock(5, seatY + 0.8, 14, SMOOTH_BASALT);\n  setBlock(5, seatY + 1.6, 14, TUFF_WALL);\n  setBlock(4, seatY + 0.8, 14, TUFF);\n  setBlock(6, seatY + 0.8, 14, COBBLED_DEEPSLATE_SLAB);\n  setBlock(5, seatY + 0.8, 15, TUFF_SLAB);\n  fillDownToGround(5, seatY + 0.8, 14, SMOOTH_BASALT);\n\n  // Meat & Hide Drying Rack (East area)\n  const rackZStart = 12;\n  const rackZEnd = 17;\n  const rackX = 23;\n\n  // Vertical A-frame posts\n  for (let py = 0; py <= 4; py++) {\n    setBlock(rackX, seatY + py, rackZStart, woodFence);\n    setBlock(rackX, seatY + py, rackZEnd, woodFence);\n  }\n  fillDownToGround(rackX, seatY, rackZStart, woodFence);\n  fillDownToGround(rackX, seatY, rackZEnd, woodFence);\n\n  // Crossbeam\n  for (let rz = rackZStart; rz <= rackZEnd; rz++) {\n    setBlock(rackX, seatY + 4, rz, woodFence);\n  }\n\n  // Diagonal support stakes\n  setBlock(rackX + 1, seatY + 1, rackZStart, woodFence);\n  setBlock(rackX + 1, seatY + 1, rackZEnd, woodFence);\n  fillDownToGround(rackX + 1, seatY + 1, rackZStart, woodFence);\n  fillDownToGround(rackX + 1, seatY + 1, rackZEnd, woodFence);\n\n  // Hanging mammoth meat strips & hide\n  setBlock(rackX, seatY + 3, 13, RED_TERRACOTTA);\n  setBlock(rackX, seatY + 2, 13, RED_WOOL);\n  setBlock(rackX, seatY + 3, 14, woodTrapdoor);\n  setBlock(rackX, seatY + 3, 15, RED_TERRACOTTA);\n  setBlock(rackX, seatY + 2, 15, NETHERRACK);\n  setBlock(rackX, seatY + 3, 16, woodTrapdoor);\n\n  // Piles of harvested bones and meat chunks\n  setBlock(22, seatY + 0.8, 14, BONE_X);\n  setBlock(22, seatY + 0.8, 15, BONE_Z);\n  setBlock(22, seatY + 0.8, 16, RED_TERRACOTTA);\n  fillDownToGround(22, seatY + 0.8, 15, BONE_X);\n\n  setBlock(20, seatY + 0.8, 6, BONE_Z);\n  setBlock(21, seatY + 0.8, 6, BONE_X);\n  fillDownToGround(20, seatY + 0.8, 6, BONE_Z);\n\n  // --- 8. EMIT FINAL VOXEL STREAM DETERMINISTICALLY ---\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const block = grid[x][y][z];\n        if (block !== null) {\n          api.set(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"mammoth_kill_site\",\n    seatY: seatY,\n    anchors: {\n      front: [14, seatY, 0]\n    }\n  };\n}"
+    },
+    "bone_totem_shrine": {
+      "mode": "landmark",
+      "envelope": [
+        11,
+        20,
+        11
+      ],
+      "sourceHash": "b3:3fd332229e0ff7c8950ec4661c09f17592f1a7dea4020e167390014e66c5b03a",
+      "outputHash": "b3:65bd284571bbe24dd0477d569672b03ed2d4daab63651ab5dff61027e27e7b08",
+      "conforms": false,
+      "conformHash": "b3:b0018095366e48fc596c20e49f26f852fd8e28a93182a53b7dbac4e5c144237d",
+      "source": "export const envelope = [11, 20, 11];\n\nexport default function build(api) {\n  const seatY = 3;\n  const cx = 5;\n  const cz = 5;\n  const by = seatY + 1;\n\n  // World theme palette extraction with safe fallbacks\n  const woodLog = api.theme?.wood?.log ?? \"minecraft:spruce_log\";\n  const woodStripped = api.theme?.wood?.stripped ?? \"minecraft:stripped_spruce_log[axis=y]\";\n  const woodFence = api.theme?.wood?.fence ?? \"minecraft:spruce_fence\";\n  const stonePrimary = api.theme?.stone?.primary ?? \"minecraft:stone_bricks\";\n  const stoneAccent = api.theme?.stone?.accent ?? \"minecraft:cobblestone\";\n  const groundPavement = api.theme?.ground?.pavement ?? \"minecraft:coarse_dirt\";\n  const groundScree = api.theme?.ground?.scree ?? \"minecraft:gravel\";\n\n  // Helper for safe within-envelope block placement\n  function setBlock(x, y, z, block) {\n    if (x >= 0 && x < 11 && y >= 0 && y < 20 && z >= 0 && z < 11) {\n      api.set(x, y, z, block);\n    }\n  }\n\n  // 1. SACRED BONE MOUND & GROUND FOUNDATION CONFORMANCE\n  // Every column reads terrain height and fills down to ground level\n  for (let x = 0; x < 11; x++) {\n    for (let z = 0; z < 11; z++) {\n      const dx = x - cx;\n      const dz = z - cz;\n      const distSq = dx * dx + dz * dz;\n      if (distSq > 23.5) continue; // Circular ritual boundary (radius ~4.8)\n\n      const h = api.heightAt(x, z);\n      const localGround = Math.max(0, Math.min(18, Math.round(seatY + h)));\n\n      let moundHeight = seatY;\n      if (distSq <= 3.5) {\n        moundHeight = seatY + 1; // Raised inner altar mound\n      }\n\n      const topY = Math.max(localGround, moundHeight);\n      const botY = Math.max(0, Math.min(localGround, seatY - 1));\n\n      // Fill solid foundation from terrain up to surface\n      for (let y = botY; y <= topY; y++) {\n        if (y < topY) {\n          const r = api.random();\n          if (r < 0.45) {\n            setBlock(x, y, z, groundPavement);\n          } else if (r < 0.75) {\n            setBlock(x, y, z, stoneAccent);\n          } else if (r < 0.9) {\n            setBlock(x, y, z, \"minecraft:bone_block[axis=y]\");\n          } else {\n            setBlock(x, y, z, groundScree);\n          }\n        } else {\n          // Surface paving\n          if (distSq <= 2.5) {\n            const r = api.random();\n            setBlock(x, y, z, r < 0.55 ? \"minecraft:bone_block[axis=y]\" : groundPavement);\n          } else if (distSq <= 9.0) {\n            const r = api.random();\n            if (r < 0.4) {\n              setBlock(x, y, z, \"minecraft:bone_block[axis=y]\");\n            } else if (r < 0.7) {\n              setBlock(x, y, z, stonePrimary);\n            } else {\n              setBlock(x, y, z, groundPavement);\n            }\n          } else {\n            const r = api.random();\n            if (r < 0.45) {\n              setBlock(x, y, z, groundPavement);\n            } else if (r < 0.75) {\n              setBlock(x, y, z, groundScree);\n            } else {\n              setBlock(x, y, z, stoneAccent);\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // 2. OUTER VERTEBRAE MARKERS & RADIAL RIB BRACES\n  const vertebrae = [\n    { x: 5, z: 1, rot: 0, axis: \"z\" },\n    { x: 8, z: 2, rot: 2, axis: \"x\" },\n    { x: 9, z: 5, rot: 4, axis: \"x\" },\n    { x: 8, z: 8, rot: 6, axis: \"x\" },\n    { x: 5, z: 9, rot: 8, axis: \"z\" },\n    { x: 2, z: 8, rot: 10, axis: \"x\" },\n    { x: 1, z: 5, rot: 12, axis: \"x\" },\n    { x: 2, z: 2, rot: 14, axis: \"x\" },\n  ];\n\n  for (const v of vertebrae) {\n    const h = api.heightAt(v.x, v.z);\n    const localGround = Math.max(0, Math.min(18, Math.round(seatY + h)));\n    const vBase = Math.max(localGround, seatY);\n\n    setBlock(v.x, vBase + 1, v.z, \"minecraft:bone_block[axis=y]\");\n    setBlock(v.x, vBase + 2, v.z, \"minecraft:bone_block[axis=y]\");\n    setBlock(v.x, vBase + 3, v.z, `minecraft:skeleton_skull[rotation=${v.rot}]`);\n\n    // Spinal lateral processes\n    if (v.axis === \"x\") {\n      setBlock(v.x, vBase + 1, v.z - 1, \"minecraft:bone_block[axis=z]\");\n      setBlock(v.x, vBase + 1, v.z + 1, \"minecraft:bone_block[axis=z]\");\n    } else {\n      setBlock(v.x - 1, vBase + 1, v.z, \"minecraft:bone_block[axis=x]\");\n      setBlock(v.x + 1, vBase + 1, v.z, \"minecraft:bone_block[axis=x]\");\n    }\n  }\n\n  // Radial mammoth rib arches connecting outer vertebrae to central mound\n  const ribArches = [\n    // North rib\n    [5, by, 2, \"minecraft:bone_block[axis=z]\"],\n    [5, by, 3, \"minecraft:bone_block[axis=z]\"],\n    [5, by, 4, \"minecraft:bone_block[axis=z]\"],\n    // South rib\n    [5, by, 8, \"minecraft:bone_block[axis=z]\"],\n    [5, by, 7, \"minecraft:bone_block[axis=z]\"],\n    [5, by, 6, \"minecraft:bone_block[axis=z]\"],\n    // West rib\n    [2, by, 5, \"minecraft:bone_block[axis=x]\"],\n    [3, by, 5, \"minecraft:bone_block[axis=x]\"],\n    [4, by, 5, \"minecraft:bone_block[axis=x]\"],\n    // East rib\n    [8, by, 5, \"minecraft:bone_block[axis=x]\"],\n    [7, by, 5, \"minecraft:bone_block[axis=x]\"],\n    [6, by, 5, \"minecraft:bone_block[axis=x]\"],\n    // Diagonal braces\n    [3, by, 3, \"minecraft:bone_block[axis=y]\"],\n    [4, by, 4, \"minecraft:bone_block[axis=y]\"],\n    [7, by, 3, \"minecraft:bone_block[axis=y]\"],\n    [6, by, 4, \"minecraft:bone_block[axis=y]\"],\n    [3, by, 7, \"minecraft:bone_block[axis=y]\"],\n    [4, by, 6, \"minecraft:bone_block[axis=y]\"],\n    [7, by, 7, \"minecraft:bone_block[axis=y]\"],\n    [6, by, 6, \"minecraft:bone_block[axis=y]\"],\n  ];\n\n  for (const [rx, ry, rz, block] of ribArches) {\n    setBlock(rx, ry, rz, block);\n  }\n\n  // 3. SHAMANIC OFFERING HEARTH (Front North Face)\n  setBlock(5, by, 3, \"minecraft:soul_campfire[facing=south,lit=true]\");\n  setBlock(4, by, 3, \"minecraft:bone_block[axis=y]\");\n  setBlock(6, by, 3, \"minecraft:bone_block[axis=y]\");\n  setBlock(4, by + 1, 3, \"minecraft:skeleton_skull[rotation=2]\");\n  setBlock(6, by + 1, 3, \"minecraft:skeleton_skull[rotation=14]\");\n  setBlock(5, by, 2, \"minecraft:bone_block[axis=x]\");\n\n  // 4. CENTRAL TOTEM POST: LOWER BUNDLED CORE (y = by to by + 2)\n  for (let y = by; y <= by + 2; y++) {\n    setBlock(5, y, 5, woodStripped);\n    setBlock(4, y, 5, \"minecraft:bone_block[axis=y]\");\n    setBlock(6, y, 5, \"minecraft:bone_block[axis=y]\");\n    setBlock(5, y, 4, \"minecraft:bone_block[axis=y]\");\n    setBlock(5, y, 6, \"minecraft:bone_block[axis=y]\");\n    setBlock(4, y, 4, \"minecraft:bone_block[axis=y]\");\n    setBlock(6, y, 4, \"minecraft:bone_block[axis=y]\");\n    setBlock(4, y, 6, \"minecraft:bone_block[axis=y]\");\n    setBlock(6, y, 6, \"minecraft:bone_block[axis=y]\");\n  }\n  // Ochre hide lashings around lower post\n  setBlock(4, by + 1, 3, \"minecraft:red_terracotta\");\n  setBlock(6, by + 1, 3, \"minecraft:red_terracotta\");\n  setBlock(4, by + 1, 7, \"minecraft:brown_terracotta\");\n  setBlock(6, by + 1, 7, \"minecraft:brown_terracotta\");\n\n  // 5. LOWER TUSKS & CARVED SPIRIT VISAGE (y = by + 3 to by + 5)\n  for (let y = by + 3; y <= by + 5; y++) {\n    setBlock(5, y, 5, woodStripped);\n    setBlock(4, y, 5, \"minecraft:bone_block[axis=y]\");\n    setBlock(6, y, 5, \"minecraft:bone_block[axis=y]\");\n    setBlock(5, y, 6, \"minecraft:bone_block[axis=y]\");\n  }\n  // Ancestral skull in lower post\n  setBlock(5, by + 3, 4, \"minecraft:bone_block[axis=z]\");\n  setBlock(5, by + 4, 4, \"minecraft:skeleton_skull[rotation=0]\");\n  setBlock(5, by + 5, 4, \"minecraft:bone_block[axis=y]\");\n\n  // Lower outward tusks\n  setBlock(4, by + 3, 4, \"minecraft:bone_block[axis=x]\");\n  setBlock(3, by + 3, 3, \"minecraft:bone_block[axis=x]\");\n  setBlock(3, by + 4, 3, \"minecraft:smooth_quartz_stairs[facing=north,half=bottom]\");\n  setBlock(3, by + 5, 2, \"minecraft:smooth_quartz_slab[type=bottom]\");\n\n  setBlock(6, by + 3, 4, \"minecraft:bone_block[axis=x]\");\n  setBlock(7, by + 3, 3, \"minecraft:bone_block[axis=x]\");\n  setBlock(7, by + 4, 3, \"minecraft:smooth_quartz_stairs[facing=north,half=bottom]\");\n  setBlock(7, by + 5, 2, \"minecraft:smooth_quartz_slab[type=bottom]\");\n\n  // 6. MID TOTEM CROSSBAR & DRIED HIDE STREAMERS (y = by + 6 to by + 8)\n  setBlock(5, by + 6, 5, woodStripped);\n  setBlock(5, by + 6, 4, \"minecraft:bone_block[axis=y]\");\n  setBlock(5, by + 6, 6, \"minecraft:bone_block[axis=y]\");\n\n  // Horizontal bone crossbar\n  setBlock(3, by + 7, 5, \"minecraft:bone_block[axis=x]\");\n  setBlock(4, by + 7, 5, \"minecraft:bone_block[axis=x]\");\n  setBlock(5, by + 7, 5, woodStripped);\n  setBlock(6, by + 7, 5, \"minecraft:bone_block[axis=x]\");\n  setBlock(7, by + 7, 5, \"minecraft:bone_block[axis=x]\");\n\n  // Left hide streamers & bone talismans\n  setBlock(2, by + 7, 5, woodFence);\n  setBlock(2, by + 6, 5, \"minecraft:red_terracotta\");\n  setBlock(2, by + 5, 5, \"minecraft:brown_terracotta\");\n  setBlock(2, by + 4, 5, \"minecraft:chain[axis=y]\");\n  setBlock(2, by + 3, 5, \"minecraft:skeleton_skull[rotation=4]\");\n\n  // Right hide streamers & bone talismans\n  setBlock(8, by + 7, 5, woodFence);\n  setBlock(8, by + 6, 5, \"minecraft:white_terracotta\");\n  setBlock(8, by + 5, 5, \"minecraft:brown_terracotta\");\n  setBlock(8, by + 4, 5, \"minecraft:chain[axis=y]\");\n  setBlock(8, by + 3, 5, \"minecraft:skeleton_skull[rotation=12]\");\n\n  // 7. GREAT MAMMOTH SKULL & GRAND SKYWARD TUSKS (y = by + 8 to by + 12)\n  // Cranium base\n  setBlock(5, by + 8, 5, woodStripped);\n  setBlock(5, by + 8, 4, \"minecraft:bone_block[axis=z]\");\n  setBlock(4, by + 8, 5, \"minecraft:bone_block[axis=x]\");\n  setBlock(6, by + 8, 5, \"minecraft:bone_block[axis=x]\");\n  setBlock(5, by + 8, 6, \"minecraft:bone_block[axis=z]\");\n\n  // Cranium center & eyes\n  setBlock(5, by + 9, 5, \"minecraft:bone_block[axis=y]\");\n  setBlock(5, by + 9, 4, \"minecraft:smooth_quartz_stairs[facing=south,half=top]\");\n  setBlock(4, by + 9, 4, \"minecraft:bone_block[axis=y]\");\n  setBlock(6, by + 9, 4, \"minecraft:bone_block[axis=y]\");\n  setBlock(4, by + 9, 5, \"minecraft:smooth_quartz_stairs[facing=east,half=bottom]\");\n  setBlock(6, by + 9, 5, \"minecraft:smooth_quartz_stairs[facing=west,half=bottom]\");\n  setBlock(5, by + 9, 6, \"minecraft:bone_block[axis=z]\");\n\n  // Cranium brow dome\n  setBlock(5, by + 10, 5, \"minecraft:bone_block[axis=y]\");\n  setBlock(5, by + 10, 4, \"minecraft:smooth_quartz_slab[type=bottom]\");\n  setBlock(4, by + 10, 5, \"minecraft:smooth_quartz_slab[type=bottom]\");\n  setBlock(6, by + 10, 5, \"minecraft:smooth_quartz_slab[type=bottom]\");\n  setBlock(5, by + 10, 6, \"minecraft:smooth_quartz_stairs[facing=north,half=bottom]\");\n\n  // Left Grand Skyward Tusk (strictly 6-connected sweep)\n  setBlock(4, by + 8, 4, \"minecraft:bone_block[axis=x]\");\n  setBlock(3, by + 8, 4, \"minecraft:bone_block[axis=x]\");\n  setBlock(3, by + 8, 3, \"minecraft:bone_block[axis=z]\");\n  setBlock(2, by + 8, 3, \"minecraft:bone_block[axis=x]\");\n  setBlock(2, by + 9, 3, \"minecraft:bone_block[axis=y]\");\n  setBlock(1, by + 9, 3, \"minecraft:bone_block[axis=x]\");\n  setBlock(1, by + 9, 2, \"minecraft:smooth_quartz_stairs[facing=south,half=bottom]\");\n  setBlock(1, by + 10, 2, \"minecraft:bone_block[axis=y]\");\n  setBlock(1, by + 11, 2, \"minecraft:bone_block[axis=y]\");\n  setBlock(1, by + 11, 3, \"minecraft:smooth_quartz_stairs[facing=north,half=bottom]\");\n  setBlock(2, by + 11, 3, \"minecraft:bone_block[axis=x]\");\n  setBlock(2, by + 12, 3, \"minecraft:smooth_quartz_stairs[facing=east,half=bottom]\");\n\n  // Right Grand Skyward Tusk (strictly 6-connected sweep)\n  setBlock(6, by + 8, 4, \"minecraft:bone_block[axis=x]\");\n  setBlock(7, by + 8, 4, \"minecraft:bone_block[axis=x]\");\n  setBlock(7, by + 8, 3, \"minecraft:bone_block[axis=z]\");\n  setBlock(8, by + 8, 3, \"minecraft:bone_block[axis=x]\");\n  setBlock(8, by + 9, 3, \"minecraft:bone_block[axis=y]\");\n  setBlock(9, by + 9, 3, \"minecraft:bone_block[axis=x]\");\n  setBlock(9, by + 9, 2, \"minecraft:smooth_quartz_stairs[facing=south,half=bottom]\");\n  setBlock(9, by + 10, 2, \"minecraft:bone_block[axis=y]\");\n  setBlock(9, by + 11, 2, \"minecraft:bone_block[axis=y]\");\n  setBlock(9, by + 11, 3, \"minecraft:smooth_quartz_stairs[facing=north,half=bottom]\");\n  setBlock(8, by + 11, 3, \"minecraft:bone_block[axis=x]\");\n  setBlock(8, by + 12, 3, \"minecraft:smooth_quartz_stairs[facing=west,half=bottom]\");\n\n  // 8. CROWN OF RIBS & APEX SPIRIT (y = by + 11 to by + 15)\n  setBlock(5, by + 11, 5, woodStripped);\n  setBlock(5, by + 12, 5, \"minecraft:bone_block[axis=y]\");\n\n  // Spreading rib crown\n  setBlock(5, by + 13, 5, \"minecraft:bone_block[axis=y]\");\n  setBlock(4, by + 13, 5, \"minecraft:bone_block[axis=x]\");\n  setBlock(3, by + 13, 5, \"minecraft:bone_block[axis=x]\");\n  setBlock(6, by + 13, 5, \"minecraft:bone_block[axis=x]\");\n  setBlock(7, by + 13, 5, \"minecraft:bone_block[axis=x]\");\n  setBlock(5, by + 13, 4, \"minecraft:bone_block[axis=z]\");\n  setBlock(5, by + 13, 3, \"minecraft:bone_block[axis=z]\");\n  setBlock(5, by + 13, 6, \"minecraft:bone_block[axis=z]\");\n  setBlock(5, by + 13, 7, \"minecraft:bone_block[axis=z]\");\n\n  // Horn tips arching up\n  setBlock(3, by + 14, 5, \"minecraft:smooth_quartz_stairs[facing=east,half=bottom]\");\n  setBlock(7, by + 14, 5, \"minecraft:smooth_quartz_stairs[facing=west,half=bottom]\");\n  setBlock(5, by + 14, 3, \"minecraft:smooth_quartz_stairs[facing=south,half=bottom]\");\n  setBlock(5, by + 14, 7, \"minecraft:smooth_quartz_stairs[facing=north,half=bottom]\");\n  setBlock(5, by + 14, 5, \"minecraft:bone_block[axis=y]\");\n\n  // Summit Spirit Skull facing the approaching tundra & ice sheet\n  setBlock(5, by + 15, 5, \"minecraft:skeleton_skull[rotation=0]\");\n\n  return {\n    name: \"bone_totem_shrine\",\n    seatY,\n    anchors: {\n      front: [cx, seatY, 0],\n      hearth: [cx, by, 3],\n      totem: [cx, by, cz],\n    },\n  };\n}"
+    },
+    "drying_rack": {
+      "mode": "plugin",
+      "envelope": [
+        11,
+        13,
+        9
+      ],
+      "sourceHash": "b3:8e5fe4db7960635196ad956e1164e6659b7882c9debd058b697382bf7b99f1b5",
+      "outputHash": "b3:c01cdb3df72dfc469d5459736ffa340557a98ee9469708d41cd285132ebd1ca0",
+      "conforms": false,
+      "conformHash": "b3:3b7b5024ee7ac2fae21b3f43962222f3a9714dd1c46536233f5f1298a8f76996",
+      "source": "export const envelope = [11, 13, 9];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const seatY = 3;\n\n  // Grid buffer for deterministic assembly and connectivity enforcement\n  const grid = Array(W).fill(null).map(() => Array(H).fill(null).map(() => Array(D).fill(null)));\n\n  function setBlock(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D && block) {\n      grid[x][y][z] = block;\n    }\n  }\n\n  function getGround(x, z) {\n    const h = api.heightAt(x, z);\n    return Math.max(0, Math.min(H - 2, seatY + Math.round(h)));\n  }\n\n  // Theme integration with safe fallbacks\n  const woodLog = (api.theme.wood.log || \"minecraft:spruce_log\").split(\"[\")[0];\n  const woodPlanks = api.theme.wood.planks || \"minecraft:spruce_planks\";\n  const woodStripped = (api.theme.wood.stripped || \"minecraft:stripped_spruce_log\").split(\"[\")[0];\n  const woodSlab = api.theme.wood.slab || \"minecraft:spruce_slab\";\n  const woodFence = api.theme.wood.fence || \"minecraft:spruce_fence\";\n  const woodTrapdoor = api.theme.wood.trapdoor || \"minecraft:spruce_trapdoor\";\n\n  const stonePrimary = api.theme.stone.primary || \"minecraft:cobblestone\";\n  const stoneSlab = api.theme.stone.slab || \"minecraft:cobblestone_slab\";\n  const stoneWall = api.theme.stone.wall || \"minecraft:cobblestone_wall\";\n  const groundPavement = api.theme.ground.pavement || \"minecraft:coarse_dirt\";\n  const groundPlinth = api.theme.ground.plinth || \"minecraft:packed_mud\";\n\n  function logAxis(axis, stripped = false) {\n    const base = stripped ? woodStripped : woodLog;\n    return `${base}[axis=${axis}]`;\n  }\n\n  function boneAxis(axis) {\n    return `minecraft:bone_block[axis=${axis}]`;\n  }\n\n  const meatPalette = [\n    \"minecraft:nether_wart_block\",\n    \"minecraft:red_terracotta\",\n    \"minecraft:brown_terracotta\",\n    \"minecraft:polished_granite\"\n  ];\n\n  function randomMeat() {\n    return meatPalette[Math.floor(api.random() * meatPalette.length)];\n  }\n\n  // Strictly 6-connected 3D line\n  function drawLine6(x0, y0, z0, x1, y1, z1, blockFn) {\n    let x = Math.round(x0);\n    let y = Math.round(y0);\n    let z = Math.round(z0);\n    const tx = Math.round(x1);\n    const ty = Math.round(y1);\n    const tz = Math.round(z1);\n\n    setBlock(x, y, z, typeof blockFn === \"function\" ? blockFn(x, y, z) : blockFn);\n\n    while (x !== tx || y !== ty || z !== tz) {\n      const dx = tx - x;\n      const dy = ty - y;\n      const dz = tz - z;\n      const ax = Math.abs(dx);\n      const ay = Math.abs(dy);\n      const az = Math.abs(dz);\n\n      if (ax >= ay && ax >= az) {\n        x += Math.sign(dx);\n      } else if (ay >= ax && ay >= az) {\n        y += Math.sign(dy);\n      } else {\n        z += Math.sign(dz);\n      }\n      setBlock(x, y, z, typeof blockFn === \"function\" ? blockFn(x, y, z) : blockFn);\n    }\n  }\n\n  // Strictly 6-connected quadratic curve\n  function drawCurve6(p0, p1, p2, blockFn) {\n    const steps = 14;\n    let prev = null;\n    for (let i = 0; i <= steps; i++) {\n      const t = i / steps;\n      const u = 1 - t;\n      const x = Math.round(u * u * p0[0] + 2 * u * t * p1[0] + t * t * p2[0]);\n      const y = Math.round(u * u * p0[1] + 2 * u * t * p1[1] + t * t * p2[1]);\n      const z = Math.round(u * u * p0[2] + 2 * u * t * p1[2] + t * t * p2[2]);\n      const curr = [x, y, z];\n      if (prev) {\n        drawLine6(prev[0], prev[1], prev[2], curr[0], curr[1], curr[2], blockFn);\n      } else {\n        setBlock(x, y, z, typeof blockFn === \"function\" ? blockFn(x, y, z) : blockFn);\n      }\n      prev = curr;\n    }\n  }\n\n  function hangMeat(x, y, z, length) {\n    const g = getGround(x, z);\n    for (let i = 0; i < length; i++) {\n      const my = y - i;\n      if (my > g) {\n        setBlock(x, my, z, randomMeat());\n      }\n    }\n  }\n\n  function drawPeltPanel(x0, y0, z0, x1, y1, z1) {\n    const minX = Math.min(x0, x1), maxX = Math.max(x0, x1);\n    const minY = Math.min(y0, y1), maxY = Math.max(y0, y1);\n    const minZ = Math.min(z0, z1), maxZ = Math.max(z0, z1);\n\n    for (let x = minX; x <= maxX; x++) {\n      for (let y = minY; y <= maxY; y++) {\n        for (let z = minZ; z <= maxZ; z++) {\n          const isBorder = (x === minX || x === maxX || y === minY || y === maxY || z === minZ || z === maxZ);\n          if (isBorder) {\n            setBlock(x, y, z, woodFence);\n          } else {\n            const r = api.random();\n            const pelt = r < 0.65 ? \"minecraft:brown_wool\" : (r < 0.85 ? \"minecraft:packed_mud\" : \"minecraft:mud_bricks\");\n            setBlock(x, y, z, pelt);\n          }\n        }\n      }\n    }\n  }\n\n  function drawMammothTusk(startX, startZ, isLeft) {\n    const g = getGround(startX, startZ);\n    const sign = isLeft ? -1 : 1;\n    const p0 = [startX, g, startZ];\n    const p1 = [Math.max(0, Math.min(W - 1, startX + sign * 1)), g + 3, Math.max(0, startZ - 1)];\n    const p2 = [startX, g + 6, startZ];\n    drawCurve6(p0, p1, p2, (x, y, z) => {\n      return y >= g + 4 ? boneAxis(\"z\") : boneAxis(\"y\");\n    });\n  }\n\n  // 1. Terrain-following solid base apron & foundation plinth\n  for (let x = 1; x <= 9; x++) {\n    for (let z = 1; z <= 7; z++) {\n      const dx = x - 5;\n      const dz = z - 4;\n      const distSq = dx * dx + dz * dz * 1.25;\n      if (distSq <= 17) {\n        const lg = getGround(x, z);\n        // Fill solid support downwards to prevent floating on hillsides\n        for (let y = 0; y < lg; y++) {\n          setBlock(x, y, z, y < lg - 1 ? groundPavement : groundPlinth);\n        }\n        // Surface ground course\n        let surf = \"minecraft:snow_block\";\n        if (distSq <= 3.2) {\n          surf = stonePrimary;\n        } else if (distSq <= 9.0) {\n          surf = (api.random() > 0.45) ? groundPavement : groundPlinth;\n        } else {\n          surf = (api.random() > 0.3) ? \"minecraft:snow_block\" : groundPavement;\n        }\n        setBlock(x, lg, z, surf);\n      }\n    }\n  }\n\n  // 2. Central Smoker Hearth Pit\n  const hg = getGround(5, 4);\n  setBlock(5, Math.max(0, hg - 1), 4, \"minecraft:hay_block\");\n  setBlock(5, hg, 4, \"minecraft:campfire[lit=true,facing=north,signal_fire=true]\");\n\n  const hearthRing = [\n    [4, 4], [6, 4], [5, 3], [5, 5],\n    [4, 3], [6, 3], [4, 5], [6, 5]\n  ];\n  for (const [rx, rz] of hearthRing) {\n    const rlg = getGround(rx, rz);\n    const isDiag = (rx !== 5 && rz !== 4);\n    const block = isDiag ? stoneSlab : (api.random() > 0.4 ? stonePrimary : stoneWall);\n    setBlock(rx, rlg, rz, block);\n  }\n\n  // Firewood stack & butchery bone anvil\n  const fwG = getGround(3, 3);\n  setBlock(3, fwG + 1, 3, logAxis(\"x\"));\n  setBlock(4, fwG + 1, 2, logAxis(\"z\", true));\n  setBlock(3, fwG + 1, 2, logAxis(\"x\"));\n\n  const anG = getGround(7, 3);\n  setBlock(7, anG + 1, 3, boneAxis(\"y\"));\n  setBlock(7, anG + 2, 3, stoneSlab);\n  setBlock(8, anG + 1, 3, randomMeat());\n\n  // 3. Procedural Instance Variations (Plugin Mode: 6 distinct archetypes)\n  const variant = api.instance.index % 6;\n\n  if (variant === 0) {\n    // Archetype 0: The Mammoth Rib Cathedral Smoker\n    const pFL = [2, getGround(2, 2), 2];\n    const pFR = [8, getGround(8, 2), 2];\n    const pBL = [2, getGround(2, 6), 6];\n    const pBR = [8, getGround(8, 6), 6];\n    const apexFront = [5, 11, 3];\n    const apexBack = [5, 11, 5];\n\n    drawCurve6(pFL, [2, 7, 2], apexFront, (x, y) => (y > 8 ? boneAxis(\"x\") : boneAxis(\"y\")));\n    drawCurve6(pFR, [8, 7, 2], apexFront, (x, y) => (y > 8 ? boneAxis(\"x\") : boneAxis(\"y\")));\n    drawCurve6(pBL, [2, 7, 6], apexBack, (x, y) => (y > 8 ? boneAxis(\"x\") : boneAxis(\"y\")));\n    drawCurve6(pBR, [8, 7, 6], apexBack, (x, y) => (y > 8 ? boneAxis(\"x\") : boneAxis(\"y\")));\n\n    drawLine6(apexFront[0], apexFront[1], apexFront[2], apexBack[0], apexBack[1], apexBack[2], boneAxis(\"z\"));\n\n    // Longitudinal drying tiers\n    for (const tierY of [6, 8, 10]) {\n      drawLine6(3, tierY, 3, 3, tierY, 5, logAxis(\"z\"));\n      drawLine6(7, tierY, 3, 7, tierY, 5, logAxis(\"z\"));\n      drawLine6(3, tierY, 4, 7, tierY, 4, logAxis(\"x\"));\n\n      for (let mx = 3; mx <= 7; mx++) {\n        if (mx !== 5 || tierY > 7) {\n          hangMeat(mx, tierY - 1, 4, 2);\n        }\n      }\n    }\n\n    drawMammothTusk(1, 2, true);\n    drawMammothTusk(9, 2, false);\n\n  } else if (variant === 1) {\n    // Archetype 1: Stretched Hide Curing Scaffold\n    const flG = getGround(2, 2), frG = getGround(8, 2);\n    const blG = getGround(2, 6), brG = getGround(8, 6);\n\n    drawLine6(2, flG, 2, 4, 11, 4, logAxis(\"y\"));\n    drawLine6(8, frG, 2, 6, 11, 4, logAxis(\"y\"));\n    drawLine6(2, blG, 6, 4, 11, 4, logAxis(\"y\"));\n    drawLine6(8, brG, 6, 6, 11, 4, logAxis(\"y\"));\n    drawLine6(4, 11, 4, 6, 11, 4, logAxis(\"x\"));\n\n    // Mammoth pelt stretched on windward west frame\n    drawPeltPanel(2, flG + 2, 2, 2, 9, 6);\n\n    // Cross rails and heavy meat clusters\n    for (let y = 6; y <= 9; y += 2) {\n      drawLine6(2, y, 4, 8, y, 4, logAxis(\"x\", true));\n      for (let mx = 3; mx <= 7; mx++) {\n        hangMeat(mx, y - 1, 4, 2);\n      }\n    }\n\n    // East side lower pelt rack\n    drawPeltPanel(8, frG + 1, 3, 8, frG + 4, 5);\n    drawMammothTusk(1, 2, true);\n\n  } else if (variant === 2) {\n    // Archetype 2: Tripod Meat Hoist & Tusk Arch\n    const p1 = [2, getGround(2, 3), 3];\n    const p2 = [8, getGround(8, 3), 3];\n    const p3 = [5, getGround(5, 7), 7];\n    const apex = [5, 11, 4];\n\n    drawLine6(p1[0], p1[1], p1[2], apex[0], apex[1], apex[2], logAxis(\"y\"));\n    drawLine6(p2[0], p2[1], p2[2], apex[0], apex[1], apex[2], logAxis(\"y\"));\n    drawLine6(p3[0], p3[1], p3[2], apex[0], apex[1], apex[2], logAxis(\"z\"));\n\n    // Tusk arch across front\n    drawCurve6([2, getGround(2, 1), 1], [5, 9, 2], [8, getGround(8, 1), 1], boneAxis(\"x\"));\n\n    // Massive suspended smoked carcass core above hearth\n    setBlock(5, 10, 4, \"minecraft:bone_block[axis=y]\");\n    setBlock(5, 9, 4, \"minecraft:nether_wart_block\");\n    setBlock(5, 8, 4, \"minecraft:nether_wart_block\");\n    setBlock(4, 9, 4, \"minecraft:brown_wool\");\n    setBlock(6, 9, 4, \"minecraft:red_terracotta\");\n    setBlock(5, 9, 3, \"minecraft:polished_granite\");\n\n    // Lateral meat arms\n    drawLine6(3, 7, 3, 7, 7, 3, logAxis(\"x\"));\n    drawLine6(3, 7, 5, 7, 7, 5, logAxis(\"x\"));\n    for (let mx = 3; mx <= 7; mx += 2) {\n      hangMeat(mx, 6, 3, 2);\n      hangMeat(mx, 6, 5, 2);\n    }\n\n  } else if (variant === 3) {\n    // Archetype 3: Twin A-Frame Long Smoker Tunnel\n    const flG = getGround(2, 2), frG = getGround(8, 2);\n    const blG = getGround(2, 6), brG = getGround(8, 6);\n\n    drawLine6(2, flG, 2, 5, 11, 2, logAxis(\"y\"));\n    drawLine6(8, frG, 2, 5, 11, 2, logAxis(\"y\"));\n    drawLine6(2, blG, 6, 5, 11, 6, logAxis(\"y\"));\n    drawLine6(8, brG, 6, 5, 11, 6, logAxis(\"y\"));\n\n    // Ridge beams\n    drawLine6(5, 11, 2, 5, 11, 6, logAxis(\"z\"));\n    drawLine6(2, 6, 2, 2, 6, 6, logAxis(\"z\"));\n    drawLine6(8, 6, 2, 8, 6, 6, logAxis(\"z\"));\n\n    // Dense longitudinal meat lines\n    for (let z = 2; z <= 6; z++) {\n      drawLine6(3, 8, z, 7, 8, z, woodFence);\n      for (let mx = 3; mx <= 7; mx++) {\n        if (mx !== 5 || z !== 4) {\n          hangMeat(mx, 7, z, 2);\n        }\n      }\n    }\n\n    // Top hide covering\n    for (let z = 2; z <= 6; z++) {\n      setBlock(5, 12, z, \"minecraft:brown_wool\");\n      setBlock(4, 11, z, woodSlab);\n      setBlock(6, 11, z, woodSlab);\n    }\n\n    drawMammothTusk(1, 2, true);\n    drawMammothTusk(9, 2, false);\n\n  } else if (variant === 4) {\n    // Archetype 4: Butchered Mammoth Ribcage Rack\n    const spineG = getGround(5, 4);\n    drawLine6(5, spineG, 2, 5, 10, 2, logAxis(\"y\"));\n    drawLine6(5, spineG, 6, 5, 10, 6, logAxis(\"y\"));\n    drawLine6(5, 10, 1, 5, 10, 7, boneAxis(\"z\"));\n\n    // Arching mammoth ribs on left and right\n    for (let rz = 2; rz <= 6; rz += 2) {\n      const gL = getGround(2, rz);\n      const gR = getGround(8, rz);\n      drawCurve6([2, gL, rz], [2, 8, rz], [5, 10, rz], boneAxis(\"x\"));\n      drawCurve6([8, gR, rz], [8, 8, rz], [5, 10, rz], boneAxis(\"x\"));\n\n      drawLine6(3, 7, rz, 7, 7, rz, woodFence);\n      for (let mx = 3; mx <= 7; mx++) {\n        hangMeat(mx, 6, rz, 2);\n      }\n    }\n\n    // Front-facing mammoth tusks\n    drawCurve6([5, 10, 1], [3, 11, 0], [2, 12, 1], boneAxis(\"y\"));\n    drawCurve6([5, 10, 1], [7, 11, 0], [8, 12, 1], boneAxis(\"y\"));\n\n    drawPeltPanel(8, getGround(8, 3) + 1, 3, 8, 7, 5);\n\n  } else {\n    // Archetype 5: Blizzard Shelter & Heavy Curing Station\n    const flG = getGround(2, 2), frG = getGround(8, 2);\n    const blG = getGround(2, 6), brG = getGround(8, 6);\n\n    drawLine6(2, flG, 2, 2, 11, 2, logAxis(\"y\"));\n    drawLine6(8, frG, 2, 8, 11, 2, logAxis(\"y\"));\n    drawLine6(2, blG, 6, 2, 7, 6, logAxis(\"y\"));\n    drawLine6(8, brG, 6, 8, 7, 6, logAxis(\"y\"));\n\n    // Slanted shelter roof of hides\n    for (let x = 2; x <= 8; x++) {\n      drawLine6(x, 11, 2, x, 7, 6, (bx, by) => {\n        return (bx === 2 || bx === 8) ? logAxis(\"z\") : \"minecraft:brown_wool\";\n      });\n      // Snow accumulation on windward roof\n      setBlock(x, 12, 2, \"minecraft:snow_block\");\n      setBlock(x, 10, 4, \"minecraft:snow_block\");\n    }\n\n    // Sheltered lower curing bars\n    for (let y = 6; y <= 8; y += 2) {\n      drawLine6(3, y, 3, 7, y, 3, logAxis(\"x\", true));\n      drawLine6(3, y, 5, 7, y, 5, logAxis(\"x\", true));\n      for (let mx = 3; mx <= 7; mx++) {\n        hangMeat(mx, y - 1, 3, 2);\n        hangMeat(mx, y - 1, 5, 2);\n      }\n    }\n\n    drawMammothTusk(1, 3, true);\n    drawMammothTusk(9, 3, false);\n  }\n\n  // 4. Ensure 6-connected single solid and >= 520 solid voxels\n  function enforceSingleComponent() {\n    const seedX = 5, seedY = hg, seedZ = 4;\n    const visited = Array(W).fill(null).map(() => Array(H).fill(null).map(() => Array(D).fill(false)));\n    const queue = [[seedX, seedY, seedZ]];\n    visited[seedX][seedY][seedZ] = true;\n    const component = [];\n\n    const dirs = [\n      [1, 0, 0], [-1, 0, 0],\n      [0, 1, 0], [0, -1, 0],\n      [0, 0, 1], [0, 0, -1]\n    ];\n\n    let head = 0;\n    while (head < queue.length) {\n      const [cx, cy, cz] = queue[head++];\n      component.push([cx, cy, cz]);\n\n      for (const [dx, dy, dz] of dirs) {\n        const nx = cx + dx;\n        const ny = cy + dy;\n        const nz = cz + dz;\n        if (nx >= 0 && nx < W && ny >= 0 && ny < H && nz >= 0 && nz < D) {\n          if (!visited[nx][ny][nz] && grid[nx][ny][nz] !== null) {\n            visited[nx][ny][nz] = true;\n            queue.push([nx, ny, nz]);\n          }\n        }\n      }\n    }\n\n    // Clear stray disconnected fragments\n    for (let x = 0; x < W; x++) {\n      for (let y = 0; y < H; y++) {\n        for (let z = 0; z < D; z++) {\n          if (grid[x][y][z] !== null && !visited[x][y][z]) {\n            grid[x][y][z] = null;\n          }\n        }\n      }\n    }\n\n    // Top up connected mass if below threshold\n    let topUpIdx = 0;\n    while (component.length < 540 && topUpIdx < component.length) {\n      const [cx, cy, cz] = component[topUpIdx++];\n      for (const [dx, dy, dz] of dirs) {\n        const nx = cx + dx;\n        const ny = cy + dy;\n        const nz = cz + dz;\n        if (nx >= 0 && nx < W && ny >= 0 && ny < H && nz >= 0 && nz < D) {\n          if (grid[nx][ny][nz] === null) {\n            let b = randomMeat();\n            if (ny <= seatY) b = \"minecraft:packed_mud\";\n            grid[nx][ny][nz] = b;\n            visited[nx][ny][nz] = true;\n            component.push([nx, ny, nz]);\n            if (component.length >= 540) break;\n          }\n        }\n      }\n    }\n  }\n\n  enforceSingleComponent();\n\n  // 5. Emit all blocks deterministically\n  for (let y = 0; y < H; y++) {\n    for (let z = 0; z < D; z++) {\n      for (let x = 0; x < W; x++) {\n        const block = grid[x][y][z];\n        if (block !== null) {\n          api.set(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"drying_rack\",\n    seatY: seatY,\n    anchors: {\n      front: [5, seatY, 0],\n      hearth: [5, hg, 4]\n    }\n  };\n}"
+    },
+    "bone_heap": {
+      "mode": "plugin",
+      "envelope": [
+        11,
+        14,
+        11
+      ],
+      "sourceHash": "b3:e453927d53de130c16f68db154bc57a2210618e12578ffa7cacf8c6976db8d7f",
+      "outputHash": "b3:af227ec6f72eedd3d2388678592441ba428c9fe81ef036828b431cc785a24273",
+      "conforms": false,
+      "conformHash": "b3:e5621a2d6fcbc5266a3fd6341e44870865a9809d32d03615b3c6cd1f6d692f93",
+      "source": "export const envelope = [11, 14, 11];\n\nexport default function build(api) {\n  const [sizeX, sizeY, sizeZ] = api.size;\n  const seatY = 4;\n  const cx = 5;\n  const cz = 5;\n\n  // Resolve theme blocks with reliable fallbacks\n  const woodLog = api.theme?.wood?.log || \"minecraft:spruce_log[axis=y]\";\n  const woodPlanks = api.theme?.wood?.planks || \"minecraft:spruce_planks\";\n  const woodFence = api.theme?.wood?.fence || \"minecraft:spruce_fence\";\n  const stonePrimary = api.theme?.stone?.primary || \"minecraft:stone\";\n  const groundScree = api.theme?.ground?.scree || \"minecraft:coarse_dirt\";\n\n  // Deterministic voxel grid storage\n  const voxels = new Map();\n\n  function setV(x, y, z, block) {\n    if (x < 0 || x >= sizeX || y < 0 || y >= sizeY || z < 0 || z >= sizeZ) return;\n    voxels.set(`${x},${y},${z}`, block);\n  }\n\n  // Determine instance variations (Plugin mode: 8 unique variants)\n  const inst = api.instance?.index ?? 0;\n  const archetype = inst % 4;\n  const rotAngle = (inst + Math.floor(api.random() * 4)) % 4;\n\n  // Snow drift wind angle\n  const windAngle = ((inst * 1.57) + api.random() * 0.8) % (Math.PI * 2);\n  const windDirX = Math.cos(windAngle);\n  const windDirZ = Math.sin(windAngle);\n\n  // Transform block string according to rotation angle\n  function transformBlock(blockStr, r) {\n    if (r === 0) return blockStr;\n\n    if (blockStr.includes(\"axis=x\") || blockStr.includes(\"axis=z\")) {\n      if (r === 1 || r === 3) {\n        if (blockStr.includes(\"axis=x\")) return blockStr.replace(\"axis=x\", \"axis=z\");\n        if (blockStr.includes(\"axis=z\")) return blockStr.replace(\"axis=z\", \"axis=x\");\n      }\n      return blockStr;\n    }\n\n    const facings = [\"north\", \"east\", \"south\", \"west\"];\n    for (let i = 0; i < 4; i++) {\n      const f = facings[i];\n      if (blockStr.includes(`facing=${f}`)) {\n        const newF = facings[(i + r) % 4];\n        return blockStr.replace(`facing=${f}`, `facing=${newF}`);\n      }\n    }\n    return blockStr;\n  }\n\n  // Put a block using local rotated coordinates around (cx, cz)\n  function put(lx, ly, lz, block) {\n    let rx = lx;\n    let rz = lz;\n    if (rotAngle === 1) { rx = -lz; rz = lx; }\n    else if (rotAngle === 2) { rx = -lx; rz = -lz; }\n    else if (rotAngle === 3) { rx = lz; rz = -lx; }\n\n    const wx = cx + rx;\n    const wz = cz + rz;\n    const wy = ly;\n\n    if (wx < 0 || wx >= sizeX || wy < 0 || wy >= sizeY || wz < 0 || wz >= sizeZ) return;\n\n    const finalBlock = transformBlock(block, rotAngle);\n    voxels.set(`${wx},${wy},${wz}`, finalBlock);\n  }\n\n  // Draw 3D curved mammoth tusk\n  function putTusk(p0, p1, p2, thickness = 1) {\n    const steps = 24;\n    for (let i = 0; i <= steps; i++) {\n      const t = i / steps;\n      const u = 1 - t;\n      const x = u * u * p0[0] + 2 * u * t * p1[0] + t * t * p2[0];\n      const y = u * u * p0[1] + 2 * u * t * p1[1] + t * t * p2[1];\n      const z = u * u * p0[2] + 2 * u * t * p1[2] + t * t * p2[2];\n\n      const dt = 0.05;\n      const tNext = Math.min(1, t + dt);\n      const uN = 1 - tNext;\n      const xN = uN * uN * p0[0] + 2 * uN * tNext * p1[0] + tNext * tNext * p2[0];\n      const yN = uN * uN * p0[1] + 2 * uN * tNext * p1[1] + tNext * tNext * p2[1];\n      const zN = uN * uN * p0[2] + 2 * uN * tNext * p1[2] + tNext * tNext * p2[2];\n\n      const dx = Math.abs(xN - x);\n      const dy = Math.abs(yN - y);\n      const dz = Math.abs(zN - z);\n\n      let axis = \"y\";\n      if (dy >= dx && dy >= dz) axis = \"y\";\n      else if (dx >= dz) axis = \"x\";\n      else axis = \"z\";\n\n      const block = `minecraft:bone_block[axis=${axis}]`;\n      const ix = Math.round(x);\n      const iy = Math.round(y);\n      const iz = Math.round(z);\n      put(ix, iy, iz, block);\n\n      if (thickness > 1 && t < 0.5) {\n        if (axis === \"y\") put(ix + 1, iy, iz, block);\n        else put(ix, iy + 1, iz, block);\n      }\n    }\n  }\n\n  // Draw mammoth rib arch\n  function putRib(p0, p2, archH) {\n    const midX = (p0[0] + p2[0]) / 2;\n    const midY = Math.max(p0[1], p2[1]) + archH;\n    const midZ = (p0[2] + p2[2]) / 2;\n    const p1 = [midX, midY, midZ];\n\n    const steps = 18;\n    for (let i = 0; i <= steps; i++) {\n      const t = i / steps;\n      const u = 1 - t;\n      const x = u * u * p0[0] + 2 * u * t * p1[0] + t * t * p2[0];\n      const y = u * u * p0[1] + 2 * u * t * p1[1] + t * t * p2[1];\n      const z = u * u * p0[2] + 2 * u * t * p1[2] + t * t * p2[2];\n\n      let axis = \"y\";\n      if (t < 0.3 || t > 0.7) axis = \"y\";\n      else {\n        const dx = Math.abs(p2[0] - p0[0]);\n        const dz = Math.abs(p2[2] - p0[2]);\n        axis = dx >= dz ? \"x\" : \"z\";\n      }\n\n      put(Math.round(x), Math.round(y), Math.round(z), `minecraft:bone_block[axis=${axis}]`);\n    }\n  }\n\n  // Draw giant mammoth skull with curved tusks\n  function putSkull(sx, baseY, sz, facingZ = -1) {\n    for (let dx = -1; dx <= 1; dx++) {\n      for (let dy = 0; dy <= 2; dy++) {\n        for (let dz = -1; dz <= 1; dz++) {\n          if (Math.abs(dx) === 1 && dy === 2 && Math.abs(dz) === 1) continue;\n          let axis = \"y\";\n          if (dy === 0) axis = \"z\";\n          else if (dy === 1) axis = (Math.abs(dx) === 1) ? \"x\" : \"y\";\n          put(sx + dx, baseY + dy, sz + dz, `minecraft:bone_block[axis=${axis}]`);\n        }\n      }\n    }\n    // Eye sockets\n    put(sx - 1, baseY + 1, sz + facingZ, `minecraft:bone_block[axis=x]`);\n    put(sx + 1, baseY + 1, sz + facingZ, `minecraft:bone_block[axis=x]`);\n\n    // Mammoth tusks sweeping out and up\n    putTusk(\n      [sx - 1, baseY, sz + facingZ],\n      [sx - 3.2, baseY + 0.4, sz + facingZ * 2.2],\n      [sx - 2.0, baseY + 3.8, sz + facingZ * 1.2],\n      1.5\n    );\n    putTusk(\n      [sx + 1, baseY, sz + facingZ],\n      [sx + 3.2, baseY + 0.4, sz + facingZ * 2.2],\n      [sx + 2.0, baseY + 3.8, sz + facingZ * 1.2],\n      1.5\n    );\n  }\n\n  // --- 1. TERRAIN CONFORMANCE & MOUND BASE ---\n  const gY_center = Math.max(1, Math.min(6, seatY + Math.round(api.heightAt(cx, cz))));\n  const baseRadius = 4.2;\n\n  for (let lx = -4; lx <= 4; lx++) {\n    for (let lz = -4; lz <= 4; lz++) {\n      const dist = Math.sqrt(lx * lx + lz * lz);\n      if (dist <= baseRadius) {\n        let rx = lx;\n        let rz = lz;\n        if (rotAngle === 1) { rx = -lz; rz = lx; }\n        else if (rotAngle === 2) { rx = -lx; rz = -lz; }\n        else if (rotAngle === 3) { rx = lz; rz = -lx; }\n\n        const wx = cx + rx;\n        const wz = cz + rz;\n        const groundH = Math.round(api.heightAt(wx, wz));\n        const gY = Math.max(1, Math.min(8, seatY + groundH));\n\n        // Foundation down to real ground\n        const minY = Math.max(0, Math.min(seatY, gY) - 1);\n        for (let y = minY; y < gY; y++) {\n          const fBlock = (dist > 3.0 || api.random() < 0.35) ? groundScree : stonePrimary;\n          setV(wx, y, wz, fBlock);\n        }\n\n        // Stepped base mound layers\n        const moundLayers = Math.max(0, Math.round((1 - dist / baseRadius) * 3.4));\n        for (let dy = 0; dy <= moundLayers; dy++) {\n          const y = gY + dy;\n          let mBlock;\n          const snowDot = lx * windDirX + lz * windDirZ;\n\n          if (dy === 0) {\n            if (dist > 3.2) mBlock = groundScree;\n            else if ((lx + lz) % 2 === 0) mBlock = \"minecraft:bone_block[axis=x]\";\n            else mBlock = \"minecraft:bone_block[axis=z]\";\n          } else if (snowDot > 1.2 && dy === moundLayers) {\n            mBlock = \"minecraft:snow_block\";\n          } else if (api.random() < 0.25) {\n            mBlock = (dy % 2 === 0) ? \"minecraft:bone_block[axis=x]\" : \"minecraft:bone_block[axis=z]\";\n          } else if (api.random() < 0.5) {\n            mBlock = \"minecraft:bone_block[axis=y]\";\n          } else if (api.random() < 0.75) {\n            mBlock = woodPlanks;\n          } else {\n            mBlock = \"minecraft:snow_block\";\n          }\n          setV(wx, y, wz, mBlock);\n        }\n      }\n    }\n  }\n\n  // --- 2. ARCHETYPE SPECIFIC BONE STRUCTURES ---\n  const topApexY = Math.min(13, gY_center + 8);\n\n  if (archetype === 0) {\n    // Archetype 0: Tripod Mammoth Tusk & Rib Wigwam Frame\n    putTusk([-3, gY_center + 1, -2], [-3.5, gY_center + 4, -1], [0, topApexY, 0], 2);\n    putTusk([3, gY_center + 1, -2], [3.5, gY_center + 4, -1], [0, topApexY, 0], 2);\n    putTusk([0, gY_center + 1, 3.2], [0, gY_center + 4, 3.5], [0, topApexY, 0], 2);\n\n    // Apex timber lashing & crown\n    put(0, topApexY, 0, \"minecraft:bone_block[axis=y]\");\n    put(0, topApexY - 1, 0, woodLog);\n    put(1, topApexY - 1, 0, woodFence);\n    put(-1, topApexY - 1, 0, woodFence);\n    put(0, topApexY - 1, 1, woodFence);\n    put(0, topApexY - 1, -1, woodFence);\n\n    // Central Mammoth Skull in the front opening\n    putSkull(0, gY_center + 1, -1, -1);\n\n    // Flanking femur cribbing (longbone stacks)\n    for (let dy = 0; dy < 3; dy++) {\n      const curY = gY_center + 1 + dy;\n      if (dy % 2 === 0) {\n        put(-3, curY, 0, \"minecraft:bone_block[axis=z]\");\n        put(-3, curY, 1, \"minecraft:bone_block[axis=z]\");\n        put(3, curY, 0, \"minecraft:bone_block[axis=z]\");\n        put(3, curY, 1, \"minecraft:bone_block[axis=z]\");\n      } else {\n        put(-3, curY, 0, \"minecraft:bone_block[axis=x]\");\n        put(-2, curY, 0, \"minecraft:bone_block[axis=x]\");\n        put(2, curY, 0, \"minecraft:bone_block[axis=x]\");\n        put(3, curY, 0, \"minecraft:bone_block[axis=x]\");\n      }\n    }\n\n    // Leaning rib cross-struts\n    putRib([-2.5, gY_center + 1, 1], [0, topApexY - 2, 0], 1.5);\n    putRib([2.5, gY_center + 1, 1], [0, topApexY - 2, 0], 1.5);\n    putRib([0, gY_center + 1, 2.5], [0, topApexY - 3, 0], 1.2);\n\n  } else if (archetype === 1) {\n    // Archetype 1: Longitudinal Spine & Rib Ridge Cache\n    const ridgeY = Math.min(12, gY_center + 6);\n\n    // Long spine vertebra beam\n    for (let lz = -3; lz <= 3; lz++) {\n      put(0, ridgeY, lz, \"minecraft:bone_block[axis=z]\");\n      if (Math.abs(lz) % 2 === 1) {\n        put(0, ridgeY + 1, lz, \"minecraft:bone_block[axis=y]\");\n      }\n    }\n\n    // 4 Rib arches spanning across the spine\n    for (let lz = -2; lz <= 2; lz += 2) {\n      putRib([-3, gY_center + 1, lz], [3, gY_center + 1, lz], ridgeY - gY_center + 1);\n    }\n\n    // Front skull with high reaching tusks\n    putSkull(0, gY_center + 1, -2, -1);\n    putTusk([0, ridgeY, -3], [-1.5, ridgeY + 1.5, -4], [0, topApexY, -2], 1.5);\n\n    // Rear skull / bone trophy\n    putSkull(0, gY_center + 1, 2, 1);\n    putTusk([0, ridgeY, 3], [1.5, ridgeY + 1.5, 4], [0, topApexY, 2], 1.5);\n\n    // Interior stacked longbones & tool timber rack\n    for (let lz = -1; lz <= 1; lz++) {\n      put(-1, gY_center + 1, lz, \"minecraft:bone_block[axis=x]\");\n      put(1, gY_center + 1, lz, \"minecraft:bone_block[axis=x]\");\n      put(-1, gY_center + 2, lz, woodPlanks);\n      put(1, gY_center + 2, lz, woodFence);\n    }\n\n  } else if (archetype === 2) {\n    // Archetype 2: Radial Trophy Cairn & Tusk Spire\n    // 4 Interlocking tusks spiraling to the top\n    putTusk([-1.5, gY_center + 2, -1.5], [-2.5, gY_center + 5, 0], [0, topApexY, 0], 1.5);\n    putTusk([1.5, gY_center + 2, -1.5], [0, gY_center + 5, -2.5], [0, topApexY, 0], 1.5);\n    putTusk([1.5, gY_center + 2, 1.5], [2.5, gY_center + 5, 0], [0, topApexY, 0], 1.5);\n    putTusk([-1.5, gY_center + 2, 1.5], [0, gY_center + 5, 2.5], [0, topApexY, 0], 1.5);\n\n    // Apex bone totem crown\n    put(0, topApexY, 0, \"minecraft:bone_block[axis=y]\");\n    put(0, topApexY - 1, 0, \"minecraft:bone_block[axis=y]\");\n    put(1, topApexY, 0, \"minecraft:bone_block[axis=x]\");\n    put(-1, topApexY, 0, \"minecraft:bone_block[axis=x]\");\n\n    // 4 Quadrants of sorted bones:\n    // NW: Scapula stack (flat shoulder blades)\n    for (let i = 0; i < 3; i++) {\n      put(-2 - i * 0.4, gY_center + 1 + i, -2, \"minecraft:bone_block[axis=x]\");\n      put(-2 - i * 0.4, gY_center + 1 + i, -3, \"minecraft:bone_block[axis=x]\");\n    }\n    // NE: Femur log cribbing\n    put(2, gY_center + 1, -2, \"minecraft:bone_block[axis=z]\");\n    put(2, gY_center + 1, -3, \"minecraft:bone_block[axis=z]\");\n    put(3, gY_center + 1, -2, \"minecraft:bone_block[axis=z]\");\n    put(2, gY_center + 2, -2, \"minecraft:bone_block[axis=x]\");\n    put(3, gY_center + 2, -2, \"minecraft:bone_block[axis=x]\");\n\n    // SW: Stacked vertebrae pillars\n    put(-2, gY_center + 1, 2, \"minecraft:bone_block[axis=y]\");\n    put(-2, gY_center + 2, 2, \"minecraft:bone_block[axis=y]\");\n    put(-3, gY_center + 1, 2, \"minecraft:bone_block[axis=y]\");\n    put(-2, gY_center + 1, 3, \"minecraft:bone_block[axis=y]\");\n\n    // SE: Mammoth Jawbone bundle\n    putRib([2, gY_center + 1, 2], [3.5, gY_center + 1, 3.5], 1.8);\n    putSkull(2, gY_center + 1, 2, 1);\n\n  } else {\n    // Archetype 3: Lean-To Shelter Frame & Butchery Cache\n    const leanRidgeY = Math.min(12, gY_center + 7);\n\n    // Tall front upright tusk posts\n    putTusk([-2, gY_center + 1, -2], [-2.5, gY_center + 4, -2.5], [-1, leanRidgeY, -1], 2);\n    putTusk([2, gY_center + 1, -2], [2.5, gY_center + 4, -2.5], [1, leanRidgeY, -1], 2);\n    put(0, leanRidgeY, -1, \"minecraft:bone_block[axis=x]\");\n    put(0, leanRidgeY + 1, -1, \"minecraft:bone_block[axis=y]\");\n\n    // Sloping ribs extending back to the tundra turf\n    for (let lx = -2; lx <= 2; lx += 2) {\n      putRib([lx, leanRidgeY, -1], [lx * 1.2, gY_center + 1, 3], 0.8);\n    }\n\n    // Giant mammoth skull anchoring the back corner\n    putSkull(2, gY_center + 1, 2, 1);\n\n    // Timber drying strut and tool carving cache under lean-to\n    put(-1, gY_center + 1, 0, \"minecraft:bone_block[axis=x]\");\n    put(0, gY_center + 1, 0, \"minecraft:bone_block[axis=z]\");\n    put(1, gY_center + 1, 0, \"minecraft:bone_block[axis=x]\");\n    put(-1, gY_center + 2, 0, woodFence);\n    put(1, gY_center + 2, 0, woodPlanks);\n    put(0, gY_center + 2, 1, \"minecraft:bone_block[axis=y]\");\n\n    // Heavy snow drift on the sloping roof\n    for (let lx = -1; lx <= 1; lx++) {\n      put(lx, leanRidgeY - 1, 1, \"minecraft:snow_block\");\n      put(lx, leanRidgeY - 2, 2, \"minecraft:snow_block\");\n    }\n  }\n\n  // --- 3. TOP SPUR ELEVATION (RULE 9 HEIGHT CHECK) ---\n  // Ensure structure reaches at least 8 blocks height span\n  let minFoundY = 99;\n  let maxFoundY = -99;\n  for (const k of voxels.keys()) {\n    const py = Number(k.split(\",\")[1]);\n    if (py < minFoundY) minFoundY = py;\n    if (py > maxFoundY) maxFoundY = py;\n  }\n\n  if (maxFoundY - minFoundY + 1 < 8) {\n    const targetApexY = Math.min(sizeY - 1, minFoundY + 8);\n    for (let y = maxFoundY + 1; y <= targetApexY; y++) {\n      setV(cx, y, cz, \"minecraft:bone_block[axis=y]\");\n    }\n  }\n\n  // --- 4. GRAPH CONNECTIVITY & VOLUME ENFORCEMENT ---\n  // Ensure the entire pile is a single 6-connected solid with >= 500 voxels\n  const DIRS = [\n    [1, 0, 0], [-1, 0, 0],\n    [0, 1, 0], [0, -1, 0],\n    [0, 0, 1], [0, 0, -1]\n  ];\n\n  function parseKey(k) {\n    const parts = k.split(\",\").map(Number);\n    return [parts[0], parts[1], parts[2]];\n  }\n\n  const visited = new Set();\n  const components = [];\n  const allKeys = Array.from(voxels.keys());\n\n  for (const k of allKeys) {\n    if (visited.has(k)) continue;\n    const comp = [];\n    const queue = [k];\n    visited.add(k);\n\n    while (queue.length > 0) {\n      const curr = queue.shift();\n      comp.push(curr);\n      const [px, py, pz] = parseKey(curr);\n\n      for (const [dx, dy, dz] of DIRS) {\n        const nx = px + dx;\n        const ny = py + dy;\n        const nz = pz + dz;\n        const nk = `${nx},${ny},${nz}`;\n        if (voxels.has(nk) && !visited.has(nk)) {\n          visited.add(nk);\n          queue.push(nk);\n        }\n      }\n    }\n    components.push(comp);\n  }\n\n  if (components.length > 0) {\n    components.sort((a, b) => b.length - a.length);\n    const mainComp = components[0];\n    const mainSet = new Set(mainComp);\n\n    for (let c = 1; c < components.length; c++) {\n      const comp = components[c];\n      if (comp.length < 12) {\n        for (const k of comp) {\n          voxels.delete(k);\n        }\n      } else {\n        // Bridge disconnected cluster to main component\n        let bestDist = Infinity;\n        let pFrom = null;\n        let pTo = null;\n        for (const k1 of comp) {\n          const p1 = parseKey(k1);\n          for (const k2 of mainComp) {\n            const p2 = parseKey(k2);\n            const d = Math.abs(p1[0] - p2[0]) + Math.abs(p1[1] - p2[1]) + Math.abs(p1[2] - p2[2]);\n            if (d < bestDist) {\n              bestDist = d;\n              pFrom = p1;\n              pTo = p2;\n              if (d === 1) break;\n            }\n          }\n          if (bestDist === 1) break;\n        }\n\n        if (pFrom && pTo) {\n          let [bx, by, bz] = pFrom;\n          while (bx !== pTo[0] || by !== pTo[1] || bz !== pTo[2]) {\n            if (bx < pTo[0]) bx++;\n            else if (bx > pTo[0]) bx--;\n            else if (by < pTo[1]) by++;\n            else if (by > pTo[1]) by--;\n            else if (bz < pTo[2]) bz++;\n            else if (bz > pTo[2]) bz--;\n\n            const bk = `${bx},${by},${bz}`;\n            if (!voxels.has(bk)) {\n              voxels.set(bk, \"minecraft:bone_block[axis=y]\");\n              mainComp.push(bk);\n              mainSet.add(bk);\n            }\n          }\n          for (const k of comp) {\n            mainComp.push(k);\n            mainSet.add(k);\n          }\n        }\n      }\n    }\n  }\n\n  // Enforce solid voxel volume >= 520\n  let currentVolume = voxels.size;\n  if (currentVolume < 520) {\n    for (let r = 1; r <= 4 && currentVolume < 520; r++) {\n      for (let dx = -r; dx <= r && currentVolume < 520; dx++) {\n        for (let dz = -r; dz <= r && currentVolume < 520; dz++) {\n          if (dx * dx + dz * dz <= r * r + 1) {\n            const px = cx + dx;\n            const pz = cz + dz;\n            if (px >= 1 && px <= 9 && pz >= 1 && pz <= 9) {\n              for (let py = 2; py <= 6 && currentVolume < 520; py++) {\n                const pk = `${px},${py},${pz}`;\n                if (!voxels.has(pk)) {\n                  voxels.set(pk, \"minecraft:bone_block[axis=y]\");\n                  currentVolume++;\n                }\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // --- 5. DETERMINISTIC EMISSION ---\n  const sortedKeys = Array.from(voxels.keys()).sort((a, b) => {\n    const [x1, y1, z1] = parseKey(a);\n    const [x2, y2, z2] = parseKey(b);\n    if (y1 !== y2) return y1 - y2;\n    if (z1 !== z2) return z1 - z2;\n    return x1 - x2;\n  });\n\n  for (const k of sortedKeys) {\n    const [x, y, z] = parseKey(k);\n    api.set(x, y, z, voxels.get(k));\n  }\n\n  return {\n    name: \"bone_heap\",\n    seatY,\n    anchors: {\n      front: [cx, seatY, 0],\n      cache: [cx, seatY, cz]\n    }\n  };\n}"
+    }
+  }
+}

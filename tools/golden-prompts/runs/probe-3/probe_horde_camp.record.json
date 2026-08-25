@@ -1,0 +1,168 @@
+{
+  "id": "probe_horde_camp",
+  "family": "probe",
+  "kit": "settlement",
+  "prompt": "A nomad horde's camp on the open steppe: rings of felt yurts around the khan's great tent, horse lines and a wooden watch tower, the grass stretching to every horizon.",
+  "seed": 911,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.4,
+    "decline": 0,
+    "formality": 0.4,
+    "climate": {
+      "biome": "minecraft:plains",
+      "temperature": 0.1,
+      "humidity": -0.4,
+      "snow": "never"
+    },
+    "character": {
+      "label": "steppe nomad horde camp",
+      "materialTheme": "temperate_timber",
+      "formPacks": [
+        "steppe_nomad"
+      ],
+      "urbanForm": "radial",
+      "archetypes": {
+        "prefer": [
+          "watchtower"
+        ],
+        "forbid": [
+          "townhouse",
+          "terraced_row",
+          "shop_row",
+          "apartment_block",
+          "office"
+        ]
+      },
+      "props": {
+        "prefer": [
+          "cart"
+        ]
+      },
+      "flora": {
+        "prefer": [
+          "sparse"
+        ]
+      },
+      "motifs": {
+        "roofType": "dome",
+        "massing": "sprawling"
+      }
+    },
+    "tokens": {
+      "terrain": "vast flat open steppe with unbroken grassland stretching to every horizon",
+      "icons": "khan's great tent on a central dais; concentric rings of felt gers and yurts; wooden watchtower overlooking the plain; horse picket lines; ovoo cairn and horsetail standards",
+      "infra": "circular beaten cart_track ring roads between the yurt rings; horse picket lines around the camp perimeter"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 175800,
+    "completionTokens": 22571,
+    "cost": 0.1082
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 28,
+    "maxDepth": 2,
+    "generators": [
+      "authored:khans_great_tent",
+      "building.grammar@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "armory",
+      "cottage",
+      "guard_post",
+      "smithy",
+      "thatched_roundhouse",
+      "watchtower"
+    ],
+    "archetypesInCatalog": 6,
+    "formPacks": [
+      "steppe_nomad"
+    ],
+    "props": [
+      "cairn",
+      "cart",
+      "covered_wagon",
+      "flagpole",
+      "hitching_post",
+      "horse_trough",
+      "yurt"
+    ],
+    "species": [
+      "hazel_bush",
+      "steppe_juniper",
+      "weathered_ironwood"
+    ],
+    "envelopes": [
+      "512x512",
+      "30x30",
+      "27x18x27",
+      "7x19x7",
+      "9x16x9",
+      "9x11x9",
+      "11x12x17"
+    ],
+    "constraints": 14,
+    "constraintKinds": [
+      "adjacent_to",
+      "blend",
+      "distance",
+      "facing",
+      "gap",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform",
+      "zone"
+    ],
+    "constraintsWithStrength": 5,
+    "hardConstraints": 0,
+    "forests": 1,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 4,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 27,
+    "eras": [
+      "medieval"
+    ],
+    "bytes": 20163
+  },
+  "wallMs": 241000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 2,
+    "feedbackRounds": 1,
+    "programs": [
+      "ok khans_great_tent [landmark] 1 attempt(s), 21146 tokens ($0.0346), 6 warning(s)"
+    ],
+    "programCost": 0.0346,
+    "totalCost": 0.1428,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/probe3/gen/probe_horde_camp/out/steppe_horde_camp",
+    "finalDiagnostics": {
+      "LOAM-W330": 1,
+      "LOAM-T208": 1,
+      "LOAM-W522": 1,
+      "LOAM-I497": 1,
+      "LOAM-T341": 1,
+      "LOAM-W470": 1
+    },
+    "crash": [],
+    "docName": "steppe_horde_camp.loam.json"
+  }
+}

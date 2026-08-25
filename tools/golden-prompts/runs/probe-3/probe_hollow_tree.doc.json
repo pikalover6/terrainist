@@ -1,0 +1,928 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "baobab_village",
+    "worldSeed": "916",
+    "prompt": "A village built in and around one colossal hollow baobab: the market inside its trunk, rope bridges from its branches to platform houses, ladders and lanterns up the bark.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:dirt_path",
+      "road.shoulder": "minecraft:coarse_dirt",
+      "plaza.path": "minecraft:packed_mud"
+    }
+  },
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.45,
+    "formality": 0.1,
+    "climate": {
+      "biome": "minecraft:savanna",
+      "temperature": 0.8,
+      "humidity": -0.4,
+      "snow": "never"
+    },
+    "character": {
+      "label": "colossal baobab village",
+      "materialTheme": "temperate_timber",
+      "urbanForm": "radial",
+      "archetypes": {
+        "prefer": [
+          "market_stall",
+          "cottage",
+          "hut",
+          "apothecary",
+          "tavern",
+          "granary",
+          "stilt_house"
+        ],
+        "forbid": [
+          "skyscraper",
+          "office",
+          "apartment_block",
+          "factory_hall"
+        ]
+      },
+      "flora": {
+        "prefer": [
+          "acacia_umbrella"
+        ]
+      },
+      "props": {
+        "prefer": [
+          "market_barrow",
+          "well_head",
+          "notice_board",
+          "treehouse",
+          "bench"
+        ]
+      },
+      "motifs": {
+        "roofType": "shed",
+        "massing": "sprawling",
+        "ornamentDensity": 0.3
+      },
+      "programs": [
+        {
+          "id": "colossal_baobab",
+          "mode": "landmark",
+          "brief": "A colossal ancient hollow baobab tree of immense girth. Its swollen wooden trunk is hollowed out into a multi-tiered bustling market chamber with stalls, counters, and timber archways; spiral stairs and carved ladders climb up the interior and exterior bark; massive horizontal boughs extend outward supporting hanging platform decks, rope bridge abutments, and glowing lantern clusters.",
+          "envelope": [
+            64,
+            52,
+            64
+          ]
+        },
+        {
+          "id": "canopy_platform_house",
+          "mode": "plugin",
+          "brief": "A stilt-mounted timber platform hut nestled in high tree boughs with a curved thatch awning, rope bridge stubs, hanging lanterns, and perimeter railing.",
+          "envelope": [
+            13,
+            12,
+            13
+          ],
+          "count": 6
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "a warm, open savanna plain centered on one colossal ancient hollow baobab tree",
+      "icons": "a lively village market sheltered inside the vast hollow trunk; wooden platform houses hung from high boughs; rope bridges spanning between canopy branches; winding ladders, walkways, and hanging lanterns ascending the outer bark"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 68,
+          "amplitude": 18,
+          "octaves": 4,
+          "frequency": 0.003,
+          "gain": 0.45,
+          "erosionPasses": 2,
+          "cliffThreshold": 60,
+          "soilDepth": 3,
+          "beachWidth": 2,
+          "snowLineFraction": 0.98
+        },
+        "children": [
+          {
+            "id": "village_rise",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "a broad gentle shelf supporting the baobab and settlement",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 110,
+              "height": 5,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "dry_wash",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "a seasonal dry wash curving around the western savanna",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.12,
+                  0.88
+                ],
+                [
+                  0.22,
+                  0.62
+                ],
+                [
+                  0.26,
+                  0.38
+                ],
+                [
+                  0.52,
+                  0.18
+                ],
+                [
+                  0.88,
+                  0.12
+                ]
+              ],
+              "width": 14,
+              "depth": 5,
+              "meander": 0.6,
+              "flooded": "never"
+            }
+          },
+          {
+            "id": "watering_hole",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "a natural savanna watering hole near the village",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.28,
+                0.42
+              ],
+              "radius": 34,
+              "depth": 6,
+              "water": true,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "arid",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0014,
+          "latitudeGradient": -0.1
+        }
+      },
+      {
+        "id": "baobab_grove",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "acacia and emergent scrub surrounding the great tree",
+        "params": {
+          "area": {
+            "at": [
+              0.5,
+              0.5
+            ],
+            "radius": 140
+          },
+          "density": 0.03,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 28,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "undergrowth": {
+            "grass": 0.45,
+            "flowers": 0.04,
+            "deadwood": 0.08
+          },
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "ancient_hardwood",
+                  "shape": "desert_ironwood"
+                }
+              ]
+            },
+            "understory": {
+              "species": [
+                {
+                  "id": "juniper",
+                  "shape": "juniper_scrub"
+                }
+              ],
+              "density": 0.08
+            },
+            "floor": "default"
+          },
+          "species": [
+            {
+              "id": "umbrella_acacia",
+              "shape": "acacia_umbrella",
+              "weight": 4
+            },
+            {
+              "id": "desert_hardwood",
+              "shape": "desert_ironwood",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "savanna_wilderness",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse savanna tree scatter",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 5,
+          "clumping": 0.4,
+          "maxSlope": 32,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "undergrowth": {
+            "grass": 0.35,
+            "flowers": 0.02,
+            "deadwood": 0.04
+          },
+          "species": [
+            {
+              "id": "wild_acacia",
+              "shape": "acacia_umbrella",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "the_great_baobab",
+        "kind": "generator",
+        "generator": "authored:colossal_baobab",
+        "label": "the colossal ancient hollow baobab centerpiece",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            64,
+            52,
+            64
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6
+          }
+        ],
+        "params": {
+          "seat": "pad"
+        },
+        "tags": [
+          "landmark",
+          "baobab",
+          "centerpiece"
+        ]
+      },
+      {
+        "id": "canopy_huts",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "aerial platform houses hung from the baobab boughs",
+        "params": {
+          "program": "canopy_platform_house",
+          "count": 6,
+          "area": {
+            "at": [
+              0.5,
+              0.5
+            ],
+            "radius": 0.18
+          },
+          "spacing": 20,
+          "hover": 18,
+          "face": {
+            "toward": "the_great_baobab"
+          }
+        },
+        "tags": [
+          "canopy_house",
+          "house",
+          "aerial"
+        ]
+      },
+      {
+        "id": "baobab_market",
+        "kind": "primitive",
+        "label": "the market ground at the foot of the baobab",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            20,
+            20
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public",
+          "market"
+        ]
+      },
+      {
+        "id": "traders_tavern",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the village tavern by the root approach",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "archetype": "tavern",
+          "floors": 2,
+          "roof": "shed"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "baobab_market",
+            "gap": [
+              2,
+              8
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "baobab_market"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "tavern",
+          "house",
+          "trade"
+        ]
+      },
+      {
+        "id": "herbalist_hut",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the bark herbalist and apothecary",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            10,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "apothecary",
+          "floors": 1,
+          "roof": "shed"
+        },
+        "constraints": [
+          {
+            "distance": "baobab_market",
+            "min": 6,
+            "max": 32,
+            "strength": "soft"
+          },
+          {
+            "facing": "baobab_market"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "apothecary",
+          "trade"
+        ]
+      },
+      {
+        "id": "elder_hall",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the communal elder gathering hall",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "hall",
+          "floors": 1,
+          "roof": "shed"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "baobab_market",
+            "gap": [
+              2,
+              10
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "baobab_market"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "hall",
+          "civic"
+        ]
+      },
+      {
+        "id": "granary_store",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "elevated dry seed and grain store",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            9,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "granary",
+          "floors": 1,
+          "roof": "shed"
+        },
+        "constraints": [
+          {
+            "distance": "baobab_market",
+            "min": 8,
+            "max": 40,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "granary",
+          "store"
+        ]
+      },
+      {
+        "id": "ground_market_stall",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "covered market stall near the outer trunk entrance",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            7,
+            7
+          ]
+        },
+        "params": {
+          "archetype": "market_stall",
+          "floors": 1,
+          "roof": "shed"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "baobab_market",
+            "gap": [
+              1,
+              4
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "baobab_market"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "market_stall",
+          "trade"
+        ]
+      },
+      {
+        "id": "root_cottage_west",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "stilted wood dwelling beside the root buttress",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "stilt_house",
+          "floors": 1,
+          "roof": "shed"
+        },
+        "constraints": [
+          {
+            "distance": "baobab_market",
+            "min": 10,
+            "max": 48,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "stilt_house",
+          "house"
+        ]
+      },
+      {
+        "id": "root_cottage_east",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "thatched wood cottage on the village edge",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "cottage",
+          "floors": 1,
+          "roof": "shed"
+        },
+        "constraints": [
+          {
+            "distance": "baobab_market",
+            "min": 12,
+            "max": 52,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "cottage",
+          "house"
+        ]
+      },
+      {
+        "id": "root_cottage_north",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "wood and mud hut facing the inner paths",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "cottage",
+          "floors": 1,
+          "roof": "shed"
+        },
+        "constraints": [
+          {
+            "distance": "baobab_market",
+            "min": 10,
+            "max": 45,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "cottage",
+          "house"
+        ]
+      },
+      {
+        "id": "savanna_holding",
+        "kind": "generator",
+        "generator": "precinct.farm@0",
+        "label": "communal village terraced fields and pasture",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            84,
+            80
+          ]
+        },
+        "params": {
+          "parcels": 5,
+          "parcelSize": 16,
+          "crops": [
+            "wheat",
+            "pasture",
+            "pumpkin"
+          ],
+          "edge": "fence"
+        },
+        "constraints": [
+          {
+            "zone": "southeast"
+          },
+          {
+            "distance": "baobab_market",
+            "min": 24,
+            "max": 75
+          }
+        ],
+        "ports": {
+          "gate": {
+            "type": "road_stub",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "farm",
+          "rural"
+        ]
+      },
+      {
+        "id": "trunk_well",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "covered windlass well near the baobab trunk",
+        "params": {
+          "prop": "well_head",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "market_barrow_prop",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "produce barrow in the market square",
+        "params": {
+          "prop": "market_barrow",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "village_notice",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "notices posted near the base ladder",
+        "params": {
+          "prop": "notice_board",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "lookout_treehouse",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "perimeter bough watch post",
+        "params": {
+          "prop": "treehouse",
+          "zone": "southwest"
+        }
+      },
+      {
+        "id": "tavern_hitching_post",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "hitching post outside the tavern",
+        "params": {
+          "prop": "hitching_post",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "worn dirt lanes radiating from the hollow baobab market",
+        "params": {
+          "anchors": [
+            "baobab_market",
+            "the_great_baobab",
+            "#tag:house",
+            "elder_hall",
+            "savanna_holding"
+          ],
+          "pattern": "radial",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 12
+        }
+      }
+    ]
+  },
+  "programs": {
+    "colossal_baobab": {
+      "mode": "landmark",
+      "envelope": [
+        64,
+        52,
+        64
+      ],
+      "sourceHash": "b3:74ca925c613cc8a0acf3739d3df4ab42b36afb0d0ecea2b6347147c4f64d2826",
+      "outputHash": "b3:e9e2213cb37c4b8bfa6bb2d711718ceb347330054dbce8be7e6ebf88a8a150e1",
+      "conforms": false,
+      "conformHash": "b3:d55c77c28c8ef15312e1ad3211463de752ea8ec2c059392f98f11d180087af18",
+      "source": "export const envelope = [64, 52, 64];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const seatY = 10;\n  const cx = 32;\n  const cz = 32;\n\n  // -------------------------------------------------------------------------\n  // Palette extraction with safe theme roles\n  // -------------------------------------------------------------------------\n  const woodLog = api.theme.wood.log;\n  const woodStripped = api.theme.wood.stripped || api.theme.wood.log;\n  const woodPlanks = api.theme.wood.planks;\n  const woodStairs = api.theme.wood.stairs;\n  const woodSlab = api.theme.wood.slab;\n  const woodFence = api.theme.wood.fence;\n  const woodTrapdoor = api.theme.wood.trapdoor;\n\n  const stonePrimary = api.theme.stone.primary;\n  const stoneWall = api.theme.stone.wall || stonePrimary;\n  const stoneStairs = api.theme.stone.stairs || woodStairs;\n  const stoneSlab = api.theme.stone.slab || woodSlab;\n\n  const groundPavement = api.theme.ground.pavement || stonePrimary;\n  const groundPlinth = api.theme.ground.plinth || woodStripped;\n\n  const roofStairs = api.theme.roof.stairs || woodStairs;\n  const roofSlab = api.theme.roof.slab || woodSlab;\n\n  const leaves = \"minecraft:acacia_leaves[persistent=true,distance=1]\";\n  const chain = \"minecraft:chain[axis=y]\";\n  const lanternHang = \"minecraft:lantern[hanging=true]\";\n  const lanternFloor = \"minecraft:lantern[hanging=false]\";\n\n  // Clean helper for block states\n  function clean(b) {\n    return b.replace(/\\[.*\\]/, \"\");\n  }\n  const cleanWoodStairs = clean(woodStairs);\n  const cleanWoodSlab = clean(woodSlab);\n  const cleanRoofStairs = clean(roofStairs);\n  const cleanRoofSlab = clean(roofSlab);\n  const cleanStoneStairs = clean(stoneStairs);\n  const cleanStoneSlab = clean(stoneSlab);\n\n  function stair(base, facing = \"north\", half = \"bottom\") {\n    return `${base}[facing=${facing},half=${half}]`;\n  }\n  function slab(base, type = \"bottom\") {\n    return `${base}[type=${type}]`;\n  }\n\n  // -------------------------------------------------------------------------\n  // 3D Voxel Grid Buffer (Dense Uint16 for fast, deduplicated, bounded writes)\n  // -------------------------------------------------------------------------\n  const totalVoxels = W * H * D;\n  const grid = new Uint16Array(totalVoxels);\n  const palette = [\"minecraft:air\"];\n  const paletteMap = new Map([[\"minecraft:air\", 0]]);\n\n  function getBlock(x, y, z) {\n    if (x < 0 || x >= W || y < 0 || y >= H || z < 0 || z >= D) return 0;\n    return grid[x + y * W + z * W * H];\n  }\n\n  function setBlock(x, y, z, blockStr) {\n    if (x < 0 || x >= W || y < 0 || y >= H || z < 0 || z >= D) return;\n    let id = paletteMap.get(blockStr);\n    if (id === undefined) {\n      id = palette.length;\n      palette.push(blockStr);\n      paletteMap.set(blockStr, id);\n    }\n    grid[x + y * W + z * W * H] = id;\n  }\n\n  function clearBlock(x, y, z) {\n    if (x < 0 || x >= W || y < 0 || y >= H || z < 0 || z >= D) return;\n    grid[x + y * W + z * W * H] = 0;\n  }\n\n  // -------------------------------------------------------------------------\n  // Geometry Curves & Shapes\n  // -------------------------------------------------------------------------\n  const rootAngles = [\n    0.0,\n    Math.PI / 3,\n    (2 * Math.PI) / 3,\n    Math.PI,\n    (-2 * Math.PI) / 3,\n    -Math.PI / 3,\n  ];\n\n  function getTrunkProfile(y, angle) {\n    let rootInfluence = 0;\n    for (let i = 0; i < rootAngles.length; i++) {\n      let da = Math.abs(angle - rootAngles[i]);\n      if (da > Math.PI) da = 2 * Math.PI - da;\n      const inf = Math.max(0, Math.cos(da * 3));\n      if (inf > rootInfluence) rootInfluence = inf;\n    }\n\n    let rProf = 13.0;\n    if (y < 10) {\n      rProf = 13.0 + (10 - y) * 0.45 + rootInfluence * (10 - y) * 1.1;\n    } else if (y <= 16) {\n      rProf = 13.0 + (y - 10) * 0.25 + rootInfluence * (16 - y) * 0.4;\n    } else if (y <= 26) {\n      rProf = 14.5 - (y - 16) * 0.12;\n    } else if (y <= 35) {\n      rProf = 13.3 - (y - 26) * 0.22;\n    } else {\n      rProf = 11.3 - (y - 35) * 0.4;\n    }\n\n    const fluting =\n      1.0 + 0.08 * Math.cos(6 * angle) + 0.03 * Math.sin(12 * angle);\n    const rOut = rProf * fluting;\n    const rIn = y >= 10 && y <= 32 ? Math.max(0, rProf - 2.6) : -1;\n\n    return { rOut, rIn, rProf, rootInfluence };\n  }\n\n  // -------------------------------------------------------------------------\n  // 1. Build Base Trunk & Ground-Conforming Roots\n  // -------------------------------------------------------------------------\n  for (let z = 0; z < D; z++) {\n    for (let x = 0; x < W; x++) {\n      const dx = x - cx;\n      const dz = z - cz;\n      const r = Math.sqrt(dx * dx + dz * dz);\n      if (r > 25) continue;\n\n      const angle = Math.atan2(dz, dx);\n      const gh = api.heightAt(x, z);\n      const groundY = Math.max(0, seatY + gh);\n\n      for (let y = groundY; y <= 36; y++) {\n        const { rOut, rIn } = getTrunkProfile(y, angle);\n\n        if (r <= rOut) {\n          if (rIn > 0 && r < rIn) {\n            // Inside hollow chamber (handled in interior phase)\n            continue;\n          }\n\n          // Bark or solid wood\n          const isOuter = r > rOut - 1.3;\n          const isGroove = Math.cos(6 * angle) < -0.15;\n\n          if (isOuter && isGroove) {\n            setBlock(x, y, z, woodStripped);\n          } else if (isOuter) {\n            setBlock(x, y, z, woodLog);\n          } else {\n            setBlock(x, y, z, woodStripped);\n          }\n        }\n      }\n\n      // Fill solid foundation/roots down to groundY if ground fell away\n      if (groundY < seatY) {\n        const { rOut } = getTrunkProfile(seatY, angle);\n        if (r <= rOut) {\n          for (let y = groundY; y < seatY; y++) {\n            setBlock(x, y, z, r < 8 ? groundPlinth : woodLog);\n          }\n        }\n      }\n    }\n  }\n\n  // -------------------------------------------------------------------------\n  // 2. Grand Portals, Windows & Approach Stairs\n  // -------------------------------------------------------------------------\n  // North Entrance (Facing -Z / Front)\n  for (let y = seatY; y <= seatY + 5; y++) {\n    for (let x = cx - 3; x <= cx + 3; x++) {\n      for (let z = cz - 16; z <= cz - 9; z++) {\n        clearBlock(x, y, z);\n      }\n    }\n  }\n  // Archway frame North\n  for (let y = seatY; y <= seatY + 5; y++) {\n    setBlock(cx - 3, y, cz - 14, woodLog);\n    setBlock(cx + 3, y, cz - 14, woodLog);\n  }\n  setBlock(cx - 3, seatY + 6, cz - 14, stair(cleanWoodStairs, \"east\", \"top\"));\n  setBlock(cx + 3, seatY + 6, cz - 14, stair(cleanWoodStairs, \"west\", \"top\"));\n  for (let x = cx - 2; x <= cx + 2; x++) {\n    setBlock(x, seatY + 6, cz - 14, woodLog);\n  }\n  setBlock(cx - 2, seatY + 5, cz - 14, stair(cleanWoodStairs, \"east\", \"top\"));\n  setBlock(cx + 2, seatY + 5, cz - 14, stair(cleanWoodStairs, \"west\", \"top\"));\n\n  // South, East, West Archways\n  const sideArches = [\n    { name: \"south\", dx: 0, dz: 13, facing: \"south\" },\n    { name: \"east\", dx: 13, dz: 0, facing: \"east\" },\n    { name: \"west\", dx: -13, dz: 0, facing: \"west\" },\n  ];\n  for (const arch of sideArches) {\n    const ax = cx + arch.dx;\n    const az = cz + arch.dz;\n    for (let y = seatY; y <= seatY + 4; y++) {\n      for (let ox = -2; ox <= 2; ox++) {\n        for (let oz = -2; oz <= 2; oz++) {\n          const px = ax + ox;\n          const pz = az + oz;\n          const dist = Math.sqrt((px - cx) ** 2 + (pz - cz) ** 2);\n          if (dist >= 9 && dist <= 16) {\n            clearBlock(px, y, pz);\n          }\n        }\n      }\n    }\n  }\n\n  // Windows / Balcony Openings\n  for (let y = 20; y <= 22; y++) {\n    for (let x = cx - 2; x <= cx + 2; x++) {\n      clearBlock(x, y, cz - 14); // North high window\n      clearBlock(x, y, cz + 14); // South high window\n    }\n    for (let z = cz - 2; z <= cz + 2; z++) {\n      clearBlock(cx + 14, y, z); // East high window\n      clearBlock(cx - 14, y, z); // West high window\n    }\n  }\n\n  // Conforming Entrance Steps descending from seatY to groundY\n  const aprons = [\n    { minX: cx - 4, maxX: cx + 4, minZ: cz - 20, maxZ: cz - 12 },\n    { minX: cx - 4, maxX: cx + 4, minZ: cz + 12, maxZ: cz + 20 },\n    { minX: cx + 12, maxX: cx + 20, minZ: cz - 4, maxZ: cz + 4 },\n    { minX: cx - 20, maxX: cx - 12, minZ: cz - 4, maxZ: cz + 4 },\n  ];\n\n  for (const apr of aprons) {\n    for (let z = apr.minZ; z <= apr.maxZ; z++) {\n      for (let x = apr.minX; x <= apr.maxX; x++) {\n        const gh = api.heightAt(x, z);\n        const groundY = Math.max(0, seatY + gh);\n        for (let y = groundY; y <= seatY; y++) {\n          if (y === seatY) {\n            setBlock(x, y, z, groundPavement);\n          } else {\n            setBlock(x, y, z, stonePrimary);\n          }\n        }\n      }\n    }\n  }\n\n  // -------------------------------------------------------------------------\n  // 3. Hollow Interior Multi-Tiered Market\n  // -------------------------------------------------------------------------\n  // Tier 1: Ground Floor Market Hall (y = seatY)\n  for (let z = cz - 11; z <= cz + 11; z++) {\n    for (let x = cx - 11; x <= cx + 11; x++) {\n      const dx = x - cx;\n      const dz = z - cz;\n      const r = Math.sqrt(dx * dx + dz * dz);\n      const { rIn } = getTrunkProfile(seatY, Math.atan2(dz, dx));\n\n      if (r <= rIn) {\n        // Patterned floor\n        if (r < 2.5) {\n          setBlock(x, seatY, z, groundPlinth);\n        } else if (Math.abs(dx) === Math.abs(dz) || dx === 0 || dz === 0) {\n          setBlock(x, seatY, z, groundPavement);\n        } else {\n          setBlock(x, seatY, z, woodPlanks);\n        }\n\n        // Clear air for market hall\n        for (let y = seatY + 1; y <= seatY + 7; y++) {\n          clearBlock(x, y, z);\n        }\n      }\n    }\n  }\n\n  // Central Timber Pillar & Chandelier\n  for (let y = seatY + 1; y <= 28; y++) {\n    setBlock(cx - 1, y, cz - 1, woodStripped);\n    setBlock(cx, y, cz - 1, woodStripped);\n    setBlock(cx - 1, y, cz, woodStripped);\n    setBlock(cx, y, cz, woodStripped);\n  }\n  // Base plinth around central pillar\n  for (let ox = -2; ox <= 1; ox++) {\n    for (let oz = -2; oz <= 1; oz++) {\n      if (ox === -2 || ox === 1 || oz === -2 || oz === 1) {\n        setBlock(cx + ox, seatY + 1, cz + oz, slab(cleanWoodSlab, \"bottom\"));\n      }\n    }\n  }\n  // Ground Tier Market Stalls (Alcoves)\n  const stallPositions = [\n    { x: cx + 6, z: cz - 6, fDir: \"west\" },\n    { x: cx + 7, z: cz + 2, fDir: \"west\" },\n    { x: cx + 4, z: cz + 7, fDir: \"north\" },\n    { x: cx - 6, z: cz + 6, fDir: \"east\" },\n    { x: cx - 7, z: cz - 2, fDir: \"east\" },\n    { x: cx - 4, z: cz - 7, fDir: \"south\" },\n  ];\n  for (const st of stallPositions) {\n    setBlock(st.x, seatY + 1, st.z, woodPlanks);\n    setBlock(\n      st.x + 1,\n      seatY + 1,\n      st.z,\n      stair(cleanWoodStairs, st.fDir, \"bottom\"),\n    );\n    setBlock(\n      st.x - 1,\n      seatY + 1,\n      st.z,\n      stair(cleanWoodStairs, st.fDir, \"bottom\"),\n    );\n    setBlock(st.x - 1, seatY + 2, st.z, woodFence);\n    setBlock(st.x + 1, seatY + 2, st.z, woodFence);\n    setBlock(st.x - 1, seatY + 3, st.z, woodFence);\n    setBlock(st.x + 1, seatY + 3, st.z, woodFence);\n    setBlock(st.x - 1, seatY + 4, st.z, slab(cleanWoodSlab, \"top\"));\n    setBlock(st.x, seatY + 4, st.z, slab(cleanWoodSlab, \"top\"));\n    setBlock(st.x + 1, seatY + 4, st.z, slab(cleanWoodSlab, \"top\"));\n    setBlock(st.x, seatY + 3, st.z, lanternHang);\n  }\n\n  // Spiral Stair Hugging Bark (Ground y=10 to Mezzanine y=18)\n  for (let i = 0; i <= 24; i++) {\n    const t = i / 24;\n    const ang = 0.5 + t * 1.8 * Math.PI;\n    const sy = seatY + Math.floor(t * 8);\n    const { rIn } = getTrunkProfile(sy, ang);\n    const sr = rIn - 1.1;\n    const sx = Math.round(cx + sr * Math.cos(ang));\n    const sz = Math.round(cz + sr * Math.sin(ang));\n\n    setBlock(sx, sy, sz, woodPlanks);\n    setBlock(sx, sy + 1, sz, woodFence);\n    for (let y = sy + 1; y <= sy + 3; y++) {\n      clearBlock(sx, y, sz);\n    }\n  }\n\n  // Tier 2: Mezzanine Balcony Ring (y = 18)\n  for (let z = cz - 11; z <= cz + 11; z++) {\n    for (let x = cx - 11; x <= cx + 11; x++) {\n      const dx = x - cx;\n      const dz = z - cz;\n      const r = Math.sqrt(dx * dx + dz * dz);\n      const { rIn } = getTrunkProfile(18, Math.atan2(dz, dx));\n\n      if (r <= rIn && r >= 5.2) {\n        setBlock(x, 18, z, woodPlanks);\n        for (let y = 19; y <= 25; y++) {\n          clearBlock(x, y, z);\n        }\n        if (r < 6.2) {\n          setBlock(x, 19, z, woodFence);\n        }\n      }\n    }\n  }\n\n  // Spiral Stair 2 (Mezzanine y=18 to Loft y=26)\n  for (let i = 0; i <= 22; i++) {\n    const t = i / 22;\n    const ang = 2.4 + t * 1.7 * Math.PI;\n    const sy = 18 + Math.floor(t * 8);\n    const { rIn } = getTrunkProfile(sy, ang);\n    const sr = rIn - 1.1;\n    const sx = Math.round(cx + sr * Math.cos(ang));\n    const sz = Math.round(cz + sr * Math.sin(ang));\n\n    setBlock(sx, sy, sz, woodPlanks);\n    setBlock(sx, sy + 1, sz, woodFence);\n    for (let y = sy + 1; y <= sy + 3; y++) {\n      clearBlock(sx, y, sz);\n    }\n  }\n\n  // Tier 3: Upper Loft Timber Bridge (y = 26)\n  for (let z = cz - 9; z <= cz + 9; z++) {\n    for (let x = cx - 2; x <= cx + 2; x++) {\n      setBlock(x, 26, z, woodPlanks);\n      if (x === cx - 2 || x === cx + 2) {\n        setBlock(x, 27, z, woodFence);\n      }\n      for (let y = 27; y <= 32; y++) {\n        if (x !== cx - 2 && x !== cx + 2) clearBlock(x, y, z);\n      }\n    }\n  }\n\n  // Central Chandelier hanging from upper hollow dome\n  for (let y = 25; y >= 15; y--) {\n    setBlock(cx, y, cz - 2, chain);\n  }\n  setBlock(cx, 14, cz - 2, woodPlanks);\n  setBlock(cx + 1, 14, cz - 2, woodFence);\n  setBlock(cx - 1, 14, cz - 2, woodFence);\n  setBlock(cx, 14, cz - 1, woodFence);\n  setBlock(cx, 14, cz - 3, woodFence);\n  setBlock(cx + 1, 13, cz - 2, lanternHang);\n  setBlock(cx - 1, 13, cz - 2, lanternHang);\n  setBlock(cx, 13, cz - 1, lanternHang);\n  setBlock(cx, 13, cz - 3, lanternHang);\n\n  // -------------------------------------------------------------------------\n  // 4. Exterior Spiral Walkway Climbing Bark\n  // -------------------------------------------------------------------------\n  for (let i = 0; i <= 44; i++) {\n    const t = i / 44;\n    const ang = 0.2 + t * 3.2 * Math.PI;\n    const wy = 11 + Math.floor(t * 22);\n    const { rOut } = getTrunkProfile(wy, ang);\n\n    for (let dr = 0.6; dr <= 2.2; dr += 0.8) {\n      const rx = Math.round(cx + (rOut + dr) * Math.cos(ang));\n      const rz = Math.round(cz + (rOut + dr) * Math.sin(ang));\n      setBlock(rx, wy, rz, woodPlanks);\n      clearBlock(rx, wy + 1, rz);\n      clearBlock(rx, wy + 2, rz);\n      clearBlock(rx, wy + 3, rz);\n\n      // Support strut under walkway\n      if (dr > 1.8) {\n        setBlock(rx, wy + 1, rz, woodFence);\n        setBlock(\n          rx,\n          wy - 1,\n          rz,\n          stair(\n            cleanWoodStairs,\n            Math.cos(ang) > 0 ? \"west\" : \"east\",\n            \"top\",\n          ),\n        );\n      }\n    }\n    // Lanterns periodically on exterior path\n    if (i % 9 === 0) {\n      const fx = Math.round(cx + (rOut + 2.4) * Math.cos(ang));\n      const fz = Math.round(cz + (rOut + 2.4) * Math.sin(ang));\n      setBlock(fx, wy + 1, fz, woodFence);\n      setBlock(fx, wy + 2, fz, lanternFloor);\n    }\n  }\n\n  // -------------------------------------------------------------------------\n  // 5. Massive Horizontal Boughs (Quadratic Bezier 3D Splines)\n  // -------------------------------------------------------------------------\n  function drawBranch(p0, p1, p2, r0, r1) {\n    const steps = 28;\n    for (let s = 0; s <= steps; s++) {\n      const t = s / steps;\n      const it = 1 - t;\n      const bx = it * it * p0[0] + 2 * it * t * p1[0] + t * t * p2[0];\n      const by = it * it * p0[1] + 2 * it * t * p1[1] + t * t * p2[1];\n      const bz = it * it * p0[2] + 2 * it * t * p1[2] + t * t * p2[2];\n      const br = (1 - t) * r0 + t * r1;\n      const ceilR = Math.ceil(br);\n\n      for (let dy = -ceilR; dy <= ceilR; dy++) {\n        for (let dz = -ceilR; dz <= ceilR; dz++) {\n          for (let dx = -ceilR; dx <= ceilR; dx++) {\n            if (dx * dx + dy * dy + dz * dz <= br * br) {\n              const px = Math.round(bx + dx);\n              const py = Math.round(by + dy);\n              const pz = Math.round(bz + dz);\n              if (py < H && py >= 0) {\n                setBlock(\n                  px,\n                  py,\n                  pz,\n                  Math.abs(dx) + Math.abs(dz) > br * 0.8\n                    ? woodLog\n                    : woodStripped,\n                );\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // 4 Major Boughs\n  // North-East Bough\n  drawBranch([32, 34, 32], [42, 37, 24], [52, 40, 16], 3.8, 2.2);\n  drawBranch([44, 38, 22], [52, 41, 18], [58, 43, 20], 2.2, 1.4);\n  drawBranch([46, 39, 20], [47, 42, 14], [48, 45, 10], 2.0, 1.3);\n\n  // South-East Bough\n  drawBranch([32, 34, 32], [44, 36, 42], [53, 38, 50], 3.8, 2.2);\n  drawBranch([45, 37, 43], [52, 40, 44], [57, 41, 44], 2.2, 1.4);\n  drawBranch([48, 38, 46], [49, 41, 52], [50, 43, 56], 2.0, 1.3);\n\n  // South-West Bough\n  drawBranch([32, 34, 32], [20, 37, 44], [13, 39, 50], 3.8, 2.2);\n  drawBranch([21, 38, 43], [15, 41, 44], [10, 43, 44], 2.2, 1.4);\n  drawBranch([18, 38, 46], [17, 41, 52], [16, 44, 57], 2.0, 1.3);\n\n  // North-West Bough\n  drawBranch([32, 34, 32], [20, 36, 22], [12, 38, 14], 3.8, 2.2);\n  drawBranch([22, 37, 21], [15, 40, 22], [10, 42, 22], 2.2, 1.4);\n  drawBranch([18, 37, 18], [17, 41, 12], [16, 43, 8], 2.0, 1.3);\n\n  // Central Crown Trunk\n  drawBranch([32, 34, 32], [32, 41, 32], [32, 47, 32], 4.2, 2.6);\n  drawBranch([32, 45, 32], [30, 47, 30], [28, 49, 28], 2.0, 1.2);\n  drawBranch([32, 45, 32], [34, 47, 30], [36, 49, 28], 2.0, 1.2);\n  drawBranch([32, 45, 32], [34, 47, 34], [36, 49, 36], 2.0, 1.2);\n  drawBranch([32, 45, 32], [30, 47, 34], [28, 49, 36], 2.0, 1.2);\n\n  // -------------------------------------------------------------------------\n  // 6. Canopy Foliage Umbrella Pads (Acacia/Baobab flat pads)\n  // -------------------------------------------------------------------------\n  function drawFoliagePad(cx, cy, cz, rx, ry, rz) {\n    const rx2 = rx * rx;\n    const ry2 = ry * ry;\n    const rz2 = rz * rz;\n\n    for (let dy = -Math.ceil(ry); dy <= Math.ceil(ry); dy++) {\n      for (let dz = -Math.ceil(rz); dz <= Math.ceil(rz); dz++) {\n        for (let dx = -Math.ceil(rx); dx <= Math.ceil(rx); dx++) {\n          const distNorm = (dx * dx) / rx2 + (dy * dy) / ry2 + (dz * dz) / rz2;\n          if (distNorm <= 1.0) {\n            const px = cx + dx;\n            const py = cy + dy;\n            const pz = cz + dz;\n            if (py >= 0 && py < H && px >= 0 && px < W && pz >= 0 && pz < D) {\n              if (getBlock(px, py, pz) === 0) {\n                setBlock(px, py, pz, leaves);\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // Central Crown Umbrella\n  drawFoliagePad(32, 49, 32, 10.0, 2.2, 10.0);\n\n  // Bough Tip Foliage Pads\n  const leafPads = [\n    { x: 52, y: 41, z: 16, rx: 6.0, ry: 1.8, rz: 6.0 },\n    { x: 58, y: 44, z: 20, rx: 5.0, ry: 1.6, rz: 5.0 },\n    { x: 48, y: 46, z: 10, rx: 4.8, ry: 1.5, rz: 4.8 },\n\n    { x: 53, y: 39, z: 50, rx: 6.0, ry: 1.8, rz: 6.0 },\n    { x: 57, y: 42, z: 44, rx: 5.0, ry: 1.6, rz: 5.0 },\n    { x: 50, y: 44, z: 56, rx: 4.8, ry: 1.5, rz: 4.8 },\n\n    { x: 13, y: 40, z: 50, rx: 6.0, ry: 1.8, rz: 6.0 },\n    { x: 10, y: 44, z: 44, rx: 5.0, ry: 1.6, rz: 5.0 },\n    { x: 16, y: 45, z: 57, rx: 4.8, ry: 1.5, rz: 4.8 },\n\n    { x: 12, y: 39, z: 14, rx: 6.0, ry: 1.8, rz: 6.0 },\n    { x: 10, y: 43, z: 22, rx: 5.0, ry: 1.6, rz: 5.0 },\n    { x: 16, y: 44, z: 8, rx: 4.8, ry: 1.5, rz: 4.8 },\n  ];\n  for (const pad of leafPads) {\n    drawFoliagePad(pad.x, pad.y, pad.z, pad.rx, pad.ry, pad.rz);\n  }\n\n  // -------------------------------------------------------------------------\n  // 7. Treehouse Platforms & Hanging Village Decks\n  // -------------------------------------------------------------------------\n  // Helper for circular wooden deck\n  function drawDeck(cx, cy, cz, rad) {\n    const rad2 = rad * rad;\n    for (let dz = -Math.ceil(rad); dz <= Math.ceil(rad); dz++) {\n      for (let dx = -Math.ceil(rad); dx <= Math.ceil(rad); dx++) {\n        const d2 = dx * dx + dz * dz;\n        if (d2 <= rad2) {\n          const px = cx + dx;\n          const pz = cz + dz;\n          setBlock(px, cy, pz, woodPlanks);\n          for (let y = cy + 1; y <= cy + 4; y++) {\n            clearBlock(px, y, pz);\n          }\n          if (d2 > (rad - 1.1) * (rad - 1.1)) {\n            setBlock(px, cy + 1, pz, woodFence);\n          }\n        }\n      }\n    }\n  }\n\n  // Platform 1: North-East Village House (center (49, 41, 18))\n  drawDeck(49, 41, 18, 4.5);\n  // House walls & Roof\n  for (let y = 42; y <= 45; y++) {\n    setBlock(47, y, 16, woodLog);\n    setBlock(51, y, 16, woodLog);\n    setBlock(51, y, 20, woodLog);\n    setBlock(47, y, 20, woodLog);\n  }\n  // Roof\n  for (let x = 46; x <= 52; x++) {\n    setBlock(x, 46, 15, stair(cleanRoofStairs, \"south\", \"bottom\"));\n    setBlock(x, 46, 21, stair(cleanRoofStairs, \"north\", \"bottom\"));\n    setBlock(x, 47, 16, stair(cleanRoofStairs, \"south\", \"bottom\"));\n    setBlock(x, 47, 20, stair(cleanRoofStairs, \"north\", \"bottom\"));\n    setBlock(x, 47, 17, slab(cleanRoofSlab, \"top\"));\n    setBlock(x, 47, 18, slab(cleanRoofSlab, \"top\"));\n    setBlock(x, 47, 19, slab(cleanRoofSlab, \"top\"));\n  }\n  setBlock(49, 45, 18, lanternHang);\n\n  // Platform 2: South-West Lookout Deck (center (15, 40, 48))\n  drawDeck(15, 40, 48, 4.2);\n  // Gazebo Awning\n  for (let y = 41; y <= 43; y++) {\n    setBlock(13, y, 46, woodFence);\n    setBlock(17, y, 46, woodFence);\n    setBlock(17, y, 50, woodFence);\n    setBlock(13, y, 50, woodFence);\n  }\n  for (let x = 12; x <= 18; x++) {\n    for (let z = 45; z <= 51; z++) {\n      if (Math.abs(x - 15) <= 2 && Math.abs(z - 48) <= 2) {\n        setBlock(x, 44, z, slab(cleanRoofSlab, \"bottom\"));\n      }\n    }\n  }\n  setBlock(15, 43, 48, lanternHang);\n\n  // Platform 3: South-East Cargo Hoist Platform (center (50, 38, 48))\n  drawDeck(50, 38, 48, 3.8);\n  // Crane boom\n  for (let y = 39; y <= 44; y++) {\n    setBlock(50, y, 46, woodLog);\n  }\n  setBlock(51, 44, 47, woodFence);\n  setBlock(52, 45, 48, woodFence);\n  setBlock(53, 45, 49, woodFence);\n  setBlock(54, 45, 50, woodFence);\n  setBlock(54, 44, 50, chain);\n  setBlock(54, 43, 50, chain);\n  setBlock(54, 42, 50, woodPlanks);\n\n  // -------------------------------------------------------------------------\n  // 8. Suspension Rope Bridges\n  // -------------------------------------------------------------------------\n  function drawRopeBridge(p0, p1, sag) {\n    const steps = 18;\n    for (let s = 0; s <= steps; s++) {\n      const t = s / steps;\n      const x = Math.round((1 - t) * p0[0] + t * p1[0]);\n      const z = Math.round((1 - t) * p0[2] + t * p1[2]);\n      const parabola = 4 * sag * t * (1 - t);\n      const y = Math.round((1 - t) * p0[1] + t * p1[1] - parabola);\n\n      setBlock(x, y, z, slab(cleanWoodSlab, \"bottom\"));\n      clearBlock(x, y + 1, z);\n      clearBlock(x, y + 2, z);\n\n      // Handrails\n      const dx = p1[0] - p0[0];\n      const dz = p1[2] - p0[2];\n      const len = Math.sqrt(dx * dx + dz * dz);\n      const nx = Math.round(-dz / len);\n      const nz = Math.round(dx / len);\n\n      setBlock(x + nx, y + 1, z + nz, woodFence);\n      setBlock(x - nx, y + 1, z - nz, woodFence);\n    }\n  }\n\n  // Bridge 1: Trunk High Balcony -> NE Platform\n  drawRopeBridge([36, 35, 26], [45, 41, 18], 1.5);\n\n  // Bridge 2: Trunk West Balcony -> SW Platform\n  drawRopeBridge([25, 34, 36], [18, 40, 45], 1.5);\n\n  // Bridge 3: SW Platform -> SE Platform\n  drawRopeBridge([18, 40, 50], [46, 38, 50], 2.2);\n\n  // -------------------------------------------------------------------------\n  // 9. Hanging Lantern Clusters under Boughs\n  // -------------------------------------------------------------------------\n  const lanternChains = [\n    { x: 44, yTop: 36, yBot: 32, z: 24 },\n    { x: 46, yTop: 35, yBot: 30, z: 42 },\n    { x: 20, yTop: 36, yBot: 31, z: 43 },\n    { x: 20, yTop: 35, yBot: 30, z: 22 },\n    { x: 32, yTop: 33, yBot: 27, z: 43 },\n  ];\n  for (const lc of lanternChains) {\n    for (let y = lc.yTop; y > lc.yBot; y--) {\n      setBlock(lc.x, y, lc.z, chain);\n    }\n    setBlock(lc.x, lc.yBot, lc.z, lanternHang);\n  }\n\n  // -------------------------------------------------------------------------\n  // 10. Flush Buffer to api.set\n  // -------------------------------------------------------------------------\n  for (let z = 0; z < D; z++) {\n    for (let y = 0; y < H; y++) {\n      for (let x = 0; x < W; x++) {\n        const id = grid[x + y * W + z * W * H];\n        if (id > 0) {\n          api.set(x, y, z, palette[id]);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"colossal_baobab\",\n    seatY: seatY,\n    anchors: {\n      front: [cx, seatY, 0],\n      door: [cx, seatY, cz - 14],\n      market: [cx, seatY, cz],\n    },\n    interiors: [\n      {\n        min: [cx - 8, seatY + 1, cz - 8],\n        max: [cx + 8, seatY + 6, cz + 8],\n        kind: \"hall\",\n      },\n      {\n        min: [cx - 7, 19, cz - 7],\n        max: [cx + 7, 24, cz + 7],\n        kind: \"quarters\",\n      },\n      {\n        min: [cx - 2, 27, cz - 6],\n        max: [cx + 2, 31, cz + 6],\n        kind: \"bridge\",\n      },\n      {\n        min: [47, 42, 16],\n        max: [51, 45, 20],\n        kind: \"quarters\",\n      },\n      {\n        min: [13, 41, 46],\n        max: [17, 43, 50],\n        kind: \"quarters\",\n      },\n    ],\n  };\n}"
+    },
+    "canopy_platform_house": {
+      "mode": "plugin",
+      "envelope": [
+        13,
+        14,
+        13
+      ],
+      "sourceHash": "b3:6a9b2cdcd2376985ab113ad0388dbd4111a58de3b9cd153738b6f5490dcc897f",
+      "outputHash": "b3:df8a01edfb51d566d868c71acc8191f4c38a6514b52b7e11b13b640968ee0a2e",
+      "conforms": false,
+      "conformHash": "b3:28ccbb2a932dc22325e888ea671e21f5bfc6bdae756072e4133b4b9947692694",
+      "source": "export const envelope = [13, 14, 13];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const seatY = 3;\n  const deckY = 4;\n  const inst = api.instance.index % 6;\n\n  // --- Theme Resolution ---\n  function getBlock(val, fallback) {\n    return typeof val === \"string\" && val.length > 0 ? val : fallback;\n  }\n\n  const woodPlanks = getBlock(api.theme?.wood?.planks, \"minecraft:acacia_planks\");\n  const woodLog = getBlock(api.theme?.wood?.log, \"minecraft:acacia_log\");\n  const woodStripped = getBlock(api.theme?.wood?.stripped, \"minecraft:stripped_acacia_log\");\n  const woodStairs = getBlock(api.theme?.wood?.stairs, \"minecraft:acacia_stairs\");\n  const woodSlab = getBlock(api.theme?.wood?.slab, \"minecraft:acacia_slab\");\n  const woodFence = getBlock(api.theme?.wood?.fence, \"minecraft:acacia_fence\");\n  const woodTrapdoor = getBlock(api.theme?.wood?.trapdoor, \"minecraft:acacia_trapdoor\");\n  const woodDoor = getBlock(api.theme?.wood?.door, \"minecraft:acacia_door\");\n  const roofSolid = getBlock(api.theme?.roof?.solid, \"minecraft:hay_block\");\n  const roofStairs = getBlock(api.theme?.roof?.stairs, \"minecraft:acacia_stairs\");\n  const roofSlab = getBlock(api.theme?.roof?.slab, \"minecraft:acacia_slab\");\n  const stoneWall = getBlock(api.theme?.stone?.wall, \"minecraft:cobblestone_wall\");\n\n  // Helper block state builders\n  function logAxis(baseLog, axis = \"y\") {\n    const base = baseLog.split(\"[\")[0];\n    return `${base}[axis=${axis}]`;\n  }\n\n  function stair(baseStair, facing = \"north\", half = \"bottom\", shape = \"straight\") {\n    const base = baseStair.split(\"[\")[0];\n    return `${base}[facing=${facing},half=${half},shape=${shape}]`;\n  }\n\n  function slab(baseSlab, type = \"bottom\") {\n    const base = baseSlab.split(\"[\")[0];\n    return `${base}[type=${type}]`;\n  }\n\n  function trapdoor(baseTrap, facing = \"north\", half = \"bottom\", open = false) {\n    const base = baseTrap.split(\"[\")[0];\n    return `${base}[facing=${facing},half=${half},open=${open}]`;\n  }\n\n  function door(baseDoor, facing = \"north\", half = \"lower\", hinge = \"left\", open = false) {\n    const base = baseDoor.split(\"[\")[0];\n    return `${base}[facing=${facing},half=${half},hinge=${hinge},open=${open}]`;\n  }\n\n  const leaves = \"minecraft:acacia_leaves[distance=1,persistent=true]\";\n  const lanternHang = \"minecraft:lantern[hanging=true]\";\n  const lanternFloor = \"minecraft:lantern[hanging=false]\";\n  const chainY = \"minecraft:chain[axis=y]\";\n\n  // Grid buffer for deterministic writes and in-bounds safety\n  const world = new Map();\n  function setBlock(x, y, z, block) {\n    if (x < 0 || x >= W || y < 0 || y >= H || z < 0 || z >= D) return;\n    world.set(`${x},${y},${z}`, block);\n  }\n\n  function getBlockAt(x, y, z) {\n    return world.get(`${x},${y},${z}`);\n  }\n\n  // --- Per-instance Variation Configuration ---\n  // 1. Colossal baobab bough corner\n  const boughConfigs = [\n    { bx: [8, 9], bz: [8, 9], leanX: 1, leanZ: 1 },    // 0: SE\n    { bx: [3, 4], bz: [8, 9], leanX: -1, leanZ: 1 },   // 1: SW\n    { bx: [8, 9], bz: [3, 4], leanX: 1, leanZ: -1 },   // 2: NE\n    { bx: [3, 4], bz: [3, 4], leanX: -1, leanZ: -1 },  // 3: NW\n    { bx: [2, 3], bz: [5, 6], leanX: -1, leanZ: 0 },   // 4: W\n    { bx: [9, 10], bz: [5, 6], leanX: 1, leanZ: 0 }    // 5: E\n  ];\n  const bough = boughConfigs[inst];\n\n  // 2. Rope bridge exits\n  // North bridge stub is standard front exit; lateral exits vary per instance\n  const hasNorthBridge = true;\n  const hasEastBridge = inst === 1 || inst === 2 || inst === 5;\n  const hasWestBridge = inst === 0 || inst === 4;\n  const hasSouthBridge = inst === 3;\n\n  // 3. Hut bounds & Layout\n  let hutX1 = 3, hutX2 = 7;\n  let hutZ1 = 4, hutZ2 = 8;\n  if (inst === 4) {\n    hutX1 = 5; hutX2 = 9;\n  } else if (inst === 5) {\n    hutX1 = 3; hutX2 = 7;\n  }\n\n  const doorX = Math.floor((hutX1 + hutX2) / 2);\n  const doorZ = hutZ1;\n\n  // --- 1. STILTS & TERRAIN CONFORMITY ---\n  const stiltColumns = [\n    [3, 3], [9, 3], [3, 9], [9, 9],\n    [6, 3], [6, 9], [3, 6], [9, 6]\n  ];\n\n  for (const [sx, sz] of stiltColumns) {\n    // Skip if covered by colossal bough\n    const inBough = sx >= bough.bx[0] && sx <= bough.bx[1] && sz >= bough.bz[0] && sz <= bough.bz[1];\n    if (inBough) continue;\n\n    const terrainH = Math.round(api.heightAt(sx, sz));\n    const startY = Math.max(0, Math.min(deckY - 1, seatY + terrainH));\n\n    for (let y = startY; y < deckY; y++) {\n      setBlock(sx, y, sz, logAxis(woodLog, \"y\"));\n    }\n    // Masonry footing collar if ground is below seat\n    if (startY > 0 && startY < seatY) {\n      setBlock(sx, startY, sz, stoneWall);\n    }\n    // Diagonal brace struts under deck\n    if (deckY - 1 >= startY) {\n      if (sx === 3) setBlock(sx + 1, deckY - 1, sz, stair(woodStairs, \"east\", \"top\"));\n      if (sx === 9) setBlock(sx - 1, deckY - 1, sz, stair(woodStairs, \"west\", \"top\"));\n      if (sz === 3) setBlock(sx, deckY - 1, sz + 1, stair(woodStairs, \"south\", \"top\"));\n      if (sz === 9) setBlock(sx, deckY - 1, sz - 1, stair(woodStairs, \"north\", \"top\"));\n    }\n  }\n\n  // Exterior Access Ladder on front-west stilt\n  const ladderX = 3, ladderZ = 3;\n  const ladderTerrain = Math.max(0, Math.min(deckY - 1, seatY + Math.round(api.heightAt(ladderX, ladderZ))));\n  for (let y = ladderTerrain + 1; y < deckY; y++) {\n    setBlock(ladderX, y, ladderZ - 1, \"minecraft:ladder[facing=north]\");\n  }\n\n  // --- 2. COLOSSAL BAOBAB BOUGH ---\n  for (let bx = bough.bx[0]; bx <= bough.bx[1]; bx++) {\n    for (let bz = bough.bz[0]; bz <= bough.bz[1]; bz++) {\n      const boughTerrain = Math.max(0, Math.min(deckY, seatY + Math.round(api.heightAt(bx, bz))));\n      // Trunk rising from ground up to canopy\n      for (let y = boughTerrain; y <= deckY + 4; y++) {\n        setBlock(bx, y, bz, logAxis(woodStripped, \"y\"));\n      }\n      // Top branch head tilting outwards\n      const topY = deckY + 5;\n      setBlock(bx + bough.leanX, topY, bz + bough.leanZ, logAxis(woodStripped, \"y\"));\n      setBlock(bx + bough.leanX, topY + 1, bz + bough.leanZ, logAxis(woodLog, \"y\"));\n    }\n  }\n\n  // Canopy branch horizontal arms & leaves\n  const branchCenterY = deckY + 6;\n  const branchCenterX = Math.floor((bough.bx[0] + bough.bx[1]) / 2) + bough.leanX;\n  const branchCenterZ = Math.floor((bough.bz[0] + bough.bz[1]) / 2) + bough.leanZ;\n\n  // Horizontal branch struts\n  for (let d = 1; d <= 2; d++) {\n    setBlock(branchCenterX + d, branchCenterY, branchCenterZ, logAxis(woodLog, \"x\"));\n    setBlock(branchCenterX - d, branchCenterY, branchCenterZ, logAxis(woodLog, \"x\"));\n    setBlock(branchCenterX, branchCenterY, branchCenterZ + d, logAxis(woodLog, \"z\"));\n    setBlock(branchCenterX, branchCenterY, branchCenterZ - d, logAxis(woodLog, \"z\"));\n  }\n\n  // Lush acacia foliage cluster attached to canopy branches\n  for (let ox = -2; ox <= 2; ox++) {\n    for (let oz = -2; oz <= 2; oz++) {\n      for (let oy = -1; oy <= 2; oy++) {\n        const lx = branchCenterX + ox;\n        const ly = branchCenterY + oy;\n        const lz = branchCenterZ + oz;\n        const distSq = ox * ox + oz * oz + oy * oy * 1.5;\n        if (distSq <= 6.5) {\n          if (!getBlockAt(lx, ly, lz)) {\n            setBlock(lx, ly, lz, leaves);\n          }\n        }\n      }\n    }\n  }\n\n  // --- 3. TIMBER PLATFORM DECK ---\n  for (let x = 2; x <= 10; x++) {\n    for (let z = 2; z <= 10; z++) {\n      // Chamfer 4 corners for octagonal platform profile\n      if ((x === 2 && z === 2) || (x === 10 && z === 2) || (x === 2 && z === 10) || (x === 10 && z === 10)) {\n        continue;\n      }\n\n      // Deck perimeter beams vs inner floor\n      const isPerimeter = (x === 2 || x === 10 || z === 2 || z === 10 ||\n        (x === 3 && (z === 2 || z === 10)) || (x === 9 && (z === 2 || z === 10)) ||\n        (z === 3 && (x === 2 || x === 10)) || (z === 9 && (x === 2 || x === 10)));\n\n      if (!getBlockAt(x, deckY, z)) {\n        setBlock(x, deckY, z, isPerimeter ? woodStripped : woodPlanks);\n      }\n    }\n  }\n\n  // Trapdoor over ladder opening\n  setBlock(ladderX, deckY, ladderZ - 1, trapdoor(woodTrapdoor, \"north\", \"bottom\", false));\n\n  // Deck Perimeter Railing\n  for (let x = 2; x <= 10; x++) {\n    for (let z = 2; z <= 10; z++) {\n      if ((x === 2 && z === 2) || (x === 10 && z === 2) || (x === 2 && z === 10) || (x === 10 && z === 10)) continue;\n\n      const isEdge = (x === 2 || x === 10 || z === 2 || z === 10);\n      if (!isEdge) continue;\n\n      // Check for bridge and ladder gaps\n      if (hasNorthBridge && z === 2 && (x >= 5 && x <= 7)) continue;\n      if (hasSouthBridge && z === 10 && (x >= 5 && x <= 7)) continue;\n      if (hasWestBridge && x === 2 && (z >= 5 && z <= 7)) continue;\n      if (hasEastBridge && x === 10 && (z >= 5 && z <= 7)) continue;\n      if (x === ladderX && z === 2) continue;\n\n      // Do not place fence over the bough trunk\n      if (x >= bough.bx[0] && x <= bough.bx[1] && z >= bough.bz[0] && z <= bough.bz[1]) continue;\n\n      setBlock(x, deckY + 1, z, woodFence);\n    }\n  }\n\n  // --- 4. ROPE BRIDGE STUBS ---\n  // North Bridge Stub (extends toward z = 0)\n  if (hasNorthBridge) {\n    for (let z = 1; z >= 0; z--) {\n      setBlock(6, deckY, z, slab(woodSlab, \"bottom\"));\n      setBlock(5, deckY + 1, z, woodFence);\n      setBlock(7, deckY + 1, z, woodFence);\n    }\n    // Bridge entry posts & hanging lanterns\n    setBlock(5, deckY + 2, 0, woodFence);\n    setBlock(7, deckY + 2, 0, woodFence);\n    setBlock(5, deckY + 3, 0, lanternFloor);\n  }\n\n  // South Bridge Stub (extends toward z = 12)\n  if (hasSouthBridge) {\n    for (let z = 11; z <= 12; z++) {\n      setBlock(6, deckY, z, slab(woodSlab, \"bottom\"));\n      setBlock(5, deckY + 1, z, woodFence);\n      setBlock(7, deckY + 1, z, woodFence);\n    }\n    setBlock(5, deckY + 2, 12, woodFence);\n    setBlock(7, deckY + 2, 12, woodFence);\n    setBlock(7, deckY + 3, 12, lanternFloor);\n  }\n\n  // East Bridge Stub (extends toward x = 12)\n  if (hasEastBridge) {\n    for (let x = 11; x <= 12; x++) {\n      setBlock(x, deckY, 6, slab(woodSlab, \"bottom\"));\n      setBlock(x, deckY + 1, 5, woodFence);\n      setBlock(x, deckY + 1, 7, woodFence);\n    }\n    setBlock(12, deckY + 2, 5, woodFence);\n    setBlock(12, deckY + 2, 7, woodFence);\n    setBlock(12, deckY + 3, 5, lanternFloor);\n  }\n\n  // West Bridge Stub (extends toward x = 0)\n  if (hasWestBridge) {\n    for (let x = 1; x >= 0; x--) {\n      setBlock(x, deckY, 6, slab(woodSlab, \"bottom\"));\n      setBlock(x, deckY + 1, 5, woodFence);\n      setBlock(x, deckY + 1, 7, woodFence);\n    }\n    setBlock(0, deckY + 2, 5, woodFence);\n    setBlock(0, deckY + 2, 7, woodFence);\n    setBlock(0, deckY + 3, 7, lanternFloor);\n  }\n\n  // --- 5. TIMBER PLATFORM HUT WALLS ---\n  const wallTopY = deckY + 3; // y = 7\n\n  for (let x = hutX1; x <= hutX2; x++) {\n    for (let z = hutZ1; z <= hutZ2; z++) {\n      const isWall = (x === hutX1 || x === hutX2 || z === hutZ1 || z === hutZ2);\n      if (!isWall) continue;\n\n      const isCorner = (x === hutX1 || x === hutX2) && (z === hutZ1 || z === hutZ2);\n\n      for (let y = deckY + 1; y <= wallTopY; y++) {\n        if (isCorner) {\n          setBlock(x, y, z, logAxis(woodStripped, \"y\"));\n        } else {\n          // Doorway on front wall\n          if (z === doorZ && x === doorX) {\n            if (y === deckY + 1) setBlock(x, y, z, door(woodDoor, \"north\", \"lower\", \"left\", false));\n            else if (y === deckY + 2) setBlock(x, y, z, door(woodDoor, \"north\", \"upper\", \"left\", false));\n            else setBlock(x, y, z, woodStripped);\n          }\n          // Window openings with wooden fences / shutters\n          else if (y === deckY + 2 && ((x === hutX1 || x === hutX2) && z === Math.floor((hutZ1 + hutZ2) / 2))) {\n            setBlock(x, y, z, woodFence);\n          } else if (y === deckY + 2 && (z === hutZ2 && x === Math.floor((hutX1 + hutX2) / 2))) {\n            setBlock(x, y, z, woodFence);\n          } else {\n            setBlock(x, y, z, woodPlanks);\n          }\n        }\n      }\n    }\n  }\n\n  // --- 6. CURVED THATCH AWNING & ROOF ---\n  const roofStyle = inst % 3; // 0: Curved Barrel Awning, 1: Sloped Shed Awning, 2: Thatched Pavilion\n\n  if (roofStyle === 0) {\n    // Style 0: Arched Thatch Awning over hut and terrace\n    const rx1 = hutX1 - 1;\n    const rx2 = hutX2 + 1;\n    const rz1 = hutZ1 - 1;\n    const rz2 = hutZ2 + 1;\n\n    // Eaves course at y = 8\n    for (let z = rz1; z <= rz2; z++) {\n      setBlock(rx1, 8, z, stair(roofStairs, \"east\", \"bottom\"));\n      setBlock(rx2, 8, z, stair(roofStairs, \"west\", \"bottom\"));\n      for (let x = rx1 + 1; x <= rx2 - 1; x++) {\n        setBlock(x, 8, z, roofSolid);\n      }\n    }\n\n    // Mid course at y = 9\n    for (let z = rz1; z <= rz2; z++) {\n      setBlock(rx1 + 1, 9, z, stair(roofStairs, \"east\", \"bottom\"));\n      setBlock(rx2 - 1, 9, z, stair(roofStairs, \"west\", \"bottom\"));\n      for (let x = rx1 + 2; x <= rx2 - 2; x++) {\n        setBlock(x, 9, z, roofSolid);\n      }\n    }\n\n    // Ridge peak at y = 10\n    const midX = Math.floor((rx1 + rx2) / 2);\n    for (let z = rz1; z <= rz2; z++) {\n      setBlock(midX, 10, z, slab(roofSlab, \"bottom\"));\n    }\n\n    // Lantern hanging from front awning peak\n    setBlock(midX, 9, rz1, chainY);\n    setBlock(midX, 8, rz1, lanternHang);\n\n  } else if (roofStyle === 1) {\n    // Style 1: Asymmetrical Sloped Shed Awning leaning forward over terrace\n    const rx1 = hutX1 - 1;\n    const rx2 = hutX2 + 1;\n    const rz1 = hutZ1 - 1;\n    const rz2 = hutZ2 + 1;\n\n    for (let x = rx1; x <= rx2; x++) {\n      setBlock(x, 8, rz1, stair(roofStairs, \"north\", \"bottom\"));\n      setBlock(x, 8, rz1 + 1, roofSolid);\n      setBlock(x, 9, rz1 + 2, stair(roofStairs, \"north\", \"bottom\"));\n      setBlock(x, 9, rz1 + 3, roofSolid);\n      setBlock(x, 10, rz2 - 1, stair(roofStairs, \"north\", \"bottom\"));\n      setBlock(x, 10, rz2, roofSolid);\n      setBlock(x, 11, rz2, slab(roofSlab, \"bottom\"));\n    }\n\n    // Front valance trapdoors\n    for (let x = rx1; x <= rx2; x++) {\n      setBlock(x, 7, rz1, trapdoor(woodTrapdoor, \"north\", \"top\", false));\n    }\n\n    // Hanging lantern at front corner\n    setBlock(rx1, 7, rz1, chainY);\n    setBlock(rx1, 6, rz1, lanternHang);\n\n  } else {\n    // Style 2: Thatched Pavilion / Hip Roof with spire\n    const rx1 = hutX1 - 1;\n    const rx2 = hutX2 + 1;\n    const rz1 = hutZ1 - 1;\n    const rz2 = hutZ2 + 1;\n\n    // Base tier y = 8\n    for (let x = rx1; x <= rx2; x++) {\n      for (let z = rz1; z <= rz2; z++) {\n        const isBorder = (x === rx1 || x === rx2 || z === rz1 || z === rz2);\n        if (isBorder) {\n          if (z === rz1) setBlock(x, 8, z, stair(roofStairs, \"south\", \"bottom\"));\n          else if (z === rz2) setBlock(x, 8, z, stair(roofStairs, \"north\", \"bottom\"));\n          else if (x === rx1) setBlock(x, 8, z, stair(roofStairs, \"east\", \"bottom\"));\n          else if (x === rx2) setBlock(x, 8, z, stair(roofStairs, \"west\", \"bottom\"));\n        } else {\n          setBlock(x, 8, z, roofSolid);\n        }\n      }\n    }\n\n    // Mid tier y = 9\n    for (let x = rx1 + 1; x <= rx2 - 1; x++) {\n      for (let z = rz1 + 1; z <= rz2 - 1; z++) {\n        const isBorder = (x === rx1 + 1 || x === rx2 - 1 || z === rz1 + 1 || z === rz2 - 1);\n        if (isBorder) {\n          if (z === rz1 + 1) setBlock(x, 9, z, stair(roofStairs, \"south\", \"bottom\"));\n          else if (z === rz2 - 1) setBlock(x, 9, z, stair(roofStairs, \"north\", \"bottom\"));\n          else if (x === rx1 + 1) setBlock(x, 9, z, stair(roofStairs, \"east\", \"bottom\"));\n          else if (x === rx2 - 1) setBlock(x, 9, z, stair(roofStairs, \"west\", \"bottom\"));\n        } else {\n          setBlock(x, 9, z, roofSolid);\n        }\n      }\n    }\n\n    // Top tier y = 10 and finial\n    const midX = Math.floor((rx1 + rx2) / 2);\n    const midZ = Math.floor((rz1 + rz2) / 2);\n    setBlock(midX, 10, midZ, roofSolid);\n    setBlock(midX, 11, midZ, woodFence);\n    setBlock(midX, 12, midZ, lanternFloor);\n  }\n\n  // --- 7. CARGO WINCH / CRANE PROP ---\n  // A timber crane perched on an open terrace corner for lifting village goods\n  const craneX = (hutX1 >= 4) ? 2 : 10;\n  const craneZ = 3;\n  setBlock(craneX, deckY + 1, craneZ, woodFence);\n  setBlock(craneX, deckY + 2, craneZ, woodFence);\n  setBlock(craneX, deckY + 3, craneZ, logAxis(woodStripped, \"z\"));\n  setBlock(craneX, deckY + 3, craneZ - 1, stair(woodStairs, \"south\", \"top\"));\n  setBlock(craneX, deckY + 2, craneZ - 1, chainY);\n  setBlock(craneX, deckY + 1, craneZ - 1, \"minecraft:barrel[facing=up]\");\n\n  // --- 8. EMIT BLOCKS DETERMINISTICALLY ---\n  for (let y = 0; y < H; y++) {\n    for (let z = 0; z < D; z++) {\n      for (let x = 0; x < W; x++) {\n        const blk = world.get(`${x},${y},${z}`);\n        if (blk) {\n          api.set(x, y, z, blk);\n        }\n      }\n    }\n  }\n\n  // Declare spacious 3x3x3 interior room inside hut for compiler fit-out\n  const interiorMinX = hutX1 + 1;\n  const interiorMaxX = hutX2 - 1;\n  const interiorMinZ = hutZ1 + 1;\n  const interiorMaxZ = hutZ2 - 1;\n\n  return {\n    name: \"canopy_platform_house\",\n    seatY: seatY,\n    anchors: {\n      front: [6, deckY + 1, 0],\n      door: [doorX, deckY + 1, doorZ]\n    },\n    interiors: [\n      {\n        min: [interiorMinX, deckY + 1, interiorMinZ],\n        max: [interiorMaxX, deckY + 3, interiorMaxZ],\n        kind: \"quarters\"\n      }\n    ]\n  };\n}"
+    }
+  }
+}

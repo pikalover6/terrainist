@@ -7,21 +7,11 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 32 (F28: the metric's dominance kept as a
-  rule and retired as a verdict for centrepieces; it now carries the read's
-  data) is committed.
-- **Next unit:** unit 33 — **probe pass 3**: six *new* prompts for G4,
-  pre-registered (one per spec §6 category again, none of pass 1's), through
-  the program stage (`generate-all.mjs` with a `probes-3.json` roster,
-  ≈ $1.70, cap $3.00), scored by the metric and **read** from full-height
-  renders; a probe fails only on a read. G4 is met when these six surface
-  no new failure class; a new class gets an F-number and the pass that
-  follows its fix. Then F17, census 1.21, P5/P6/P7 first steps if cheap;
-  the remaining verdict stations, G2's named worlds, the final deck and
-  closing report.
-- **Last commit:** a382ef5 (unit 31). Convention: this line names the
+- **In flight:** nothing — unit 33 (probe pass 3: six of six generated, five one-shot, every icon present, zero boxes; four of six pass by read — the baobab (dominant by rule too), the river forts with a river that holds and a bridge ending mid-stream, the karst, the horde camp's great tent; the mammoth fails on F27's known remainder and the lighthouse on a new cause, F29 — G4 not met) is committed.
+- **Next unit:** unit 34 — **F29, the silent fit-out**: probe `fitLighthouse` on the pass-3 document (why `archetype: "lighthouse", floors: 2, roof: "flat"` built a box: the roof override, a height floor, or a fallback path), then the smallest honest fix — a `LOAM-W…` note when an archetype's own fit-out is skipped or overruled by params (the sibling of `W511`), and, if the probe names a bug, the fix behind a switch (law 5). Then probe pass 4 — six new prompts for G4 (≈ $1.70). Then F17, census 1.21, P5/P6/P7; the remaining verdict stations, G2, the final deck and closing report.
+- **Last commit:** 30f2075 (unit 32). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
-- **Spend:** $11.77 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
+- **Spend:** $13.47 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
 - **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19, D25,
   D32.)
 - **Findings queue (law 1: bugs before anything else):**
@@ -44,6 +34,11 @@ running state. The NOW block is rewritten at the end of every turn.
     column): the two-villages fjord, 14 % of its floor wet, up to 31 blocks
     dry. Fixed (unit 30): `LOAM-I502 CARVE_MOSTLY_DRY`, measured along the
     floor samples, below half wet.
+  - F29 — **an archetype's bespoke fit-out is defeated by the author's
+    params or falls back, with no diagnostic**: the pass-3 lighthouse
+    (`archetype: "lighthouse", floors: 2, roof: "flat"`) is a two-floor
+    box where the catalog promises a banded spire with a lantern, and the
+    compile says nothing. Unit 34.
   - F28 — closed (unit 32): a prominence rule would reconcile none of the
     four (the gompa's "ordinary buildings" are its own outbuildings; the
     bell sits *below* its village; the ferry is span), so `dominant` keeps
@@ -551,6 +546,15 @@ running state. The NOW block is rewritten at the end of every turn.
   it". `dominant` itself is unchanged, so every score in every run stays
   comparable; the verdict on a program-carried centrepiece is the read's,
   as D70 already ruled. Undo: revert the tool.
+- **D73 (unit 33):** pass 3 does not close G4: four of six read as their
+  prompts, the mammoth fails on a known cause, and the lighthouse on a new
+  one (F29). The rule is the pre-registered one — a new cause gets its
+  F-number and the next six run after its fix — and it is applied as
+  written rather than argued down to "five of six". Undo: n/a.
+- **D74 (unit 33):** the metric's "read it" alarm (unit 32) fired on
+  exactly the four icons whose verdict needed a render — the tent, the
+  bridge, the kill site, the tower — and on nothing else; on this pass the
+  instrument and the reads agree about where to look. Undo: n/a.
 
 ## SPEND
 
@@ -588,6 +592,7 @@ running state. The NOW block is rewritten at the end of every turn.
 | 30 | probe pass 2 — six worlds generated end to end (`runs/probe-2`), the icon metric | 1.67 | 10.22 |
 | 31 | F27 in the kit — the golden gate (`runs/after-f27`) and four probes re-run (`runs/probe-2b`) | 1.55 | 11.77 |
 | 32 | F28 — the metric re-scored on `runs/probe-2b`, no authoring | 0.00 | 11.77 |
+| 33 | probe pass 3 — six new worlds generated end to end (`runs/probe-3`), the icon metric | 1.70 | 13.47 |
 
 ## VERDICTS
 
@@ -688,6 +693,34 @@ fails is F27's remainder, named.
 | `probe_bronze_tundra` | h ×0.93, a ×6.0 | a low dark working among huts | fail — F27 remainder |
 
 Golden gate `runs/after-f27`: 11 of 11, 10 one-shot, `gate: pass`, 28 of 28 icons present, `railway_town` FIXED; dominance not comparable (F24).
+
+**Pass 3 — pre-registered (unit 33, 2026-08-25), before any spend.** Six
+*new* prompts (`tools/golden-prompts/probes-3.json`), one per spec §6
+category and none of pass 1's: `probe_horde_camp` (steppe_nomad at 0 %),
+`probe_river_forts` (two places, a broken bridge), `probe_mammoth_camp`
+(Stone Age, an ice sheet), `probe_karst` (terrain-only), `probe_lighthouse`
+(an icon in the packs), `probe_hollow_tree` (bespoke, T8). Through the
+program stage (`generate-all.mjs`, ≈ $0.28 per world, ≈ $1.70 the pass;
+cap $3.00), recorded to `runs/probe-3`, scored by the icon metric and
+**read** from full-height renders; the verdict is the read's (D70).
+**Prediction:** 6 of 6 generate; icons present 6 of 6; by read ≥ 4 pass —
+the baobab and the great tent dominate (F27's paragraph is fresh), the
+karst passes by read, the river forts get their river (F26's note fires in
+the feedback rounds); the likely fails are the lighthouse (a pack member
+at pack scale) and the mammoth (a skeleton on open ground, F27's
+remainder). **Decision rule:** a probe fails on a read; a failure whose
+cause is already an open F-number is not a new class; a new cause gets an
+F-number and G4 waits for the pass after its fix. G4 is met if these six
+surface no new failure class.
+
+| probe | targeted | exercised | failed | cause | promoted? |
+|---|---|---|---|---|---|
+| `probe_hollow_tree` | bespoke (T8) | a colossal baobab program, walkways, platforms | — | dominant by rule and by read | no — pass |
+| `probe_river_forts` | two places, a broken bridge | two forts, a river that holds, a bridge program ending mid-stream | — | pass by read (span ×7.6); F26 works end to end | no — pass |
+| `probe_karst` | terrain-only | towers, a sinkhole, a cave mouth | — | pass by read | no — pass |
+| `probe_horde_camp` | steppe_nomad at 0 % | the pack, the great tent, six `prop.place` yurts | the yurt rings thin | the centerpiece reads; saturation is props that mostly did not place | no — pass |
+| `probe_mammoth_camp` | Stone Age, an ice sheet | the ice sheet, hide huts, a kill-site program | the skeleton is three blocks | F27 remainder (icon at prop scale) | after F27's remainder |
+| `probe_lighthouse` | an icon in the packs | the `lighthouse` archetype (`floors: 2, roof: flat`) | a flat-roofed box, no lantern | **F29** (new): the archetype's fit-out defeated silently | after F29 |
 
 ## PROPOSALS
 
@@ -1194,3 +1227,10 @@ Golden gate `runs/after-f27`: 11 of 11, 10 one-shot, `gate: pass`, 28 of 28 icon
   read with its span; a valley pavilion does not). `runs/probe-2b`
   re-scored: the ferry alone asks for a read ("not dominant by the rule (h×1.07, a×8) — read it: span ×4"); the gompa sits 5 below its complex, the bell 12 below its village, the mine level with the camp — three alarms unchanged. Tests: FULL suite COUNTS Test Files 347 passed | 1 skipped (348), Tests 5684 passed | 31 skipped (5715). Files: the tool,
   the test, the re-scored `icon-metric.json`, the ledger. Spend $0.
+- **unit 33 — probe pass 3 (2026-08-25):** six new prompts
+  (`tools/golden-prompts/probes-3.json`), pre-registered, through
+  `terrainist generate` (worlds in the scratchpad, records in
+  `runs/probe-3`, $1.70), scored by the icon metric and read from
+  full-height renders (`docs/decks/probes/PROBE-PASS-3-2026-08-25.md`).
+  six of six generated, five one-shot, every icon present, zero boxes; four of six pass by read — the baobab (dominant by rule too), the river forts with a river that holds and a bridge ending mid-stream, the karst, the horde camp's great tent; the mammoth fails on F27's known remainder and the lighthouse on a new cause, F29 — G4 not met Tests: FULL suite COUNTS none run — no compiler, stdlib or tool code moved in this unit; the roster, the run records and the documents only. Files: the roster,
+  `runs/probe-3`, the record, the ledger. Spend $1.70.

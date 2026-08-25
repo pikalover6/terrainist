@@ -1,0 +1,856 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "fog_headland_harbour",
+    "worldSeed": "915",
+    "prompt": "A fog-bound fishing harbour on a rocky Atlantic headland: a stone lighthouse on the point above the boats, net lofts along the quay, a chapel for the drowned.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.cliff": "minecraft:stone",
+      "ground.beach": "minecraft:gravel",
+      "road.surface": "minecraft:cobblestone",
+      "road.shoulder": "minecraft:gravel",
+      "plaza.path": "minecraft:cobblestone",
+      "plaza.gravel": "minecraft:gravel"
+    }
+  },
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.35,
+    "decline": 0.2,
+    "formality": 0.15,
+    "climate": {
+      "temperature": -0.2,
+      "humidity": 0.8
+    },
+    "character": {
+      "label": "fog-bound fishing harbour",
+      "materialTheme": "temperate_timber",
+      "archetypes": {
+        "prefer": [
+          "lighthouse",
+          "cottage",
+          "tavern",
+          "warehouse",
+          "church"
+        ]
+      },
+      "urbanForm": "grown",
+      "motifs": {
+        "roofType": "gable",
+        "massing": "blocky"
+      }
+    },
+    "tokens": {
+      "terrain": "a rocky Atlantic headland jutting into open cold sea with a sheltered fishing harbour below",
+      "icons": "a stone lighthouse on the high rocky point above the moored boats; weathered net lofts and fish houses along the stone quay; a small stone chapel for the drowned overlooking the water"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Fog-bound Atlantic Fishing Harbour and Headland",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "rugged coastal headland falling to a sheltered sea cove",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 72,
+          "amplitude": 42,
+          "octaves": 5,
+          "frequency": 0.0038,
+          "gain": 0.52,
+          "erosionPasses": 2,
+          "continentalness": {
+            "frequency": 0.0012,
+            "seaFraction": 0.45
+          },
+          "cliffThreshold": 48,
+          "soilDepth": 3,
+          "beachWidth": 5,
+          "snowLineFraction": 0.95
+        },
+        "children": [
+          {
+            "id": "headland_spine",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the rocky spine reaching out toward the sea",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.72,
+                  0.56
+                ],
+                [
+                  0.48,
+                  0.44
+                ],
+                [
+                  0.22,
+                  0.34
+                ]
+              ],
+              "width": 56,
+              "height": 38,
+              "profile": "sharp",
+              "meander": 0.4
+            }
+          },
+          {
+            "id": "lighthouse_point_peak",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the high rocky promontory overlooking the ocean",
+            "params": {
+              "verb": "peak",
+              "at": [
+                0.2,
+                0.32
+              ],
+              "radius": 46,
+              "height": 30,
+              "profile": "sharp",
+              "irregularity": 0.22
+            }
+          },
+          {
+            "id": "sheltered_harbour_cove",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the sheltered water carved into the south side of the headland",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.68,
+                  0.68
+                ],
+                [
+                  0.52,
+                  0.6
+                ],
+                [
+                  0.38,
+                  0.52
+                ],
+                "coast"
+              ],
+              "width": 54,
+              "depth": 34,
+              "flooded": "auto",
+              "meander": 0.45
+            }
+          },
+          {
+            "id": "harbour_village_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the walkable bench above the quayside",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.46,
+                0.56
+              ],
+              "radius": 82,
+              "height": 7,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "boreal",
+          "temperatureFrequency": 0.0014,
+          "humidityFrequency": 0.0016,
+          "latitudeGradient": -0.25,
+          "blendRadius": 10
+        }
+      },
+      {
+        "id": "windswept_pines",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "gnarled pines and coastal scrub along the inland slopes",
+        "params": {
+          "area": {
+            "at": [
+              0.65,
+              0.45
+            ],
+            "radius": 150
+          },
+          "density": 0.06,
+          "spacing": 4,
+          "clumping": 0.55,
+          "maxSlope": 30,
+          "elevation": [
+            2,
+            85
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.4,
+            "flowers": 0.03,
+            "deadwood": 0.08
+          },
+          "strata": {
+            "understory": {
+              "species": [
+                {
+                  "id": "juniper",
+                  "shape": "juniper_scrub"
+                }
+              ],
+              "density": 0.08
+            }
+          },
+          "species": [
+            {
+              "id": "squat_pine",
+              "weight": 3,
+              "shape": "spruce_squat"
+            },
+            {
+              "id": "tall_pine",
+              "weight": 1,
+              "shape": "spruce_tall"
+            }
+          ]
+        }
+      },
+      {
+        "id": "coastal_scatter",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse salt-blasted trees on the outer headland",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 5,
+          "clumping": 0.35,
+          "maxSlope": 34,
+          "elevation": [
+            2,
+            95
+          ],
+          "edgeFalloff": 12,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "species": [
+            {
+              "id": "lone_pine",
+              "weight": 2,
+              "shape": "spruce_squat"
+            },
+            {
+              "id": "bent_oak",
+              "weight": 1,
+              "shape": "oak_spreading"
+            }
+          ]
+        }
+      },
+      {
+        "id": "quay",
+        "kind": "primitive",
+        "label": "the stone quay along the water",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            26,
+            22
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.46,
+              0.56
+            ]
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "tags": [
+          "plaza",
+          "quay",
+          "public"
+        ]
+      },
+      {
+        "id": "lighthouse_tower",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the stone lighthouse on the point above the sea",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            22,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "lighthouse",
+          "floors": 2,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "at": [
+              0.2,
+              0.32
+            ]
+          },
+          {
+            "distance": "quay",
+            "min": 35,
+            "max": 160,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "max",
+            "blend": 6
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "lighthouse",
+          "landmark"
+        ]
+      },
+      {
+        "id": "drowned_chapel",
+        "kind": "generator",
+        "generator": "authored:chapel_for_the_drowned",
+        "label": "the stone chapel for the drowned overlooking the cove",
+        "constraints": [
+          {
+            "distance": "quay",
+            "min": 12,
+            "max": 42,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "params": {
+          "face": {
+            "toward": "quay"
+          }
+        },
+        "tags": [
+          "church",
+          "chapel",
+          "public",
+          "landmark"
+        ]
+      },
+      {
+        "id": "net_loft_north",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the two-storey timber net loft along the quayside",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "warehouse",
+          "floors": 2,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "quay",
+            "gap": [
+              1,
+              6
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "quay"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "warehouse",
+          "trade"
+        ]
+      },
+      {
+        "id": "net_loft_south",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the secondary gear store and net repair barn",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            10,
+            13
+          ]
+        },
+        "params": {
+          "archetype": "warehouse",
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "quay",
+            "gap": [
+              1,
+              8
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "quay"
+          },
+          {
+            "distance": "net_loft_north",
+            "min": 8,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "warehouse",
+          "trade"
+        ]
+      },
+      {
+        "id": "the_fog_tavern",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the harbour tavern where fishermen gather",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "archetype": "tavern",
+          "floors": 2,
+          "roof": "gable",
+          "basement": {
+            "depth": 4,
+            "style": "wine_cellar"
+          }
+        },
+        "constraints": [
+          {
+            "adjacent_to": "quay",
+            "gap": [
+              2,
+              8
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "quay"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "tavern",
+          "house",
+          "trade"
+        ]
+      },
+      {
+        "id": "fishers_cottage_one",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a stone-walled cottage tucked above the landing",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            10,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "cottage",
+          "floors": 2,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "quay",
+            "min": 6,
+            "max": 32,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "cottage",
+          "house"
+        ]
+      },
+      {
+        "id": "fishers_cottage_two",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a low fisherman's cottage facing the harbour lane",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "cottage",
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "quay",
+            "min": 10,
+            "max": 40,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "cottage",
+          "house"
+        ]
+      },
+      {
+        "id": "fish_smokehouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the curing shed and smokehouse on the harbour edge",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "archetype": "cannery",
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "quay",
+            "min": 8,
+            "max": 36,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "trade",
+          "craft"
+        ]
+      },
+      {
+        "id": "net_drying_frames",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "drying racks, net frames and lobster pot stacks along the harbour slopes",
+        "params": {
+          "program": "drying_racks_and_net_frames",
+          "count": 6,
+          "area": {
+            "at": [
+              0.46,
+              0.56
+            ],
+            "radius": 0.2
+          },
+          "spacing": 16,
+          "maxSlope": 20,
+          "avoidTags": [
+            "building",
+            "road"
+          ]
+        }
+      },
+      {
+        "id": "main_pier",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the primary timber jetty extending into the cove",
+        "params": {
+          "prop": "pier",
+          "zone": "center",
+          "length": 16,
+          "width": 3
+        }
+      },
+      {
+        "id": "fishing_trawler_moored",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the trawler berthed alongside the jetty",
+        "params": {
+          "prop": "fishing_trawler",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "fishing_sloop_moored",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a fishing sloop moored in the cove",
+        "params": {
+          "prop": "fishing_sloop",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "harbour_skiff",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a wooden skiff tied off the pier end",
+        "params": {
+          "prop": "rowboat",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "channel_buoy",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a navigational buoy marking the harbour approach",
+        "params": {
+          "prop": "buoy",
+          "zone": "west",
+          "on": "water"
+        }
+      },
+      {
+        "id": "quay_notice_board",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "tide tables and port notices on the quay",
+        "params": {
+          "prop": "notice_board",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "headland_cairn",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a stone waymarker cairn on the path to the lighthouse",
+        "params": {
+          "prop": "cairn",
+          "zone": "northwest"
+        }
+      },
+      {
+        "id": "quay_woodpile",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "stacked firewood beside the smokehouse",
+        "params": {
+          "prop": "log_pile",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "harbour_lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "cobbled paths connecting the quay, cottages, chapel, and lighthouse",
+        "params": {
+          "anchors": [
+            "quay",
+            "lighthouse_tower",
+            "drowned_chapel",
+            "#tag:house",
+            "net_loft_north"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 14
+        }
+      }
+    ]
+  },
+  "programs": {
+    "chapel_for_the_drowned": {
+      "mode": "landmark",
+      "envelope": [
+        15,
+        18,
+        19
+      ],
+      "sourceHash": "b3:5a12ffc2282d65431ef0d6e3fa233f4eb7fb76d527f59e27b1715939b3925887",
+      "outputHash": "b3:4cdbdf97e240406507c8226d44f54cb96418198e8813c441044d77c95a2edd7a",
+      "conforms": false,
+      "conformHash": "b3:f93229ff3b092dcad5ce4617b131631c8052459e84ef2305aeb290babe7e6ab5",
+      "source": "export const envelope = [15, 18, 19];\n\nexport default function build(api) {\n  const { size } = api;\n  const SEAT_Y = 5;\n\n  // Resolve palette from theme with robust fallbacks\n  const stonePrimary = api.theme?.stone?.primary || \"minecraft:stone_bricks\";\n  const stoneAccent = api.theme?.stone?.accent || \"minecraft:mossy_stone_bricks\";\n  const stoneStairs = api.theme?.stone?.stairs || \"minecraft:stone_brick_stairs\";\n  const stoneSlab = api.theme?.stone?.slab || \"minecraft:stone_brick_slab\";\n  const stoneWall = api.theme?.stone?.wall || \"minecraft:stone_brick_wall\";\n\n  const roofStairs = api.theme?.roof?.stairs || stoneStairs;\n  const roofSlab = api.theme?.roof?.slab || stoneSlab;\n  const roofSolid = api.theme?.roof?.solid || stonePrimary;\n\n  const woodLog = api.theme?.wood?.log || \"minecraft:spruce_log\";\n  const woodFence = api.theme?.wood?.fence || \"minecraft:spruce_fence\";\n\n  const groundPavement = api.theme?.ground?.pavement || \"minecraft:cobblestone\";\n  const groundPlinth = api.theme?.ground?.plinth || \"minecraft:stone_bricks\";\n  const groundRevetment = api.theme?.ground?.revetment || \"minecraft:mossy_cobblestone\";\n  const groundScree = api.theme?.ground?.scree || \"minecraft:gravel\";\n\n  // Deterministic spatial hash for natural salt-spray weathering\n  function hash(x, y, z) {\n    let h = (x * 374761393 + y * 668265263 + z * 3141592653) ^ 0x5bf03635;\n    h = Math.imul(h ^ (h >>> 13), 1274126177);\n    return ((h ^ (h >>> 16)) >>> 0) / 4294967296;\n  }\n\n  function setBlock(x, y, z, block) {\n    if (x >= 0 && x < size[0] && y >= 0 && y < size[1] && z >= 0 && z < size[2]) {\n      api.set(x, y, z, block);\n    }\n  }\n\n  function getBase(blockStr) {\n    return (blockStr || \"minecraft:stone_bricks\").split(\"[\")[0];\n  }\n\n  function makeStair(blockStr, facing, half = \"bottom\") {\n    const base = getBase(blockStr);\n    return `${base}[facing=${facing},half=${half},shape=straight]`;\n  }\n\n  function makeSlab(blockStr, type = \"bottom\") {\n    const base = getBase(blockStr);\n    return `${base}[type=${type}]`;\n  }\n\n  function makeLog(blockStr, axis = \"y\") {\n    const base = getBase(blockStr);\n    return `${base}[axis=${axis}]`;\n  }\n\n  function getWallStone(x, y, z) {\n    const h = hash(x, y, z);\n    if (h < 0.42) return stonePrimary;\n    if (h < 0.68) return stoneAccent;\n    if (h < 0.84) return \"minecraft:cobblestone\";\n    if (h < 0.94) return \"minecraft:mossy_cobblestone\";\n    return \"minecraft:cracked_stone_bricks\";\n  }\n\n  function getFoundationStone(x, y, z) {\n    const h = hash(x, y, z);\n    if (h < 0.35) return groundPlinth;\n    if (h < 0.65) return groundRevetment;\n    if (h < 0.85) return \"minecraft:cobblestone\";\n    return stonePrimary;\n  }\n\n  function getGroundBlock(x, y, z) {\n    const h = hash(x, y, z);\n    if (h < 0.35) return groundPavement;\n    if (h < 0.60) return \"minecraft:mossy_cobblestone\";\n    if (h < 0.78) return groundScree;\n    if (h < 0.90) return \"minecraft:cobblestone\";\n    return stoneAccent;\n  }\n\n  // 1. TERRAIN & FOUNDATION PASS (Rule 6: Follow the ground you are given)\n  for (let x = 0; x < size[0]; x++) {\n    for (let z = 0; z < size[2]; z++) {\n      const h = api.heightAt(x, z);\n      const groundY = Math.max(0, Math.min(size[1] - 1, Math.round(SEAT_Y + h)));\n\n      // Fill solid foundation columns from terrain up to seat level\n      for (let y = groundY; y < SEAT_Y; y++) {\n        setBlock(x, y, z, getFoundationStone(x, y, z));\n      }\n\n      // Seat plane (y = SEAT_Y) ground surface\n      const isInsideNave = x >= 4 && x <= 10 && z >= 4 && z <= 14;\n      const isPath = x >= 6 && x <= 8 && z >= 0 && z <= 3;\n\n      if (isInsideNave) {\n        if (x === 7) {\n          setBlock(x, SEAT_Y, z, \"minecraft:smooth_stone\");\n        } else if ((x === 5 || x === 9) && (z === 6 || z === 9 || z === 12)) {\n          setBlock(x, SEAT_Y, z, \"minecraft:chiseled_stone_bricks\");\n        } else {\n          setBlock(x, SEAT_Y, z, hash(x, SEAT_Y, z) > 0.5 ? stonePrimary : \"minecraft:polished_andesite\");\n        }\n      } else if (isPath) {\n        setBlock(x, SEAT_Y, z, groundPavement);\n      } else {\n        setBlock(x, SEAT_Y, z, getGroundBlock(x, SEAT_Y, z));\n      }\n    }\n  }\n\n  // 2. CHAPEL NAVE WALLS (x: 4..10, z: 4..14, y: 6..9)\n  for (let z = 4; z <= 14; z++) {\n    for (let y = SEAT_Y + 1; y <= SEAT_Y + 4; y++) {\n      setBlock(4, y, z, getWallStone(4, y, z));\n      setBlock(10, y, z, getWallStone(10, y, z));\n    }\n  }\n\n  for (let x = 4; x <= 10; x++) {\n    for (let y = SEAT_Y + 1; y <= SEAT_Y + 4; y++) {\n      setBlock(x, y, 4, getWallStone(x, y, 4));\n      setBlock(x, y, 14, getWallStone(x, y, 14));\n    }\n  }\n\n  // Slit Windows on West & East Walls\n  const sideWindowZ = [6, 9, 12];\n  const glassColors = [\n    \"minecraft:cyan_stained_glass_pane\",\n    \"minecraft:light_blue_stained_glass_pane\",\n    \"minecraft:blue_stained_glass_pane\"\n  ];\n\n  sideWindowZ.forEach((wz, idx) => {\n    const glass = glassColors[idx % glassColors.length];\n    // West wall windows\n    setBlock(4, SEAT_Y + 1, wz, makeStair(stoneStairs, \"east\", \"bottom\"));\n    setBlock(4, SEAT_Y + 2, wz, glass);\n    setBlock(4, SEAT_Y + 3, wz, glass);\n    setBlock(4, SEAT_Y + 4, wz, makeStair(stoneStairs, \"east\", \"top\"));\n\n    // East wall windows\n    setBlock(10, SEAT_Y + 1, wz, makeStair(stoneStairs, \"west\", \"bottom\"));\n    setBlock(10, SEAT_Y + 2, wz, glass);\n    setBlock(10, SEAT_Y + 3, wz, glass);\n    setBlock(10, SEAT_Y + 4, wz, makeStair(stoneStairs, \"west\", \"top\"));\n  });\n\n  // North Doorway (Entrance into Nave)\n  setBlock(7, SEAT_Y + 1, 4, \"minecraft:air\");\n  setBlock(7, SEAT_Y + 2, 4, \"minecraft:air\");\n  setBlock(7, SEAT_Y + 3, 4, makeStair(stoneStairs, \"south\", \"top\"));\n  setBlock(7, SEAT_Y + 4, 4, \"minecraft:cyan_stained_glass_pane\");\n\n  // South Wall Sanctuary Lancet Windows (Altar Wall)\n  setBlock(7, SEAT_Y + 2, 14, \"minecraft:blue_stained_glass_pane\");\n  setBlock(7, SEAT_Y + 3, 14, \"minecraft:cyan_stained_glass_pane\");\n  setBlock(7, SEAT_Y + 4, 14, \"minecraft:light_blue_stained_glass_pane\");\n  setBlock(6, SEAT_Y + 3, 14, \"minecraft:blue_stained_glass_pane\");\n  setBlock(8, SEAT_Y + 3, 14, \"minecraft:blue_stained_glass_pane\");\n\n  // 3. BUTTRESSES (Rustic coastal stone buttresses)\n  const buttressZ = [4, 7, 11, 14];\n  for (const bz of buttressZ) {\n    // West buttresses\n    setBlock(3, SEAT_Y + 1, bz, getWallStone(3, SEAT_Y + 1, bz));\n    setBlock(3, SEAT_Y + 2, bz, getWallStone(3, SEAT_Y + 2, bz));\n    setBlock(3, SEAT_Y + 3, bz, makeStair(stoneStairs, \"east\", \"bottom\"));\n\n    // East buttresses\n    setBlock(11, SEAT_Y + 1, bz, getWallStone(11, SEAT_Y + 1, bz));\n    setBlock(11, SEAT_Y + 2, bz, getWallStone(11, SEAT_Y + 2, bz));\n    setBlock(11, SEAT_Y + 3, bz, makeStair(stoneStairs, \"west\", \"bottom\"));\n  }\n\n  // Corner Buttress Projections North/South\n  setBlock(4, SEAT_Y + 1, 3, getWallStone(4, SEAT_Y + 1, 3));\n  setBlock(4, SEAT_Y + 2, 3, makeStair(stoneStairs, \"south\", \"bottom\"));\n  setBlock(10, SEAT_Y + 1, 3, getWallStone(10, SEAT_Y + 1, 3));\n  setBlock(10, SEAT_Y + 2, 3, makeStair(stoneStairs, \"south\", \"bottom\"));\n\n  setBlock(4, SEAT_Y + 1, 15, getWallStone(4, SEAT_Y + 1, 15));\n  setBlock(4, SEAT_Y + 2, 15, makeStair(stoneStairs, \"north\", \"bottom\"));\n  setBlock(10, SEAT_Y + 1, 15, getWallStone(10, SEAT_Y + 1, 15));\n  setBlock(10, SEAT_Y + 2, 15, makeStair(stoneStairs, \"north\", \"bottom\"));\n\n  // 4. NORTH PORCH & PORTAL (z = 3)\n  setBlock(6, SEAT_Y + 1, 3, stoneWall);\n  setBlock(6, SEAT_Y + 2, 3, stoneWall);\n  setBlock(8, SEAT_Y + 1, 3, stoneWall);\n  setBlock(8, SEAT_Y + 2, 3, stoneWall);\n  setBlock(7, SEAT_Y + 3, 3, makeStair(stoneStairs, \"south\", \"top\"));\n  setBlock(6, SEAT_Y + 3, 3, makeStair(roofStairs, \"east\", \"bottom\"));\n  setBlock(8, SEAT_Y + 3, 3, makeStair(roofStairs, \"west\", \"bottom\"));\n  setBlock(7, SEAT_Y + 4, 3, makeSlab(roofSlab, \"bottom\"));\n  setBlock(7, SEAT_Y + 2, 3, \"minecraft:lantern[hanging=true]\");\n\n  // 5. GABLE WALLS & GABLED ROOF\n  // Gables Infill\n  const gablesZ = [4, 14];\n  for (const gz of gablesZ) {\n    for (let gx = 5; gx <= 9; gx++) setBlock(gx, SEAT_Y + 5, gz, getWallStone(gx, SEAT_Y + 5, gz));\n    for (let gx = 6; gx <= 8; gx++) {\n      setBlock(gx, SEAT_Y + 6, gz, getWallStone(gx, SEAT_Y + 6, gz));\n      setBlock(gx, SEAT_Y + 7, gz, getWallStone(gx, SEAT_Y + 7, gz));\n    }\n    setBlock(7, SEAT_Y + 8, gz, getWallStone(7, SEAT_Y + 8, gz));\n  }\n\n  // Full Gabled Slate/Stone Roof\n  for (let rz = 3; rz <= 15; rz++) {\n    // West slope\n    setBlock(3, SEAT_Y + 4, rz, makeStair(roofStairs, \"east\", \"bottom\"));\n    setBlock(3, SEAT_Y + 3, rz, makeStair(stoneStairs, \"west\", \"top\"));\n    setBlock(4, SEAT_Y + 5, rz, makeStair(roofStairs, \"east\", \"bottom\"));\n    setBlock(5, SEAT_Y + 6, rz, makeStair(roofStairs, \"east\", \"bottom\"));\n    setBlock(6, SEAT_Y + 7, rz, makeStair(roofStairs, \"east\", \"bottom\"));\n\n    // Central Ridge\n    setBlock(7, SEAT_Y + 7, rz, roofSolid);\n    setBlock(7, SEAT_Y + 8, rz, makeSlab(roofSlab, \"bottom\"));\n\n    // East slope\n    setBlock(8, SEAT_Y + 7, rz, makeStair(roofStairs, \"west\", \"bottom\"));\n    setBlock(9, SEAT_Y + 6, rz, makeStair(roofStairs, \"west\", \"bottom\"));\n    setBlock(10, SEAT_Y + 5, rz, makeStair(roofStairs, \"west\", \"bottom\"));\n    setBlock(11, SEAT_Y + 4, rz, makeStair(roofStairs, \"west\", \"bottom\"));\n    setBlock(11, SEAT_Y + 3, rz, makeStair(stoneStairs, \"east\", \"top\"));\n  }\n\n  // Internal Timber Rafters / Tie Beams (above standable height y >= SEAT_Y + 5)\n  for (const tz of [7, 10]) {\n    for (let tx = 5; tx <= 9; tx++) {\n      setBlock(tx, SEAT_Y + 5, tz, makeLog(woodLog, \"x\"));\n    }\n    setBlock(7, SEAT_Y + 6, tz, woodFence);\n    setBlock(7, SEAT_Y + 7, tz, woodFence);\n    setBlock(6, SEAT_Y + 6, tz, woodFence);\n    setBlock(8, SEAT_Y + 6, tz, woodFence);\n  }\n\n  // 6. OPEN STONE BELLCOTE (At North Gable Peak)\n  setBlock(6, SEAT_Y + 8, 4, stonePrimary);\n  setBlock(7, SEAT_Y + 8, 4, stonePrimary);\n  setBlock(8, SEAT_Y + 8, 4, stonePrimary);\n\n  // Twin stone pillars & open bell chamber\n  setBlock(6, SEAT_Y + 9, 4, stonePrimary);\n  setBlock(8, SEAT_Y + 9, 4, stonePrimary);\n  setBlock(6, SEAT_Y + 10, 4, stonePrimary);\n  setBlock(8, SEAT_Y + 10, 4, stonePrimary);\n\n  setBlock(6, SEAT_Y + 9, 3, stoneWall);\n  setBlock(8, SEAT_Y + 9, 3, stoneWall);\n\n  // Bronze bell and iron chain\n  setBlock(7, SEAT_Y + 10, 4, \"minecraft:chain[axis=y]\");\n  setBlock(7, SEAT_Y + 9, 4, \"minecraft:bell[attachment=ceiling,facing=north]\");\n\n  // Arch crown and stone finial cross\n  setBlock(6, SEAT_Y + 11, 4, makeStair(stoneStairs, \"east\", \"bottom\"));\n  setBlock(7, SEAT_Y + 11, 4, makeSlab(stoneSlab, \"top\"));\n  setBlock(8, SEAT_Y + 11, 4, makeStair(stoneStairs, \"west\", \"bottom\"));\n  setBlock(7, SEAT_Y + 12, 4, stoneWall);\n\n  // South Gable Small Stone Cross\n  setBlock(7, SEAT_Y + 9, 14, stoneWall);\n  setBlock(7, SEAT_Y + 10, 14, stoneWall);\n\n  // 7. OUTDOOR MEMORIAL CAIRNS (Dedicated to Lost Sailors)\n\n  // Cairn 1: The Lost Fishermen's Stack (West Yard, x = 1, z = 6)\n  setBlock(1, SEAT_Y + 1, 6, \"minecraft:mossy_cobblestone\");\n  setBlock(2, SEAT_Y + 1, 6, makeStair(stoneStairs, \"west\", \"bottom\"));\n  setBlock(1, SEAT_Y + 1, 7, makeStair(stoneStairs, \"north\", \"bottom\"));\n  setBlock(1, SEAT_Y + 2, 6, stoneWall);\n  setBlock(1, SEAT_Y + 3, 6, \"minecraft:soul_lantern[hanging=false]\");\n  setBlock(2, SEAT_Y + 1, 7, makeSlab(stoneSlab, \"bottom\"));\n\n  // Cairn 2: Mariners' Cross Cairn (West Yard, x = 1, z = 11)\n  setBlock(0, SEAT_Y + 1, 11, makeStair(stoneStairs, \"east\", \"bottom\"));\n  setBlock(2, SEAT_Y + 1, 11, makeStair(stoneStairs, \"west\", \"bottom\"));\n  setBlock(1, SEAT_Y + 1, 10, makeStair(stoneStairs, \"south\", \"bottom\"));\n  setBlock(1, SEAT_Y + 1, 12, makeStair(stoneStairs, \"north\", \"bottom\"));\n  setBlock(1, SEAT_Y + 1, 11, \"minecraft:cracked_stone_bricks\");\n  setBlock(1, SEAT_Y + 2, 11, stoneWall);\n  setBlock(1, SEAT_Y + 3, 11, stoneWall);\n  setBlock(1, SEAT_Y + 3, 10, stoneWall);\n  setBlock(1, SEAT_Y + 3, 12, stoneWall);\n  setBlock(1, SEAT_Y + 4, 11, stoneWall);\n\n  // Cairn 3: The Widow's Beacon (East Yard, x = 13, z = 6)\n  setBlock(13, SEAT_Y + 1, 5, makeStair(stoneStairs, \"south\", \"bottom\"));\n  setBlock(13, SEAT_Y + 1, 7, makeStair(stoneStairs, \"north\", \"bottom\"));\n  setBlock(12, SEAT_Y + 1, 6, makeStair(stoneStairs, \"east\", \"bottom\"));\n  setBlock(13, SEAT_Y + 1, 6, \"minecraft:chiseled_stone_bricks\");\n  setBlock(13, SEAT_Y + 2, 6, stoneWall);\n  setBlock(13, SEAT_Y + 3, 6, \"minecraft:sea_lantern\");\n  setBlock(13, SEAT_Y + 4, 6, makeSlab(stoneSlab, \"bottom\"));\n\n  // Cairn 4: Deep Water Cenotaph (East Yard, x = 13, z = 11)\n  setBlock(13, SEAT_Y + 1, 11, \"minecraft:mossy_stone_bricks\");\n  setBlock(12, SEAT_Y + 1, 11, makeSlab(stoneSlab, \"bottom\"));\n  setBlock(13, SEAT_Y + 1, 12, makeSlab(stoneSlab, \"bottom\"));\n  setBlock(13, SEAT_Y + 2, 11, stoneWall);\n  setBlock(12, SEAT_Y + 1, 11, \"minecraft:soul_lantern[hanging=false]\");\n\n  // Cairn 5: Great Atlantic Memorial Cross (South Cliff Overlook, x = 7, z = 17)\n  for (let cx = 6; cx <= 8; cx++) {\n    for (let cz = 16; cz <= 17; cz++) {\n      setBlock(cx, SEAT_Y + 1, cz, stonePrimary);\n    }\n  }\n  setBlock(6, SEAT_Y + 1, 16, makeStair(stoneStairs, \"south\", \"bottom\"));\n  setBlock(8, SEAT_Y + 1, 16, makeStair(stoneStairs, \"south\", \"bottom\"));\n  setBlock(6, SEAT_Y + 2, 17, \"minecraft:soul_lantern[hanging=false]\");\n  setBlock(8, SEAT_Y + 2, 17, \"minecraft:soul_lantern[hanging=false]\");\n\n  setBlock(7, SEAT_Y + 2, 17, \"minecraft:chiseled_stone_bricks\");\n  setBlock(7, SEAT_Y + 3, 17, stoneWall);\n  setBlock(7, SEAT_Y + 4, 17, stoneWall);\n  setBlock(6, SEAT_Y + 4, 17, stoneWall);\n  setBlock(8, SEAT_Y + 4, 17, stoneWall);\n  setBlock(7, SEAT_Y + 5, 17, stoneWall);\n\n  // 8. LOW DRYSTONE BOUNDARY PARAPET\n  for (let z = 2; z <= 17; z++) {\n    if (z !== 8 && z !== 9) {\n      setBlock(0, SEAT_Y + 1, z, hash(0, SEAT_Y, z) > 0.4 ? stoneWall : makeSlab(stoneSlab, \"bottom\"));\n      setBlock(14, SEAT_Y + 1, z, hash(14, SEAT_Y, z) > 0.4 ? stoneWall : makeSlab(stoneSlab, \"bottom\"));\n    }\n  }\n  for (let x = 1; x <= 13; x++) {\n    if (x < 5 || x > 9) {\n      setBlock(x, SEAT_Y + 1, 18, stoneWall);\n    }\n  }\n  for (let x = 0; x <= 4; x++) setBlock(x, SEAT_Y + 1, 1, stoneWall);\n  for (let x = 10; x <= 14; x++) setBlock(x, SEAT_Y + 1, 1, stoneWall);\n\n  return {\n    name: \"chapel_for_the_drowned\",\n    seatY: SEAT_Y,\n    anchors: {\n      front: [7, SEAT_Y, 0],\n      door: [7, SEAT_Y + 1, 4]\n    },\n    interiors: [\n      {\n        min: [5, SEAT_Y + 1, 5],\n        max: [9, SEAT_Y + 4, 13],\n        kind: \"nave\"\n      }\n    ]\n  };\n}"
+    },
+    "drying_racks_and_net_frames": {
+      "mode": "plugin",
+      "envelope": [
+        10,
+        14,
+        10
+      ],
+      "sourceHash": "b3:99862f73c41f2b1dddb2efa662691fec0fd2c643b65ac3a91e0d75fd9a1aa0f0",
+      "outputHash": "b3:46323256e37f256e90342409ec6826799ca27239203d47a01c9bc75e2a3936d2",
+      "conforms": true,
+      "conformHash": "b3:a4b72dcc891923e1c87ae97876aea8b9c29e6deec1d569616043b2d10616f190",
+      "source": "export const envelope = [10, 14, 10];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const seatY = 5;\n\n  const rnd = () => api.random();\n\n  // Palette extraction with safe fallbacks\n  const wood = api.theme.wood || {};\n  const stone = api.theme.stone || {};\n  const ground = api.theme.ground || {};\n  const roof = api.theme.roof || {};\n\n  const planks = wood.planks || \"minecraft:spruce_planks\";\n  const log = wood.log || \"minecraft:spruce_log\";\n  const stripped = wood.stripped || \"minecraft:stripped_spruce_log\";\n  const woodStairs = wood.stairs || \"minecraft:spruce_stairs\";\n  const woodSlab = wood.slab || \"minecraft:spruce_slab\";\n  const fence = wood.fence || \"minecraft:spruce_fence\";\n  const trapdoor = wood.trapdoor || \"minecraft:spruce_trapdoor\";\n\n  const stonePrimary = stone.primary || \"minecraft:stone_bricks\";\n  const stoneAccent = stone.accent || \"minecraft:cobblestone\";\n  const stoneStairs = stone.stairs || \"minecraft:stone_brick_stairs\";\n  const stoneSlab = stone.slab || \"minecraft:stone_brick_slab\";\n  const stoneWall = stone.wall || \"minecraft:cobblestone_wall\";\n\n  const pavement = ground.pavement || stonePrimary;\n  const coping = ground.coping || stoneAccent;\n\n  const roofStairs = roof.stairs || woodStairs;\n  const roofSlab = roof.slab || woodSlab;\n\n  // Block state modifier helpers\n  function setProp(blockStr, key, val) {\n    if (!blockStr) return blockStr;\n    if (blockStr.includes('[')) {\n      const base = blockStr.slice(0, blockStr.indexOf('['));\n      const props = blockStr.slice(blockStr.indexOf('[') + 1, -1).split(',');\n      const map = {};\n      for (const p of props) {\n        const [k, v] = p.split('=');\n        map[k] = v;\n      }\n      map[key] = val;\n      const propStr = Object.entries(map).map(([k, v]) => `${k}=${v}`).join(',');\n      return `${base}[${propStr}]`;\n    }\n    return `${blockStr}[${key}=${val}]`;\n  }\n\n  function withAxis(blockStr, axis) {\n    return setProp(blockStr, 'axis', axis);\n  }\n\n  function withFacing(blockStr, facing) {\n    return setProp(blockStr, 'facing', facing);\n  }\n\n  function withHalf(blockStr, half) {\n    return setProp(blockStr, 'half', half);\n  }\n\n  function safeSet(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      api.set(x, y, z, block);\n    }\n  }\n\n  // --- 1. QUAY PLATFORM & GROUND CONFORMITY FOUNDATION ---\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const h = Math.round(api.heightAt(x, z));\n      const groundY = Math.max(0, Math.min(seatY, seatY + h));\n      const isNorth = (z === 0);\n      const isEdge = (x === 0 || x === W - 1 || z === 0 || z === D - 1);\n\n      // Foundation downwards to terrain/seabed\n      for (let y = groundY; y < seatY; y++) {\n        if (isNorth) {\n          if (x % 3 === 0 || x === W - 1) {\n            safeSet(x, y, z, withAxis(log, 'y'));\n          } else {\n            safeSet(x, y, z, (y % 2 === 0) ? stonePrimary : stoneAccent);\n          }\n        } else if (isEdge) {\n          if ((x === 0 || x === W - 1) && z % 3 === 0) {\n            safeSet(x, y, z, withAxis(log, 'y'));\n          } else {\n            safeSet(x, y, z, stonePrimary);\n          }\n        } else {\n          if (x % 3 === 0 && z % 3 === 0) {\n            safeSet(x, y, z, withAxis(log, 'y'));\n          } else {\n            safeSet(x, y, z, stonePrimary);\n          }\n        }\n      }\n\n      // Deck at seat plane (y = seatY)\n      if (isNorth) {\n        safeSet(x, seatY, z, withAxis(log, 'x'));\n      } else if (x === 0 || x === W - 1) {\n        safeSet(x, seatY, z, withAxis(log, 'z'));\n      } else {\n        const deckNoise = rnd();\n        if (deckNoise < 0.65) {\n          safeSet(x, seatY, z, planks);\n        } else if (deckNoise < 0.85) {\n          safeSet(x, seatY, z, stripped);\n        } else {\n          safeSet(x, seatY, z, pavement);\n        }\n      }\n\n      // If terrain rises above seat plane, build retaining wall up to it\n      if (seatY + h > seatY) {\n        const topH = Math.min(H - 1, seatY + h);\n        for (let y = seatY + 1; y <= topH; y++) {\n          safeSet(x, y, z, stoneAccent);\n        }\n      }\n    }\n  }\n\n  // Quayside North Mooring Bollards\n  safeSet(1, seatY + 1, 0, stoneWall);\n  safeSet(1, seatY + 2, withHalf(trapdoor, 'bottom'));\n  safeSet(8, seatY + 1, 0, stoneWall);\n  safeSet(8, seatY + 2, withHalf(trapdoor, 'bottom'));\n\n  // Helpers for superstructure placement\n  function placePost(x, z, startY, endY) {\n    for (let y = startY; y <= endY; y++) {\n      safeSet(x, y, z, withAxis(log, 'y'));\n    }\n  }\n\n  function placeFencePost(x, z, startY, endY) {\n    for (let y = startY; y <= endY; y++) {\n      safeSet(x, y, z, fence);\n    }\n  }\n\n  function placeBeamX(x1, x2, y, z) {\n    for (let x = x1; x <= x2; x++) {\n      safeSet(x, y, z, withAxis(log, 'x'));\n    }\n  }\n\n  function placeBeamZ(x, y, z1, z2) {\n    for (let z = z1; z <= z2; z++) {\n      safeSet(x, y, z, withAxis(log, 'z'));\n    }\n  }\n\n  function placeNetCurtain(x1, z1, x2, z2, topY, botY) {\n    if (x1 === x2) {\n      const x = x1;\n      for (let z = Math.min(z1, z2); z <= Math.max(z1, z2); z++) {\n        for (let y = topY; y >= botY; y--) {\n          if (rnd() > 0.12) {\n            safeSet(x, y, z, \"minecraft:cobweb\");\n          }\n        }\n      }\n    } else if (z1 === z2) {\n      const z = z1;\n      for (let x = Math.min(x1, x2); x <= Math.max(x1, x2); x++) {\n        for (let y = topY; y >= botY; y--) {\n          if (rnd() > 0.12) {\n            safeSet(x, y, z, \"minecraft:cobweb\");\n          }\n        }\n      }\n    }\n  }\n\n  function placeLobsterPot(x, y, z) {\n    safeSet(x, y, z, \"minecraft:composter[level=0]\");\n    safeSet(x, y + 1, withHalf(trapdoor, 'bottom'));\n  }\n\n  function placePotStack(x, z, height) {\n    for (let i = 0; i < height; i++) {\n      safeSet(x, seatY + 1 + i, \"minecraft:composter[level=0]\");\n    }\n    safeSet(x, seatY + 1 + height, withHalf(trapdoor, 'bottom'));\n  }\n\n  function placeBench(x1, z1, x2, z2) {\n    for (let x = x1; x <= x2; x++) {\n      for (let z = z1; z <= z2; z++) {\n        safeSet(x, seatY + 1, stoneSlab);\n      }\n    }\n  }\n\n  // --- 2. INSTANCE VARIATION LOGIC ---\n  const variant = api.instance.index % 8;\n\n  if (variant === 0) {\n    // VARIANT 0: High Net Tower & Derrick Crane\n    placePost(1, 2, seatY + 1, seatY + 7);\n    placePost(1, 7, seatY + 1, seatY + 7);\n    placePost(3, 2, seatY + 1, seatY + 7);\n    placePost(3, 7, seatY + 1, seatY + 7);\n\n    placeBeamZ(1, seatY + 4, 2, 7);\n    placeBeamZ(3, seatY + 4, 2, 7);\n    placeBeamZ(1, seatY + 7, 2, 7);\n    placeBeamZ(3, seatY + 7, 2, 7);\n    placeBeamX(1, 3, seatY + 7, 2);\n    placeBeamX(1, 3, seatY + 7, 7);\n\n    // Cross A-frame ridge\n    safeSet(2, seatY + 8, 2, withFacing(woodStairs, 'south'));\n    safeSet(2, seatY + 8, 7, withFacing(woodStairs, 'north'));\n    placeBeamZ(2, seatY + 8, 3, 6);\n\n    // Net curtains\n    placeNetCurtain(2, 3, 2, 6, seatY + 7, seatY + 2);\n\n    // Derrick crane on East\n    placePost(7, 1, seatY + 1, seatY + 6);\n    safeSet(7, seatY + 6, 0, withAxis(log, 'z'));\n    safeSet(7, seatY + 5, 0, withFacing(woodStairs, 'north'));\n    safeSet(7, seatY + 5, 0, \"minecraft:chain\");\n    safeSet(7, seatY + 4, 0, \"minecraft:chain\");\n    safeSet(7, seatY + 3, 0, \"minecraft:barrel[facing=up]\");\n\n    // Mending table & lobster pots\n    placeBench(5, 4, 6, 5);\n    safeSet(5, seatY + 2, \"minecraft:lantern[hanging=false]\");\n    placePotStack(7, 6, 2);\n    placePotStack(8, 6, 1);\n    placePotStack(8, 7, 2);\n    safeSet(7, seatY + 1, 7, \"minecraft:barrel[facing=up]\");\n\n  } else if (variant === 1) {\n    // VARIANT 1: Twin Fish-Drying Flakes & Brine Trough\n    // West drying trestle\n    placeFencePost(2, 2, seatY + 1, seatY + 4);\n    placeFencePost(2, 4, seatY + 1, seatY + 4);\n    placeFencePost(2, 6, seatY + 1, seatY + 4);\n    placeFencePost(2, 7, seatY + 1, seatY + 4);\n    placeBeamZ(2, seatY + 3, 2, 7);\n    for (let z = 2; z <= 7; z++) {\n      safeSet(2, seatY + 4, z, \"minecraft:campfire[lit=false]\");\n    }\n\n    // East drying trestle\n    placeFencePost(7, 2, seatY + 1, seatY + 4);\n    placeFencePost(7, 4, seatY + 1, seatY + 4);\n    placeFencePost(7, 6, seatY + 1, seatY + 4);\n    placeFencePost(7, 7, seatY + 1, seatY + 4);\n    placeBeamZ(7, seatY + 3, 2, 7);\n    for (let z = 2; z <= 7; z++) {\n      safeSet(7, seatY + 4, z, woodSlab);\n      safeSet(7, seatY + 2, z, \"minecraft:cobweb\");\n    }\n\n    // Central salting bench & brine trough\n    placeBench(4, 3, 5, 6);\n    safeSet(4, seatY + 1, 4, \"minecraft:cauldron\");\n    safeSet(5, seatY + 1, 5, \"minecraft:barrel[facing=up]\");\n\n    // South net frame\n    placePost(3, 8, seatY + 1, seatY + 7);\n    placePost(6, 8, seatY + 1, seatY + 7);\n    placeBeamX(3, 6, seatY + 7, 8);\n    placeNetCurtain(4, 8, 5, 8, seatY + 6, seatY + 2);\n    safeSet(3, seatY + 8, 8, withFacing(woodStairs, 'east'));\n    safeSet(6, seatY + 8, 8, withFacing(woodStairs, 'west'));\n\n  } else if (variant === 2) {\n    // VARIANT 2: Lobster Pot Depot & Bait Shed\n    // Lean-to shed at South-East\n    placePost(5, 5, seatY + 1, seatY + 4);\n    placePost(8, 5, seatY + 1, seatY + 4);\n    placePost(5, 8, seatY + 1, seatY + 6);\n    placePost(8, 8, seatY + 1, seatY + 6);\n\n    placeBeamX(5, 8, seatY + 4, 5);\n    placeBeamX(5, 8, seatY + 6, 8);\n    placeBeamZ(5, seatY + 5, 5, 8);\n    placeBeamZ(8, seatY + 5, 5, 8);\n\n    // Sloped roof\n    for (let x = 5; x <= 8; x++) {\n      safeSet(x, seatY + 5, 5, withFacing(roofStairs, 'north'));\n      safeSet(x, seatY + 6, 6, withFacing(roofStairs, 'north'));\n      safeSet(x, seatY + 6, 7, roofSlab);\n      safeSet(x, seatY + 7, 8, roofSlab);\n    }\n    safeSet(6, seatY + 3, 6, \"minecraft:lantern[hanging=true]\");\n    safeSet(6, seatY + 1, 7, \"minecraft:dried_kelp_block\");\n    safeSet(7, seatY + 1, 7, \"minecraft:barrel[facing=up]\");\n\n    // Massive stacks of wicker lobster pots on West\n    placePotStack(1, 4, 3);\n    placePotStack(2, 4, 2);\n    placePotStack(1, 5, 2);\n    placePotStack(2, 5, 3);\n    placePotStack(1, 6, 2);\n    placePotStack(2, 6, 1);\n    placePotStack(3, 5, 1);\n    placePotStack(3, 6, 2);\n    placePotStack(2, 7, 1);\n\n    // Buoy pole\n    placeFencePost(1, 2, seatY + 1, seatY + 6);\n    safeSet(1, seatY + 7, 2, \"minecraft:lantern[hanging=false]\");\n\n    // North mending rail\n    placeFencePost(3, 1, seatY + 1, seatY + 3);\n    placeFencePost(5, 1, seatY + 1, seatY + 3);\n    placeBeamX(3, 5, seatY + 3, 1);\n    placeNetCurtain(3, 1, 5, 1, seatY + 2, seatY + 1);\n\n  } else if (variant === 3) {\n    // VARIANT 3: Smoker Hearth & Curing Flakes\n    // Stone smoker hearth at South\n    for (let x = 4; x <= 6; x++) {\n      for (let z = 7; z <= 8; z++) {\n        safeSet(x, seatY + 1, z, stonePrimary);\n      }\n    }\n    safeSet(5, seatY + 1, 7, \"minecraft:campfire[lit=false]\");\n    safeSet(4, seatY + 2, 7, stoneWall);\n    safeSet(6, seatY + 2, 7, stoneWall);\n    safeSet(4, seatY + 2, 8, stonePrimary);\n    safeSet(6, seatY + 2, 8, stonePrimary);\n    safeSet(5, seatY + 2, 8, stonePrimary);\n\n    // Chimney\n    placePost(5, 8, seatY + 3, seatY + 6);\n    safeSet(5, seatY + 7, 8, \"minecraft:campfire[lit=false]\");\n    safeSet(5, seatY + 8, 8, withHalf(trapdoor, 'bottom'));\n\n    // Overhead curing trestles\n    placePost(2, 4, seatY + 1, seatY + 7);\n    placePost(7, 4, seatY + 1, seatY + 7);\n    placePost(2, 6, seatY + 1, seatY + 7);\n    placePost(7, 6, seatY + 1, seatY + 7);\n\n    placeBeamX(2, 7, seatY + 4, 4);\n    placeBeamX(2, 7, seatY + 4, 6);\n    placeBeamX(2, 7, seatY + 7, 4);\n    placeBeamX(2, 7, seatY + 7, 6);\n    placeBeamZ(2, seatY + 7, 4, 6);\n    placeBeamZ(7, seatY + 7, 4, 6);\n\n    placeNetCurtain(3, 5, 6, 5, seatY + 6, seatY + 2);\n\n    // Gutting bench on West\n    placeBench(1, 3, 2, 5);\n    safeSet(1, seatY + 1, 4, \"minecraft:cauldron\");\n    safeSet(2, seatY + 2, 3, \"minecraft:lantern[hanging=false]\");\n\n    // Crates and pots\n    placePotStack(7, 2, 2);\n    placePotStack(8, 2, 1);\n    safeSet(8, seatY + 1, 3, \"minecraft:barrel[facing=up]\");\n\n  } else if (variant === 4) {\n    // VARIANT 4: Angled Net Hurdle Platform & Yardarm Mast\n    // Slanted hurdles on West (stepped up from Z=2 to Z=7)\n    for (let x = 1; x <= 4; x++) {\n      safeSet(x, seatY + 1, 2, woodStairs);\n      safeSet(x, seatY + 1, 3, planks);\n      safeSet(x, seatY + 2, 4, woodStairs);\n      safeSet(x, seatY + 2, 5, planks);\n      safeSet(x, seatY + 3, 6, woodStairs);\n      safeSet(x, seatY + 3, 7, planks);\n\n      // Nets spread across hurdles\n      safeSet(x, seatY + 2, 3, \"minecraft:cobweb\");\n      safeSet(x, seatY + 3, 5, \"minecraft:cobweb\");\n      safeSet(x, seatY + 4, 7, \"minecraft:cobweb\");\n    }\n\n    // Yardarm Mast on East\n    placePost(8, 3, seatY + 1, seatY + 8);\n    placeBeamZ(8, seatY + 7, 1, 6);\n    safeSet(8, seatY + 6, 1, withFacing(woodStairs, 'north'));\n    safeSet(8, seatY + 6, 6, withFacing(woodStairs, 'south'));\n\n    // Rigging & net curtains from yardarm\n    placeNetCurtain(7, 2, 7, 5, seatY + 6, seatY + 2);\n    safeSet(8, seatY + 6, 1, \"minecraft:chain\");\n    safeSet(8, seatY + 5, 1, \"minecraft:chain\");\n    safeSet(8, seatY + 4, 1, \"minecraft:lantern[hanging=true]\");\n\n    // Lobster pots & rope crates\n    placePotStack(6, 7, 2);\n    placePotStack(7, 7, 3);\n    placePotStack(8, 7, 2);\n    placePotStack(7, 6, 1);\n    safeSet(6, seatY + 1, 6, \"minecraft:hay_block\");\n\n  } else if (variant === 5) {\n    // VARIANT 5: Mender's Loft Canopy & Tiered Herring Flakes\n    // Canopy on North-West\n    placePost(1, 1, seatY + 1, seatY + 4);\n    placePost(4, 1, seatY + 1, seatY + 4);\n    placePost(1, 4, seatY + 1, seatY + 5);\n    placePost(4, 4, seatY + 1, seatY + 5);\n\n    placeBeamX(1, 4, seatY + 4, 1);\n    placeBeamX(1, 4, seatY + 5, 4);\n    placeBeamZ(1, seatY + 4, 1, 4);\n    placeBeamZ(4, seatY + 4, 1, 4);\n\n    for (let x = 1; x <= 4; x++) {\n      safeSet(x, seatY + 5, 1, withFacing(roofStairs, 'north'));\n      safeSet(x, seatY + 5, 2, roofSlab);\n      safeSet(x, seatY + 6, 3, withFacing(roofStairs, 'north'));\n      safeSet(x, seatY + 6, 4, roofSlab);\n    }\n    placeBench(2, 2, 3, 3);\n    safeSet(2, seatY + 3, 2, \"minecraft:lantern[hanging=true]\");\n\n    // Tiered herring racks on East\n    placePost(7, 2, seatY + 1, seatY + 7);\n    placePost(7, 5, seatY + 1, seatY + 7);\n    placePost(7, 8, seatY + 1, seatY + 7);\n\n    placeBeamZ(7, seatY + 3, 2, 8);\n    placeBeamZ(7, seatY + 5, 2, 8);\n    placeBeamZ(7, seatY + 7, 2, 8);\n\n    for (let z = 2; z <= 8; z++) {\n      if (z !== 5) {\n        safeSet(7, seatY + 2, z, \"minecraft:cobweb\");\n        safeSet(7, seatY + 4, z, woodSlab);\n        safeSet(7, seatY + 6, z, \"minecraft:campfire[lit=false]\");\n      }\n    }\n\n    // Lobster pots at South-West\n    placePotStack(1, 6, 2);\n    placePotStack(2, 6, 3);\n    placePotStack(1, 7, 1);\n    placePotStack(2, 7, 2);\n    safeSet(3, seatY + 1, 7, \"minecraft:barrel[facing=up]\");\n\n  } else if (variant === 6) {\n    // VARIANT 6: Twin Giant A-Frames with Net Curtains\n    // West Gantry\n    placePost(2, 1, seatY + 1, seatY + 7);\n    placePost(2, 4, seatY + 1, seatY + 7);\n    placePost(2, 8, seatY + 1, seatY + 7);\n    placeBeamZ(2, seatY + 7, 1, 8);\n\n    // East Gantry\n    placePost(7, 1, seatY + 1, seatY + 7);\n    placePost(7, 4, seatY + 1, seatY + 7);\n    placePost(7, 8, seatY + 1, seatY + 7);\n    placeBeamZ(7, seatY + 7, 1, 8);\n\n    // Cross spans bridging West & East\n    placeBeamX(2, 7, seatY + 6, 2);\n    placeBeamX(2, 7, seatY + 6, 5);\n    placeBeamX(2, 7, seatY + 6, 8);\n\n    // Diagonal A-frame ridge caps\n    safeSet(2, seatY + 8, 1, withFacing(woodStairs, 'south'));\n    safeSet(2, seatY + 8, 8, withFacing(woodStairs, 'north'));\n    safeSet(7, seatY + 8, 1, withFacing(woodStairs, 'south'));\n    safeSet(7, seatY + 8, 8, withFacing(woodStairs, 'north'));\n\n    // Net curtains suspended between spans\n    placeNetCurtain(4, 2, 5, 2, seatY + 5, seatY + 2);\n    placeNetCurtain(4, 5, 5, 5, seatY + 5, seatY + 2);\n    placeNetCurtain(4, 8, 5, 8, seatY + 5, seatY + 2);\n    placeNetCurtain(2, 3, 2, 7, seatY + 6, seatY + 2);\n    placeNetCurtain(7, 3, 7, 7, seatY + 6, seatY + 2);\n\n    // Work alleyway in center\n    placeBench(4, 3, 5, 4);\n    safeSet(4, seatY + 1, 3, \"minecraft:cauldron\");\n    safeSet(5, seatY + 2, 4, \"minecraft:lantern[hanging=false]\");\n    placePotStack(4, 6, 2);\n    placePotStack(5, 6, 1);\n    placePotStack(5, 7, 2);\n\n  } else {\n    // VARIANT 7: Harbour Corner Gear Depot & Flake Terrace\n    // Derrick crane on Northeast\n    placePost(8, 2, seatY + 1, seatY + 8);\n    placeBeamX(5, 8, seatY + 7, 2);\n    safeSet(5, seatY + 6, 2, withFacing(woodStairs, 'west'));\n    safeSet(5, seatY + 6, 1, \"minecraft:chain\");\n    safeSet(5, seatY + 5, 1, \"minecraft:chain\");\n    safeSet(5, seatY + 4, 1, \"minecraft:barrel[facing=up]\");\n\n    // Multi-tier flake terrace on West\n    placePost(1, 2, seatY + 1, seatY + 7);\n    placePost(3, 2, seatY + 1, seatY + 7);\n    placePost(1, 6, seatY + 1, seatY + 7);\n    placePost(3, 6, seatY + 1, seatY + 7);\n\n    placeBeamZ(1, seatY + 3, 2, 6);\n    placeBeamZ(3, seatY + 3, 2, 6);\n    placeBeamZ(1, seatY + 5, 2, 6);\n    placeBeamZ(3, seatY + 5, 2, 6);\n    placeBeamZ(1, seatY + 7, 2, 6);\n    placeBeamZ(3, seatY + 7, 2, 6);\n\n    placeNetCurtain(2, 2, 2, 6, seatY + 6, seatY + 2);\n\n    // Central salting bench\n    placeBench(4, 4, 5, 5);\n    safeSet(4, seatY + 2, 4, \"minecraft:lantern[hanging=false]\");\n\n    // South lobster pot pyramid\n    placePotStack(6, 6, 3);\n    placePotStack(7, 6, 2);\n    placePotStack(8, 6, 2);\n    placePotStack(6, 7, 2);\n    placePotStack(7, 7, 3);\n    placePotStack(8, 7, 1);\n    safeSet(5, seatY + 1, 7, \"minecraft:barrel[facing=up]\");\n    safeSet(5, seatY + 1, 6, \"minecraft:dried_kelp_block\");\n  }\n\n  return {\n    name: \"drying_racks_and_net_frames\",\n    seatY: 5,\n    anchors: {\n      front: [Math.floor(W / 2), seatY, 0]\n    }\n  };\n}"
+    }
+  }
+}

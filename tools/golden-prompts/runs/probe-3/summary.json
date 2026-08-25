@@ -1,0 +1,975 @@
+{
+  "label": "probe-3",
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "intentPrepass": true,
+  "source": "terrainist generate (full pipeline: intent, authoring, programs, compile-feedback rounds, emit)",
+  "kits": {
+    "settlement": {
+      "path": "docs/kits/settlement-author.md",
+      "sha256": "34e3a176aa3e5af5aa781a9354f42b966531581b8db75c6fd5ad169a543f268b",
+      "bytes": 285375,
+      "envelopeLiterals": [
+        "11x11x9",
+        "11x14x9",
+        "11x8x9",
+        "120x120",
+        "13x10x11",
+        "13x11x13",
+        "13x11x9",
+        "13x16x13",
+        "13x9x11",
+        "140x120",
+        "140x24x92",
+        "15x17x21",
+        "16x52x14",
+        "180x160",
+        "18x18",
+        "18x44x15",
+        "200x180",
+        "21x76x19",
+        "21x78x19",
+        "220x200",
+        "22x22",
+        "25x22x19",
+        "288x288",
+        "30x30",
+        "440x400",
+        "512x512",
+        "5x4",
+        "7x19x7",
+        "8x8x8",
+        "96x16x72",
+        "96x80",
+        "9x11x9",
+        "9x12x9",
+        "9x8x8",
+        "9x8x9"
+      ]
+    },
+    "terrain": {
+      "path": "docs/kits/terrain-author.md",
+      "sha256": "0adfac8d77042820afec8495258497e5cd44aa2a4391a585ac942518717f331b",
+      "bytes": 41193,
+      "envelopeLiterals": [
+        "384x384",
+        "512x512"
+      ]
+    }
+  },
+  "totals": {
+    "ok": 6,
+    "attempts": 7,
+    "oneShot": 5,
+    "promptTokens": 1296549,
+    "completionTokens": 267740,
+    "cost": 0.9882,
+    "generateCost": 1.7014
+  },
+  "records": [
+    {
+      "id": "probe_horde_camp",
+      "family": "probe",
+      "kit": "settlement",
+      "prompt": "A nomad horde's camp on the open steppe: rings of felt yurts around the khan's great tent, horse lines and a wooden watch tower, the grass stretching to every horizon.",
+      "seed": 911,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "era": "medieval",
+        "wealth": 0.4,
+        "decline": 0,
+        "formality": 0.4,
+        "climate": {
+          "biome": "minecraft:plains",
+          "temperature": 0.1,
+          "humidity": -0.4,
+          "snow": "never"
+        },
+        "character": {
+          "label": "steppe nomad horde camp",
+          "materialTheme": "temperate_timber",
+          "formPacks": [
+            "steppe_nomad"
+          ],
+          "urbanForm": "radial",
+          "archetypes": {
+            "prefer": [
+              "watchtower"
+            ],
+            "forbid": [
+              "townhouse",
+              "terraced_row",
+              "shop_row",
+              "apartment_block",
+              "office"
+            ]
+          },
+          "props": {
+            "prefer": [
+              "cart"
+            ]
+          },
+          "flora": {
+            "prefer": [
+              "sparse"
+            ]
+          },
+          "motifs": {
+            "roofType": "dome",
+            "massing": "sprawling"
+          }
+        },
+        "tokens": {
+          "terrain": "vast flat open steppe with unbroken grassland stretching to every horizon",
+          "icons": "khan's great tent on a central dais; concentric rings of felt gers and yurts; wooden watchtower overlooking the plain; horse picket lines; ovoo cairn and horsetail standards",
+          "infra": "circular beaten cart_track ring roads between the yurt rings; horse picket lines around the camp perimeter"
+        }
+      },
+      "attempts": 1,
+      "diagnostics": [],
+      "usage": {
+        "promptTokens": 175800,
+        "completionTokens": 22571,
+        "cost": 0.1082
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 28,
+        "maxDepth": 2,
+        "generators": [
+          "authored:khans_great_tent",
+          "building.grammar@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "armory",
+          "cottage",
+          "guard_post",
+          "smithy",
+          "thatched_roundhouse",
+          "watchtower"
+        ],
+        "archetypesInCatalog": 6,
+        "formPacks": [
+          "steppe_nomad"
+        ],
+        "props": [
+          "cairn",
+          "cart",
+          "covered_wagon",
+          "flagpole",
+          "hitching_post",
+          "horse_trough",
+          "yurt"
+        ],
+        "species": [
+          "hazel_bush",
+          "steppe_juniper",
+          "weathered_ironwood"
+        ],
+        "envelopes": [
+          "512x512",
+          "30x30",
+          "27x18x27",
+          "7x19x7",
+          "9x16x9",
+          "9x11x9",
+          "11x12x17"
+        ],
+        "constraints": 14,
+        "constraintKinds": [
+          "adjacent_to",
+          "blend",
+          "distance",
+          "facing",
+          "gap",
+          "max",
+          "min",
+          "reference",
+          "terrain_conform",
+          "zone"
+        ],
+        "constraintsWithStrength": 5,
+        "hardConstraints": 0,
+        "forests": 1,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 4,
+        "programReferences": 1,
+        "conformsTrue": 0,
+        "labels": 27,
+        "eras": [
+          "medieval"
+        ],
+        "bytes": 20163
+      },
+      "wallMs": 241000,
+      "generate": {
+        "exit": "0",
+        "modelRuns": 2,
+        "feedbackRounds": 1,
+        "programs": [
+          "ok khans_great_tent [landmark] 1 attempt(s), 21146 tokens ($0.0346), 6 warning(s)"
+        ],
+        "programCost": 0.0346,
+        "totalCost": 0.1428,
+        "compiled": true,
+        "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/probe3/gen/probe_horde_camp/out/steppe_horde_camp",
+        "finalDiagnostics": {
+          "LOAM-W330": 1,
+          "LOAM-T208": 1,
+          "LOAM-W522": 1,
+          "LOAM-I497": 1,
+          "LOAM-T341": 1,
+          "LOAM-W470": 1
+        },
+        "crash": [],
+        "docName": "steppe_horde_camp.loam.json"
+      }
+    },
+    {
+      "id": "probe_river_forts",
+      "family": "probe",
+      "kit": "settlement",
+      "prompt": "Two rival river forts on opposite banks of a wide river, each with its own bridgehead, and a half-built stone bridge that stops in the middle of the water.",
+      "seed": 912,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "era": "medieval",
+        "climate": {
+          "humidity": 0.2
+        },
+        "tokens": {
+          "terrain": "a wide river separating two opposite riverbanks; a fortified river fort and bridgehead on each bank facing each other; a half-built stone bridge extending into the water from the banks and breaking off in the middle",
+          "event_direction": "two rival forts facing off across the wide river toward the half-built bridge between them",
+          "region_river_fort_alpha": "era medieval, wealth 0.5, formality 0.7, materialTheme temperate_timber; fortification walled; prefer archetypes watchtower, gatehouse, barracks, armoury, dock; props ballista, crane, scaffolding, brazier, banner; heavily fortified bridgehead on the riverbank",
+          "region_river_fort_beta": "era medieval, wealth 0.5, formality 0.7, materialTheme temperate_timber; fortification walled; prefer archetypes watchtower, gatehouse, barracks, armoury, dock; props ballista, crane, scaffolding, brazier, banner; rival fortified bridgehead on the opposing bank",
+          "icons": "half-finished stone bridge piers and arches ending abruptly mid-stream with abandoned scaffolding; fortified bridgehead gatehouses on each shore; rival watchtowers and artillery emplacements pointed across the water"
+        }
+      },
+      "attempts": 2,
+      "diagnostics": [],
+      "usage": {
+        "promptTokens": 388759,
+        "completionTokens": 69599,
+        "cost": 0.2763
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 31,
+        "maxDepth": 2,
+        "generators": [
+          "authored:half_built_bridge",
+          "building.grammar@0",
+          "infra.entry@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "scatter.program@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "armory",
+          "arsenal",
+          "barracks",
+          "beacon_tower",
+          "castle",
+          "checkpoint",
+          "cottage",
+          "gatehouse",
+          "granary",
+          "guard_post",
+          "inn",
+          "keep",
+          "smithy",
+          "tavern",
+          "warehouse",
+          "watchtower"
+        ],
+        "archetypesInCatalog": 16,
+        "formPacks": [],
+        "props": [
+          "cart",
+          "covered_wagon",
+          "log_pile",
+          "pier",
+          "rowboat"
+        ],
+        "species": [
+          "boreal_spruce",
+          "plain_oak",
+          "scrub_spruce",
+          "slim_birch",
+          "spreading_oak"
+        ],
+        "envelopes": [
+          "512x512",
+          "110x110",
+          "13x16x11",
+          "15x18x15",
+          "110x110",
+          "13x16x11",
+          "15x18x15",
+          "160x26x32"
+        ],
+        "constraints": 7,
+        "constraintKinds": [
+          "at",
+          "blend",
+          "distance",
+          "max",
+          "min",
+          "reference",
+          "terrain_conform"
+        ],
+        "constraintsWithStrength": 2,
+        "hardConstraints": 0,
+        "forests": 3,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 4,
+        "programReferences": 1,
+        "conformsTrue": 0,
+        "labels": 29,
+        "eras": [
+          "medieval",
+          "medieval",
+          "medieval"
+        ],
+        "bytes": 54287
+      },
+      "wallMs": 692000,
+      "generate": {
+        "exit": "0",
+        "modelRuns": 3,
+        "feedbackRounds": 2,
+        "programs": [
+          "ok half_built_bridge [landmark] 1 attempt(s), 28012 tokens ($0.0474), 26 warning(s)",
+          "ok river_ballista [plugin] 1 attempt(s), 28830 tokens ($0.0490), 28 warning(s)"
+        ],
+        "programCost": 0.0964,
+        "totalCost": 0.3727,
+        "compiled": true,
+        "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/probe3/gen/probe_river_forts/out/rival_river_forts",
+        "finalDiagnostics": {
+          "LOAM-W330": 1,
+          "LOAM-T208": 1,
+          "LOAM-W520": 1,
+          "LOAM-T242": 1,
+          "LOAM-T223": 1,
+          "LOAM-W483": 1,
+          "LOAM-I412": 2,
+          "LOAM-I463": 4,
+          "LOAM-T228": 1,
+          "LOAM-I497": 1,
+          "LOAM-W413": 1,
+          "LOAM-I524": 1,
+          "LOAM-T234": 1,
+          "LOAM-T341": 2,
+          "LOAM-W470": 1
+        },
+        "crash": [],
+        "docName": "rival_river_forts.loam.json"
+      }
+    },
+    {
+      "id": "probe_mammoth_camp",
+      "family": "probe",
+      "kit": "settlement",
+      "prompt": "A Stone Age mammoth-hunters' camp at the foot of an ice sheet: huts of mammoth bone and hide, drying racks, a kill site on the tundra with the skeleton still in the snow.",
+      "seed": 913,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "era": "primitive",
+        "wealth": 0.1,
+        "decline": 0.1,
+        "formality": 0,
+        "climate": {
+          "biome": "minecraft:snowy_plains",
+          "temperature": -0.9,
+          "humidity": -0.4,
+          "snow": "always"
+        },
+        "character": {
+          "label": "mammoth-hunters camp",
+          "materialTheme": "boreal_pine",
+          "urbanForm": "grown",
+          "archetypes": {
+            "forbid": [
+              "townhouse",
+              "terraced_row",
+              "shop_row",
+              "office",
+              "apartment_block",
+              "church",
+              "manor",
+              "warehouse"
+            ]
+          }
+        },
+        "tokens": {
+          "terrain": "open snowy tundra at the foot of a towering glacial ice sheet",
+          "icons": "mammoth bone and hide shelters; timber drying racks for hides and meat; butchered mammoth skeleton half-buried in the snow at a nearby kill site; central fire hearths",
+          "infra": "beaten snow paths between the shelters and the kill site"
+        }
+      },
+      "attempts": 1,
+      "diagnostics": [],
+      "usage": {
+        "promptTokens": 199903,
+        "completionTokens": 47656,
+        "cost": 0.1643
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 24,
+        "maxDepth": 2,
+        "generators": [
+          "authored:bone_totem_shrine",
+          "authored:mammoth_kill_site",
+          "building.grammar@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "scatter.program@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "cottage",
+          "hermitage",
+          "hut",
+          "sod_house",
+          "thatched_roundhouse"
+        ],
+        "archetypesInCatalog": 5,
+        "formPacks": [],
+        "props": [
+          "cairn",
+          "campsite",
+          "log_pile",
+          "monolith"
+        ],
+        "species": [
+          "creeping_juniper",
+          "ground_juniper",
+          "scrub_pine",
+          "taiga_spruce",
+          "tundra_spruce"
+        ],
+        "envelopes": [
+          "512x512",
+          "18x18",
+          "11x15x11",
+          "9x13x9",
+          "9x11x9",
+          "9x11x9",
+          "9x10x9",
+          "28x14x24",
+          "9x16x9"
+        ],
+        "constraints": 20,
+        "constraintKinds": [
+          "adjacent_to",
+          "at",
+          "blend",
+          "distance",
+          "facing",
+          "gap",
+          "max",
+          "min",
+          "reference",
+          "terrain_conform"
+        ],
+        "constraintsWithStrength": 6,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 5,
+        "programReferences": 2,
+        "conformsTrue": 0,
+        "labels": 23,
+        "eras": [
+          "primitive"
+        ],
+        "bytes": 78083
+      },
+      "wallMs": 897000,
+      "generate": {
+        "exit": "0",
+        "modelRuns": 2,
+        "feedbackRounds": 1,
+        "programs": [
+          "ok mammoth_kill_site [landmark] 2 attempt(s), 56036 tokens ($0.0735), 8 warning(s)",
+          "ok bone_totem_shrine [landmark] 1 attempt(s), 27660 tokens ($0.0469), 4 warning(s)",
+          "ok drying_rack [plugin] 1 attempt(s), 27121 tokens ($0.0459), 1 warning(s)",
+          "ok bone_heap [plugin] 1 attempt(s), 29529 tokens ($0.0504), 2 warning(s)"
+        ],
+        "programCost": 0.2167,
+        "totalCost": 0.381,
+        "compiled": true,
+        "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/probe3/gen/probe_mammoth_camp/out/mammoth_hunters_camp",
+        "finalDiagnostics": {
+          "LOAM-W330": 2,
+          "LOAM-T208": 1,
+          "LOAM-W483": 1,
+          "LOAM-I463": 1,
+          "LOAM-I497": 1,
+          "LOAM-T341": 3,
+          "LOAM-W337": 2,
+          "LOAM-W470": 1
+        },
+        "crash": [],
+        "docName": "mammoth_hunters_camp.loam.json"
+      }
+    },
+    {
+      "id": "probe_karst",
+      "family": "probe",
+      "kit": "terrain",
+      "prompt": "A tropical karst landscape: limestone towers rising out of a flooded plain, a sinkhole lake, and a river that vanishes into the mouth of a cave — no settlement of any kind.",
+      "seed": 914,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "climate": {
+          "biome": "minecraft:jungle",
+          "temperature": 0.9,
+          "humidity": 0.8,
+          "snow": "never"
+        },
+        "character": {
+          "label": "uninhabited tropical karst",
+          "flora": {
+            "prefer": [
+              "jungle_broadleaf",
+              "tree_fern",
+              "kapok_emergent",
+              "understory"
+            ]
+          }
+        },
+        "tokens": {
+          "terrain": "a flooded plain with steep limestone karst towers rising above the water; one sinkhole lake; one river vanishing into the mouth of a cave",
+          "icons": "sheer karst pinnacles, flooded lowland marshes, sinkhole cenote pool, subterranean river swallow hole",
+          "settlement": "none; entirely pristine wilderness with no buildings, roads, or human presence"
+        }
+      },
+      "attempts": 1,
+      "diagnostics": [],
+      "usage": {
+        "promptTokens": 50441,
+        "completionTokens": 32222,
+        "cost": 0.0793
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 16,
+        "maxDepth": 2,
+        "generators": [
+          "authored:cenote_sinkhole",
+          "authored:karst_ponor_cave_mouth",
+          "cave.carver@0",
+          "scatter.forest@0",
+          "scatter.program@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [],
+        "archetypesInCatalog": 0,
+        "formPacks": [],
+        "props": [],
+        "species": [
+          "jungle_canopy",
+          "spreading_jungle_oak",
+          "water_willow"
+        ],
+        "envelopes": [
+          "512x512"
+        ],
+        "constraints": 2,
+        "constraintKinds": [
+          "at"
+        ],
+        "constraintsWithStrength": 0,
+        "hardConstraints": 0,
+        "forests": 1,
+        "forestFillsAtOrAboveCoverage": 1,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 0,
+        "programReferences": 2,
+        "conformsTrue": 0,
+        "labels": 13,
+        "eras": [],
+        "bytes": 56983
+      },
+      "wallMs": 702000,
+      "generate": {
+        "exit": "0",
+        "modelRuns": 2,
+        "feedbackRounds": 0,
+        "programs": [
+          "ok karst_ponor_cave_mouth [landmark] 1 attempt(s), 32838 tokens ($0.0567), 27 warning(s)",
+          "ok cenote_sinkhole [landmark] 1 attempt(s), 23795 tokens ($0.0397), 26 warning(s)",
+          "ok karst_pinnacle_tower [plugin] 2 attempt(s), 58638 tokens ($0.0778), 25 warning(s)"
+        ],
+        "programCost": 0.1759,
+        "totalCost": 0.2552,
+        "compiled": true,
+        "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/probe3/gen/probe_karst/out/tropical_karst",
+        "finalDiagnostics": {
+          "LOAM-T341": 2,
+          "LOAM-W337": 2,
+          "LOAM-T342": 1,
+          "LOAM-T107": 1
+        },
+        "crash": [],
+        "docName": "tropical_karst.loam.json"
+      }
+    },
+    {
+      "id": "probe_lighthouse",
+      "family": "probe",
+      "kit": "settlement",
+      "prompt": "A fog-bound fishing harbour on a rocky Atlantic headland: a stone lighthouse on the point above the boats, net lofts along the quay, a chapel for the drowned.",
+      "seed": 915,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "era": "medieval",
+        "wealth": 0.35,
+        "decline": 0.2,
+        "formality": 0.15,
+        "climate": {
+          "temperature": -0.2,
+          "humidity": 0.8
+        },
+        "character": {
+          "label": "fog-bound fishing harbour",
+          "materialTheme": "temperate_timber",
+          "archetypes": {
+            "prefer": [
+              "lighthouse",
+              "cottage",
+              "tavern",
+              "warehouse",
+              "church"
+            ]
+          },
+          "urbanForm": "grown",
+          "motifs": {
+            "roofType": "gable",
+            "massing": "blocky"
+          }
+        },
+        "tokens": {
+          "terrain": "a rocky Atlantic headland jutting into open cold sea with a sheltered fishing harbour below",
+          "icons": "a stone lighthouse on the high rocky point above the moored boats; weathered net lofts and fish houses along the stone quay; a small stone chapel for the drowned overlooking the water"
+        }
+      },
+      "attempts": 1,
+      "diagnostics": [],
+      "usage": {
+        "promptTokens": 186382,
+        "completionTokens": 31300,
+        "cost": 0.1286
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 28,
+        "maxDepth": 2,
+        "generators": [
+          "authored:chapel_for_the_drowned",
+          "building.grammar@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "scatter.program@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "cannery",
+          "chapel",
+          "church",
+          "cottage",
+          "inn",
+          "lighthouse",
+          "tavern",
+          "warehouse"
+        ],
+        "archetypesInCatalog": 8,
+        "formPacks": [],
+        "props": [
+          "buoy",
+          "cairn",
+          "fishing_sloop",
+          "fishing_trawler",
+          "log_pile",
+          "notice_board",
+          "pier",
+          "rowboat"
+        ],
+        "species": [
+          "bent_oak",
+          "lone_pine",
+          "squat_pine",
+          "tall_pine"
+        ],
+        "envelopes": [
+          "512x512",
+          "26x22",
+          "11x22x11",
+          "13x11x11",
+          "11x10x13",
+          "13x11x13",
+          "9x10x9",
+          "9x8x9",
+          "11x11x13"
+        ],
+        "constraints": 25,
+        "constraintKinds": [
+          "adjacent_to",
+          "at",
+          "blend",
+          "distance",
+          "facing",
+          "gap",
+          "max",
+          "min",
+          "reference",
+          "terrain_conform"
+        ],
+        "constraintsWithStrength": 11,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 7,
+        "programReferences": 1,
+        "conformsTrue": 0,
+        "labels": 27,
+        "eras": [
+          "medieval"
+        ],
+        "bytes": 44246
+      },
+      "wallMs": 489000,
+      "generate": {
+        "exit": "0",
+        "modelRuns": 2,
+        "feedbackRounds": 0,
+        "programs": [
+          "ok chapel_for_the_drowned [landmark] 1 attempt(s), 30645 tokens ($0.0525), 7 warning(s)",
+          "ok drying_racks_and_net_frames [plugin] 1 attempt(s), 28112 tokens ($0.0478), 3 warning(s)"
+        ],
+        "programCost": 0.1017,
+        "totalCost": 0.2303,
+        "compiled": true,
+        "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/probe3/gen/probe_lighthouse/out/fog_headland_harbour",
+        "finalDiagnostics": {
+          "LOAM-I502": 1,
+          "LOAM-T208": 1,
+          "LOAM-W522": 1,
+          "LOAM-T228": 1,
+          "LOAM-I463": 1,
+          "LOAM-I497": 1,
+          "LOAM-T341": 1,
+          "LOAM-W337": 2,
+          "LOAM-T342": 1,
+          "LOAM-W470": 1
+        },
+        "crash": [],
+        "docName": "fog_headland_harbour.loam.json"
+      }
+    },
+    {
+      "id": "probe_hollow_tree",
+      "family": "probe",
+      "kit": "settlement",
+      "prompt": "A village built in and around one colossal hollow baobab: the market inside its trunk, rope bridges from its branches to platform houses, ladders and lanterns up the bark.",
+      "seed": 916,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "era": "medieval",
+        "wealth": 0.45,
+        "formality": 0.1,
+        "climate": {
+          "biome": "minecraft:savanna",
+          "temperature": 0.8,
+          "humidity": -0.4,
+          "snow": "never"
+        },
+        "character": {
+          "label": "colossal baobab village",
+          "materialTheme": "temperate_timber",
+          "urbanForm": "radial",
+          "flora": {
+            "prefer": [
+              "emergent",
+              "acacia_umbrella"
+            ]
+          },
+          "props": {
+            "prefer": [
+              "market_barrow",
+              "well_head",
+              "notice_board"
+            ]
+          },
+          "motifs": {
+            "roofType": "shed",
+            "massing": "sprawling"
+          }
+        },
+        "tokens": {
+          "terrain": "a warm, open savanna plain centered on one colossal ancient hollow baobab tree",
+          "icons": "a lively village market sheltered inside the vast hollow trunk; wooden platform houses hung from high boughs; rope bridges spanning between canopy branches; winding ladders, walkways, and hanging lanterns ascending the outer bark"
+        }
+      },
+      "attempts": 1,
+      "diagnostics": [],
+      "usage": {
+        "promptTokens": 295264,
+        "completionTokens": 64392,
+        "cost": 0.2315
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 26,
+        "maxDepth": 2,
+        "generators": [
+          "authored:colossal_baobab",
+          "building.grammar@0",
+          "precinct.farm@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "scatter.program@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "apothecary",
+          "cottage",
+          "granary",
+          "hall",
+          "market_stall",
+          "stilt_house",
+          "tavern"
+        ],
+        "archetypesInCatalog": 7,
+        "formPacks": [],
+        "props": [
+          "hitching_post",
+          "market_barrow",
+          "notice_board",
+          "treehouse",
+          "well_head"
+        ],
+        "species": [
+          "desert_hardwood",
+          "umbrella_acacia",
+          "wild_acacia"
+        ],
+        "envelopes": [
+          "512x512",
+          "64x52x64",
+          "20x20",
+          "13x11x13",
+          "9x10x9",
+          "13x12x11",
+          "9x9x9",
+          "9x7x7",
+          "11x12x11",
+          "9x8x9",
+          "9x8x9",
+          "84x80"
+        ],
+        "constraints": 29,
+        "constraintKinds": [
+          "adjacent_to",
+          "blend",
+          "distance",
+          "facing",
+          "gap",
+          "max",
+          "min",
+          "reference",
+          "terrain_conform",
+          "zone"
+        ],
+        "constraintsWithStrength": 11,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 8,
+        "programReferences": 1,
+        "conformsTrue": 0,
+        "labels": 23,
+        "eras": [
+          "medieval"
+        ],
+        "bytes": 55638
+      },
+      "wallMs": 647000,
+      "generate": {
+        "exit": "0",
+        "modelRuns": 3,
+        "feedbackRounds": 2,
+        "programs": [
+          "ok colossal_baobab [landmark] 1 attempt(s), 29368 tokens ($0.0500), 27 warning(s)",
+          "ok canopy_platform_house [plugin] 1 attempt(s), 22827 tokens ($0.0378), 27 warning(s)"
+        ],
+        "programCost": 0.0879,
+        "totalCost": 0.3194,
+        "compiled": true,
+        "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/probe3/gen/probe_hollow_tree/out/baobab_village",
+        "finalDiagnostics": {
+          "LOAM-W330": 1,
+          "LOAM-T105": 1,
+          "LOAM-T208": 1,
+          "LOAM-E404": 1,
+          "LOAM-W522": 1,
+          "LOAM-I500": 1,
+          "LOAM-I504": 1,
+          "LOAM-I497": 1,
+          "LOAM-T341": 1,
+          "LOAM-W337": 1,
+          "LOAM-W470": 1
+        },
+        "crash": [],
+        "docName": "baobab_village.loam.json"
+      }
+    }
+  ]
+}

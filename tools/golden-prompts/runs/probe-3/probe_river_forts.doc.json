@@ -1,0 +1,884 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "rival_river_forts",
+    "worldSeed": "912",
+    "prompt": "Two rival river forts on opposite banks of a wide river, each with its own bridgehead, and a half-built stone bridge that stops in the middle of the water.",
+    "spawn": {
+      "at": [
+        0.32,
+        0.5
+      ]
+    }
+  },
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.5,
+    "formality": 0.7,
+    "climate": {
+      "humidity": 0.2
+    },
+    "character": {
+      "label": "rival river fortress frontier",
+      "materialTheme": "temperate_timber",
+      "programs": [
+        {
+          "id": "half_built_bridge",
+          "mode": "landmark",
+          "brief": "A massive cut-stone arched bridge built outward from both banks that stops abruptly mid-river over deep water, complete with broken stone arches, heavy piers, abandoned timber scaffolding, and block-and-tackle hoist cranes.",
+          "envelope": [
+            160,
+            26,
+            32
+          ]
+        },
+        {
+          "id": "river_ballista",
+          "mode": "plugin",
+          "brief": "A heavy war ballista mounted on a stone and timber firing platform facing across the river, with ammo crates, a brazier, and weapon racks.",
+          "envelope": [
+            7,
+            6,
+            7
+          ],
+          "count": 6
+        }
+      ],
+      "archetypes": {
+        "prefer": [
+          "gatehouse",
+          "keep",
+          "barracks",
+          "armory",
+          "watchtower",
+          "guard_post",
+          "smithy",
+          "tavern"
+        ],
+        "forbid": [
+          "skyscraper",
+          "office",
+          "apartment_block",
+          "modern_villa",
+          "shopping_mall",
+          "gas_station"
+        ]
+      },
+      "props": {
+        "prefer": [
+          "pier",
+          "rowboat",
+          "curtain_wall",
+          "cart",
+          "log_pile",
+          "flagpole"
+        ]
+      }
+    },
+    "tokens": {
+      "terrain": "a wide river separating two opposite riverbanks; a fortified river fort and bridgehead on each bank facing each other; a half-built stone bridge extending into the water from the banks and breaking off in the middle",
+      "event_direction": "two rival forts facing off across the wide river toward the half-built bridge between them",
+      "region_river_fort_alpha": "era medieval, wealth 0.5, formality 0.7, materialTheme temperate_timber; fortification walled; prefer archetypes watchtower, gatehouse, barracks, armoury, dock; props ballista, crane, scaffolding, brazier, banner; heavily fortified bridgehead on the riverbank",
+      "region_river_fort_beta": "era medieval, wealth 0.5, formality 0.7, materialTheme temperate_timber; fortification walled; prefer archetypes watchtower, gatehouse, barracks, armoury, dock; props ballista, crane, scaffolding, brazier, banner; rival fortified bridgehead on the opposing bank",
+      "icons": "half-finished stone bridge piers and arches ending abruptly mid-stream with abandoned scaffolding; fortified bridgehead gatehouses on each shore; rival watchtowers and artillery emplacements pointed across the water"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:gravel",
+      "road.shoulder": "minecraft:coarse_dirt"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "a broad river valley between defensive bluffs",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 72,
+          "amplitude": 26,
+          "octaves": 5,
+          "frequency": 0.0035,
+          "erosionPasses": 2,
+          "continentalness": {
+            "frequency": 0.001,
+            "seaFraction": 0.35
+          },
+          "cliffThreshold": 55,
+          "soilDepth": 3,
+          "beachWidth": 4,
+          "snowLineFraction": 0.95
+        },
+        "children": [
+          {
+            "id": "wide_river",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the wide deep river cutting through the region",
+            "params": {
+              "verb": "valley",
+              "course": [
+                "coast",
+                [
+                  0.5,
+                  0.25
+                ],
+                [
+                  0.5,
+                  0.5
+                ],
+                [
+                  0.5,
+                  0.75
+                ],
+                "coast"
+              ],
+              "width": 80,
+              "depth": 22,
+              "profile": "rounded",
+              "meander": 0.25,
+              "flooded": "auto"
+            }
+          },
+          {
+            "id": "west_bank_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the raised plateau foundation for the western fort",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.2,
+                0.5
+              ],
+              "radius": 75,
+              "height": 7,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "east_bank_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the raised plateau foundation for the eastern fort",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.8,
+                0.5
+              ],
+              "radius": 75,
+              "height": 7,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "west_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the upland ridge guarding the western flank",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.06,
+                  0.2
+                ],
+                [
+                  0.08,
+                  0.5
+                ],
+                [
+                  0.06,
+                  0.8
+                ]
+              ],
+              "width": 50,
+              "height": 28,
+              "profile": "sharp"
+            }
+          },
+          {
+            "id": "east_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the upland ridge guarding the eastern flank",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.94,
+                  0.2
+                ],
+                [
+                  0.92,
+                  0.5
+                ],
+                [
+                  0.94,
+                  0.8
+                ]
+              ],
+              "width": 50,
+              "height": 28,
+              "profile": "sharp"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0016
+        }
+      },
+      {
+        "id": "west_woodland",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "dense spruce forest behind the western stronghold",
+        "params": {
+          "area": {
+            "at": [
+              0.12,
+              0.35
+            ],
+            "radius": 90
+          },
+          "density": 0.16,
+          "spacing": 3,
+          "clumping": 0.45,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "undergrowth": {
+            "grass": 0.35,
+            "flowers": 0.04,
+            "deadwood": 0.05
+          },
+          "species": [
+            {
+              "id": "boreal_spruce",
+              "shape": "spruce_tall",
+              "weight": 3
+            },
+            {
+              "id": "scrub_spruce",
+              "shape": "spruce_squat",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "east_woodland",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "deep oak forest behind the eastern fortress",
+        "params": {
+          "area": {
+            "at": [
+              0.88,
+              0.65
+            ],
+            "radius": 90
+          },
+          "density": 0.16,
+          "spacing": 3,
+          "clumping": 0.45,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "undergrowth": {
+            "grass": 0.4,
+            "flowers": 0.08,
+            "deadwood": 0.02
+          },
+          "species": [
+            {
+              "id": "spreading_oak",
+              "shape": "oak_spreading",
+              "weight": 3
+            },
+            {
+              "id": "slim_birch",
+              "shape": "birch_slim",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "wilderness_trees",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse cover across the river valley floor",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 4,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "species": [
+            {
+              "id": "plain_oak",
+              "shape": "oak_round",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "west_river_fort",
+        "kind": "district",
+        "label": "the western river fort and garrison compound",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            110,
+            110
+          ]
+        },
+        "intent": {
+          "era": "medieval",
+          "wealth": 0.5,
+          "formality": 0.75,
+          "character": {
+            "label": "Western Griffin River Fort",
+            "materialTheme": "boreal_pine",
+            "archetypes": {
+              "prefer": [
+                "gatehouse",
+                "keep",
+                "barracks",
+                "armory",
+                "guard_post",
+                "watchtower"
+              ]
+            }
+          }
+        },
+        "params": {
+          "fabric": "grown",
+          "density": "medium",
+          "blockSize": 36,
+          "mix": [
+            "barracks",
+            "armory",
+            "guard_post",
+            "smithy",
+            "tavern",
+            "warehouse",
+            "watchtower"
+          ],
+          "walls": {
+            "style": "masonry",
+            "margin": 8,
+            "towerPitch": 32,
+            "height": 7
+          }
+        },
+        "constraints": [
+          {
+            "at": [
+              0.2,
+              0.5
+            ]
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6
+          }
+        ],
+        "tags": [
+          "fort",
+          "district",
+          "west_faction"
+        ],
+        "children": [
+          {
+            "id": "west_bridgehead_gate",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the fortified western bridgehead gatehouse guarding the river crossing",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                16,
+                11
+              ]
+            },
+            "params": {
+              "archetype": "gatehouse",
+              "floors": 2
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "east",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "gatehouse"
+            ]
+          },
+          {
+            "id": "west_command_keep",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the western donjon keep commanding the valley",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                15,
+                18,
+                15
+              ]
+            },
+            "params": {
+              "archetype": "keep",
+              "floors": 2,
+              "basement": {
+                "depth": 5,
+                "style": "vault"
+              }
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "east",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "keep"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "east_river_fort",
+        "kind": "district",
+        "label": "the rival eastern river fort and citadel",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            110,
+            110
+          ]
+        },
+        "intent": {
+          "era": "medieval",
+          "wealth": 0.55,
+          "formality": 0.75,
+          "character": {
+            "label": "Eastern Lion River Fort",
+            "materialTheme": "temperate_timber",
+            "archetypes": {
+              "prefer": [
+                "outer_gate",
+                "castle",
+                "barracks",
+                "arsenal",
+                "checkpoint",
+                "beacon_tower"
+              ]
+            }
+          }
+        },
+        "params": {
+          "fabric": "grown",
+          "density": "medium",
+          "blockSize": 36,
+          "mix": [
+            "barracks",
+            "arsenal",
+            "checkpoint",
+            "smithy",
+            "inn",
+            "granary",
+            "beacon_tower"
+          ],
+          "walls": {
+            "style": "masonry",
+            "margin": 8,
+            "towerPitch": 32,
+            "height": 7
+          }
+        },
+        "constraints": [
+          {
+            "at": [
+              0.8,
+              0.5
+            ]
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6
+          }
+        ],
+        "tags": [
+          "fort",
+          "district",
+          "east_faction"
+        ],
+        "children": [
+          {
+            "id": "east_bridgehead_gate",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the eastern bridgehead gatehouse staring down the unfinished bridge",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                16,
+                11
+              ]
+            },
+            "params": {
+              "archetype": "gatehouse",
+              "floors": 2
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "west",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "gatehouse"
+            ]
+          },
+          {
+            "id": "east_stronghold_citadel",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the eastern citadel fortress overlooking the river",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                15,
+                18,
+                15
+              ]
+            },
+            "params": {
+              "archetype": "castle",
+              "floors": 2,
+              "basement": {
+                "depth": 5,
+                "style": "vault"
+              }
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "west",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "castle"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "broken_bridge_span",
+        "kind": "generator",
+        "generator": "authored:half_built_bridge",
+        "label": "the monumental half-built stone bridge breaking off abruptly in the middle of the river",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            160,
+            26,
+            32
+          ]
+        },
+        "params": {
+          "seat": "wade",
+          "face": {
+            "toward": "east_river_fort"
+          }
+        },
+        "constraints": [
+          {
+            "at": [
+              0.5,
+              0.5
+            ]
+          },
+          {
+            "distance": "west_river_fort",
+            "min": 8,
+            "max": 40,
+            "strength": "soft"
+          },
+          {
+            "distance": "east_river_fort",
+            "min": 8,
+            "max": 40,
+            "strength": "soft"
+          }
+        ],
+        "tags": [
+          "landmark",
+          "bridge"
+        ]
+      },
+      {
+        "id": "west_river_defenses",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "western artillery emplacements aimed across the river",
+        "params": {
+          "program": "river_ballista",
+          "count": 3,
+          "area": {
+            "at": [
+              0.32,
+              0.36
+            ],
+            "radius": 0.14
+          },
+          "spacing": 18,
+          "face": {
+            "toward": "east_river_fort"
+          },
+          "avoidTags": [
+            "structure",
+            "road"
+          ]
+        }
+      },
+      {
+        "id": "east_river_defenses",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "eastern artillery emplacements aimed across the river",
+        "params": {
+          "program": "river_ballista",
+          "count": 3,
+          "area": {
+            "at": [
+              0.68,
+              0.64
+            ],
+            "radius": 0.14
+          },
+          "spacing": 18,
+          "face": {
+            "toward": "west_river_fort"
+          },
+          "avoidTags": [
+            "structure",
+            "road"
+          ]
+        }
+      },
+      {
+        "id": "west_bridge_barricade",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "the barricade defending the western bridgehead road",
+        "params": {
+          "entry": "barricade_line",
+          "route": {
+            "across": "west_river_fort"
+          }
+        }
+      },
+      {
+        "id": "east_bridge_barricade",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "the barricade defending the eastern bridgehead road",
+        "params": {
+          "entry": "barricade_line",
+          "route": {
+            "across": "east_river_fort"
+          }
+        }
+      },
+      {
+        "id": "west_landing_pier",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the western garrison boat landing",
+        "params": {
+          "prop": "pier",
+          "zone": "west",
+          "length": 10,
+          "width": 2
+        }
+      },
+      {
+        "id": "west_patrol_boat",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a river skiff moored at the western pier",
+        "params": {
+          "prop": "rowboat",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "east_landing_pier",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the eastern fortress boat landing",
+        "params": {
+          "prop": "pier",
+          "zone": "east",
+          "length": 10,
+          "width": 2
+        }
+      },
+      {
+        "id": "east_patrol_boat",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a river skiff moored at the eastern pier",
+        "params": {
+          "prop": "rowboat",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "west_supply_cart",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a munitions cart parked in the western bailey",
+        "params": {
+          "prop": "cart",
+          "zone": "west"
+        }
+      },
+      {
+        "id": "east_supply_wagon",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a supply wagon parked in the eastern ward",
+        "params": {
+          "prop": "covered_wagon",
+          "zone": "east"
+        }
+      },
+      {
+        "id": "west_timber_reserve",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "construction lumber and fuel near the western bridgehead",
+        "params": {
+          "prop": "log_pile",
+          "zone": "west"
+        }
+      },
+      {
+        "id": "east_timber_reserve",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "construction lumber and fuel near the eastern bridgehead",
+        "params": {
+          "prop": "log_pile",
+          "zone": "east"
+        }
+      },
+      {
+        "id": "fort_roads",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "gravel military thoroughfares serving each fort and its bridgehead",
+        "params": {
+          "anchors": [
+            "west_river_fort",
+            "east_river_fort",
+            "broken_bridge_span",
+            "#tag:gatehouse"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 14
+        }
+      }
+    ]
+  },
+  "programs": {
+    "half_built_bridge": {
+      "mode": "landmark",
+      "envelope": [
+        160,
+        26,
+        32
+      ],
+      "sourceHash": "b3:a045124de6c9287da006fe4f07f5dc1ca7ef640c01263ebb359ca9399db35852",
+      "outputHash": "b3:b0941b5cca1a4ffa5d4e5667d950e352685c1d219de138f57c2c33a7d0c0f4d1",
+      "conforms": false,
+      "conformHash": "b3:395ea83e56977a0b69f1840a2d12f3c53dec170d5127a93f2ea2038e02763ea0",
+      "source": "export const envelope = [160, 26, 32];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const seatY = 6;\n\n  // ---------------------------------------------------------\n  // 1. PALETTE RESOLUTION & BLOCK STATE HELPERS\n  // ---------------------------------------------------------\n  const stonePrimary = api.theme.stone?.primary || \"minecraft:stone_bricks\";\n  const stoneAccent = api.theme.stone?.accent || \"minecraft:cracked_stone_bricks\";\n  const stoneStairs = api.theme.stone?.stairs || \"minecraft:stone_brick_stairs\";\n  const stoneSlab = api.theme.stone?.slab || \"minecraft:stone_brick_slab\";\n  const stoneWall = api.theme.stone?.wall || \"minecraft:stone_brick_wall\";\n\n  const groundPave = api.theme.ground?.pavement || \"minecraft:cobblestone\";\n  const groundKerb = api.theme.ground?.kerb || \"minecraft:stone\";\n  const groundPlinth = api.theme.ground?.plinth || \"minecraft:deepslate_bricks\";\n\n  const woodPlanks = api.theme.wood?.planks || \"minecraft:oak_planks\";\n  const woodLog = api.theme.wood?.log || \"minecraft:oak_log\";\n  const woodStripped = api.theme.wood?.stripped || \"minecraft:stripped_oak_log\";\n  const woodStairs = api.theme.wood?.stairs || \"minecraft:oak_stairs\";\n  const woodSlab = api.theme.wood?.slab || \"minecraft:oak_slab\";\n  const woodFence = api.theme.wood?.fence || \"minecraft:oak_fence\";\n  const woodTrapdoor = api.theme.wood?.trapdoor || \"minecraft:oak_trapdoor\";\n\n  function cleanId(block) {\n    return block.split(\"[\")[0];\n  }\n\n  function getLog(block, axis = \"y\") {\n    return `${cleanId(block)}[axis=${axis}]`;\n  }\n\n  function getStairs(block, facing = \"north\", half = \"bottom\", shape = \"straight\") {\n    return `${cleanId(block)}[facing=${facing},half=${half},shape=${shape}]`;\n  }\n\n  function getSlab(block, type = \"bottom\") {\n    return `${cleanId(block)}[type=${type}]`;\n  }\n\n  function getTrapdoor(block, facing = \"north\", half = \"bottom\", open = false) {\n    return `${cleanId(block)}[facing=${facing},half=${half},open=${open}]`;\n  }\n\n  function getLadder(facing = \"north\") {\n    return `minecraft:ladder[facing=${facing}]`;\n  }\n\n  function setB(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      api.set(x, y, z, block);\n    }\n  }\n\n  function fillBox(x1, y1, z1, x2, y2, z2, block) {\n    const minX = Math.max(0, Math.min(x1, x2));\n    const maxX = Math.min(W - 1, Math.max(x1, x2));\n    const minY = Math.max(0, Math.min(y1, y2));\n    const maxY = Math.min(H - 1, Math.max(y1, y2));\n    const minZ = Math.max(0, Math.min(z1, z2));\n    const maxZ = Math.min(D - 1, Math.max(z1, z2));\n    for (let x = minX; x <= maxX; x++) {\n      for (let y = minY; y <= maxY; y++) {\n        for (let z = minZ; z <= maxZ; z++) {\n          api.set(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  function getStoneVariation(x, y, z) {\n    const val = Math.abs((Math.sin(x * 12.9898 + y * 78.233 + z * 37.719) * 43758.5453) % 1);\n    if (val < 0.55) return stonePrimary;\n    if (val < 0.85) return stoneAccent;\n    return groundPave;\n  }\n\n  // ---------------------------------------------------------\n  // 2. TERRAIN CONFORMANCE & RIVERBED FOUNDATION\n  // ---------------------------------------------------------\n  function getGroundY(x, z) {\n    const h = Math.round(api.heightAt(x, z));\n    return Math.max(0, Math.min(seatY + h, 14));\n  }\n\n  function buildFoundationColumn(x, z, topY, fillBlock) {\n    const gy = getGroundY(x, z);\n    for (let y = gy; y <= topY; y++) {\n      if (y === gy) {\n        setB(x, y, z, groundPlinth);\n      } else {\n        setB(x, y, z, fillBlock || getStoneVariation(x, y, z));\n      }\n    }\n    // Skirt down to envelope base if terrain fell below 0\n    for (let y = 0; y < gy; y++) {\n      setB(x, y, z, groundPlinth);\n    }\n  }\n\n  // Continuous submerged rock foundation & riverbed causeway (guarantees 1 connected solid)\n  for (let x = 0; x < W; x++) {\n    for (let z = 10; z <= 22; z++) {\n      buildFoundationColumn(x, z, 5, groundPlinth);\n    }\n  }\n\n  // ---------------------------------------------------------\n  // 3. PIER GEOMETRY & CUTWATERS (STARLINGS)\n  // ---------------------------------------------------------\n  const piers = [\n    { cx: 47, name: \"Pier 1 (West Complete)\", halfBuilt: false },\n    { cx: 81, name: \"Pier 2 (West Construction Head)\", halfBuilt: false },\n    { cx: 115, name: \"Pier 3 (East Under Construction)\", halfBuilt: true }\n  ];\n\n  function buildPier(pier) {\n    const cx = pier.cx;\n    const minX = cx - 5;\n    const maxX = cx + 5;\n    const topY = pier.halfBuilt ? 17 : 19;\n\n    // Main rectangular pier shaft\n    for (let x = minX; x <= maxX; x++) {\n      for (let z = 10; z <= 22; z++) {\n        buildFoundationColumn(x, z, topY, getStoneVariation(x, 5, z));\n        for (let y = 6; y <= topY; y++) {\n          setB(x, y, z, getStoneVariation(x, y, z));\n        }\n      }\n    }\n\n    // Triangular Cutwaters (Upstream - North, Downstream - South)\n    // North cutwater: Z from 5 to 9, apex at (cx, 5)\n    for (let z = 5; z <= 9; z++) {\n      const spanW = z - 5;\n      for (let x = cx - spanW; x <= cx + spanW; x++) {\n        buildFoundationColumn(x, z, 14, getStoneVariation(x, 5, z));\n        for (let y = 6; y <= 12; y++) {\n          setB(x, y, z, getStoneVariation(x, y, z));\n        }\n        // Sloped cutwater cap (Y=13..14)\n        if (z === 5) {\n          setB(x, 13, z, getStairs(stoneStairs, \"south\", \"bottom\"));\n          setB(x, 14, z, getSlab(stoneSlab, \"bottom\"));\n        } else if (x === cx - spanW) {\n          setB(x, 13, z, getStairs(stoneStairs, \"west\", \"bottom\"));\n        } else if (x === cx + spanW) {\n          setB(x, 13, z, getStairs(stoneStairs, \"east\", \"bottom\"));\n        } else {\n          setB(x, 13, z, getStoneVariation(x, 13, z));\n          setB(x, 14, z, getSlab(stoneSlab, \"bottom\"));\n        }\n      }\n    }\n\n    // South cutwater: Z from 23 to 27, apex at (cx, 27)\n    for (let z = 23; z <= 27; z++) {\n      const spanW = 27 - z;\n      for (let x = cx - spanW; x <= cx + spanW; x++) {\n        buildFoundationColumn(x, z, 14, getStoneVariation(x, 5, z));\n        for (let y = 6; y <= 12; y++) {\n          setB(x, y, z, getStoneVariation(x, y, z));\n        }\n        // Sloped cutwater cap (Y=13..14)\n        if (z === 27) {\n          setB(x, 13, z, getStairs(stoneStairs, \"north\", \"bottom\"));\n          setB(x, 14, z, getSlab(stoneSlab, \"bottom\"));\n        } else if (x === cx - spanW) {\n          setB(x, 13, z, getStairs(stoneStairs, \"west\", \"bottom\"));\n        } else if (x === cx + spanW) {\n          setB(x, 13, z, getStairs(stoneStairs, \"east\", \"bottom\"));\n        } else {\n          setB(x, 13, z, getStoneVariation(x, 13, z));\n          setB(x, 14, z, getSlab(stoneSlab, \"bottom\"));\n        }\n      }\n    }\n\n    // Pier Pilasters and Deck Refuges (for complete piers)\n    if (!pier.halfBuilt) {\n      // Pilasters rising to deck level\n      for (let y = 14; y <= 18; y++) {\n        setB(cx, y, 9, getStoneVariation(cx, y, 9));\n        setB(cx, y, 23, getStoneVariation(cx, y, 23));\n      }\n      // Corbelled refuge bays at Y=18\n      for (let dx = -1; dx <= 1; dx++) {\n        setB(cx + dx, 18, 9, getStairs(stoneStairs, \"south\", \"top\"));\n        setB(cx + dx, 18, 23, getStairs(stoneStairs, \"north\", \"top\"));\n      }\n      // Refuge floors & parapet at Y=19..21\n      for (let dx = -1; dx <= 1; dx++) {\n        setB(cx + dx, 19, 9, groundPave);\n        setB(cx + dx, 19, 23, groundPave);\n        setB(cx + dx, 20, 8, stoneWall);\n        setB(cx + dx, 20, 24, stoneWall);\n      }\n      setB(cx - 2, 20, 9, stoneWall);\n      setB(cx + 2, 20, 9, stoneWall);\n      setB(cx - 2, 20, 23, stoneWall);\n      setB(cx + 2, 20, 23, stoneWall);\n    }\n  }\n\n  piers.forEach(buildPier);\n\n  // ---------------------------------------------------------\n  // 4. ARCHES & SPANDRELS\n  // ---------------------------------------------------------\n  function buildArch(startX, endX, brokenSide = null) {\n    const midX = (startX + endX) / 2;\n    const spanRadius = (endX - startX) / 2;\n    const springY = 9;\n    const archH = 8;\n\n    for (let x = startX; x <= endX; x++) {\n      const norm = (x - midX) / spanRadius;\n      if (Math.abs(norm) > 1.0) continue;\n      const curve = Math.sqrt(Math.max(0, 1 - norm * norm));\n      const underY = Math.round(springY + archH * curve);\n      const ringTopY = underY + 1;\n\n      // Handle the incomplete / broken arch (Span 3)\n      if (brokenSide === \"broken_mid\") {\n        const breakX_West = 94 + (Math.abs(x * 7) % 3);\n        const startX_East = 106;\n\n        if (x > breakX_West && x < startX_East) {\n          // Central open gap in stone masonry\n          continue;\n        }\n\n        if (x >= startX_East) {\n          // East incomplete arch: Place arch stones only near pier spring\n          for (let z = 11; z <= 21; z++) {\n            setB(x, underY, z, getStoneVariation(x, underY, z));\n            setB(x, ringTopY, z, getStoneVariation(x, ringTopY, z));\n          }\n          continue;\n        }\n\n        // West breaking end\n        if (x === breakX_West) {\n          for (let z = 11; z <= 21; z++) {\n            if ((z + x) % 2 === 0) {\n              setB(x, underY, z, stoneAccent);\n              // Protruding broken timber falsework log\n              setB(x, underY - 1, z, getLog(woodLog, \"x\"));\n            }\n          }\n          continue;\n        }\n      }\n\n      // Solid Arch Ring (Voussoirs)\n      for (let z = 11; z <= 21; z++) {\n        setB(x, underY, z, getStoneVariation(x, underY, z));\n        setB(x, ringTopY, z, getStoneVariation(x, ringTopY, z));\n\n        // Fill spandrels up to road deck bottom (Y=18)\n        for (let y = ringTopY + 1; y <= 18; y++) {\n          if (z === 11 || z === 21) {\n            setB(x, y, z, getStoneVariation(x, y, z));\n          } else {\n            setB(x, y, z, (y === 18) ? groundKerb : stoneAccent);\n          }\n        }\n      }\n    }\n  }\n\n  // Span 1: West Land/River Arch (X: 18 to 42)\n  buildArch(18, 42);\n\n  // Span 2: West River Arch (X: 52 to 76)\n  buildArch(52, 76);\n\n  // Span 3: Broken Mid-River Arch (X: 86 to 110)\n  buildArch(86, 110, \"broken_mid\");\n\n  // Span 4: East River Arch (X: 120 to 142)\n  buildArch(120, 142);\n\n  // ---------------------------------------------------------\n  // 5. ROAD DECK, PAVEMENT & PARAPETS\n  // ---------------------------------------------------------\n  // West Deck (X: 0 to 92)\n  for (let x = 0; x <= 92; x++) {\n    for (let z = 12; z <= 20; z++) {\n      if (z === 12 || z === 20) {\n        setB(x, 19, z, groundKerb);\n      } else {\n        const val = Math.abs((Math.sin(x * 3.1 + z * 7.7) * 1000) % 1);\n        setB(x, 19, z, val < 0.7 ? groundPave : stonePrimary);\n      }\n    }\n    // Parapets on West section\n    setB(x, 20, 11, stonePrimary);\n    setB(x, 21, 11, stoneWall);\n    setB(x, 20, 21, stonePrimary);\n    setB(x, 21, 21, stoneWall);\n  }\n\n  // West Deck End Barricade & Construction Warning (X: 91..92)\n  for (let z = 12; z <= 20; z++) {\n    setB(92, 20, z, getLog(woodStripped, \"z\"));\n    setB(92, 21, z, woodFence);\n  }\n  setB(92, 22, 13, \"minecraft:campfire[lit=true]\");\n  setB(92, 22, 19, \"minecraft:campfire[lit=true]\");\n\n  // Stacks of dressed cut-stone on West deck (X: 88..90)\n  fillBox(88, 20, 13, 90, 21, 15, stonePrimary);\n  fillBox(89, 20, 17, 91, 20, 18, stoneAccent);\n\n  // East Deck (X: 112 to 159)\n  for (let x = 112; x <= 159; x++) {\n    for (let z = 12; z <= 20; z++) {\n      if (z === 12 || z === 20) {\n        setB(x, 19, z, groundKerb);\n      } else {\n        const val = Math.abs((Math.sin(x * 3.1 + z * 7.7) * 1000) % 1);\n        setB(x, 19, z, val < 0.7 ? groundPave : stonePrimary);\n      }\n    }\n    // Parapets on East section\n    if (x >= 118) {\n      setB(x, 20, 11, stonePrimary);\n      setB(x, 21, 11, stoneWall);\n      setB(x, 20, 21, stonePrimary);\n      setB(x, 21, 21, stoneWall);\n    }\n  }\n\n  // East Deck Construction Staging (X: 112..117)\n  fillBox(113, 20, 13, 115, 21, 14, stonePrimary);\n  setB(116, 20, 17, \"minecraft:cauldron\");\n  setB(116, 20, 18, woodFence);\n  setB(116, 21, 18, \"minecraft:lantern[hanging=false]\");\n\n  // ---------------------------------------------------------\n  // 6. TIMBER CATWALK & FALSEWORK CENTERING IN CENTRAL GAP\n  // ---------------------------------------------------------\n  // Suspended maintenance / construction plankway spanning X: 86 to 112\n  for (let x = 86; x <= 112; x++) {\n    for (let z = 15; z <= 17; z++) {\n      setB(x, 9, z, woodPlanks);\n    }\n    // Handrails & Hangers\n    setB(x, 10, 15, woodFence);\n    setB(x, 10, 17, woodFence);\n    if (x % 4 === 0) {\n      setB(x, 8, 16, getLog(woodLog, \"z\"));\n      setB(x, 8, 15, woodFence);\n      setB(x, 8, 17, woodFence);\n    }\n  }\n\n  // Timber falsework centering trusses under East incomplete arch (X: 104 to 110)\n  for (let x = 104; x <= 110; x++) {\n    const norm = (x - 98) / 12;\n    const curve = Math.sqrt(Math.max(0, 1 - norm * norm));\n    const archUnderside = Math.round(9 + 8 * curve);\n\n    for (let z = 12; z <= 20; z += 4) {\n      // Curved wooden falsework rib\n      setB(x, archUnderside - 1, z, woodPlanks);\n      // Vertical supporting timber struts\n      for (let y = 10; y < archUnderside - 1; y++) {\n        setB(x, y, z, woodFence);\n      }\n    }\n  }\n\n  // ---------------------------------------------------------\n  // 7. BLOCK-AND-TACKLE CRANES & DERRICKS\n  // ---------------------------------------------------------\n  // Crane 1: Heavy Derrick on Pier 2 (West construction head, X: 88..97)\n  // Base sill\n  fillBox(87, 20, 15, 89, 20, 17, getLog(woodStripped, \"x\"));\n  // Vertical Mast\n  for (let y = 20; y <= 25; y++) {\n    setB(88, y, 16, getLog(woodLog, \"y\"));\n  }\n  // Horizontal Boom extending East over the chasm\n  for (let x = 88; x <= 96; x++) {\n    setB(x, 25, 16, getLog(woodLog, \"x\"));\n  }\n  // Diagonal Strut\n  setB(90, 21, 16, getStairs(woodStairs, \"west\", \"bottom\"));\n  setB(91, 22, 16, woodPlanks);\n  setB(92, 23, 16, woodPlanks);\n  setB(93, 24, 16, getStairs(woodStairs, \"east\", \"top\"));\n  // Winch spool at base\n  setB(87, 21, 16, getTrapdoor(woodTrapdoor, \"west\", \"bottom\", false));\n  setB(89, 21, 16, getTrapdoor(woodTrapdoor, \"east\", \"bottom\", false));\n  // Suspended Block & Tackle Chain with Ashlar Stone\n  for (let y = 18; y <= 24; y++) {\n    setB(96, y, 16, \"minecraft:chain[axis=y]\");\n  }\n  setB(96, 17, 16, stonePrimary);\n  setB(95, 17, 16, stonePrimary);\n  setB(96, 16, 16, getSlab(stoneSlab, \"bottom\"));\n  setB(95, 16, 16, getSlab(stoneSlab, \"bottom\"));\n\n  // Crane 2: A-Frame Hoist & Scaffolding Cage on Pier 3 (East, X: 110..120)\n  // Multi-story Scaffolding Framework around Pier 3\n  const scaffoldPosts = [\n    [109, 8], [109, 24],\n    [115, 8], [115, 24],\n    [121, 8], [121, 24]\n  ];\n\n  scaffoldPosts.forEach(([sx, sz]) => {\n    buildFoundationColumn(sx, sz, 22, getLog(woodLog, \"y\"));\n    for (let y = 6; y <= 22; y++) {\n      setB(sx, y, sz, getLog(woodLog, \"y\"));\n    }\n  });\n\n  // Scaffolding horizontal ledger poles & platforms at Y=11, 15, 19\n  [11, 15, 19].forEach((sy) => {\n    // North ledgers\n    for (let x = 109; x <= 121; x++) {\n      setB(x, sy, 8, getLog(woodLog, \"x\"));\n      setB(x, sy, 9, woodPlanks);\n      setB(x, sy + 1, 8, woodFence);\n    }\n    // South ledgers\n    for (let x = 109; x <= 121; x++) {\n      setB(x, sy, 24, getLog(woodLog, \"x\"));\n      setB(x, sy, 23, woodPlanks);\n      setB(x, sy + 1, 24, woodFence);\n    }\n  });\n\n  // Ladder access on North scaffold post\n  for (let y = 6; y <= 22; y++) {\n    setB(121, y, 9, getLadder(\"north\"));\n  }\n\n  // A-Frame Crane atop Pier 3 (X: 114..118, Y: 18..25)\n  for (let y = 18; y <= 24; y++) {\n    setB(116, y, 14, getLog(woodLog, \"y\"));\n    setB(116, y, 18, getLog(woodLog, \"y\"));\n  }\n  fillBox(116, 24, 14, 116, 24, 18, getLog(woodLog, \"z\"));\n  // Crane boom pointing West\n  for (let x = 107; x <= 116; x++) {\n    setB(x, 24, 16, getLog(woodLog, \"x\"));\n  }\n  // Counterweight box at rear (X: 118)\n  fillBox(117, 18, 15, 119, 20, 17, groundPave);\n  // Suspended tackle & stone block on Pier 3 crane\n  for (let y = 18; y <= 23; y++) {\n    setB(107, y, 16, \"minecraft:chain[axis=y]\");\n  }\n  setB(107, 17, 16, stonePrimary);\n\n  // ---------------------------------------------------------\n  // 8. FORTIFIED BRIDGEHEAD GATEHOUSES & ABUTMENTS\n  // ---------------------------------------------------------\n  // Helper to build bridgehead gatehouse fortress\n  function buildBridgehead(startX, endX, isWest) {\n    const minX = Math.min(startX, endX);\n    const maxX = Math.max(startX, endX);\n\n    // Foundation & Solid Mass\n    for (let x = minX; x <= maxX; x++) {\n      for (let z = 8; z <= 24; z++) {\n        buildFoundationColumn(x, z, 18, getStoneVariation(x, 5, z));\n      }\n    }\n\n    // Riverbank Towpath Vault Tunnel (through abutment at Y=6..10)\n    const tunnelX = isWest ? 11 : 147;\n    for (let x = tunnelX - 2; x <= tunnelX + 2; x++) {\n      for (let z = 8; z <= 24; z++) {\n        for (let y = 6; y <= 10; y++) {\n          setB(x, y, z, \"minecraft:air\");\n        }\n        setB(x, 11, z, getStoneVariation(x, 11, z));\n      }\n    }\n\n    // Approach Ramp (from fort bank onto bridge deck)\n    const rampStart = isWest ? 0 : 159;\n    const rampEnd = isWest ? 7 : 152;\n    const stepDir = isWest ? 1 : -1;\n    let currY = 15;\n    for (let x = rampStart; x !== rampEnd + stepDir; x += stepDir) {\n      for (let z = 12; z <= 20; z++) {\n        for (let y = currY; y <= 19; y++) {\n          setB(x, y, z, (y === 19) ? groundPave : stonePrimary);\n        }\n      }\n      if (currY < 19) currY++;\n    }\n\n    // Flanking Guard Bastion Turrets\n    // North Turret (Z: 8..11), South Turret (Z: 21..24)\n    const tMinX = isWest ? 3 : 152;\n    const tMaxX = isWest ? 7 : 156;\n\n    [ [8, 11], [21, 24] ].forEach(([tz1, tz2]) => {\n      for (let x = tMinX; x <= tMaxX; x++) {\n        for (let z = tz1; z <= tz2; z++) {\n          for (let y = 18; y <= 24; y++) {\n            setB(x, y, z, getStoneVariation(x, y, z));\n          }\n        }\n      }\n      // Crenellations & Braziers on turret roof (Y=25)\n      for (let x = tMinX; x <= tMaxX; x++) {\n        for (let z = tz1; z <= tz2; z++) {\n          const isEdge = (x === tMinX || x === tMaxX || z === tz1 || z === tz2);\n          if (isEdge && (x + z) % 2 === 0) {\n            setB(x, 25, z, stoneWall);\n          }\n        }\n      }\n      setB(Math.floor((tMinX + tMaxX) / 2), 25, Math.floor((tz1 + tz2) / 2), \"minecraft:campfire[lit=true]\");\n    });\n\n    // Fortified Gate Arch spanning road between turrets\n    const archX = isWest ? 5 : 154;\n    for (let z = 12; z <= 20; z++) {\n      for (let y = 20; y <= 24; y++) {\n        if (z === 12 || z === 20 || y === 24) {\n          setB(archX, y, z, stonePrimary);\n        } else {\n          setB(archX, y, z, \"minecraft:air\");\n        }\n      }\n      // Machicolation corbels above arch\n      setB(archX, 25, z, getStairs(stoneStairs, isWest ? \"east\" : \"west\", \"top\"));\n    }\n\n    // Interior Chamber (hollow room inside the abutment for furnishing)\n    const roomMinX = isWest ? 3 : 152;\n    const roomMaxX = isWest ? 7 : 156;\n    for (let x = roomMinX; x <= roomMaxX; x++) {\n      for (let z = 12; z <= 20; z++) {\n        for (let y = 8; y <= 12; y++) {\n          setB(x, y, z, \"minecraft:air\");\n        }\n        setB(x, 7, z, groundKerb);     // Solid Floor\n        setB(x, 13, z, stonePrimary);   // Solid Ceiling\n      }\n    }\n    // Doorway into the interior from towpath tunnel\n    const doorX = isWest ? 7 : 152;\n    for (let y = 8; y <= 10; y++) {\n      setB(doorX, y, 16, \"minecraft:air\");\n    }\n  }\n\n  // West Fort Bridgehead (Fort Alpha)\n  buildBridgehead(0, 18, true);\n\n  // East Fort Bridgehead (Fort Beta)\n  buildBridgehead(142, 159, false);\n\n  // Pier 1 Interior Vault (Bridge Chapel / Guard Vault)\n  for (let x = 44; x <= 50; x++) {\n    for (let z = 13; z <= 19; z++) {\n      for (let y = 8; y <= 12; y++) {\n        setB(x, y, z, \"minecraft:air\");\n      }\n      setB(x, 7, z, groundKerb);     // Floor\n      setB(x, 13, z, stonePrimary);   // Ceiling\n    }\n  }\n  // Doorway into Pier 1 Vault from North cutwater\n  setB(47, 8, 12, \"minecraft:air\");\n  setB(47, 9, 12, \"minecraft:air\");\n  setB(47, 10, 12, getStairs(stoneStairs, \"south\", \"bottom\"));\n\n  // ---------------------------------------------------------\n  // 9. RETURN SPECIFICATION & ANCHORS\n  // ---------------------------------------------------------\n  return {\n    name: \"half_built_bridge\",\n    seatY: seatY,\n    anchors: {\n      front: [80, 20, 0],              // Looking North across the river\n      west_gate: [0, 19, 16],          // West Fort entrance\n      east_gate: [159, 19, 16],        // East Fort entrance\n      mid_chasm: [96, 20, 16]          // Edge of broken bridge deck\n    },\n    interiors: [\n      {\n        min: [3, 8, 12],\n        max: [7, 12, 20],\n        kind: \"quarters\"\n      },\n      {\n        min: [44, 8, 13],\n        max: [50, 12, 19],\n        kind: \"vault\"\n      },\n      {\n        min: [152, 8, 12],\n        max: [156, 12, 20],\n        kind: \"armoury\"\n      }\n    ]\n  };\n}"
+    },
+    "river_ballista": {
+      "mode": "plugin",
+      "envelope": [
+        9,
+        12,
+        9
+      ],
+      "sourceHash": "b3:6526dd4170b06ee143ff2932c7edb506f83e30452b11aeec94c3244b5422816b",
+      "outputHash": "b3:b4e784feef8129db94ded30d3c7b1c6ff5715ed22442efaccd09a46d5b922d46",
+      "conforms": false,
+      "conformHash": "b3:cda7d62d20577027c914a036801e51b57d572d897d6a4f3255ab9692d3637a6b",
+      "source": "export const envelope = [9, 12, 9];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const seatY = 4;\n  const deckY = 4;\n  const idx = api.instance.index;\n  const variant = idx % 6;\n\n  // Safe setter bounded strictly to envelope\n  function setBlock(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      api.set(x, y, z, block);\n    }\n  }\n\n  // Helper to format block states cleanly with theme fallbacks\n  function withState(block, states) {\n    const base = block.split(\"[\")[0];\n    const entries = Object.entries(states).map(([k, v]) => `${k}=${v}`).join(\",\");\n    return `${base}[${entries}]`;\n  }\n\n  // Theme resolution with robust fallbacks\n  const themeWood = api.theme?.wood || {};\n  const themeStone = api.theme?.stone || {};\n  const themeGround = api.theme?.ground || {};\n\n  const woodPlanks = themeWood.planks || \"minecraft:oak_planks\";\n  const woodLog = themeWood.log || \"minecraft:oak_log\";\n  const woodStripped = themeWood.stripped || \"minecraft:stripped_oak_log\";\n  const woodStairs = themeWood.stairs || \"minecraft:oak_stairs\";\n  const woodSlab = themeWood.slab || \"minecraft:oak_slab\";\n  const woodFence = themeWood.fence || \"minecraft:oak_fence\";\n  const woodTrapdoor = themeWood.trapdoor || \"minecraft:oak_trapdoor\";\n\n  const stonePrimary = themeStone.primary || \"minecraft:stone_bricks\";\n  const stoneAccent = themeStone.accent || \"minecraft:mossy_stone_bricks\";\n  const stoneStairs = themeStone.stairs || \"minecraft:stone_brick_stairs\";\n  const stoneSlab = themeStone.slab || \"minecraft:stone_brick_slab\";\n  const stoneWall = themeStone.wall || \"minecraft:stone_brick_wall\";\n\n  const groundPlinth = themeGround.plinth || stonePrimary;\n\n  // Ground conformity: calculate node-local ground Y at column (x, z)\n  function getGroundY(x, z) {\n    const h = api.heightAt(x, z);\n    return Math.max(0, Math.min(seatY + h, H - 1));\n  }\n\n  // ==========================================\n  // 1. SOLID FOUNDATION (CONFORMS TO TERRAIN)\n  // ==========================================\n  // Main 7x7 platform footprint (x: 1..7, z: 1..7)\n  for (let x = 1; x <= 7; x++) {\n    for (let z = 1; z <= 7; z++) {\n      const gY = Math.min(getGroundY(x, z), deckY);\n      for (let y = gY; y < deckY; y++) {\n        const isPlinth = (y === gY);\n        const isAccent = ((x * 3 + y * 5 + z * 7 + idx) % 4 === 0);\n        const blk = isPlinth ? groundPlinth : (isAccent ? stoneAccent : stonePrimary);\n        setBlock(x, y, z, blk);\n      }\n    }\n  }\n\n  // Corner & side buttress piers down to terrain\n  const buttresses = [\n    [0, 1], [0, 7], [8, 1], [8, 7],\n    [1, 0], [7, 0], [1, 8], [7, 8],\n    [0, 4], [8, 4], [4, 0]\n  ];\n  for (const [bx, bz] of buttresses) {\n    const gY = Math.min(getGroundY(bx, bz), deckY - 1);\n    for (let y = gY; y <= deckY - 1; y++) {\n      const isPlinth = (y === gY);\n      const isAccent = ((bx + y + bz + idx) % 3 === 0);\n      setBlock(bx, y, bz, isPlinth ? groundPlinth : (isAccent ? stoneAccent : stonePrimary));\n    }\n  }\n\n  // Stepped footing stairs meeting ground at outer edges\n  const gWest = Math.min(getGroundY(0, 4), deckY - 2);\n  setBlock(0, gWest, 4, withState(stoneStairs, { facing: \"west\", half: \"bottom\" }));\n  const gEast = Math.min(getGroundY(8, 4), deckY - 2);\n  setBlock(8, gEast, 4, withState(stoneStairs, { facing: \"east\", half: \"bottom\" }));\n  const gNorth = Math.min(getGroundY(4, 0), deckY - 2);\n  setBlock(4, gNorth, 0, withState(stoneStairs, { facing: \"north\", half: \"bottom\" }));\n\n  // ==========================================\n  // 2. TIMBER & STONE DECK (y = deckY = 4)\n  // ==========================================\n  for (let x = 1; x <= 7; x++) {\n    for (let z = 1; z <= 7; z++) {\n      const isPerimeter = (x === 1 || x === 7 || z === 1 || z === 7);\n      if (isPerimeter) {\n        const isAccent = ((x * 2 + z * 3 + idx) % 5 === 0);\n        setBlock(x, deckY, z, isAccent ? stoneAccent : stonePrimary);\n      } else {\n        setBlock(x, deckY, z, woodPlanks);\n      }\n    }\n  }\n  // Swivel turntable base ring\n  setBlock(4, deckY, 4, withState(woodStripped, { axis: \"y\" }));\n\n  // Rear access stairs (z = 8, x = 3..5)\n  for (let x = 3; x <= 5; x++) {\n    const gY = Math.min(getGroundY(x, 8), deckY);\n    for (let y = gY; y < deckY - 1; y++) {\n      setBlock(x, y, 8, stonePrimary);\n    }\n    if (deckY - 1 >= gY) {\n      setBlock(x, deckY - 1, 8, withState(stoneStairs, { facing: \"south\", half: \"bottom\" }));\n    }\n  }\n\n  // ==========================================\n  // 3. DEFENSIVE RAMPARTS & PARAPETS\n  // ==========================================\n  // Heavy corner timber pilasters\n  const cornerCols = [[1, 1], [7, 1], [1, 7], [7, 7]];\n  for (const [cx, cz] of cornerCols) {\n    setBlock(cx, 5, cz, withState(woodLog, { axis: \"y\" }));\n    setBlock(cx, 6, cz, withState(woodLog, { axis: \"y\" }));\n  }\n\n  // Front rampart facing river (z = 1)\n  setBlock(2, 5, 1, stoneWall);\n  setBlock(3, 5, 1, withState(stoneStairs, { facing: \"north\", half: \"bottom\" }));\n  setBlock(4, 5, 1, withState(stoneSlab, { type: \"bottom\" })); // Central firing embrasure\n  setBlock(5, 5, 1, withState(stoneStairs, { facing: \"north\", half: \"bottom\" }));\n  setBlock(6, 5, 1, stoneWall);\n\n  // Front merlons & mantlets (y = 6)\n  setBlock(2, 6, 1, withState(woodTrapdoor, { facing: \"north\", half: \"bottom\", open: \"false\" }));\n  setBlock(6, 6, 1, withState(woodTrapdoor, { facing: \"north\", half: \"bottom\", open: \"false\" }));\n\n  // Side parapets\n  for (let z = 2; z <= 6; z++) {\n    setBlock(1, 5, z, (z % 2 === 0) ? stoneWall : woodFence);\n    setBlock(7, 5, z, (z % 2 === 0) ? stoneWall : woodFence);\n  }\n\n  // Rear rampart wings\n  setBlock(2, 5, 7, stoneWall);\n  setBlock(6, 5, 7, stoneWall);\n\n  // ==========================================\n  // 4. THE WAR BALLISTA (6 UNIQUE INSTANCES)\n  // ==========================================\n  // Turntable mount (y = 5)\n  setBlock(4, 5, 4, withState(woodStripped, { axis: \"y\" }));\n  setBlock(3, 5, 4, withState(woodStairs, { facing: \"east\", half: \"bottom\" }));\n  setBlock(5, 5, 4, withState(woodStairs, { facing: \"west\", half: \"bottom\" }));\n  setBlock(4, 5, 5, withState(woodStairs, { facing: \"north\", half: \"bottom\" }));\n  setBlock(4, 5, 3, withState(woodStairs, { facing: \"south\", half: \"bottom\" }));\n\n  if (variant === 0) {\n    // -----------------------------------------------------------------\n    // VARIANT 0: \"FORT ALPHA HEAVY FLAME-BALLISTA\"\n    // Dual heavy torsion bundles, roaring pitch bolt aimed across river\n    // -----------------------------------------------------------------\n    // Ballista chassis (y = 6)\n    setBlock(4, 6, 5, withState(woodLog, { axis: \"x\" }));\n    setBlock(3, 6, 5, \"minecraft:grindstone[face=floor,facing=west]\");\n    setBlock(5, 6, 5, \"minecraft:grindstone[face=floor,facing=east]\");\n    setBlock(4, 6, 4, withState(woodStripped, { axis: \"z\" }));\n    setBlock(4, 6, 3, withState(woodStripped, { axis: \"z\" }));\n    setBlock(4, 6, 2, withState(woodLog, { axis: \"z\" }));\n    setBlock(4, 6, 1, withState(woodStairs, { facing: \"north\", half: \"top\" }));\n\n    // Heavy torsion towers & bow prods\n    setBlock(3, 6, 3, withState(woodLog, { axis: \"y\" }));\n    setBlock(5, 6, 3, withState(woodLog, { axis: \"y\" }));\n    setBlock(3, 7, 3, withState(woodLog, { axis: \"y\" }));\n    setBlock(5, 7, 3, withState(woodLog, { axis: \"y\" }));\n    setBlock(4, 7, 3, withState(woodSlab, { type: \"top\" }));\n\n    // Bow prods swept back\n    setBlock(2, 6, 2, withState(woodStairs, { facing: \"east\", half: \"bottom\" }));\n    setBlock(1, 6, 2, woodFence);\n    setBlock(0, 6, 3, woodFence);\n    setBlock(6, 6, 2, withState(woodStairs, { facing: \"west\", half: \"bottom\" }));\n    setBlock(7, 6, 2, woodFence);\n    setBlock(8, 6, 3, woodFence);\n\n    // Tensioned cord\n    setBlock(1, 6, 3, \"minecraft:chain[axis=z]\");\n    setBlock(2, 6, 4, \"minecraft:chain[axis=x]\");\n    setBlock(3, 6, 5, \"minecraft:chain[axis=x]\");\n    setBlock(5, 6, 5, \"minecraft:chain[axis=x]\");\n    setBlock(6, 6, 4, \"minecraft:chain[axis=x]\");\n    setBlock(7, 6, 3, \"minecraft:chain[axis=z]\");\n\n    // Loaded flaming war bolt\n    setBlock(4, 7, 4, woodFence);\n    setBlock(4, 7, 2, woodFence);\n    setBlock(4, 7, 1, \"minecraft:lightning_rod[facing=north]\");\n    setBlock(4, 7, 0, \"minecraft:campfire[facing=north,lit=true]\");\n\n    // Props: Firing brazier, ammo barrels, Alpha war banner\n    setBlock(2, 5, 6, stoneWall);\n    setBlock(2, 6, 6, \"minecraft:campfire[facing=north,lit=true]\");\n    setBlock(2, 7, 6, \"minecraft:iron_bars\");\n\n    setBlock(6, 5, 5, \"minecraft:barrel[facing=up]\");\n    setBlock(6, 5, 6, \"minecraft:barrel[facing=up]\");\n    setBlock(7, 5, 5, \"minecraft:chest[facing=west]\");\n    setBlock(6, 6, 6, withState(woodTrapdoor, { facing: \"north\", half: \"bottom\", open: \"false\" }));\n\n    setBlock(7, 7, 1, woodFence);\n    setBlock(7, 8, 1, woodFence);\n    setBlock(7, 8, 0, \"minecraft:red_wool\");\n\n  } else if (variant === 1) {\n    // -----------------------------------------------------------------\n    // VARIANT 1: \"FORT BETA RIVER HARPOONER\"\n    // High-angle siege harpoon with trailing chain cable, soul flame\n    // -----------------------------------------------------------------\n    // Elevated carriage\n    setBlock(4, 6, 5, withState(woodLog, { axis: \"x\" }));\n    setBlock(3, 6, 5, woodFence);\n    setBlock(5, 6, 5, woodFence);\n    setBlock(4, 6, 4, withState(woodStairs, { facing: \"north\", half: \"bottom\" }));\n    setBlock(4, 7, 3, withState(woodLog, { axis: \"z\" }));\n    setBlock(4, 7, 2, withState(woodLog, { axis: \"z\" }));\n    setBlock(4, 7, 1, withState(woodStairs, { facing: \"north\", half: \"top\" }));\n\n    // Torsion prods at elevation\n    setBlock(3, 7, 2, withState(woodLog, { axis: \"y\" }));\n    setBlock(5, 7, 2, withState(woodLog, { axis: \"y\" }));\n    setBlock(3, 8, 2, withState(woodLog, { axis: \"y\" }));\n    setBlock(5, 8, 2, withState(woodLog, { axis: \"y\" }));\n    setBlock(4, 8, 2, withState(woodSlab, { type: \"bottom\" }));\n\n    setBlock(2, 7, 2, withState(woodStairs, { facing: \"east\", half: \"bottom\" }));\n    setBlock(1, 7, 1, woodFence);\n    setBlock(0, 7, 2, woodFence);\n    setBlock(6, 7, 2, withState(woodStairs, { facing: \"west\", half: \"bottom\" }));\n    setBlock(7, 7, 1, woodFence);\n    setBlock(8, 7, 2, woodFence);\n\n    // Heavy barbed harpoon with trailing chain\n    setBlock(4, 8, 4, \"minecraft:chain[axis=z]\");\n    setBlock(4, 8, 3, \"minecraft:chain[axis=z]\");\n    setBlock(4, 8, 1, \"minecraft:iron_bars\");\n    setBlock(4, 8, 0, \"minecraft:anvil[facing=north]\");\n\n    // Props: Soul cauldron, cable spool, Beta banner\n    setBlock(2, 5, 5, \"minecraft:cauldron\");\n    setBlock(2, 6, 5, \"minecraft:soul_campfire[facing=north,lit=true]\");\n\n    setBlock(6, 5, 5, \"minecraft:barrel[facing=up]\");\n    setBlock(6, 5, 6, \"minecraft:chain[axis=y]\");\n    setBlock(7, 5, 5, \"minecraft:chest[facing=west]\");\n\n    setBlock(1, 7, 7, woodFence);\n    setBlock(1, 8, 7, woodFence);\n    setBlock(1, 9, 7, woodFence);\n    setBlock(1, 9, 6, \"minecraft:blue_wool\");\n\n  } else if (variant === 2) {\n    // -----------------------------------------------------------------\n    // VARIANT 2: \"TWIN-PROD RAPID SCORPION\"\n    // Dual tiered spring prods, multiple steel bolts, weapon rack\n    // -----------------------------------------------------------------\n    setBlock(4, 6, 5, withState(woodStripped, { axis: \"x\" }));\n    setBlock(3, 6, 5, \"minecraft:grindstone[face=floor,facing=west]\");\n    setBlock(5, 6, 5, \"minecraft:grindstone[face=floor,facing=east]\");\n    setBlock(4, 6, 4, withState(woodStripped, { axis: \"z\" }));\n    setBlock(4, 6, 3, withState(woodLog, { axis: \"z\" }));\n    setBlock(4, 6, 2, withState(woodLog, { axis: \"z\" }));\n    setBlock(4, 6, 1, withState(woodStairs, { facing: \"north\", half: \"top\" }));\n\n    // Double-deck bow prods\n    setBlock(3, 6, 2, withState(woodLog, { axis: \"y\" }));\n    setBlock(5, 6, 2, withState(woodLog, { axis: \"y\" }));\n    setBlock(3, 7, 2, withState(woodLog, { axis: \"y\" }));\n    setBlock(5, 7, 2, withState(woodLog, { axis: \"y\" }));\n\n    // Lower tier\n    setBlock(2, 6, 2, woodFence);\n    setBlock(1, 6, 3, woodFence);\n    setBlock(6, 6, 2, woodFence);\n    setBlock(7, 6, 3, woodFence);\n    // Upper tier\n    setBlock(2, 7, 2, withState(woodSlab, { type: \"bottom\" }));\n    setBlock(1, 7, 3, withState(woodSlab, { type: \"bottom\" }));\n    setBlock(6, 7, 2, withState(woodSlab, { type: \"bottom\" }));\n    setBlock(7, 7, 3, withState(woodSlab, { type: \"bottom\" }));\n\n    // Tri-fin war bolt\n    setBlock(4, 7, 4, \"minecraft:chain[axis=x]\");\n    setBlock(4, 7, 3, woodFence);\n    setBlock(4, 7, 2, woodFence);\n    setBlock(4, 7, 1, \"minecraft:lightning_rod[facing=north]\");\n    setBlock(4, 7, 0, \"minecraft:iron_bars\");\n\n    // Props: Bolt crate, sharpening grindstone, corner brazier\n    setBlock(6, 5, 5, woodPlanks);\n    setBlock(6, 6, 5, withState(woodTrapdoor, { facing: \"north\", half: \"bottom\", open: \"false\" }));\n    setBlock(7, 5, 5, \"minecraft:barrel[facing=up]\");\n    setBlock(2, 5, 4, \"minecraft:grindstone[face=floor,facing=north]\");\n    setBlock(2, 5, 6, stoneWall);\n    setBlock(2, 6, 6, \"minecraft:campfire[facing=north,lit=true]\");\n\n  } else if (variant === 3) {\n    // -----------------------------------------------------------------\n    // VARIANT 3: \"FORTIFIED EMPLACEMENT WITH AMMO HOIST CRANE\"\n    // Timber gantry crane over the ballista for heavy stone shells\n    // -----------------------------------------------------------------\n    setBlock(4, 6, 5, withState(woodLog, { axis: \"x\" }));\n    setBlock(4, 6, 4, withState(woodStripped, { axis: \"z\" }));\n    setBlock(4, 6, 3, withState(woodLog, { axis: \"z\" }));\n    setBlock(4, 6, 2, withState(woodLog, { axis: \"z\" }));\n    setBlock(4, 6, 1, withState(woodStairs, { facing: \"north\", half: \"top\" }));\n\n    setBlock(3, 6, 3, withState(woodLog, { axis: \"y\" }));\n    setBlock(5, 6, 3, withState(woodLog, { axis: \"y\" }));\n    setBlock(2, 6, 2, withState(woodStairs, { facing: \"east\", half: \"bottom\" }));\n    setBlock(1, 6, 2, woodFence);\n    setBlock(0, 6, 3, woodFence);\n    setBlock(6, 6, 2, withState(woodStairs, { facing: \"west\", half: \"bottom\" }));\n    setBlock(7, 6, 2, woodFence);\n    setBlock(8, 6, 3, woodFence);\n\n    // Heavy siege projectile\n    setBlock(4, 7, 2, stonePrimary);\n    setBlock(4, 7, 1, \"minecraft:iron_bars\");\n\n    // Loading Gantry Crane (x = 2..6, z = 6, y = 5..8)\n    setBlock(2, 5, 6, withState(woodLog, { axis: \"y\" }));\n    setBlock(2, 6, 6, withState(woodLog, { axis: \"y\" }));\n    setBlock(2, 7, 6, withState(woodLog, { axis: \"y\" }));\n    setBlock(2, 8, 6, withState(woodLog, { axis: \"y\" }));\n\n    setBlock(6, 5, 6, withState(woodLog, { axis: \"y\" }));\n    setBlock(6, 6, 6, withState(woodLog, { axis: \"y\" }));\n    setBlock(6, 7, 6, withState(woodLog, { axis: \"y\" }));\n    setBlock(6, 8, 6, withState(woodLog, { axis: \"y\" }));\n\n    for (let x = 2; x <= 6; x++) {\n      setBlock(x, 8, 6, withState(woodLog, { axis: \"x\" }));\n    }\n    setBlock(4, 7, 6, \"minecraft:chain[axis=y]\");\n    setBlock(4, 6, 6, \"minecraft:grindstone[face=ceiling,facing=north]\");\n\n    // Props: Supply chests & brazier\n    setBlock(2, 5, 3, \"minecraft:chest[facing=east]\");\n    setBlock(6, 5, 3, \"minecraft:barrel[facing=up]\");\n    setBlock(7, 5, 6, \"minecraft:campfire[facing=north,lit=true]\");\n\n  } else if (variant === 4) {\n    // -----------------------------------------------------------------\n    // VARIANT 4: \"IRONCLAD SIEGE ARBALEST\"\n    // Armored bow prods, reinforced mantlet shutters, oil kettles\n    // -----------------------------------------------------------------\n    setBlock(4, 6, 5, withState(woodLog, { axis: \"x\" }));\n    setBlock(3, 6, 5, \"minecraft:grindstone[face=floor,facing=west]\");\n    setBlock(5, 6, 5, \"minecraft:grindstone[face=floor,facing=east]\");\n    setBlock(4, 6, 4, withState(woodStripped, { axis: \"z\" }));\n    setBlock(4, 6, 3, withState(woodLog, { axis: \"z\" }));\n    setBlock(4, 6, 2, withState(woodLog, { axis: \"z\" }));\n    setBlock(4, 6, 1, withState(woodStairs, { facing: \"north\", half: \"top\" }));\n\n    // Armored torsion towers capped with lanterns\n    setBlock(3, 6, 2, withState(woodLog, { axis: \"y\" }));\n    setBlock(5, 6, 2, withState(woodLog, { axis: \"y\" }));\n    setBlock(3, 7, 2, stoneWall);\n    setBlock(5, 7, 2, stoneWall);\n    setBlock(3, 8, 2, \"minecraft:lantern[hanging=false]\");\n    setBlock(5, 8, 2, \"minecraft:lantern[hanging=false]\");\n\n    // Chain-wrapped prods\n    setBlock(2, 6, 2, \"minecraft:chain[axis=x]\");\n    setBlock(1, 6, 2, \"minecraft:chain[axis=x]\");\n    setBlock(0, 6, 2, \"minecraft:iron_bars\");\n    setBlock(6, 6, 2, \"minecraft:chain[axis=x]\");\n    setBlock(7, 6, 2, \"minecraft:chain[axis=x]\");\n    setBlock(8, 6, 2, \"minecraft:iron_bars\");\n\n    // Steel bolt\n    setBlock(4, 7, 3, \"minecraft:chain[axis=z]\");\n    setBlock(4, 7, 2, woodFence);\n    setBlock(4, 7, 1, \"minecraft:iron_bars\");\n    setBlock(4, 7, 0, \"minecraft:lightning_rod[facing=north]\");\n\n    // Props: Pitch cauldron, oil barrels, brazier\n    setBlock(2, 5, 6, \"minecraft:barrel[facing=up]\");\n    setBlock(3, 5, 6, \"minecraft:cauldron\");\n    setBlock(6, 5, 5, stoneWall);\n    setBlock(6, 6, 5, \"minecraft:campfire[facing=north,lit=true]\");\n\n  } else {\n    // -----------------------------------------------------------------\n    // VARIANT 5: \"RIVER WATCH BATTERY & BEACON\"\n    // Fired state/reloading, tall river signal beacon tower on corner\n    // -----------------------------------------------------------------\n    setBlock(4, 6, 5, withState(woodLog, { axis: \"x\" }));\n    setBlock(3, 6, 5, \"minecraft:grindstone[face=floor,facing=west]\");\n    setBlock(5, 6, 5, \"minecraft:grindstone[face=floor,facing=east]\");\n    setBlock(4, 6, 4, withState(woodStripped, { axis: \"z\" }));\n    setBlock(4, 6, 3, withState(woodLog, { axis: \"z\" }));\n    setBlock(4, 6, 2, withState(woodLog, { axis: \"z\" }));\n    setBlock(4, 6, 1, withState(woodStairs, { facing: \"north\", half: \"top\" }));\n\n    setBlock(3, 6, 2, withState(woodLog, { axis: \"y\" }));\n    setBlock(5, 6, 2, withState(woodLog, { axis: \"y\" }));\n\n    // Prods straight forward in fired position\n    setBlock(2, 6, 2, withState(woodStairs, { facing: \"east\", half: \"bottom\" }));\n    setBlock(1, 6, 1, woodFence);\n    setBlock(0, 6, 1, woodFence);\n    setBlock(6, 6, 2, withState(woodStairs, { facing: \"west\", half: \"bottom\" }));\n    setBlock(7, 6, 1, woodFence);\n    setBlock(8, 6, 1, woodFence);\n\n    // Released straight bowstring across front\n    for (let x = 0; x <= 8; x++) {\n      if (x !== 4) {\n        setBlock(x, 6, 1, (x === 0 || x === 8) ? woodFence : \"minecraft:chain[axis=x]\");\n      }\n    }\n\n    // Fresh bolt being carried up from rack\n    setBlock(3, 6, 4, woodFence);\n\n    // Tall River Signal Beacon (x = 1, z = 1, y = 5..10)\n    for (let y = 7; y <= 9; y++) {\n      setBlock(1, y, 1, woodFence);\n    }\n    setBlock(1, 10, 1, \"minecraft:campfire[facing=north,lit=true]\");\n    setBlock(1, 10, 2, \"minecraft:iron_bars\");\n    setBlock(2, 10, 1, \"minecraft:iron_bars\");\n\n    // Props: Ammo chest, spare pitch barrel\n    setBlock(6, 5, 4, \"minecraft:chest[facing=north]\");\n    setBlock(6, 5, 5, \"minecraft:barrel[facing=up]\");\n    setBlock(7, 5, 4, woodPlanks);\n    setBlock(6, 5, 6, \"minecraft:campfire[facing=north,lit=true]\");\n  }\n\n  return {\n    name: \"river_ballista\",\n    seatY: seatY,\n    anchors: {\n      front: [4, deckY + 1, 0],\n      road: [4, deckY - 1, 8],\n      platform: [4, deckY + 1, 4]\n    }\n  };\n}"
+    }
+  }
+}

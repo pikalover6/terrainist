@@ -1,0 +1,675 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "steppe_horde_camp",
+    "worldSeed": "911",
+    "prompt": "A nomad horde's camp on the open steppe: rings of felt yurts around the khan's great tent, horse lines and a wooden watch tower, the grass stretching to every horizon.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:dirt_path",
+      "road.shoulder": "minecraft:coarse_dirt",
+      "plaza.path": "minecraft:dirt_path",
+      "plaza.border": "minecraft:coarse_dirt"
+    }
+  },
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.4,
+    "decline": 0,
+    "formality": 0.4,
+    "climate": {
+      "biome": "minecraft:plains",
+      "temperature": 0.1,
+      "humidity": -0.4,
+      "snow": "never"
+    },
+    "character": {
+      "label": "steppe nomad horde camp",
+      "materialTheme": "temperate_timber",
+      "formPacks": [
+        "steppe_nomad"
+      ],
+      "urbanForm": "radial",
+      "archetypes": {
+        "prefer": [
+          "watchtower"
+        ],
+        "forbid": [
+          "townhouse",
+          "terraced_row",
+          "shop_row",
+          "apartment_block",
+          "office"
+        ]
+      },
+      "props": {
+        "prefer": [
+          "cart"
+        ]
+      },
+      "flora": {
+        "prefer": [
+          "sparse"
+        ]
+      },
+      "motifs": {
+        "roofType": "dome",
+        "massing": "sprawling"
+      },
+      "programs": [
+        {
+          "id": "khans_great_tent",
+          "mode": "landmark",
+          "brief": "The Khan's colossal royal ger pavilion: a vast circular domed felt tent raised on an ornamental timber dais, adorned with horsetail war standards, patterned felt embroidery, and a grand smoke-ring crown.",
+          "envelope": [
+            27,
+            18,
+            27
+          ]
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "vast flat open steppe with unbroken grassland stretching to every horizon",
+      "icons": "khan's great tent on a central dais; concentric rings of felt gers and yurts; wooden watchtower overlooking the plain; horse picket lines; ovoo cairn and horsetail standards",
+      "infra": "circular beaten cart_track ring roads between the yurt rings; horse picket lines around the camp perimeter"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "The Steppe Horde Encampment",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "vast open grassland steppe stretching to every horizon",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 68,
+          "amplitude": 12,
+          "octaves": 4,
+          "frequency": 0.002,
+          "gain": 0.45,
+          "erosionPasses": 2,
+          "cliffThreshold": 60,
+          "soilDepth": 4,
+          "beachWidth": 2,
+          "snowLineFraction": 0.98
+        },
+        "children": [
+          {
+            "id": "camp_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "slight natural rise for the central horde camp",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 130,
+              "height": 3,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "horizon_swells_north",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "broad low undulation on the northern horizon",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.08,
+                  0.12
+                ],
+                [
+                  0.5,
+                  0.08
+                ],
+                [
+                  0.92,
+                  0.14
+                ]
+              ],
+              "width": 90,
+              "height": 14,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "dry_gully_south",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "shallow winding steppe depression in the south",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.12,
+                  0.88
+                ],
+                [
+                  0.5,
+                  0.82
+                ],
+                [
+                  0.88,
+                  0.85
+                ]
+              ],
+              "width": 40,
+              "depth": 5,
+              "profile": "rounded",
+              "flooded": "never"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0015
+        }
+      },
+      {
+        "id": "steppe_vegetation",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse windswept scrub and hardy bushes across the steppe",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.009,
+          "spacing": 6,
+          "clumping": 0.5,
+          "maxSlope": 30,
+          "elevation": [
+            1,
+            120
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.58,
+            "flowers": 0.06,
+            "deadwood": 0.05
+          },
+          "species": [
+            {
+              "id": "steppe_juniper",
+              "weight": 4,
+              "shape": "juniper_scrub"
+            },
+            {
+              "id": "hazel_bush",
+              "weight": 2,
+              "shape": "hazel_shrub"
+            },
+            {
+              "id": "weathered_ironwood",
+              "weight": 1,
+              "shape": "desert_ironwood"
+            }
+          ]
+        }
+      },
+      {
+        "id": "camp_plaza",
+        "kind": "primitive",
+        "label": "the central muster circle of the horde",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            30,
+            30
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "khans_great_tent",
+        "kind": "generator",
+        "generator": "authored:khans_great_tent",
+        "label": "the great khan's royal ger pavilion",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            27,
+            18,
+            27
+          ]
+        },
+        "params": {
+          "face": {
+            "toward": "camp_plaza"
+          }
+        },
+        "constraints": [
+          {
+            "adjacent_to": "camp_plaza",
+            "gap": [
+              1,
+              12
+            ],
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "landmark",
+          "khan_tent"
+        ]
+      },
+      {
+        "id": "watchtower",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "wooden lookout tower overlooking the open steppe",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            7,
+            19,
+            7
+          ]
+        },
+        "params": {
+          "archetype": "watchtower",
+          "floors": 2,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "distance": "camp_plaza",
+            "min": 35,
+            "max": 75,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "watchtower",
+          "lookout"
+        ]
+      },
+      {
+        "id": "shaman_roundhouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the high shaman's ceremonial lodge",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            16,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "thatched_roundhouse",
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "distance": "camp_plaza",
+            "min": 14,
+            "max": 38,
+            "strength": "soft"
+          },
+          {
+            "facing": "camp_plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 3
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "vanguard_guard_post",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "vanguard sentry post",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            11,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "guard_post",
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "distance": "camp_plaza",
+            "min": 24,
+            "max": 56,
+            "strength": "soft"
+          },
+          {
+            "facing": "camp_plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 3
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "horde_armory",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "composite bow and weapons storage tent",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            17
+          ]
+        },
+        "params": {
+          "archetype": "armory",
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "distance": "camp_plaza",
+            "min": 18,
+            "max": 46,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 3
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "craft"
+        ]
+      },
+      {
+        "id": "yurt_inner_east",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "felt yurt in the inner eastern ring",
+        "params": {
+          "prop": "yurt",
+          "zone": "east",
+          "jitter": 0.12
+        }
+      },
+      {
+        "id": "yurt_inner_west",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "felt yurt in the inner western ring",
+        "params": {
+          "prop": "yurt",
+          "zone": "west",
+          "jitter": 0.12
+        }
+      },
+      {
+        "id": "yurt_inner_north",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "felt yurt in the inner northern ring",
+        "params": {
+          "prop": "yurt",
+          "zone": "north",
+          "jitter": 0.14
+        }
+      },
+      {
+        "id": "yurt_outer_nw",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "nomad yurt on the northwest perimeter",
+        "params": {
+          "prop": "yurt",
+          "zone": "northwest",
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "yurt_outer_ne",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "nomad yurt on the northeast perimeter",
+        "params": {
+          "prop": "yurt",
+          "zone": "northeast",
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "yurt_outer_sw",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "nomad yurt on the southwest perimeter",
+        "params": {
+          "prop": "yurt",
+          "zone": "southwest",
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "yurt_outer_se",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "nomad yurt on the southeast perimeter",
+        "params": {
+          "prop": "yurt",
+          "zone": "southeast",
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "horse_picket_south",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "horse picket line post",
+        "params": {
+          "prop": "hitching_post",
+          "zone": "south",
+          "jitter": 0.1
+        }
+      },
+      {
+        "id": "horse_water_trough",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "horse water trough",
+        "params": {
+          "prop": "horse_trough",
+          "zone": "south",
+          "jitter": 0.14
+        }
+      },
+      {
+        "id": "horse_picket_west",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "horse picket line post in west pasture",
+        "params": {
+          "prop": "hitching_post",
+          "zone": "west",
+          "jitter": 0.18
+        }
+      },
+      {
+        "id": "horde_supply_wagon",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "heavy steppe covered supply wagon",
+        "params": {
+          "prop": "covered_wagon",
+          "zone": "southwest",
+          "jitter": 0.15
+        }
+      },
+      {
+        "id": "camp_cart_east",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "camp baggage cart",
+        "params": {
+          "prop": "cart",
+          "zone": "east",
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "ovoo_shrine_cairn",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "sacred ovoo stone cairn on the camp rise",
+        "params": {
+          "prop": "cairn",
+          "zone": "northeast",
+          "jitter": 0.22
+        }
+      },
+      {
+        "id": "horsetail_standard",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "horde war banner flagpole",
+        "params": {
+          "prop": "flagpole",
+          "zone": "center",
+          "jitter": 0.06
+        }
+      },
+      {
+        "id": "steppe_tracks",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "radial beaten dirt tracks through the yurt rings",
+        "params": {
+          "anchors": [
+            "camp_plaza",
+            "khans_great_tent",
+            "watchtower",
+            "#tag:house",
+            "horde_armory"
+          ],
+          "pattern": "radial",
+          "width": 2,
+          "lanterns": false
+        }
+      }
+    ]
+  },
+  "programs": {
+    "khans_great_tent": {
+      "mode": "landmark",
+      "envelope": [
+        27,
+        18,
+        27
+      ],
+      "sourceHash": "b3:dfd51536dc9cd318c1cb4622662557c70ffeb15f89e128d7d8cfbb11726a8267",
+      "outputHash": "b3:049193e7e55c31f6bf2e49de249b162befe6821e7b0ac52056d053e754609c46",
+      "conforms": false,
+      "conformHash": "b3:4463198bffaba921440dc87123c9f90bdcbce11270a1b4619e97f310405412c4",
+      "source": "export const envelope = [27, 18, 27];\n\nexport default function build(api) {\n  const [sizeX, sizeY, sizeZ] = api.size;\n  const cx = 13;\n  const cz = 13;\n  const seatY = 3;\n  const daisY = 5;\n\n  // Safe voxel writer respecting envelope boundaries\n  function setBlock(x, y, z, block) {\n    if (x >= 0 && x < sizeX && y >= 0 && y < sizeY && z >= 0 && z < sizeZ) {\n      api.set(x, y, z, block);\n    }\n  }\n\n  // Terrain height helper mapped to node-local coordinates\n  function getGroundY(x, z) {\n    return Math.floor(seatY + api.heightAt(x, z));\n  }\n\n  // Theme roles & blocks\n  const woodLogY = api.theme.wood.log + \"[axis=y]\";\n  const woodLogX = api.theme.wood.log + \"[axis=x]\";\n  const woodLogZ = api.theme.wood.log + \"[axis=z]\";\n  const woodPlanks = api.theme.wood.planks;\n  const woodFence = api.theme.wood.fence;\n  const woodStairsS = api.theme.wood.stairs + \"[facing=south,half=bottom,shape=straight]\";\n  const woodStairsN = api.theme.wood.stairs + \"[facing=north,half=bottom,shape=straight]\";\n  const woodStairsE = api.theme.wood.stairs + \"[facing=east,half=bottom,shape=straight]\";\n  const woodStairsW = api.theme.wood.stairs + \"[facing=west,half=bottom,shape=straight]\";\n  const roofStairsN = api.theme.roof.stairs + \"[facing=north,half=bottom,shape=straight]\";\n  const roofSlab = api.theme.roof.slab + \"[type=bottom]\";\n  const plinthBlock = api.theme.ground.plinth;\n\n  // Traditional felt materials & steppe embellishments\n  const whiteFelt = \"minecraft:white_wool\";\n  const redFelt = \"minecraft:red_wool\";\n  const blueFelt = \"minecraft:blue_wool\";\n  const yellowFelt = \"minecraft:yellow_wool\";\n  const goldBlock = \"minecraft:gold_block\";\n  const hangingLantern = \"minecraft:lantern[hanging=true]\";\n  const standingLantern = \"minecraft:lantern[hanging=false]\";\n\n  // --- 1. Ornamental Timber Dais Platform & Conforming Footing ---\n  const daisRadius = 12.2;\n  const daisRadiusSq = daisRadius * daisRadius;\n\n  for (let x = 0; x < sizeX; x++) {\n    for (let z = 0; z < sizeZ; z++) {\n      const dx = x - cx;\n      const dz = z - cz;\n      const d2 = dx * dx + dz * dz;\n      const isDais = d2 <= daisRadiusSq;\n      const isSteps = x >= 11 && x <= 15 && z >= 0 && z <= 3;\n\n      if (!isDais && !isSteps) continue;\n\n      const groundY = getGroundY(x, z);\n      const botY = Math.max(0, Math.min(seatY, groundY));\n\n      let topY = daisY;\n      let isStairStep = false;\n\n      if (isSteps) {\n        if (z === 0) topY = Math.max(botY, seatY - 1);\n        else if (z === 1) { topY = seatY; isStairStep = true; }\n        else if (z === 2) { topY = seatY + 1; isStairStep = true; }\n        else if (z === 3) { topY = daisY; }\n      }\n\n      // Foundation downward to terrain\n      for (let y = botY; y < topY; y++) {\n        if (y < seatY) {\n          setBlock(x, y, z, plinthBlock);\n        } else if (d2 > 10.5 * 10.5 && !isSteps) {\n          setBlock(x, y, z, woodLogY);\n        } else {\n          setBlock(x, y, z, woodPlanks);\n        }\n      }\n\n      // Surface course\n      if (isStairStep) {\n        setBlock(x, topY, z, woodStairsS);\n      } else {\n        if (d2 > 11.2 * 11.2 && !isSteps) {\n          setBlock(x, topY, z, woodLogY);\n        } else {\n          setBlock(x, topY, z, woodPlanks);\n        }\n      }\n    }\n  }\n\n  // --- 2. Dais Railings & Perimeter Lantern Posts ---\n  for (let x = 0; x < sizeX; x++) {\n    for (let z = 0; z < sizeZ; z++) {\n      const dx = x - cx;\n      const dz = z - cz;\n      const d2 = dx * dx + dz * dz;\n\n      // On the outer lip of the dais, excluding front entrance\n      if (d2 <= daisRadiusSq && d2 >= 11.0 * 11.0) {\n        if (x >= 10 && x <= 16 && z <= 4) continue; // Entrance gap\n\n        setBlock(x, daisY + 1, z, woodFence);\n\n        // Accent posts with lanterns\n        if ((x === 3 || x === 23) && (z === 13 || z === 19 || z === 7)) {\n          setBlock(x, daisY + 2, z, woodFence);\n          setBlock(x, daisY + 3, z, standingLantern);\n        }\n      }\n    }\n  }\n\n  // --- 3. Khan's Horsetail War Standards (Nine White Sulde) ---\n  const standardPositions = [\n    [10, 2], [16, 2],  // Entrance guard standards\n    [3, 9],  [23, 9],  // Flank standards\n    [4, 18], [22, 18], // Rear quarter standards\n    [13, 24]           // High rear standard\n  ];\n\n  for (const [sx, sz] of standardPositions) {\n    const groundY = getGroundY(sx, sz);\n    const botY = Math.max(0, Math.min(seatY, groundY));\n\n    for (let y = botY; y <= daisY; y++) {\n      setBlock(sx, y, sz, woodLogY);\n    }\n    setBlock(sx, daisY + 1, sz, woodPlanks);\n\n    // Standard pole\n    for (let y = daisY + 2; y <= daisY + 6; y++) {\n      setBlock(sx, y, sz, woodFence);\n    }\n\n    // Cross-arm and horsetail tassels\n    const crossY = daisY + 5;\n    setBlock(sx - 1, crossY, sz, woodFence);\n    setBlock(sx + 1, crossY, sz, woodFence);\n    setBlock(sx - 1, crossY - 1, sz, whiteFelt);\n    setBlock(sx + 1, crossY - 1, sz, whiteFelt);\n    setBlock(sx, crossY - 1, sz, whiteFelt);\n\n    // Spearhead trident finial\n    setBlock(sx, daisY + 7, sz, goldBlock);\n    setBlock(sx, daisY + 8, sz, woodFence);\n  }\n\n  // --- 4. Grand North Entrance Canopy ---\n  // Entrance timber pillars\n  for (let y = daisY; y <= daisY + 3; y++) {\n    setBlock(11, y, 3, woodLogY);\n    setBlock(15, y, 3, woodLogY);\n  }\n  // Lintel\n  for (let x = 11; x <= 15; x++) {\n    setBlock(x, daisY + 3, 3, woodLogX);\n  }\n  // Canopy eaves & overhang\n  for (let x = 10; x <= 16; x++) {\n    setBlock(x, daisY + 4, 2, roofStairsN);\n    setBlock(x, daisY + 4, 3, roofSlab);\n  }\n  // Entrance lanterns\n  setBlock(11, daisY + 2, 2, hangingLantern);\n  setBlock(15, daisY + 2, 2, hangingLantern);\n\n  // --- 5. Internal Bagana (Four Great Central Pillars) ---\n  const pillarCoords = [\n    [10, 10], [16, 10],\n    [10, 16], [16, 16]\n  ];\n\n  for (const [px, pz] of pillarCoords) {\n    for (let y = daisY; y <= daisY + 8; y++) {\n      setBlock(px, y, pz, woodLogY);\n    }\n    // Capital brackets under Toono\n    setBlock(px, daisY + 9, pz, woodPlanks);\n  }\n  // Collar tie cross beams between pillars\n  for (let x = 11; x <= 15; x++) {\n    setBlock(x, daisY + 7, 10, woodFence);\n    setBlock(x, daisY + 7, 16, woodFence);\n  }\n  for (let z = 11; z <= 15; z++) {\n    setBlock(10, daisY + 7, z, woodFence);\n    setBlock(16, daisY + 7, z, woodFence);\n  }\n\n  // --- 6. Cylindrical Felt Wall (Khana Drum) ---\n  const wallRMin = 8.2;\n  const wallRMax = 9.4;\n\n  for (let x = 3; x <= 23; x++) {\n    for (let z = 3; z <= 23; z++) {\n      const dx = x - cx;\n      const dz = z - cz;\n      const dist = Math.sqrt(dx * dx + dz * dz);\n\n      if (dist >= wallRMin && dist <= wallRMax) {\n        // Doorway void at the front (North)\n        const isDoorway = x >= 12 && x <= 14 && z <= 5 && z >= 3;\n\n        for (let y = daisY; y <= daisY + 4; y++) {\n          if (isDoorway) {\n            if (y === daisY) {\n              setBlock(x, y, z, woodPlanks);\n            } else if (y === daisY + 4) {\n              setBlock(x, y, z, woodLogX);\n            }\n            // Air opening at daisY + 1 .. daisY + 3\n            continue;\n          }\n\n          const angle = Math.atan2(dz, dx);\n\n          if (y === daisY) {\n            // Lower crimson rim\n            setBlock(x, y, z, redFelt);\n          } else if (y === daisY + 1 || y === daisY + 3) {\n            // Main white felt body\n            setBlock(x, y, z, whiteFelt);\n          } else if (y === daisY + 2) {\n            // Traditional nomad geometric wave embroidery\n            const sector = Math.floor(((angle + Math.PI) / (Math.PI / 6))) % 2;\n            const motifBlock = sector === 0 ? blueFelt : yellowFelt;\n            setBlock(x, y, z, motifBlock);\n          } else if (y === daisY + 4) {\n            // Upper eave felt border\n            setBlock(x, y, z, redFelt);\n          }\n        }\n      }\n    }\n  }\n\n  // --- 7. Conical Domed Felt Roof & Radial Straps (Uni Rafters) ---\n  const roofLayers = [\n    { y: daisY + 5, rMin: 6.8, rMax: 8.2 },\n    { y: daisY + 6, rMin: 5.4, rMax: 6.8 },\n    { y: daisY + 7, rMin: 4.0, rMax: 5.4 },\n    { y: daisY + 8, rMin: 2.6, rMax: 4.0 }\n  ];\n\n  for (const layer of roofLayers) {\n    for (let x = 4; x <= 22; x++) {\n      for (let z = 4; z <= 22; z++) {\n        const dx = x - cx;\n        const dz = z - cz;\n        const dist = Math.sqrt(dx * dx + dz * dz);\n\n        if (dist >= layer.rMin && dist <= layer.rMax) {\n          const angle = (Math.atan2(dz, dx) + 2 * Math.PI) % (2 * Math.PI);\n\n          // 8 radial felt tension straps\n          const strapIndex = Math.round(8 * (angle / (2 * Math.PI))) % 8;\n          const strapAngle = strapIndex * (Math.PI / 4);\n          let angleDiff = Math.abs(angle - strapAngle);\n          if (angleDiff > Math.PI) angleDiff = 2 * Math.PI - angleDiff;\n\n          const isStrap = angleDiff < 0.16;\n\n          if (isStrap) {\n            setBlock(x, layer.y, z, redFelt);\n          } else if (layer.y === daisY + 6 && dist >= 5.8 && dist <= 6.3) {\n            // Middle decorative blue felt ring\n            setBlock(x, layer.y, z, blueFelt);\n          } else {\n            setBlock(x, layer.y, z, whiteFelt);\n          }\n        }\n      }\n    }\n  }\n\n  // --- 8. The Grand Toono (Royal Smoke-Ring Crown & Finial) ---\n  const toonoY = daisY + 9;\n\n  for (let x = 9; x <= 17; x++) {\n    for (let z = 9; z <= 17; z++) {\n      const dx = x - cx;\n      const dz = z - cz;\n      const dist = Math.sqrt(dx * dx + dz * dz);\n\n      // Wooden crown ring\n      if (dist >= 2.0 && dist <= 3.5) {\n        setBlock(x, toonoY, z, woodLogY);\n      }\n\n      // Wheel spokes across the crown\n      if (dist < 2.0) {\n        if (dx === 0 || dz === 0 || Math.abs(dx) === Math.abs(dz)) {\n          setBlock(x, toonoY, z, woodFence);\n        }\n      }\n\n      // Raised cupola rim\n      if (dist >= 2.0 && dist <= 3.0) {\n        setBlock(x, toonoY + 1, z, woodFence);\n      }\n    }\n  }\n\n  // Central apex standard & golden imperial sun disc\n  setBlock(cx, toonoY, cz, woodLogY);\n  setBlock(cx, toonoY + 1, cz, woodLogY);\n  setBlock(cx, toonoY + 2, cz, goldBlock);\n  setBlock(cx, toonoY + 3, cz, woodFence);\n\n  // Cross tassels on the royal finial\n  setBlock(cx - 1, toonoY + 2, cz, woodFence);\n  setBlock(cx + 1, toonoY + 2, cz, woodFence);\n  setBlock(cx, toonoY + 2, cz - 1, woodFence);\n  setBlock(cx, toonoY + 2, cz + 1, woodFence);\n\n  setBlock(cx - 1, toonoY + 1, cz, whiteFelt);\n  setBlock(cx + 1, toonoY + 1, cz, whiteFelt);\n  setBlock(cx, toonoY + 1, cz - 1, whiteFelt);\n  setBlock(cx, toonoY + 1, cz + 1, whiteFelt);\n\n  return {\n    name: \"Khan's Great Tent\",\n    seatY,\n    anchors: {\n      front: [cx, daisY, 0],\n      door: [cx, daisY + 1, 3]\n    },\n    interiors: [\n      {\n        min: [7, daisY + 1, 7],\n        max: [19, daisY + 6, 19],\n        kind: \"hall\"\n      }\n    ]\n  };\n}"
+    }
+  }
+}

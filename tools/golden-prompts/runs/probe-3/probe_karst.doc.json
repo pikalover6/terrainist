@@ -1,0 +1,470 @@
+{
+  "loam": "0.1",
+  "profile": "terrain",
+  "meta": {
+    "name": "tropical_karst",
+    "worldSeed": "914",
+    "prompt": "A tropical karst landscape: limestone towers rising out of a flooded plain, a sinkhole lake, and a river that vanishes into the mouth of a cave — no settlement of any kind.",
+    "spawn": {
+      "at": [
+        0.36,
+        0.78
+      ]
+    }
+  },
+  "intent": {
+    "climate": {
+      "biome": "minecraft:jungle",
+      "temperature": 0.9,
+      "humidity": 0.8,
+      "snow": "never"
+    },
+    "character": {
+      "label": "uninhabited tropical karst",
+      "flora": {
+        "prefer": [
+          "jungle_broadleaf",
+          "tree_fern",
+          "kapok_emergent",
+          "understory"
+        ]
+      }
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.cliff": {
+        "mix": [
+          [
+            "minecraft:calcite",
+            4
+          ],
+          [
+            "minecraft:dripstone_block",
+            3
+          ],
+          [
+            "minecraft:stone",
+            2
+          ]
+        ]
+      },
+      "ground.stone": {
+        "mix": [
+          [
+            "minecraft:calcite",
+            3
+          ],
+          [
+            "minecraft:stone",
+            3
+          ],
+          [
+            "minecraft:dripstone_block",
+            2
+          ]
+        ]
+      },
+      "ground.peak": {
+        "mix": [
+          [
+            "minecraft:calcite",
+            4
+          ],
+          [
+            "minecraft:dripstone_block",
+            2
+          ],
+          [
+            "minecraft:stone",
+            1
+          ]
+        ]
+      },
+      "ground.underwater": {
+        "mix": [
+          [
+            "minecraft:clay",
+            3
+          ],
+          [
+            "minecraft:gravel",
+            2
+          ],
+          [
+            "minecraft:moss_block",
+            1
+          ]
+        ]
+      }
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 62,
+          "amplitude": 18,
+          "octaves": 5,
+          "frequency": 0.003,
+          "lacunarity": 2,
+          "gain": 0.48,
+          "erosionPasses": 2,
+          "cliffThreshold": 42,
+          "soilDepth": 3,
+          "beachWidth": 2,
+          "snowLineFraction": 0.99
+        },
+        "children": [
+          {
+            "id": "karst_tower_nw",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "sheer limestone karst pinnacle in the northwest",
+            "params": {
+              "verb": "peak",
+              "at": [
+                0.28,
+                0.28
+              ],
+              "radius": 34,
+              "height": 76,
+              "profile": "sharp",
+              "irregularity": 0.24
+            }
+          },
+          {
+            "id": "karst_tower_north",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "tall limestone tower rising from the flooded northern flats",
+            "params": {
+              "verb": "peak",
+              "at": [
+                0.52,
+                0.22
+              ],
+              "radius": 36,
+              "height": 86,
+              "profile": "sharp",
+              "irregularity": 0.2
+            }
+          },
+          {
+            "id": "karst_tower_east",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "eastern karst pinnacle overlooking the cenote",
+            "params": {
+              "verb": "peak",
+              "at": [
+                0.76,
+                0.38
+              ],
+              "radius": 38,
+              "height": 82,
+              "profile": "sharp",
+              "irregularity": 0.22
+            }
+          },
+          {
+            "id": "karst_tower_swallow",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "karst cliff tower right above the subterranean river sinkhole",
+            "params": {
+              "verb": "peak",
+              "at": [
+                0.54,
+                0.48
+              ],
+              "radius": 34,
+              "height": 72,
+              "profile": "sharp",
+              "irregularity": 0.26
+            }
+          },
+          {
+            "id": "karst_tower_sw",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "southwestern limestone tower pinnacle",
+            "params": {
+              "verb": "peak",
+              "at": [
+                0.22,
+                0.62
+              ],
+              "radius": 30,
+              "height": 66,
+              "profile": "sharp",
+              "irregularity": 0.22
+            }
+          },
+          {
+            "id": "karst_tower_se",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "southeastern limestone tower pinnacle",
+            "params": {
+              "verb": "peak",
+              "at": [
+                0.72,
+                0.74
+              ],
+              "radius": 36,
+              "height": 78,
+              "profile": "sharp",
+              "irregularity": 0.24
+            }
+          },
+          {
+            "id": "cenote_sinkhole",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "deep limestone sinkhole lake",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.78,
+                0.2
+              ],
+              "radius": 32,
+              "depth": 24,
+              "water": true,
+              "profile": "sharp",
+              "irregularity": 0.15
+            }
+          },
+          {
+            "id": "vanishing_river",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "river traversing the plain and vanishing into the karst cave mouth",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.18,
+                  0.88
+                ],
+                [
+                  0.32,
+                  0.74
+                ],
+                [
+                  0.44,
+                  0.6
+                ],
+                [
+                  0.53,
+                  0.5
+                ]
+              ],
+              "width": 14,
+              "depth": 7,
+              "meander": 0.42
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "tropical",
+          "temperatureFrequency": 0.0015,
+          "humidityFrequency": 0.0015
+        }
+      },
+      {
+        "id": "subterranean_river_caves",
+        "kind": "generator",
+        "generator": "cave.carver@0",
+        "label": "dripstone cavern network connecting to the river swallow hole entrance",
+        "params": {
+          "style": "chamber_network",
+          "density": 0.42,
+          "frequency": 0.012,
+          "radius": [
+            3,
+            7
+          ],
+          "yRange": [
+            10,
+            68
+          ],
+          "verticality": 0.35,
+          "chambers": {
+            "count": 4,
+            "radius": 13,
+            "chance": 0.5,
+            "spacing": 45
+          },
+          "entrances": 2,
+          "decorate": true
+        }
+      },
+      {
+        "id": "karst_jungle",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "lush tropical rainforest across the karst lowlands and tower flanks",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.18,
+          "spacing": 3,
+          "clumping": 0.55,
+          "maxSlope": 42,
+          "elevation": [
+            1,
+            92
+          ],
+          "edgeFalloff": 16,
+          "undergrowth": {
+            "grass": 0.55,
+            "flowers": 0.08,
+            "deadwood": 0.04
+          },
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "kapok_tower",
+                  "shape": "kapok_emergent"
+                }
+              ]
+            },
+            "understory": {
+              "species": [
+                {
+                  "id": "fern_carpet",
+                  "shape": "tree_fern"
+                }
+              ],
+              "density": 0.12
+            },
+            "floor": "default"
+          },
+          "species": [
+            {
+              "id": "jungle_canopy",
+              "shape": "jungle_broadleaf",
+              "weight": 4
+            },
+            {
+              "id": "water_willow",
+              "shape": "willow_weeping",
+              "weight": 2
+            },
+            {
+              "id": "spreading_jungle_oak",
+              "shape": "oak_spreading",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "river_cave_mouth",
+        "kind": "generator",
+        "generator": "authored:karst_ponor_cave_mouth",
+        "label": "monumental swallow hole cave mouth engulfing the vanishing river",
+        "constraints": [
+          {
+            "at": [
+              0.53,
+              0.5
+            ]
+          }
+        ]
+      },
+      {
+        "id": "sinkhole_cenote",
+        "kind": "generator",
+        "generator": "authored:cenote_sinkhole",
+        "label": "deep turquoise karst sinkhole cenote with overhanging limestone cliffs",
+        "constraints": [
+          {
+            "at": [
+              0.78,
+              0.2
+            ]
+          }
+        ]
+      },
+      {
+        "id": "karst_pinnacles",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "fluted limestone karst pinnacle towers scattered across the landscape",
+        "params": {
+          "program": "karst_pinnacle_tower",
+          "count": 8,
+          "area": {
+            "all": true
+          },
+          "spacing": 36,
+          "maxSlope": 40
+        }
+      }
+    ]
+  },
+  "programs": {
+    "karst_ponor_cave_mouth": {
+      "mode": "landmark",
+      "envelope": [
+        38,
+        28,
+        38
+      ],
+      "sourceHash": "b3:696278a1f1da93336acd9486c5aa62fd33b6a284d39f6a3a17cd8c430828806e",
+      "outputHash": "b3:fbf40ecd59299779cf951f6f01c48d153ae37ef37cfd498b59f1d7af26bff698",
+      "conforms": false,
+      "conformHash": "b3:bc1f74c0b4c6972a577f3eec055286337631469d0b6b336c74b447e18c4b1d6a",
+      "source": "export const envelope = [38, 28, 38];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const seatY = 6;\n\n  // 3D voxel grid\n  const grid = new Array(W * H * D).fill(null);\n  const getIdx = (x, y, z) => (x * H + y) * D + z;\n  const getBlock = (x, y, z) => {\n    if (x < 0 || x >= W || y < 0 || y >= H || z < 0 || z >= D) return null;\n    return grid[getIdx(x, y, z)];\n  };\n  const setBlock = (x, y, z, b) => {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      grid[getIdx(x, y, z)] = b;\n    }\n  };\n\n  // Deterministic coordinate noise\n  function hash(x, y, z) {\n    let n = Math.sin(x * 12.9898 + y * 78.233 + z * 37.719) * 43758.5453;\n    return n - Math.floor(n);\n  }\n\n  function noise(x, y, z) {\n    const X = Math.floor(x), Y = Math.floor(y), Z = Math.floor(z);\n    const fx = x - X, fy = y - Y, fz = z - Z;\n    const wx = fx * fx * (3 - 2 * fx);\n    const wy = fy * fy * (3 - 2 * fy);\n    const wz = fz * fz * (3 - 2 * fz);\n\n    const v000 = hash(X, Y, Z);\n    const v100 = hash(X + 1, Y, Z);\n    const v010 = hash(X, Y + 1, Z);\n    const v110 = hash(X + 1, Y + 1, Z);\n    const v001 = hash(X, Y, Z + 1);\n    const v101 = hash(X + 1, Y, Z + 1);\n    const v011 = hash(X, Y + 1, Z + 1);\n    const v111 = hash(X + 1, Y + 1, Z + 1);\n\n    const x00 = v000 + wx * (v100 - v000);\n    const x10 = v010 + wx * (v110 - v010);\n    const x01 = v001 + wx * (v101 - v001);\n    const x11 = v011 + wx * (v111 - v011);\n\n    const y0 = x00 + wy * (x10 - x00);\n    const y1 = x01 + wy * (x11 - x01);\n\n    return y0 + wz * (y1 - y0);\n  }\n\n  // Material palette derived from theme\n  const pStone = api.theme.stone.primary || \"minecraft:stone\";\n  const aStone = api.theme.stone.accent || \"minecraft:andesite\";\n  const scree = api.theme.ground.scree || api.theme.stone.accent || \"minecraft:gravel\";\n\n  function getRockBlock(x, y, z) {\n    // Calcite marble veins running through karst strata\n    const calciteVal = Math.sin(y * 0.75 + x * 0.35 + z * 0.25) + noise(x * 0.4, y * 0.4, z * 0.4) * 0.4;\n    if (calciteVal > 0.85) {\n      return \"minecraft:calcite\";\n    }\n\n    // Dripstone speleothem strata\n    const dripVal = Math.sin(y * 0.55 - z * 0.45) + noise(x * 0.3, y * 0.5, z * 0.3) * 0.3;\n    if (dripVal > 0.82) {\n      return \"minecraft:dripstone_block\";\n    }\n\n    // Wet bedrock at base of chasm\n    if (y <= 4) {\n      const wetVal = hash(x, y, z);\n      if (wetVal < 0.35) return scree;\n      if (wetVal < 0.65) return aStone;\n      return pStone;\n    }\n\n    // Stratified limestone body\n    const n = noise(x * 0.25, y * 0.3, z * 0.25);\n    if (n > 0.62) {\n      return aStone;\n    } else if (n < 0.25) {\n      return \"minecraft:calcite\";\n    } else {\n      return pStone;\n    }\n  }\n\n  // Sample terrain height for every column to ensure continuous ground seating\n  const groundMap = new Int32Array(W * D);\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const gh = api.heightAt(x, z);\n      groundMap[x * D + z] = Math.max(0, Math.min(20, Math.round(seatY + gh)));\n    }\n  }\n\n  // 1. Generate base structural solids and terrain morphology\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const groundY = groundMap[x * D + z];\n\n      // Distances to karst centers\n      const dWest = Math.hypot(x - 7.5, z - 16.0);\n      const dEast = Math.hypot(x - 30.0, z - 16.0);\n      const dSwallow = Math.hypot(x - 18.5, z - 17.5);\n      const angSwallow = Math.atan2(z - 17.5, x - 18.5);\n\n      // Floor calculations: river approach, vortex funnel, and cavern abyss\n      const dxNorth = Math.abs(x - 18.5);\n      const floorNorth = 5.0 + Math.pow(dxNorth / 5.5, 2) * 3.5;\n\n      const spiral = 0.85 * Math.sin(angSwallow * 3.0 - dSwallow * 0.85);\n      const floorSwallow = 2.0 + Math.min(4.5, dSwallow * 0.65) + spiral;\n\n      const dxCav = Math.abs(x - 18.5);\n      const floorCavern = 2.0 + Math.pow(dxCav / 4.8, 2) * 3.0 + (z - 23) * 0.15;\n\n      let centerFloor = 5.0;\n      if (z <= 12) {\n        centerFloor = floorNorth;\n      } else if (z <= 23) {\n        const t = (z - 12) / 11;\n        centerFloor = (1 - t) * floorNorth + t * floorSwallow;\n      } else {\n        const t = Math.min(1.0, (z - 23) / 6);\n        centerFloor = (1 - t) * floorSwallow + t * floorCavern;\n      }\n\n      const distCenter = Math.abs(x - 18.5);\n      let colFloor = centerFloor;\n      if (distCenter > 5.5) {\n        const rise = Math.pow((distCenter - 5.5) / 6.0, 1.8) * 10.0;\n        colFloor = centerFloor + rise;\n      }\n\n      // Towering Karst elevations\n      let colTop = colFloor;\n\n      // West Tower Bluff\n      if (dWest < 9.0) {\n        const fluteW = 0.9 * Math.sin(Math.atan2(z - 16.0, x - 7.5) * 5.0);\n        const topW = 23.5 - Math.pow(dWest / 7.5, 2) * 16.0 + fluteW + noise(x * 0.3, 10, z * 0.3) * 2.0;\n        if (topW > colTop) colTop = topW;\n      }\n\n      // East Karst Pinnacle Needle\n      if (dEast < 8.0) {\n        const fluteE = 1.1 * Math.sin(Math.atan2(z - 16.0, x - 30.0) * 6.0);\n        const topE = 26.5 - Math.pow(dEast / 6.5, 2) * 20.0 + fluteE + noise(x * 0.35, 12, z * 0.35) * 2.0;\n        if (topE > colTop) colTop = topE;\n      }\n\n      // South Cliff Amphitheater\n      if (z >= 25) {\n        const cliffTop = 22.0 + Math.sin(x * 0.25 + 1.2) * 2.5 + noise(x * 0.3, 15, z * 0.3) * 1.5;\n        const zProg = (z - 25) / 12;\n        const topS = colFloor + (cliffTop - colFloor) * Math.min(1.0, zProg * 1.5);\n        if (topS > colTop) colTop = topS;\n      }\n\n      // Side bounding ridges\n      if (x <= 5 || x >= 32) {\n        const sideTop = 16.0 + noise(x * 0.2, 8, z * 0.2) * 4.0;\n        if (sideTop > colTop) colTop = sideTop;\n      }\n\n      colTop = Math.min(H - 1, Math.max(colFloor, colTop));\n\n      // Fill from ground level up to rock summit\n      const fillStart = Math.max(0, Math.min(Math.floor(colFloor), groundY));\n      const fillEnd = Math.max(Math.ceil(colTop), groundY);\n\n      for (let y = fillStart; y <= fillEnd; y++) {\n        // Hollow out the cavern chamber beneath the mountain\n        let isCavernVoid = false;\n        if (z >= 17 && z <= 30 && x >= 9 && x <= 28) {\n          const cavHalfW = 7.2 - (z - 17) * 0.25;\n          const dxCavNorm = Math.abs(x - 18.5) / cavHalfW;\n          if (dxCavNorm < 1.0) {\n            const vaultY = 17.2 - (z - 17) * 0.70 - Math.pow(dxCavNorm, 2) * 6.0 + (noise(x * 0.3, y * 0.3, z * 0.3) - 0.5) * 1.2;\n            if (y > colFloor && y < vaultY) {\n              isCavernVoid = true;\n            }\n          }\n        }\n\n        if (!isCavernVoid && y <= colTop) {\n          setBlock(x, y, z, getRockBlock(x, y, z));\n        } else if (y <= groundY && y <= colFloor) {\n          setBlock(x, y, z, getRockBlock(x, y, z));\n        }\n      }\n    }\n  }\n\n  // 2. Build the Monumental Karst Arch over the Cave Mouth\n  for (let x = 6; x <= 31; x++) {\n    const archU = (x - 18.5) / 11.5;\n    if (Math.abs(archU) > 1.05) continue;\n\n    for (let z = 13; z <= 21; z++) {\n      const zDist = Math.abs(z - 17.5);\n      const zProfile = 1.0 - Math.pow(zDist / 3.8, 2);\n      if (zProfile <= 0) continue;\n\n      const archUnder = 17.2 - 8.8 * (archU * archU) - (1.0 - zProfile) * 2.5;\n      const archOver = 23.5 - 5.0 * (archU * archU) + (noise(x * 0.4, 18, z * 0.4) - 0.5) * 1.5;\n\n      const yStart = Math.max(1, Math.floor(archUnder));\n      const yEnd = Math.min(H - 2, Math.ceil(archOver));\n\n      for (let y = yStart; y <= yEnd; y++) {\n        setBlock(x, y, z, getRockBlock(x, y, z));\n      }\n    }\n  }\n\n  // Speleothem generation\n  function addStalactite(cx, cz, topY, length, maxR) {\n    for (let dy = 0; dy < length; dy++) {\n      const y = topY - dy;\n      if (y < 1 || y >= H) continue;\n      const progress = dy / length;\n      const r = maxR * (1.0 - progress * 0.85);\n      const intR = Math.ceil(r);\n      for (let dx = -intR; dx <= intR; dx++) {\n        for (let dz = -intR; dz <= intR; dz++) {\n          const d = Math.hypot(dx, dz);\n          if (d <= r + 0.15) {\n            const px = cx + dx, pz = cz + dz;\n            const b = (progress > 0.5) ? \"minecraft:dripstone_block\" : getRockBlock(px, y, pz);\n            setBlock(px, y, pz, b);\n          }\n        }\n      }\n    }\n    const tipY = topY - length;\n    if (tipY >= 1 && tipY < H && getBlock(cx, tipY + 1, cz) !== null) {\n      setBlock(cx, tipY, cz, \"minecraft:pointed_dripstone[thickness=tip,vertical_direction=down]\");\n    }\n  }\n\n  function addStalagmite(cx, cz, baseY, height, maxR) {\n    for (let dy = 0; dy < height; dy++) {\n      const y = baseY + dy;\n      if (y < 1 || y >= H) continue;\n      const progress = dy / height;\n      const r = maxR * (1.0 - progress * 0.85);\n      const intR = Math.ceil(r);\n      for (let dx = -intR; dx <= intR; dx++) {\n        for (let dz = -intR; dz <= intR; dz++) {\n          const d = Math.hypot(dx, dz);\n          if (d <= r + 0.15) {\n            const px = cx + dx, pz = cz + dz;\n            const b = (progress > 0.4) ? \"minecraft:dripstone_block\" : getRockBlock(px, y, pz);\n            setBlock(px, y, pz, b);\n          }\n        }\n      }\n    }\n    const tipY = baseY + height;\n    if (tipY >= 1 && tipY < H && getBlock(cx, tipY - 1, cz) !== null) {\n      setBlock(cx, tipY, cz, \"minecraft:pointed_dripstone[thickness=tip,vertical_direction=up]\");\n    }\n  }\n\n  // 3. Hanging Stalactite Arches and Rising Stalagmites\n  addStalactite(15, 17, 17, 6, 1.8);\n  addStalactite(22, 17, 17, 7, 2.0);\n  addStalactite(18, 16, 18, 4, 1.3);\n  addStalactite(12, 18, 15, 5, 1.5);\n  addStalactite(25, 18, 15, 5, 1.5);\n\n  addStalactite(17, 22, 14, 5, 1.6);\n  addStalactite(21, 23, 13, 5, 1.5);\n  addStalactite(19, 26, 11, 4, 1.2);\n  addStalactite(15, 27, 10, 4, 1.1);\n  addStalactite(23, 27, 10, 4, 1.1);\n\n  addStalagmite(12, 15, 7, 4, 1.4);\n  addStalagmite(25, 15, 7, 4, 1.4);\n  addStalagmite(14, 21, 5, 3, 1.1);\n  addStalagmite(23, 21, 5, 3, 1.1);\n  addStalagmite(17, 27, 3, 3, 1.0);\n  addStalagmite(21, 27, 3, 3, 1.0);\n\n  // 4. Tropical Overhangs, Mossy Caps, Vines, and Glow Lichen\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      for (let y = 1; y < H; y++) {\n        const cur = getBlock(x, y, z);\n        if (!cur) continue;\n\n        const above = getBlock(x, y + 1, z);\n        const below = getBlock(x, y - 1, z);\n\n        // Exposed horizontal top surfaces\n        if (!above && y >= 6) {\n          if (y >= 16) {\n            setBlock(x, y, z, \"minecraft:moss_block\");\n\n            // Emergent jungle crowns on pinnacles\n            if (y >= 22 && (Math.hypot(x - 7.5, z - 16) < 4.0 || Math.hypot(x - 30, z - 16) < 3.5 || z >= 32)) {\n              if (y + 1 < H) {\n                setBlock(x, y + 1, z, \"minecraft:jungle_leaves[persistent=true]\");\n                if (y + 2 < H && hash(x, y, z) > 0.45) {\n                  setBlock(x, y + 2, z, \"minecraft:jungle_leaves[persistent=true]\");\n                }\n              }\n            } else if (y + 1 < H && hash(x, y, z) < 0.3) {\n              setBlock(x, y + 1, z, \"minecraft:moss_carpet\");\n            }\n          } else if (y >= 8 && hash(x, y, z) < 0.4) {\n            setBlock(x, y, z, \"minecraft:moss_block\");\n          }\n        }\n\n        // Cave ceiling bioluminescence\n        if (!below && y >= 8 && y <= 18 && cur !== \"minecraft:pointed_dripstone[thickness=tip,vertical_direction=down]\") {\n          if (hash(x, y, z) < 0.18) {\n            setBlock(x, y - 1, z, \"minecraft:glow_lichen[up=true]\");\n          }\n        }\n\n        // Dangling jungle vines along cliff walls\n        if (y >= 8 && y <= 22 && !cur.startsWith(\"minecraft:pointed\") && !cur.startsWith(\"minecraft:vine\")) {\n          if (z > 0 && getBlock(x, y, z - 1) === null && hash(x, y, z) < 0.12) {\n            setBlock(x, y, z - 1, \"minecraft:vine[south=true]\");\n            if (y > 8 && getBlock(x, y - 1, z - 1) === null) {\n              setBlock(x, y - 1, z - 1, \"minecraft:vine[south=true]\");\n            }\n          }\n          if (z < D - 1 && getBlock(x, y, z + 1) === null && hash(x, y, z + 1) < 0.10) {\n            setBlock(x, y, z + 1, \"minecraft:vine[north=true]\");\n          }\n          if (x > 0 && getBlock(x - 1, y, z) === null && hash(x - 1, y, z) < 0.10) {\n            setBlock(x - 1, y, z, \"minecraft:vine[east=true]\");\n          }\n          if (x < W - 1 && getBlock(x + 1, y, z) === null && hash(x + 1, y, z) < 0.10) {\n            setBlock(x + 1, y, z, \"minecraft:vine[west=true]\");\n          }\n        }\n      }\n    }\n  }\n\n  // 5. Emit all blocks\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const b = getBlock(x, y, z);\n        if (b) {\n          api.set(x, y, z, b);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"karst_ponor_cave_mouth\",\n    seatY: seatY,\n    anchors: {\n      front: [19, seatY, 0],\n      cave_mouth: [19, seatY, 17]\n    }\n  };\n}"
+    },
+    "cenote_sinkhole": {
+      "mode": "landmark",
+      "envelope": [
+        32,
+        32,
+        32
+      ],
+      "sourceHash": "b3:b8effd88290ff3a80c1447da339a3aa8f7e8b84d2a7820401fbeb7f17fdedb73",
+      "outputHash": "b3:205d9919a4e656cca1f2fe17ea1a48ec017dae46701bbd02a7f26de227015681",
+      "conforms": false,
+      "conformHash": "b3:185d93defb23a6cba24127f7ac09f774aec54170cec1002ed83ca616e5c75176",
+      "source": "export const envelope = [32, 32, 32];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const seatY = 12;\n\n  // ---------------------------------------------------------\n  // 1. DETERMINISTIC NOISE GENERATOR\n  // ---------------------------------------------------------\n  const perm = new Uint8Array(512);\n  const p = new Uint8Array(256);\n  for (let i = 0; i < 256; i++) p[i] = i;\n  for (let i = 255; i > 0; i--) {\n    const j = Math.floor(api.random() * (i + 1));\n    const tmp = p[i];\n    p[i] = p[j];\n    p[j] = tmp;\n  }\n  for (let i = 0; i < 512; i++) perm[i] = p[i & 255];\n\n  function grad(hash, x, y, z) {\n    const h = hash & 15;\n    const u = h < 8 ? x : y;\n    const v = h < 4 ? y : h === 12 || h === 14 ? x : z;\n    return ((h & 1) === 0 ? u : -u) + ((h & 2) === 0 ? v : -v);\n  }\n\n  function noise3D(x, y, z) {\n    const X = Math.floor(x) & 255;\n    const Y = Math.floor(y) & 255;\n    const Z = Math.floor(z) & 255;\n    const xf = x - Math.floor(x);\n    const yf = y - Math.floor(y);\n    const zf = z - Math.floor(z);\n    const u = xf * xf * xf * (xf * (xf * 6 - 15) + 10);\n    const v = yf * yf * yf * (yf * (yf * 6 - 15) + 10);\n    const w = zf * zf * zf * (zf * (zf * 6 - 15) + 10);\n    const A = perm[X] + Y, AA = perm[A] + Z, AB = perm[A + 1] + Z;\n    const B = perm[X + 1] + Y, BA = perm[B] + Z, BB = perm[B + 1] + Z;\n\n    const g000 = grad(perm[AA], xf, yf, zf);\n    const g100 = grad(perm[BA], xf - 1, yf, zf);\n    const g010 = grad(perm[AB], xf, yf - 1, zf);\n    const g110 = grad(perm[BB], xf - 1, yf - 1, zf);\n    const g001 = grad(perm[AA + 1], xf, yf, zf - 1);\n    const g101 = grad(perm[BA + 1], xf - 1, yf, zf - 1);\n    const g011 = grad(perm[AB + 1], xf, yf - 1, zf - 1);\n    const g111 = grad(perm[BB + 1], xf - 1, yf - 1, zf - 1);\n\n    const x1 = g000 + u * (g100 - g000);\n    const x2 = g010 + u * (g110 - g010);\n    const y1 = x1 + v * (x2 - x1);\n    const x3 = g001 + u * (g101 - g001);\n    const x4 = g011 + u * (g111 - g011);\n    const y2 = x3 + v * (x4 - x3);\n\n    return y1 + w * (y2 - y1);\n  }\n\n  // ---------------------------------------------------------\n  // 2. PALETTE SETUP\n  // ---------------------------------------------------------\n  const stonePrimary = api.theme?.stone?.primary || \"minecraft:diorite\";\n  const stoneAccent = api.theme?.stone?.accent || \"minecraft:mossy_cobblestone\";\n  const groundPlinth = api.theme?.ground?.plinth || \"minecraft:stone\";\n  const woodLog = api.theme?.wood?.log || \"minecraft:jungle_log\";\n\n  // ---------------------------------------------------------\n  // 3. VOXEL BUFFER\n  // ---------------------------------------------------------\n  const grid = new Array(W * H * D).fill(null);\n  function getV(x, y, z) {\n    if (x < 0 || x >= W || y < 0 || y >= H || z < 0 || z >= D) return null;\n    return grid[(x * H + y) * D + z];\n  }\n  function setV(x, y, z, val) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      grid[(x * H + y) * D + z] = val;\n    }\n  }\n\n  // ---------------------------------------------------------\n  // 4. KARST SINKHOLE & PINNACLE GEOMETRY\n  // ---------------------------------------------------------\n  const cx = 15.5;\n  const cz = 15.5;\n\n  function pitRadiusAt(y, angle) {\n    let rBase;\n    if (y <= 4) {\n      rBase = 8.8;\n    } else if (y <= 8) {\n      // undercut cavern belly (wider below)\n      rBase = 8.8 + (y - 4) * 0.75;\n    } else if (y <= 13) {\n      // sheer overhanging rim\n      rBase = 11.8 - (y - 8) * 0.65;\n    } else {\n      // opens wider above the rim\n      rBase = 8.55 + (y - 13) * 0.75;\n    }\n    const pert = 1.7 * Math.sin(angle * 3 + 0.4) +\n                 1.2 * Math.cos(angle * 2 - 0.6) +\n                 0.6 * Math.sin(angle * 5 + 1.2);\n    return Math.max(5.5, rBase + pert);\n  }\n\n  function isCaveTunnel(x, y, z) {\n    // Swallow hole / subterranean river mouth heading south-east\n    if (y < 2 || y > 8) return false;\n    if (z < 15 || z > 31) return false;\n    const progress = (z - 15) / 16;\n    const tunX = 16.0 + progress * 2.5 + Math.sin(progress * Math.PI) * 1.5;\n    const tunY = 4.2 - progress * 0.8;\n    const dx = x - tunX;\n    const dy = (y - tunY) * 1.25;\n    return Math.sqrt(dx * dx + dy * dy) < 3.2;\n  }\n\n  const pinnacles = [\n    { x: 6, z: 6, h: 29, r: 4.8 },   // NW pinnacle (tallest tower)\n    { x: 25, z: 7, h: 26, r: 4.4 },  // NE pinnacle\n    { x: 6, z: 25, h: 27, r: 4.6 },  // SW pinnacle\n    { x: 25, z: 24, h: 24, r: 4.2 }  // SE pinnacle\n  ];\n\n  // Pre-read heightmap for ground conformity\n  const heightMap = new Int16Array(W * D);\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      heightMap[x * D + z] = Math.round(api.heightAt(x, z));\n    }\n  }\n\n  // --- PASS A: Solid Rock Husk, Cavern Walls, & Ground Skirt ---\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const dx = x - cx;\n      const dz = z - cz;\n      const r = Math.sqrt(dx * dx + dz * dz);\n      const angle = Math.atan2(dz, dx);\n      const h = heightMap[x * D + z];\n      const terrainY = seatY + h;\n\n      for (let y = 0; y < H; y++) {\n        // Bedrock floor at bottom of envelope\n        if (y === 0 || (y === 1 && r <= 15.5)) {\n          setV(x, y, z, \"base_rock\");\n          continue;\n        }\n\n        const pitR = pitRadiusAt(y, angle);\n        const inPit = (r < pitR);\n        const inTunnel = isCaveTunnel(x, y, z);\n\n        // Subterranean pit walls (y <= seatY)\n        if (y <= seatY && y >= 1) {\n          if (!inPit && !inTunnel) {\n            setV(x, y, z, \"karst_wall\");\n          }\n        }\n\n        // Ground skirt & foundation conforming to terrain\n        if (y <= terrainY && y >= 1 && r >= pitRadiusAt(Math.min(seatY, y), angle)) {\n          if (!inTunnel) {\n            setV(x, y, z, \"karst_wall\");\n          }\n        }\n      }\n    }\n  }\n\n  // --- PASS B: Karst Pinnacle Towers (y >= 12 to 30) ---\n  for (const pin of pinnacles) {\n    for (let x = 0; x < W; x++) {\n      for (let z = 0; z < D; z++) {\n        const pdx = x - pin.x;\n        const pdz = z - pin.z;\n        const pDist = Math.sqrt(pdx * pdx + pdz * pdz);\n\n        for (let y = seatY; y <= pin.h && y < H; y++) {\n          const yFrac = (y - seatY) / (pin.h - seatY);\n          const taper = 1.0 - yFrac * 0.45;\n          const fluting = noise3D(x * 0.35, y * 0.2, z * 0.35) * 1.3;\n          const effR = pin.r * taper + fluting;\n          if (pDist <= effR) {\n            setV(x, y, z, \"karst_pinnacle\");\n          }\n        }\n      }\n    }\n  }\n\n  // --- PASS C: Natural Karst Bridge / Arch over North Rim ---\n  for (let x = 7; x <= 24; x++) {\n    const t = (x - 7) / 17;\n    const archZ = 7.0 - Math.sin(t * Math.PI) * 2.8;\n    const archY = 16.5 + Math.sin(t * Math.PI) * 4.8;\n\n    for (let y = Math.floor(archY - 3); y <= Math.ceil(archY + 3); y++) {\n      for (let z = Math.floor(archZ - 3); z <= Math.ceil(archZ + 3); z++) {\n        if (x < 0 || x >= W || y < 0 || y >= H || z < 0 || z >= D) continue;\n        const dy = y - archY;\n        const dz = z - archZ;\n        const dist = Math.sqrt(dy * dy * 1.2 + dz * dz);\n        const rough = noise3D(x * 0.4, y * 0.3, z * 0.4) * 0.6;\n        if (dist <= 2.2 + rough) {\n          setV(x, y, z, \"karst_arch\");\n        }\n      }\n    }\n  }\n\n  // --- PASS D: Turquoise Plunge Pool Basin (y = 1 to 4) ---\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const dx = x - cx;\n      const dz = z - cz;\n      const r = Math.sqrt(dx * dx + dz * dz);\n      const angle = Math.atan2(dz, dx);\n      const pitR = pitRadiusAt(3, angle);\n\n      if (r < pitR - 0.4) {\n        // Layer 1: Dark prismarine basin foundation\n        setV(x, 1, z, \"minecraft:dark_prismarine\");\n\n        // Layer 2: Deep illuminated mineral floor\n        if (r <= 4.2) {\n          setV(x, 2, z, \"minecraft:sea_lantern\");\n        } else if (r <= 7.2) {\n          setV(x, 2, z, \"minecraft:prismarine\");\n        } else {\n          setV(x, 2, z, \"minecraft:prismarine_bricks\");\n        }\n\n        // Layer 3: Crystal turquoise pool surface\n        if (r <= 3.8) {\n          setV(x, 3, z, \"minecraft:cyan_stained_glass\");\n        } else if (r <= 6.8) {\n          setV(x, 3, z, \"minecraft:light_blue_stained_glass\");\n        } else {\n          // Pool margin shelf\n          const n = noise3D(x * 0.5, 3.0, z * 0.5);\n          if (n > 0.1) {\n            setV(x, 3, z, \"minecraft:moss_block\");\n          } else {\n            setV(x, 3, z, \"minecraft:prismarine\");\n          }\n        }\n      }\n    }\n  }\n\n  // Collapsed limestone talus boulders rising from the plunge pool\n  const boulders = [\n    { x: 12, y: 3, z: 13 }, { x: 13, y: 4, z: 13 },\n    { x: 19, y: 3, z: 18 }, { x: 18, y: 4, z: 18 },\n    { x: 11, y: 3, z: 19 }, { x: 15, y: 3, z: 10 }\n  ];\n  for (const b of boulders) {\n    setV(b.x, b.y, b.z, \"minecraft:mossy_cobblestone\");\n  }\n\n  // --- PASS E: Material Assignment & Speleothem Texturing ---\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const v = getV(x, y, z);\n        if (!v) continue;\n\n        if (v === \"base_rock\") {\n          setV(x, y, z, groundPlinth);\n        } else if (v === \"karst_wall\" || v === \"karst_pinnacle\" || v === \"karst_arch\") {\n          const n1 = noise3D(x * 0.28, y * 0.35, z * 0.28);\n          const n2 = noise3D(x * 0.18, y * 0.22, z * 0.18);\n\n          // Top crown of pinnacles gets lush moss and soil\n          if (y >= 20 && !getV(x, y + 1, z)) {\n            setV(x, y, z, \"minecraft:moss_block\");\n            continue;\n          }\n\n          // Limestone strata & mineral veins\n          if (Math.abs(n1) > 0.38) {\n            setV(x, y, z, \"minecraft:calcite\");\n          } else if (n2 > 0.25) {\n            setV(x, y, z, \"minecraft:dripstone_block\");\n          } else if (n1 < -0.22) {\n            setV(x, y, z, stoneAccent);\n          } else {\n            setV(x, y, z, stonePrimary);\n          }\n        }\n      }\n    }\n  }\n\n  // --- PASS F: Stalactites, Stalagmites & Hanging Speleothems ---\n  for (let x = 1; x < W - 1; x++) {\n    for (let z = 1; z < D - 1; z++) {\n      for (let y = 4; y <= 16; y++) {\n        const current = getV(x, y, z);\n        const above = getV(x, y + 1, z);\n        const below = getV(x, y - 1, z);\n\n        // Hanging stalactites under ceiling overhangs\n        if (!current && above && above !== \"air\" && !below) {\n          const n = noise3D(x * 0.45, y * 0.5, z * 0.45);\n          if (n > 0.18) {\n            setV(x, y, z, \"minecraft:pointed_dripstone[vertical_direction=down,thickness=tip]\");\n            // 2-block long stalactite\n            if (y > 5 && !getV(x, y - 2, z) && n > 0.42) {\n              setV(x, y, z, \"minecraft:dripstone_block\");\n              setV(x, y - 1, z, \"minecraft:pointed_dripstone[vertical_direction=down,thickness=tip]\");\n            }\n          } else if (n < -0.45 && y >= 10) {\n            // Hanging jungle spore blossom for drifting atmospheric particles\n            setV(x, y, z, \"minecraft:spore_blossom\");\n          }\n        }\n\n        // Stalagmites on cave floor shelves\n        if (!current && below && below.startsWith(\"minecraft:\") && below !== \"minecraft:cyan_stained_glass\" && below !== \"minecraft:light_blue_stained_glass\") {\n          const n = noise3D(x * 0.5, y * 0.5, z * 0.5);\n          if (n > 0.35 && y <= 8) {\n            setV(x, y, z, \"minecraft:pointed_dripstone[vertical_direction=up,thickness=tip]\");\n          }\n        }\n      }\n    }\n  }\n\n  // --- PASS G: Pinnacle Trees, Roots & Canopy ---\n  function placePinnacleTree(tx, ty, tz) {\n    // Tree trunk\n    for (let dy = 0; dy < 4; dy++) {\n      setV(tx, ty + dy, tz, woodLog);\n    }\n    // Canopy foliage\n    const topY = ty + 3;\n    for (let ox = -2; ox <= 2; ox++) {\n      for (let oz = -2; oz <= 2; oz++) {\n        for (let oy = 0; oy <= 2; oy++) {\n          const d = Math.sqrt(ox * ox + oz * oz + oy * oy);\n          if (d <= 2.4 && (ox !== 0 || oz !== 0 || oy > 1)) {\n            const lx = tx + ox;\n            const ly = topY + oy;\n            const lz = tz + oz;\n            if (lx >= 0 && lx < W && ly < H && lz >= 0 && lz < D) {\n              if (!getV(lx, ly, lz)) {\n                setV(lx, ly, lz, \"minecraft:jungle_leaves[persistent=true]\");\n              }\n            }\n          }\n        }\n      }\n    }\n    // Aerial roots clinging down the cliff face\n    for (let rStep = 0; rStep <= 3; rStep++) {\n      const rx = tx - 1;\n      const ry = ty - rStep;\n      if (rx >= 0 && ry >= 0 && ry < H && !getV(rx, ry, tz)) {\n        if (getV(rx + 1, ry, tz)) {\n          setV(rx, ry, tz, woodLog);\n        }\n      }\n    }\n  }\n\n  placePinnacleTree(6, 29, 6);   // NW tower crown\n  placePinnacleTree(6, 27, 25);  // SW tower crown\n\n  // --- PASS H: Draped Hanging Jungle Vines ---\n  for (let x = 1; x < W - 1; x++) {\n    for (let z = 1; z < D - 1; z++) {\n      for (let y = 6; y <= 22; y++) {\n        if (getV(x, y, z)) continue;\n\n        // Check if there is a solid wall neighbor\n        let vineState = null;\n        if (getV(x, y, z + 1) && !getV(x, y, z + 1).includes(\"glass\") && !getV(x, y, z + 1).includes(\"dripstone\")) {\n          vineState = \"minecraft:vine[south=true]\";\n        } else if (getV(x, y, z - 1) && !getV(x, y, z - 1).includes(\"glass\") && !getV(x, y, z - 1).includes(\"dripstone\")) {\n          vineState = \"minecraft:vine[north=true]\";\n        } else if (getV(x + 1, y, z) && !getV(x + 1, y, z).includes(\"glass\") && !getV(x + 1, y, z).includes(\"dripstone\")) {\n          vineState = \"minecraft:vine[east=true]\";\n        } else if (getV(x - 1, y, z) && !getV(x - 1, y, z).includes(\"glass\") && !getV(x - 1, y, z).includes(\"dripstone\")) {\n          vineState = \"minecraft:vine[west=true]\";\n        }\n\n        if (vineState) {\n          const vn = noise3D(x * 0.4, y * 0.2, z * 0.4);\n          if (vn > 0.22) {\n            // Drape vine down 2 to 5 blocks\n            const vineLen = Math.floor(2 + (vn - 0.22) * 8);\n            for (let vy = 0; vy < vineLen; vy++) {\n              const curY = y - vy;\n              if (curY <= 3) break;\n              if (!getV(x, curY, z)) {\n                setV(x, curY, z, vineState);\n              } else {\n                break;\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // --- PASS I: Bioluminescent Cave Lichen ---\n  for (let x = 1; x < W - 1; x++) {\n    for (let z = 1; z < D - 1; z++) {\n      for (let y = 2; y <= 10; y++) {\n        if (!getV(x, y, z)) {\n          const n = noise3D(x * 0.6, y * 0.6, z * 0.6);\n          if (n > 0.48) {\n            if (getV(x, y, z + 1)) setV(x, y, z, \"minecraft:glow_lichen[south=true]\");\n            else if (getV(x, y, z - 1)) setV(x, y, z, \"minecraft:glow_lichen[north=true]\");\n            else if (getV(x + 1, y, z)) setV(x, y, z, \"minecraft:glow_lichen[east=true]\");\n            else if (getV(x - 1, y, z)) setV(x, y, z, \"minecraft:glow_lichen[west=true]\");\n          }\n        }\n      }\n    }\n  }\n\n  // ---------------------------------------------------------\n  // 5. CONNECTED COMPONENT PRUNING (RULE 9)\n  // ---------------------------------------------------------\n  // Find all 6-connected components and keep only the largest connected body\n  const visited = new Uint8Array(W * H * D);\n  let maxCompSize = 0;\n  let maxCompSeed = -1;\n\n  for (let i = 0; i < grid.length; i++) {\n    if (!grid[i] || visited[i]) continue;\n\n    let compSize = 0;\n    const queue = [i];\n    visited[i] = 1;\n\n    let head = 0;\n    while (head < queue.length) {\n      const curr = queue[head++];\n      compSize++;\n      const cz = curr % D;\n      const rem = Math.floor(curr / D);\n      const cy = rem % H;\n      const cx = Math.floor(rem / H);\n\n      const neighbors = [\n        [cx + 1, cy, cz], [cx - 1, cy, cz],\n        [cx, cy + 1, cz], [cx, cy - 1, cz],\n        [cx, cy, cz + 1], [cx, cy, cz - 1]\n      ];\n\n      for (const [nx, ny, nz] of neighbors) {\n        if (nx >= 0 && nx < W && ny >= 0 && ny < H && nz >= 0 && nz < D) {\n          const nIdx = (nx * H + ny) * D + nz;\n          if (grid[nIdx] && !visited[nIdx]) {\n            visited[nIdx] = 1;\n            queue.push(nIdx);\n          }\n        }\n      }\n    }\n\n    if (compSize > maxCompSize) {\n      maxCompSize = compSize;\n      maxCompSeed = i;\n    }\n  }\n\n  // Re-run BFS from maxCompSeed to mark valid voxels\n  const inMainBody = new Uint8Array(W * H * D);\n  if (maxCompSeed !== -1) {\n    const queue = [maxCompSeed];\n    inMainBody[maxCompSeed] = 1;\n    let head = 0;\n    while (head < queue.length) {\n      const curr = queue[head++];\n      const cz = curr % D;\n      const rem = Math.floor(curr / D);\n      const cy = rem % H;\n      const cx = Math.floor(rem / H);\n\n      const neighbors = [\n        [cx + 1, cy, cz], [cx - 1, cy, cz],\n        [cx, cy + 1, cz], [cx, cy - 1, cz],\n        [cx, cy, cz + 1], [cx, cy, cz - 1]\n      ];\n\n      for (const [nx, ny, nz] of neighbors) {\n        if (nx >= 0 && nx < W && ny >= 0 && ny < H && nz >= 0 && nz < D) {\n          const nIdx = (nx * H + ny) * D + nz;\n          if (grid[nIdx] && !inMainBody[nIdx]) {\n            inMainBody[nIdx] = 1;\n            queue.push(nIdx);\n          }\n        }\n      }\n    }\n  }\n\n  // ---------------------------------------------------------\n  // 6. EMIT BLOCKS TO WORLD\n  // ---------------------------------------------------------\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const idx = (x * H + y) * D + z;\n        if (inMainBody[idx]) {\n          api.set(x, y, z, grid[idx]);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"cenote_sinkhole\",\n    seatY: seatY,\n    anchors: {\n      pool: [16, 3, 16],\n      arch: [16, 21, 6],\n      rim: [16, 12, 4],\n      swallow_hole: [17, 3, 27]\n    }\n  };\n}"
+    },
+    "karst_pinnacle_tower": {
+      "mode": "plugin",
+      "envelope": [
+        22,
+        46,
+        22
+      ],
+      "sourceHash": "b3:0aeafb6de8ee0952f114f14a3ebdd1fe30452daa04ef5dbe395ac22f0fd38d7e",
+      "outputHash": "b3:3cab490c0017db821482562a02b062a17292f282638d64494f96ec7616d6d9a4",
+      "conforms": true,
+      "conformHash": "b3:a4e9204a95eb615929476c2411205f18389b4d178197f3dbbd13deb5214ea5aa",
+      "source": "export const envelope = [22, 46, 22];\n\nexport default function build(api) {\n  const W = api.size[0];\n  const H = api.size[1];\n  const D = api.size[2];\n  const SEAT_Y = 8;\n  const inst = api.instance.index;\n\n  // Theme palette mapping\n  const stonePrimary = (api.theme && api.theme.stone && api.theme.stone.primary) || \"minecraft:dripstone_block\";\n  const stoneAccent = (api.theme && api.theme.stone && api.theme.stone.accent) || \"minecraft:calcite\";\n  const stoneWall = (api.theme && api.theme.stone && api.theme.stone.wall) || \"minecraft:cobblestone_wall\";\n  const stoneSlab = (api.theme && api.theme.stone && api.theme.stone.slab) || \"minecraft:stone_slab\";\n  const groundScree = (api.theme && api.theme.ground && api.theme.ground.scree) || \"minecraft:coarse_dirt\";\n  const groundBank = (api.theme && api.theme.ground && api.theme.ground.bank) || \"minecraft:moss_block\";\n  const woodLog = (api.theme && api.theme.wood && api.theme.wood.log) || \"minecraft:jungle_log\";\n\n  // Voxel IDs\n  const V_AIR = 0;\n  const V_STONE = 1;\n  const V_ACCENT = 2;\n  const V_CALCITE = 3;\n  const V_DRIPSTONE = 4;\n  const V_TUFF = 5;\n  const V_MOSS = 6;\n  const V_ROOTED_DIRT = 7;\n  const V_SCREE = 8;\n  const V_LOG = 9;\n  const V_LEAVES_JUNGLE = 10;\n  const V_LEAVES_AZALEA = 11;\n  const V_LEAVES_FLOWERING = 12;\n  const V_DRIP_TIP_DOWN = 13;\n  const V_DRIP_FRUSTUM_DOWN = 14;\n  const V_DRIP_BASE_DOWN = 15;\n  const V_DRIP_TIP_UP = 16;\n  const V_SPORE = 17;\n  const V_HANGING_ROOTS = 18;\n  const V_MOSS_CARPET = 19;\n  const V_WALL = 20;\n  const V_SLAB = 21;\n  const V_VINE = 22;\n\n  const grid = new Uint8Array(W * H * D);\n  const getV = (x, y, z) => {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      return grid[(x * H + y) * D + z];\n    }\n    return 0;\n  };\n\n  const setV = (x, y, z, val) => {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      grid[(x * H + y) * D + z] = val;\n    }\n  };\n\n  const isSolid = (v) => v >= 1 && v <= 12;\n\n  // Instance specific morphotypes\n  const towerType = inst % 4; // 0: Twin Spire, 1: Swallow Arch, 2: Fluted Needle, 3: Terraced Mogote\n  const baseHeights = [41, 38, 43, 39];\n  const topY = Math.min(H - 4, baseHeights[towerType] + Math.floor((api.random() - 0.5) * 4));\n\n  const cx0 = 10.5 + (api.random() - 0.5) * 1.5;\n  const cz0 = 10.5 + (api.random() - 0.5) * 1.5;\n  const leanX = (api.random() - 0.5) * 2.6;\n  const leanZ = (api.random() - 0.5) * 2.6;\n\n  const baseRadius = 5.2 + api.random() * 1.4;\n  const fluteN = 4 + Math.floor(api.random() * 4);\n  const fluteAmp = 0.45 + api.random() * 0.35;\n  const flutePhase = api.random() * Math.PI * 2;\n\n  const notchDepth = 0.85 + api.random() * 0.5;\n  const notchHeightOffset = 1.0 + api.random() * 1.5;\n\n  // Natural Arch parameters (Type 1)\n  const archAngle = api.random() * Math.PI;\n  const archY = 12 + Math.floor(api.random() * 4);\n  const archRadiusH = 2.4 + api.random() * 0.8;\n  const archRadiusV = 2.9 + api.random() * 1.0;\n\n  // Twin spire parameters (Type 0)\n  const saddleY = 24 + Math.floor(api.random() * 5);\n  const splitAngle = api.random() * Math.PI;\n  const splitDist = 2.4 + api.random() * 1.0;\n  const peak1Dx = Math.cos(splitAngle) * splitDist;\n  const peak1Dz = Math.sin(splitAngle) * splitDist;\n\n  // Calcite vein orientation\n  const veinAngleX = 0.45 + api.random() * 0.4;\n  const veinAngleY = 0.25 + api.random() * 0.3;\n  const veinAngleZ = 0.45 + api.random() * 0.4;\n  const veinPhase = api.random() * 10;\n\n  // Subterranean dissolution pockets (tafoni vugs)\n  const pockets = [];\n  const numPockets = 1 + Math.floor(api.random() * 3);\n  for (let i = 0; i < numPockets; i++) {\n    const pAng = api.random() * Math.PI * 2;\n    const pDist = baseRadius * (0.5 + api.random() * 0.35);\n    pockets.push({\n      x: cx0 + Math.cos(pAng) * pDist,\n      y: 14 + Math.floor(api.random() * (topY - 20)),\n      z: cz0 + Math.sin(pAng) * pDist,\n      rx: 1.5 + api.random() * 1.0,\n      ry: 1.8 + api.random() * 1.2,\n      rz: 1.5 + api.random() * 1.0\n    });\n  }\n\n  // 1. Terrain elevation query across footprint\n  const groundY = new Int32Array(W * D);\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const h = api.heightAt(x, z);\n      groundY[x * D + z] = Math.max(0, Math.min(H - 6, Math.floor(SEAT_Y + h)));\n    }\n  }\n\n  // 2. Sculpt karst core\n  for (let y = 0; y <= topY; y++) {\n    const ty = Math.max(0, (y - SEAT_Y) / (topY - SEAT_Y));\n    const curCx = cx0 + leanX * ty + Math.sin(y * 0.18) * 0.6;\n    const curCz = cz0 + leanZ * ty + Math.cos(y * 0.18) * 0.6;\n\n    for (let x = 0; x < W; x++) {\n      for (let z = 0; z < D; z++) {\n        const gY = groundY[x * D + z];\n        const dx = x - curCx;\n        const dz = z - curCz;\n        const dist = Math.hypot(dx, dz);\n        const theta = Math.atan2(dz, dx);\n\n        let r = baseRadius;\n        r -= (y - SEAT_Y) * 0.08;\n\n        // Solution undercut notch near local waterline\n        const localNotchY = gY + notchHeightOffset;\n        const nDist = Math.abs(y - localNotchY);\n        if (nDist < 2.8) {\n          r -= (2.8 - nDist) * (notchDepth * 0.6);\n        }\n\n        // Submerged / ground skirt flaring\n        if (y < gY + 2) {\n          r += (gY + 2 - y) * 0.65;\n        }\n\n        // Vertical Karren / solution fluting\n        const flute = fluteAmp * Math.cos(fluteN * theta + flutePhase)\n                    + 0.3 * Math.sin((fluteN + 2) * theta - y * 0.2)\n                    + 0.25 * Math.sin(y * 0.45 + theta * 2.5);\n        r += flute;\n\n        let solid = false;\n\n        if (towerType === 0 && y > saddleY) {\n          const progress = (y - saddleY) / (topY - saddleY);\n          const p1x = curCx + peak1Dx * progress;\n          const p1z = curCz + peak1Dz * progress;\n          const p2x = curCx - peak1Dx * progress;\n          const p2z = curCz - peak1Dz * progress;\n\n          const pR = Math.max(1.2, r * 0.58 - progress * 0.35);\n          const d1 = Math.hypot(x - p1x, z - p1z);\n          const d2 = Math.hypot(x - p2x, z - p2z);\n          if (d1 <= pR + flute * 0.35 || d2 <= pR + flute * 0.35) {\n            solid = true;\n          }\n        } else {\n          if (dist <= r) {\n            solid = true;\n          }\n        }\n\n        // Natural Archway Tunnel\n        if (solid && (towerType === 1)) {\n          const adx = x - curCx;\n          const adz = z - curCz;\n          const ady = (y - archY) / archRadiusV;\n          const proj = adx * Math.cos(archAngle) + adz * Math.sin(archAngle);\n          const perp = (-adx * Math.sin(archAngle) + adz * Math.cos(archAngle)) / archRadiusH;\n          if (Math.hypot(perp, ady) < 1.0 && Math.abs(proj) < baseRadius + 3.0) {\n            solid = false;\n          }\n        }\n\n        // Dissolution pockets\n        if (solid) {\n          for (let p = 0; p < pockets.length; p++) {\n            const pk = pockets[p];\n            const pdx = (x - pk.x) / pk.rx;\n            const pdy = (y - pk.y) / pk.ry;\n            const pdz = (z - pk.z) / pk.rz;\n            if (pdx * pdx + pdy * pdy + pdz * pdz < 1.0) {\n              solid = false;\n              break;\n            }\n          }\n        }\n\n        if (solid) {\n          setV(x, y, z, V_STONE);\n        }\n      }\n    }\n  }\n\n  // Foundation downward conformity: fill solid rock to terrain on all columns\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const gY = groundY[x * D + z];\n      let hasColumnRock = false;\n      for (let y = gY; y <= gY + 4; y++) {\n        if (getV(x, y, z) === V_STONE) {\n          hasColumnRock = true;\n          break;\n        }\n      }\n      if (hasColumnRock) {\n        for (let y = 0; y <= gY; y++) {\n          setV(x, y, z, V_STONE);\n        }\n      }\n    }\n  }\n\n  // 3. Geological Material texturing\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        if (getV(x, y, z) !== V_STONE) continue;\n\n        const gY = groundY[x * D + z];\n\n        // Wet / algae-encrusted waterline base\n        if (y <= gY + 1) {\n          const rVal = api.random();\n          if (rVal < 0.35) setV(x, y, z, V_TUFF);\n          else if (rVal < 0.65) setV(x, y, z, V_SCREE);\n          else if (rVal < 0.85) setV(x, y, z, V_MOSS);\n          else setV(x, y, z, V_DRIPSTONE);\n          continue;\n        }\n\n        // Calcite mineral veins\n        const veinVal = Math.sin(x * veinAngleX + y * veinAngleY + z * veinAngleZ + veinPhase);\n        if (veinVal > 0.72) {\n          setV(x, y, z, (api.random() < 0.65) ? V_CALCITE : V_ACCENT);\n          continue;\n        }\n\n        // Weathered dripstone strata\n        const dripVal = Math.sin(y * 0.32 + (x - z) * 0.18);\n        if (dripVal > 0.58) {\n          setV(x, y, z, V_DRIPSTONE);\n          continue;\n        }\n\n        if (api.random() < 0.15) {\n          setV(x, y, z, V_ACCENT);\n        }\n      }\n    }\n  }\n\n  // 4. Summit Soil & Karst Vegetation Ledges\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      let maxY = -1;\n      for (let y = H - 1; y >= 0; y--) {\n        if (getV(x, y, z) !== V_AIR) {\n          maxY = y;\n          break;\n        }\n      }\n      if (maxY >= 0) {\n        const gY = groundY[x * D + z];\n        if (maxY >= topY - 4) {\n          setV(x, maxY, z, (api.random() < 0.75) ? V_MOSS : V_ROOTED_DIRT);\n          if (maxY > 0 && api.random() < 0.5) {\n            setV(x, maxY - 1, z, V_ROOTED_DIRT);\n          }\n        } else if (maxY > gY + 3 && api.random() < 0.42) {\n          setV(x, maxY, z, V_MOSS);\n        }\n      }\n    }\n  }\n\n  // 5. Emergent Tropical Karst Canopy / Summit Trees\n  const treeBases = [];\n  if (towerType === 0) {\n    treeBases.push({ x: Math.round(cx0 + peak1Dx * 0.85), z: Math.round(cz0 + peak1Dz * 0.85) });\n    treeBases.push({ x: Math.round(cx0 - peak1Dx * 0.85), z: Math.round(cz0 - peak1Dz * 0.85) });\n  } else {\n    treeBases.push({ x: Math.round(cx0), z: Math.round(cz0) });\n    if (towerType === 3 || api.random() < 0.5) {\n      const ang = api.random() * Math.PI * 2;\n      const rad = 2.0 + api.random() * 1.5;\n      treeBases.push({ x: Math.round(cx0 + Math.cos(ang) * rad), z: Math.round(cz0 + Math.sin(ang) * rad) });\n    }\n  }\n\n  for (let t = 0; t < treeBases.length; t++) {\n    const tb = treeBases[t];\n    let startY = -1;\n    for (let y = H - 1; y >= topY - 8; y--) {\n      if (getV(tb.x, y, tb.z) !== V_AIR) {\n        startY = y;\n        break;\n      }\n    }\n    if (startY < 0) continue;\n\n    const trunkH = 2 + Math.floor(api.random() * 3);\n    let curX = tb.x;\n    let curZ = tb.z;\n\n    for (let ty = 1; ty <= trunkH; ty++) {\n      const y = startY + ty;\n      if (y >= H - 2) break;\n      setV(curX, y, curZ, V_LOG);\n      if (ty === trunkH - 1 && api.random() < 0.5) {\n        curX += (api.random() < 0.5 ? 1 : -1);\n      }\n    }\n\n    const crownCenterY = Math.min(H - 3, startY + trunkH);\n    const crownRadius = 2.3 + api.random() * 1.1;\n\n    for (let ox = -3; ox <= 3; ox++) {\n      for (let oz = -3; oz <= 3; oz++) {\n        for (let oy = -1; oy <= 2; oy++) {\n          const lx = curX + ox;\n          const ly = crownCenterY + oy;\n          const lz = curZ + oz;\n          if (lx < 0 || lx >= W || ly < 0 || ly >= H || lz < 0 || lz >= D) continue;\n\n          const d = Math.hypot(ox, oz, oy * 1.3);\n          if (d <= crownRadius && getV(lx, ly, lz) === V_AIR) {\n            const roll = api.random();\n            if (roll < 0.55) setV(lx, ly, lz, V_LEAVES_JUNGLE);\n            else if (roll < 0.85) setV(lx, ly, lz, V_LEAVES_AZALEA);\n            else setV(lx, ly, lz, V_LEAVES_FLOWERING);\n          }\n        }\n      }\n    }\n  }\n\n  // 6. Overhang Features: Stalactites, Spores, Hanging Roots & Ledges\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      for (let y = 1; y < H - 1; y++) {\n        if (getV(x, y, z) !== V_AIR) continue;\n\n        const above = getV(x, y + 1, z);\n        const below = getV(x, y - 1, z);\n\n        // Stalactite Dripstones under rock ceilings\n        if ((above === V_STONE || above === V_DRIPSTONE || above === V_CALCITE || above === V_ACCENT) && api.random() < 0.28) {\n          let airDepth = 0;\n          while (y - airDepth >= 0 && getV(x, y - airDepth, z) === V_AIR) {\n            airDepth++;\n          }\n          if (airDepth >= 1) {\n            if (airDepth === 1 || api.random() < 0.5) {\n              setV(x, y, z, V_DRIP_TIP_DOWN);\n            } else if (airDepth === 2 || api.random() < 0.6) {\n              setV(x, y, z, V_DRIP_FRUSTUM_DOWN);\n              setV(x, y - 1, z, V_DRIP_TIP_DOWN);\n            } else {\n              setV(x, y, z, V_DRIP_BASE_DOWN);\n              setV(x, y - 1, z, V_DRIP_FRUSTUM_DOWN);\n              setV(x, y - 2, z, V_DRIP_TIP_DOWN);\n            }\n          }\n          continue;\n        }\n\n        // Spore Blossom & Hanging Roots under foliage/soil\n        if (above === V_MOSS || above === V_ROOTED_DIRT || above === V_LEAVES_JUNGLE || above === V_LEAVES_AZALEA || above === V_LEAVES_FLOWERING) {\n          const r = api.random();\n          if (r < 0.12) {\n            setV(x, y, z, V_SPORE);\n          } else if (r < 0.35) {\n            setV(x, y, z, V_HANGING_ROOTS);\n          }\n          continue;\n        }\n\n        // Ledge decorations on horizontal surfaces\n        if (below === V_MOSS || below === V_ROOTED_DIRT) {\n          if (api.random() < 0.35) {\n            setV(x, y, z, V_MOSS_CARPET);\n          }\n        } else if (below === V_STONE || below === V_ACCENT || below === V_DRIPSTONE) {\n          const r = api.random();\n          if (r < 0.08) {\n            setV(x, y, z, V_SLAB);\n          } else if (r < 0.14) {\n            setV(x, y, z, V_WALL);\n          }\n        }\n      }\n    }\n  }\n\n  // 7. Cascading Tropical Vines on Sheer Limestone Walls\n  for (let x = 1; x < W - 1; x++) {\n    for (let z = 1; z < D - 1; z++) {\n      for (let y = H - 4; y >= 6; y--) {\n        if (getV(x, y, z) !== V_AIR) continue;\n\n        const adjE = isSolid(getV(x + 1, y, z));\n        const adjW = isSolid(getV(x - 1, y, z));\n        const adjS = isSolid(getV(x, y, z + 1));\n        const adjN = isSolid(getV(x, y, z - 1));\n\n        if ((adjE || adjW || adjS || adjN) && api.random() < 0.18) {\n          const strandLen = 2 + Math.floor(api.random() * 5);\n          for (let vy = 0; vy < strandLen; vy++) {\n            const targetY = y - vy;\n            if (targetY < 4 || getV(x, targetY, z) !== V_AIR) break;\n\n            const sE = isSolid(getV(x + 1, targetY, z));\n            const sW = isSolid(getV(x - 1, targetY, z));\n            const sS = isSolid(getV(x, targetY, z + 1));\n            const sN = isSolid(getV(x, targetY, z - 1));\n\n            if (sE || sW || sS || sN || vy > 0) {\n              setV(x, targetY, z, V_VINE);\n            } else {\n              break;\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // 8. Single 6-Connected Component Enforcement\n  const visited = new Uint8Array(W * H * D);\n  const queue = [];\n\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      for (let y = 0; y <= 2; y++) {\n        const idx = (x * H + y) * D + z;\n        if (grid[idx] !== V_AIR && !visited[idx]) {\n          visited[idx] = 1;\n          queue.push(x, y, z);\n        }\n      }\n    }\n  }\n\n  let head = 0;\n  const dirs = [\n    [1, 0, 0], [-1, 0, 0],\n    [0, 1, 0], [0, -1, 0],\n    [0, 0, 1], [0, 0, -1]\n  ];\n\n  while (head < queue.length) {\n    const qx = queue[head++];\n    const qy = queue[head++];\n    const qz = queue[head++];\n\n    for (let i = 0; i < 6; i++) {\n      const nx = qx + dirs[i][0];\n      const ny = qy + dirs[i][1];\n      const nz = qz + dirs[i][2];\n\n      if (nx >= 0 && nx < W && ny >= 0 && ny < H && nz >= 0 && nz < D) {\n        const nidx = (nx * H + ny) * D + nz;\n        if (grid[nidx] !== V_AIR && !visited[nidx]) {\n          visited[nidx] = 1;\n          queue.push(nx, ny, nz);\n        }\n      }\n    }\n  }\n\n  for (let i = 0; i < W * H * D; i++) {\n    if (grid[i] !== V_AIR && !visited[i]) {\n      grid[i] = V_AIR;\n    }\n  }\n\n  // Static block string lookup table (clean and free of switch-case AST issues)\n  const blockMap = [];\n  blockMap[V_STONE] = stonePrimary;\n  blockMap[V_ACCENT] = stoneAccent;\n  blockMap[V_CALCITE] = \"minecraft:calcite\";\n  blockMap[V_DRIPSTONE] = \"minecraft:dripstone_block\";\n  blockMap[V_TUFF] = \"minecraft:tuff\";\n  blockMap[V_MOSS] = groundBank.indexOf(\"moss\") !== -1 ? groundBank : \"minecraft:moss_block\";\n  blockMap[V_ROOTED_DIRT] = \"minecraft:rooted_dirt\";\n  blockMap[V_SCREE] = groundScree;\n  blockMap[V_LOG] = woodLog.indexOf(\"[\") !== -1 ? woodLog : woodLog + \"[axis=y]\";\n  blockMap[V_LEAVES_JUNGLE] = \"minecraft:jungle_leaves[persistent=true]\";\n  blockMap[V_LEAVES_AZALEA] = \"minecraft:azalea_leaves[persistent=true]\";\n  blockMap[V_LEAVES_FLOWERING] = \"minecraft:flowering_azalea_leaves[persistent=true]\";\n  blockMap[V_DRIP_TIP_DOWN] = \"minecraft:pointed_dripstone[thickness=tip,vertical_direction=down]\";\n  blockMap[V_DRIP_FRUSTUM_DOWN] = \"minecraft:pointed_dripstone[thickness=frustum,vertical_direction=down]\";\n  blockMap[V_DRIP_BASE_DOWN] = \"minecraft:pointed_dripstone[thickness=base,vertical_direction=down]\";\n  blockMap[V_DRIP_TIP_UP] = \"minecraft:pointed_dripstone[thickness=tip,vertical_direction=up]\";\n  blockMap[V_SPORE] = \"minecraft:spore_blossom\";\n  blockMap[V_HANGING_ROOTS] = \"minecraft:hanging_roots\";\n  blockMap[V_MOSS_CARPET] = \"minecraft:moss_carpet\";\n  blockMap[V_WALL] = stoneWall;\n  blockMap[V_SLAB] = stoneSlab.indexOf(\"[\") !== -1 ? stoneSlab : stoneSlab + \"[type=bottom]\";\n\n  // 9. Emission to Minecraft world\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const v = getV(x, y, z);\n        if (v === V_AIR) continue;\n\n        if (v === V_VINE) {\n          const adjE = isSolid(getV(x + 1, y, z));\n          const adjW = isSolid(getV(x - 1, y, z));\n          const adjS = isSolid(getV(x, y, z + 1));\n          const adjN = isSolid(getV(x, y, z - 1));\n\n          let n = adjN;\n          let s = adjS;\n          let e = adjE;\n          let w = adjW;\n          if (!n && !s && !e && !w) {\n            n = true;\n          }\n          api.set(x, y, z, \"minecraft:vine[east=\" + e + \",north=\" + n + \",south=\" + s + \",west=\" + w + \",up=false]\");\n        } else {\n          const str = blockMap[v];\n          if (str) {\n            api.set(x, y, z, str);\n          }\n        }\n      }\n    }\n  }\n\n  const names = [\n    \"Twin Horns Karst Pinnacle\",\n    \"Swallow Arch Karst Mogote\",\n    \"Sheer Mist Karst Needle\",\n    \"Cascading Terraced Mogote\"\n  ];\n\n  return {\n    name: names[towerType] || \"Limestone Karst Pinnacle\",\n    seatY: SEAT_Y,\n    anchors: {\n      base: [Math.round(cx0), SEAT_Y, Math.round(cz0)],\n      summit: [Math.round(cx0), Math.min(topY, H - 2), Math.round(cz0)]\n    },\n    interiors: []\n  };\n}"
+    }
+  }
+}

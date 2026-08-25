@@ -1,0 +1,156 @@
+{
+  "id": "probe_mammoth_camp",
+  "family": "probe",
+  "kit": "settlement",
+  "prompt": "A Stone Age mammoth-hunters' camp at the foot of an ice sheet: huts of mammoth bone and hide, drying racks, a kill site on the tundra with the skeleton still in the snow.",
+  "seed": 913,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "era": "primitive",
+    "wealth": 0.1,
+    "decline": 0.1,
+    "formality": 0,
+    "climate": {
+      "biome": "minecraft:snowy_plains",
+      "temperature": -0.9,
+      "humidity": -0.4,
+      "snow": "always"
+    },
+    "character": {
+      "label": "mammoth-hunters camp",
+      "materialTheme": "boreal_pine",
+      "urbanForm": "grown",
+      "archetypes": {
+        "forbid": [
+          "townhouse",
+          "terraced_row",
+          "shop_row",
+          "office",
+          "apartment_block",
+          "church",
+          "manor",
+          "warehouse"
+        ]
+      }
+    },
+    "tokens": {
+      "terrain": "open snowy tundra at the foot of a towering glacial ice sheet",
+      "icons": "mammoth bone and hide shelters; timber drying racks for hides and meat; butchered mammoth skeleton half-buried in the snow at a nearby kill site; central fire hearths",
+      "infra": "beaten snow paths between the shelters and the kill site"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 199903,
+    "completionTokens": 47656,
+    "cost": 0.1643
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 24,
+    "maxDepth": 2,
+    "generators": [
+      "authored:bone_totem_shrine",
+      "authored:mammoth_kill_site",
+      "building.grammar@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "cottage",
+      "hermitage",
+      "hut",
+      "sod_house",
+      "thatched_roundhouse"
+    ],
+    "archetypesInCatalog": 5,
+    "formPacks": [],
+    "props": [
+      "cairn",
+      "campsite",
+      "log_pile",
+      "monolith"
+    ],
+    "species": [
+      "creeping_juniper",
+      "ground_juniper",
+      "scrub_pine",
+      "taiga_spruce",
+      "tundra_spruce"
+    ],
+    "envelopes": [
+      "512x512",
+      "18x18",
+      "11x15x11",
+      "9x13x9",
+      "9x11x9",
+      "9x11x9",
+      "9x10x9",
+      "28x14x24",
+      "9x16x9"
+    ],
+    "constraints": 20,
+    "constraintKinds": [
+      "adjacent_to",
+      "at",
+      "blend",
+      "distance",
+      "facing",
+      "gap",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform"
+    ],
+    "constraintsWithStrength": 6,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 5,
+    "programReferences": 2,
+    "conformsTrue": 0,
+    "labels": 23,
+    "eras": [
+      "primitive"
+    ],
+    "bytes": 78083
+  },
+  "wallMs": 897000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 2,
+    "feedbackRounds": 1,
+    "programs": [
+      "ok mammoth_kill_site [landmark] 2 attempt(s), 56036 tokens ($0.0735), 8 warning(s)",
+      "ok bone_totem_shrine [landmark] 1 attempt(s), 27660 tokens ($0.0469), 4 warning(s)",
+      "ok drying_rack [plugin] 1 attempt(s), 27121 tokens ($0.0459), 1 warning(s)",
+      "ok bone_heap [plugin] 1 attempt(s), 29529 tokens ($0.0504), 2 warning(s)"
+    ],
+    "programCost": 0.2167,
+    "totalCost": 0.381,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/probe3/gen/probe_mammoth_camp/out/mammoth_hunters_camp",
+    "finalDiagnostics": {
+      "LOAM-W330": 2,
+      "LOAM-T208": 1,
+      "LOAM-W483": 1,
+      "LOAM-I463": 1,
+      "LOAM-I497": 1,
+      "LOAM-T341": 3,
+      "LOAM-W337": 2,
+      "LOAM-W470": 1
+    },
+    "crash": [],
+    "docName": "mammoth_hunters_camp.loam.json"
+  }
+}

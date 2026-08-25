@@ -1,0 +1,107 @@
+{
+  "id": "probe_karst",
+  "family": "probe",
+  "kit": "terrain",
+  "prompt": "A tropical karst landscape: limestone towers rising out of a flooded plain, a sinkhole lake, and a river that vanishes into the mouth of a cave — no settlement of any kind.",
+  "seed": 914,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "climate": {
+      "biome": "minecraft:jungle",
+      "temperature": 0.9,
+      "humidity": 0.8,
+      "snow": "never"
+    },
+    "character": {
+      "label": "uninhabited tropical karst",
+      "flora": {
+        "prefer": [
+          "jungle_broadleaf",
+          "tree_fern",
+          "kapok_emergent",
+          "understory"
+        ]
+      }
+    },
+    "tokens": {
+      "terrain": "a flooded plain with steep limestone karst towers rising above the water; one sinkhole lake; one river vanishing into the mouth of a cave",
+      "icons": "sheer karst pinnacles, flooded lowland marshes, sinkhole cenote pool, subterranean river swallow hole",
+      "settlement": "none; entirely pristine wilderness with no buildings, roads, or human presence"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 50441,
+    "completionTokens": 32222,
+    "cost": 0.0793
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 16,
+    "maxDepth": 2,
+    "generators": [
+      "authored:cenote_sinkhole",
+      "authored:karst_ponor_cave_mouth",
+      "cave.carver@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [],
+    "archetypesInCatalog": 0,
+    "formPacks": [],
+    "props": [],
+    "species": [
+      "jungle_canopy",
+      "spreading_jungle_oak",
+      "water_willow"
+    ],
+    "envelopes": [
+      "512x512"
+    ],
+    "constraints": 2,
+    "constraintKinds": [
+      "at"
+    ],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 1,
+    "forestFillsAtOrAboveCoverage": 1,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 0,
+    "programReferences": 2,
+    "conformsTrue": 0,
+    "labels": 13,
+    "eras": [],
+    "bytes": 56983
+  },
+  "wallMs": 702000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 2,
+    "feedbackRounds": 0,
+    "programs": [
+      "ok karst_ponor_cave_mouth [landmark] 1 attempt(s), 32838 tokens ($0.0567), 27 warning(s)",
+      "ok cenote_sinkhole [landmark] 1 attempt(s), 23795 tokens ($0.0397), 26 warning(s)",
+      "ok karst_pinnacle_tower [plugin] 2 attempt(s), 58638 tokens ($0.0778), 25 warning(s)"
+    ],
+    "programCost": 0.1759,
+    "totalCost": 0.2552,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/probe3/gen/probe_karst/out/tropical_karst",
+    "finalDiagnostics": {
+      "LOAM-T341": 2,
+      "LOAM-W337": 2,
+      "LOAM-T342": 1,
+      "LOAM-T107": 1
+    },
+    "crash": [],
+    "docName": "tropical_karst.loam.json"
+  }
+}
