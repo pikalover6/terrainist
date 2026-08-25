@@ -1512,5 +1512,14 @@ export const PULL_CROSS = true;
  * class the street cliff census counts (26 on troy at n13).
  *
  * `false` is the neutral value: bare full-block risers, exactly the n13 pass.
+ *
+ * **OFF by Kai's walk verdict (2026-08-24, n14b):** the gate PASSED — the
+ * dressing was coherent, refusals honest, no new defect class — and the
+ * *taste* verdict retired it anyway: "minecraft is a voxel game, anyone
+ * accepts blocky; stairs read as stairs and feel less natural." The lesson
+ * carries into the flight object: stairs are ARCHITECTURE for real drops
+ * (junction cliffs, terrace connections, monumental approaches), never
+ * texture for a road's own risers. The pass stays in-tree as the proven
+ * vocabulary the flight dresser will reuse.
  */
-export const STAIR_DRESS = true;
+export const STAIR_DRESS = false;

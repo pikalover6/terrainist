@@ -101,10 +101,13 @@ function snapshot(p: ColumnPlan): string {
 /* -------------------------------------------------------------------------- */
 
 describe("STAIR_DRESS", () => {
-  // STAIR_DRESS flip (2026-08-23): the dressing demonstration ships — Kai's
+  // STAIR_DRESS flip (2026-08-23): the demonstration shipped (n14b) — Kai's
   // gate for the flight-object mini-project. Landed false in a5e4573.
-  it("is flipped on: stepped streets are the shipping state", () => {
-    expect(STAIR_DRESS).toBe(true);
+  // OFF again (2026-08-24): gate PASSED, taste retired it — blocky risers
+  // read more natural than stair texture on roads. Stairs become the flight
+  // object's architecture, never road surface. The pass and its pins stay.
+  it("is off by walked verdict: bare risers are the shipping state", () => {
+    expect(STAIR_DRESS).toBe(false);
   });
 
   it("dresses a stepped street's risers with stairs facing the rise, and moves no level", () => {
