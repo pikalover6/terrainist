@@ -145,6 +145,21 @@ others — each a different teaching, none to be taught before a census of
 Third time this campaign that probing overturned a plausible story (C17's
 misfiled rule, C3's unenforced "violation", this).
 
+**"What else was hard" census (orchestrator, zero spend, 227 demotions
+matched to their nodes in the battery docs):** the conform was LAST in the
+constraints array in 86/100 of its demotions; the nodes carried 2 hard
+constraints (55), 3 (19), 1 (16), 4 (2); the other hard constraints
+present were `distance` 64, `adjacent_to` 28, `on` 8, `connected` 3; and
+**92 of the 100 conform-demoted nodes also lost a second constraint** —
+so the node was genuinely over-constrained and the conform merely went
+first. The over-constraint source is the tethering pattern the kit's own
+fences model: several hard `distance`/`adjacent_to` tethers per building
+(distance defaults hard). Levers, for the consult: teach `distance` soft
+by default in fences (the validator's own hint calls soft "the single
+most useful habit"); or change `DEFAULT_STRENGTH.distance` to soft in the
+spec — a layout-changing code decision, byte-identity-staged, Kai's;
+or weight the conform above 1.0. Script: scratchpad b3/demotion-census.py.
+
 ## Sequencing, caps, spend
 
 B1 first (one cluster, ~$0.35, answers Kai's own question); B3's probes in
