@@ -26,8 +26,8 @@ disk and refuses findings). LLMs never emit absolute coordinates.
 6. **The bespoke tier** — model-written sandboxed programs (landmark/plugin),
    hash-frozen into the document, five-step gate, dropped-never-broken.
 7. **The ground contract + hillside + flora** (Aug 2026) — see cells 2–3.
-8. **The road-pull saga → n13 ratified → the Great Stocktake** (late Aug
-   2026) — cells 3–4.
+8. **The road-pull saga → n13 ratified → the Great Stocktake** — late
+   August 2026, cells 3–4.
 
 **Late July → early Aug 2026 (compressed from cell 2):** 07-29 the
 subagent-effort discovery (stock CC honours frontmatter `effort:`; 15-type
