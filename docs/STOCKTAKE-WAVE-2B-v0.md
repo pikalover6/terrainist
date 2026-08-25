@@ -98,15 +98,27 @@ and the one Kai's campaign window should be sized for.
 ## B3. Binding contracts — probe before teaching
 
 The behavior audit asked to "teach the two or three contracts that bind"
-(strength, conforms, envelope). Wave 2a says probe first: `strength` is
-omitted in 677/716 constraints and `hard` is never written — **what an
-omitted strength means to the solver is the first question**, and if the
-default is already hard there is nothing to teach; `conforms` is 1/108 but
-is set by the conform-certification gate, not by the author — a harness
-question, not a kit one; envelopes are copied from whatever the kit prints
-(84 % kit-literal), so the lever is which envelopes the fences print, which
-B1/B2 already move. Proposed: three probes (zero spend), then at most one
-kit-fix cluster for whatever actually binds.
+(strength, conforms, envelope). Wave 2a says probe first — and the first
+probe is answered (orchestrator, 2026-08-24, zero spend): **an omitted
+`strength` is a per-type default, not an absence** (`spec/settlement/
+constraints.ts:199-221`, §4.5) — hard for `within`, `adjacent_to`, `along`,
+`beside`, `distance`, `connected`, `orientation`, `clearance`,
+`terrain_conform`, `course`, `on`, `not_overlapping`, `elevation`, `slope`,
+`inside_shell`, `above`; soft for `facing`, `align`, `zone`, `at`, `spread`,
+`cluster`; contain-mode `zone`/`at` flip hard. So `hard` never being written
+(677/716 omitted) is the contract working, not failing: writing `hard` is
+redundant, and the only meaningful authoring choice is `soft` (39/716). The
+E404 demotions in 38/48 runs are hard defaults the solver could not satisfy,
+softened with a warning whose fix hint already says "widen the numbers
+first, soften only if it was a preference" — which is exactly what the kit
+teaches at :3681. **Nothing to teach on strength unless a census shows the
+demotions concentrate on a type or two** (the golden records carry
+diagnostic codes; a zero-spend census can say). `conforms` 1/108 is set by
+the conform-certification gate, not the author — a harness question;
+envelopes are copied from whatever the kit prints (84 % kit-literal), so
+the lever is which envelopes the fences print, which B1/B2 already move.
+Proposed: the demotion census (zero spend), then at most one kit-fix
+cluster for whatever actually binds — possibly none.
 
 ## Sequencing, caps, spend
 
