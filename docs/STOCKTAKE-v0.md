@@ -216,6 +216,14 @@ analysis harness over it:
   seven packs including east_asian and feudal_japanese — FORM_PACKS'
   affinity fields are W517 advice, too coarse to serve as a retrieval
   filter. Cut implemented in registry-export.ts at zero spend.
+- **WS-A2 CLOSED (`5893621`):** the candidate menu is named-pack-only —
+  a classical troy menu is 24 ids / ~1k tokens (was 60 / ~2.5k, −59 % for
+  zero measured reach) — committed, tested (360/360), measured twice, OFF
+  by Kai's ruling until revisited. Handed to A3: the binding finding
+  (named pack, coherent menu, still ignored on glowcap_vale/redwood_camp)
+  and the region-scope consult. The session's two probe-before-spend
+  catches (an env var the harness never read; a baseline one kit behind)
+  saved more than the measurements cost.
 
 ## WS-D — Price optimization
 

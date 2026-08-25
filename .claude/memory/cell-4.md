@@ -72,7 +72,10 @@ pithos_store/trireme/votive_column (0/50 corpus) 3/3 ON, 0/3 OFF;
 explicitArchetypeParams held (prediction pre-registered); walled 0/0/0
 = the era tier's defect (medieval spans 8 incompatible packs — a
 European town offered torii); binding hypothesis narrowed to named-pack
-cases. Kai's ruling pending: cut or affinity-gate tier 2; flag "not yet".
+cases. Kai: DROP tier 2 (580 shown / 0 adopted vs 198/49) — **WS-A2 CLOSED
+5893621**, menu named-pack-only ~1k tokens, flag OFF "not yet". Cluster 4
+(checklists: no forest-count law exists; envelope rules unenforced)
+applied, triplicates in flight ($0.35).
 **Region scope** (consult 82216ce): two-place prompts empty world scope
 BY INSTRUCTION (one region_<place> token each, hand-off in prose nobody
 structural reads) — a prompt class the menu and A3 are blind to; Kai:
