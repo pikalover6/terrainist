@@ -22,6 +22,9 @@ export * from "./highrise.js";
 export * from "./terrace.js";
 export * from "./catalog.js";
 export * from "./form-packs.js";
+// The per-run candidate menu (WS-A2): a read-only view over the two registries
+// above, conditioned on a classified intent.
+export * from "./registry-export.js";
 export * from "./archetypes.js";
 export * from "./themes.js";
 export * from "./props.js";
