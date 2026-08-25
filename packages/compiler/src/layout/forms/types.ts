@@ -316,6 +316,21 @@ export interface FormPlan {
   readonly edges?: readonly PlannedEdge[];
   /** What the form actually did, for the compile report. */
   readonly record: FormRecord;
+  /**
+   * Notes the form wants in the compile report, one per event, forwarded by
+   * `layDistrict` under the district's node path. A form has no diagnostics
+   * channel of its own; `record.adapted` is a summary for the report's form
+   * row, and a per-strip fact (which strip, what it measured, what it cost)
+   * belongs here.
+   */
+  readonly notes?: readonly FormNote[];
+}
+
+/** A note a form asks the district pass to emit on its behalf. */
+export interface FormNote {
+  readonly name: "SITE_STRIP_DISSOLVED";
+  readonly message: string;
+  readonly fix: string;
 }
 
 /** A drawn plan, or the measured reason there is none. */

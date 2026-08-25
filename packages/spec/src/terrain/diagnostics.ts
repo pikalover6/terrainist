@@ -1134,6 +1134,16 @@ export const TERRAIN_DIAGNOSTICS = {
    */
   DISTRICT_FORM_ALIAS: "LOAM-I498",
   /**
+   * A site-planned quarter dissolved a frontage strip back to natural ground
+   * (`docs/SITE-PLAN-v0.md` §3.7): its usable frontage came out shorter than
+   * the two lots a terrace needs. One note per strip, naming the strip, the
+   * measurement (stations held against the minimum) and the cost (columns
+   * returned) — the note §3.7 always specified and the planner never wrote
+   * until the Stocktake Run found four of montfort_hill's five strips gone
+   * with only an `adapted` string to say so (2026-08-25).
+   */
+  SITE_STRIP_DISSOLVED: "LOAM-I499",
+  /**
    * `docs/GROUND-CONTRACT-v1.md` §3.2's coverage invariant is violated: a
    * boundary pair between two winners at different levels that matches none of
    * the four accounting clauses — no derived transition, no `transition: "none"`

@@ -613,6 +613,14 @@ demoted: to a `lane` if another strip still fronts it, and dropped entirely
 otherwise. One `SITE_STRIP_DISSOLVED` note names the strip, the measurement and
 what it cost.
 
+> **Amended by the Stocktake Run, 2026-08-25 — the note now exists.** It never
+> had: the planner wrote one `adapted` string ("N frontage strip(s) dissolved
+> back to natural ground") and no note, and montfort_hill_k1 lost four of five
+> strips with nothing per strip in the report. `SITE_STRIP_DISSOLVED` is
+> `LOAM-I499`, one per strip, carried from the form to `layDistrict` on
+> `FormPlan.notes`: the strip, the side and contour, the stations held against
+> `MIN_STRIP_RUN`, and the columns returned.
+
 > Sol's rule, stated normatively: **if a terrace cannot support both its use and
 > its transition, it is merged or dissolved.** It is never shipped for a
 > downstream pass to dress.

@@ -85,6 +85,7 @@ import {
   type SpineStreet,
 } from "./carriage-spine.js";
 import {
+  type FormNote,
   ROUND_ZERO,
   drewAsAsked,
   type FormBench,
@@ -634,6 +635,8 @@ function draw(ctx: FormContext): FormResult {
   /** The platform level a chosen street sits on, by segment index. */
   const streetLevel: number[] = [];
   let dissolved = 0;
+  /** One `SITE_STRIP_DISSOLVED` per strip §3.7 gives back, for the report. */
+  const notes: FormNote[] = [];
 
   for (const [c, candidate] of chosen.entries()) {
     const { e, path, normals } = candidate;
@@ -834,7 +837,26 @@ function draw(ctx: FormContext): FormResult {
           if (stations > 0) dissolved++;
           // Everything but the street's own standing room, which is the
           // street's and not this strip's to give away.
-          for (let k = 0; k < cells; k++) if (columns[k] === 1 && ring[k] !== 1) platform[k] = 0;
+          let returned = 0;
+          for (let k = 0; k < cells; k++) {
+            if (columns[k] === 1 && ring[k] !== 1) {
+              platform[k] = 0;
+              returned++;
+            }
+          }
+          if (stations > 0) {
+            notes.push({
+              name: "SITE_STRIP_DISSOLVED",
+              message:
+                `strip "${id}" (${sign === 1 ? "uphill" : "downhill"} side of the contour street at ${e}) ` +
+                `held ${stations} usable station(s) against the ${minStripRun(ctx.density)} two lots need, ` +
+                `and gave ${returned} column(s) of claimed terrace back to natural ground`,
+              fix:
+                "Nothing to change if the hill is simply too broken for a terrace here. If the town is " +
+                'sparse, give the quarter a broader, gentler slope ("zone"/"at"), a smaller "envelope.size" ' +
+                'so it sits across fewer contours, or a lower "density" so a strip needs less frontage.',
+            });
+          }
           continue;
         }
         sides.push({
@@ -1125,6 +1147,7 @@ function draw(ctx: FormContext): FormResult {
       strips: kept,
       edges,
       lotMask,
+      notes,
       record: drewAsAsked("hillside", {
         adapted: [
           `${chosen.length} principal contour street(s) at ${chosen.map((c) => c.e).join(", ")}`,

@@ -540,3 +540,27 @@ restored to unit 6's — the world is unit 6's. The pass is kept in
 montfort junction density 0.013 → 0.062, walled 0.036 → 0.070, solo down,
 unserved faces flat — the same seat-beside-doorstep clutter; F10's fix
 must be read against these numbers too.
+
+## J. The guard sees the hill, and a dissolved strip says so (unit 10, 2026-08-25)
+
+Two findings from §B, landed as diagnostics (the worlds are payload-identical
+on all fourteen law-5 documents; the reports change):
+
+- **F6 — `W527 WALLED_QUARTER_SPARSE` on the planned path.** The guard was
+  gated `planned === undefined`. It now measures a planned quarter against
+  the land inside its streets — every column the carriageway and sidewalk
+  did not take, natural ground included, because the natural ground inside
+  the wall is exactly the sparse part. montfort_hill_k1: "built 1,344 of its
+  27,653 column(s) of land inside the streets — 5 %, under the 50 % a walled
+  quarter needs"; the fresh walled city 10 %. Troy (grown, block path):
+  silent, as before the flip made it so.
+- **F7 — `SITE_STRIP_DISSOLVED` (`LOAM-I499`).** SITE-PLAN §3.7's note, one
+  per strip, carried from the form to `layDistrict` on the new
+  `FormPlan.notes`: montfort names three — e.g. `hs1_0`, uphill of the
+  contour street at 93, "held 21 usable station(s) against the 30 two lots
+  need, and gave 656 column(s) of claimed terrace back to natural ground";
+  the fresh walled city names six. §3.7 amended to say the note exists.
+
+Pinned by `packages/compiler/test/walled-planned.test.ts` on the walked
+document. The spec registry's uniqueness/totality suite passes with the new
+code (469 tests).

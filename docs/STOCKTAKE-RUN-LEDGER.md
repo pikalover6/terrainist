@@ -7,46 +7,41 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 9 (the city flips + the highrise head-course
-  fix) is committed.
-- **Next unit:** unit 10 — the small findings unit: F6 (`W527
-  WALLED_QUARTER_SPARSE` blind on the planned path — coverage = built
-  columns / enclosed land minus streets, so a walled hill town's own T4
-  guard fires) and F7 (`SITE_STRIP_DISSOLVED`, the note SITE-PLAN §3.7
-  mandates: strip, measurement, cost). Diagnostics change the report, not
-  the world: payload-identical on all fourteen; new codes take their
-  numbers from `packages/spec/src/terrain/diagnostics.ts`'s pre-allocated
-  table (append only). Then F10 (two-phase parcel growth), F4 (the `I512`
-  street probe), F14 (a physics unit over the shipped worlds' pre-existing
-  findings); then §10.3 — the icon metric, the rules-only kit, E1's three
-  arms.
-- **Last commit:** a03c7d5 (unit 8). Convention: this line names the
+- **In flight:** nothing — unit 10 (F6/F7: the walled guard on the planned
+  path, the dissolved-strip note) is committed.
+- **Next unit:** unit 11 — spec §10.3, **the icon metric**
+  (`tools/golden-prompts/`): per spec §6 — (i) icon presence: a pre-written
+  icon list per golden prompt (from the prompt text, `prompts.json`
+  `icons`), matched against named nodes / archetypes / programs in the
+  document and against the compiled world's placements; (ii) dominance:
+  the icon's height and footprint vs the median building; (iii) density:
+  lots per 10k envelope cells (from the compile report) vs a per-prompt
+  floor; (iv) archetype-less box count in pre-modern worlds; (v) era
+  fidelity; (vi) the old metrics as floors. Reads a run directory's
+  `*.doc.json` (`run.mjs` or `record-generate-run.mjs` shape) plus compile
+  reports (`--report`, or compiled in-process); prints a scoreboard and
+  writes `icon-metric.json` beside `summary.json`. First target: the
+  before-sample (free — the documents exist; compiles are free). Law 7
+  applies: the read wins over the number; the metric is a floor and an
+  alarm. Then the rules-only kit and E1's three arms (spend: ~$0.64 ×
+  9 authoring passes + compiles), F10, F4, F14 interleaved.
+- **Last commit:** 4f6f373 (unit 9). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
 - **Spend:** $2.29 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
 - **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19, D25.)
 - **Findings queue (law 1: bugs before anything else):**
   - F1 — `railway_town` `LOAM-T110 UNSTABLE_FLUID` at emit.
-  - F2 — anchors at HEAD: all four attributed; metropolis and hellenist read
-    (units 4, 8); troy/pirates moved better with the kerb flip.
+  - F2 — anchors at HEAD: all four attributed (units 4, 8).
   - F3 — metropolis authoring regression, lost 3-of-3. E2/E3.
   - F4 — `LOAM-I512` "ruined shells" vs intact boxes — street-level probe.
-  - F5 — fixed (units 5–6). F11, F12 — **fixed** (units 8–9). F13 — **the
-    highrise door's head course never written** (`storyHeight > 3`) —
-    **fixed** (unit 9, D25).
-  - F6 — `W527` gated `planned === undefined`; F7 — `SITE_STRIP_DISSOLVED`
-    never existed. Unit 10.
+  - F5, F11, F12, F13 — fixed (units 5–9). **F6, F7 — fixed (unit 10).**
   - F8 — `frontageLots` drops (~70 % starvation → F10, ~30 % geometry → P1).
   - F9 — new hillside lots' cut faces undressed (P2); walkability audit
     reads zero entrance reach on montfort/walled — instrument gap.
   - F10 — `LOT_PARCEL_OWN_STATIONS` orphans 24 % of the plane; two-phase
     growth needed; off.
-  - F14 — pre-existing physics findings on shipped worlds (the physics gate
-    covers fixtures only): sea-lantern chains/lanterns on the leviathan and
-    harbour props (thalassa 54/31, hellenist_k1 46/24), three isolated
-    blocks and a dripstone on thalassa, andesite-wall chains on the
-    metropolis (48), pirates' `interior.blocked_column` 429 and
-    `prop.fluid_leak` 33, troy's `floating.stair` 1. One physics unit,
-    probe first.
+  - F14 — pre-existing physics findings on shipped worlds; one physics
+    unit, probe first.
 ## DECISIONS
 
 (every fork taken: the reversible default chosen, why, and how to undo it)
@@ -186,6 +181,16 @@ running state. The NOW block is rewritten at the end of every turn.
   (F14) are not chased in this unit — the gate pins the fixtures, the
   committed baselines' `floaters` show these predate the Run — and go to a
   physics unit of their own, probe first. Undo: n/a.
+- **D27 (unit 10):** `SITE_STRIP_DISSOLVED` takes `LOAM-I499` — the next
+  free number beside `DISTRICT_FORM_ALIAS` I498 in the site-plan block; the
+  design doc named the note but no number, so SITE-PLAN §3.7 is amended to
+  record it. Forms carry per-event notes on `FormPlan.notes`, forwarded by
+  `layDistrict`; no form gains a diagnostics channel of its own. Undo: n/a.
+- **D28 (unit 10):** the planned-path `W527` measures against the land
+  inside the streets (natural ground included) rather than against strip
+  land, because the natural ground inside the wall is the sparse part;
+  diagnostics change the report only — no switch, worlds payload-identical.
+  Undo: revert the branch.
 
 ## SPEND
 
@@ -200,6 +205,7 @@ running state. The NOW block is rewritten at the end of every turn.
 | 7 | the second flip — compiles, audits, the FULL suite | 0.00 | 2.29 |
 | 8 | hellenist's density — instrumented probe, two switches off, trials, the FULL suite | 0.00 | 2.29 |
 | 9 | the city flips + the highrise head fix — compiles, lints, traces, baselines, two FULL suites | 0.00 | 2.29 |
+| 10 | F6/F7 — diagnostics only; compiles, the FULL suite | 0.00 | 2.29 |
 
 ## VERDICTS
 
@@ -382,3 +388,15 @@ running state. The NOW block is rewritten at the end of every turn.
   skipped (5673)`. Files: `layout/district.ts`, `layout/city.ts`,
   `stdlib/structures/highrise.ts`, tests ×3, two baselines, the record
   §F–§H, VERDICT station 3. Subagent: 1 (opus-5-medium). Spend $0.
+- **unit 10 — the walled guard sees the hill; the dissolved strip says so
+  (2026-08-25):** `W527 WALLED_QUARTER_SPARSE` fires on the planned path
+  against the land inside the streets (montfort 5 %, the fresh walled city
+  10 %, troy silent); `SITE_STRIP_DISSOLVED` `LOAM-I499` exists (three notes
+  on montfort, six on the walled city), carried on the new `FormPlan.notes`;
+  SITE-PLAN §3.7 amended (D27, D28). Payload-identical on all fourteen.
+  Pinned by `test/walled-planned.test.ts` (compiles the walked montfort).
+  Tests: FULL suite COUNTS `Test Files 338 passed | 1 skipped (339)`, `Tests
+  5645 passed | 31 skipped (5676)`; spec registry `469 passed`. Files:
+  `spec/terrain/diagnostics.ts`, `layout/forms/types.ts`,
+  `layout/forms/hillside.ts`, `layout/district.ts`, the test,
+  `docs/SITE-PLAN-v0.md`, `MONTFORT-HILLSIDE-2026-08-25.md` §J. Spend $0.

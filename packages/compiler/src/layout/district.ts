@@ -1850,6 +1850,9 @@ export function layDistrict(
   // no ground a lot may take. The gate is `plan.strips`, which only `hillside`
   // sets, so no other form moves.
   const planned = plan.strips;
+  // The form's own per-event notes (`FormPlan.notes`) — today the site plan's
+  // `SITE_STRIP_DISSOLVED`, one per strip §3.7 gave back.
+  for (const n of plan.notes ?? []) diagnostics.push(note(n.name, nodePath, n.message, n.fix));
 
   // --- the leaf cap ---------------------------------------------------------
   // Every block that is too deep for `subdivide` to reach the middle of gets an
@@ -2501,20 +2504,35 @@ export function layDistrict(
   // Measured at the end of the pass, from what was actually built against the
   // land the blocks actually held — the one ratio that can tell "a walled town"
   // from "a wall round a field", and the one nothing else in the report says.
-  if (walledQuarter(p, intent) && planned === undefined && blocks.length > 0) {
+  //
+  // **On the planned path too** (the Stocktake Run, 2026-08-25): the guard was
+  // gated `planned === undefined` and so blind on `hillside` — the form every
+  // walled hill town gets — while montfort_hill_k1 shipped a keep and a
+  // handful of houses inside a full circuit with this warning silent. A
+  // planned quarter has no blocks; its land is every column the streets did
+  // not take, natural ground included, because the natural ground inside the
+  // wall is exactly the sparse part.
+  if (walledQuarter(p, intent) && (planned === undefined ? blocks.length > 0 : true)) {
     let blockLand = 0;
-    for (const block of blocks) blockLand += block.columns;
+    if (planned === undefined) {
+      for (const block of blocks) blockLand += block.columns;
+    } else {
+      for (let k = 0; k < grid.cells; k++) {
+        if (carriageway[k] !== 1 && sidewalk[k] !== 1) blockLand++;
+      }
+    }
     let builtColumns = 0;
     for (const item of built) {
       builtColumns += (item.rect.x1 - item.rect.x0 + 1) * (item.rect.z1 - item.rect.z0 + 1);
     }
     const coverage = blockLand === 0 ? 0 : builtColumns / blockLand;
+    const land = planned === undefined ? "block column(s)" : "column(s) of land inside the streets";
     if (coverage < WALLED_COVERAGE_FLOOR) {
       diagnostics.push(
         warning(
           "WALLED_QUARTER_SPARSE",
           nodePath,
-          `"${nodePath}" is walled and built ${builtColumns} of its ${blockLand} block column(s) — ${Math.round(coverage * 100)} %, under the ${Math.round(WALLED_COVERAGE_FLOOR * 100)} % a walled quarter needs before the circuit reads as a town wall rather than as a fence round open ground`,
+          `"${nodePath}" is walled and built ${builtColumns} of its ${blockLand} ${land} — ${Math.round(coverage * 100)} %, under the ${Math.round(WALLED_COVERAGE_FLOOR * 100)} % a walled quarter needs before the circuit reads as a town wall rather than as a fence round open ground`,
           `Raise "density", lower "params.blockSize" so the fabric draws more streets and shallower blocks, or shrink "envelope.size" so the wall encloses the fabric that was actually built.`,
         ),
       );
