@@ -70,6 +70,8 @@ interface RawChunkColumn {
   getBlockStateId(pos: RawVec3): number;
   getBiome(pos: RawVec3): number;
   readonly biomes: readonly { data: { value?: number; palette?: unknown } }[];
+  /** @internal read by the run-fill path; see {@link RawChunkSection}. */
+  readonly sections?: readonly (RawChunkSection | undefined)[];
   /** Read by prismarine-provider-anvil; defaults to a `Date.now()`-derived value. */
   lastUpdate?: readonly [number, number];
   inhabitedTime?: number;
@@ -82,6 +84,29 @@ interface RawChunkColumn {
    * disk.
    */
   blockEntities: Record<string, unknown>;
+}
+
+/**
+ * The internals of `prismarine-chunk`'s palette containers, as far as the
+ * run-fill path in {@link ChunkAdapter.fillColumn} reads them. Everything here
+ * is optional and shape-checked at the point of use: if a `prismarine-chunk`
+ * upgrade moves any of it, the fill quietly falls back to the public per-block
+ * setter rather than writing wrong bytes.
+ */
+interface RawBitArray {
+  get(index: number): number;
+  set(index: number, value: number): void;
+}
+
+interface RawPaletteContainer {
+  /** Present on an indirect palette container; absent on single/direct. */
+  palette?: number[];
+  data?: RawBitArray;
+}
+
+interface RawChunkSection {
+  data: RawPaletteContainer;
+  solidBlockCount: number;
 }
 
 interface RawAnvil {
@@ -408,16 +433,100 @@ class ChunkAdapter implements EmitChunk {
     this.raw.setBlockStateId(p, stateId);
   }
 
+  /**
+   * Fill a vertical run of one state.
+   *
+   * The obvious loop — one `setBlockStateId` per block — costs 13–35 ns/block,
+   * and almost none of that is the write: `IndirectPaletteContainer.set` runs
+   * `palette.indexOf(stateId)`, a linear scan of the section palette, for
+   * *every block*. That is why the per-block cost climbs with palette size
+   * (12.8 ns at palette 1, 35.5 ns at palette 32) while the `BitArray.set`
+   * underneath it is 4.1 ns.
+   *
+   * A run is one state by definition, so that scan need happen only once. The
+   * first block of each section slice still goes through prismarine's own
+   * public setter, and that is what makes this byte-identical rather than
+   * merely plausible: palette insertion order, the single → indirect → direct
+   * container transitions, and the bit-width resize points are all decided by
+   * that call exactly as before. After it no further palette growth is
+   * possible — every remaining block is the same state — so the container is
+   * stable and the rest of the run is a straight bit-packed write.
+   *
+   * Anything unfamiliar (a single-value container the fill does not disturb, a
+   * direct palette, a `prismarine-chunk` upgrade that moves the internals)
+   * falls back to the per-block loop. The fast path can be skipped; it cannot
+   * be wrong.
+   */
   fillColumn(x: number, z: number, y0: number, y1: number, stateId: number): void {
     const lo = y0 <= y1 ? y0 : y1;
     const hi = y0 <= y1 ? y1 : y0;
     const p = this.scratch;
     p.x = x;
     p.z = z;
-    for (let y = lo; y <= hi; y++) {
+    let y = lo;
+    while (y <= hi) {
+      const sectionTop = (y & ~15) + 15;
+      const sliceEnd = hi < sectionTop ? hi : sectionTop;
+      // The first block establishes the palette entry and the container shape.
       p.y = y;
       this.raw.setBlockStateId(p, stateId);
+      if (y < sliceEnd) this.fillSlice(x, z, y + 1, sliceEnd, stateId, p);
+      y = sliceEnd + 1;
     }
+  }
+
+  /**
+   * Write `[y0, y1]` — known to lie within one section, and to have had
+   * `stateId` written immediately below at `y0 - 1` — straight into that
+   * section's bit array.
+   */
+  private fillSlice(
+    x: number,
+    z: number,
+    y0: number,
+    y1: number,
+    stateId: number,
+    p: { x: number; y: number; z: number },
+  ): void {
+    const section = this.raw.sections?.[(y0 - WORLD_MIN_Y) >> 4];
+    const palette = section?.data.palette;
+    const bits = section?.data.data;
+    const paletteIndex = palette === undefined ? -1 : palette.indexOf(stateId);
+    if (section === undefined || palette === undefined || bits === undefined || paletteIndex < 0) {
+      for (let y = y0; y <= y1; y++) {
+        p.y = y;
+        this.raw.setBlockStateId(p, stateId);
+      }
+      return;
+    }
+
+    // `solidBlockCount` counts non-air blocks, and prismarine maintains it per
+    // write by comparing old state to new. Reproduce that arithmetic exactly:
+    // all that matters is whether each old entry was air. When the palette
+    // holds no air at all, no old block can be air and the reads fall away.
+    const airIndex = palette.indexOf(0);
+    const baseIndex = ((z & 15) << 4) | (x & 15);
+    let delta = 0;
+    if (airIndex < 0) {
+      // No air in the palette, so nothing being overwritten was air. (And the
+      // state being written cannot be air either — it is in this palette.)
+      for (let y = y0; y <= y1; y++) {
+        bits.set((((y - WORLD_MIN_Y) & 15) << 8) | baseIndex, paletteIndex);
+      }
+    } else if (stateId === 0) {
+      for (let y = y0; y <= y1; y++) {
+        const index = (((y - WORLD_MIN_Y) & 15) << 8) | baseIndex;
+        if (bits.get(index) !== airIndex) delta -= 1;
+        bits.set(index, paletteIndex);
+      }
+    } else {
+      for (let y = y0; y <= y1; y++) {
+        const index = (((y - WORLD_MIN_Y) & 15) << 8) | baseIndex;
+        if (bits.get(index) === airIndex) delta += 1;
+        bits.set(index, paletteIndex);
+      }
+    }
+    section.solidBlockCount += delta;
   }
 
   setBiomeAt(x: number, y: number, z: number, biomeId: number): void {
