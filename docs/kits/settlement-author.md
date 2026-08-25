@@ -735,7 +735,7 @@ on a cottage, use `adjacent_to` the plaza instead.
   "envelope": { "shape": "box", "size": [11, 11, 9] },
   "params": { "archetype": "inn", "floors": 2, "roof": "gable", "windowRhythm": "paired" },
   "constraints": [
-    { "adjacent_to": "plaza", "gap": [1, 8] },
+    { "adjacent_to": "plaza", "gap": [1, 8], "strength": "soft" },
     { "facing": "plaza" },
     { "terrain_conform": "cut_fill", "reference": "median", "blend": 4 }
   ],
@@ -1600,7 +1600,7 @@ own rules, all enforced.
   "envelope": { "shape": "box", "size": [16, 52, 14] },
   "params": { "archetype": "skyscraper", "floors": 12, "roof": "flat", "windowRhythm": "dense" },
   "constraints": [
-    { "distance": "plaza", "min": 10, "max": 60 },
+    { "distance": "plaza", "min": 10, "max": 60, "strength": "soft" },
     { "terrain_conform": "flatten", "reference": "median", "blend": 6 }
   ],
   "ports": { "door": { "type": "door", "face": "south", "tags": ["primary"] } },
@@ -3713,10 +3713,19 @@ Notes that matter:
   nearest points of the two footprints. Add `"measure": "center"` for
   centre-to-centre. The difference is half of each envelope, so on big
   buildings the same number means two very different gaps.
-- Add `"strength": "soft"` to anything you would rather have than insist on.
-  A soft constraint costs the solver score; a hard one it must satisfy or climb
-  the relaxation ladder (demote → drop → place-least-bad), and every rung is
-  reported back.
+- **`distance` and `adjacent_to` are hard unless you say otherwise, and that is
+  usually not what you mean.** "This house is somewhere near the green" is a
+  preference: write `"strength": "soft"` on it. A soft constraint still costs
+  the solver score, so it is honoured wherever the ground allows — it simply
+  stops competing with the ground itself. Keep a tether hard only when the
+  relationship IS the composition: the keep to its bailey, the horse before the
+  gates, a colossus facing the enemy shore.
+- Why it matters: a node the solver cannot satisfy climbs the relaxation ladder
+  (demote → drop → place-least-bad), and **the first thing demoted is almost
+  always the `terrain_conform`** — it is the lightest constraint and the last
+  one written. So a building tethered hard on three sides does not lose a
+  tether; it loses its grip on the ground, and lands badly on a slope while the
+  tethers it could not keep are honoured. Fewer hard tethers, better ground.
 - Too many hard constraints on one node is the usual cause of a demotion
   warning. Three or four per building is plenty.
 
@@ -3733,7 +3742,7 @@ underground gallery between that building's cellar and the target's.
   "envelope": { "shape": "box", "size": [9, 8, 9] },
   "params": { "archetype": "smithy", "floors": 1, "roof": "gable", "basement": { "depth": 4 } },
   "constraints": [
-    { "distance": "plaza", "min": 8, "max": 50 },
+    { "distance": "plaza", "min": 8, "max": 50, "strength": "soft" },
     { "connected": "great_hall", "via": "tunnel" },
     { "terrain_conform": "cut_fill", "reference": "median", "blend": 4 }
   ],
@@ -3953,7 +3962,7 @@ working face. Declare the tunnel on one side only.
     "params": { "archetype": "mine_head", "floors": 1, "roof": "gable", "basement": { "depth": 5, "style": "mine" } },
     "constraints": [
       { "on": "@terrain:ridge", "band": 40 },
-      { "distance": "plaza", "min": 20, "max": 90 },
+      { "distance": "plaza", "min": 20, "max": 90, "strength": "soft" },
       { "connected": "assay_office", "via": "tunnel", "style": "mine", "oreChamber": true },
       { "terrain_conform": "flatten", "reference": "median", "blend": 6 }
     ],
@@ -3997,7 +4006,7 @@ tower lined up on the main road. `floors × 4 + 4` is the envelope height.
     "params": { "archetype": "apartment_block", "floors": 10, "roof": "flat", "windowRhythm": "dense" },
     "constraints": [
       { "along": "avenues", "offset": [2, 6], "side": "any", "faceRoad": true },
-      { "distance": "plaza", "min": 12, "max": 70 },
+      { "distance": "plaza", "min": 12, "max": 70, "strength": "soft" },
       { "terrain_conform": "flatten", "reference": "median", "blend": 8 }
     ],
     "ports": { "door": { "type": "door", "face": "south", "tags": ["primary"] } },
@@ -4071,7 +4080,7 @@ and a lighthouse `on` the coastline finish it.
     "params": { "archetype": "warehouse", "floors": 1, "basement": { "depth": 4 } },
     "constraints": [
       { "on": "@terrain:coastline", "band": 26 },
-      { "distance": "plaza", "min": 6, "max": 60 },
+      { "distance": "plaza", "min": 6, "max": 60, "strength": "soft" },
       { "terrain_conform": "cut_fill", "reference": "median", "blend": 4 }
     ],
     "ports": { "door": { "type": "door", "face": "north", "tags": ["primary"] } },
@@ -4086,7 +4095,7 @@ and a lighthouse `on` the coastline finish it.
     "params": { "archetype": "lighthouse", "floors": 2, "roof": "flat" },
     "constraints": [
       { "on": "@terrain:coastline", "band": 12 },
-      { "distance": "plaza", "min": 24 },
+      { "distance": "plaza", "min": 24, "strength": "soft" },
       { "terrain_conform": "flatten", "reference": "max", "blend": 6 }
     ],
     "tags": ["landmark"]
@@ -4390,7 +4399,7 @@ far shore"*.
         "label": "the cottage closest to the water",
         "envelope": { "shape": "box", "size": [9, 8, 8] },
         "params": { "archetype": "cottage", "floors": 1, "roof": "gable", "windowRhythm": "regular" },
-        "constraints": [ { "adjacent_to": "green", "gap": [1, 8] }, { "facing": "green" },
+        "constraints": [ { "adjacent_to": "green", "gap": [1, 8], "strength": "soft" }, { "facing": "green" },
                          { "terrain_conform": "cut_fill", "reference": "median", "blend": 4, "maxSlope": 26 } ],
         "ports": { "door": { "type": "door", "face": "north", "tags": ["primary"] } },
         "tags": ["house"] },
@@ -4398,8 +4407,8 @@ far shore"*.
         "label": "a two-storey cottage on the lane",
         "envelope": { "shape": "box", "size": [9, 11, 9] },
         "params": { "archetype": "cottage", "floors": 2, "roof": "gable" },
-        "constraints": [ { "adjacent_to": "green", "gap": [1, 10] }, { "facing": "green" },
-                         { "distance": "#tag:house", "min": 6 },
+        "constraints": [ { "adjacent_to": "green", "gap": [1, 10], "strength": "soft" }, { "facing": "green" },
+                         { "distance": "#tag:house", "min": 6, "strength": "soft" },
                          { "terrain_conform": "cut_fill", "reference": "median", "blend": 4 } ],
         "ports": { "door": { "type": "door", "face": "west", "tags": ["primary"] } },
         "tags": ["house"] },
@@ -4407,7 +4416,7 @@ far shore"*.
         "label": "the last cottage, out toward the fields",
         "envelope": { "shape": "box", "size": [8, 8, 8] },
         "params": { "archetype": "cottage", "floors": 1, "roof": "gable", "windowRhythm": "sparse" },
-        "constraints": [ { "distance": "green", "min": 8, "max": 56 }, { "distance": "#tag:house", "min": 7 },
+        "constraints": [ { "distance": "green", "min": 8, "max": 56, "strength": "soft" }, { "distance": "#tag:house", "min": 7, "strength": "soft" },
                          { "terrain_conform": "cut_fill", "reference": "median", "blend": 4 } ],
         "ports": { "door": { "type": "door", "face": "north", "tags": ["primary"] } },
         "tags": ["house"] },
@@ -4415,7 +4424,7 @@ far shore"*.
         "label": "the smithy, kept a little apart",
         "envelope": { "shape": "box", "size": [9, 8, 9] },
         "params": { "archetype": "smithy", "floors": 1, "roof": "gable", "windowRhythm": "sparse" },
-        "constraints": [ { "distance": "green", "min": 6, "max": 44 }, { "distance": "#tag:house", "min": 8 },
+        "constraints": [ { "distance": "green", "min": 6, "max": 44, "strength": "soft" }, { "distance": "#tag:house", "min": 8, "strength": "soft" },
                          { "terrain_conform": "cut_fill", "reference": "median", "blend": 4 } ],
         "ports": { "door": { "type": "door", "face": "south", "tags": ["primary"] } },
         "tags": ["craft"] },
