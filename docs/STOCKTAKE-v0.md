@@ -160,7 +160,41 @@ Seed findings already in hand:
   verified by counting T204 across a 3-prompt pass.
 - **T204 FIXED (`t204-after`):** 30 → 0 across the pass; pirate and troy
   now author one-shot with zero diagnostics (attempts 2 → 1); a saved
-  round is a re-send of the ~80k-token kit on most worlds. **The pattern,
+  round is a re-send of the ~80k-token kit on most worlds.
+- **THE FIRST FRESH TROY AFTER PHASE 1 (Kai: "generate now"; seed 303 so the
+  ground is every walked deck's):** authored in ONE attempt ($0.05 + one
+  landmark program $0.05, zero authoring diagnostics; the pre-pass already
+  names megaron in its prefer list; the doc requests an olive-grove holding,
+  an abandoned camp, a beached longship, an altar) — and the compile found
+  **two latent compiler bugs the three baseline docs could never reach:**
+  (1) `farm.ts` forced the driver's fifth resolve inside the declaring half
+  (a WP-2 line from 08-09 that outlived G6), so the doorstep walk's tier-D
+  landing tripped the §1.6 guard the first time a holding met a stepped
+  doorstep — fixed by computing the pass's entitlement privately (same
+  inputs, same answer, no seal; byte-identical on alien_farm_town and troy;
+  FULL 5,622/0; `bafb179`); (2) the quarter election derived a bench over a
+  bay, the waterline floor exempted it as mostly water (the river-channel
+  exemption), and the quarter graded it — **a pad edit over water drains
+  it**, so 69 pristine sea columns shipped as a dry trench at 61 against the
+  sea at 63 (LOAM-T110). Kai's ruling: a submerged bench is not graded.
+  Landed neutral behind `SUBMERGED_BENCH_UNGRADED` (`b268220`), then
+  flipped: the bench stays in the election and in `levels` (a bench with a
+  level is what keeps lots and verges out of the water — dropping it dammed
+  the river fixture: 8,647 → 7,098 wet columns, lots and verges in the
+  channel), only its `quarter.plane` pad edits are withheld; `LOAM-I526
+  PLATFORM_SUBMERGED` names each. Triage: river fixture intact, troy /
+  thalassa / alien_farm byte-identical, **pirates moved by exactly 43
+  columns of sea-fill restored to sea with identical warnings** —
+  attributed. Deck: `trojan_horse_troy_k1`. Flip gate 5,621/1: the one failure was
+  pirates' ground-probe baseline — pad intent ids renumbered by 4, four
+  fewer quarter.plane intents, 15 fewer plane-owned columns, no ground value
+  moved — re-pinned with attribution. **A third, pre-existing item for WS-F
+  (not this flip's):** kit-fix's redwood_camp document (an inland forest
+  with no sea) authored cleanly and its river, connected to no sea, was
+  demoted to a pond chain (LOAM-T112) that leaves eight unstable water
+  blocks at y=56 (LOAM-T110) — reproduced terrain-only, so it is the
+  river/pond family in the terrain verbs, and a candidate kit teaching
+  (steer a sealess world away from a river) to be measured before touched. **The pattern,
   stated for the record: all four fence-teaches-an-error finds were
   invisible to prose review and obvious the moment something counted what
   the model emitted — the audits could not have found them; the suite did,

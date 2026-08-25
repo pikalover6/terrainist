@@ -1535,10 +1535,12 @@ export const STAIR_DRESS = false;
  * gone, and what ships is a dry trench below the open sea: on that troy, 69
  * columns at 61 against the sea at 63 (`LOAM-T110 UNSTABLE_FLUID`), three
  * benches in all. A bench that is mostly water is not ground the quarter
- * stands on: with this on, it ships with no runs — its columns keep the
- * pristine terrain, the sea stays sea, the beach strip keeps its height, and
- * the solver's water rules refuse the lots — and `LOAM-I526` names it.
+ * stands on: with this on, its `quarter.plane` pad edits are withheld — its
+ * columns keep the pristine terrain and the water on it — while the bench
+ * itself stays in the election and in `levels`, because a bench with a level
+ * is what keeps lots and verges out of the water (dropping it put them in a
+ * river). `LOAM-I526` names it.
  *
  * `false` is the neutral value: the election exactly as it shipped before.
  */
-export const SUBMERGED_BENCH_UNGRADED = false;
+export const SUBMERGED_BENCH_UNGRADED = true;

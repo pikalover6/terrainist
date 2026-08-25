@@ -687,7 +687,7 @@ export const TERRAIN_DIAGNOSTICS = {
    */
   LEVEL_DISSOLVED: "LOAM-W410",
   /**
-   * A derived platform whose columns are mostly water declared no level: it is
+   * A derived platform whose columns are mostly water was not graded: it is
    * the sea or the river beside the quarter, not ground the quarter stands on,
    * and grading it to its own bed level made a dry trench below the waterline
    * (`LOAM-T110` on the first fresh troy after Phase 1, 2026-08-24). Its

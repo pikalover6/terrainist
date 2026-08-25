@@ -11,13 +11,13 @@
     "z0": -210,
     "z1": 248
   },
-  "ownedColumns": 43770,
+  "ownedColumns": 43755,
   "intents": {
-    "total": 1118,
+    "total": 1114,
     "byClass": [
       {
         "name": "quarter.plane",
-        "n": 898
+        "n": 894
       },
       {
         "name": "building.footprint",
@@ -56,7 +56,7 @@
   "columnsWonByClass": [
     {
       "name": "quarter.plane",
-      "n": 15891
+      "n": 15876
     },
     {
       "name": "building.footprint",
@@ -92,39 +92,39 @@
     }
   ],
   "sanity": {
-    "n": 144196,
+    "n": 144181,
     "byDelta": [
       {
         "delta": 0,
-        "n": 113869
+        "n": 113859
       },
       {
         "delta": 1,
-        "n": 8307
+        "n": 8306
       },
       {
         "delta": 2,
-        "n": 1319
+        "n": 1305
       },
       {
         "delta": 3,
-        "n": 1018
+        "n": 1015
       },
       {
         "delta": 4,
-        "n": 634
+        "n": 638
       },
       {
         "delta": 5,
-        "n": 348
+        "n": 353
       },
       {
         "delta": 6,
-        "n": 59
+        "n": 62
       },
       {
         "delta": 7,
-        "n": 651
+        "n": 652
       },
       {
         "delta": 8,
@@ -248,7 +248,7 @@
   "cliffCensus": [
     {
       "pair": "natural over natural",
-      "n": 3982,
+      "n": 3978,
       "avg": 2.9,
       "max": 10
     },
@@ -313,16 +313,16 @@
       "max": 4
     },
     {
-      "pair": "quarter.plane over quarter.plane",
-      "n": 8,
-      "avg": 2.4,
-      "max": 3
-    },
-    {
       "pair": "natural over street.sidewalk",
       "n": 7,
       "avg": 2,
       "max": 2
+    },
+    {
+      "pair": "quarter.plane over quarter.plane",
+      "n": 7,
+      "avg": 2.4,
+      "max": 3
     },
     {
       "pair": "street.sidewalk over street.sidewalk",
@@ -413,7 +413,7 @@
         "n": 729
       },
       {
-        "source": "world.pirate_cove_town.infill_-53_-109#pad@870",
+        "source": "world.pirate_cove_town.infill_-53_-109#pad@866",
         "floorY": 69,
         "ringMed": 69,
         "ringMax": 69,
@@ -422,7 +422,7 @@
         "n": 210
       },
       {
-        "source": "world.pirate_cove_town.infill_-53_-109#pad@870#preserve",
+        "source": "world.pirate_cove_town.infill_-53_-109#pad@866#preserve",
         "floorY": 69,
         "ringMed": 69,
         "ringMax": 69,
@@ -431,7 +431,7 @@
         "n": 210
       },
       {
-        "source": "world.pirate_cove_town.infill_-53_-184#pad@856",
+        "source": "world.pirate_cove_town.infill_-53_-184#pad@852",
         "floorY": 69,
         "ringMed": 69,
         "ringMax": 69,
@@ -440,7 +440,7 @@
         "n": 105
       },
       {
-        "source": "world.pirate_cove_town.infill_-53_-184#pad@856#preserve",
+        "source": "world.pirate_cove_town.infill_-53_-184#pad@852#preserve",
         "floorY": 69,
         "ringMed": 69,
         "ringMax": 69,
@@ -449,7 +449,7 @@
         "n": 105
       },
       {
-        "source": "world.pirate_cove_town.infill_-57_-85#pad@876",
+        "source": "world.pirate_cove_town.infill_-57_-85#pad@872",
         "floorY": 69,
         "ringMed": 69,
         "ringMax": 69,
@@ -458,7 +458,7 @@
         "n": 152
       },
       {
-        "source": "world.pirate_cove_town.infill_-57_-85#pad@876#preserve",
+        "source": "world.pirate_cove_town.infill_-57_-85#pad@872#preserve",
         "floorY": 69,
         "ringMed": 69,
         "ringMax": 69,
@@ -467,7 +467,7 @@
         "n": 152
       },
       {
-        "source": "world.pirate_cove_town.infill_-70_-109#pad@869",
+        "source": "world.pirate_cove_town.infill_-70_-109#pad@865",
         "floorY": 69,
         "ringMed": 69,
         "ringMax": 69,
@@ -476,7 +476,7 @@
         "n": 210
       },
       {
-        "source": "world.pirate_cove_town.infill_-70_-109#pad@869#preserve",
+        "source": "world.pirate_cove_town.infill_-70_-109#pad@865#preserve",
         "floorY": 69,
         "ringMed": 69,
         "ringMax": 69,
@@ -485,7 +485,7 @@
         "n": 210
       },
       {
-        "source": "world.pirate_cove_town.infill_-94_-148#pad@862",
+        "source": "world.pirate_cove_town.infill_-94_-148#pad@858",
         "floorY": 69,
         "ringMed": 69,
         "ringMax": 69,
@@ -494,7 +494,7 @@
         "n": 180
       },
       {
-        "source": "world.pirate_cove_town.infill_-94_-148#pad@862#preserve",
+        "source": "world.pirate_cove_town.infill_-94_-148#pad@858#preserve",
         "floorY": 69,
         "ringMed": 69,
         "ringMax": 69,
@@ -623,7 +623,7 @@
     }
   ],
   "clusters": {
-    "count": 25,
+    "count": 24,
     "top": [
       {
         "score": 354,

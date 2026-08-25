@@ -1623,29 +1623,34 @@ export function layDistrict(
       ),
     );
   }
-  // A bench that is mostly water declares no level (`SUBMERGED_BENCH_UNGRADED`,
-  // Kai 2026-08-24): the floor exempted it so a river keeps its bed, and the
-  // quarter then graded it to that bed and lost the water — a dry trench below
-  // the sea. Read straight off the classification's water, not off
-  // `protectedWater`, which is only computed where the quarter would dam:
-  // whether a bench *is* water does not depend on whether grading it would dam.
-  const shipped =
+  // A bench that is mostly water is not graded (`SUBMERGED_BENCH_UNGRADED`,
+  // Kai 2026-08-24). The floor exempted it so a river keeps its bed, and the
+  // quarter then *graded* it to that bed — and a pad edit over water drains the
+  // water, so a bay inside a quarter shipped as a dry trench two below the sea.
+  // The bench stays in the election and in `levels`: the fabric's lookups,
+  // the seams and the lot seating read it exactly as before (a bench with a
+  // level is what keeps lots and verges out of the water — dropping it put
+  // them in the river). Only its `quarter.plane` pad edits are withheld, so
+  // its columns keep the pristine terrain and the water on it. Read straight
+  // off the classification's water, not off `protectedWater`, which is only
+  // computed where the quarter would dam: whether a bench *is* water does not
+  // depend on whether grading it would dam.
+  const submergedPlatforms: readonly boolean[] =
     SUBMERGED_BENCH_UNGRADED && input.water !== undefined && election.benches.length > 0
-      ? election.benches.map((bench, i) =>
-          submergedBenches(election.benches, { mask: input.water as Uint8Array, region: input.field.region })[i]
-            ? (diagnostics.push(
-                note(
-                  "PLATFORM_SUBMERGED",
-                  nodePath,
-                  `platform "${bench.id ?? String(i)}" in "${nodePath}" is mostly water and declares no level: its columns keep the pristine terrain`,
-                  `nothing to change if the quarter meets the water there; if the water was not meant to be inside the quarter, move or shrink the district's envelope off it`,
-                ),
-              ),
-              { ...bench, runs: [] })
-            : bench,
-        )
-      : election.benches;
-  const levels = groundLevelsOf(bounds, shipped);
+      ? submergedBenches(election.benches, { mask: input.water, region: input.field.region })
+      : election.benches.map(() => false);
+  for (const [i, bench] of election.benches.entries()) {
+    if (submergedPlatforms[i] !== true) continue;
+    diagnostics.push(
+      note(
+        "PLATFORM_SUBMERGED",
+        nodePath,
+        `platform "${bench.id ?? String(i)}" in "${nodePath}" is mostly water and is not graded: its columns keep the pristine terrain and the water on it`,
+        `nothing to change if the quarter meets the water there; if the water was not meant to be inside the quarter, move or shrink the district's envelope off it`,
+      ),
+    );
+  }
+  const levels = groundLevelsOf(bounds, election.benches);
 
   // --- the street harmonization (`STREET_PLANE_HARMONIZE`) -------------------
   // **The call point, and why it is here.** The datum grades ~200 lines above,
@@ -2334,6 +2339,8 @@ export function layDistrict(
   // opt in gains a pad.
   if (derived.length > 0 && levels !== null) {
     for (const [platform, runs] of levels.runs.entries()) {
+      // `SUBMERGED_BENCH_UNGRADED`: the water keeps its bed; see the election.
+      if (submergedPlatforms[platform] === true) continue;
       const targetY = levels.levelY[platform] as number;
       for (const run of runs) {
         padEdits.push({
