@@ -65,6 +65,18 @@ the noun, never the civic heart.
 on a null result. Cost ≈ $0.35 + ~$0.04/world at run time when a program is
 requested.
 
+**B1 (a) MEASURED — NULL ($0.47, fence reverted byte-exact):**
+setPieceDominance 1.25/1.24/1.28 → 1.23/1.16/1.34 (flat);
+civicProgramPresent 0/3 → 1/3. Mechanism: the set-piece grew 45 % and the
+median building 46 % — **a fence teaches the number it contains, not the
+ratio it illustrates; to teach a ratio, fence both sides** (A3 module
+design input). One run copied the example's program id verbatim and still
+did not move the metric. Metric flaw recorded: troy docs carry 2–3 grammar
+nodes, so "median building" was named landmarks, not housing — a rebuild
+reads the compiled world. Per this plan's own rule → **(b), the proposal-
+turn line item in program-author.ts, is next**; agents-side, a later
+session; before-state kept in runs/b1-before-1..3 + b1-metric.mjs.
+
 ## B2. A3 — dynamic context assembly (the kit as core + example modules)
 
 **What A3 now is.** Not "inject the relevant catalog slices" (that was the
