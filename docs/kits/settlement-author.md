@@ -3236,7 +3236,7 @@ Place the ones you request as ordinary generator nodes:
 
 ```json
 { "id": "the_wreck", "kind": "generator", "generator": "authored:mothership_wreck",
-  "constraints": [ { "zone": "northeast" }, { "distance": { "to": "camp", "max": 90 } } ] }
+  "constraints": [ { "zone": "northeast" }, { "distance": "camp", "max": 90 } ] }
 ```
 
 **Where it stands is `zone` or `at`, and nothing else is a placement.** `zone`
@@ -3282,7 +3282,7 @@ scenery. Concretely, for a landmark belonging to a district:
 ```json
 { "id": "guardian_colossus", "kind": "generator", "generator": "authored:unicorn_colossus",
   "constraints": [ { "at": [0.56, 0.72] },
-                   { "distance": { "to": "unicorn_citadel", "min": 12, "max": 60 } } ],
+                   { "distance": "unicorn_citadel", "min": 12, "max": 60 } ],
   "params": { "face": { "toward": "pirate_haven" } } }
 ```
 
