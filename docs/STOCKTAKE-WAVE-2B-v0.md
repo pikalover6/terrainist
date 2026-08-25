@@ -117,8 +117,21 @@ diagnostic codes; a zero-spend census can say). `conforms` 1/108 is set by
 the conform-certification gate, not the author — a harness question;
 envelopes are copied from whatever the kit prints (84 % kit-literal), so
 the lever is which envelopes the fences print, which B1/B2 already move.
-Proposed: the demotion census (zero spend), then at most one kit-fix
-cluster for whatever actually binds — possibly none.
+**Demotion census (done, zero spend, 36 battery generate logs, 30 with a
+demotion):** `terrain_conform` 100, `distance` 62, `adjacent_to` 51, `on`
+10, `connected` 3, `clearance` 1. The top one has a mechanism: the corpus
+writes `terrain_conform` 209 times (cut_fill 116 / flatten 83 / drape 10)
+because eight of the kit's fences write it — almost always without
+`maxSlope` (once, at :4358) — and the constraint is structural, not a
+cost: the solver's slope veto uses `terrain_conform.maxSlope` or
+`DEFAULT_MAX_SLOPE`, so a copied conform with the default slope limit on a
+hilly site cannot be placed anywhere and is demoted to soft (the fix hint
+already says "raise maxSlope"). `drape` is a no-op (W407) that the farm
+example teaches. So B3's one real cluster is **terrain_conform**: fence
+`maxSlope` beside every conform, teach when to omit conform entirely, and
+retire `drape` from the examples — verified 3×3 on a hilly settlement
+prompt with `E404 by type` as the metric. `distance`/`adjacent_to` are
+next if the same census after that cluster still shows them.
 
 ## Sequencing, caps, spend
 
