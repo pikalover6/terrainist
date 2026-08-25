@@ -1,0 +1,147 @@
+{
+  "id": "redwood_camp",
+  "family": "redwood_camp",
+  "kit": "settlement",
+  "prompt": "An ancient forest of colossal redwoods with a small logging camp at its edge.",
+  "seed": 306,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "cache",
+    "value": {
+      "era": "industrial",
+      "wealth": 0.35,
+      "formality": 0.1,
+      "climate": {
+        "biome": "minecraft:old_growth_spruce_taiga",
+        "temperature": 0.25,
+        "humidity": 0.7,
+        "snow": "never"
+      },
+      "character": {
+        "label": "redwood logging camp",
+        "materialTheme": "boreal_pine",
+        "formPacks": [
+          "wilds_camps"
+        ],
+        "flora": {
+          "prefer": [
+            "emergent",
+            "ancient",
+            "old_growth",
+            "spruce_ancient",
+            "giant"
+          ]
+        },
+        "urbanForm": "linear"
+      },
+      "tokens": {
+        "terrain": "a primeval forest of colossal redwoods with a logging camp clearing at its perimeter",
+        "infra": "cut_over_ground clearing surrounding the camp; cart_track running into the deep timber",
+        "icons": "towering redwood canopy, log stacks, sawpits, bunk cabins, and timber skid trails"
+      }
+    }
+  },
+  "intentUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "reasoningTokens": 0,
+    "cost": 0,
+    "cached": true
+  },
+  "menu": {
+    "injected": false,
+    "reason": "flag off"
+  },
+  "attempts": 1,
+  "diagnostics": [
+    []
+  ],
+  "usage": {
+    "promptTokens": 84363,
+    "completionTokens": 9307,
+    "reasoningTokens": 5308,
+    "cost": 0.04908675
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 23,
+    "maxDepth": 2,
+    "generators": [
+      "building.grammar@0",
+      "infra.entry@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "cottage",
+      "dormitory",
+      "granary",
+      "inn",
+      "log_cabin",
+      "sawmill",
+      "smithy",
+      "tavern",
+      "warehouse"
+    ],
+    "archetypesInCatalog": 9,
+    "formPacks": [
+      "wilds_camps"
+    ],
+    "props": [
+      "cart",
+      "covered_wagon",
+      "log_pile",
+      "notice_board"
+    ],
+    "species": [
+      "columnar_larch",
+      "outlier_pine",
+      "redwood_tall_pine",
+      "squat_pine"
+    ],
+    "envelopes": [
+      "512x512",
+      "24x24",
+      "11x11x17",
+      "13x12x19",
+      "13x11x13",
+      "11x12x13",
+      "9x8x9",
+      "13x10x11"
+    ],
+    "constraints": 21,
+    "constraintKinds": [
+      "adjacent_to",
+      "blend",
+      "distance",
+      "facing",
+      "gap",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform",
+      "zone"
+    ],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 6,
+    "programReferences": 0,
+    "conformsTrue": 0,
+    "labels": 16,
+    "eras": [
+      "industrial"
+    ],
+    "bytes": 7932
+  },
+  "wallMs": 49519
+}
