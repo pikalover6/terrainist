@@ -687,6 +687,14 @@ export const TERRAIN_DIAGNOSTICS = {
    */
   LEVEL_DISSOLVED: "LOAM-W410",
   /**
+   * A derived platform whose columns are mostly water declared no level: it is
+   * the sea or the river beside the quarter, not ground the quarter stands on,
+   * and grading it to its own bed level made a dry trench below the waterline
+   * (`LOAM-T110` on the first fresh troy after Phase 1, 2026-08-24). Its
+   * columns keep the pristine terrain; the note names the platform.
+   */
+  PLATFORM_SUBMERGED: "LOAM-I526",
+  /**
    * Phase 4.2 — a seam was too tall for a retaining wall (`drop` past
    * `RETAIN_MAX`), so the two platforms were graded into each other as a bank.
    *

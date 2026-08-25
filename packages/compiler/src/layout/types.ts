@@ -1523,3 +1523,22 @@ export const PULL_CROSS = true;
  * vocabulary the flight dresser will reuse.
  */
 export const STAIR_DRESS = false;
+
+/**
+ * **A submerged bench declares no level** — Kai's ruling, 2026-08-24, on the
+ * second compiler bug the first fresh troy after Phase 1 surfaced.
+ *
+ * The quarter election derives benches over every cell of the district,
+ * including a bay. The waterline floor exempts a bench that is mostly water
+ * so a river channel keeps its bed instead of being dammed — but the quarter
+ * then *grades* that bench to its bed level, the water it was made of is
+ * gone, and what ships is a dry trench below the open sea: on that troy, 69
+ * columns at 61 against the sea at 63 (`LOAM-T110 UNSTABLE_FLUID`), three
+ * benches in all. A bench that is mostly water is not ground the quarter
+ * stands on: with this on, it ships with no runs — its columns keep the
+ * pristine terrain, the sea stays sea, the beach strip keeps its height, and
+ * the solver's water rules refuse the lots — and `LOAM-I526` names it.
+ *
+ * `false` is the neutral value: the election exactly as it shipped before.
+ */
+export const SUBMERGED_BENCH_UNGRADED = false;

@@ -112,6 +112,7 @@ import {
 } from "./descent-datum.js";
 import { largestRect } from "./masks.js";
 import {
+  submergedBenches,
   DISSOLVE_DROP_MAX,
   damsWater,
   derivePlatforms,
@@ -163,6 +164,7 @@ import {
   type StreetDatumInput,
 } from "./street-datum.js";
 import {
+  SUBMERGED_BENCH_UNGRADED,
   CORNER_TOLERANCE,
   DESCENT_SOLVE,
   ELECTION_SOLVE,
@@ -1621,7 +1623,29 @@ export function layDistrict(
       ),
     );
   }
-  const levels = groundLevelsOf(bounds, election.benches);
+  // A bench that is mostly water declares no level (`SUBMERGED_BENCH_UNGRADED`,
+  // Kai 2026-08-24): the floor exempted it so a river keeps its bed, and the
+  // quarter then graded it to that bed and lost the water — a dry trench below
+  // the sea. Read straight off the classification's water, not off
+  // `protectedWater`, which is only computed where the quarter would dam:
+  // whether a bench *is* water does not depend on whether grading it would dam.
+  const shipped =
+    SUBMERGED_BENCH_UNGRADED && input.water !== undefined && election.benches.length > 0
+      ? election.benches.map((bench, i) =>
+          submergedBenches(election.benches, { mask: input.water as Uint8Array, region: input.field.region })[i]
+            ? (diagnostics.push(
+                note(
+                  "PLATFORM_SUBMERGED",
+                  nodePath,
+                  `platform "${bench.id ?? String(i)}" in "${nodePath}" is mostly water and declares no level: its columns keep the pristine terrain`,
+                  `nothing to change if the quarter meets the water there; if the water was not meant to be inside the quarter, move or shrink the district's envelope off it`,
+                ),
+              ),
+              { ...bench, runs: [] })
+            : bench,
+        )
+      : election.benches;
+  const levels = groundLevelsOf(bounds, shipped);
 
   // --- the street harmonization (`STREET_PLANE_HARMONIZE`) -------------------
   // **The call point, and why it is here.** The datum grades ~200 lines above,

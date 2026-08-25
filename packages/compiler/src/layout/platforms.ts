@@ -386,6 +386,17 @@ export function damsWater(water: WaterMask, bounds: Rect): boolean {
  * Is this set of columns water rather than ground? A strict majority, so a bank
  * with its toes wet is still a bank and a channel is still a channel.
  */
+/**
+ * Which benches are the water rather than the ground beside it — the same
+ * strict-majority test {@link dissolveTallPairs} exempts from the waterline
+ * floor, exported so the quarter can act on the answer (Kai, 2026-08-24: a
+ * bench that is mostly water declares no level; see
+ * `SUBMERGED_BENCH_UNGRADED`).
+ */
+export function submergedBenches(benches: readonly FormBench[], water: WaterMask): boolean[] {
+  return benches.map((b) => mostlyWater(water, benchColumns(b)));
+}
+
 function mostlyWater(water: WaterMask, columns: Iterable<readonly [number, number]>): boolean {
   const { region, mask } = water;
   let n = 0;
