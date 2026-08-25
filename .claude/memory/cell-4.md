@@ -63,8 +63,10 @@ structures" was the programs' declare half mis-billed (timings fixed);
 3.7 s = ONE authored program (leviathan_prime re-filling voxels 70×) —
 **Kai: program cost is NOT an authoring burden**, no diagnostic, no kit
 law. #27 density question: NO (retaining 30 ms on thalassa vs 497 troy).
-Next: bucketTrees keys, deflate pool designed in front of Kai; roads.js
-654 ms unprofiled. Menus design ratified by Kai: two
+**LADDER CLOSED by Kai ("stop the ladder, bank the win"):** profile is
+flat (top self item 205 ms); bucketTrees keys 27 ms self, deflate 136 ms
+— E1's per-item numbers were INCLUSIVE. Unspent → WS-F: roads.js 654 ms,
+flora parts ~250 ms, retaining density inversion. perf session stood down. Menus design ratified by Kai: two
 tiers (named packs whole, era-affine round-robin), ~60 entries/2.1k
 tokens, statuses=[implemented], empty menu ⇒ no message.
 

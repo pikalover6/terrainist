@@ -160,6 +160,25 @@ of wall; full report: scratchpad perf/REPORT.md + battery of scripts).
     dense city) — the partial-stack pattern is a correctness question on its
     own merits, with no perf case either way. roads.js (654 ms self on
     thalassa) is the largest genuine structures-side cost, unprofiled.
+  - **LADDER CLOSED — Kai: "stop the ladder, bank the win" (2026-08-24).**
+    Three rungs landed (`c446041`, `c18c9fe`, `dbb47fd`), byte-identical on
+    three docs at every step: **troy 5.0 → 3.9 s (−22 %), pirates 6.8 → 4.7 s
+    (−31 %), thalassa 9.4 → 8.5 s (−9 %, ~4.8 s honest compiler-side)**;
+    scatter 3.8×, emit −20–29 %, the hash from 15.8 % of wall to ~1 %. The
+    profile is now FLAT: the top self-time item in a troy compile is 205 ms
+    (buildTieredSeam) and nothing else clears it; no contained win over 5 %
+    remains anywhere. Two more E1 items died on contact: bucketTrees' string
+    keys are 27 ms self (the 302 ms was the flora part emission beneath —
+    leafDistances 98 ms), and deflate is 136 ms not 260, so the worker pool
+    — the riskiest change in the ladder — would have bought ~100 ms of a
+    4.1 s compile; recommended against, and Kai agreed by stopping.
+    **Caveat on E1 for the record: its per-item attributions were inclusive
+    times, not available wins.** Handed to WS-F unspent: roads.js 654 ms on
+    thalassa; flora part emission ~250 ms; retaining 409 ms on troy vs 30 ms
+    on thalassa (the density inversion #27 should explain). Worktree
+    `terrainist-wt-perf` (branch `perf/compile-ladder`) is redundant and
+    stands until campaign end; baselines and profiles live in the perf
+    session's scratchpad.
 
 ## WS-F — Architectural inventory (the "glaring stuff" census)
 

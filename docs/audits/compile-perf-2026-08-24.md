@@ -84,6 +84,15 @@ so, every compile millisecond is being optimised against LLM latency.
 
 ## 5. Curiosities for the inventory workstream (WS-F)
 
+> **Caveat added after the Wave-2a ladder (2026-08-24):** the per-item numbers
+> in this section and in §1 are INCLUSIVE times from the profile, not self
+> times, and should not be read as available wins. Two died on contact with a
+> self-time profile: bucketTrees' string keys are 27 ms self (the rest is
+> flora part emission beneath it), and deflate is ~136 ms, not 260. The
+> "16 ns/block through the palette API" was real but is a linear palette
+> scan in prismarine's container, not the API. Ladder result and the flat
+> profile that closed it: docs/STOCKTAKE-v0.md §WS-E.
+
 1. **`resolveGround` runs from five call sites (269 ms) while the run's own
    LOAM-I497 note says "1 resolve(s)"** — three declare-time view() prefix
    resolves + two under freeze(), including a resolveGround nested inside
