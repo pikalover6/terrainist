@@ -86,6 +86,12 @@ enforces it.
   gitignored). `battery/RELEASES.md` is the ledger of walk decks and config
   rows.
 
+- The settlement kit has one source: `docs/kits/settlement-author.md`.
+  `docs/kits/settlement-core.md` and `docs/kits/modules/` are **generated** from
+  it by `node tools/golden-prompts/split-kit.mjs --kit docs/kits/settlement-author.md --out docs/kits`
+  (each carries a generated-by header). Edit the author kit, regenerate, and
+  commit all three together; a kit change is gated by the golden harness.
+
 ## Probes and worlds
 
 - `tools/worlds/ground-probe.mjs <doc> <worldDir|-> [label] [--json]` —

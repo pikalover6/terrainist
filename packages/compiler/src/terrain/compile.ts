@@ -107,6 +107,7 @@ import {
   type SolverReport,
 } from "../layout/index.js";
 import type { GroundBaseline } from "../layout/ground-contract.js";
+import type { GroundReport } from "../layout/ground-contract.js";
 import { resolveGround } from "../layout/ground-resolver.js";
 import type {
   GroundEquivalenceOutcome,
@@ -416,6 +417,13 @@ export interface CompileStats {
   readonly structures?: StructureStats;
   /** What each authored-program node put in the world; absent when none did. */
   readonly programs?: readonly ProgramNodeStats[];
+  /**
+   * GROUND-CONTRACT §7: the frozen resolve's own report — claim rows, moved
+   * columns, transitions — on every product compile (the Stocktake census's
+   * 1.21, unit 39; before it only `options.groundEquivalence` computed one,
+   * and the product path dropped it). Absent only when the driver never ran.
+   */
+  readonly ground?: GroundReport;
 }
 
 /** One authored-program node's contribution to the world. */
@@ -1019,6 +1027,8 @@ async function compileValidated(
   };
   // Nothing placed means nothing to build *and* nothing to connect, and the
   // report must stay identical to a terrain-profile compile's in that case.
+  /** The frozen resolve's report, for `stats.ground` (census 1.21). */
+  let groundReport: GroundReport | undefined;
   if (
     isSettlement(doc) &&
     groundDriver !== undefined &&
@@ -1122,6 +1132,7 @@ async function compileValidated(
     // keeps it from costing a resolve there either, so `stats.ground.resolves`
     // stays the mixture's own number with the flag off.
     const frozen = GROUND_V1_FREEZE ? groundDriver.freeze() : undefined;
+    groundReport = frozen?.report;
     // Class-3 D3 (Stocktake unit 24): the resolver's own report says whether
     // every `building.footprint` claim got its ground. It always has, on every
     // anchor and fixture; this is the assertion the contract never made.
@@ -1691,6 +1702,7 @@ async function compileValidated(
     stats: {
       region,
       columns: plan.ground.length,
+      ...(groundReport === undefined ? {} : { ground: groundReport }),
       minHeight: classification.minHeight,
       maxHeight: classification.maxHeight,
       snowLine: classification.snowLine,

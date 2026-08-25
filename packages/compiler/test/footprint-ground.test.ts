@@ -42,4 +42,24 @@ describe("a building's footprint gets the ground it declared", () => {
       await rm(root, { recursive: true, force: true });
     }
   });
+
+  it("stats.ground is on the product path: the frozen resolve's report ships without groundEquivalence (census 1.21)", async () => {
+    const doc = JSON.parse(
+      await readFile(fileURLToPath(new URL("../../../examples/hillside-village.loam.json", import.meta.url)), "utf8"),
+    );
+    const root = await mkdtemp(path.join(tmpdir(), "stats-ground-"));
+    try {
+      const c = await compileTerrain(doc, { outDir: path.join(root, "w") });
+      expect(c.ok).toBe(true);
+      if (!c.ok) return;
+      const ground = c.report.stats.ground;
+      expect(ground).toBeDefined();
+      if (ground === undefined) return;
+      expect(ground.columns).toBe(c.report.stats.columns);
+      expect(ground.claims.length).toBeGreaterThan(0);
+      expect(ground.claims.some((r) => r.sourceClass === "building.footprint" && r.declared > 0)).toBe(true);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
 });

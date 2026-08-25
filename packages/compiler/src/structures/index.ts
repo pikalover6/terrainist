@@ -391,8 +391,19 @@ export interface StructureStats {
  *
  * The block list is built by concatenation, in pass order, and nothing ever
  * removes from it. So a half-open index range per push is a complete, exact and
- * free record of who laid what. It is a *return value only*: nothing downstream
- * reads it, so the emitted world is byte-identical with or without it.
+ * free record of who laid what. Its readers are `emit/walkability.ts` (which
+ * pass laid the paving under a foot) and the compile report; the emitted world
+ * is byte-identical with or without it.
+ *
+ * What a span attributes is **first-writer** position ownership, not the
+ * world's last word: where two passes write one position the later block wins
+ * in the world while both spans still claim it (the Stocktake census, class 2
+ * seam 2: 363 positions double-written on troy, 14 of them by different
+ * emitters — the road pass over a lot's kerb, the life pass over a verge), and
+ * the blocks of authored programs written straight to the world (1,185 on troy,
+ * the horse) sit outside every span. An instrument that needs the last writer
+ * reads the world; a span answers "who laid something here", which is the
+ * junction question it was built for.
  */
 export interface BlockSpan {
   /** The pass, as `walkability.ts` and the report name it. */

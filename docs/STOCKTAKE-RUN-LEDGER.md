@@ -7,23 +7,20 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 38 (census 3.4: one `roofPlan`, one
-  `wallPlan`, one `RebuildPlan`, byte-identical on the thirteen) is
-  committed.
-- **Next unit:** unit 39 — **the census sweep against G5's letter** ("every
-  finding in classes 1–7 has a disposition … and classes 1–3 are executed,
-  not just listed"). Execute the open S rows: 1.19 (the classical head-course
-  probe), 1.21 (`stats.ground` wired from the frozen resolve), 2.2's
-  first-writer attribution if it is S; give every open M/L row a written
-  disposition — 1.5 (staged off under Kai's veto: executed as a switch),
-  2.1, 2.3, 2.4, 3.1, 3.3 become proposals (P9+) with the text a future unit
-  needs, or are done if they turn out small; then re-read classes 1–3 row by
-  row and mark the census's G5 line. Byte-identity on the thirteen for any
-  code change (`bi14.sh` against `bi/u38/PAYLOADS`). Then the road (D77):
-  G2 the three named worlds fresh, G1 the eleven golden fresh, G6 kit 3×3
-  (and WS-A–D read against the spec's line), G4 six probes at final bytes,
-  G7 deck and closing report, `STATUS: DONE`.
-- **Last commit:** 4065277 (unit 37). Convention: this line names the
+- **In flight:** nothing — unit 39 (the census sweep against G5's letter:
+  1.19 probed, 1.21 `stats.ground` wired, 2.2's doc, 3.3 corrected, the M/L
+  rows to P9/P10, the S list closed) is committed.
+- **Next unit:** unit 40 — **G2: the three named worlds fresh.** Montfort
+  hill, the walled city and the overgrown metropolis hideout generated end
+  to end at HEAD's bytes (`generate-all.mjs` on a three-prompt roster
+  `tools/golden-prompts/g2.json` — the same prompts and seeds as their k1
+  decks; records under `runs/g2`; ≈$1 against the cap), scored by the icon
+  metric, rendered full-height and read against T1/T6 and the walk cards,
+  installed to the Prism instance with `--saves` (never `--replace`) for
+  Kai's walk. Pre-register the prediction in REACH before the spend. Then
+  G1 the eleven golden fresh, G6 kit 3×3 and WS-A–D against the spec's line,
+  G4 six probes at final bytes, G7 deck and closing report, `STATUS: DONE`.
+- **Last commit:** 33464af (unit 38). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
 - **Spend:** $14.96 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
 - **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19, D25,
@@ -84,11 +81,11 @@ running state. The NOW block is rewritten at the end of every turn.
     the redwoods' measure, the farm town's hull density; the rail gantry).
   - F16 — the kit's core is 88 % of the kit; a smaller kit is a prose job.
   - F17 — the walled city's keep authored in 1 of 3 kit rolls; kit-teaching.
-  - F18 — **the kit never names 175 of 428 building archetypes (41 %) and
+  - F18 — → **P10** (unit 39). **the kit never names 175 of 428 building archetypes (41 %) and
     253 of 654 catalog entries (39 %)**; zero the other way. E7's "is the
     model drowning?" is answered from the other side: the kit under-names
     (census 2.4; a table fill is M, a generator is a proposal).
-  - F19 — **79 % of structure blocks are emitted at absolute y before the
+  - F19 — → **P9** (unit 39). **79 % of structure blocks are emitted at absolute y before the
     ground freezes** (`enterTier` has no caller; the declare/build split is
     a statement-order cut) — the GROUND-CONTRACT migration's undone half;
     proposal (L) with the pads' double authority (census 3.1).
@@ -115,6 +112,15 @@ running state. The NOW block is rewritten at the end of every turn.
 
 (every fork taken: the reversible default chosen, why, and how to undo it)
 
+- **D84 (unit 39):** G5 is read by its letter — "classes 1–3 executed, not
+  just listed" — and executed means done, staged behind an attributed
+  switch, or written as a proposal, which the spec lists among the five
+  dispositions. Four rows went to proposals (2.1, 2.3, 3.1 → P9; 2.4 → P10)
+  because each is the ground contract's or the kit's L-sized half and a
+  unit could not land it byte-identically; each says so in its status and
+  the proposal carries the text a future unit needs. The class-4/7 probes
+  (4.5, 7.3) stay unexecuted: G5 asks a disposition of them, not execution,
+  and the closing report carries 4.4's deletion ladder. Undo: n/a.
 - **D83 (unit 38):** the consolidation takes `wallPlan` with `roofPlan`
   (32 copies and 25: the roof plan is the wall plan plus the two-course
   check) and one `RebuildPlan` that is the superset of every file's private
@@ -683,6 +689,7 @@ running state. The NOW block is rewritten at the end of every turn.
 | 36 | P6 part one — one bi14 run, the FULL suite | 0.00 | 14.96 |
 | 37 | P6 part two — two bi14 runs (off, dist-patched on), three renders, the FULL suite | 0.00 | 14.96 |
 | 38 | census 3.4 — one bi14 run, the FULL suite | 0.00 | 14.96 |
+| 39 | census sweep — one bi14 run, one CLI compile, the FULL suite | 0.00 | 14.96 |
 
 ## VERDICTS
 
@@ -885,6 +892,32 @@ F-number; G4 is met if these six surface no new failure class.
   bed, the floor at the requested height above the water, the pad
   contract's `waterFloor` rule as its floor, and kit-teaching after the
   feature. Until then a prompt for a stilt village gets islands.
+- **P9 — the ground contract's undone half** (unit 39; census 2.1, 2.3,
+  3.1; F19). Three things one subsystem: (1) `enterTier` has no caller, so
+  every pass's "declare, then build, in tier order" is a statement-order
+  cut and 79 % of structure blocks (121,277 of 153,720 on troy) are emitted
+  at absolute y before `freeze()`; (2) the pads decide twice — baked into
+  the field, then re-declared as claims that cannot lose (`compile.ts`
+  admits it) — and `district.ts` `foundationY`'s four-way `??` survives an
+  election that collapsed `seatOnPlane`; (3) the driver's `commit`
+  write-through is dead under `GROUND_V1_FREEZE` and `plan.surface` is
+  written outside the `write` guard by `props.ts` and `site-treatment.ts`.
+  The order: (1) first, as a switch that calls `enterTier` at each tier and
+  proves the thirteen identical (the baseline is the bare pre-freeze view,
+  so identity is expected); then (2) the pads as ordinary claims with a
+  rank, attributed where they lose; then (3) the guard closed and the two
+  outside writes routed through it. L; each step law 5.
+- **P10 — the kit's archetype and catalog tables, generated** (unit 39;
+  census 2.4; F18). 175 of 428 building archetypes and 253 of 654 catalog
+  entries are never named in `settlement-author.md`, and the ratchet
+  (`kit-registry-drift.test.ts`) only stops the gap growing. A hand fill of
+  428 rows would double a kit F16 already wants smaller; the fix is a
+  generator — a `split-kit.mjs` sibling that writes a kit module from the
+  registries' own one-line descriptions, kept out of the core (the
+  centerpiece paragraph and the icon register stay prose), with the
+  ratchet retired when the module exists. M; a kit change, so the golden
+  gate. Whether the model reaches further when it can see every name is
+  the question G6's 3×3 asks before and after.
 - **P4 — a wet-neighbour constraint in the ground contract** (unit 14). A
   pad or platform whose ground claim would lower a column beside standing
   water below that water's surface is refused or raised to it — the rule
@@ -1410,3 +1443,13 @@ F-number; G4 is met if these six surface no new failure class.
   type a subset of the shared one; byte-identical on the thirteen
   (`bi/u38` ≡ `bi/u37on`). Tests: FULL suite Test Files 350 passed | 1 skipped (351), Tests 5690 passed | 31 skipped (5721). Files: the
   archetype files, the census (3.4), the ledger. Spend $0.
+- **unit 39 — the census sweep (2026-08-25):** G5 read by its letter (D84):
+  1.19 probed by read (the classical head course is rule 7, keep); 1.21
+  `stats.ground` on every product compile (`compile.ts`, `CompileStats`,
+  a test); 2.2 `BlockSpan`'s doc; 3.3's stale status corrected; 1.5 and
+  1.11 named as executed (staged / P4); 2.1, 2.3, 3.1 → P9 and 2.4 → P10,
+  written; the CLASS-2 S list closed (items 3, 7 — the kit note in
+  `AGENTS.md`, not the kit). Byte-identical on the thirteen (`bi/u39` ≡
+  `bi/u38`). Tests: FULL suite Test Files 350 passed | 1 skipped (351), Tests 5691 passed | 31 skipped (5722). Files: `compile.ts`,
+  `structures/index.ts`, `footprint-ground.test.ts`, `AGENTS.md`, the
+  census, the ledger. Spend $0.
