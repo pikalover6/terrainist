@@ -88,6 +88,9 @@ enforces it.
   compiles a doc in-process and cross-attributes every ground discontinuity
   to the owning subsystem. `-` self-emits. Text mode prints ASCII maps.
 - `terrainist render <worldDir> --out x.png --scale 2` — top-down render.
+- `tools/worlds/block-census.mjs <worldDir> [--bbox x0,z0,x1,z1] [--match re]`
+  — block-id counts read from the region files (vines, palette, water…
+  inside a district); the number a render cannot give.
 - Installs go to the PrismLauncher "Fabulously Optimized" instance:
   `terrainist install <worldDir> --saves "/Users/kaihoward/Library/Application Support/PrismLauncher/instances/Fabulously Optimized/minecraft/saves"`.
   **Never `--replace`** — install alongside with `--channel <x>` or
