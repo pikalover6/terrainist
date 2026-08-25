@@ -143,6 +143,21 @@ Seed findings already in hand:
   output went [T204, W407] → [T204]. Cluster 6 (semantics) next, which
   also touches the conform consult (C19's "every building needs a
   terrain_conform" is part of why buildings carry a conform they lose).
+- **Cluster 6 LANDED (semantics) — Phase 1 of the audit is COMPLETE:**
+  galleon advice split by base (the kit's own table says water; the prose
+  said plateau); "when in doubt, write the program"; the centerpiece-vs-
+  never-depend tension reconciled; C19 scoped to solver-placed buildings
+  (the conform-on-every-building question stays with the consult);
+  intent precedence stated (root wins key by key, resolve.ts:99-101); the
+  prominence law stops teaching a district-child landmark that
+  validate.ts:698 rejects. **Found, unfixed, Kai's call: LOAM-T204 = the
+  kit's own fence** — 30 occurrences in the campaign's runs, 29 at
+  `constraints[1]` of an authored: landmark, because two bespoke-section
+  fences (:3239, :3285) write the invalid nested `{distance:{to,max}}`
+  form; the shorthand validates clean. Every bespoke landmark costs a
+  retry round (~80k tokens, ~$0.05, ~60 s). Audit C13; the third fence-
+  teaches-an-error (forest radius, farm example, this). Two-line fix,
+  verified by counting T204 across a 3-prompt pass.
 - **Wave 2b RULED (Kai, 2026-08-24): B1 now, B2 next wave** — see
   docs/STOCKTAKE-WAVE-2B-v0.md. kit-fix's queue after Phase 1: B1 (fence
   the civic set-piece + name the acropolis class, 3×3 on troy, ~$0.35) and
