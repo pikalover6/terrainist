@@ -11,20 +11,12 @@ E performance, F architectural inventory / kill-list. Laws: measure before
 rebuilding, ratify before deleting; read-only audits + consult before ANY
 fix; no delicate task is one-shot by a fire-and-forget agent.
 
-**WAVE 1 (landed 04633eb, docs/audits/ — full numbers there):** compile
-= **5.4 s** (my "3–4 min" was generate's LLM wall); BLAKE3 15.8 % of wall;
-floors 2.7 → 1.25 → 0.4 s (layout solver = asymptote); **Bun DECLINED**,
-node canonical. **Parroting CONFIRMED:** 84 % of docs use kit-spelled
-vocab only; envelopes 84 % kit-literal; reach 147/722 catalog, 99/428
-archetypes; 6/7 form packs at 0 %; ONE hallucination in 50 docs →
-**reach is RETRIEVAL, not capability; fenced examples ARE the spec**.
-Citadel: acropolis_terrace 0× ever; 9/10 troy rolls = archetype-less box;
-landmark budget chases the prompt noun 11/11. Price = loop cost
-($0.34/world; 3 model runs × 99k tokens; 277KB kit resent); **T118 units
-= 53 % of retries** — kit says fraction, CODE says BLOCKS (C17 re-graded).
-Authored layer barely binds (`hard` never written; conforms 1/108).
-Convergent insight: the kit is the cost, speed AND creative-reach lever;
-the compiler is healthy.
+**WAVE 1 (04633eb, docs/audits/):** compile 5.4 s (the minutes were the
+LLM loop); parroting CONFIRMED (84 % kit-only vocab; reach 20 % of the
+catalog; 6/7 packs at 0 %; ONE hallucination in 50 docs → reach is
+RETRIEVAL); citadel never reached (acropolis_terrace 0×); price = loop
+cost ($0.34/world, T118 = 53 % of retries, code says BLOCKS); Bun
+declined. The kit is the cost, speed AND reach lever.
 
 **WAVE 2a (LIVE):** Kai runs three parallel CC sessions in this repo and
 STEPS THROUGH each (never one-shot; popups per step; if Kai is idle the
