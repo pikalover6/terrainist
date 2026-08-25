@@ -958,6 +958,13 @@ async function compileValidated(
   // byte-identical.
   let programJobs: readonly ProgramJob[] = [];
   let programJobsPlanned = false;
+  // Wall time of that declaring half. It runs inside the structures window
+  // (it must — §7.1 sits between `declareStructures` and `freeze()`), so it is
+  // subtracted from `timings.structures` and billed to `timings.programs`,
+  // where the caller of `report.timings` expects a program's cost to appear.
+  // Before 2026-08-24 it was billed to structures: thalassa_polis read as
+  // "structures 4.9 s" when 3.7 s of that was one authored program's declare.
+  let programDeclareMs = 0;
   let programDeclaration: ProgramDeclaration | undefined;
   /**
    * Which authored-program nodes this document asks for, and how each is
@@ -1063,6 +1070,7 @@ async function compileValidated(
     // one block is laid here — `executePrograms` does that at 5f, over the
     // resolved ground, which is what finally makes `api.heightAt` show a
     // program the pad it is standing on.
+    const tProgramDeclare = now();
     if (GROUND_V1_FREEZE) {
       programJobs = planProgramJobs(planAt(plan, groundDriver.view("D")));
       programJobsPlanned = true;
@@ -1081,6 +1089,7 @@ async function compileValidated(
         });
       }
     }
+    programDeclareMs = now() - tProgramDeclare;
     // **Pass 5c — the freeze** (contract v1 §1.6). The one place it can go: the
     // declaring half has just finished — including §7.1's program siting above,
     // the last `prop.pad` there is — so the fifth resolve is over the whole
@@ -1097,7 +1106,7 @@ async function compileValidated(
     diagnostics.push(...structures.diagnostics);
     layoutOutcome = { ...layoutOutcome, structures };
   }
-  const structuresMs = now() - tStruct;
+  const structuresMs = now() - tStruct - programDeclareMs;
 
   // --- pass 5b′: the ground contract's equivalence shim ---------------------
   // §8.1, steps 2–3. Read-only: the shadow declarers recompute what each of the
@@ -1218,7 +1227,7 @@ async function compileValidated(
       if (occupancy !== undefined) claimProgramFootprints(occupancy, programs.placed);
     }
   }
-  const programsMs = now() - tPrograms;
+  const programsMs = now() - tPrograms + programDeclareMs;
 
   // --- pass 5c: the settlement clearing and the vegetation clip ------------
   // Both are derived from what the structure pass actually built, and both are

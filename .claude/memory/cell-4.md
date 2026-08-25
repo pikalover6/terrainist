@@ -58,8 +58,13 @@ NOT representative (thalassa 9.4 s structures-bound, pirates scatter-
 bound); emit cost = prismarine's linear palette scan (couples to authoring
 richness). Rung 3 run-fill LANDED c18c9fe (gate 5,573/0): emit −20-30 %;
 cumulative troy 3.9 s / thalassa 8.5 / pirates 4.7; Kai: zero-fallback
-test guards the silent fallback. Next: bucketTrees keys, thalassa
-structures profile (read-only), deflate pool designed in front of Kai. Menus design ratified by Kai: two
+test guards the silent fallback. Thalassa profile: the "4.6 s
+structures" was the programs' declare half mis-billed (timings fixed);
+3.7 s = ONE authored program (leviathan_prime re-filling voxels 70×) —
+**Kai: program cost is NOT an authoring burden**, no diagnostic, no kit
+law. #27 density question: NO (retaining 30 ms on thalassa vs 497 troy).
+Next: bucketTrees keys, deflate pool designed in front of Kai; roads.js
+654 ms unprofiled. Menus design ratified by Kai: two
 tiers (named packs whole, era-affine round-robin), ~60 entries/2.1k
 tokens, statuses=[implemented], empty menu ⇒ no message.
 

@@ -142,9 +142,24 @@ of wall; full report: scratchpad perf/REPORT.md + battery of scripts).
     bump fails CI loudly while production keeps the silent fallback.
     `terrain/emit.ts` is emit code by role and was granted to the session as
     one file (bucketTrees' keys next, on Kai's go); the string chunk-key maps
-    in structures/** are parked as a later orchestrator rung; thalassa's
-    unmoved 4.6 s of structures is the biggest single item left and gets a
-    read-only profile.
+    in structures/** are parked as a later orchestrator rung.
+  - *Thalassa's "4.6 s of structures" was never structures*
+    (docs/audits/thalassa-structures-profile-2026-08-24.md): the timings
+    billed the authored programs' DECLARE half (§7.1, hoisted inside the
+    structures window) to `structures` — 3.7 s of it — a report bug, fixed
+    (declare time now lands in `timings.programs`). The structures pass is
+    779 ms. The 3.7 s is ONE authored program, `leviathan_prime` (4.0 s,
+    44 % of the compile, 34k blocks at ~118 µs/block): a Catmull-Rom sweep
+    at 70 fixed steps per segment rasterising a full (2r+1)³ cube per step,
+    re-filling the same voxels ~70×. **Kai's ruling (2026-08-24): program
+    cost is NOT an authoring burden** — no diagnostic, no kit cost law; a
+    few seconds is accepted if it keeps the author's job easy. Consequence
+    for E: the compile floor for a doc with bespoke programs is set by the
+    program's own code and is not a target. #27's density question answered
+    NO: retaining is 30 ms on thalassa vs 497 on troy (16× cheaper on the
+    dense city) — the partial-stack pattern is a correctness question on its
+    own merits, with no perf case either way. roads.js (654 ms self on
+    thalassa) is the largest genuine structures-side cost, unprofiled.
 
 ## WS-F — Architectural inventory (the "glaring stuff" census)
 
