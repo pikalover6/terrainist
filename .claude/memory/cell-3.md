@@ -96,3 +96,21 @@ NOT an authoring burden** (no diagnostic, no kit law). Unspent → WS-F:
 roads.js 654 ms on thalassa, flora parts ~250 ms, retaining density
 inversion. Vitest rule loosened (AGENTS.md): heavy runs one at a time,
 light targeted runs overlap.
+
+## Wave 2a's briefs and coordination rules (08-24) — compressed from cell 4
+
+Three Kai-driven sessions briefed by SendMessage with disjoint scopes:
+**kit-fix** = docs/kits/** + spec/test/kit.test.ts + tools/golden-prompts/
+(A0 golden suite first, then audit clusters); **menus** = packages/agents/**
++ a new stdlib registry-export + cli catalog/generate seam (opaque-string
+menu as a second system message, flag OFF = prompt-identical); **perf** =
+stdlib/determinism + compiler/emit in its OWN worktree, every rung
+shasum-identical ×3 baseline docs with the FULL suite as the flip gate.
+Rules: sessions never commit or git add (shared index); targeted vitest
+only, FULL scheduled by the orchestrator; subagent cap shared; Kai's
+in-session answers override the brief; code bugs found by kit sessions
+come to the orchestrator (large → one opus subagent). Learned in flight:
+freeze the kit around any LLM measurement and pin one runner blob per
+triplicate; install harness edits by atomic rename; the log renderer
+must be pinned to this session's transcript (--transcript) because the
+parallel sessions share the project directory.

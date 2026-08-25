@@ -18,31 +18,15 @@ RETRIEVAL); citadel never reached (acropolis_terrace 0×); price = loop
 cost ($0.34/world, T118 = 53 % of retries, code says BLOCKS); Bun
 declined. The kit is the cost, speed AND reach lever.
 
-**WAVE 2a (LIVE):** Kai runs three parallel CC sessions in this repo and
-STEPS THROUGH each (never one-shot; popups per step; if Kai is idle the
-session is idle). This session = MASTER ORCHESTRATOR (ListAgents names
-kit-fix / menus / perf; briefs + corrections via SendMessage). Scopes
-disjoint: **kit-fix** = docs/kits/** + spec/test/kit.test.ts +
-tools/golden-prompts/ (A0 baseline, ~$2.6/pass → units cluster (T118 +
-terrain C3) → root union → archetype identity [kit:1447 "no archetype
-param" is the defect; validate.ts:2396 validates it] → envelopes/
-checklist → vocab contradictions → semantics; code bugs reported to me
-and taught around); **menus** = packages/agents/** + new stdlib
-registry-export + cli `catalog` + generate.ts seam + candidate-menu.ts
-(opaque-string menu, second system message after the kit so revision
-rounds keep it, flag OFF = messages byte-identical; implemented-only
-ids, three tiers ~60 entries / 2.5k tokens); **perf** = stdlib/
-determinism/** + compiler/emit/** in its OWN WORKTREE, every rung shasum-
-identical ×3 baseline docs (troy_r22 / hellenist_r22 / pirates_r22).
-Rules: sessions never commit or `git add` (shared index — I commit on
-their reports); targeted vitest only, FULL suite scheduled by me; subagent
-cap shared across all sessions. **No teaching around bugs** (Kai, via
-kit-fix): code bugs come to ME and are fixed first (large → one opus
-subagent; small/medium myself), then the kit teaches what the code does.
-Fixed so far: biomeThemes phantom hint (de8381b); C3 forest gate = code is
-RIGHT (F20 calibration), both kits teach the 0.02 line (Kai's verdict). Wave 2b after 1+2: civic set-piece budget
-line (the citadel, ~$0.04/world), A3 dynamic context assembly, binding-
-contracts teaching. The campaign window (caps) is Kai's to design.
+**WAVE 2a (Kai-driven parallel sessions, this session = MASTER
+ORCHESTRATOR; briefs/corrections via SendMessage; sessions never commit —
+I commit on their reports; step-gated, never one-shot):** perf CLOSED
+(cell 3); menus CLOSED (WS-A2, below); kit-fix on clusters 4–6 (scope
+docs/kits/** + tools/golden-prompts/**). Rules that held: freeze/thaw the
+kit around any LLM measurement; one runner blob per triplicate; atomic
+installs of harness edits; bug-first (code fixed by me, then the kit
+teaches); heavy vitest one at a time. Wave 2b after 2a; campaign window
+(caps) is Kai's.
 
 **Perf ladder CLOSED** — see cell 3 (troy 5.0→3.9 s, byte-identical ×3
 docs; profile flat; program cost = non-goal; #27 = correctness only).
