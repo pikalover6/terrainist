@@ -1,8 +1,8 @@
 # Cell 4 — the Great Stocktake (2026-08-24 →)
 
-**READ FIRST: docs/STOCKTAKE-v0.md** (campaign plan, Wave-1 findings,
-WS-F seeds) + docs/audits/*.md (the evidence). Prior epoch: cell 3 +
-docs/SESSION-HANDOFF-2026-08-23.md.
+**READ FIRST: docs/SESSION-HANDOFF-2026-08-24.md** (the whole day, commit-
+anchored), then docs/STOCKTAKE-v0.md + docs/STOCKTAKE-WAVE-2B-v0.md +
+docs/audits/*.md + docs/decks/*. Prior epoch: cell 3 + SESSION-HANDOFF-2026-08-23.
 
 **THE PIVOT (Kai, 08-24):** weeks of surface sprinting left slop → a
 deliberate, parallel, measured campaign over six workstreams: A settlement
