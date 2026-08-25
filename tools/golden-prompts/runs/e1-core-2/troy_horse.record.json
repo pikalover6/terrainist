@@ -1,0 +1,210 @@
+{
+  "id": "troy_horse",
+  "family": "troy",
+  "kit": "settlement",
+  "prompt": "The Trojan horse in Troy, right before the soldiers emerge.",
+  "seed": 303,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "cache",
+    "value": {
+      "era": "ancient",
+      "wealth": 0.7,
+      "decline": 0.1,
+      "formality": 0.6,
+      "event": {
+        "kind": "siege",
+        "severity": 0.9,
+        "recency": 0
+      },
+      "climate": {
+        "temperature": 0.7,
+        "humidity": -0.2,
+        "snow": "never"
+      },
+      "character": {
+        "label": "Walled Troy under the Greek stratagem",
+        "materialTheme": "sun_clay",
+        "fortification": "walled",
+        "formPacks": [
+          "classical_mediterranean"
+        ],
+        "archetypes": {
+          "prefer": [
+            "peristyle_house",
+            "megaron",
+            "stoa",
+            "peripteral_temple",
+            "palaestra",
+            "olive_press"
+          ],
+          "forbid": [
+            "townhouse",
+            "terraced_row",
+            "shop_row",
+            "office",
+            "apartment_block"
+          ]
+        },
+        "motifs": {
+          "roofType": "flat",
+          "massing": "stepped",
+          "windowRhythm": "sparse",
+          "ornamentDensity": 0.4
+        },
+        "urbanForm": "grown",
+        "courtyards": 0.6,
+        "ground": "stepped"
+      },
+      "tokens": {
+        "terrain": "a walled citadel city on a coastal rise above a sandy plain; the Aegean shore and open sea in view",
+        "icons": "the colossal wooden Trojan horse brought inside the Scaean gate; monumental stone ramparts and watchtowers; royal megaron palace overlooking the city; abandoned Greek camp and beached ship hulls on the distant shore",
+        "event_direction": "Greek soldiers concealed inside the belly of the wooden horse waiting for midnight to open the gates to the returning fleet"
+      }
+    }
+  },
+  "intentUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "reasoningTokens": 0,
+    "cost": 0,
+    "cached": true
+  },
+  "kitFile": "docs/kits/settlement-core.md",
+  "menu": {
+    "injected": false,
+    "reason": "flag off"
+  },
+  "attempts": 2,
+  "diagnostics": [
+    [
+      {
+        "code": "LOAM-T101",
+        "name": "BAD_ENUM",
+        "severity": "error",
+        "nodePath": "world.troas_heightfield.troy_hill"
+      },
+      {
+        "code": "LOAM-T101",
+        "name": "BAD_ENUM",
+        "severity": "error",
+        "nodePath": "world.troas_heightfield.scamander_river"
+      },
+      {
+        "code": "LOAM-T101",
+        "name": "BAD_ENUM",
+        "severity": "error",
+        "nodePath": "world.troas_heightfield.mount_ida_spurs"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "world.troy_citadel.priams_megaron"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "world.troy_citadel.temple_of_athena"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "world.troy_citadel.trojan_armory"
+      }
+    ],
+    []
+  ],
+  "usage": {
+    "promptTokens": 147400,
+    "completionTokens": 14621,
+    "reasoningTokens": 10658,
+    "cost": 0.08268937500000001
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 19,
+    "maxDepth": 2,
+    "generators": [
+      "authored:trojan_horse",
+      "building.grammar@0",
+      "precinct.farm@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "armory",
+      "barracks",
+      "church",
+      "cistern",
+      "cottage",
+      "courtyard_house",
+      "granary",
+      "hall",
+      "kiln",
+      "megaron",
+      "peristyle_house",
+      "shrine",
+      "stoa",
+      "temple"
+    ],
+    "archetypesInCatalog": 14,
+    "formPacks": [
+      "classical_mediterranean"
+    ],
+    "props": [
+      "campsite",
+      "longship",
+      "rowboat",
+      "statue_plinth"
+    ],
+    "species": [
+      "juniper",
+      "mediterranean_pine",
+      "olive_tree",
+      "scrub_oak"
+    ],
+    "envelopes": [
+      "512x512",
+      "192x176",
+      "15x14x19",
+      "15x15x21",
+      "13x12x17",
+      "15x20x19",
+      "80x80"
+    ],
+    "constraints": 6,
+    "constraintKinds": [
+      "at",
+      "blend",
+      "distance",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform"
+    ],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 3,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 6,
+    "eras": [
+      "ancient"
+    ],
+    "bytes": 6646
+  },
+  "wallMs": 82359
+}

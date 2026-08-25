@@ -1,0 +1,415 @@
+{
+  "id": "glowcap_vale",
+  "family": "glowcap_vale",
+  "kit": "settlement",
+  "prompt": "A glowing mushroom vale where a strange village has grown between the caps.",
+  "seed": 307,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": false,
+  "intent": {
+    "source": "cache",
+    "value": {
+      "era": "medieval",
+      "wealth": 0.35,
+      "formality": 0.1,
+      "climate": {
+        "humidity": 0.8,
+        "temperature": 0.2
+      },
+      "character": {
+        "label": "glowing mushroom vale village",
+        "materialTheme": "temperate_timber",
+        "formPacks": [
+          "swamp_witch"
+        ],
+        "urbanForm": "grown",
+        "flora": {
+          "prefer": [
+            "fungal",
+            "glow",
+            "mushroom_giant_red",
+            "mushroom_shelf_brown",
+            "glowcap"
+          ]
+        },
+        "archetypes": {
+          "prefer": [
+            "cottage",
+            "watchtower"
+          ]
+        }
+      },
+      "tokens": {
+        "terrain": "a secluded mountain vale nestled between steep ridges, sheltered beneath a canopy of giant glowing mushrooms",
+        "icons": "rustic wooden cottages and stilt dwellings built between and around giant mushroom stems; rope bridges and elevated walkways connecting mushroom caps; spore lanterns illuminating the vale floor"
+      }
+    }
+  },
+  "intentUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "reasoningTokens": 0,
+    "cost": 0,
+    "cached": true
+  },
+  "kitFile": "docs/kits/settlement-core.md",
+  "menu": {
+    "injected": false,
+    "reason": "flag off"
+  },
+  "attempts": 3,
+  "diagnostics": [
+    [
+      {
+        "code": "LOAM-T106",
+        "name": "BAD_PALETTE",
+        "severity": "error",
+        "nodePath": "style.palettes.ground.surface"
+      },
+      {
+        "code": "LOAM-T106",
+        "name": "BAD_PALETTE",
+        "severity": "error",
+        "nodePath": "style.palettes.ground.surface"
+      },
+      {
+        "code": "LOAM-T106",
+        "name": "BAD_PALETTE",
+        "severity": "error",
+        "nodePath": "style.palettes.ground.surface"
+      },
+      {
+        "code": "LOAM-T009",
+        "name": "MISSING_KEY",
+        "severity": "error",
+        "nodePath": ""
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.base_heightfield"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.climate"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.mushroom_vale_forest"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.sparse_surrounding_forest"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.ancestral_glowcap"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.spore_apothecary"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.glowing_cap_inn"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.mycelium_hall"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.fungal_dwelling_east"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.stilt_cottage_west"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.stilt_cottage_south"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.spore_witch_hut"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.spore_laboratory"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.vale_watchtower"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.plaza_well"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.floating_spore_disc"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.vale_notice_board"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.spore_cairn"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.plaza_bench"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.vale_lanes"
+      },
+      {
+        "code": "LOAM-T003",
+        "name": "GENERATOR_CARDINALITY",
+        "severity": "error",
+        "nodePath": "root"
+      },
+      {
+        "code": "LOAM-T003",
+        "name": "GENERATOR_CARDINALITY",
+        "severity": "error",
+        "nodePath": "root"
+      }
+    ],
+    [
+      {
+        "code": "LOAM-T004",
+        "name": "EDIT_NOT_UNDER_HEIGHTFIELD",
+        "severity": "error",
+        "nodePath": "mushroom_vale_settlement.base_heightfield.north_ridge"
+      },
+      {
+        "code": "LOAM-T004",
+        "name": "EDIT_NOT_UNDER_HEIGHTFIELD",
+        "severity": "error",
+        "nodePath": "mushroom_vale_settlement.base_heightfield.south_ridge"
+      },
+      {
+        "code": "LOAM-T004",
+        "name": "EDIT_NOT_UNDER_HEIGHTFIELD",
+        "severity": "error",
+        "nodePath": "mushroom_vale_settlement.base_heightfield.vale_cradle"
+      },
+      {
+        "code": "LOAM-T004",
+        "name": "EDIT_NOT_UNDER_HEIGHTFIELD",
+        "severity": "error",
+        "nodePath": "mushroom_vale_settlement.base_heightfield.vale_brook"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "mushroom_vale_settlement.spore_apothecary"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "mushroom_vale_settlement.glowing_cap_inn"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "mushroom_vale_settlement.mycelium_hall"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "mushroom_vale_settlement.fungal_dwelling_east"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "mushroom_vale_settlement.stilt_cottage_west"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "mushroom_vale_settlement.stilt_cottage_south"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "mushroom_vale_settlement.spore_witch_hut"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "mushroom_vale_settlement.spore_laboratory"
+      },
+      {
+        "code": "LOAM-E162",
+        "name": "UNKNOWN_ZONE",
+        "severity": "error",
+        "nodePath": "mushroom_vale_settlement.vale_watchtower.constraints[0]"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "mushroom_vale_settlement.vale_watchtower"
+      }
+    ],
+    [
+      {
+        "code": "LOAM-T008",
+        "name": "UNKNOWN_KEY",
+        "severity": "error",
+        "nodePath": "mushroom_vale_settlement.base_heightfield.north_ridge"
+      },
+      {
+        "code": "LOAM-T008",
+        "name": "UNKNOWN_KEY",
+        "severity": "error",
+        "nodePath": "mushroom_vale_settlement.base_heightfield.north_ridge"
+      },
+      {
+        "code": "LOAM-T101",
+        "name": "BAD_ENUM",
+        "severity": "error",
+        "nodePath": "mushroom_vale_settlement.base_heightfield.north_ridge"
+      },
+      {
+        "code": "LOAM-T101",
+        "name": "BAD_ENUM",
+        "severity": "error",
+        "nodePath": "mushroom_vale_settlement.base_heightfield.north_ridge.params"
+      },
+      {
+        "code": "LOAM-T008",
+        "name": "UNKNOWN_KEY",
+        "severity": "error",
+        "nodePath": "mushroom_vale_settlement.base_heightfield.south_ridge"
+      },
+      {
+        "code": "LOAM-T008",
+        "name": "UNKNOWN_KEY",
+        "severity": "error",
+        "nodePath": "mushroom_vale_settlement.base_heightfield.south_ridge"
+      },
+      {
+        "code": "LOAM-T101",
+        "name": "BAD_ENUM",
+        "severity": "error",
+        "nodePath": "mushroom_vale_settlement.base_heightfield.south_ridge"
+      },
+      {
+        "code": "LOAM-T101",
+        "name": "BAD_ENUM",
+        "severity": "error",
+        "nodePath": "mushroom_vale_settlement.base_heightfield.south_ridge.params"
+      },
+      {
+        "code": "LOAM-T008",
+        "name": "UNKNOWN_KEY",
+        "severity": "error",
+        "nodePath": "mushroom_vale_settlement.base_heightfield.vale_cradle"
+      },
+      {
+        "code": "LOAM-T008",
+        "name": "UNKNOWN_KEY",
+        "severity": "error",
+        "nodePath": "mushroom_vale_settlement.base_heightfield.vale_cradle"
+      },
+      {
+        "code": "LOAM-T101",
+        "name": "BAD_ENUM",
+        "severity": "error",
+        "nodePath": "mushroom_vale_settlement.base_heightfield.vale_cradle"
+      },
+      {
+        "code": "LOAM-T101",
+        "name": "BAD_ENUM",
+        "severity": "error",
+        "nodePath": "mushroom_vale_settlement.base_heightfield.vale_cradle.params"
+      },
+      {
+        "code": "LOAM-T008",
+        "name": "UNKNOWN_KEY",
+        "severity": "error",
+        "nodePath": "mushroom_vale_settlement.base_heightfield.vale_brook"
+      },
+      {
+        "code": "LOAM-T008",
+        "name": "UNKNOWN_KEY",
+        "severity": "error",
+        "nodePath": "mushroom_vale_settlement.base_heightfield.vale_brook"
+      },
+      {
+        "code": "LOAM-T101",
+        "name": "BAD_ENUM",
+        "severity": "error",
+        "nodePath": "mushroom_vale_settlement.base_heightfield.vale_brook"
+      },
+      {
+        "code": "LOAM-T101",
+        "name": "BAD_ENUM",
+        "severity": "error",
+        "nodePath": "mushroom_vale_settlement.base_heightfield.vale_brook.params"
+      }
+    ]
+  ],
+  "usage": {
+    "promptTokens": 251389,
+    "completionTokens": 29735,
+    "reasoningTokens": 14213,
+    "cost": 0.1265367
+  },
+  "error": "authoring failed after 3 attempt(s); last attempt had 16 problem(s):\nerror LOAM-T008 UNKNOWN_KEY at mushroom_vale_settlement.base_heightfield.north_ridge: unknown key \"verb\" on terrain.edit@0 node\n  fix: remove \"verb\"; terrain.edit@0 node accepts only: id, kind, generator, envelope, params, children, tags, seedSalt, constraints, ports, intent (plus \"label\" and \"note\", which are always allowed)\nerror LOAM-T008 UNKNOWN_KEY at mushroom_vale_settlement.base_heightfield.north_ridge: unknown key \"course\" on terrain.edit@0 node\n  fix: remove \"course\"; terrain.edit@0 node accepts only: id, kind, generator, envelope, params, children, tags, seedSalt, constraints, ports, intent (plus \"label\" and \"note\", which are always allowed)\nerror LOAM-T101 BAD_ENUM at mushroom_vale_settlement.base_heightfield.north_ridge: edit nodes must have \"kind\": \"generator\", got nothing\n  fix: set \"kind\": \"generator\"\nerror LOAM-T101 BAD_ENUM at mushroom_vale_settlement.base_heightfield.north_ridge.params: \"verb\" must be one of the eight terrain verbs, got nothing\n  fix: set \"verb\" to one of: ridge, peak, volcano, plateau, island, valley, river, basin\nerror LOAM-T008 UNKNOWN_KEY at mushroom_vale_settlement.base_heightfield.south_ridge: unknown key \"verb\" on terrain.edit@0 node\n  fix: remove \"verb\"; terrain.edit@0 node accepts only: id, kind, generator, envelope, params, children, tags, seedSalt, constraints, ports, intent (plus \"label\" and \"note\", which are always allowed)\nerror LOAM-T008 UNKNOWN_KEY at mushroom_vale_settlement.base_heightfield.south_ridge: unknown key \"course\" on terrain.edit@0 node\n  fix: remove \"course\"; terrain.edit@0 node accepts only: id, kind, generator, envelope, params, children, tags, seedSalt, constraints, ports, intent (plus \"label\" and \"note\", which are always allowed)\nerror LOAM-T101 BAD_ENUM at mushroom_vale_settlement.base_heightfield.south_ridge: edit nodes must have \"kind\": \"generator\", got nothing\n  fix: set \"kind\": \"generator\"\nerror LOAM-T101 BAD_ENUM at mushroom_vale_settlement.base_heightfield.south_ridge.params: \"verb\" must be one of the eight terrain verbs, got nothing\n  fix: set \"verb\" to one of: ridge, peak, volcano, plateau, island, valley, river, basin\nerror LOAM-T008 UNKNOWN_KEY at mushroom_vale_settlement.base_heightfield.vale_cradle: unknown key \"verb\" on terrain.edit@0 node\n  fix: remove \"verb\"; terrain.edit@0 node accepts only: id, kind, generator, envelope, params, children, tags, seedSalt, constraints, ports, intent (plus \"label\" and \"note\", which are always allowed)\nerror LOAM-T008 UNKNOWN_KEY at mushroom_vale_settlement.base_heightfield.vale_cradle: unknown key \"at\" on terrain.edit@0 node\n  fix: remove \"at\"; terrain.edit@0 node accepts only: id, kind, generator, envelope, params, children, tags, seedSalt, constraints, ports, intent (plus \"label\" and \"note\", which are always allowed)\nerror LOAM-T101 BAD_ENUM at mushroom_vale_settlement.base_heightfield.vale_cradle: edit nodes must have \"kind\": \"generator\", got nothing\n  fix: set \"kind\": \"generator\"\nerror LOAM-T101 BAD_ENUM at mushroom_vale_settlement.base_heightfield.vale_cradle.params: \"verb\" must be one of the eight terrain verbs, got nothing\n  fix: set \"verb\" to one of: ridge, peak, volcano, plateau, island, valley, river, basin\nerror LOAM-T008 UNKNOWN_KEY at mushroom_vale_settlement.base_heightfield.vale_brook: unknown key \"verb\" on terrain.edit@0 node\n  fix: remove \"verb\"; terrain.edit@0 node accepts only: id, kind, generator, envelope, params, children, tags, seedSalt, constraints, ports, intent (plus \"label\" and \"note\", which are always allowed)\nerror LOAM-T008 UNKNOWN_KEY at mushroom_vale_settlement.base_heightfield.vale_brook: unknown key \"course\" on terrain.edit@0 node\n  fix: remove \"course\"; terrain.edit@0 node accepts only: id, kind, generator, envelope, params, children, tags, seedSalt, constraints, ports, intent (plus \"label\" and \"note\", which are always allowed)\nerror LOAM-T101 BAD_ENUM at mushroom_vale_settlement.base_heightfield.vale_brook: edit nodes must have \"kind\": \"generator\", got nothing\n  fix: set \"kind\": \"generator\"\nerror LOAM-T101 BAD_ENUM at mushroom_vale_settlement.base_heightfield.vale_brook.params: \"verb\" must be one of the eight terrain verbs, got nothing\n  fix: set \"verb\" to one of: ridge, peak, volcano, plateau, island, valley, river, basin",
+  "wallMs": 163947
+}

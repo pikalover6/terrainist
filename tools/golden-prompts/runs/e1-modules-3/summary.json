@@ -1,0 +1,2145 @@
+{
+  "suite": "golden-prompts-v0",
+  "label": "e1-modules-3",
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "intentPrepass": true,
+  "kits": {
+    "settlement": {
+      "path": "docs/kits/settlement-core.md",
+      "sha256": "e19f3bb032ef2794a74b8876c7193d1faf9269e07b7a7fc0e420284b0fc605a1",
+      "bytes": 251084,
+      "envelopeLiterals": []
+    },
+    "terrain": {
+      "path": "docs/kits/terrain-author.md",
+      "sha256": "0adfac8d77042820afec8495258497e5cd44aa2a4391a585ac942518717f331b",
+      "bytes": 41193,
+      "envelopeLiterals": [
+        "384x384",
+        "512x512"
+      ]
+    }
+  },
+  "kitFile": "docs/kits/settlement-core.md",
+  "modulesDir": "docs/kits/modules",
+  "totals": {
+    "ok": 11,
+    "attempts": 18,
+    "oneShot": 5,
+    "promptTokens": 1440343,
+    "completionTokens": 130310,
+    "cost": 0.6836044124999998,
+    "diagnosticCodes": {
+      "LOAM-T106": 6,
+      "LOAM-T004": 6,
+      "LOAM-T008": 5,
+      "LOAM-T010": 1,
+      "LOAM-T000": 2
+    }
+  },
+  "records": [
+    {
+      "id": "troy_horse",
+      "family": "troy",
+      "kit": "settlement",
+      "prompt": "The Trojan horse in Troy, right before the soldiers emerge.",
+      "seed": 303,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "source": "cache",
+        "value": {
+          "era": "ancient",
+          "wealth": 0.7,
+          "decline": 0.1,
+          "formality": 0.6,
+          "event": {
+            "kind": "siege",
+            "severity": 0.9,
+            "recency": 0
+          },
+          "climate": {
+            "temperature": 0.7,
+            "humidity": -0.2,
+            "snow": "never"
+          },
+          "character": {
+            "label": "Walled Troy under the Greek stratagem",
+            "materialTheme": "sun_clay",
+            "fortification": "walled",
+            "formPacks": [
+              "classical_mediterranean"
+            ],
+            "archetypes": {
+              "prefer": [
+                "peristyle_house",
+                "megaron",
+                "stoa",
+                "peripteral_temple",
+                "palaestra",
+                "olive_press"
+              ],
+              "forbid": [
+                "townhouse",
+                "terraced_row",
+                "shop_row",
+                "office",
+                "apartment_block"
+              ]
+            },
+            "motifs": {
+              "roofType": "flat",
+              "massing": "stepped",
+              "windowRhythm": "sparse",
+              "ornamentDensity": 0.4
+            },
+            "urbanForm": "grown",
+            "courtyards": 0.6,
+            "ground": "stepped"
+          },
+          "tokens": {
+            "terrain": "a walled citadel city on a coastal rise above a sandy plain; the Aegean shore and open sea in view",
+            "icons": "the colossal wooden Trojan horse brought inside the Scaean gate; monumental stone ramparts and watchtowers; royal megaron palace overlooking the city; abandoned Greek camp and beached ship hulls on the distant shore",
+            "event_direction": "Greek soldiers concealed inside the belly of the wooden horse waiting for midnight to open the gates to the returning fleet"
+          }
+        }
+      },
+      "intentUsage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "reasoningTokens": 0,
+        "cost": 0,
+        "cached": true
+      },
+      "modules": {
+        "dir": "docs/kits/modules",
+        "selected": [
+          "1-document-skeleton (always)",
+          "2-coordinates-and-zones (always)",
+          "building-grammar (settlement)",
+          "district (settlement)",
+          "road-network (settlement)",
+          "the-plaza (settlement)",
+          "11-worked-settlement-fragments (settlement)",
+          "9c-infra-entry (walled)",
+          "the-entries-and-one-worked-example-each (walled)",
+          "multi-level-ground (walled)",
+          "bespoke-programs-must-belong-to-the-worl (icons)",
+          "how-to-write-the-request (icons)",
+          "what-you-get-back-and-what-to-do-with-it (icons)",
+          "seating-how-a-grounded-thing-meets-the-g (icons)",
+          "facing-which-way-it-looks (icons)"
+        ],
+        "used": [
+          "1-document-skeleton",
+          "2-coordinates-and-zones",
+          "building-grammar",
+          "district",
+          "road-network",
+          "the-plaza",
+          "11-worked-settlement-fragments",
+          "9c-infra-entry",
+          "the-entries-and-one-worked-example-each",
+          "multi-level-ground",
+          "bespoke-programs-must-belong-to-the-worl",
+          "how-to-write-the-request",
+          "what-you-get-back-and-what-to-do-with-it",
+          "seating-how-a-grounded-thing-meets-the-g",
+          "facing-which-way-it-looks"
+        ],
+        "missing": [],
+        "bytes": 19887
+      },
+      "kitFile": "docs/kits/settlement-core.md",
+      "menu": {
+        "injected": false,
+        "reason": "flag off"
+      },
+      "attempts": 2,
+      "diagnostics": [
+        [
+          {
+            "code": "LOAM-T106",
+            "name": "BAD_PALETTE",
+            "severity": "error",
+            "nodePath": "style.palettes.ground.beach"
+          },
+          {
+            "code": "LOAM-T106",
+            "name": "BAD_PALETTE",
+            "severity": "error",
+            "nodePath": "style.palettes.ground.beach"
+          },
+          {
+            "code": "LOAM-T106",
+            "name": "BAD_PALETTE",
+            "severity": "error",
+            "nodePath": "style.palettes.ground.cliff"
+          },
+          {
+            "code": "LOAM-T106",
+            "name": "BAD_PALETTE",
+            "severity": "error",
+            "nodePath": "style.palettes.ground.cliff"
+          },
+          {
+            "code": "LOAM-T106",
+            "name": "BAD_PALETTE",
+            "severity": "error",
+            "nodePath": "style.palettes.ground.cliff"
+          }
+        ],
+        []
+      ],
+      "usage": {
+        "promptTokens": 165367,
+        "completionTokens": 16294,
+        "reasoningTokens": 8663,
+        "cost": 0.066313125
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 20,
+        "maxDepth": 2,
+        "generators": [
+          "authored:trojan_horse",
+          "building.grammar@0",
+          "precinct.farm@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "armory",
+          "church",
+          "cottage",
+          "courtyard_house",
+          "granary",
+          "hall",
+          "keep",
+          "megaron",
+          "peristyle_house",
+          "shrine",
+          "stoa",
+          "temple",
+          "warehouse"
+        ],
+        "archetypesInCatalog": 13,
+        "formPacks": [
+          "classical_mediterranean"
+        ],
+        "props": [
+          "cairn",
+          "campsite",
+          "longship"
+        ],
+        "species": [
+          "ancient_oak",
+          "coastal_oak",
+          "dry_scrub",
+          "field_shrub",
+          "olive_scrub"
+        ],
+        "envelopes": [
+          "512x512",
+          "190x170",
+          "17x15x23",
+          "15x14x21",
+          "13x12x17",
+          "13x10x15",
+          "14x22x18",
+          "80x80"
+        ],
+        "constraints": 7,
+        "constraintKinds": [
+          "at",
+          "blend",
+          "distance",
+          "max",
+          "min",
+          "reference",
+          "terrain_conform",
+          "zone"
+        ],
+        "constraintsWithStrength": 0,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 4,
+        "programReferences": 1,
+        "conformsTrue": 0,
+        "labels": 12,
+        "eras": [
+          "ancient"
+        ],
+        "bytes": 7295
+      },
+      "wallMs": 94012
+    },
+    {
+      "id": "pirate_unicorn_isles",
+      "family": "pirates_v_unicorns",
+      "kit": "settlement",
+      "prompt": "A pirate island and a unicorn island, at war.",
+      "seed": 301,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "source": "cache",
+        "value": {
+          "climate": {
+            "temperature": 0.6,
+            "humidity": 0.3,
+            "snow": "never"
+          },
+          "tokens": {
+            "terrain": "two distinct islands separated by a contested strait of open water",
+            "event_direction": "pirate sloops and coastal cannon batteries facing across the strait at the fortified unicorn island",
+            "infra": "cannon_battery along the pirate shore; beacon_tower and defensive_barricade along the unicorn island coastline",
+            "region_pirate_island": "era renaissance, wealth 0.35, decline 0.4, formality 0.15; materialTheme temperate_timber; formPacks [nautical_pirate]; prefer archetypes tavern, watchtower, warehouse, lighthouse; props galleon, cart; fortified buccaneer cove, ship repair yards, coastal artillery",
+            "region_unicorn_island": "era renaissance, wealth 0.85, decline 0.05, formality 0.75; materialTheme white_quartz; prefer archetypes church, manor, watchtower; props standing_stones, fountain; sacred unicorn pastures, pristine defensive ramparts and magical shrine towers"
+          }
+        }
+      },
+      "intentUsage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "reasoningTokens": 0,
+        "cost": 0,
+        "cached": true
+      },
+      "modules": {
+        "dir": "docs/kits/modules",
+        "selected": [
+          "1-document-skeleton (always)",
+          "2-coordinates-and-zones (always)",
+          "building-grammar (settlement)",
+          "district (settlement)",
+          "road-network (settlement)",
+          "the-plaza (settlement)",
+          "11-worked-settlement-fragments (settlement)",
+          "two-regions-in-one-world (two places)",
+          "precinct-harbour (water)"
+        ],
+        "used": [
+          "1-document-skeleton",
+          "2-coordinates-and-zones",
+          "building-grammar",
+          "district",
+          "road-network",
+          "the-plaza",
+          "11-worked-settlement-fragments",
+          "two-regions-in-one-world",
+          "precinct-harbour"
+        ],
+        "missing": [],
+        "bytes": 15242
+      },
+      "kitFile": "docs/kits/settlement-core.md",
+      "menu": {
+        "injected": false,
+        "reason": "flag off"
+      },
+      "attempts": 3,
+      "diagnostics": [
+        [
+          {
+            "code": "LOAM-T004",
+            "name": "EDIT_NOT_UNDER_HEIGHTFIELD",
+            "severity": "error",
+            "nodePath": "world.heightfield.island_pirate"
+          },
+          {
+            "code": "LOAM-T004",
+            "name": "EDIT_NOT_UNDER_HEIGHTFIELD",
+            "severity": "error",
+            "nodePath": "world.heightfield.island_unicorn"
+          },
+          {
+            "code": "LOAM-T004",
+            "name": "EDIT_NOT_UNDER_HEIGHTFIELD",
+            "severity": "error",
+            "nodePath": "world.heightfield.peak_unicorn"
+          },
+          {
+            "code": "LOAM-T004",
+            "name": "EDIT_NOT_UNDER_HEIGHTFIELD",
+            "severity": "error",
+            "nodePath": "world.heightfield.pirate_cove"
+          }
+        ],
+        [
+          {
+            "code": "LOAM-T008",
+            "name": "UNKNOWN_KEY",
+            "severity": "error",
+            "nodePath": "world.heightfield.island_pirate.params"
+          },
+          {
+            "code": "LOAM-T008",
+            "name": "UNKNOWN_KEY",
+            "severity": "error",
+            "nodePath": "world.heightfield.island_unicorn.params"
+          },
+          {
+            "code": "LOAM-T008",
+            "name": "UNKNOWN_KEY",
+            "severity": "error",
+            "nodePath": "world.heightfield.peak_unicorn.params"
+          },
+          {
+            "code": "LOAM-T008",
+            "name": "UNKNOWN_KEY",
+            "severity": "error",
+            "nodePath": "world.heightfield.pirate_cove.params"
+          }
+        ],
+        []
+      ],
+      "usage": {
+        "promptTokens": 258386,
+        "completionTokens": 25202,
+        "reasoningTokens": 11776,
+        "cost": 0.1192804875
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 24,
+        "maxDepth": 2,
+        "generators": [
+          "authored:pirate_flagship",
+          "authored:unicorn_colossus",
+          "building.grammar@0",
+          "precinct.farm@0",
+          "precinct.harbour@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "beacon_spire",
+          "cathedral",
+          "church",
+          "cloister",
+          "cooperage",
+          "cottage",
+          "courtyard_house",
+          "crystal_shrine",
+          "hall",
+          "library",
+          "manor_house",
+          "sawmill",
+          "tannery",
+          "tavern",
+          "temple",
+          "warehouse",
+          "watchtower"
+        ],
+        "archetypesInCatalog": 17,
+        "formPacks": [
+          "arcane_magical",
+          "nautical_pirate"
+        ],
+        "props": [
+          "galleon",
+          "portal_frame",
+          "standing_stones"
+        ],
+        "species": [
+          "birch",
+          "cherry",
+          "dark_oak",
+          "oak",
+          "spruce"
+        ],
+        "envelopes": [
+          "512x512",
+          "130x130",
+          "15x12x13",
+          "130x130",
+          "15x18x21",
+          "80x16x60",
+          "70x70",
+          "16x26x16",
+          "36x24x14",
+          "7x19x7",
+          "9x21x9"
+        ],
+        "constraints": 18,
+        "constraintKinds": [
+          "at",
+          "blend",
+          "distance",
+          "max",
+          "min",
+          "reference",
+          "terrain_conform"
+        ],
+        "constraintsWithStrength": 6,
+        "hardConstraints": 0,
+        "forests": 3,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 4,
+        "programReferences": 2,
+        "conformsTrue": 0,
+        "labels": 12,
+        "eras": [
+          "renaissance",
+          "renaissance",
+          "renaissance"
+        ],
+        "bytes": 9359
+      },
+      "wallMs": 136010
+    },
+    {
+      "id": "hellenist_harbour",
+      "family": "hellenist_city",
+      "kit": "settlement",
+      "prompt": "A modern Hellenist city being invaded by sea monsters.",
+      "seed": 305,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "source": "cache",
+        "value": {
+          "era": "modern",
+          "wealth": 0.8,
+          "formality": 0.75,
+          "event": {
+            "kind": "siege",
+            "severity": 0.85,
+            "recency": 0
+          },
+          "climate": {
+            "temperature": 0.6,
+            "humidity": 0.2,
+            "snow": "never"
+          },
+          "character": {
+            "label": "modern Hellenist coastal metropolis under sea monster siege",
+            "materialTheme": "modern_city",
+            "formPacks": [
+              "classical_mediterranean"
+            ],
+            "archetypes": {
+              "prefer": [
+                "stoa",
+                "peripteral_temple",
+                "bouleuterion",
+                "palaestra",
+                "nymphaeum"
+              ]
+            },
+            "urbanForm": "grid",
+            "motifs": {
+              "roofType": "flat",
+              "massing": "blocky",
+              "windowRhythm": "regular",
+              "ornamentDensity": 0.6
+            }
+          },
+          "tokens": {
+            "terrain": "a grand coastal metropolis fronting a deep harbour and open sea where sea monsters surface",
+            "event_direction": "giant sea monsters rise out of the ocean water attacking the harbour and waterfront avenues",
+            "infra": "barricade_line across the harbour promenade; emergency_cordon along the coastal boulevard",
+            "icons": "leviathans and sea monsters breaching along the modern docks; neoclassical porticos and high-rise stoas overlooking the bay; emergency barricades and defensive lines guarding the shore"
+          }
+        }
+      },
+      "intentUsage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "reasoningTokens": 0,
+        "cost": 0,
+        "cached": true
+      },
+      "modules": {
+        "dir": "docs/kits/modules",
+        "selected": [
+          "1-document-skeleton (always)",
+          "2-coordinates-and-zones (always)",
+          "building-grammar (settlement)",
+          "district (settlement)",
+          "road-network (settlement)",
+          "the-plaza (settlement)",
+          "11-worked-settlement-fragments (settlement)",
+          "city (urbanForm grid)",
+          "the-urban-forms (city forms)",
+          "bespoke-programs-must-belong-to-the-worl (icons)",
+          "how-to-write-the-request (icons)",
+          "what-you-get-back-and-what-to-do-with-it (icons)",
+          "seating-how-a-grounded-thing-meets-the-g (icons)",
+          "facing-which-way-it-looks (icons)",
+          "precinct-harbour (water)"
+        ],
+        "used": [
+          "1-document-skeleton",
+          "2-coordinates-and-zones",
+          "building-grammar",
+          "district",
+          "road-network",
+          "the-plaza",
+          "11-worked-settlement-fragments",
+          "city",
+          "the-urban-forms",
+          "bespoke-programs-must-belong-to-the-worl",
+          "how-to-write-the-request",
+          "what-you-get-back-and-what-to-do-with-it",
+          "seating-how-a-grounded-thing-meets-the-g",
+          "facing-which-way-it-looks",
+          "precinct-harbour"
+        ],
+        "missing": [],
+        "bytes": 20424
+      },
+      "kitFile": "docs/kits/settlement-core.md",
+      "menu": {
+        "injected": false,
+        "reason": "flag off"
+      },
+      "attempts": 1,
+      "diagnostics": [
+        []
+      ],
+      "usage": {
+        "promptTokens": 78704,
+        "completionTokens": 13160,
+        "reasoningTokens": 8551,
+        "cost": 0.054189
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 24,
+        "maxDepth": 2,
+        "generators": [
+          "authored:colossus_sentinel",
+          "authored:kraken_leviathan",
+          "building.grammar@0",
+          "infra.entry@0",
+          "precinct.harbour@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "scatter.program@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "arsenal",
+          "bouleuterion",
+          "cottage",
+          "guildhall",
+          "inn",
+          "nymphaeum",
+          "palaestra",
+          "peripteral_temple",
+          "shop_row",
+          "stoa",
+          "town_hall",
+          "townhouse",
+          "warehouse"
+        ],
+        "archetypesInCatalog": 13,
+        "formPacks": [
+          "classical_mediterranean"
+        ],
+        "props": [
+          "buoy",
+          "fountain",
+          "galleon",
+          "statue_plinth"
+        ],
+        "species": [
+          "column_cypress",
+          "mediterranean_oak",
+          "scrub_oak",
+          "wild_juniper",
+          "wild_oak"
+        ],
+        "envelopes": [
+          "512x512",
+          "340x260",
+          "19x18x23",
+          "15x14x21",
+          "13x13x19",
+          "96x18x64"
+        ],
+        "constraints": 9,
+        "constraintKinds": [
+          "at",
+          "band",
+          "distance",
+          "max",
+          "min",
+          "on"
+        ],
+        "constraintsWithStrength": 2,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 3,
+        "programReferences": 2,
+        "conformsTrue": 0,
+        "labels": 12,
+        "eras": [
+          "modern"
+        ],
+        "bytes": 8826
+      },
+      "wallMs": 75109
+    },
+    {
+      "id": "alien_farm",
+      "family": "alien_farm",
+      "kit": "settlement",
+      "prompt": "A small farm town being invaded by aliens.",
+      "seed": 302,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "source": "cache",
+        "value": {
+          "era": "industrial",
+          "wealth": 0.35,
+          "decline": 0.4,
+          "formality": 0.2,
+          "event": {
+            "kind": "siege",
+            "severity": 0.8,
+            "recency": 0
+          },
+          "climate": {
+            "biome": "minecraft:plains",
+            "temperature": 0,
+            "humidity": 0.1
+          },
+          "character": {
+            "label": "invaded farming community",
+            "materialTheme": "temperate_timber",
+            "formPacks": [
+              "agrarian",
+              "alien_scifi"
+            ],
+            "archetypes": {
+              "prefer": [
+                "cottage",
+                "granary",
+                "windmill",
+                "tavern",
+                "field_lab",
+                "hive_mound"
+              ]
+            },
+            "urbanForm": "linear",
+            "motifs": {
+              "roofType": "gable",
+              "massing": "sprawling"
+            }
+          },
+          "tokens": {
+            "terrain": "rolling farmland with grain fields surrounding a small rural crossroads town",
+            "event_direction": "extraterrestrial invaders and bio-structures spreading from the outer crop fields into the village centre",
+            "infra": "crop_circle pressed into the wheat fields; crash_furrow ending at a downed alien craft; quarantine_fence along the outer pasture; barricade_line across the main lane",
+            "icons": "strange metallic scout craft hovering or crashed in the fields; glowing alien pylons; abandoned farm equipment and hay wagons along the lanes"
+          }
+        }
+      },
+      "intentUsage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "reasoningTokens": 0,
+        "cost": 0,
+        "cached": true
+      },
+      "modules": {
+        "dir": "docs/kits/modules",
+        "selected": [
+          "1-document-skeleton (always)",
+          "2-coordinates-and-zones (always)",
+          "building-grammar (settlement)",
+          "district (settlement)",
+          "road-network (settlement)",
+          "the-plaza (settlement)",
+          "11-worked-settlement-fragments (settlement)",
+          "bespoke-programs-must-belong-to-the-worl (icons)",
+          "how-to-write-the-request (icons)",
+          "what-you-get-back-and-what-to-do-with-it (icons)",
+          "seating-how-a-grounded-thing-meets-the-g (icons)",
+          "facing-which-way-it-looks (icons)",
+          "hovering-airborne-things (airborne icon)",
+          "precinct-farm (farm)"
+        ],
+        "used": [
+          "1-document-skeleton",
+          "2-coordinates-and-zones",
+          "building-grammar",
+          "district",
+          "road-network",
+          "the-plaza",
+          "11-worked-settlement-fragments",
+          "bespoke-programs-must-belong-to-the-worl",
+          "how-to-write-the-request",
+          "what-you-get-back-and-what-to-do-with-it",
+          "seating-how-a-grounded-thing-meets-the-g",
+          "facing-which-way-it-looks",
+          "hovering-airborne-things",
+          "precinct-farm"
+        ],
+        "missing": [],
+        "bytes": 18452
+      },
+      "kitFile": "docs/kits/settlement-core.md",
+      "menu": {
+        "injected": false,
+        "reason": "flag off"
+      },
+      "attempts": 1,
+      "diagnostics": [
+        []
+      ],
+      "usage": {
+        "promptTokens": 77992,
+        "completionTokens": 10376,
+        "reasoningTokens": 5661,
+        "cost": 0.048702
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 26,
+        "maxDepth": 2,
+        "generators": [
+          "authored:crashed_invader_ship",
+          "building.grammar@0",
+          "infra.entry@0",
+          "precinct.farm@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "scatter.program@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "cottage",
+          "farmhouse",
+          "field_station",
+          "general_store",
+          "inn",
+          "tavern",
+          "town_hall",
+          "windmill"
+        ],
+        "archetypesInCatalog": 8,
+        "formPacks": [
+          "agrarian",
+          "alien_scifi"
+        ],
+        "props": [
+          "cart",
+          "covered_wagon",
+          "log_pile",
+          "notice_board"
+        ],
+        "species": [
+          "birch",
+          "oak"
+        ],
+        "envelopes": [
+          "512x512",
+          "96x96",
+          "80x80",
+          "24x24",
+          "13x16x13",
+          "13x11x13",
+          "13x10x11",
+          "13x13x15",
+          "11x11x13",
+          "9x16x9"
+        ],
+        "constraints": 25,
+        "constraintKinds": [
+          "adjacent_to",
+          "blend",
+          "distance",
+          "facing",
+          "gap",
+          "max",
+          "min",
+          "reference",
+          "terrain_conform",
+          "zone"
+        ],
+        "constraintsWithStrength": 8,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 6,
+        "programReferences": 1,
+        "conformsTrue": 0,
+        "labels": 22,
+        "eras": [
+          "industrial"
+        ],
+        "bytes": 9264
+      },
+      "wallMs": 57058
+    },
+    {
+      "id": "metropolis_hideout",
+      "family": "metropolis_hideout",
+      "kit": "settlement",
+      "prompt": "A high-tech apocalyptic hideout in the massively overgrown ruins of a metropolis.",
+      "seed": 304,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "source": "cache",
+        "value": {
+          "era": "far_future",
+          "wealth": 0.4,
+          "decline": 0.9,
+          "formality": 0.3,
+          "climate": {
+            "humidity": 0.7
+          },
+          "character": {
+            "label": "overgrown post-apocalyptic high-tech hideout",
+            "materialTheme": "modern_city",
+            "formPacks": [
+              "alien_scifi"
+            ],
+            "archetypes": {
+              "prefer": [
+                "bunker_complex",
+                "laboratory",
+                "field_station",
+                "hydroponics_bay",
+                "watchtower",
+                "office",
+                "apartment_block"
+              ],
+              "forbid": [
+                "cottage",
+                "manor",
+                "tavern",
+                "church",
+                "windmill"
+              ]
+            },
+            "flora": {
+              "prefer": [
+                "understory",
+                "emergent",
+                "old_growth"
+              ]
+            },
+            "motifs": {
+              "massing": "blocky",
+              "windowRhythm": "sparse"
+            },
+            "urbanForm": "grid"
+          },
+          "tokens": {
+            "fittings": "blast_door on the bunker_complex; airlock_vestibule on the laboratory",
+            "infra": "barricade_line across the fractured boulevard; quarantine_fence around the reinforced perimeter",
+            "terrain": "a ruined metropolis grid of shattered skyscrapers and collapsed elevated roads choked with deep canopy forest and dense undergrowth",
+            "icons": "a reinforced high-tech hideout nestled in the hollow base of a ruined skyscraper; solar panels and satellite dishes tangled in vines; defensive floodlights and sensor towers hidden in the foliage"
+          }
+        }
+      },
+      "intentUsage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "reasoningTokens": 0,
+        "cost": 0,
+        "cached": true
+      },
+      "modules": {
+        "dir": "docs/kits/modules",
+        "selected": [
+          "1-document-skeleton (always)",
+          "2-coordinates-and-zones (always)",
+          "building-grammar (settlement)",
+          "district (settlement)",
+          "road-network (settlement)",
+          "the-plaza (settlement)",
+          "11-worked-settlement-fragments (settlement)",
+          "city (urbanForm grid)",
+          "the-urban-forms (city forms)",
+          "a-ruined-city-is-a-district-with-a-high- (decline 0.9)",
+          "bespoke-programs-must-belong-to-the-worl (icons)",
+          "how-to-write-the-request (icons)",
+          "what-you-get-back-and-what-to-do-with-it (icons)",
+          "seating-how-a-grounded-thing-meets-the-g (icons)",
+          "facing-which-way-it-looks (icons)"
+        ],
+        "used": [
+          "1-document-skeleton",
+          "2-coordinates-and-zones",
+          "building-grammar",
+          "district",
+          "road-network",
+          "the-plaza",
+          "11-worked-settlement-fragments",
+          "city",
+          "the-urban-forms",
+          "a-ruined-city-is-a-district-with-a-high-",
+          "bespoke-programs-must-belong-to-the-worl",
+          "how-to-write-the-request",
+          "what-you-get-back-and-what-to-do-with-it",
+          "seating-how-a-grounded-thing-meets-the-g",
+          "facing-which-way-it-looks"
+        ],
+        "missing": [],
+        "bytes": 20594
+      },
+      "kitFile": "docs/kits/settlement-core.md",
+      "menu": {
+        "injected": false,
+        "reason": "flag off"
+      },
+      "attempts": 2,
+      "diagnostics": [
+        [
+          {
+            "code": "LOAM-T004",
+            "name": "EDIT_NOT_UNDER_HEIGHTFIELD",
+            "severity": "error",
+            "nodePath": "world.master_heightfield.metro_shelf"
+          },
+          {
+            "code": "LOAM-T004",
+            "name": "EDIT_NOT_UNDER_HEIGHTFIELD",
+            "severity": "error",
+            "nodePath": "world.master_heightfield.collapsed_canal"
+          },
+          {
+            "code": "LOAM-T008",
+            "name": "UNKNOWN_KEY",
+            "severity": "error",
+            "nodePath": "world.solar_power_array.params"
+          }
+        ],
+        []
+      ],
+      "usage": {
+        "promptTokens": 166521,
+        "completionTokens": 16110,
+        "reasoningTokens": 7443,
+        "cost": 0.0664005375
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 21,
+        "maxDepth": 2,
+        "generators": [
+          "authored:tech_survivor_redoubt",
+          "building.grammar@0",
+          "infra.entry@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "scatter.program@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "apartment_block",
+          "battery_shed",
+          "brutalist_block",
+          "bunker",
+          "bunker_complex",
+          "cottage",
+          "data_center",
+          "laboratory",
+          "office",
+          "parking_garage",
+          "ruined_cottage",
+          "skyscraper",
+          "subway_station",
+          "watchtower"
+        ],
+        "archetypesInCatalog": 14,
+        "formPacks": [
+          "alien_scifi"
+        ],
+        "props": [
+          "lamp_post",
+          "shattered_obelisk",
+          "solar_array"
+        ],
+        "species": [
+          "birch_spire",
+          "hazel_brush",
+          "overgrown_oak",
+          "river_willow",
+          "tree_fern_layer"
+        ],
+        "envelopes": [
+          "512x512",
+          "280x280",
+          "18x48x18",
+          "15x11x15",
+          "13x10x13",
+          "13x12x17",
+          "13x12x15",
+          "7x19x7"
+        ],
+        "constraints": 12,
+        "constraintKinds": [
+          "blend",
+          "distance",
+          "max",
+          "min",
+          "reference",
+          "terrain_conform",
+          "zone"
+        ],
+        "constraintsWithStrength": 1,
+        "hardConstraints": 0,
+        "forests": 1,
+        "forestFillsAtOrAboveCoverage": 1,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 6,
+        "programReferences": 1,
+        "conformsTrue": 0,
+        "labels": 7,
+        "eras": [
+          "far_future"
+        ],
+        "bytes": 8169
+      },
+      "wallMs": 98314
+    },
+    {
+      "id": "redwood_camp",
+      "family": "redwood_camp",
+      "kit": "settlement",
+      "prompt": "An ancient forest of colossal redwoods with a small logging camp at its edge.",
+      "seed": 306,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "source": "cache",
+        "value": {
+          "era": "industrial",
+          "wealth": 0.35,
+          "formality": 0.1,
+          "climate": {
+            "biome": "minecraft:old_growth_spruce_taiga",
+            "temperature": 0.25,
+            "humidity": 0.7,
+            "snow": "never"
+          },
+          "character": {
+            "label": "redwood logging camp",
+            "materialTheme": "boreal_pine",
+            "formPacks": [
+              "wilds_camps"
+            ],
+            "flora": {
+              "prefer": [
+                "emergent",
+                "ancient",
+                "old_growth",
+                "spruce_ancient",
+                "giant"
+              ]
+            },
+            "urbanForm": "linear"
+          },
+          "tokens": {
+            "terrain": "a primeval forest of colossal redwoods with a logging camp clearing at its perimeter",
+            "infra": "cut_over_ground clearing surrounding the camp; cart_track running into the deep timber",
+            "icons": "towering redwood canopy, log stacks, sawpits, bunk cabins, and timber skid trails"
+          }
+        }
+      },
+      "intentUsage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "reasoningTokens": 0,
+        "cost": 0,
+        "cached": true
+      },
+      "modules": {
+        "dir": "docs/kits/modules",
+        "selected": [
+          "1-document-skeleton (always)",
+          "2-coordinates-and-zones (always)",
+          "building-grammar (settlement)",
+          "district (settlement)",
+          "road-network (settlement)",
+          "the-plaza (settlement)",
+          "11-worked-settlement-fragments (settlement)",
+          "bespoke-programs-must-belong-to-the-worl (icons)",
+          "how-to-write-the-request (icons)",
+          "what-you-get-back-and-what-to-do-with-it (icons)",
+          "seating-how-a-grounded-thing-meets-the-g (icons)",
+          "facing-which-way-it-looks (icons)"
+        ],
+        "used": [
+          "1-document-skeleton",
+          "2-coordinates-and-zones",
+          "building-grammar",
+          "district",
+          "road-network",
+          "the-plaza",
+          "11-worked-settlement-fragments",
+          "bespoke-programs-must-belong-to-the-worl",
+          "how-to-write-the-request",
+          "what-you-get-back-and-what-to-do-with-it",
+          "seating-how-a-grounded-thing-meets-the-g",
+          "facing-which-way-it-looks"
+        ],
+        "missing": [],
+        "bytes": 17218
+      },
+      "kitFile": "docs/kits/settlement-core.md",
+      "menu": {
+        "injected": false,
+        "reason": "flag off"
+      },
+      "attempts": 1,
+      "diagnostics": [
+        []
+      ],
+      "usage": {
+        "promptTokens": 77463,
+        "completionTokens": 8435,
+        "reasoningTokens": 3847,
+        "cost": 0.04486425
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 24,
+        "maxDepth": 2,
+        "generators": [
+          "building.grammar@0",
+          "infra.entry@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "cottage",
+          "dormitory",
+          "inn",
+          "log_cabin",
+          "machine_shop",
+          "sawmill",
+          "smithy",
+          "tavern",
+          "warehouse"
+        ],
+        "archetypesInCatalog": 9,
+        "formPacks": [
+          "wilds_camps"
+        ],
+        "props": [
+          "cart",
+          "covered_wagon",
+          "hitching_post",
+          "horse_trough",
+          "log_pile",
+          "notice_board"
+        ],
+        "species": [
+          "columnar_larch",
+          "fringe_spruce",
+          "grandfather_redwood",
+          "tall_timber_pine"
+        ],
+        "envelopes": [
+          "512x512",
+          "24x24",
+          "11x11x17",
+          "13x11x17",
+          "13x11x13",
+          "11x12x13",
+          "11x10x11",
+          "11x11x15"
+        ],
+        "constraints": 20,
+        "constraintKinds": [
+          "adjacent_to",
+          "blend",
+          "distance",
+          "facing",
+          "gap",
+          "max",
+          "min",
+          "reference",
+          "terrain_conform",
+          "zone"
+        ],
+        "constraintsWithStrength": 6,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 6,
+        "programReferences": 0,
+        "conformsTrue": 0,
+        "labels": 13,
+        "eras": [
+          "industrial"
+        ],
+        "bytes": 8114
+      },
+      "wallMs": 46574
+    },
+    {
+      "id": "glowcap_vale",
+      "family": "glowcap_vale",
+      "kit": "settlement",
+      "prompt": "A glowing mushroom vale where a strange village has grown between the caps.",
+      "seed": 307,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "source": "cache",
+        "value": {
+          "era": "medieval",
+          "wealth": 0.35,
+          "formality": 0.1,
+          "climate": {
+            "humidity": 0.8,
+            "temperature": 0.2
+          },
+          "character": {
+            "label": "glowing mushroom vale village",
+            "materialTheme": "temperate_timber",
+            "formPacks": [
+              "swamp_witch"
+            ],
+            "urbanForm": "grown",
+            "flora": {
+              "prefer": [
+                "fungal",
+                "glow",
+                "mushroom_giant_red",
+                "mushroom_shelf_brown",
+                "glowcap"
+              ]
+            },
+            "archetypes": {
+              "prefer": [
+                "cottage",
+                "watchtower"
+              ]
+            }
+          },
+          "tokens": {
+            "terrain": "a secluded mountain vale nestled between steep ridges, sheltered beneath a canopy of giant glowing mushrooms",
+            "icons": "rustic wooden cottages and stilt dwellings built between and around giant mushroom stems; rope bridges and elevated walkways connecting mushroom caps; spore lanterns illuminating the vale floor"
+          }
+        }
+      },
+      "intentUsage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "reasoningTokens": 0,
+        "cost": 0,
+        "cached": true
+      },
+      "modules": {
+        "dir": "docs/kits/modules",
+        "selected": [
+          "1-document-skeleton (always)",
+          "2-coordinates-and-zones (always)",
+          "building-grammar (settlement)",
+          "district (settlement)",
+          "road-network (settlement)",
+          "the-plaza (settlement)",
+          "11-worked-settlement-fragments (settlement)",
+          "bespoke-programs-must-belong-to-the-worl (icons)",
+          "how-to-write-the-request (icons)",
+          "what-you-get-back-and-what-to-do-with-it (icons)",
+          "seating-how-a-grounded-thing-meets-the-g (icons)",
+          "facing-which-way-it-looks (icons)",
+          "a-fungal-grove-you-can-copy (fungal pack)"
+        ],
+        "used": [
+          "1-document-skeleton",
+          "2-coordinates-and-zones",
+          "building-grammar",
+          "district",
+          "road-network",
+          "the-plaza",
+          "11-worked-settlement-fragments",
+          "bespoke-programs-must-belong-to-the-worl",
+          "how-to-write-the-request",
+          "what-you-get-back-and-what-to-do-with-it",
+          "seating-how-a-grounded-thing-meets-the-g",
+          "facing-which-way-it-looks",
+          "a-fungal-grove-you-can-copy"
+        ],
+        "missing": [],
+        "bytes": 18116
+      },
+      "kitFile": "docs/kits/settlement-core.md",
+      "menu": {
+        "injected": false,
+        "reason": "flag off"
+      },
+      "attempts": 1,
+      "diagnostics": [
+        []
+      ],
+      "usage": {
+        "promptTokens": 77799,
+        "completionTokens": 9868,
+        "reasoningTokens": 5065,
+        "cost": 0.047677125
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 23,
+        "maxDepth": 2,
+        "generators": [
+          "building.grammar@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "alchemists_tower",
+          "apothecary",
+          "cottage",
+          "hobbit_hole",
+          "inn",
+          "mushroom_house",
+          "stilt_house",
+          "watchtower",
+          "witch_hut",
+          "wizard_tower"
+        ],
+        "archetypesInCatalog": 10,
+        "formPacks": [
+          "swamp_witch"
+        ],
+        "props": [
+          "log_pile",
+          "notice_board",
+          "standing_stones",
+          "well_head"
+        ],
+        "species": [
+          "canopy_shelf_mushroom",
+          "pale_spore_birch",
+          "ridge_birch",
+          "ridge_spruce",
+          "under_glowcap"
+        ],
+        "envelopes": [
+          "512x512",
+          "22x22",
+          "11x16x11",
+          "9x10x9",
+          "9x19x9",
+          "11x12x11",
+          "11x12x11",
+          "11x14x13",
+          "11x16x11",
+          "7x19x7"
+        ],
+        "constraints": 27,
+        "constraintKinds": [
+          "adjacent_to",
+          "blend",
+          "distance",
+          "facing",
+          "gap",
+          "max",
+          "min",
+          "reference",
+          "terrain_conform",
+          "zone"
+        ],
+        "constraintsWithStrength": 8,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 8,
+        "programReferences": 0,
+        "conformsTrue": 0,
+        "labels": 14,
+        "eras": [
+          "medieval"
+        ],
+        "bytes": 8335
+      },
+      "wallMs": 53400
+    },
+    {
+      "id": "walled_medieval_city",
+      "family": "new/set-piece",
+      "kit": "settlement",
+      "prompt": "A walled medieval city on a hill, its castle keep above the rooftops.",
+      "seed": 311,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "source": "cache",
+        "value": {
+          "era": "medieval",
+          "wealth": 0.5,
+          "decline": 0.1,
+          "formality": 0.4,
+          "character": {
+            "label": "walled hill city",
+            "materialTheme": "temperate_timber",
+            "fortification": "walled",
+            "archetypes": {
+              "prefer": [
+                "manor",
+                "watchtower",
+                "tavern",
+                "church",
+                "granary"
+              ]
+            },
+            "motifs": {
+              "roofType": "gable",
+              "massing": "stepped"
+            },
+            "urbanForm": "hillside",
+            "ground": "stepped",
+            "courtyards": 0.4
+          },
+          "tokens": {
+            "terrain": "a prominent hill rising above the surrounding country",
+            "icons": "a towering stone castle keep crowning the peak above dense medieval rooftops, enclosed by circuit walls with gatehouses and towers"
+          }
+        }
+      },
+      "intentUsage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "reasoningTokens": 0,
+        "cost": 0,
+        "cached": true
+      },
+      "modules": {
+        "dir": "docs/kits/modules",
+        "selected": [
+          "1-document-skeleton (always)",
+          "2-coordinates-and-zones (always)",
+          "building-grammar (settlement)",
+          "district (settlement)",
+          "road-network (settlement)",
+          "the-plaza (settlement)",
+          "11-worked-settlement-fragments (settlement)",
+          "city (urbanForm hillside)",
+          "the-urban-forms (city forms)",
+          "9c-infra-entry (walled)",
+          "the-entries-and-one-worked-example-each (walled)",
+          "multi-level-ground (walled)",
+          "bespoke-programs-must-belong-to-the-worl (icons)",
+          "how-to-write-the-request (icons)",
+          "what-you-get-back-and-what-to-do-with-it (icons)",
+          "seating-how-a-grounded-thing-meets-the-g (icons)",
+          "facing-which-way-it-looks (icons)"
+        ],
+        "used": [
+          "1-document-skeleton",
+          "2-coordinates-and-zones",
+          "building-grammar",
+          "district",
+          "road-network",
+          "the-plaza",
+          "11-worked-settlement-fragments",
+          "city",
+          "the-urban-forms",
+          "9c-infra-entry",
+          "the-entries-and-one-worked-example-each",
+          "multi-level-ground",
+          "bespoke-programs-must-belong-to-the-worl",
+          "how-to-write-the-request",
+          "what-you-get-back-and-what-to-do-with-it",
+          "seating-how-a-grounded-thing-meets-the-g",
+          "facing-which-way-it-looks"
+        ],
+        "missing": [],
+        "bytes": 22603
+      },
+      "kitFile": "docs/kits/settlement-core.md",
+      "menu": {
+        "injected": false,
+        "reason": "flag off"
+      },
+      "attempts": 2,
+      "diagnostics": [
+        [
+          {
+            "code": "LOAM-T010",
+            "name": "BAD_TYPE",
+            "severity": "error",
+            "nodePath": "world.valley_woods.params.strata"
+          }
+        ],
+        []
+      ],
+      "usage": {
+        "promptTokens": 163799,
+        "completionTokens": 9979,
+        "reasoningTokens": 5018,
+        "cost": 0.08013524999999999
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 15,
+        "maxDepth": 2,
+        "generators": [
+          "building.grammar@0",
+          "precinct.farm@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "bakery",
+          "barracks",
+          "castle",
+          "chapel",
+          "church",
+          "cooperage",
+          "cottage",
+          "gatehouse",
+          "general_store",
+          "guildhall",
+          "keep",
+          "smithy",
+          "tavern",
+          "townhouse",
+          "tudor_row"
+        ],
+        "archetypesInCatalog": 15,
+        "formPacks": [],
+        "props": [
+          "covered_wagon",
+          "milestone"
+        ],
+        "species": [
+          "birch",
+          "field_birch",
+          "field_oak",
+          "hazel",
+          "oak"
+        ],
+        "envelopes": [
+          "512x512",
+          "220x220",
+          "17x24x17",
+          "15x17x21",
+          "13x14x17",
+          "11x14x9",
+          "88x80"
+        ],
+        "constraints": 3,
+        "constraintKinds": [
+          "at",
+          "distance",
+          "max",
+          "min",
+          "zone"
+        ],
+        "constraintsWithStrength": 1,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 4,
+        "programReferences": 0,
+        "conformsTrue": 0,
+        "labels": 7,
+        "eras": [
+          "medieval"
+        ],
+        "bytes": 4859
+      },
+      "wallMs": 57903
+    },
+    {
+      "id": "railway_town",
+      "family": "new/alias",
+      "kit": "settlement",
+      "prompt": "A soot-blackened industrial town where the railway meets the canal.",
+      "seed": 312,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "source": "cache",
+        "value": {
+          "era": "industrial",
+          "wealth": 0.35,
+          "decline": 0.25,
+          "formality": 0.5,
+          "character": {
+            "label": "soot-blackened canal and rail town",
+            "materialTheme": "temperate_timber",
+            "urbanForm": "canal",
+            "archetypes": {
+              "prefer": [
+                "warehouse",
+                "tavern",
+                "cottage",
+                "watchtower"
+              ]
+            },
+            "props": {
+              "prefer": [
+                "cart",
+                "notice_board"
+              ]
+            },
+            "motifs": {
+              "roofType": "gable",
+              "massing": "blocky",
+              "windowRhythm": "regular",
+              "ornamentDensity": 0.2
+            }
+          },
+          "tokens": {
+            "terrain": "a commercial canal network intersecting a railway corridor and freight rail lines",
+            "icons": "soot-stained brick warehouses, smoking factory chimneys, iron rail bridges over the canal, barge docks, coal yards and rail depots"
+          }
+        }
+      },
+      "intentUsage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "reasoningTokens": 0,
+        "cost": 0,
+        "cached": true
+      },
+      "modules": {
+        "dir": "docs/kits/modules",
+        "selected": [
+          "1-document-skeleton (always)",
+          "2-coordinates-and-zones (always)",
+          "building-grammar (settlement)",
+          "district (settlement)",
+          "road-network (settlement)",
+          "the-plaza (settlement)",
+          "11-worked-settlement-fragments (settlement)",
+          "bespoke-programs-must-belong-to-the-worl (icons)",
+          "how-to-write-the-request (icons)",
+          "what-you-get-back-and-what-to-do-with-it (icons)",
+          "seating-how-a-grounded-thing-meets-the-g (icons)",
+          "facing-which-way-it-looks (icons)",
+          "worked-water (water feature)"
+        ],
+        "used": [
+          "1-document-skeleton",
+          "2-coordinates-and-zones",
+          "building-grammar",
+          "district",
+          "road-network",
+          "the-plaza",
+          "11-worked-settlement-fragments",
+          "bespoke-programs-must-belong-to-the-worl",
+          "how-to-write-the-request",
+          "what-you-get-back-and-what-to-do-with-it",
+          "seating-how-a-grounded-thing-meets-the-g",
+          "facing-which-way-it-looks",
+          "worked-water"
+        ],
+        "missing": [],
+        "bytes": 17667
+      },
+      "kitFile": "docs/kits/settlement-core.md",
+      "menu": {
+        "injected": false,
+        "reason": "flag off"
+      },
+      "attempts": 1,
+      "diagnostics": [
+        []
+      ],
+      "usage": {
+        "promptTokens": 77586,
+        "completionTokens": 11156,
+        "reasoningTokens": 6794,
+        "cost": 0.05001225
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 28,
+        "maxDepth": 2,
+        "generators": [
+          "building.grammar@0",
+          "infra.entry@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "brewery",
+          "coal_tipple",
+          "cooperage",
+          "cottage",
+          "customs_house",
+          "factory_hall",
+          "foundry",
+          "gasworks",
+          "machine_shop",
+          "roundhouse",
+          "signal_box",
+          "tavern",
+          "terraced_row",
+          "textile_mill",
+          "train_station",
+          "warehouse",
+          "water_tower"
+        ],
+        "archetypesInCatalog": 17,
+        "formPacks": [],
+        "props": [
+          "barge",
+          "bollard_row",
+          "caboose",
+          "freight_car",
+          "lamp_post",
+          "locomotive"
+        ],
+        "species": [
+          "birch_stub",
+          "hazel_scrub",
+          "scrub_oak",
+          "shrub",
+          "sooty_oak"
+        ],
+        "envelopes": [
+          "512x512",
+          "190x170",
+          "13x12x13",
+          "13x11x15",
+          "11x12x15",
+          "15x13x21",
+          "15x14x21",
+          "9x13x11",
+          "13x14x17",
+          "15x15x15",
+          "13x22x13"
+        ],
+        "constraints": 16,
+        "constraintKinds": [
+          "blend",
+          "distance",
+          "max",
+          "min",
+          "reference",
+          "terrain_conform",
+          "zone"
+        ],
+        "constraintsWithStrength": 2,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 9,
+        "programReferences": 0,
+        "conformsTrue": 0,
+        "labels": 18,
+        "eras": [
+          "industrial"
+        ],
+        "bytes": 8973
+      },
+      "wallMs": 62301
+    },
+    {
+      "id": "desert_wilderness",
+      "family": "new/terrain-only",
+      "kit": "terrain",
+      "prompt": "A vast salt desert under a hard sun, cracked flat to the horizon, with nothing living on it.",
+      "seed": 313,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "source": "cache",
+        "value": {
+          "climate": {
+            "biome": "minecraft:desert",
+            "temperature": 1,
+            "humidity": -1,
+            "snow": "never"
+          },
+          "character": {
+            "label": "salt desert"
+          },
+          "tokens": {
+            "terrain": "a vast, cracked salt flat stretching flat to the horizon under a hard sun; barren expanse with no vegetation, water, or living structures"
+          }
+        }
+      },
+      "intentUsage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "reasoningTokens": 0,
+        "cost": 0,
+        "cached": true
+      },
+      "modules": {
+        "dir": "docs/kits/modules",
+        "selected": [
+          "1-document-skeleton (always)",
+          "2-coordinates-and-zones (always)",
+          "3-terrain-heightfield (terrain kit)",
+          "5-terrain-climate (terrain kit)",
+          "6-scatter-forest (terrain kit)",
+          "strata (terrain kit)",
+          "8-worked-terrain-patterns (terrain kit)"
+        ],
+        "used": [
+          "1-document-skeleton",
+          "2-coordinates-and-zones",
+          "3-terrain-heightfield",
+          "5-terrain-climate",
+          "6-scatter-forest",
+          "strata",
+          "8-worked-terrain-patterns"
+        ],
+        "missing": [],
+        "bytes": 4580
+      },
+      "kitFile": "docs/kits/settlement-core.md",
+      "menu": {
+        "injected": false,
+        "reason": "flag off"
+      },
+      "attempts": 2,
+      "diagnostics": [
+        [
+          {
+            "code": "LOAM-T000",
+            "name": "BAD_DOCUMENT",
+            "severity": "error",
+            "nodePath": ""
+          },
+          {
+            "code": "LOAM-T106",
+            "name": "BAD_PALETTE",
+            "severity": "error",
+            "nodePath": "style.palettes.ground.surface"
+          }
+        ],
+        []
+      ],
+      "usage": {
+        "promptTokens": 147211,
+        "completionTokens": 3598,
+        "reasoningTokens": 2226,
+        "cost": 0.0384647625
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 3,
+        "maxDepth": 1,
+        "generators": [
+          "terrain.climate@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [],
+        "archetypesInCatalog": 0,
+        "formPacks": [],
+        "props": [],
+        "species": [],
+        "envelopes": [
+          "512x512"
+        ],
+        "constraints": 0,
+        "constraintKinds": [],
+        "constraintsWithStrength": 0,
+        "hardConstraints": 0,
+        "forests": 0,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 0,
+        "programReferences": 0,
+        "conformsTrue": 0,
+        "labels": 0,
+        "eras": [],
+        "bytes": 1380
+      },
+      "wallMs": 23464
+    },
+    {
+      "id": "fjord_terrain",
+      "family": "new/terrain-only",
+      "kit": "terrain",
+      "prompt": "A deep fjord cutting inland between pine ridges, its water open to the sea.",
+      "seed": 314,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "source": "cache",
+        "value": {
+          "climate": {
+            "biome": "minecraft:old_growth_pine_taiga",
+            "temperature": -0.3,
+            "humidity": 0.5
+          },
+          "character": {
+            "label": "pine fjord",
+            "materialTheme": "boreal_pine",
+            "flora": {
+              "prefer": [
+                "spruce_tall",
+                "conifer",
+                "old_growth"
+              ]
+            }
+          },
+          "tokens": {
+            "terrain": "a deep fjord cutting inland between steep pine-covered ridges, opening to the open sea"
+          }
+        }
+      },
+      "intentUsage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "reasoningTokens": 0,
+        "cost": 0,
+        "cached": true
+      },
+      "modules": {
+        "dir": "docs/kits/modules",
+        "selected": [
+          "1-document-skeleton (always)",
+          "2-coordinates-and-zones (always)",
+          "3-terrain-heightfield (terrain kit)",
+          "5-terrain-climate (terrain kit)",
+          "6-scatter-forest (terrain kit)",
+          "strata (terrain kit)",
+          "8-worked-terrain-patterns (terrain kit)"
+        ],
+        "used": [
+          "1-document-skeleton",
+          "2-coordinates-and-zones",
+          "3-terrain-heightfield",
+          "5-terrain-climate",
+          "6-scatter-forest",
+          "strata",
+          "8-worked-terrain-patterns"
+        ],
+        "missing": [],
+        "bytes": 4580
+      },
+      "kitFile": "docs/kits/settlement-core.md",
+      "menu": {
+        "injected": false,
+        "reason": "flag off"
+      },
+      "attempts": 2,
+      "diagnostics": [
+        [
+          {
+            "code": "LOAM-T000",
+            "name": "BAD_DOCUMENT",
+            "severity": "error",
+            "nodePath": ""
+          }
+        ],
+        []
+      ],
+      "usage": {
+        "promptTokens": 149515,
+        "completionTokens": 6132,
+        "reasoningTokens": 2411,
+        "cost": 0.06756562499999999
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 8,
+        "maxDepth": 2,
+        "generators": [
+          "scatter.forest@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [],
+        "archetypesInCatalog": 0,
+        "formPacks": [],
+        "props": [],
+        "species": [
+          "columnar_larch",
+          "squat_spruce",
+          "tall_spruce",
+          "wild_pine",
+          "wild_squat"
+        ],
+        "envelopes": [
+          "512x512"
+        ],
+        "constraints": 0,
+        "constraintKinds": [],
+        "constraintsWithStrength": 0,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 1,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 0,
+        "programReferences": 0,
+        "conformsTrue": 0,
+        "labels": 5,
+        "eras": [],
+        "bytes": 3177
+      },
+      "wallMs": 38153
+    }
+  ]
+}

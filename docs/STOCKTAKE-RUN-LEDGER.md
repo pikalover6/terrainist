@@ -7,28 +7,34 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 12 (the E1 arms built, E1 pre-registered)
-  is committed.
-- **Next unit:** unit 13 — **run E1** as pre-registered in D31: nine
-  authoring-only harness passes (3 arms × 3 repeats, ≈ $0.64 each, ≈ $5.8,
-  concurrency 3, ~20 min a pass; run detached, one pass at a time):
-  `run.mjs --label e1-kit-{1,2,3}`, `--label e1-core-{1,2,3} --kit-file
-  docs/kits/settlement-core.md`, `--label e1-modules-{1,2,3} --kit-file
-  docs/kits/settlement-core.md --modules docs/kits/modules`. Then, free:
-  `icon-metric.mjs` on each run directory (in-process compiles) and
-  `score.mjs` arm vs arm; the decision by D31's rule; the write-up in
-  `docs/decks/e1/E1-VERDICT.md` (icons 3-of-3 tables, noise, cost per pass).
-  On a 402 or at the cap: `STATUS: BLOCKED`. Interleave F10, F4, F14 after.
-- **Last commit:** 78e8f40 (unit 11). Convention: this line names the
+- **In flight:** nothing — unit 13 (E1 run and decided) is committed.
+- **Next unit:** unit 14 — **F1/T110, the compiler bug the gates keep
+  exposing**: `LOAM-T110 UNSTABLE_FLUID` refused the emit of five
+  documents across the Run (railway_town in the before-sample; the E1
+  arms' modules-1 metropolis and redwood, core-3, modules-2). Probe first:
+  compile each refused document, read the physics lint's witnesses (the
+  water columns and their y), and attribute each to the terrain verb or
+  structure that left water above its floor (a carved inlet's rim, a
+  canal's bank, a caldera's lip — the lint's own `fix` names the classes);
+  find the shared mechanism; fix code-first under law 5 (switch, fourteen
+  payload shas, FULL suite) or write it up if it is a subsystem. Then F10,
+  F4, F14, F17; then §10.5 probe prompts and the remaining verdict
+  stations (G1 needs each golden prompt read 3-of-3 at the final bytes —
+  the E1 kit repeats are three fresh rolls at the current kit bytes and
+  serve that reading once the compiler settles).
+- **Last commit:** edaf5e4 (unit 12). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
-- **Spend:** $2.29 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
-  E1 is budgeted at ≤ $6.00 (D31).
-- **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19, D25.)
+- **Spend:** $8.19 of the $35.00 OpenRouter cap (Run-only; log-derived,
+  D4). E1 cost $5.90 against its $6.00 budget.
+- **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19, D25,
+  D32.)
 - **Findings queue (law 1: bugs before anything else):**
-  - F1 — `railway_town` `LOAM-T110 UNSTABLE_FLUID` at emit.
+  - F1 — `LOAM-T110 UNSTABLE_FLUID` at emit — **now five documents**;
+    unit 14.
   - F2 — anchors at HEAD: all four attributed (units 4, 8).
-  - F3 — metropolis authoring regression, lost 3-of-3. E2/E3 (E1's arms
-    will show whether the core or the modules bring the skeleton field back).
+  - F3 — metropolis authoring regression, lost 3-of-3; E1 shows no arm
+    brings the skeleton field back — E2 (the machinery that asks for a
+    program) is where it went.
   - F4 — `LOAM-I512` "ruined shells" vs intact boxes — street-level probe.
   - F5, F6, F7, F11, F12, F13 — fixed (units 5–10).
   - F8 — `frontageLots` drops (~70 % starvation → F10, ~30 % geometry → P1).
@@ -37,13 +43,13 @@ running state. The NOW block is rewritten at the end of every turn.
   - F10 — `LOT_PARCEL_OWN_STATIONS` orphans 24 % of the plane; off.
   - F14 — pre-existing physics findings on shipped worlds; one physics
     unit, probe first.
-  - F15 — the icon metric's before-sample alarms not yet owned by a unit
-    (horse/citadel dominance, the redwoods' measure, the farm town's hull
-    density).
-  - F16 — the settlement kit's core is 88 % of the kit: its 67 fences are
-    34.5 KB and the worked sections' prose 2.3 KB. The "core ~⅓ the size"
-    that wave 2B expected would need the prose cut, not the examples — a
-    kit-writing job, not a split (D31 arm 2 is the honest version).
+  - F15 — the icon metric's before-sample alarms (horse/citadel dominance,
+    the redwoods' measure, the farm town's hull density).
+  - F16 — the kit's core is 88 % of the kit; a smaller kit is a prose job.
+  - F17 — **the walled city's keep is authored in only 1 of 3 kit rolls**
+    (E1 kit repeats: absent, present-dominant, absent) — T1/T4 icon noise
+    on the shipped kit at authoring; a kit-teaching item (E1 says fences,
+    not rules, are where such things land) and a G1 risk.
 ## DECISIONS
 
 (every fork taken: the reversible default chosen, why, and how to undo it)
@@ -235,6 +241,23 @@ running state. The NOW block is rewritten at the end of every turn.
   --gate` green against arm 1. Anything less is a write-up
   (`docs/decks/e1/E1-VERDICT.md`) and the kit stays. Undo: n/a — a
   pre-registration is a record.
+- **D32 (unit 13) — E1 decided: neither arm ships, the kit stays.** By
+  D31's rule: the core loses one-shot (8–10 → 0–1), costs 60–75 % more,
+  multiplies validator diagnostics 30×, and drops two prompts in one
+  repeat; the modules arm loses one-shot and cost and gains nothing on
+  icons or dominance, its reach gain inside the noise floor. Icon presence
+  is equal across arms within noise (the harness reads program-carried
+  icons at the document level; the walled keep's absence is kit-side
+  noise, F17). The measured answer to "examples at all?" is yes: the
+  fences are where envelope literals and constraint strengths are learned,
+  and they buy the one-shot rate. A3's size goal is a prose problem (F16).
+  Full write-up `docs/decks/e1/E1-VERDICT.md`. Undo: Kai's veto; the arms
+  and the harness flags stay in the tree for a later kit.
+- **D33 (unit 13):** the nine E1 passes were run three at a time (one per
+  arm per repeat, concurrency 9 in all) — seven minutes a round against
+  the README's twenty — with one transient `OpenRouter fetch failed` on
+  modules-3 resumed by the harness's own record cache (three prompts
+  re-authored, ~$0.20, inside the $6 budget). Undo: n/a.
 
 ## SPEND
 
@@ -252,10 +275,14 @@ running state. The NOW block is rewritten at the end of every turn.
 | 10 | F6/F7 — diagnostics only; compiles, the FULL suite | 0.00 | 2.29 |
 | 11 | the icon metric — in-process compiles only | 0.00 | 2.29 |
 | 12 | the E1 arms — the kit split, harness flags, dry runs only | 0.00 | 2.29 |
+| 13 | E1: 9 authoring passes (3 arms × 3 repeats) + one resumed pass; compiles free | 5.90 | 8.19 |
 
 ## VERDICTS
 
 (pointers to `docs/decks/<deck>/VERDICT.md`)
+
+- `docs/decks/e1/E1-VERDICT.md` — E1, examples at all: **neither arm
+  ships; the kit stays** (D32).
 
 - `docs/decks/before-sample/VERDICT.md` — station 1 metropolis_hideout:
   **FAIL** (T6, T9); station 3 hellenist_harbour: **FAIL (T7, narrowed:
@@ -470,3 +497,18 @@ running state. The NOW block is rewritten at the end of every turn.
   what was sent). Dry runs green; 7 tests (`kit-assembly.test.ts`) pin the
   split and the selection; README section. E1 pre-registered (D31). No
   compiler code changed; no spend.
+- **unit 13 — E1 run and decided (2026-08-25):** nine authoring-only passes
+  as pre-registered (D31), $5.90; the icon metric on all nine (in-process
+  compiles), `score.mjs` arm vs kit and kit vs its own repeats (the noise
+  floor). The kit: one-shot 8–10/11, $0.55–0.58, icons 27–28/28,
+  dominant 1–2/8, density 7/9, compiled 33/33. The core: one-shot 0–1,
+  $0.87–0.96, diagnostics ×30, one repeat 9/11, parroting 30 → 12 %,
+  constraints-with-strength 38–44 → 0–17. The modules: one-shot 3–5,
+  +25 % cost, icons equal, no dominance or density gain, reach inside the
+  noise. Decision D32: the kit stays; the answer to "examples at all?" is
+  yes, measured. The metric learned program-carried icons (`params.program`
+  and `authored:<id>`) at the document level in authoring-only runs. F17
+  and F1's broadening logged. Files: `tools/golden-prompts/runs/e1-*`
+  (9 run directories with `icon-metric.json`), `icon-metric.mjs`,
+  `docs/decks/e1/E1-VERDICT.md`. Tests: `icon-metric.test.ts 7 passed`;
+  no compiler code changed. Spend $5.90.

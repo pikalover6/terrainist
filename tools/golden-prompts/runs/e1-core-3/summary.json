@@ -1,0 +1,2958 @@
+{
+  "suite": "golden-prompts-v0",
+  "label": "e1-core-3",
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "intentPrepass": true,
+  "kits": {
+    "settlement": {
+      "path": "docs/kits/settlement-core.md",
+      "sha256": "e19f3bb032ef2794a74b8876c7193d1faf9269e07b7a7fc0e420284b0fc605a1",
+      "bytes": 251084,
+      "envelopeLiterals": []
+    },
+    "terrain": {
+      "path": "docs/kits/terrain-author.md",
+      "sha256": "0adfac8d77042820afec8495258497e5cd44aa2a4391a585ac942518717f331b",
+      "bytes": 41193,
+      "envelopeLiterals": [
+        "384x384",
+        "512x512"
+      ]
+    }
+  },
+  "kitFile": "docs/kits/settlement-core.md",
+  "totals": {
+    "ok": 11,
+    "attempts": 26,
+    "oneShot": 1,
+    "promptTokens": 2047157,
+    "completionTokens": 199909,
+    "cost": 0.8731102875,
+    "diagnosticCodes": {
+      "LOAM-T106": 10,
+      "LOAM-T101": 14,
+      "LOAM-T205": 41,
+      "LOAM-T009": 1,
+      "LOAM-T200": 61,
+      "LOAM-T201": 37,
+      "LOAM-T003": 14,
+      "LOAM-T008": 9,
+      "LOAM-T010": 1,
+      "LOAM-E338": 2,
+      "LOAM-T102": 2,
+      "LOAM-E162": 4,
+      "LOAM-T004": 5,
+      "LOAM-W519": 1,
+      "LOAM-T000": 2,
+      "LOAM-T001": 5
+    }
+  },
+  "records": [
+    {
+      "id": "troy_horse",
+      "family": "troy",
+      "kit": "settlement",
+      "prompt": "The Trojan horse in Troy, right before the soldiers emerge.",
+      "seed": 303,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "source": "cache",
+        "value": {
+          "era": "ancient",
+          "wealth": 0.7,
+          "decline": 0.1,
+          "formality": 0.6,
+          "event": {
+            "kind": "siege",
+            "severity": 0.9,
+            "recency": 0
+          },
+          "climate": {
+            "temperature": 0.7,
+            "humidity": -0.2,
+            "snow": "never"
+          },
+          "character": {
+            "label": "Walled Troy under the Greek stratagem",
+            "materialTheme": "sun_clay",
+            "fortification": "walled",
+            "formPacks": [
+              "classical_mediterranean"
+            ],
+            "archetypes": {
+              "prefer": [
+                "peristyle_house",
+                "megaron",
+                "stoa",
+                "peripteral_temple",
+                "palaestra",
+                "olive_press"
+              ],
+              "forbid": [
+                "townhouse",
+                "terraced_row",
+                "shop_row",
+                "office",
+                "apartment_block"
+              ]
+            },
+            "motifs": {
+              "roofType": "flat",
+              "massing": "stepped",
+              "windowRhythm": "sparse",
+              "ornamentDensity": 0.4
+            },
+            "urbanForm": "grown",
+            "courtyards": 0.6,
+            "ground": "stepped"
+          },
+          "tokens": {
+            "terrain": "a walled citadel city on a coastal rise above a sandy plain; the Aegean shore and open sea in view",
+            "icons": "the colossal wooden Trojan horse brought inside the Scaean gate; monumental stone ramparts and watchtowers; royal megaron palace overlooking the city; abandoned Greek camp and beached ship hulls on the distant shore",
+            "event_direction": "Greek soldiers concealed inside the belly of the wooden horse waiting for midnight to open the gates to the returning fleet"
+          }
+        }
+      },
+      "intentUsage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "reasoningTokens": 0,
+        "cost": 0,
+        "cached": true
+      },
+      "kitFile": "docs/kits/settlement-core.md",
+      "menu": {
+        "injected": false,
+        "reason": "flag off"
+      },
+      "attempts": 2,
+      "diagnostics": [
+        [
+          {
+            "code": "LOAM-T106",
+            "name": "BAD_PALETTE",
+            "severity": "error",
+            "nodePath": "style.palettes.ground.beach"
+          },
+          {
+            "code": "LOAM-T106",
+            "name": "BAD_PALETTE",
+            "severity": "error",
+            "nodePath": "style.palettes.ground.beach"
+          },
+          {
+            "code": "LOAM-T101",
+            "name": "BAD_ENUM",
+            "severity": "error",
+            "nodePath": "root.inland_groves.params.area"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "root.lookout_tower"
+          },
+          {
+            "code": "LOAM-T101",
+            "name": "BAD_ENUM",
+            "severity": "error",
+            "nodePath": "root.abandoned_greek_camp.params"
+          },
+          {
+            "code": "LOAM-T101",
+            "name": "BAD_ENUM",
+            "severity": "error",
+            "nodePath": "root.beached_greek_ship.params"
+          }
+        ],
+        []
+      ],
+      "usage": {
+        "promptTokens": 150447,
+        "completionTokens": 15268,
+        "reasoningTokens": 8319,
+        "cost": 0.0615588375
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 19,
+        "maxDepth": 2,
+        "generators": [
+          "authored:trojan_horse",
+          "building.grammar@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "armory",
+          "church",
+          "cottage",
+          "courtyard_house",
+          "granary",
+          "hall",
+          "megaron",
+          "peristyle_house",
+          "shrine",
+          "stoa",
+          "temple",
+          "warehouse",
+          "watchtower"
+        ],
+        "archetypesInCatalog": 13,
+        "formPacks": [
+          "classical_mediterranean"
+        ],
+        "props": [
+          "campsite",
+          "longship",
+          "statue_plinth"
+        ],
+        "species": [
+          "holm_oak",
+          "juniper",
+          "olive",
+          "scrub_oak",
+          "shrub"
+        ],
+        "envelopes": [
+          "512x512",
+          "190x170",
+          "15x14x21",
+          "13x15x19",
+          "11x12x17",
+          "13x12x15",
+          "12x18x16",
+          "7x19x7"
+        ],
+        "constraints": 6,
+        "constraintKinds": [
+          "at",
+          "band",
+          "blend",
+          "distance",
+          "max",
+          "min",
+          "on",
+          "reference",
+          "terrain_conform"
+        ],
+        "constraintsWithStrength": 0,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 5,
+        "programReferences": 1,
+        "conformsTrue": 0,
+        "labels": 0,
+        "eras": [
+          "ancient"
+        ],
+        "bytes": 6431
+      },
+      "wallMs": 84523
+    },
+    {
+      "id": "pirate_unicorn_isles",
+      "family": "pirates_v_unicorns",
+      "kit": "settlement",
+      "prompt": "A pirate island and a unicorn island, at war.",
+      "seed": 301,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "source": "cache",
+        "value": {
+          "climate": {
+            "temperature": 0.6,
+            "humidity": 0.3,
+            "snow": "never"
+          },
+          "tokens": {
+            "terrain": "two distinct islands separated by a contested strait of open water",
+            "event_direction": "pirate sloops and coastal cannon batteries facing across the strait at the fortified unicorn island",
+            "infra": "cannon_battery along the pirate shore; beacon_tower and defensive_barricade along the unicorn island coastline",
+            "region_pirate_island": "era renaissance, wealth 0.35, decline 0.4, formality 0.15; materialTheme temperate_timber; formPacks [nautical_pirate]; prefer archetypes tavern, watchtower, warehouse, lighthouse; props galleon, cart; fortified buccaneer cove, ship repair yards, coastal artillery",
+            "region_unicorn_island": "era renaissance, wealth 0.85, decline 0.05, formality 0.75; materialTheme white_quartz; prefer archetypes church, manor, watchtower; props standing_stones, fountain; sacred unicorn pastures, pristine defensive ramparts and magical shrine towers"
+          }
+        }
+      },
+      "intentUsage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "reasoningTokens": 0,
+        "cost": 0,
+        "cached": true
+      },
+      "kitFile": "docs/kits/settlement-core.md",
+      "menu": {
+        "injected": false,
+        "reason": "flag off"
+      },
+      "attempts": 1,
+      "diagnostics": [
+        []
+      ],
+      "usage": {
+        "promptTokens": 71266,
+        "completionTokens": 14812,
+        "reasoningTokens": 10598,
+        "cost": 0.05449725
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 24,
+        "maxDepth": 2,
+        "generators": [
+          "authored:pirate_dreadnought",
+          "authored:unicorn_colossus",
+          "building.grammar@0",
+          "infra.entry@0",
+          "precinct.farm@0",
+          "precinct.harbour@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "apothecary",
+          "beacon_spire",
+          "cloister",
+          "cooperage",
+          "cottage",
+          "courtyard_house",
+          "crystal_shrine",
+          "inn",
+          "library",
+          "manor_house",
+          "smithy",
+          "tavern",
+          "warehouse",
+          "watchtower"
+        ],
+        "archetypesInCatalog": 14,
+        "formPacks": [
+          "arcane_magical",
+          "nautical_pirate"
+        ],
+        "props": [
+          "galleon",
+          "standing_stones"
+        ],
+        "species": [
+          "blossom_tree",
+          "dark_pine",
+          "weathered_oak",
+          "white_birch",
+          "wild_oak"
+        ],
+        "envelopes": [
+          "512x512",
+          "130x120",
+          "13x11x13",
+          "7x19x7",
+          "64x16x48",
+          "26x20x36",
+          "130x120",
+          "11x13x13",
+          "7x21x7",
+          "18x26x18",
+          "80x80"
+        ],
+        "constraints": 15,
+        "constraintKinds": [
+          "adjacent_to",
+          "at",
+          "band",
+          "blend",
+          "distance",
+          "gap",
+          "max",
+          "min",
+          "on",
+          "terrain_conform",
+          "zone"
+        ],
+        "constraintsWithStrength": 0,
+        "hardConstraints": 0,
+        "forests": 3,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 4,
+        "programReferences": 2,
+        "conformsTrue": 0,
+        "labels": 0,
+        "eras": [
+          "renaissance",
+          "renaissance",
+          "renaissance"
+        ],
+        "bytes": 7960
+      },
+      "wallMs": 79203
+    },
+    {
+      "id": "hellenist_harbour",
+      "family": "hellenist_city",
+      "kit": "settlement",
+      "prompt": "A modern Hellenist city being invaded by sea monsters.",
+      "seed": 305,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "source": "cache",
+        "value": {
+          "era": "modern",
+          "wealth": 0.8,
+          "formality": 0.75,
+          "event": {
+            "kind": "siege",
+            "severity": 0.85,
+            "recency": 0
+          },
+          "climate": {
+            "temperature": 0.6,
+            "humidity": 0.2,
+            "snow": "never"
+          },
+          "character": {
+            "label": "modern Hellenist coastal metropolis under sea monster siege",
+            "materialTheme": "modern_city",
+            "formPacks": [
+              "classical_mediterranean"
+            ],
+            "archetypes": {
+              "prefer": [
+                "stoa",
+                "peripteral_temple",
+                "bouleuterion",
+                "palaestra",
+                "nymphaeum"
+              ]
+            },
+            "urbanForm": "grid",
+            "motifs": {
+              "roofType": "flat",
+              "massing": "blocky",
+              "windowRhythm": "regular",
+              "ornamentDensity": 0.6
+            }
+          },
+          "tokens": {
+            "terrain": "a grand coastal metropolis fronting a deep harbour and open sea where sea monsters surface",
+            "event_direction": "giant sea monsters rise out of the ocean water attacking the harbour and waterfront avenues",
+            "infra": "barricade_line across the harbour promenade; emergency_cordon along the coastal boulevard",
+            "icons": "leviathans and sea monsters breaching along the modern docks; neoclassical porticos and high-rise stoas overlooking the bay; emergency barricades and defensive lines guarding the shore"
+          }
+        }
+      },
+      "intentUsage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "reasoningTokens": 0,
+        "cost": 0,
+        "cached": true
+      },
+      "kitFile": "docs/kits/settlement-core.md",
+      "menu": {
+        "injected": false,
+        "reason": "flag off"
+      },
+      "attempts": 3,
+      "diagnostics": [
+        [
+          {
+            "code": "LOAM-T009",
+            "name": "MISSING_KEY",
+            "severity": "error",
+            "nodePath": ""
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.base_terrain"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.climate_controller"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.coastal_groves"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.wilderness_fill"
+          },
+          {
+            "code": "LOAM-T201",
+            "name": "STRUCTURE_NODE_SHAPE",
+            "severity": "error",
+            "nodePath": "root.hellenist_metropolis.high_stoa_colonnade"
+          },
+          {
+            "code": "LOAM-T201",
+            "name": "STRUCTURE_NODE_SHAPE",
+            "severity": "error",
+            "nodePath": "root.hellenist_metropolis.council_bouleuterion"
+          },
+          {
+            "code": "LOAM-T201",
+            "name": "STRUCTURE_NODE_SHAPE",
+            "severity": "error",
+            "nodePath": "root.hellenist_metropolis.poseidon_acropolis_temple"
+          },
+          {
+            "code": "LOAM-T201",
+            "name": "STRUCTURE_NODE_SHAPE",
+            "severity": "error",
+            "nodePath": "root.hellenist_metropolis.olympian_highrise"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.metropolitan_harbour"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.leviathan_prime"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.colossus_of_athena"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.tentacle_swarm"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.breaching_beasts"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.harbourfront_barricade"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.emergency_cordon"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.main_highways"
+          },
+          {
+            "code": "LOAM-T003",
+            "name": "GENERATOR_CARDINALITY",
+            "severity": "error",
+            "nodePath": "root"
+          },
+          {
+            "code": "LOAM-T003",
+            "name": "GENERATOR_CARDINALITY",
+            "severity": "error",
+            "nodePath": "root"
+          }
+        ],
+        [
+          {
+            "code": "LOAM-T008",
+            "name": "UNKNOWN_KEY",
+            "severity": "error",
+            "nodePath": "root.base_terrain.ocean_bay"
+          },
+          {
+            "code": "LOAM-T008",
+            "name": "UNKNOWN_KEY",
+            "severity": "error",
+            "nodePath": "root.base_terrain.ocean_bay"
+          },
+          {
+            "code": "LOAM-T101",
+            "name": "BAD_ENUM",
+            "severity": "error",
+            "nodePath": "root.base_terrain.ocean_bay"
+          },
+          {
+            "code": "LOAM-T101",
+            "name": "BAD_ENUM",
+            "severity": "error",
+            "nodePath": "root.base_terrain.ocean_bay.params"
+          },
+          {
+            "code": "LOAM-T008",
+            "name": "UNKNOWN_KEY",
+            "severity": "error",
+            "nodePath": "root.base_terrain.city_plateau"
+          },
+          {
+            "code": "LOAM-T008",
+            "name": "UNKNOWN_KEY",
+            "severity": "error",
+            "nodePath": "root.base_terrain.city_plateau"
+          },
+          {
+            "code": "LOAM-T101",
+            "name": "BAD_ENUM",
+            "severity": "error",
+            "nodePath": "root.base_terrain.city_plateau"
+          },
+          {
+            "code": "LOAM-T101",
+            "name": "BAD_ENUM",
+            "severity": "error",
+            "nodePath": "root.base_terrain.city_plateau.params"
+          },
+          {
+            "code": "LOAM-T008",
+            "name": "UNKNOWN_KEY",
+            "severity": "error",
+            "nodePath": "root.base_terrain.harbour_inlet"
+          },
+          {
+            "code": "LOAM-T008",
+            "name": "UNKNOWN_KEY",
+            "severity": "error",
+            "nodePath": "root.base_terrain.harbour_inlet"
+          },
+          {
+            "code": "LOAM-T101",
+            "name": "BAD_ENUM",
+            "severity": "error",
+            "nodePath": "root.base_terrain.harbour_inlet"
+          },
+          {
+            "code": "LOAM-T101",
+            "name": "BAD_ENUM",
+            "severity": "error",
+            "nodePath": "root.base_terrain.harbour_inlet.params"
+          },
+          {
+            "code": "LOAM-T010",
+            "name": "BAD_TYPE",
+            "severity": "error",
+            "nodePath": "root.coastal_groves.params.strata"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "root.hellenist_metropolis.high_stoa_colonnade"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "root.hellenist_metropolis.council_bouleuterion"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "root.hellenist_metropolis.poseidon_acropolis_temple"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "root.hellenist_metropolis.olympian_highrise"
+          },
+          {
+            "code": "LOAM-E338",
+            "name": "PROGRAM_SCHEMA",
+            "severity": "error",
+            "nodePath": "root.tentacle_swarm.params.count"
+          },
+          {
+            "code": "LOAM-E338",
+            "name": "PROGRAM_SCHEMA",
+            "severity": "error",
+            "nodePath": "root.breaching_beasts.params.count"
+          }
+        ],
+        []
+      ],
+      "usage": {
+        "promptTokens": 245311,
+        "completionTokens": 23736,
+        "reasoningTokens": 10928,
+        "cost": 0.113010675
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 21,
+        "maxDepth": 2,
+        "generators": [
+          "authored:colossus_of_athena",
+          "authored:leviathan_prime",
+          "building.grammar@0",
+          "infra.entry@0",
+          "precinct.harbour@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "scatter.program@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "bouleuterion",
+          "courthouse",
+          "customs_house",
+          "department_store",
+          "modern_villa",
+          "museum",
+          "nymphaeum",
+          "office",
+          "palaestra",
+          "peripteral_temple",
+          "shop_row",
+          "skyscraper",
+          "stoa",
+          "townhouse"
+        ],
+        "archetypesInCatalog": 14,
+        "formPacks": [
+          "classical_mediterranean"
+        ],
+        "props": [],
+        "species": [
+          "ancient_olive",
+          "coastal_shrub",
+          "mediterranean_cypress",
+          "sparse_cypress",
+          "sparse_oak"
+        ],
+        "envelopes": [
+          "512x512",
+          "320x220",
+          "21x14x13",
+          "19x15x17",
+          "17x16x23",
+          "18x52x18",
+          "112x24x72"
+        ],
+        "constraints": 10,
+        "constraintKinds": [
+          "adjacent_to",
+          "band",
+          "blend",
+          "distance",
+          "gap",
+          "max",
+          "min",
+          "on",
+          "reference",
+          "terrain_conform",
+          "zone"
+        ],
+        "constraintsWithStrength": 0,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 4,
+        "programReferences": 2,
+        "conformsTrue": 0,
+        "labels": 0,
+        "eras": [
+          "modern"
+        ],
+        "bytes": 8081
+      },
+      "wallMs": 136680
+    },
+    {
+      "id": "alien_farm",
+      "family": "alien_farm",
+      "kit": "settlement",
+      "prompt": "A small farm town being invaded by aliens.",
+      "seed": 302,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "source": "cache",
+        "value": {
+          "era": "industrial",
+          "wealth": 0.35,
+          "decline": 0.4,
+          "formality": 0.2,
+          "event": {
+            "kind": "siege",
+            "severity": 0.8,
+            "recency": 0
+          },
+          "climate": {
+            "biome": "minecraft:plains",
+            "temperature": 0,
+            "humidity": 0.1
+          },
+          "character": {
+            "label": "invaded farming community",
+            "materialTheme": "temperate_timber",
+            "formPacks": [
+              "agrarian",
+              "alien_scifi"
+            ],
+            "archetypes": {
+              "prefer": [
+                "cottage",
+                "granary",
+                "windmill",
+                "tavern",
+                "field_lab",
+                "hive_mound"
+              ]
+            },
+            "urbanForm": "linear",
+            "motifs": {
+              "roofType": "gable",
+              "massing": "sprawling"
+            }
+          },
+          "tokens": {
+            "terrain": "rolling farmland with grain fields surrounding a small rural crossroads town",
+            "event_direction": "extraterrestrial invaders and bio-structures spreading from the outer crop fields into the village centre",
+            "infra": "crop_circle pressed into the wheat fields; crash_furrow ending at a downed alien craft; quarantine_fence along the outer pasture; barricade_line across the main lane",
+            "icons": "strange metallic scout craft hovering or crashed in the fields; glowing alien pylons; abandoned farm equipment and hay wagons along the lanes"
+          }
+        }
+      },
+      "intentUsage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "reasoningTokens": 0,
+        "cost": 0,
+        "cached": true
+      },
+      "kitFile": "docs/kits/settlement-core.md",
+      "menu": {
+        "injected": false,
+        "reason": "flag off"
+      },
+      "attempts": 3,
+      "diagnostics": [
+        [
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.base_terrain"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.climate"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.forest_copse"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.field_trees"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.main_farm"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.south_croftholding"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.town_hall"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.general_store"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.tavern"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.church"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.windmill"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.grain_silo"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.cottage_north"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.cottage_south"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.emergency_field_station"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.crashed_saucer"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.mothership_harvester"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.alien_spores_scatter"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.wheat_crop_circle"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.farm_quarantine_fence"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.saucer_crash_furrow"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.town_defense_barricade"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.abandoned_cart"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.emergency_notice_board"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.village_well"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.field_cart"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.field_scarecrow"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.town_roads"
+          },
+          {
+            "code": "LOAM-T003",
+            "name": "GENERATOR_CARDINALITY",
+            "severity": "error",
+            "nodePath": "root"
+          },
+          {
+            "code": "LOAM-T003",
+            "name": "GENERATOR_CARDINALITY",
+            "severity": "error",
+            "nodePath": "root"
+          }
+        ],
+        [
+          {
+            "code": "LOAM-T008",
+            "name": "UNKNOWN_KEY",
+            "severity": "error",
+            "nodePath": "root.base_terrain.town_shelf"
+          },
+          {
+            "code": "LOAM-T102",
+            "name": "BAD_PLACEMENT",
+            "severity": "error",
+            "nodePath": "root.base_terrain.town_shelf.params"
+          },
+          {
+            "code": "LOAM-T008",
+            "name": "UNKNOWN_KEY",
+            "severity": "error",
+            "nodePath": "root.base_terrain.pasture_pond"
+          },
+          {
+            "code": "LOAM-T102",
+            "name": "BAD_PLACEMENT",
+            "severity": "error",
+            "nodePath": "root.base_terrain.pasture_pond.params"
+          },
+          {
+            "code": "LOAM-T101",
+            "name": "BAD_ENUM",
+            "severity": "error",
+            "nodePath": "root.forest_copse.params.area"
+          },
+          {
+            "code": "LOAM-E162",
+            "name": "UNKNOWN_ZONE",
+            "severity": "error",
+            "nodePath": "root.main_farm.constraints[0]"
+          },
+          {
+            "code": "LOAM-E162",
+            "name": "UNKNOWN_ZONE",
+            "severity": "error",
+            "nodePath": "root.south_croftholding.constraints[0]"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "root.town_hall"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "root.general_store"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "root.tavern"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "root.church"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "root.windmill"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "root.grain_silo"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "root.cottage_north"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "root.cottage_south"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "root.emergency_field_station"
+          },
+          {
+            "code": "LOAM-E162",
+            "name": "UNKNOWN_ZONE",
+            "severity": "error",
+            "nodePath": "root.crashed_saucer.constraints[0]"
+          }
+        ],
+        []
+      ],
+      "usage": {
+        "promptTokens": 258521,
+        "completionTokens": 31400,
+        "reasoningTokens": 13170,
+        "cost": 0.10331921250000001
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 32,
+        "maxDepth": 2,
+        "generators": [
+          "authored:alien_harvester",
+          "authored:downed_saucer",
+          "building.grammar@0",
+          "infra.entry@0",
+          "precinct.farm@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "scatter.program@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "church",
+          "cottage",
+          "field_station",
+          "general_store",
+          "hall",
+          "inn",
+          "silo",
+          "tavern",
+          "town_hall",
+          "train_station",
+          "windmill"
+        ],
+        "archetypesInCatalog": 11,
+        "formPacks": [
+          "agrarian",
+          "alien_scifi"
+        ],
+        "props": [
+          "cart",
+          "covered_wagon",
+          "notice_board",
+          "scarecrow",
+          "well_head"
+        ],
+        "species": [
+          "birch",
+          "field_oak",
+          "field_shrub",
+          "oak"
+        ],
+        "envelopes": [
+          "512x512",
+          "22x22",
+          "130x110",
+          "90x80",
+          "13x16x13",
+          "13x10x11",
+          "13x11x13",
+          "11x15x17",
+          "9x16x9",
+          "9x18x9",
+          "9x8x11",
+          "11x10x11",
+          "11x11x13",
+          "28x14x28",
+          "44x32x44"
+        ],
+        "constraints": 38,
+        "constraintKinds": [
+          "adjacent_to",
+          "blend",
+          "distance",
+          "facing",
+          "gap",
+          "max",
+          "min",
+          "reference",
+          "terrain_conform",
+          "zone"
+        ],
+        "constraintsWithStrength": 10,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 9,
+        "programReferences": 2,
+        "conformsTrue": 0,
+        "labels": 0,
+        "eras": [
+          "industrial"
+        ],
+        "bytes": 10683
+      },
+      "wallMs": 160949
+    },
+    {
+      "id": "metropolis_hideout",
+      "family": "metropolis_hideout",
+      "kit": "settlement",
+      "prompt": "A high-tech apocalyptic hideout in the massively overgrown ruins of a metropolis.",
+      "seed": 304,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "source": "cache",
+        "value": {
+          "era": "far_future",
+          "wealth": 0.4,
+          "decline": 0.9,
+          "formality": 0.3,
+          "climate": {
+            "humidity": 0.7
+          },
+          "character": {
+            "label": "overgrown post-apocalyptic high-tech hideout",
+            "materialTheme": "modern_city",
+            "formPacks": [
+              "alien_scifi"
+            ],
+            "archetypes": {
+              "prefer": [
+                "bunker_complex",
+                "laboratory",
+                "field_station",
+                "hydroponics_bay",
+                "watchtower",
+                "office",
+                "apartment_block"
+              ],
+              "forbid": [
+                "cottage",
+                "manor",
+                "tavern",
+                "church",
+                "windmill"
+              ]
+            },
+            "flora": {
+              "prefer": [
+                "understory",
+                "emergent",
+                "old_growth"
+              ]
+            },
+            "motifs": {
+              "massing": "blocky",
+              "windowRhythm": "sparse"
+            },
+            "urbanForm": "grid"
+          },
+          "tokens": {
+            "fittings": "blast_door on the bunker_complex; airlock_vestibule on the laboratory",
+            "infra": "barricade_line across the fractured boulevard; quarantine_fence around the reinforced perimeter",
+            "terrain": "a ruined metropolis grid of shattered skyscrapers and collapsed elevated roads choked with deep canopy forest and dense undergrowth",
+            "icons": "a reinforced high-tech hideout nestled in the hollow base of a ruined skyscraper; solar panels and satellite dishes tangled in vines; defensive floodlights and sensor towers hidden in the foliage"
+          }
+        }
+      },
+      "intentUsage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "reasoningTokens": 0,
+        "cost": 0,
+        "cached": true
+      },
+      "kitFile": "docs/kits/settlement-core.md",
+      "menu": {
+        "injected": false,
+        "reason": "flag off"
+      },
+      "attempts": 3,
+      "diagnostics": [
+        [
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.terrain_base"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.climate_base"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.overgrown_jungle_canopy"
+          },
+          {
+            "code": "LOAM-T201",
+            "name": "STRUCTURE_NODE_SHAPE",
+            "severity": "error",
+            "nodePath": "root.ruined_metropolis.high_rise_ruin_alpha"
+          },
+          {
+            "code": "LOAM-T201",
+            "name": "STRUCTURE_NODE_SHAPE",
+            "severity": "error",
+            "nodePath": "root.ruined_metropolis.high_rise_ruin_beta"
+          },
+          {
+            "code": "LOAM-T201",
+            "name": "STRUCTURE_NODE_SHAPE",
+            "severity": "error",
+            "nodePath": "root.ruined_metropolis.collapsed_subway_hub"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.central_hideout_citadel"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.command_bunker"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.bio_hydroponics_lab"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.comm_field_station"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.power_substation"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.perimeter_security_fence"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.boulevard_barricade"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.hideout_solar_field"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.hideout_helipad"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.quantum_sensor_gate"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.metropolis_arterials"
+          },
+          {
+            "code": "LOAM-T003",
+            "name": "GENERATOR_CARDINALITY",
+            "severity": "error",
+            "nodePath": "root"
+          },
+          {
+            "code": "LOAM-T003",
+            "name": "GENERATOR_CARDINALITY",
+            "severity": "error",
+            "nodePath": "root"
+          }
+        ],
+        [
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "root.command_bunker"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "root.bio_hydroponics_lab"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "root.comm_field_station"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "root.power_substation"
+          },
+          {
+            "code": "LOAM-T008",
+            "name": "UNKNOWN_KEY",
+            "severity": "error",
+            "nodePath": "root.hideout_solar_field.params"
+          }
+        ],
+        []
+      ],
+      "usage": {
+        "promptTokens": 246103,
+        "completionTokens": 23052,
+        "reasoningTokens": 9425,
+        "cost": 0.1120241625
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 22,
+        "maxDepth": 2,
+        "generators": [
+          "authored:shattered_cyber_tower",
+          "building.grammar@0",
+          "infra.entry@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "apartment_block",
+          "brutalist_block",
+          "bunker_complex",
+          "castle",
+          "cottage",
+          "data_center",
+          "field_station",
+          "laboratory",
+          "office",
+          "parking_garage",
+          "skyscraper",
+          "substation",
+          "subway_station",
+          "warehouse"
+        ],
+        "archetypesInCatalog": 14,
+        "formPacks": [
+          "alien_scifi"
+        ],
+        "props": [
+          "helipad",
+          "portal_frame",
+          "solar_array"
+        ],
+        "species": [
+          "jungle_bulk",
+          "spreading_oak",
+          "tall_spruce"
+        ],
+        "envelopes": [
+          "512x512",
+          "260x260",
+          "17x36x17",
+          "15x32x19",
+          "15x12x15",
+          "26x26",
+          "24x38x24",
+          "13x11x13",
+          "13x12x17",
+          "11x11x13",
+          "15x12x15"
+        ],
+        "constraints": 23,
+        "constraintKinds": [
+          "adjacent_to",
+          "blend",
+          "connected",
+          "distance",
+          "facing",
+          "gap",
+          "max",
+          "min",
+          "reference",
+          "style",
+          "terrain_conform",
+          "via",
+          "zone"
+        ],
+        "constraintsWithStrength": 0,
+        "hardConstraints": 0,
+        "forests": 1,
+        "forestFillsAtOrAboveCoverage": 1,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 7,
+        "programReferences": 1,
+        "conformsTrue": 0,
+        "labels": 0,
+        "eras": [
+          "far_future"
+        ],
+        "bytes": 8264
+      },
+      "wallMs": 116756
+    },
+    {
+      "id": "redwood_camp",
+      "family": "redwood_camp",
+      "kit": "settlement",
+      "prompt": "An ancient forest of colossal redwoods with a small logging camp at its edge.",
+      "seed": 306,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "source": "cache",
+        "value": {
+          "era": "industrial",
+          "wealth": 0.35,
+          "formality": 0.1,
+          "climate": {
+            "biome": "minecraft:old_growth_spruce_taiga",
+            "temperature": 0.25,
+            "humidity": 0.7,
+            "snow": "never"
+          },
+          "character": {
+            "label": "redwood logging camp",
+            "materialTheme": "boreal_pine",
+            "formPacks": [
+              "wilds_camps"
+            ],
+            "flora": {
+              "prefer": [
+                "emergent",
+                "ancient",
+                "old_growth",
+                "spruce_ancient",
+                "giant"
+              ]
+            },
+            "urbanForm": "linear"
+          },
+          "tokens": {
+            "terrain": "a primeval forest of colossal redwoods with a logging camp clearing at its perimeter",
+            "infra": "cut_over_ground clearing surrounding the camp; cart_track running into the deep timber",
+            "icons": "towering redwood canopy, log stacks, sawpits, bunk cabins, and timber skid trails"
+          }
+        }
+      },
+      "intentUsage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "reasoningTokens": 0,
+        "cost": 0,
+        "cached": true
+      },
+      "kitFile": "docs/kits/settlement-core.md",
+      "menu": {
+        "injected": false,
+        "reason": "flag off"
+      },
+      "attempts": 2,
+      "diagnostics": [
+        [
+          {
+            "code": "LOAM-T004",
+            "name": "EDIT_NOT_UNDER_HEIGHTFIELD",
+            "severity": "error",
+            "nodePath": "root.terrain_base.camp_clearing"
+          },
+          {
+            "code": "LOAM-T004",
+            "name": "EDIT_NOT_UNDER_HEIGHTFIELD",
+            "severity": "error",
+            "nodePath": "root.terrain_base.redwood_ridge"
+          },
+          {
+            "code": "LOAM-T004",
+            "name": "EDIT_NOT_UNDER_HEIGHTFIELD",
+            "severity": "error",
+            "nodePath": "root.terrain_base.timber_river"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "root.camp_sawmill"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "root.loggers_bunkhouse"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "root.foreman_cabin"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "root.camp_cookhouse"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "root.equipment_shed"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "root.camp_smithy"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "root.camp_charcoal_burner"
+          }
+        ],
+        []
+      ],
+      "usage": {
+        "promptTokens": 152553,
+        "completionTokens": 17562,
+        "reasoningTokens": 8302,
+        "cost": 0.0666495
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 26,
+        "maxDepth": 2,
+        "generators": [
+          "building.grammar@0",
+          "infra.entry@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "charcoal_burner",
+          "dormitory",
+          "log_cabin",
+          "machine_shop",
+          "office",
+          "sawmill",
+          "smithy",
+          "tavern",
+          "warehouse"
+        ],
+        "archetypesInCatalog": 9,
+        "formPacks": [
+          "wilds_camps"
+        ],
+        "props": [
+          "cart",
+          "covered_wagon",
+          "hitching_post",
+          "horse_trough",
+          "log_pile",
+          "notice_board"
+        ],
+        "species": [
+          "redwood_canopy",
+          "sparse_spruce",
+          "sparse_squat",
+          "tall_larch",
+          "under_spruce"
+        ],
+        "envelopes": [
+          "512x512",
+          "24x20",
+          "11x11x17",
+          "13x12x19",
+          "11x12x13",
+          "13x11x13",
+          "11x11x15",
+          "11x12x15",
+          "13x11x13"
+        ],
+        "constraints": 30,
+        "constraintKinds": [
+          "adjacent_to",
+          "blend",
+          "distance",
+          "facing",
+          "gap",
+          "max",
+          "min",
+          "reference",
+          "terrain_conform",
+          "zone"
+        ],
+        "constraintsWithStrength": 6,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 7,
+        "programReferences": 0,
+        "conformsTrue": 0,
+        "labels": 0,
+        "eras": [
+          "industrial"
+        ],
+        "bytes": 7847
+      },
+      "wallMs": 95691
+    },
+    {
+      "id": "glowcap_vale",
+      "family": "glowcap_vale",
+      "kit": "settlement",
+      "prompt": "A glowing mushroom vale where a strange village has grown between the caps.",
+      "seed": 307,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "source": "cache",
+        "value": {
+          "era": "medieval",
+          "wealth": 0.35,
+          "formality": 0.1,
+          "climate": {
+            "humidity": 0.8,
+            "temperature": 0.2
+          },
+          "character": {
+            "label": "glowing mushroom vale village",
+            "materialTheme": "temperate_timber",
+            "formPacks": [
+              "swamp_witch"
+            ],
+            "urbanForm": "grown",
+            "flora": {
+              "prefer": [
+                "fungal",
+                "glow",
+                "mushroom_giant_red",
+                "mushroom_shelf_brown",
+                "glowcap"
+              ]
+            },
+            "archetypes": {
+              "prefer": [
+                "cottage",
+                "watchtower"
+              ]
+            }
+          },
+          "tokens": {
+            "terrain": "a secluded mountain vale nestled between steep ridges, sheltered beneath a canopy of giant glowing mushrooms",
+            "icons": "rustic wooden cottages and stilt dwellings built between and around giant mushroom stems; rope bridges and elevated walkways connecting mushroom caps; spore lanterns illuminating the vale floor"
+          }
+        }
+      },
+      "intentUsage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "reasoningTokens": 0,
+        "cost": 0,
+        "cached": true
+      },
+      "kitFile": "docs/kits/settlement-core.md",
+      "menu": {
+        "injected": false,
+        "reason": "flag off"
+      },
+      "attempts": 2,
+      "diagnostics": [
+        [
+          {
+            "code": "LOAM-T101",
+            "name": "BAD_ENUM",
+            "severity": "error",
+            "nodePath": "world.base_terrain.north_vale_ridge"
+          },
+          {
+            "code": "LOAM-T101",
+            "name": "BAD_ENUM",
+            "severity": "error",
+            "nodePath": "world.base_terrain.south_vale_ridge"
+          },
+          {
+            "code": "LOAM-T101",
+            "name": "BAD_ENUM",
+            "severity": "error",
+            "nodePath": "world.base_terrain.vale_floor_cradle"
+          },
+          {
+            "code": "LOAM-T101",
+            "name": "BAD_ENUM",
+            "severity": "error",
+            "nodePath": "world.base_terrain.settlement_shelf"
+          },
+          {
+            "code": "LOAM-W519",
+            "name": "LANDMARK_CONSTRAINT_IGNORED",
+            "severity": "warning",
+            "nodePath": "world.elder_sanctuary.constraints[1]"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "world.mushroom_house_north"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "world.witch_hut_east"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "world.stilt_dwelling_west"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "world.alchemy_tower"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "world.apothecary_shop"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "world.shroom_cottage_south"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "world.root_cellar_pantry"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "world.hermit_shrine"
+          }
+        ],
+        []
+      ],
+      "usage": {
+        "promptTokens": 153139,
+        "completionTokens": 18292,
+        "reasoningTokens": 8714,
+        "cost": 0.06823766249999999
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 25,
+        "maxDepth": 2,
+        "generators": [
+          "authored:elder_glowcap_sanctuary",
+          "building.grammar@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "alchemists_tower",
+          "alchemy_lab",
+          "apothecary",
+          "church",
+          "cottage",
+          "farmstead",
+          "hermitage",
+          "inn",
+          "mushroom_house",
+          "root_cellar_mound",
+          "shrine",
+          "stilt_house",
+          "temple",
+          "witch_hut"
+        ],
+        "archetypesInCatalog": 14,
+        "formPacks": [
+          "swamp_witch"
+        ],
+        "props": [
+          "cairn",
+          "lamp_post",
+          "treehouse",
+          "well_head"
+        ],
+        "species": [
+          "birch_sparse",
+          "oak_mossy",
+          "shelf_brown",
+          "spruce_dark",
+          "spruce_sparse"
+        ],
+        "envelopes": [
+          "512x512",
+          "22x22",
+          "28x36x28",
+          "11x16x11",
+          "11x14x13",
+          "11x12x11",
+          "9x19x9",
+          "9x10x9",
+          "9x10x11",
+          "11x14x11",
+          "9x10x9"
+        ],
+        "constraints": 26,
+        "constraintKinds": [
+          "adjacent_to",
+          "blend",
+          "distance",
+          "facing",
+          "gap",
+          "max",
+          "min",
+          "reference",
+          "terrain_conform",
+          "zone"
+        ],
+        "constraintsWithStrength": 0,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 8,
+        "programReferences": 1,
+        "conformsTrue": 0,
+        "labels": 2,
+        "eras": [
+          "medieval"
+        ],
+        "bytes": 8215
+      },
+      "wallMs": 94135
+    },
+    {
+      "id": "walled_medieval_city",
+      "family": "new/set-piece",
+      "kit": "settlement",
+      "prompt": "A walled medieval city on a hill, its castle keep above the rooftops.",
+      "seed": 311,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "source": "cache",
+        "value": {
+          "era": "medieval",
+          "wealth": 0.5,
+          "decline": 0.1,
+          "formality": 0.4,
+          "character": {
+            "label": "walled hill city",
+            "materialTheme": "temperate_timber",
+            "fortification": "walled",
+            "archetypes": {
+              "prefer": [
+                "manor",
+                "watchtower",
+                "tavern",
+                "church",
+                "granary"
+              ]
+            },
+            "motifs": {
+              "roofType": "gable",
+              "massing": "stepped"
+            },
+            "urbanForm": "hillside",
+            "ground": "stepped",
+            "courtyards": 0.4
+          },
+          "tokens": {
+            "terrain": "a prominent hill rising above the surrounding country",
+            "icons": "a towering stone castle keep crowning the peak above dense medieval rooftops, enclosed by circuit walls with gatehouses and towers"
+          }
+        }
+      },
+      "intentUsage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "reasoningTokens": 0,
+        "cost": 0,
+        "cached": true
+      },
+      "kitFile": "docs/kits/settlement-core.md",
+      "menu": {
+        "injected": false,
+        "reason": "flag off"
+      },
+      "attempts": 3,
+      "diagnostics": [
+        [
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.heightfield"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.climate"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.wilderness_trees"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.valley_woods"
+          },
+          {
+            "code": "LOAM-T201",
+            "name": "STRUCTURE_NODE_SHAPE",
+            "severity": "error",
+            "nodePath": "root.hill_city.citadel_keep"
+          },
+          {
+            "code": "LOAM-T201",
+            "name": "STRUCTURE_NODE_SHAPE",
+            "severity": "error",
+            "nodePath": "root.hill_city.city_cathedral"
+          },
+          {
+            "code": "LOAM-T201",
+            "name": "STRUCTURE_NODE_SHAPE",
+            "severity": "error",
+            "nodePath": "root.hill_city.moot_guildhall"
+          },
+          {
+            "code": "LOAM-T201",
+            "name": "STRUCTURE_NODE_SHAPE",
+            "severity": "error",
+            "nodePath": "root.hill_city.inner_gatehouse"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.lowland_holding"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.approach_road"
+          },
+          {
+            "code": "LOAM-T200",
+            "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.wayside_sign"
+          },
+          {
+            "code": "LOAM-T003",
+            "name": "GENERATOR_CARDINALITY",
+            "severity": "error",
+            "nodePath": "root"
+          },
+          {
+            "code": "LOAM-T003",
+            "name": "GENERATOR_CARDINALITY",
+            "severity": "error",
+            "nodePath": "root"
+          }
+        ],
+        [
+          {
+            "code": "LOAM-T004",
+            "name": "EDIT_NOT_UNDER_HEIGHTFIELD",
+            "severity": "error",
+            "nodePath": "root.heightfield.city_hill_base"
+          },
+          {
+            "code": "LOAM-T004",
+            "name": "EDIT_NOT_UNDER_HEIGHTFIELD",
+            "severity": "error",
+            "nodePath": "root.heightfield.keep_crest"
+          },
+          {
+            "code": "LOAM-E162",
+            "name": "UNKNOWN_ZONE",
+            "severity": "error",
+            "nodePath": "root.lowland_holding.constraints[0]"
+          }
+        ],
+        []
+      ],
+      "usage": {
+        "promptTokens": 230958,
+        "completionTokens": 15758,
+        "reasoningTokens": 8574,
+        "cost": 0.09128985
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 15,
+        "maxDepth": 2,
+        "generators": [
+          "building.grammar@0",
+          "precinct.farm@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "bakery",
+          "barracks",
+          "church",
+          "gatehouse",
+          "general_store",
+          "granary",
+          "guard_post",
+          "guildhall",
+          "inn",
+          "keep",
+          "manor_house",
+          "smithy",
+          "tavern",
+          "townhouse"
+        ],
+        "archetypesInCatalog": 14,
+        "formPacks": [],
+        "props": [
+          "signpost"
+        ],
+        "species": [
+          "birch",
+          "canopy_oak",
+          "hazel",
+          "oak",
+          "tall_spruce"
+        ],
+        "envelopes": [
+          "512x512",
+          "220x220",
+          "15x20x15",
+          "13x16x19",
+          "13x14x17",
+          "11x14x9",
+          "80x80"
+        ],
+        "constraints": 4,
+        "constraintKinds": [
+          "distance",
+          "max",
+          "min",
+          "zone"
+        ],
+        "constraintsWithStrength": 1,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 4,
+        "programReferences": 0,
+        "conformsTrue": 0,
+        "labels": 0,
+        "eras": [
+          "medieval"
+        ],
+        "bytes": 4186
+      },
+      "wallMs": 91289
+    },
+    {
+      "id": "railway_town",
+      "family": "new/alias",
+      "kit": "settlement",
+      "prompt": "A soot-blackened industrial town where the railway meets the canal.",
+      "seed": 312,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "source": "cache",
+        "value": {
+          "era": "industrial",
+          "wealth": 0.35,
+          "decline": 0.25,
+          "formality": 0.5,
+          "character": {
+            "label": "soot-blackened canal and rail town",
+            "materialTheme": "temperate_timber",
+            "urbanForm": "canal",
+            "archetypes": {
+              "prefer": [
+                "warehouse",
+                "tavern",
+                "cottage",
+                "watchtower"
+              ]
+            },
+            "props": {
+              "prefer": [
+                "cart",
+                "notice_board"
+              ]
+            },
+            "motifs": {
+              "roofType": "gable",
+              "massing": "blocky",
+              "windowRhythm": "regular",
+              "ornamentDensity": 0.2
+            }
+          },
+          "tokens": {
+            "terrain": "a commercial canal network intersecting a railway corridor and freight rail lines",
+            "icons": "soot-stained brick warehouses, smoking factory chimneys, iron rail bridges over the canal, barge docks, coal yards and rail depots"
+          }
+        }
+      },
+      "intentUsage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "reasoningTokens": 0,
+        "cost": 0,
+        "cached": true
+      },
+      "kitFile": "docs/kits/settlement-core.md",
+      "menu": {
+        "injected": false,
+        "reason": "flag off"
+      },
+      "attempts": 3,
+      "diagnostics": [
+        [
+          {
+            "code": "LOAM-T106",
+            "name": "BAD_PALETTE",
+            "severity": "error",
+            "nodePath": "style.palettes.road.surface"
+          },
+          {
+            "code": "LOAM-T106",
+            "name": "BAD_PALETTE",
+            "severity": "error",
+            "nodePath": "style.palettes.ground.surface"
+          },
+          {
+            "code": "LOAM-T201",
+            "name": "STRUCTURE_NODE_SHAPE",
+            "severity": "error",
+            "nodePath": "root.heightfield"
+          },
+          {
+            "code": "LOAM-T201",
+            "name": "STRUCTURE_NODE_SHAPE",
+            "severity": "error",
+            "nodePath": "root.climate"
+          },
+          {
+            "code": "LOAM-T201",
+            "name": "STRUCTURE_NODE_SHAPE",
+            "severity": "error",
+            "nodePath": "root.industrial_woods"
+          },
+          {
+            "code": "LOAM-T201",
+            "name": "STRUCTURE_NODE_SHAPE",
+            "severity": "error",
+            "nodePath": "root.sparse_wilderness_trees"
+          },
+          {
+            "code": "LOAM-T201",
+            "name": "STRUCTURE_NODE_SHAPE",
+            "severity": "error",
+            "nodePath": "root.industrial_district.freight_station"
+          },
+          {
+            "code": "LOAM-T201",
+            "name": "STRUCTURE_NODE_SHAPE",
+            "severity": "error",
+            "nodePath": "root.industrial_district.engine_roundhouse"
+          },
+          {
+            "code": "LOAM-T201",
+            "name": "STRUCTURE_NODE_SHAPE",
+            "severity": "error",
+            "nodePath": "root.industrial_district.canal_warehouse"
+          },
+          {
+            "code": "LOAM-T201",
+            "name": "STRUCTURE_NODE_SHAPE",
+            "severity": "error",
+            "nodePath": "root.industrial_district.junction_signal_box"
+          },
+          {
+            "code": "LOAM-T201",
+            "name": "STRUCTURE_NODE_SHAPE",
+            "severity": "error",
+            "nodePath": "root.industrial_district.coke_blast_furnace"
+          },
+          {
+            "code": "LOAM-T201",
+            "name": "STRUCTURE_NODE_SHAPE",
+            "severity": "error",
+            "nodePath": "root.industrial_district.iron_foundry"
+          },
+          {
+            "code": "LOAM-T201",
+            "name": "STRUCTURE_NODE_SHAPE",
+            "severity": "error",
+            "nodePath": "root.industrial_district.coal_tipple_depot"
+          },
+          {
+            "code": "LOAM-T201",
+            "name": "STRUCTURE_NODE_SHAPE",
+            "severity": "error",
+            "nodePath": "root.industrial_district.canal_tavern"
+          },
+          {
+            "code": "LOAM-T201",
+            "name": "STRUCTURE_NODE_SHAPE",
+            "severity": "error",
+            "nodePath": "root.canal_gantry_crane"
+          },
+          {
+            "code": "LOAM-T201",
+            "name": "STRUCTURE_NODE_SHAPE",
+            "severity": "error",
+            "nodePath": "root.canal_flight_lock"
+          },
+          {
+            "code": "LOAM-T201",
+            "name": "STRUCTURE_NODE_SHAPE",
+            "severity": "error",
+            "nodePath": "root.rail_telegraph_line"
+          },
+          {
+            "code": "LOAM-T201",
+            "name": "STRUCTURE_NODE_SHAPE",
+            "severity": "error",
+            "nodePath": "root.canal_coal_barge"
+          },
+          {
+            "code": "LOAM-T201",
+            "name": "STRUCTURE_NODE_SHAPE",
+            "severity": "error",
+            "nodePath": "root.canal_timber_barge"
+          },
+          {
+            "code": "LOAM-T201",
+            "name": "STRUCTURE_NODE_SHAPE",
+            "severity": "error",
+            "nodePath": "root.yard_locomotive"
+          },
+          {
+            "code": "LOAM-T201",
+            "name": "STRUCTURE_NODE_SHAPE",
+            "severity": "error",
+            "nodePath": "root.coal_freight_cars"
+          },
+          {
+            "code": "LOAM-T201",
+            "name": "STRUCTURE_NODE_SHAPE",
+            "severity": "error",
+            "nodePath": "root.freight_caboose"
+          },
+          {
+            "code": "LOAM-T201",
+            "name": "STRUCTURE_NODE_SHAPE",
+            "severity": "error",
+            "nodePath": "root.canal_work_gondola"
+          },
+          {
+            "code": "LOAM-T201",
+            "name": "STRUCTURE_NODE_SHAPE",
+            "severity": "error",
+            "nodePath": "root.quayside_bollards"
+          },
+          {
+            "code": "LOAM-T201",
+            "name": "STRUCTURE_NODE_SHAPE",
+            "severity": "error",
+            "nodePath": "root.wharf_gas_lamp"
+          },
+          {
+            "code": "LOAM-T201",
+            "name": "STRUCTURE_NODE_SHAPE",
+            "severity": "error",
+            "nodePath": "root.rail_freight_cart"
+          },
+          {
+            "code": "LOAM-T201",
+            "name": "STRUCTURE_NODE_SHAPE",
+            "severity": "error",
+            "nodePath": "root.rail_coal_pile"
+          },
+          {
+            "code": "LOAM-T201",
+            "name": "STRUCTURE_NODE_SHAPE",
+            "severity": "error",
+            "nodePath": "root.lanes"
+          },
+          {
+            "code": "LOAM-T003",
+            "name": "GENERATOR_CARDINALITY",
+            "severity": "error",
+            "nodePath": "root"
+          },
+          {
+            "code": "LOAM-T003",
+            "name": "GENERATOR_CARDINALITY",
+            "severity": "error",
+            "nodePath": "root"
+          }
+        ],
+        [
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "root.industrial_district.freight_station"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "root.industrial_district.engine_roundhouse"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "root.industrial_district.canal_warehouse"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "root.industrial_district.junction_signal_box"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "root.industrial_district.coke_blast_furnace"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "root.industrial_district.iron_foundry"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "root.industrial_district.coal_tipple_depot"
+          },
+          {
+            "code": "LOAM-T205",
+            "name": "BAD_PORT",
+            "severity": "error",
+            "nodePath": "root.industrial_district.canal_tavern"
+          }
+        ],
+        []
+      ],
+      "usage": {
+        "promptTokens": 248348,
+        "completionTokens": 26725,
+        "reasoningTokens": 12837,
+        "cost": 0.092122125
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 30,
+        "maxDepth": 2,
+        "generators": [
+          "authored:iron_transshipment_crane",
+          "building.grammar@0",
+          "infra.entry@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "blast_furnace_works",
+          "brickworks",
+          "coal_tipple",
+          "cottage",
+          "factory_hall",
+          "foundry",
+          "gasworks",
+          "machine_shop",
+          "roundhouse",
+          "signal_box",
+          "tavern",
+          "terraced_row",
+          "townhouse",
+          "train_station",
+          "warehouse"
+        ],
+        "archetypesInCatalog": 15,
+        "formPacks": [],
+        "props": [
+          "barge",
+          "bollard_row",
+          "caboose",
+          "cart",
+          "freight_car",
+          "gondola",
+          "lamp_post",
+          "locomotive",
+          "log_pile"
+        ],
+        "species": [
+          "pollarded_oak",
+          "scrub_hazel",
+          "smoky_birch",
+          "wild_birch",
+          "wild_oak"
+        ],
+        "envelopes": [
+          "512x512",
+          "220x190",
+          "15x13x21",
+          "15x14x21",
+          "13x12x19",
+          "9x13x11",
+          "13x13x15",
+          "13x12x15",
+          "13x14x17",
+          "13x11x13",
+          "24x28x20"
+        ],
+        "constraints": 4,
+        "constraintKinds": [
+          "blend",
+          "distance",
+          "max",
+          "min",
+          "reference",
+          "terrain_conform",
+          "zone"
+        ],
+        "constraintsWithStrength": 0,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 8,
+        "programReferences": 1,
+        "conformsTrue": 0,
+        "labels": 0,
+        "eras": [
+          "industrial"
+        ],
+        "bytes": 8543
+      },
+      "wallMs": 140322
+    },
+    {
+      "id": "desert_wilderness",
+      "family": "new/terrain-only",
+      "kit": "terrain",
+      "prompt": "A vast salt desert under a hard sun, cracked flat to the horizon, with nothing living on it.",
+      "seed": 313,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "source": "cache",
+        "value": {
+          "climate": {
+            "biome": "minecraft:desert",
+            "temperature": 1,
+            "humidity": -1,
+            "snow": "never"
+          },
+          "character": {
+            "label": "salt desert"
+          },
+          "tokens": {
+            "terrain": "a vast, cracked salt flat stretching flat to the horizon under a hard sun; barren expanse with no vegetation, water, or living structures"
+          }
+        }
+      },
+      "intentUsage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "reasoningTokens": 0,
+        "cost": 0,
+        "cached": true
+      },
+      "kitFile": "docs/kits/settlement-core.md",
+      "menu": {
+        "injected": false,
+        "reason": "flag off"
+      },
+      "attempts": 2,
+      "diagnostics": [
+        [
+          {
+            "code": "LOAM-T000",
+            "name": "BAD_DOCUMENT",
+            "severity": "error",
+            "nodePath": ""
+          },
+          {
+            "code": "LOAM-T106",
+            "name": "BAD_PALETTE",
+            "severity": "error",
+            "nodePath": "style.palettes.ground.surface"
+          },
+          {
+            "code": "LOAM-T106",
+            "name": "BAD_PALETTE",
+            "severity": "error",
+            "nodePath": "style.palettes.ground.surface"
+          },
+          {
+            "code": "LOAM-T106",
+            "name": "BAD_PALETTE",
+            "severity": "error",
+            "nodePath": "style.palettes.ground.surface"
+          },
+          {
+            "code": "LOAM-T106",
+            "name": "BAD_PALETTE",
+            "severity": "error",
+            "nodePath": "style.palettes.ground.subsurface"
+          },
+          {
+            "code": "LOAM-T106",
+            "name": "BAD_PALETTE",
+            "severity": "error",
+            "nodePath": "style.palettes.ground.subsurface"
+          },
+          {
+            "code": "LOAM-T106",
+            "name": "BAD_PALETTE",
+            "severity": "error",
+            "nodePath": "style.palettes.ground.subsurface"
+          },
+          {
+            "code": "LOAM-T001",
+            "name": "GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.heightfield"
+          },
+          {
+            "code": "LOAM-T001",
+            "name": "GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "root.climate"
+          },
+          {
+            "code": "LOAM-T003",
+            "name": "GENERATOR_CARDINALITY",
+            "severity": "error",
+            "nodePath": "root"
+          },
+          {
+            "code": "LOAM-T003",
+            "name": "GENERATOR_CARDINALITY",
+            "severity": "error",
+            "nodePath": "root"
+          }
+        ],
+        []
+      ],
+      "usage": {
+        "promptTokens": 144523,
+        "completionTokens": 5498,
+        "reasoningTokens": 4056,
+        "cost": 0.06450487499999999
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 4,
+        "maxDepth": 2,
+        "generators": [
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [],
+        "archetypesInCatalog": 0,
+        "formPacks": [],
+        "props": [],
+        "species": [],
+        "envelopes": [
+          "512x512"
+        ],
+        "constraints": 0,
+        "constraintKinds": [],
+        "constraintsWithStrength": 0,
+        "hardConstraints": 0,
+        "forests": 0,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 0,
+        "programReferences": 0,
+        "conformsTrue": 0,
+        "labels": 0,
+        "eras": [],
+        "bytes": 1352
+      },
+      "wallMs": 36199
+    },
+    {
+      "id": "fjord_terrain",
+      "family": "new/terrain-only",
+      "kit": "terrain",
+      "prompt": "A deep fjord cutting inland between pine ridges, its water open to the sea.",
+      "seed": 314,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "source": "cache",
+        "value": {
+          "climate": {
+            "biome": "minecraft:old_growth_pine_taiga",
+            "temperature": -0.3,
+            "humidity": 0.5
+          },
+          "character": {
+            "label": "pine fjord",
+            "materialTheme": "boreal_pine",
+            "flora": {
+              "prefer": [
+                "spruce_tall",
+                "conifer",
+                "old_growth"
+              ]
+            }
+          },
+          "tokens": {
+            "terrain": "a deep fjord cutting inland between steep pine-covered ridges, opening to the open sea"
+          }
+        }
+      },
+      "intentUsage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "reasoningTokens": 0,
+        "cost": 0,
+        "cached": true
+      },
+      "kitFile": "docs/kits/settlement-core.md",
+      "menu": {
+        "injected": false,
+        "reason": "flag off"
+      },
+      "attempts": 2,
+      "diagnostics": [
+        [
+          {
+            "code": "LOAM-T000",
+            "name": "BAD_DOCUMENT",
+            "severity": "error",
+            "nodePath": ""
+          },
+          {
+            "code": "LOAM-T001",
+            "name": "GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "world.hf_main"
+          },
+          {
+            "code": "LOAM-T001",
+            "name": "GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "world.climate_boreal"
+          },
+          {
+            "code": "LOAM-T001",
+            "name": "GENERATOR_NOT_IN_PROFILE",
+            "severity": "error",
+            "nodePath": "world.pine_ridge_forest"
+          },
+          {
+            "code": "LOAM-T003",
+            "name": "GENERATOR_CARDINALITY",
+            "severity": "error",
+            "nodePath": "world"
+          },
+          {
+            "code": "LOAM-T003",
+            "name": "GENERATOR_CARDINALITY",
+            "severity": "error",
+            "nodePath": "world"
+          }
+        ],
+        []
+      ],
+      "usage": {
+        "promptTokens": 145988,
+        "completionTokens": 7806,
+        "reasoningTokens": 4551,
+        "cost": 0.045896137499999996
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 9,
+        "maxDepth": 2,
+        "generators": [
+          "scatter.forest@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [],
+        "archetypesInCatalog": 0,
+        "formPacks": [],
+        "props": [],
+        "species": [
+          "columnar_larch",
+          "squat_pine",
+          "tall_pine"
+        ],
+        "envelopes": [
+          "512x512"
+        ],
+        "constraints": 0,
+        "constraintKinds": [],
+        "constraintsWithStrength": 0,
+        "hardConstraints": 0,
+        "forests": 1,
+        "forestFillsAtOrAboveCoverage": 1,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 0,
+        "programReferences": 0,
+        "conformsTrue": 0,
+        "labels": 0,
+        "eras": [],
+        "bytes": 2659
+      },
+      "wallMs": 44323
+    }
+  ]
+}

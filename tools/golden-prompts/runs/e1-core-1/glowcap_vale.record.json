@@ -1,0 +1,395 @@
+{
+  "id": "glowcap_vale",
+  "family": "glowcap_vale",
+  "kit": "settlement",
+  "prompt": "A glowing mushroom vale where a strange village has grown between the caps.",
+  "seed": 307,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "cache",
+    "value": {
+      "era": "medieval",
+      "wealth": 0.35,
+      "formality": 0.1,
+      "climate": {
+        "humidity": 0.8,
+        "temperature": 0.2
+      },
+      "character": {
+        "label": "glowing mushroom vale village",
+        "materialTheme": "temperate_timber",
+        "formPacks": [
+          "swamp_witch"
+        ],
+        "urbanForm": "grown",
+        "flora": {
+          "prefer": [
+            "fungal",
+            "glow",
+            "mushroom_giant_red",
+            "mushroom_shelf_brown",
+            "glowcap"
+          ]
+        },
+        "archetypes": {
+          "prefer": [
+            "cottage",
+            "watchtower"
+          ]
+        }
+      },
+      "tokens": {
+        "terrain": "a secluded mountain vale nestled between steep ridges, sheltered beneath a canopy of giant glowing mushrooms",
+        "icons": "rustic wooden cottages and stilt dwellings built between and around giant mushroom stems; rope bridges and elevated walkways connecting mushroom caps; spore lanterns illuminating the vale floor"
+      }
+    }
+  },
+  "intentUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "reasoningTokens": 0,
+    "cost": 0,
+    "cached": true
+  },
+  "kitFile": "docs/kits/settlement-core.md",
+  "menu": {
+    "injected": false,
+    "reason": "flag off"
+  },
+  "attempts": 3,
+  "diagnostics": [
+    [
+      {
+        "code": "LOAM-T106",
+        "name": "BAD_PALETTE",
+        "severity": "error",
+        "nodePath": "style.palettes.ground.surface"
+      },
+      {
+        "code": "LOAM-T106",
+        "name": "BAD_PALETTE",
+        "severity": "error",
+        "nodePath": "style.palettes.ground.surface"
+      },
+      {
+        "code": "LOAM-T106",
+        "name": "BAD_PALETTE",
+        "severity": "error",
+        "nodePath": "style.palettes.ground.surface"
+      },
+      {
+        "code": "LOAM-T106",
+        "name": "BAD_PALETTE",
+        "severity": "error",
+        "nodePath": "style.palettes.ground.surface"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.vale_heightfield"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.vale_climate"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.glowing_mushroom_grove"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.ridge_pines"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.elder_glowshroom_spire"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.spore_lantern_scatter"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.mushroom_dwelling_west"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.mushroom_dwelling_east"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.spore_tavern"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.spore_apothecary"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.alchemists_tower"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.stilt_lodge"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.witch_hut"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.mycelium_cellar"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.vale_hermitage"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.spore_well"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.standing_stones"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.notice_board"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.log_pile"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.bench_green"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.vale_cairn"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.lanes"
+      },
+      {
+        "code": "LOAM-T003",
+        "name": "GENERATOR_CARDINALITY",
+        "severity": "error",
+        "nodePath": "root"
+      },
+      {
+        "code": "LOAM-T003",
+        "name": "GENERATOR_CARDINALITY",
+        "severity": "error",
+        "nodePath": "root"
+      }
+    ],
+    [
+      {
+        "code": "LOAM-W519",
+        "name": "LANDMARK_CONSTRAINT_IGNORED",
+        "severity": "warning",
+        "nodePath": "root.elder_glowshroom_spire.constraints[1]"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "root.mushroom_dwelling_west"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "root.mushroom_dwelling_east"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "root.spore_tavern"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "root.spore_apothecary"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "root.alchemists_tower"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "root.stilt_lodge"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "root.witch_hut"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "root.mycelium_cellar"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "root.vale_hermitage"
+      }
+    ],
+    []
+  ],
+  "usage": {
+    "promptTokens": 254096,
+    "completionTokens": 27413,
+    "reasoningTokens": 10777,
+    "cost": 0.12319875
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 28,
+    "maxDepth": 2,
+    "generators": [
+      "authored:elder_glowshroom_spire",
+      "building.grammar@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "alchemists_tower",
+      "apothecary",
+      "beacon_spire",
+      "cottage",
+      "general_store",
+      "granary",
+      "hermitage",
+      "mushroom_house",
+      "root_cellar_mound",
+      "shrine",
+      "stilt_house",
+      "tavern",
+      "watchtower",
+      "witch_hut"
+    ],
+    "archetypesInCatalog": 14,
+    "formPacks": [
+      "swamp_witch"
+    ],
+    "props": [
+      "bench",
+      "cairn",
+      "log_pile",
+      "notice_board",
+      "standing_stones",
+      "well_head"
+    ],
+    "species": [
+      "giant_red",
+      "glow_shroom",
+      "gnarled_oak",
+      "mountain_spruce",
+      "shelf_shroom",
+      "spruce_scrub"
+    ],
+    "envelopes": [
+      "512x512",
+      "22x22",
+      "11x16x11",
+      "11x16x11",
+      "13x11x13",
+      "9x10x9",
+      "9x19x9",
+      "11x12x11",
+      "11x14x13",
+      "11x14x11",
+      "9x10x9"
+    ],
+    "constraints": 31,
+    "constraintKinds": [
+      "adjacent_to",
+      "blend",
+      "distance",
+      "facing",
+      "gap",
+      "max",
+      "min",
+      "terrain_conform",
+      "zone"
+    ],
+    "constraintsWithStrength": 5,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 9,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 0,
+    "eras": [
+      "medieval"
+    ],
+    "bytes": 9725
+  },
+  "wallMs": 140806
+}

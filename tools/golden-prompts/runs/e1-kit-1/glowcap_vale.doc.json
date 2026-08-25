@@ -1,0 +1,894 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "glowing_mushroom_vale",
+    "worldSeed": 307,
+    "prompt": "A glowing mushroom vale where a strange village has grown between the caps.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:dirt_path",
+      "plaza.path": "minecraft:moss_block"
+    }
+  },
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.35,
+    "formality": 0.1,
+    "climate": {
+      "humidity": 0.8,
+      "temperature": 0.2
+    },
+    "character": {
+      "label": "glowing mushroom vale village",
+      "materialTheme": "temperate_timber",
+      "formPacks": [
+        "swamp_witch"
+      ],
+      "urbanForm": "grown",
+      "flora": {
+        "prefer": [
+          "glowcap",
+          "mushroom_giant_red",
+          "mushroom_shelf_brown"
+        ]
+      },
+      "archetypes": {
+        "prefer": [
+          "mushroom_house",
+          "stilt_house",
+          "witch_hut",
+          "apothecary",
+          "alchemists_tower",
+          "herbarium",
+          "cottage"
+        ]
+      },
+      "programs": [
+        {
+          "id": "mothercap_shrine",
+          "mode": "landmark",
+          "brief": "A towering bioluminescent giant mushroom whose flared glowing cap shelters an open wooden shrine platform with hanging spore lanterns and winding ladder steps around the stipe.",
+          "envelope": [
+            21,
+            28,
+            21
+          ]
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "a secluded mountain vale nestled between steep ridges, sheltered beneath a canopy of giant glowing mushrooms",
+      "icons": "rustic wooden cottages and stilt dwellings built between and around giant mushroom stems; spore lanterns illuminating the vale floor"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "The Glowing Mushroom Vale",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "sheltered vale hollow surrounded by forested heights",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 72,
+          "amplitude": 28,
+          "octaves": 5,
+          "frequency": 0.0035,
+          "gain": 0.48,
+          "erosionPasses": 2,
+          "cliffThreshold": 55,
+          "soilDepth": 4,
+          "beachWidth": 3,
+          "snowLineFraction": 0.95
+        },
+        "children": [
+          {
+            "id": "north_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the northern ridge sheltering the vale",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.12,
+                  0.18
+                ],
+                [
+                  0.5,
+                  0.12
+                ],
+                [
+                  0.88,
+                  0.18
+                ]
+              ],
+              "width": 72,
+              "height": 52,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "south_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the southern rampart of the vale",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.12,
+                  0.82
+                ],
+                [
+                  0.5,
+                  0.88
+                ],
+                [
+                  0.88,
+                  0.82
+                ]
+              ],
+              "width": 72,
+              "height": 50,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "vale_basin",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the sunken hollow of the vale",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 150,
+              "depth": 18,
+              "water": false,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "village_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the gentle shelf where the village gathers",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 80,
+              "height": 6,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "shroom_pool",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "a calm pool fed by spore seeps",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.38,
+                0.44
+              ],
+              "radius": 34,
+              "depth": 8,
+              "water": true,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0014,
+          "humidityFrequency": 0.0018
+        }
+      },
+      {
+        "id": "glowshroom_vale_forest",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "the glowing mushroom forest filling the vale floor",
+        "params": {
+          "area": {
+            "at": [
+              0.5,
+              0.5
+            ],
+            "radius": 190
+          },
+          "density": 0.18,
+          "spacing": 4,
+          "clumping": 0.65,
+          "maxSlope": 32,
+          "edgeFalloff": 24,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.25,
+            "flowers": 0.08,
+            "deadwood": 0.08
+          },
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "ancient_glowcap",
+                  "shape": "glowcap"
+                },
+                {
+                  "id": "red_colossus",
+                  "shape": "mushroom_giant_red"
+                }
+              ]
+            },
+            "understory": {
+              "species": [
+                {
+                  "id": "hazel_fungus",
+                  "shape": "hazel_shrub"
+                }
+              ],
+              "density": 0.08
+            },
+            "floor": "glow"
+          },
+          "species": [
+            {
+              "id": "shelf_shroom",
+              "shape": "mushroom_shelf_brown",
+              "weight": 4
+            },
+            {
+              "id": "spore_birch",
+              "shape": "birch_slim",
+              "weight": 1
+            },
+            {
+              "id": "willow_bank",
+              "shape": "willow_weeping",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "ridge_wildwood",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "scattered conifers on the high ridges",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 5,
+          "clumping": 0.5,
+          "maxSlope": 38,
+          "elevation": [
+            2,
+            120
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "species": [
+            {
+              "id": "ridge_spruce",
+              "shape": "spruce_tall",
+              "weight": 2
+            },
+            {
+              "id": "scrub_pine",
+              "shape": "spruce_squat",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "spore_green",
+        "kind": "primitive",
+        "label": "the central mossy clearing of the fungal village",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            20,
+            20
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "shroom_hall",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the mushroom-domed council dwelling on the green",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            16,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "mushroom_house",
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "adjacent_to": "spore_green",
+            "gap": [
+              1,
+              8
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "spore_green"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house",
+          "landmark"
+        ]
+      },
+      {
+        "id": "apothecary_shop",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the apothecary brewing distillates from vale spores",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            10,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "apothecary",
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "spore_green",
+            "gap": [
+              1,
+              8
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "spore_green"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "craft",
+          "trade"
+        ]
+      },
+      {
+        "id": "stilt_dwelling_north",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a stilt house perched above damp fungal loam",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "stilt_house",
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "distance": "spore_green",
+            "min": 6,
+            "max": 36,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "witch_hovel",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a crooked witch hut nestled among giant caps",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            14,
+            13
+          ]
+        },
+        "params": {
+          "archetype": "witch_hut",
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "distance": "spore_green",
+            "min": 10,
+            "max": 44,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "stilt_dwelling_south",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a wooden stilt home flanking the southern cap grove",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "stilt_house",
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "distance": "spore_green",
+            "min": 8,
+            "max": 42,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "alchemist_spire",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the copper-banded spire studying bioluminescence",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            19,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "alchemists_tower",
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "distance": "spore_green",
+            "min": 14,
+            "max": 50,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 8,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "landmark",
+          "craft"
+        ]
+      },
+      {
+        "id": "herb_conservatory",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the herbarium tending rare vale molds and mosses",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            17
+          ]
+        },
+        "params": {
+          "archetype": "herbarium",
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "spore_green",
+            "min": 12,
+            "max": 48,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "craft"
+        ]
+      },
+      {
+        "id": "shroom_cottage_east",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a rounded mushroom cottage near the east woods",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            16,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "mushroom_house",
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "distance": "spore_green",
+            "min": 12,
+            "max": 52,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "root_storage",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a turf-covered root cellar storing harvested fungi",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            14,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "root_cellar_mound",
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "distance": "spore_green",
+            "min": 15,
+            "max": 55,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "store"
+        ]
+      },
+      {
+        "id": "mothercap_monument",
+        "kind": "generator",
+        "generator": "authored:mothercap_shrine",
+        "label": "the great mothercap glowing shrine above the village pool",
+        "constraints": [
+          {
+            "at": [
+              0.42,
+              0.44
+            ]
+          },
+          {
+            "distance": "spore_green",
+            "min": 14,
+            "max": 42
+          }
+        ],
+        "params": {
+          "seat": "pad",
+          "face": {
+            "toward": "spore_green"
+          }
+        },
+        "tags": [
+          "landmark"
+        ]
+      },
+      {
+        "id": "vale_well",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the moss-covered well on the green",
+        "params": {
+          "prop": "well_head",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "vale_circle",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "an ancient ring of stones near the glowing grove",
+        "params": {
+          "prop": "standing_stones",
+          "zone": "west",
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "lantern_green",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "spore lantern post illuminating the green",
+        "params": {
+          "prop": "lamp_post",
+          "zone": "center",
+          "jitter": 0.1
+        }
+      },
+      {
+        "id": "lantern_south",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "wayside lantern post along the path",
+        "params": {
+          "prop": "lamp_post",
+          "zone": "south",
+          "jitter": 0.15
+        }
+      },
+      {
+        "id": "firewood_stack",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "stacked wood drying beneath a fungal shelf",
+        "params": {
+          "prop": "log_pile",
+          "zone": "center",
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "vale_sign",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "signpost pointing along the fungal trails",
+        "params": {
+          "prop": "signpost",
+          "zone": "center",
+          "jitter": 0.12
+        }
+      },
+      {
+        "id": "vale_paths",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "soft dirt tracks winding between the mushroom caps",
+        "params": {
+          "anchors": [
+            "spore_green",
+            "#tag:house",
+            "#tag:craft",
+            "mothercap_monument",
+            "alchemist_spire"
+          ],
+          "pattern": "organic",
+          "width": 2,
+          "lanterns": true,
+          "lanternSpacing": 12
+        }
+      }
+    ]
+  }
+}

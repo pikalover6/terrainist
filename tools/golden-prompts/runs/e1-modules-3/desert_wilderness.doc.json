@@ -1,0 +1,96 @@
+{
+  "loam": "0.1",
+  "profile": "terrain",
+  "meta": {
+    "name": "vast_salt_desert",
+    "worldSeed": 313,
+    "prompt": "A vast salt desert under a hard sun, cracked flat to the horizon, with nothing living on it."
+  },
+  "intent": {
+    "climate": {
+      "biome": "minecraft:desert",
+      "temperature": 1,
+      "humidity": -1,
+      "snow": "never"
+    },
+    "character": {
+      "label": "salt desert"
+    },
+    "tokens": {
+      "terrain": "a vast, cracked salt flat stretching flat to the horizon under a hard sun; barren expanse with no vegetation, water, or living structures"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": {
+        "mix": [
+          [
+            "minecraft:calcite",
+            6
+          ],
+          [
+            "minecraft:diorite",
+            2
+          ],
+          [
+            "minecraft:white_terracotta",
+            2
+          ],
+          [
+            "minecraft:smooth_basalt",
+            1
+          ]
+        ]
+      },
+      "ground.subsurface": "minecraft:calcite",
+      "ground.stone": "minecraft:calcite",
+      "ground.cliff": "minecraft:calcite",
+      "ground.beach": "minecraft:calcite"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "salt_flats_terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 68,
+          "amplitude": 3,
+          "octaves": 4,
+          "frequency": 0.002,
+          "lacunarity": 2,
+          "gain": 0.4,
+          "ridged": false,
+          "erosionPasses": 2,
+          "soilDepth": 3,
+          "beachWidth": 0,
+          "snowLineFraction": 1
+        },
+        "children": []
+      },
+      {
+        "id": "arid_sun_climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "arid",
+          "temperatureFrequency": 0.001,
+          "humidityFrequency": 0.001,
+          "latitudeGradient": 0,
+          "blendRadius": 16
+        }
+      }
+    ]
+  }
+}

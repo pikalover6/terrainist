@@ -1,0 +1,138 @@
+{
+  "id": "walled_medieval_city",
+  "family": "new/set-piece",
+  "kit": "settlement",
+  "prompt": "A walled medieval city on a hill, its castle keep above the rooftops.",
+  "seed": 311,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "cache",
+    "value": {
+      "era": "medieval",
+      "wealth": 0.5,
+      "decline": 0.1,
+      "formality": 0.4,
+      "character": {
+        "label": "walled hill city",
+        "materialTheme": "temperate_timber",
+        "fortification": "walled",
+        "archetypes": {
+          "prefer": [
+            "manor",
+            "watchtower",
+            "tavern",
+            "church",
+            "granary"
+          ]
+        },
+        "motifs": {
+          "roofType": "gable",
+          "massing": "stepped"
+        },
+        "urbanForm": "hillside",
+        "ground": "stepped",
+        "courtyards": 0.4
+      },
+      "tokens": {
+        "terrain": "a prominent hill rising above the surrounding country",
+        "icons": "a towering stone castle keep crowning the peak above dense medieval rooftops, enclosed by circuit walls with gatehouses and towers"
+      }
+    }
+  },
+  "intentUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "reasoningTokens": 0,
+    "cost": 0,
+    "cached": true
+  },
+  "menu": {
+    "injected": false,
+    "reason": "flag off"
+  },
+  "attempts": 1,
+  "diagnostics": [
+    []
+  ],
+  "usage": {
+    "promptTokens": 83778,
+    "completionTokens": 8206,
+    "reasoningTokens": 5114,
+    "cost": 0.046803
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 17,
+    "maxDepth": 2,
+    "generators": [
+      "building.grammar@0",
+      "precinct.farm@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "apothecary",
+      "bakery",
+      "barracks",
+      "cathedral",
+      "church",
+      "cottage",
+      "gatehouse",
+      "general_store",
+      "guildhall",
+      "keep",
+      "smithy",
+      "tavern",
+      "townhouse",
+      "tudor_row",
+      "watchtower"
+    ],
+    "archetypesInCatalog": 15,
+    "formPacks": [],
+    "props": [
+      "covered_wagon"
+    ],
+    "species": [
+      "great_oak",
+      "pasture_oak",
+      "slim_birch"
+    ],
+    "envelopes": [
+      "512x512",
+      "220x220",
+      "15x22x15",
+      "15x17x21",
+      "11x14x9",
+      "7x19x7",
+      "96x80"
+    ],
+    "constraints": 4,
+    "constraintKinds": [
+      "at",
+      "blend",
+      "reference",
+      "terrain_conform"
+    ],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 4,
+    "programReferences": 0,
+    "conformsTrue": 0,
+    "labels": 16,
+    "eras": [
+      "medieval"
+    ],
+    "bytes": 6251
+  },
+  "wallMs": 45315
+}

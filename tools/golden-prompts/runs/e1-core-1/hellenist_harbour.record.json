@@ -1,0 +1,282 @@
+{
+  "id": "hellenist_harbour",
+  "family": "hellenist_city",
+  "kit": "settlement",
+  "prompt": "A modern Hellenist city being invaded by sea monsters.",
+  "seed": 305,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "cache",
+    "value": {
+      "era": "modern",
+      "wealth": 0.8,
+      "formality": 0.75,
+      "event": {
+        "kind": "siege",
+        "severity": 0.85,
+        "recency": 0
+      },
+      "climate": {
+        "temperature": 0.6,
+        "humidity": 0.2,
+        "snow": "never"
+      },
+      "character": {
+        "label": "modern Hellenist coastal metropolis under sea monster siege",
+        "materialTheme": "modern_city",
+        "formPacks": [
+          "classical_mediterranean"
+        ],
+        "archetypes": {
+          "prefer": [
+            "stoa",
+            "peripteral_temple",
+            "bouleuterion",
+            "palaestra",
+            "nymphaeum"
+          ]
+        },
+        "urbanForm": "grid",
+        "motifs": {
+          "roofType": "flat",
+          "massing": "blocky",
+          "windowRhythm": "regular",
+          "ornamentDensity": 0.6
+        }
+      },
+      "tokens": {
+        "terrain": "a grand coastal metropolis fronting a deep harbour and open sea where sea monsters surface",
+        "event_direction": "giant sea monsters rise out of the ocean water attacking the harbour and waterfront avenues",
+        "infra": "barricade_line across the harbour promenade; emergency_cordon along the coastal boulevard",
+        "icons": "leviathans and sea monsters breaching along the modern docks; neoclassical porticos and high-rise stoas overlooking the bay; emergency barricades and defensive lines guarding the shore"
+      }
+    }
+  },
+  "intentUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "reasoningTokens": 0,
+    "cost": 0,
+    "cached": true
+  },
+  "kitFile": "docs/kits/settlement-core.md",
+  "menu": {
+    "injected": false,
+    "reason": "flag off"
+  },
+  "attempts": 3,
+  "diagnostics": [
+    [
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root_region.heightfield_base"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root_region.climate_base"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root_region.mediterranean_pines"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root_region.sparse_wilderness"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root_region.metropolis_harbour"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root_region.neopolis_city.stoa_grand_colonnade"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root_region.neopolis_city.pantheon_rotunda"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root_region.neopolis_city.acropolis_tower"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root_region.leviathan_prime"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root_region.leviathan_brood"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root_region.waterfront_barricade"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root_region.coastal_defense_battery"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root_region.colossus_statue"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root_region.emergency_helipad"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root_region.metropolis_roads"
+      },
+      {
+        "code": "LOAM-T003",
+        "name": "GENERATOR_CARDINALITY",
+        "severity": "error",
+        "nodePath": "root_region"
+      },
+      {
+        "code": "LOAM-T003",
+        "name": "GENERATOR_CARDINALITY",
+        "severity": "error",
+        "nodePath": "root_region"
+      }
+    ],
+    [
+      {
+        "code": "LOAM-T101",
+        "name": "BAD_ENUM",
+        "severity": "error",
+        "nodePath": "root_region.mediterranean_pines.params.area"
+      },
+      {
+        "code": "LOAM-E162",
+        "name": "UNKNOWN_ZONE",
+        "severity": "error",
+        "nodePath": "root_region.metropolis_harbour.constraints[0]"
+      }
+    ],
+    []
+  ],
+  "usage": {
+    "promptTokens": 239331,
+    "completionTokens": 22074,
+    "reasoningTokens": 11529,
+    "cost": 0.10765293749999999
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 19,
+    "maxDepth": 2,
+    "generators": [
+      "authored:leviathan_colossus",
+      "building.grammar@0",
+      "infra.entry@0",
+      "precinct.harbour@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "brutalist_block",
+      "cathedral",
+      "church",
+      "conference_center",
+      "cottage",
+      "modern_villa",
+      "museum",
+      "office",
+      "skyscraper",
+      "stoa",
+      "temple",
+      "townhouse",
+      "university_hall"
+    ],
+    "archetypesInCatalog": 13,
+    "formPacks": [
+      "classical_mediterranean"
+    ],
+    "props": [
+      "helipad",
+      "statue_plinth"
+    ],
+    "species": [
+      "cypress",
+      "laurel",
+      "stone_pine",
+      "wild_cypress",
+      "wild_pine"
+    ],
+    "envelopes": [
+      "512x512",
+      "84x18x52",
+      "280x210",
+      "15x14x21",
+      "15x17x21",
+      "16x44x16",
+      "36x42x36"
+    ],
+    "constraints": 10,
+    "constraintKinds": [
+      "adjacent_to",
+      "at",
+      "band",
+      "distance",
+      "gap",
+      "max",
+      "min",
+      "on",
+      "terrain_conform",
+      "zone"
+    ],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 3,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 0,
+    "eras": [
+      "modern"
+    ],
+    "bytes": 6495
+  },
+  "wallMs": 116899
+}

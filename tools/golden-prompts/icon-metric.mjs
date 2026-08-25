@@ -54,7 +54,11 @@ export function walkDocument(doc) {
       kind: node.kind ?? node.generator ?? "",
       archetype: node.params?.archetype ?? "",
       tags: Array.isArray(node.tags) ? node.tags.map(String) : [],
-      program: node.params?.program ?? "",
+      // A bespoke program reference is either `params.program` or the
+      // `authored:<id>` generator the kit's request form produces.
+      program:
+        node.params?.program ??
+        (typeof node.generator === "string" && node.generator.startsWith("authored:") ? node.generator.slice("authored:".length) : ""),
       label: node.label ?? node.params?.label ?? "",
     });
     for (const c of node.children ?? []) walk(c, path);
@@ -121,6 +125,17 @@ export function iconPresence(icon, doc, report) {
     const n = report ? (report.layout?.structures?.buildings ?? []).length : null;
     return { inDocument: [], inWorld: [], present: n === 0, note: n === null ? "no report" : `${n} building(s)` };
   }
+  // An icon the document carries as a bespoke program (`params.program`) that
+  // this document has no source for — an authoring-only harness run never
+  // authors programs — cannot be placed by any compile of it. The read is the
+  // document's, says so, and is the same for every arm of an experiment.
+  const programOnly = [...inDocument].some((p) => {
+    const n = nodes.find((x) => x.path === p);
+    return n !== undefined && n.program !== "" && !(n.program in (doc.programs ?? {}));
+  });
+  if (programOnly && inWorld.size === 0 && inDocument.size > 0) {
+    return { inDocument: [...inDocument].slice(0, 12), inWorld: [], present: true, note: "asked for as a program this document has no source for (authoring-only run): document read" };
+  }
   // A terrain icon (a fjord, a ridge of pines, a salt flat) is a shape the
   // compiled world has no name for: the read is the document's, and says so.
   if (icon.terrain) {
@@ -180,7 +195,7 @@ export function iconDominance(icon, report, presence) {
       volumeRatio: +volumeRatio.toFixed(2), footprintRatio: +footprintRatio.toFixed(2),
     };
   }
-  if (best === null) return { dominant: false, note: "nothing placed to measure" };
+  if (best === null) return { dominant: false, note: presence.note ? "program not authored in this run" : "nothing placed to measure" };
   const heightRatio = median.height === 0 ? Infinity : best.h / median.height;
   const footprintRatio = median.footprint === 0 ? Infinity : best.a / median.footprint;
   return {

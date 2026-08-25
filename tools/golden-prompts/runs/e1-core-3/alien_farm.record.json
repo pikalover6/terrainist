@@ -1,0 +1,461 @@
+{
+  "id": "alien_farm",
+  "family": "alien_farm",
+  "kit": "settlement",
+  "prompt": "A small farm town being invaded by aliens.",
+  "seed": 302,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "cache",
+    "value": {
+      "era": "industrial",
+      "wealth": 0.35,
+      "decline": 0.4,
+      "formality": 0.2,
+      "event": {
+        "kind": "siege",
+        "severity": 0.8,
+        "recency": 0
+      },
+      "climate": {
+        "biome": "minecraft:plains",
+        "temperature": 0,
+        "humidity": 0.1
+      },
+      "character": {
+        "label": "invaded farming community",
+        "materialTheme": "temperate_timber",
+        "formPacks": [
+          "agrarian",
+          "alien_scifi"
+        ],
+        "archetypes": {
+          "prefer": [
+            "cottage",
+            "granary",
+            "windmill",
+            "tavern",
+            "field_lab",
+            "hive_mound"
+          ]
+        },
+        "urbanForm": "linear",
+        "motifs": {
+          "roofType": "gable",
+          "massing": "sprawling"
+        }
+      },
+      "tokens": {
+        "terrain": "rolling farmland with grain fields surrounding a small rural crossroads town",
+        "event_direction": "extraterrestrial invaders and bio-structures spreading from the outer crop fields into the village centre",
+        "infra": "crop_circle pressed into the wheat fields; crash_furrow ending at a downed alien craft; quarantine_fence along the outer pasture; barricade_line across the main lane",
+        "icons": "strange metallic scout craft hovering or crashed in the fields; glowing alien pylons; abandoned farm equipment and hay wagons along the lanes"
+      }
+    }
+  },
+  "intentUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "reasoningTokens": 0,
+    "cost": 0,
+    "cached": true
+  },
+  "kitFile": "docs/kits/settlement-core.md",
+  "menu": {
+    "injected": false,
+    "reason": "flag off"
+  },
+  "attempts": 3,
+  "diagnostics": [
+    [
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.base_terrain"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.climate"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.forest_copse"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.field_trees"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.main_farm"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.south_croftholding"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.town_hall"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.general_store"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.tavern"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.church"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.windmill"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.grain_silo"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.cottage_north"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.cottage_south"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.emergency_field_station"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.crashed_saucer"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.mothership_harvester"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.alien_spores_scatter"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.wheat_crop_circle"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.farm_quarantine_fence"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.saucer_crash_furrow"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.town_defense_barricade"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.abandoned_cart"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.emergency_notice_board"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.village_well"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.field_cart"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.field_scarecrow"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.town_roads"
+      },
+      {
+        "code": "LOAM-T003",
+        "name": "GENERATOR_CARDINALITY",
+        "severity": "error",
+        "nodePath": "root"
+      },
+      {
+        "code": "LOAM-T003",
+        "name": "GENERATOR_CARDINALITY",
+        "severity": "error",
+        "nodePath": "root"
+      }
+    ],
+    [
+      {
+        "code": "LOAM-T008",
+        "name": "UNKNOWN_KEY",
+        "severity": "error",
+        "nodePath": "root.base_terrain.town_shelf"
+      },
+      {
+        "code": "LOAM-T102",
+        "name": "BAD_PLACEMENT",
+        "severity": "error",
+        "nodePath": "root.base_terrain.town_shelf.params"
+      },
+      {
+        "code": "LOAM-T008",
+        "name": "UNKNOWN_KEY",
+        "severity": "error",
+        "nodePath": "root.base_terrain.pasture_pond"
+      },
+      {
+        "code": "LOAM-T102",
+        "name": "BAD_PLACEMENT",
+        "severity": "error",
+        "nodePath": "root.base_terrain.pasture_pond.params"
+      },
+      {
+        "code": "LOAM-T101",
+        "name": "BAD_ENUM",
+        "severity": "error",
+        "nodePath": "root.forest_copse.params.area"
+      },
+      {
+        "code": "LOAM-E162",
+        "name": "UNKNOWN_ZONE",
+        "severity": "error",
+        "nodePath": "root.main_farm.constraints[0]"
+      },
+      {
+        "code": "LOAM-E162",
+        "name": "UNKNOWN_ZONE",
+        "severity": "error",
+        "nodePath": "root.south_croftholding.constraints[0]"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "root.town_hall"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "root.general_store"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "root.tavern"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "root.church"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "root.windmill"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "root.grain_silo"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "root.cottage_north"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "root.cottage_south"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "root.emergency_field_station"
+      },
+      {
+        "code": "LOAM-E162",
+        "name": "UNKNOWN_ZONE",
+        "severity": "error",
+        "nodePath": "root.crashed_saucer.constraints[0]"
+      }
+    ],
+    []
+  ],
+  "usage": {
+    "promptTokens": 258521,
+    "completionTokens": 31400,
+    "reasoningTokens": 13170,
+    "cost": 0.10331921250000001
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 32,
+    "maxDepth": 2,
+    "generators": [
+      "authored:alien_harvester",
+      "authored:downed_saucer",
+      "building.grammar@0",
+      "infra.entry@0",
+      "precinct.farm@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "church",
+      "cottage",
+      "field_station",
+      "general_store",
+      "hall",
+      "inn",
+      "silo",
+      "tavern",
+      "town_hall",
+      "train_station",
+      "windmill"
+    ],
+    "archetypesInCatalog": 11,
+    "formPacks": [
+      "agrarian",
+      "alien_scifi"
+    ],
+    "props": [
+      "cart",
+      "covered_wagon",
+      "notice_board",
+      "scarecrow",
+      "well_head"
+    ],
+    "species": [
+      "birch",
+      "field_oak",
+      "field_shrub",
+      "oak"
+    ],
+    "envelopes": [
+      "512x512",
+      "22x22",
+      "130x110",
+      "90x80",
+      "13x16x13",
+      "13x10x11",
+      "13x11x13",
+      "11x15x17",
+      "9x16x9",
+      "9x18x9",
+      "9x8x11",
+      "11x10x11",
+      "11x11x13",
+      "28x14x28",
+      "44x32x44"
+    ],
+    "constraints": 38,
+    "constraintKinds": [
+      "adjacent_to",
+      "blend",
+      "distance",
+      "facing",
+      "gap",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform",
+      "zone"
+    ],
+    "constraintsWithStrength": 10,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 9,
+    "programReferences": 2,
+    "conformsTrue": 0,
+    "labels": 0,
+    "eras": [
+      "industrial"
+    ],
+    "bytes": 10683
+  },
+  "wallMs": 160949
+}

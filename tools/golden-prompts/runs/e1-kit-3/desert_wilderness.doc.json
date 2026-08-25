@@ -1,0 +1,173 @@
+{
+  "loam": "0.1",
+  "profile": "terrain",
+  "meta": {
+    "name": "cracked_salt_desert",
+    "worldSeed": 313,
+    "prompt": "A vast salt desert under a hard sun, cracked flat to the horizon, with nothing living on it.",
+    "spawn": {
+      "at": [
+        0.5,
+        0.5
+      ]
+    }
+  },
+  "intent": {
+    "climate": {
+      "biome": "minecraft:desert",
+      "temperature": 1,
+      "humidity": -1,
+      "snow": "never"
+    },
+    "character": {
+      "label": "salt desert"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": {
+        "mix": [
+          [
+            "minecraft:calcite",
+            6
+          ],
+          [
+            "minecraft:white_concrete_powder",
+            3
+          ],
+          [
+            "minecraft:diorite",
+            2
+          ],
+          [
+            "minecraft:bone_block",
+            1
+          ]
+        ]
+      },
+      "ground.subsurface": {
+        "mix": [
+          [
+            "minecraft:smooth_sandstone",
+            4
+          ],
+          [
+            "minecraft:sandstone",
+            2
+          ],
+          [
+            "minecraft:packed_mud",
+            1
+          ]
+        ]
+      },
+      "ground.cliff": {
+        "mix": [
+          [
+            "minecraft:calcite",
+            3
+          ],
+          [
+            "minecraft:smooth_sandstone",
+            2
+          ],
+          [
+            "minecraft:diorite",
+            1
+          ]
+        ]
+      },
+      "ground.beach": "minecraft:calcite",
+      "ground.stone": "minecraft:smooth_sandstone"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Cracked Salt Expanse",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 66,
+          "amplitude": 4,
+          "octaves": 4,
+          "frequency": 0.0015,
+          "erosionPasses": 3,
+          "soilDepth": 2,
+          "cliffThreshold": 65,
+          "beachWidth": 0,
+          "snowLineFraction": 1
+        },
+        "children": [
+          {
+            "id": "salt_pan_basin",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "broad flat salt pan basin",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 220,
+              "depth": 3,
+              "water": false,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "cracked_rift_wash",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "shallow dry cracked wash cutting across the pan",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.12,
+                  0.38
+                ],
+                [
+                  0.46,
+                  0.52
+                ],
+                [
+                  0.88,
+                  0.65
+                ]
+              ],
+              "width": 12,
+              "depth": 3,
+              "meander": 0.6,
+              "flooded": "never"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "arid",
+          "temperatureFrequency": 0.0008,
+          "humidityFrequency": 0.0008,
+          "latitudeGradient": 0,
+          "blendRadius": 4
+        }
+      }
+    ]
+  }
+}

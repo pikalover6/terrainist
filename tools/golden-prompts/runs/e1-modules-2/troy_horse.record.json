@@ -1,0 +1,240 @@
+{
+  "id": "troy_horse",
+  "family": "troy",
+  "kit": "settlement",
+  "prompt": "The Trojan horse in Troy, right before the soldiers emerge.",
+  "seed": 303,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "cache",
+    "value": {
+      "era": "ancient",
+      "wealth": 0.7,
+      "decline": 0.1,
+      "formality": 0.6,
+      "event": {
+        "kind": "siege",
+        "severity": 0.9,
+        "recency": 0
+      },
+      "climate": {
+        "temperature": 0.7,
+        "humidity": -0.2,
+        "snow": "never"
+      },
+      "character": {
+        "label": "Walled Troy under the Greek stratagem",
+        "materialTheme": "sun_clay",
+        "fortification": "walled",
+        "formPacks": [
+          "classical_mediterranean"
+        ],
+        "archetypes": {
+          "prefer": [
+            "peristyle_house",
+            "megaron",
+            "stoa",
+            "peripteral_temple",
+            "palaestra",
+            "olive_press"
+          ],
+          "forbid": [
+            "townhouse",
+            "terraced_row",
+            "shop_row",
+            "office",
+            "apartment_block"
+          ]
+        },
+        "motifs": {
+          "roofType": "flat",
+          "massing": "stepped",
+          "windowRhythm": "sparse",
+          "ornamentDensity": 0.4
+        },
+        "urbanForm": "grown",
+        "courtyards": 0.6,
+        "ground": "stepped"
+      },
+      "tokens": {
+        "terrain": "a walled citadel city on a coastal rise above a sandy plain; the Aegean shore and open sea in view",
+        "icons": "the colossal wooden Trojan horse brought inside the Scaean gate; monumental stone ramparts and watchtowers; royal megaron palace overlooking the city; abandoned Greek camp and beached ship hulls on the distant shore",
+        "event_direction": "Greek soldiers concealed inside the belly of the wooden horse waiting for midnight to open the gates to the returning fleet"
+      }
+    }
+  },
+  "intentUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "reasoningTokens": 0,
+    "cost": 0,
+    "cached": true
+  },
+  "modules": {
+    "dir": "docs/kits/modules",
+    "selected": [
+      "1-document-skeleton (always)",
+      "2-coordinates-and-zones (always)",
+      "building-grammar (settlement)",
+      "district (settlement)",
+      "road-network (settlement)",
+      "the-plaza (settlement)",
+      "11-worked-settlement-fragments (settlement)",
+      "9c-infra-entry (walled)",
+      "the-entries-and-one-worked-example-each (walled)",
+      "multi-level-ground (walled)",
+      "bespoke-programs-must-belong-to-the-worl (icons)",
+      "how-to-write-the-request (icons)",
+      "what-you-get-back-and-what-to-do-with-it (icons)",
+      "seating-how-a-grounded-thing-meets-the-g (icons)",
+      "facing-which-way-it-looks (icons)"
+    ],
+    "used": [
+      "1-document-skeleton",
+      "2-coordinates-and-zones",
+      "building-grammar",
+      "district",
+      "road-network",
+      "the-plaza",
+      "11-worked-settlement-fragments",
+      "9c-infra-entry",
+      "the-entries-and-one-worked-example-each",
+      "multi-level-ground",
+      "bespoke-programs-must-belong-to-the-worl",
+      "how-to-write-the-request",
+      "what-you-get-back-and-what-to-do-with-it",
+      "seating-how-a-grounded-thing-meets-the-g",
+      "facing-which-way-it-looks"
+    ],
+    "missing": [],
+    "bytes": 19887
+  },
+  "kitFile": "docs/kits/settlement-core.md",
+  "menu": {
+    "injected": false,
+    "reason": "flag off"
+  },
+  "attempts": 2,
+  "diagnostics": [
+    [
+      {
+        "code": "LOAM-T004",
+        "name": "EDIT_NOT_UNDER_HEIGHTFIELD",
+        "severity": "error",
+        "nodePath": "world.heightfield.troy_plateau"
+      },
+      {
+        "code": "LOAM-T004",
+        "name": "EDIT_NOT_UNDER_HEIGHTFIELD",
+        "severity": "error",
+        "nodePath": "world.heightfield.mount_ida_foothills"
+      },
+      {
+        "code": "LOAM-T004",
+        "name": "EDIT_NOT_UNDER_HEIGHTFIELD",
+        "severity": "error",
+        "nodePath": "world.heightfield.scamander_river"
+      },
+      {
+        "code": "LOAM-T004",
+        "name": "EDIT_NOT_UNDER_HEIGHTFIELD",
+        "severity": "error",
+        "nodePath": "world.heightfield.simois_river"
+      },
+      {
+        "code": "LOAM-T004",
+        "name": "EDIT_NOT_UNDER_HEIGHTFIELD",
+        "severity": "error",
+        "nodePath": "world.heightfield.aegean_shore_plain"
+      }
+    ],
+    []
+  ],
+  "usage": {
+    "promptTokens": 165395,
+    "completionTokens": 20243,
+    "reasoningTokens": 12406,
+    "cost": 0.09997875
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 20,
+    "maxDepth": 2,
+    "generators": [
+      "authored:trojan_horse",
+      "building.grammar@0",
+      "precinct.farm@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "armory",
+      "castle",
+      "church",
+      "cottage",
+      "courtyard_house",
+      "gatehouse",
+      "hall",
+      "keep",
+      "megaron",
+      "peristyle_house",
+      "stoa",
+      "temple"
+    ],
+    "archetypesInCatalog": 12,
+    "formPacks": [
+      "classical_mediterranean"
+    ],
+    "props": [
+      "campsite",
+      "longship"
+    ],
+    "species": [
+      "juniper",
+      "scrub",
+      "spreading_oak",
+      "trojan_oak"
+    ],
+    "envelopes": [
+      "512x512",
+      "180x160",
+      "17x14x19",
+      "13x15x17",
+      "11x16x11",
+      "11x12x15",
+      "15x20x17",
+      "64x64"
+    ],
+    "constraints": 6,
+    "constraintKinds": [
+      "at",
+      "blend",
+      "distance",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform"
+    ],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 4,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 11,
+    "eras": [
+      "ancient"
+    ],
+    "bytes": 7195
+  },
+  "wallMs": 134416
+}

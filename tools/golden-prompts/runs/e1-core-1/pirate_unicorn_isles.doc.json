@@ -1,0 +1,762 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "pirates_vs_unicorns_war",
+    "worldSeed": 301,
+    "prompt": "A pirate island and a unicorn island, at war.",
+    "spawn": {
+      "at": [
+        0.3,
+        0.5
+      ]
+    }
+  },
+  "intent": {
+    "era": "renaissance",
+    "wealth": 0.5,
+    "decline": 0.2,
+    "formality": 0.35,
+    "climate": {
+      "temperature": 0.6,
+      "humidity": 0.3,
+      "snow": "never"
+    },
+    "tokens": {
+      "terrain": "two distinct islands separated by a contested strait of open water",
+      "event_direction": "pirate sloops and coastal cannon batteries facing across the strait at the fortified unicorn island",
+      "infra": "cannon_battery along the pirate shore; beacon_tower and defensive_barricade along the unicorn island coastline",
+      "region_pirate_island": "era renaissance, wealth 0.35, decline 0.4, formality 0.15; materialTheme temperate_timber; formPacks [nautical_pirate]; prefer archetypes tavern, watchtower, warehouse, lighthouse; props galleon, cart; fortified buccaneer cove, ship repair yards, coastal artillery",
+      "region_unicorn_island": "era renaissance, wealth 0.85, decline 0.05, formality 0.75; materialTheme white_quartz; prefer archetypes church, manor, watchtower; props standing_stones, fountain; sacred unicorn pastures, pristine defensive ramparts and magical shrine towers"
+    },
+    "character": {
+      "programs": [
+        {
+          "id": "pirate_flagship",
+          "mode": "landmark",
+          "brief": "A menacing three-masted pirate galleon anchored in the strait, bristling with dark oak cannons and torn black sails aimed directly at the unicorn citadel across the water.",
+          "envelope": [
+            20,
+            26,
+            38
+          ]
+        },
+        {
+          "id": "unicorn_colossus",
+          "mode": "landmark",
+          "brief": "A colossal rearing unicorn war monument carved of pristine quartz and gold, perched on the shoreline bluff staring down the pirate armada.",
+          "envelope": [
+            16,
+            28,
+            16
+          ]
+        }
+      ]
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "base_terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 52,
+          "amplitude": 18,
+          "octaves": 5,
+          "frequency": 0.0035,
+          "erosionPasses": 2,
+          "continentalness": {
+            "frequency": 0.002,
+            "seaFraction": 0.6
+          }
+        },
+        "children": [
+          {
+            "id": "pirate_island_base",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "island",
+              "at": [
+                0.26,
+                0.5
+              ],
+              "radius": 105,
+              "height": 28,
+              "profile": "rounded",
+              "irregularity": 0.22
+            }
+          },
+          {
+            "id": "pirate_crags",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.15,
+                  0.36
+                ],
+                [
+                  0.2,
+                  0.52
+                ],
+                [
+                  0.16,
+                  0.68
+                ]
+              ],
+              "width": 38,
+              "height": 22,
+              "profile": "sharp"
+            }
+          },
+          {
+            "id": "unicorn_island_base",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "island",
+              "at": [
+                0.74,
+                0.5
+              ],
+              "radius": 105,
+              "height": 30,
+              "profile": "rounded",
+              "irregularity": 0.18
+            }
+          },
+          {
+            "id": "unicorn_acropolis_mount",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.76,
+                0.48
+              ],
+              "radius": 52,
+              "height": 16,
+              "rim": 6,
+              "profile": "sharp"
+            }
+          },
+          {
+            "id": "contested_strait",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.5,
+                  0
+                ],
+                [
+                  0.49,
+                  0.5
+                ],
+                [
+                  0.51,
+                  1
+                ]
+              ],
+              "width": 75,
+              "depth": 24,
+              "flooded": "auto"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate"
+        }
+      },
+      {
+        "id": "pirate_woods",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "params": {
+          "area": {
+            "at": [
+              0.22,
+              0.52
+            ],
+            "radius": 85
+          },
+          "density": 0.14,
+          "species": [
+            {
+              "id": "spruce",
+              "shape": "spruce_tall",
+              "weight": 4
+            },
+            {
+              "id": "oak",
+              "shape": "oak_round",
+              "weight": 2
+            },
+            {
+              "id": "dead_pine",
+              "shape": "spruce_squat",
+              "weight": 2
+            }
+          ],
+          "undergrowth": {
+            "grass": 0.25,
+            "flowers": 0.02,
+            "deadwood": 0.09
+          },
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ]
+        }
+      },
+      {
+        "id": "unicorn_enchanted_grove",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "params": {
+          "area": {
+            "at": [
+              0.76,
+              0.52
+            ],
+            "radius": 85
+          },
+          "density": 0.12,
+          "species": [
+            {
+              "id": "cherry",
+              "shape": "cherry_blossom",
+              "weight": 5
+            },
+            {
+              "id": "birch",
+              "shape": "birch_slim",
+              "weight": 3
+            },
+            {
+              "id": "oak",
+              "shape": "oak_spreading",
+              "weight": 2
+            }
+          ],
+          "strata": {
+            "emergent": "default",
+            "understory": "default",
+            "floor": "glow"
+          },
+          "undergrowth": {
+            "grass": 0.5,
+            "flowers": 0.35,
+            "deadwood": 0
+          },
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ]
+        }
+      },
+      {
+        "id": "sparse_wilds",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "species": [
+            {
+              "id": "oak",
+              "shape": "oak_round"
+            }
+          ],
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ]
+        }
+      },
+      {
+        "id": "pirate_haven",
+        "kind": "district",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            110,
+            96
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.3,
+              0.5
+            ]
+          },
+          {
+            "terrain_conform": "flatten",
+            "blend": 6
+          }
+        ],
+        "intent": {
+          "era": "renaissance",
+          "wealth": 0.35,
+          "decline": 0.4,
+          "formality": 0.15,
+          "character": {
+            "label": "Pirate Haven",
+            "materialTheme": "boreal_pine",
+            "formPacks": [
+              "nautical_pirate"
+            ],
+            "archetypes": {
+              "prefer": [
+                "tavern",
+                "warehouse",
+                "boathouse",
+                "armory",
+                "watchtower",
+                "workshop"
+              ]
+            },
+            "props": {
+              "prefer": [
+                "galleon",
+                "rowboat",
+                "cart",
+                "hitching_post"
+              ]
+            }
+          }
+        },
+        "params": {
+          "fabric": "grown",
+          "density": "medium",
+          "mix": [
+            "tavern",
+            "warehouse",
+            "boathouse",
+            "armory",
+            "smithy",
+            "cottage",
+            "shop_row",
+            "watchtower"
+          ],
+          "plaza": true,
+          "walls": {
+            "style": "palisade",
+            "margin": 8,
+            "towerPitch": 32,
+            "height": 5,
+            "gates": true
+          }
+        },
+        "children": [
+          {
+            "id": "buccaneer_hall",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                13,
+                15
+              ]
+            },
+            "params": {
+              "archetype": "hall",
+              "floors": 2,
+              "roof": "gable"
+            }
+          },
+          {
+            "id": "the_black_dog_tavern",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                11,
+                13
+              ]
+            },
+            "params": {
+              "archetype": "tavern",
+              "floors": 2,
+              "roof": "gable"
+            }
+          },
+          {
+            "id": "coastal_armory",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                11,
+                12,
+                17
+              ]
+            },
+            "params": {
+              "archetype": "armory",
+              "floors": 1,
+              "roof": "gable"
+            }
+          }
+        ]
+      },
+      {
+        "id": "unicorn_citadel",
+        "kind": "district",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            110,
+            100
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.7,
+              0.5
+            ]
+          },
+          {
+            "terrain_conform": "flatten",
+            "blend": 6
+          }
+        ],
+        "intent": {
+          "era": "fantasy",
+          "wealth": 0.85,
+          "decline": 0.05,
+          "formality": 0.75,
+          "character": {
+            "label": "Unicorn Citadel",
+            "materialTheme": "white_quartz",
+            "formPacks": [
+              "arcane_magical"
+            ],
+            "archetypes": {
+              "prefer": [
+                "crystal_shrine",
+                "cathedral",
+                "manor_house",
+                "glass_pavilion",
+                "observatory",
+                "beacon_spire"
+              ]
+            },
+            "props": {
+              "prefer": [
+                "standing_stones",
+                "fountain",
+                "statue_plinth",
+                "bandstand"
+              ]
+            }
+          }
+        },
+        "params": {
+          "fabric": "radial",
+          "density": "medium",
+          "mix": [
+            "crystal_shrine",
+            "manor_house",
+            "townhouse",
+            "observatory",
+            "glass_pavilion",
+            "library",
+            "courtyard_house"
+          ],
+          "plaza": true,
+          "walls": {
+            "style": "masonry",
+            "margin": 8,
+            "towerPitch": 28,
+            "height": 7,
+            "gates": true
+          }
+        },
+        "children": [
+          {
+            "id": "celestial_cathedral",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                15,
+                17,
+                21
+              ]
+            },
+            "params": {
+              "archetype": "cathedral",
+              "floors": 2,
+              "roof": "gable"
+            }
+          },
+          {
+            "id": "celestial_manor",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                14,
+                17
+              ]
+            },
+            "params": {
+              "archetype": "manor_house",
+              "floors": 2,
+              "roof": "hip"
+            }
+          },
+          {
+            "id": "arcane_observatory",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                11,
+                15,
+                11
+              ]
+            },
+            "params": {
+              "archetype": "observatory",
+              "floors": 1,
+              "roof": "dome"
+            }
+          }
+        ]
+      },
+      {
+        "id": "pirate_harbour",
+        "kind": "generator",
+        "generator": "precinct.harbour@0",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            64,
+            16,
+            48
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.35,
+              0.46
+            ]
+          },
+          {
+            "distance": "pirate_haven",
+            "min": 6,
+            "max": 24
+          }
+        ],
+        "params": {
+          "piers": 3,
+          "ships": "fill"
+        }
+      },
+      {
+        "id": "skull_rock_lighthouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            20,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "lighthouse",
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "on": "@terrain:coastline",
+            "band": 16
+          },
+          {
+            "distance": "pirate_haven",
+            "min": 14,
+            "max": 42
+          },
+          {
+            "terrain_conform": "flatten",
+            "blend": 4
+          }
+        ]
+      },
+      {
+        "id": "celestial_beacon_spire",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            7,
+            21,
+            7
+          ]
+        },
+        "params": {
+          "archetype": "beacon_spire",
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "on": "@terrain:coastline",
+            "band": 16
+          },
+          {
+            "distance": "unicorn_citadel",
+            "min": 14,
+            "max": 42
+          },
+          {
+            "terrain_conform": "flatten",
+            "blend": 4
+          }
+        ]
+      },
+      {
+        "id": "pirate_dreadnought",
+        "kind": "generator",
+        "generator": "authored:pirate_flagship",
+        "constraints": [
+          {
+            "at": [
+              0.39,
+              0.5
+            ]
+          },
+          {
+            "distance": "pirate_haven",
+            "min": 10,
+            "max": 32
+          }
+        ],
+        "params": {
+          "seat": "wade",
+          "face": {
+            "toward": "unicorn_citadel"
+          }
+        }
+      },
+      {
+        "id": "celestial_colossus",
+        "kind": "generator",
+        "generator": "authored:unicorn_colossus",
+        "constraints": [
+          {
+            "at": [
+              0.61,
+              0.5
+            ]
+          },
+          {
+            "distance": "unicorn_citadel",
+            "min": 8,
+            "max": 28
+          }
+        ],
+        "params": {
+          "seat": "pad",
+          "face": {
+            "toward": "pirate_haven"
+          }
+        }
+      },
+      {
+        "id": "pirate_coastal_battery",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "params": {
+          "entry": "cannon_battery",
+          "route": {
+            "ring": "pirate_haven",
+            "margin": 14
+          }
+        }
+      },
+      {
+        "id": "sacred_henge",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "standing_stones"
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "distance": "unicorn_citadel",
+            "min": 12,
+            "max": 36
+          }
+        ]
+      },
+      {
+        "id": "celestial_fountain",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "fountain"
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "distance": "unicorn_citadel",
+            "min": 4,
+            "max": 18
+          }
+        ]
+      }
+    ]
+  }
+}

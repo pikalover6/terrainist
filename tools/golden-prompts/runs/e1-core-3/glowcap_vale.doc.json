@@ -1,0 +1,776 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "glowing_mushroom_vale",
+    "worldSeed": 307,
+    "prompt": "A glowing mushroom vale where a strange village has grown between the caps.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.35,
+    "formality": 0.1,
+    "climate": {
+      "humidity": 0.8,
+      "temperature": 0.2,
+      "biome": "minecraft:dark_forest"
+    },
+    "character": {
+      "label": "glowing mushroom vale village",
+      "materialTheme": "temperate_timber",
+      "formPacks": [
+        "swamp_witch"
+      ],
+      "urbanForm": "grown",
+      "flora": {
+        "prefer": [
+          "mushroom_giant_red",
+          "mushroom_shelf_brown",
+          "glowcap"
+        ]
+      },
+      "archetypes": {
+        "prefer": [
+          "mushroom_house",
+          "witch_hut",
+          "stilt_house",
+          "alchemists_tower",
+          "apothecary",
+          "cottage"
+        ]
+      },
+      "props": {
+        "prefer": [
+          "treehouse",
+          "well_head",
+          "lamp_post",
+          "cairn"
+        ]
+      },
+      "programs": [
+        {
+          "id": "elder_glowcap_sanctuary",
+          "mode": "landmark",
+          "brief": "A colossal bioluminescent elder glowcap mushroom shrine whose towering glowing cap shelters an elevated spiraling walkway, spore lantern censers, and a central natural shrine. Ground approach stairs anchored as door.",
+          "envelope": [
+            28,
+            36,
+            28
+          ]
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "a secluded mountain vale nestled between steep ridges, sheltered beneath a canopy of giant glowing mushrooms",
+      "icons": "rustic wooden cottages and stilt dwellings built between and around giant mushroom stems; rope bridges and elevated walkways connecting mushroom caps; spore lanterns illuminating the vale floor"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "base_terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 72,
+          "amplitude": 30,
+          "frequency": 0.003,
+          "erosionPasses": 2,
+          "warp": {
+            "amount": 20,
+            "frequency": 0.004
+          }
+        },
+        "children": [
+          {
+            "id": "north_vale_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.1,
+                  0.2
+                ],
+                [
+                  0.5,
+                  0.22
+                ],
+                [
+                  0.9,
+                  0.18
+                ]
+              ],
+              "width": 64,
+              "height": 45,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "south_vale_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.1,
+                  0.8
+                ],
+                [
+                  0.5,
+                  0.78
+                ],
+                [
+                  0.9,
+                  0.82
+                ]
+              ],
+              "width": 64,
+              "height": 45,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "vale_floor_cradle",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.15,
+                  0.5
+                ],
+                [
+                  0.5,
+                  0.5
+                ],
+                [
+                  0.85,
+                  0.5
+                ]
+              ],
+              "width": 70,
+              "depth": 12,
+              "flooded": "never"
+            }
+          },
+          {
+            "id": "settlement_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 85,
+              "height": 6,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "vale_climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.002,
+          "humidityFrequency": 0.002
+        }
+      },
+      {
+        "id": "glowing_mushroom_canopy",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "params": {
+          "area": {
+            "at": [
+              0.5,
+              0.5
+            ],
+            "radius": 175
+          },
+          "density": 0.22,
+          "spacing": 4,
+          "clumping": 0.5,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.45,
+            "flowers": 0.15,
+            "deadwood": 0.03
+          },
+          "species": [
+            {
+              "id": "shelf_brown",
+              "shape": "mushroom_shelf_brown",
+              "weight": 4
+            },
+            {
+              "id": "oak_mossy",
+              "shape": "oak_spreading",
+              "weight": 1
+            },
+            {
+              "id": "spruce_dark",
+              "shape": "spruce_tall",
+              "weight": 1
+            }
+          ],
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "luminescent_glowcap",
+                  "shape": "glowcap",
+                  "weight": 4
+                },
+                {
+                  "id": "great_red_dome",
+                  "shape": "mushroom_giant_red",
+                  "weight": 3
+                }
+              ]
+            },
+            "understory": {
+              "species": [
+                {
+                  "id": "giant_fern",
+                  "shape": "tree_fern",
+                  "weight": 3
+                },
+                {
+                  "id": "hazel_bush",
+                  "shape": "hazel_shrub",
+                  "weight": 2
+                }
+              ],
+              "density": 0.35
+            },
+            "floor": "glow"
+          }
+        }
+      },
+      {
+        "id": "vale_wilderness_trees",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 6,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "species": [
+            {
+              "id": "spruce_sparse",
+              "shape": "spruce_tall",
+              "weight": 3
+            },
+            {
+              "id": "birch_sparse",
+              "shape": "birch_slim",
+              "weight": 2
+            }
+          ]
+        }
+      },
+      {
+        "id": "spore_square",
+        "kind": "primitive",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            22,
+            22
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ],
+        "label": "Spore Square"
+      },
+      {
+        "id": "elder_sanctuary",
+        "kind": "generator",
+        "generator": "authored:elder_glowcap_sanctuary",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            28,
+            36,
+            28
+          ]
+        },
+        "params": {
+          "seat": "pad",
+          "face": {
+            "toward": "spore_square"
+          }
+        },
+        "constraints": [
+          {
+            "distance": "spore_square",
+            "min": 16,
+            "max": 38
+          }
+        ],
+        "tags": [
+          "landmark",
+          "temple",
+          "shrine"
+        ],
+        "label": "Elder Glowcap Sanctuary"
+      },
+      {
+        "id": "mushroom_house_north",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            16,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "mushroom_house",
+          "floors": 1
+        },
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south"
+          }
+        },
+        "constraints": [
+          {
+            "adjacent_to": "spore_square",
+            "gap": [
+              2,
+              6
+            ]
+          },
+          {
+            "facing": "spore_square"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 3
+          }
+        ],
+        "tags": [
+          "house",
+          "dwelling"
+        ]
+      },
+      {
+        "id": "witch_hut_east",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            14,
+            13
+          ]
+        },
+        "params": {
+          "archetype": "witch_hut",
+          "floors": 1
+        },
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west"
+          }
+        },
+        "constraints": [
+          {
+            "adjacent_to": "spore_square",
+            "gap": [
+              2,
+              7
+            ]
+          },
+          {
+            "facing": "spore_square"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 3
+          }
+        ],
+        "tags": [
+          "house",
+          "magic"
+        ]
+      },
+      {
+        "id": "stilt_dwelling_west",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "stilt_house",
+          "floors": 1
+        },
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east"
+          }
+        },
+        "constraints": [
+          {
+            "adjacent_to": "spore_square",
+            "gap": [
+              2,
+              7
+            ]
+          },
+          {
+            "facing": "spore_square"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 3
+          }
+        ],
+        "tags": [
+          "house",
+          "dwelling"
+        ]
+      },
+      {
+        "id": "alchemy_tower",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            19,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "alchemists_tower",
+          "floors": 1
+        },
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south"
+          }
+        },
+        "constraints": [
+          {
+            "distance": "spore_square",
+            "min": 10,
+            "max": 28
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 3
+          }
+        ],
+        "tags": [
+          "craft",
+          "alchemy"
+        ]
+      },
+      {
+        "id": "apothecary_shop",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            10,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "apothecary",
+          "floors": 1
+        },
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south"
+          }
+        },
+        "constraints": [
+          {
+            "adjacent_to": "spore_square",
+            "gap": [
+              1,
+              6
+            ]
+          },
+          {
+            "facing": "spore_square"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 3
+          }
+        ],
+        "tags": [
+          "trade",
+          "craft"
+        ]
+      },
+      {
+        "id": "shroom_cottage_south",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            10,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "cottage",
+          "floors": 2
+        },
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north"
+          }
+        },
+        "constraints": [
+          {
+            "adjacent_to": "spore_square",
+            "gap": [
+              2,
+              6
+            ]
+          },
+          {
+            "facing": "spore_square"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 3
+          }
+        ],
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "root_cellar_pantry",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            14,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "root_cellar_mound",
+          "floors": 1
+        },
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north"
+          }
+        },
+        "constraints": [
+          {
+            "distance": "spore_square",
+            "min": 8,
+            "max": 24
+          },
+          {
+            "distance": "#tag:house",
+            "min": 4
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 3
+          }
+        ],
+        "tags": [
+          "storage",
+          "homestead"
+        ]
+      },
+      {
+        "id": "hermit_shrine",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            10,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "hermitage",
+          "floors": 1
+        },
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north"
+          }
+        },
+        "constraints": [
+          {
+            "distance": "spore_square",
+            "min": 14,
+            "max": 35
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 3
+          }
+        ],
+        "tags": [
+          "faith",
+          "hermit"
+        ]
+      },
+      {
+        "id": "cap_treehouse",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "treehouse",
+          "zone": "center",
+          "jitter": 0.1
+        }
+      },
+      {
+        "id": "vale_well",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "well_head",
+          "zone": "center",
+          "jitter": 0.05
+        }
+      },
+      {
+        "id": "spore_lantern_post_1",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "lamp_post",
+          "zone": "center",
+          "jitter": 0.08
+        }
+      },
+      {
+        "id": "spore_lantern_post_2",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "lamp_post",
+          "zone": "center",
+          "jitter": 0.12
+        }
+      },
+      {
+        "id": "mystic_cairn",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "cairn",
+          "zone": "center",
+          "jitter": 0.15
+        }
+      },
+      {
+        "id": "vale_lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "params": {
+          "anchors": [
+            "spore_square",
+            "#tag:house",
+            "elder_sanctuary",
+            "#tag:craft"
+          ],
+          "pattern": "organic",
+          "width": 2,
+          "lanterns": true,
+          "lanternSpacing": 10
+        }
+      }
+    ]
+  }
+}

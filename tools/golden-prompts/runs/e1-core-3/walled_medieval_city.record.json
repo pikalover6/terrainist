@@ -1,0 +1,240 @@
+{
+  "id": "walled_medieval_city",
+  "family": "new/set-piece",
+  "kit": "settlement",
+  "prompt": "A walled medieval city on a hill, its castle keep above the rooftops.",
+  "seed": 311,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "cache",
+    "value": {
+      "era": "medieval",
+      "wealth": 0.5,
+      "decline": 0.1,
+      "formality": 0.4,
+      "character": {
+        "label": "walled hill city",
+        "materialTheme": "temperate_timber",
+        "fortification": "walled",
+        "archetypes": {
+          "prefer": [
+            "manor",
+            "watchtower",
+            "tavern",
+            "church",
+            "granary"
+          ]
+        },
+        "motifs": {
+          "roofType": "gable",
+          "massing": "stepped"
+        },
+        "urbanForm": "hillside",
+        "ground": "stepped",
+        "courtyards": 0.4
+      },
+      "tokens": {
+        "terrain": "a prominent hill rising above the surrounding country",
+        "icons": "a towering stone castle keep crowning the peak above dense medieval rooftops, enclosed by circuit walls with gatehouses and towers"
+      }
+    }
+  },
+  "intentUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "reasoningTokens": 0,
+    "cost": 0,
+    "cached": true
+  },
+  "kitFile": "docs/kits/settlement-core.md",
+  "menu": {
+    "injected": false,
+    "reason": "flag off"
+  },
+  "attempts": 3,
+  "diagnostics": [
+    [
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.heightfield"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.climate"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.wilderness_trees"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.valley_woods"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.hill_city.citadel_keep"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.hill_city.city_cathedral"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.hill_city.moot_guildhall"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.hill_city.inner_gatehouse"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.lowland_holding"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.approach_road"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.wayside_sign"
+      },
+      {
+        "code": "LOAM-T003",
+        "name": "GENERATOR_CARDINALITY",
+        "severity": "error",
+        "nodePath": "root"
+      },
+      {
+        "code": "LOAM-T003",
+        "name": "GENERATOR_CARDINALITY",
+        "severity": "error",
+        "nodePath": "root"
+      }
+    ],
+    [
+      {
+        "code": "LOAM-T004",
+        "name": "EDIT_NOT_UNDER_HEIGHTFIELD",
+        "severity": "error",
+        "nodePath": "root.heightfield.city_hill_base"
+      },
+      {
+        "code": "LOAM-T004",
+        "name": "EDIT_NOT_UNDER_HEIGHTFIELD",
+        "severity": "error",
+        "nodePath": "root.heightfield.keep_crest"
+      },
+      {
+        "code": "LOAM-E162",
+        "name": "UNKNOWN_ZONE",
+        "severity": "error",
+        "nodePath": "root.lowland_holding.constraints[0]"
+      }
+    ],
+    []
+  ],
+  "usage": {
+    "promptTokens": 230958,
+    "completionTokens": 15758,
+    "reasoningTokens": 8574,
+    "cost": 0.09128985
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 15,
+    "maxDepth": 2,
+    "generators": [
+      "building.grammar@0",
+      "precinct.farm@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "bakery",
+      "barracks",
+      "church",
+      "gatehouse",
+      "general_store",
+      "granary",
+      "guard_post",
+      "guildhall",
+      "inn",
+      "keep",
+      "manor_house",
+      "smithy",
+      "tavern",
+      "townhouse"
+    ],
+    "archetypesInCatalog": 14,
+    "formPacks": [],
+    "props": [
+      "signpost"
+    ],
+    "species": [
+      "birch",
+      "canopy_oak",
+      "hazel",
+      "oak",
+      "tall_spruce"
+    ],
+    "envelopes": [
+      "512x512",
+      "220x220",
+      "15x20x15",
+      "13x16x19",
+      "13x14x17",
+      "11x14x9",
+      "80x80"
+    ],
+    "constraints": 4,
+    "constraintKinds": [
+      "distance",
+      "max",
+      "min",
+      "zone"
+    ],
+    "constraintsWithStrength": 1,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 4,
+    "programReferences": 0,
+    "conformsTrue": 0,
+    "labels": 0,
+    "eras": [
+      "medieval"
+    ],
+    "bytes": 4186
+  },
+  "wallMs": 91289
+}

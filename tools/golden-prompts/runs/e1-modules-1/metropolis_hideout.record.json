@@ -1,0 +1,244 @@
+{
+  "id": "metropolis_hideout",
+  "family": "metropolis_hideout",
+  "kit": "settlement",
+  "prompt": "A high-tech apocalyptic hideout in the massively overgrown ruins of a metropolis.",
+  "seed": 304,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "cache",
+    "value": {
+      "era": "far_future",
+      "wealth": 0.4,
+      "decline": 0.9,
+      "formality": 0.3,
+      "climate": {
+        "humidity": 0.7
+      },
+      "character": {
+        "label": "overgrown post-apocalyptic high-tech hideout",
+        "materialTheme": "modern_city",
+        "formPacks": [
+          "alien_scifi"
+        ],
+        "archetypes": {
+          "prefer": [
+            "bunker_complex",
+            "laboratory",
+            "field_station",
+            "hydroponics_bay",
+            "watchtower",
+            "office",
+            "apartment_block"
+          ],
+          "forbid": [
+            "cottage",
+            "manor",
+            "tavern",
+            "church",
+            "windmill"
+          ]
+        },
+        "flora": {
+          "prefer": [
+            "understory",
+            "emergent",
+            "old_growth"
+          ]
+        },
+        "motifs": {
+          "massing": "blocky",
+          "windowRhythm": "sparse"
+        },
+        "urbanForm": "grid"
+      },
+      "tokens": {
+        "fittings": "blast_door on the bunker_complex; airlock_vestibule on the laboratory",
+        "infra": "barricade_line across the fractured boulevard; quarantine_fence around the reinforced perimeter",
+        "terrain": "a ruined metropolis grid of shattered skyscrapers and collapsed elevated roads choked with deep canopy forest and dense undergrowth",
+        "icons": "a reinforced high-tech hideout nestled in the hollow base of a ruined skyscraper; solar panels and satellite dishes tangled in vines; defensive floodlights and sensor towers hidden in the foliage"
+      }
+    }
+  },
+  "intentUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "reasoningTokens": 0,
+    "cost": 0,
+    "cached": true
+  },
+  "modules": {
+    "dir": "docs/kits/modules",
+    "selected": [
+      "1-document-skeleton (always)",
+      "2-coordinates-and-zones (always)",
+      "building-grammar (settlement)",
+      "district (settlement)",
+      "road-network (settlement)",
+      "the-plaza (settlement)",
+      "11-worked-settlement-fragments (settlement)",
+      "city (urbanForm grid)",
+      "the-urban-forms (city forms)",
+      "a-ruined-city-is-a-district-with-a-high- (decline 0.9)",
+      "bespoke-programs-must-belong-to-the-worl (icons)",
+      "how-to-write-the-request (icons)",
+      "what-you-get-back-and-what-to-do-with-it (icons)",
+      "seating-how-a-grounded-thing-meets-the-g (icons)",
+      "facing-which-way-it-looks (icons)"
+    ],
+    "used": [
+      "1-document-skeleton",
+      "2-coordinates-and-zones",
+      "building-grammar",
+      "district",
+      "road-network",
+      "the-plaza",
+      "11-worked-settlement-fragments",
+      "city",
+      "the-urban-forms",
+      "a-ruined-city-is-a-district-with-a-high-",
+      "bespoke-programs-must-belong-to-the-worl",
+      "how-to-write-the-request",
+      "what-you-get-back-and-what-to-do-with-it",
+      "seating-how-a-grounded-thing-meets-the-g",
+      "facing-which-way-it-looks"
+    ],
+    "missing": [],
+    "bytes": 20594
+  },
+  "kitFile": "docs/kits/settlement-core.md",
+  "menu": {
+    "injected": false,
+    "reason": "flag off"
+  },
+  "attempts": 2,
+  "diagnostics": [
+    [
+      {
+        "code": "LOAM-T004",
+        "name": "EDIT_NOT_UNDER_HEIGHTFIELD",
+        "severity": "error",
+        "nodePath": "world.heightfield.metro_plateau"
+      },
+      {
+        "code": "LOAM-T004",
+        "name": "EDIT_NOT_UNDER_HEIGHTFIELD",
+        "severity": "error",
+        "nodePath": "world.heightfield.collapse_fissure"
+      },
+      {
+        "code": "LOAM-T004",
+        "name": "EDIT_NOT_UNDER_HEIGHTFIELD",
+        "severity": "error",
+        "nodePath": "world.heightfield.overgrown_canal"
+      },
+      {
+        "code": "LOAM-T008",
+        "name": "UNKNOWN_KEY",
+        "severity": "error",
+        "nodePath": "world.hideout_solar_power.params"
+      }
+    ],
+    []
+  ],
+  "usage": {
+    "promptTokens": 168554,
+    "completionTokens": 23567,
+    "reasoningTokens": 12912,
+    "cost": 0.107395875
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 23,
+    "maxDepth": 2,
+    "generators": [
+      "authored:ruined_spire_hideout",
+      "authored:satellite_relay_dish",
+      "building.grammar@0",
+      "infra.entry@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "apartment_block",
+      "brutalist_block",
+      "bunker_complex",
+      "checkpoint",
+      "cottage",
+      "data_center",
+      "greenhouse",
+      "laboratory",
+      "office",
+      "parking_garage",
+      "ruined_cottage",
+      "skyscraper",
+      "transit_hub",
+      "watchtower"
+    ],
+    "archetypesInCatalog": 14,
+    "formPacks": [
+      "alien_scifi"
+    ],
+    "props": [
+      "solar_array"
+    ],
+    "species": [
+      "ancient_oak",
+      "humid_tree_fern",
+      "slim_birch",
+      "spreading_oak",
+      "tall_spruce",
+      "weeping_willow",
+      "wild_oak"
+    ],
+    "envelopes": [
+      "512x512",
+      "200x200",
+      "19x60x17",
+      "15x12x17",
+      "28x24x28",
+      "13x16x13",
+      "13x12x17",
+      "11x10x11",
+      "11x8x9",
+      "7x19x7",
+      "11x11x11"
+    ],
+    "constraints": 18,
+    "constraintKinds": [
+      "at",
+      "blend",
+      "connected",
+      "distance",
+      "facing",
+      "max",
+      "min",
+      "reference",
+      "style",
+      "terrain_conform",
+      "via",
+      "zone"
+    ],
+    "constraintsWithStrength": 5,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 7,
+    "programReferences": 2,
+    "conformsTrue": 0,
+    "labels": 14,
+    "eras": [
+      "far_future"
+    ],
+    "bytes": 9964
+  },
+  "wallMs": 136285
+}

@@ -1,0 +1,183 @@
+{
+  "id": "redwood_camp",
+  "family": "redwood_camp",
+  "kit": "settlement",
+  "prompt": "An ancient forest of colossal redwoods with a small logging camp at its edge.",
+  "seed": 306,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "cache",
+    "value": {
+      "era": "industrial",
+      "wealth": 0.35,
+      "formality": 0.1,
+      "climate": {
+        "biome": "minecraft:old_growth_spruce_taiga",
+        "temperature": 0.25,
+        "humidity": 0.7,
+        "snow": "never"
+      },
+      "character": {
+        "label": "redwood logging camp",
+        "materialTheme": "boreal_pine",
+        "formPacks": [
+          "wilds_camps"
+        ],
+        "flora": {
+          "prefer": [
+            "emergent",
+            "ancient",
+            "old_growth",
+            "spruce_ancient",
+            "giant"
+          ]
+        },
+        "urbanForm": "linear"
+      },
+      "tokens": {
+        "terrain": "a primeval forest of colossal redwoods with a logging camp clearing at its perimeter",
+        "infra": "cut_over_ground clearing surrounding the camp; cart_track running into the deep timber",
+        "icons": "towering redwood canopy, log stacks, sawpits, bunk cabins, and timber skid trails"
+      }
+    }
+  },
+  "intentUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "reasoningTokens": 0,
+    "cost": 0,
+    "cached": true
+  },
+  "modules": {
+    "dir": "docs/kits/modules",
+    "selected": [
+      "1-document-skeleton (always)",
+      "2-coordinates-and-zones (always)",
+      "building-grammar (settlement)",
+      "district (settlement)",
+      "road-network (settlement)",
+      "the-plaza (settlement)",
+      "11-worked-settlement-fragments (settlement)",
+      "bespoke-programs-must-belong-to-the-worl (icons)",
+      "how-to-write-the-request (icons)",
+      "what-you-get-back-and-what-to-do-with-it (icons)",
+      "seating-how-a-grounded-thing-meets-the-g (icons)",
+      "facing-which-way-it-looks (icons)"
+    ],
+    "used": [
+      "1-document-skeleton",
+      "2-coordinates-and-zones",
+      "building-grammar",
+      "district",
+      "road-network",
+      "the-plaza",
+      "11-worked-settlement-fragments",
+      "bespoke-programs-must-belong-to-the-worl",
+      "how-to-write-the-request",
+      "what-you-get-back-and-what-to-do-with-it",
+      "seating-how-a-grounded-thing-meets-the-g",
+      "facing-which-way-it-looks"
+    ],
+    "missing": [],
+    "bytes": 17218
+  },
+  "kitFile": "docs/kits/settlement-core.md",
+  "menu": {
+    "injected": false,
+    "reason": "flag off"
+  },
+  "attempts": 1,
+  "diagnostics": [
+    []
+  ],
+  "usage": {
+    "promptTokens": 77463,
+    "completionTokens": 8435,
+    "reasoningTokens": 3847,
+    "cost": 0.04486425
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 24,
+    "maxDepth": 2,
+    "generators": [
+      "building.grammar@0",
+      "infra.entry@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "cottage",
+      "dormitory",
+      "inn",
+      "log_cabin",
+      "machine_shop",
+      "sawmill",
+      "smithy",
+      "tavern",
+      "warehouse"
+    ],
+    "archetypesInCatalog": 9,
+    "formPacks": [
+      "wilds_camps"
+    ],
+    "props": [
+      "cart",
+      "covered_wagon",
+      "hitching_post",
+      "horse_trough",
+      "log_pile",
+      "notice_board"
+    ],
+    "species": [
+      "columnar_larch",
+      "fringe_spruce",
+      "grandfather_redwood",
+      "tall_timber_pine"
+    ],
+    "envelopes": [
+      "512x512",
+      "24x24",
+      "11x11x17",
+      "13x11x17",
+      "13x11x13",
+      "11x12x13",
+      "11x10x11",
+      "11x11x15"
+    ],
+    "constraints": 20,
+    "constraintKinds": [
+      "adjacent_to",
+      "blend",
+      "distance",
+      "facing",
+      "gap",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform",
+      "zone"
+    ],
+    "constraintsWithStrength": 6,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 6,
+    "programReferences": 0,
+    "conformsTrue": 0,
+    "labels": 13,
+    "eras": [
+      "industrial"
+    ],
+    "bytes": 8114
+  },
+  "wallMs": 46574
+}

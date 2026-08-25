@@ -1,0 +1,271 @@
+{
+  "id": "railway_town",
+  "family": "new/alias",
+  "kit": "settlement",
+  "prompt": "A soot-blackened industrial town where the railway meets the canal.",
+  "seed": 312,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "cache",
+    "value": {
+      "era": "industrial",
+      "wealth": 0.35,
+      "decline": 0.25,
+      "formality": 0.5,
+      "character": {
+        "label": "soot-blackened canal and rail town",
+        "materialTheme": "temperate_timber",
+        "urbanForm": "canal",
+        "archetypes": {
+          "prefer": [
+            "warehouse",
+            "tavern",
+            "cottage",
+            "watchtower"
+          ]
+        },
+        "props": {
+          "prefer": [
+            "cart",
+            "notice_board"
+          ]
+        },
+        "motifs": {
+          "roofType": "gable",
+          "massing": "blocky",
+          "windowRhythm": "regular",
+          "ornamentDensity": 0.2
+        }
+      },
+      "tokens": {
+        "terrain": "a commercial canal network intersecting a railway corridor and freight rail lines",
+        "icons": "soot-stained brick warehouses, smoking factory chimneys, iron rail bridges over the canal, barge docks, coal yards and rail depots"
+      }
+    }
+  },
+  "intentUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "reasoningTokens": 0,
+    "cost": 0,
+    "cached": true
+  },
+  "modules": {
+    "dir": "docs/kits/modules",
+    "selected": [
+      "1-document-skeleton (always)",
+      "2-coordinates-and-zones (always)",
+      "building-grammar (settlement)",
+      "district (settlement)",
+      "road-network (settlement)",
+      "the-plaza (settlement)",
+      "11-worked-settlement-fragments (settlement)",
+      "bespoke-programs-must-belong-to-the-worl (icons)",
+      "how-to-write-the-request (icons)",
+      "what-you-get-back-and-what-to-do-with-it (icons)",
+      "seating-how-a-grounded-thing-meets-the-g (icons)",
+      "facing-which-way-it-looks (icons)",
+      "worked-water (water feature)"
+    ],
+    "used": [
+      "1-document-skeleton",
+      "2-coordinates-and-zones",
+      "building-grammar",
+      "district",
+      "road-network",
+      "the-plaza",
+      "11-worked-settlement-fragments",
+      "bespoke-programs-must-belong-to-the-worl",
+      "how-to-write-the-request",
+      "what-you-get-back-and-what-to-do-with-it",
+      "seating-how-a-grounded-thing-meets-the-g",
+      "facing-which-way-it-looks",
+      "worked-water"
+    ],
+    "missing": [],
+    "bytes": 17667
+  },
+  "kitFile": "docs/kits/settlement-core.md",
+  "menu": {
+    "injected": false,
+    "reason": "flag off"
+  },
+  "attempts": 2,
+  "diagnostics": [
+    [
+      {
+        "code": "LOAM-T106",
+        "name": "BAD_PALETTE",
+        "severity": "error",
+        "nodePath": "style.palettes.ground.surface"
+      },
+      {
+        "code": "LOAM-T106",
+        "name": "BAD_PALETTE",
+        "severity": "error",
+        "nodePath": "style.palettes.ground.surface"
+      },
+      {
+        "code": "LOAM-T106",
+        "name": "BAD_PALETTE",
+        "severity": "error",
+        "nodePath": "style.palettes.ground.surface"
+      },
+      {
+        "code": "LOAM-T106",
+        "name": "BAD_PALETTE",
+        "severity": "error",
+        "nodePath": "style.palettes.ground.surface"
+      },
+      {
+        "code": "LOAM-T106",
+        "name": "BAD_PALETTE",
+        "severity": "error",
+        "nodePath": "style.palettes.road.surface"
+      },
+      {
+        "code": "LOAM-T106",
+        "name": "BAD_PALETTE",
+        "severity": "error",
+        "nodePath": "style.palettes.road.surface"
+      },
+      {
+        "code": "LOAM-T106",
+        "name": "BAD_PALETTE",
+        "severity": "error",
+        "nodePath": "style.palettes.road.surface"
+      },
+      {
+        "code": "LOAM-T008",
+        "name": "UNKNOWN_KEY",
+        "severity": "error",
+        "nodePath": "programs.soot_smokestack_battery"
+      },
+      {
+        "code": "LOAM-T008",
+        "name": "UNKNOWN_KEY",
+        "severity": "error",
+        "nodePath": "programs.soot_smokestack_battery"
+      },
+      {
+        "code": "LOAM-E338",
+        "name": "PROGRAM_SCHEMA",
+        "severity": "error",
+        "nodePath": "programs.soot_smokestack_battery.source"
+      },
+      {
+        "code": "LOAM-E338",
+        "name": "PROGRAM_SCHEMA",
+        "severity": "error",
+        "nodePath": "programs.soot_smokestack_battery.sourceHash"
+      },
+      {
+        "code": "LOAM-E338",
+        "name": "PROGRAM_SCHEMA",
+        "severity": "error",
+        "nodePath": "programs.soot_smokestack_battery.outputHash"
+      },
+      {
+        "code": "LOAM-W519",
+        "name": "LANDMARK_CONSTRAINT_IGNORED",
+        "severity": "warning",
+        "nodePath": "world.soot_smokestack_works.constraints[1]"
+      }
+    ],
+    []
+  ],
+  "usage": {
+    "promptTokens": 163950,
+    "completionTokens": 17029,
+    "reasoningTokens": 9555,
+    "cost": 0.0685412625
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 27,
+    "maxDepth": 2,
+    "generators": [
+      "building.grammar@0",
+      "infra.entry@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "boathouse",
+      "coal_tipple",
+      "cooperage",
+      "cottage",
+      "factory_hall",
+      "foundry",
+      "machine_shop",
+      "roundhouse",
+      "signal_box",
+      "steam_plant",
+      "tavern",
+      "terraced_row",
+      "train_station",
+      "warehouse"
+    ],
+    "archetypesInCatalog": 14,
+    "formPacks": [],
+    "props": [
+      "barge",
+      "bollard_row",
+      "caboose",
+      "cart",
+      "freight_car",
+      "houseboat",
+      "lamp_post",
+      "locomotive",
+      "log_pile",
+      "rail_line"
+    ],
+    "species": [
+      "dark_oak",
+      "scrub_oak",
+      "sooty_birch"
+    ],
+    "envelopes": [
+      "512x512",
+      "220x200",
+      "15x13x21",
+      "15x14x21",
+      "13x14x17",
+      "13x14x17",
+      "13x14x19",
+      "9x13x11"
+    ],
+    "constraints": 8,
+    "constraintKinds": [
+      "blend",
+      "distance",
+      "facing",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform",
+      "zone"
+    ],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 6,
+    "programReferences": 0,
+    "conformsTrue": 0,
+    "labels": 7,
+    "eras": [
+      "industrial"
+    ],
+    "bytes": 7343
+  },
+  "wallMs": 92234
+}

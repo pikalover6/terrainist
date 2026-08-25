@@ -1,0 +1,358 @@
+{
+  "id": "redwood_camp",
+  "family": "redwood_camp",
+  "kit": "settlement",
+  "prompt": "An ancient forest of colossal redwoods with a small logging camp at its edge.",
+  "seed": 306,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "cache",
+    "value": {
+      "era": "industrial",
+      "wealth": 0.35,
+      "formality": 0.1,
+      "climate": {
+        "biome": "minecraft:old_growth_spruce_taiga",
+        "temperature": 0.25,
+        "humidity": 0.7,
+        "snow": "never"
+      },
+      "character": {
+        "label": "redwood logging camp",
+        "materialTheme": "boreal_pine",
+        "formPacks": [
+          "wilds_camps"
+        ],
+        "flora": {
+          "prefer": [
+            "emergent",
+            "ancient",
+            "old_growth",
+            "spruce_ancient",
+            "giant"
+          ]
+        },
+        "urbanForm": "linear"
+      },
+      "tokens": {
+        "terrain": "a primeval forest of colossal redwoods with a logging camp clearing at its perimeter",
+        "infra": "cut_over_ground clearing surrounding the camp; cart_track running into the deep timber",
+        "icons": "towering redwood canopy, log stacks, sawpits, bunk cabins, and timber skid trails"
+      }
+    }
+  },
+  "intentUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "reasoningTokens": 0,
+    "cost": 0,
+    "cached": true
+  },
+  "kitFile": "docs/kits/settlement-core.md",
+  "menu": {
+    "injected": false,
+    "reason": "flag off"
+  },
+  "attempts": 3,
+  "diagnostics": [
+    [
+      {
+        "code": "LOAM-T101",
+        "name": "BAD_ENUM",
+        "severity": "error",
+        "nodePath": "meta.spawn"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "world.heightfield"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "world.climate"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "world.colossal_redwood_forest"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "world.wilderness_timber_fill"
+      },
+      {
+        "code": "LOAM-E162",
+        "name": "UNKNOWN_ZONE",
+        "severity": "error",
+        "nodePath": "world.log_landing_yard.constraints[0]"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "world.timber_sawmill"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "world.foreman_cabin"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "world.lumberjack_bunkhouse"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "world.camp_cookhouse"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "world.tool_smithy"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "world.timber_warehouse"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "world.scaler_hut"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "world.log_deck_sawmill"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "world.log_deck_yard"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "world.log_deck_skid"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "world.haul_cart_1"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "world.supply_wagon"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "world.camp_hitching_post"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "world.camp_water_trough"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "world.camp_notice_board"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "world.fallers_timber_campsite"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "world.timber_haul_skid_trail"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "world.camp_lanes"
+      },
+      {
+        "code": "LOAM-T003",
+        "name": "GENERATOR_CARDINALITY",
+        "severity": "error",
+        "nodePath": "world"
+      },
+      {
+        "code": "LOAM-T003",
+        "name": "GENERATOR_CARDINALITY",
+        "severity": "error",
+        "nodePath": "world"
+      }
+    ],
+    [
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "world.timber_sawmill"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "world.foreman_cabin"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "world.lumberjack_bunkhouse"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "world.camp_cookhouse"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "world.tool_smithy"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "world.timber_warehouse"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "world.scaler_hut"
+      }
+    ],
+    []
+  ],
+  "usage": {
+    "promptTokens": 253415,
+    "completionTokens": 28834,
+    "reasoningTokens": 12208,
+    "cost": 0.09797561249999999
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 27,
+    "maxDepth": 2,
+    "generators": [
+      "building.grammar@0",
+      "infra.entry@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "barracks",
+      "cottage",
+      "hut",
+      "log_cabin",
+      "office",
+      "sawmill",
+      "smithy",
+      "tavern",
+      "warehouse"
+    ],
+    "archetypesInCatalog": 9,
+    "formPacks": [
+      "wilds_camps"
+    ],
+    "props": [
+      "campsite",
+      "cart",
+      "covered_wagon",
+      "hitching_post",
+      "horse_trough",
+      "log_pile",
+      "notice_board"
+    ],
+    "species": [
+      "columnar_larch",
+      "sparse_pine",
+      "sparse_spruce",
+      "squat_redwood",
+      "tall_redwood"
+    ],
+    "envelopes": [
+      "512x512",
+      "28x22",
+      "11x11x17",
+      "11x12x13",
+      "13x11x19",
+      "13x11x13",
+      "9x10x11",
+      "11x10x15",
+      "9x11x9"
+    ],
+    "constraints": 31,
+    "constraintKinds": [
+      "adjacent_to",
+      "at",
+      "beside",
+      "blend",
+      "distance",
+      "facing",
+      "gap",
+      "max",
+      "min",
+      "offset",
+      "reference",
+      "terrain_conform",
+      "zone"
+    ],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 7,
+    "programReferences": 0,
+    "conformsTrue": 0,
+    "labels": 21,
+    "eras": [
+      "industrial"
+    ],
+    "bytes": 9606
+  },
+  "wallMs": 146360
+}

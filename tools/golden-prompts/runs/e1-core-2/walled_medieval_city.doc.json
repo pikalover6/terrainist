@@ -1,0 +1,360 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "walled_medieval_hill_city",
+    "worldSeed": 311,
+    "prompt": "A walled medieval city on a hill, its castle keep above the rooftops.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.5,
+    "decline": 0.1,
+    "formality": 0.4,
+    "character": {
+      "label": "walled hill city",
+      "materialTheme": "temperate_timber",
+      "fortification": "walled",
+      "archetypes": {
+        "prefer": [
+          "manor_house",
+          "watchtower",
+          "tavern",
+          "church",
+          "granary",
+          "keep",
+          "smithy",
+          "bakery"
+        ]
+      },
+      "motifs": {
+        "roofType": "gable",
+        "massing": "stepped"
+      },
+      "urbanForm": "hillside",
+      "ground": "stepped",
+      "courtyards": 0.4
+    },
+    "tokens": {
+      "terrain": "a prominent hill rising above the surrounding country",
+      "icons": "a towering stone castle keep crowning the peak above dense medieval rooftops, enclosed by circuit walls with gatehouses and towers"
+    }
+  },
+  "root": {
+    "id": "root",
+    "kind": "composite",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "base_terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "params": {
+          "baseHeight": 72,
+          "amplitude": 20,
+          "octaves": 5,
+          "frequency": 0.0035,
+          "erosionPasses": 2,
+          "soilDepth": 3,
+          "cliffThreshold": 55
+        },
+        "children": [
+          {
+            "id": "city_hill_base",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 130,
+              "height": 32,
+              "rim": 10,
+              "profile": "rounded",
+              "irregularity": 0.18
+            }
+          },
+          {
+            "id": "citadel_hill_crest",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "peak",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 48,
+              "height": 18,
+              "profile": "rounded",
+              "irregularity": 0.15
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate"
+        }
+      },
+      {
+        "id": "countryside_trees",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "species": [
+            {
+              "id": "oak",
+              "shape": "oak_spreading",
+              "weight": 3
+            },
+            {
+              "id": "birch",
+              "shape": "birch_slim",
+              "weight": 1
+            },
+            {
+              "id": "round_oak",
+              "shape": "oak_round",
+              "weight": 2
+            }
+          ],
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct",
+            "district"
+          ]
+        }
+      },
+      {
+        "id": "valley_woodland",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "params": {
+          "area": {
+            "at": [
+              0.25,
+              0.3
+            ],
+            "radius": 85
+          },
+          "density": 0.18,
+          "strata": {
+            "emergent": "default",
+            "understory": "default"
+          },
+          "species": [
+            {
+              "id": "spreading_oak",
+              "shape": "oak_spreading",
+              "weight": 3
+            },
+            {
+              "id": "giant_beech",
+              "shape": "beech_giant",
+              "weight": 1
+            },
+            {
+              "id": "hazel",
+              "shape": "hazel_shrub",
+              "weight": 2
+            }
+          ],
+          "undergrowth": {
+            "grass": 0.4,
+            "flowers": 0.1,
+            "deadwood": 0.02
+          },
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct",
+            "district"
+          ]
+        }
+      },
+      {
+        "id": "hilltop_city",
+        "kind": "district",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            220,
+            220
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.5,
+              0.5
+            ]
+          }
+        ],
+        "params": {
+          "fabric": "grown",
+          "density": "medium",
+          "mix": [
+            "townhouse",
+            "tavern",
+            "church",
+            "bakery",
+            "smithy",
+            "guildhall",
+            "barracks",
+            "granary",
+            "general_store",
+            "manor_house"
+          ],
+          "courtyards": 0.4,
+          "ground": "stepped",
+          "walls": {
+            "style": "masonry",
+            "margin": 10,
+            "towerPitch": 32,
+            "height": 8,
+            "gates": true
+          }
+        },
+        "children": [
+          {
+            "id": "citadel_keep",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                17,
+                26,
+                17
+              ]
+            },
+            "params": {
+              "archetype": "keep",
+              "floors": 2,
+              "roof": "flat"
+            },
+            "tags": [
+              "keep",
+              "castle",
+              "citadel"
+            ]
+          },
+          {
+            "id": "city_church",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                16,
+                19
+              ]
+            },
+            "params": {
+              "archetype": "church",
+              "floors": 1,
+              "roof": "gable"
+            },
+            "tags": [
+              "church",
+              "worship"
+            ]
+          },
+          {
+            "id": "citadel_tower",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                9,
+                20,
+                9
+              ]
+            },
+            "params": {
+              "archetype": "watchtower",
+              "floors": 2,
+              "roof": "flat"
+            },
+            "tags": [
+              "lookout",
+              "watchtower"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "valley_farms",
+        "kind": "generator",
+        "generator": "precinct.farm@0",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            96,
+            96
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "southeast"
+          },
+          {
+            "distance": "hilltop_city",
+            "min": 20,
+            "max": 65
+          }
+        ],
+        "params": {
+          "parcels": 6,
+          "parcelSize": 16,
+          "crops": [
+            "wheat",
+            "pasture",
+            "carrots",
+            "potatoes"
+          ],
+          "edge": "fence"
+        }
+      },
+      {
+        "id": "main_road_network",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "params": {
+          "anchors": [
+            "hilltop_city",
+            "valley_farms"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 16
+        }
+      }
+    ]
+  }
+}

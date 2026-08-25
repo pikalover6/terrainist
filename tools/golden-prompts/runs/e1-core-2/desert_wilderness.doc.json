@@ -1,0 +1,108 @@
+{
+  "loam": "0.1",
+  "profile": "terrain",
+  "meta": {
+    "name": "vast_salt_desert",
+    "worldSeed": 313,
+    "prompt": "A vast salt desert under a hard sun, cracked flat to the horizon, with nothing living on it."
+  },
+  "intent": {
+    "climate": {
+      "biome": "minecraft:desert",
+      "temperature": 1,
+      "humidity": -1,
+      "snow": "never"
+    },
+    "character": {
+      "label": "salt desert"
+    },
+    "tokens": {
+      "terrain": "a vast, cracked salt flat stretching flat to the horizon under a hard sun; barren expanse with no vegetation, water, or living structures"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": {
+        "mix": [
+          [
+            "minecraft:calcite",
+            0.65
+          ],
+          [
+            "minecraft:diorite",
+            0.2
+          ],
+          [
+            "minecraft:smooth_quartz",
+            0.15
+          ]
+        ]
+      },
+      "ground.subsurface": {
+        "mix": [
+          [
+            "minecraft:smooth_sandstone",
+            0.6
+          ],
+          [
+            "minecraft:calcite",
+            0.4
+          ]
+        ]
+      },
+      "ground.stone": "minecraft:smooth_sandstone",
+      "ground.beach": "minecraft:calcite"
+    }
+  },
+  "root": {
+    "id": "root",
+    "kind": "composite",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "heightfield",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "params": {
+          "baseHeight": 68,
+          "amplitude": 3,
+          "frequency": 0.002,
+          "octaves": 4,
+          "erosionPasses": 2,
+          "soilDepth": 3
+        },
+        "children": [
+          {
+            "id": "central_salt_pan",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "basin",
+              "zone": "center",
+              "radius": 180,
+              "depth": 2,
+              "water": false,
+              "flooded": "never",
+              "profile": "rounded",
+              "irregularity": 0.2
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "arid"
+        }
+      }
+    ]
+  }
+}

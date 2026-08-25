@@ -1,0 +1,132 @@
+{
+  "id": "fjord_terrain",
+  "family": "new/terrain-only",
+  "kit": "terrain",
+  "prompt": "A deep fjord cutting inland between pine ridges, its water open to the sea.",
+  "seed": 314,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "cache",
+    "value": {
+      "climate": {
+        "biome": "minecraft:old_growth_pine_taiga",
+        "temperature": -0.3,
+        "humidity": 0.5
+      },
+      "character": {
+        "label": "pine fjord",
+        "materialTheme": "boreal_pine",
+        "flora": {
+          "prefer": [
+            "spruce_tall",
+            "conifer",
+            "old_growth"
+          ]
+        }
+      },
+      "tokens": {
+        "terrain": "a deep fjord cutting inland between steep pine-covered ridges, opening to the open sea"
+      }
+    }
+  },
+  "intentUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "reasoningTokens": 0,
+    "cost": 0,
+    "cached": true
+  },
+  "kitFile": "docs/kits/settlement-core.md",
+  "menu": {
+    "injected": false,
+    "reason": "flag off"
+  },
+  "attempts": 2,
+  "diagnostics": [
+    [
+      {
+        "code": "LOAM-T000",
+        "name": "BAD_DOCUMENT",
+        "severity": "error",
+        "nodePath": ""
+      },
+      {
+        "code": "LOAM-T001",
+        "name": "GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "world.hf_main"
+      },
+      {
+        "code": "LOAM-T001",
+        "name": "GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "world.climate_boreal"
+      },
+      {
+        "code": "LOAM-T001",
+        "name": "GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "world.pine_ridge_forest"
+      },
+      {
+        "code": "LOAM-T003",
+        "name": "GENERATOR_CARDINALITY",
+        "severity": "error",
+        "nodePath": "world"
+      },
+      {
+        "code": "LOAM-T003",
+        "name": "GENERATOR_CARDINALITY",
+        "severity": "error",
+        "nodePath": "world"
+      }
+    ],
+    []
+  ],
+  "usage": {
+    "promptTokens": 145988,
+    "completionTokens": 7806,
+    "reasoningTokens": 4551,
+    "cost": 0.045896137499999996
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 9,
+    "maxDepth": 2,
+    "generators": [
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [],
+    "archetypesInCatalog": 0,
+    "formPacks": [],
+    "props": [],
+    "species": [
+      "columnar_larch",
+      "squat_pine",
+      "tall_pine"
+    ],
+    "envelopes": [
+      "512x512"
+    ],
+    "constraints": 0,
+    "constraintKinds": [],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 1,
+    "forestFillsAtOrAboveCoverage": 1,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 0,
+    "programReferences": 0,
+    "conformsTrue": 0,
+    "labels": 0,
+    "eras": [],
+    "bytes": 2659
+  },
+  "wallMs": 44323
+}

@@ -1,0 +1,408 @@
+{
+  "id": "railway_town",
+  "family": "new/alias",
+  "kit": "settlement",
+  "prompt": "A soot-blackened industrial town where the railway meets the canal.",
+  "seed": 312,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "cache",
+    "value": {
+      "era": "industrial",
+      "wealth": 0.35,
+      "decline": 0.25,
+      "formality": 0.5,
+      "character": {
+        "label": "soot-blackened canal and rail town",
+        "materialTheme": "temperate_timber",
+        "urbanForm": "canal",
+        "archetypes": {
+          "prefer": [
+            "warehouse",
+            "tavern",
+            "cottage",
+            "watchtower"
+          ]
+        },
+        "props": {
+          "prefer": [
+            "cart",
+            "notice_board"
+          ]
+        },
+        "motifs": {
+          "roofType": "gable",
+          "massing": "blocky",
+          "windowRhythm": "regular",
+          "ornamentDensity": 0.2
+        }
+      },
+      "tokens": {
+        "terrain": "a commercial canal network intersecting a railway corridor and freight rail lines",
+        "icons": "soot-stained brick warehouses, smoking factory chimneys, iron rail bridges over the canal, barge docks, coal yards and rail depots"
+      }
+    }
+  },
+  "intentUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "reasoningTokens": 0,
+    "cost": 0,
+    "cached": true
+  },
+  "kitFile": "docs/kits/settlement-core.md",
+  "menu": {
+    "injected": false,
+    "reason": "flag off"
+  },
+  "attempts": 3,
+  "diagnostics": [
+    [
+      {
+        "code": "LOAM-T106",
+        "name": "BAD_PALETTE",
+        "severity": "error",
+        "nodePath": "style.palettes.ground.surface"
+      },
+      {
+        "code": "LOAM-T106",
+        "name": "BAD_PALETTE",
+        "severity": "error",
+        "nodePath": "style.palettes.ground.surface"
+      },
+      {
+        "code": "LOAM-T106",
+        "name": "BAD_PALETTE",
+        "severity": "error",
+        "nodePath": "style.palettes.ground.surface"
+      },
+      {
+        "code": "LOAM-T106",
+        "name": "BAD_PALETTE",
+        "severity": "error",
+        "nodePath": "style.palettes.road.surface"
+      },
+      {
+        "code": "LOAM-T106",
+        "name": "BAD_PALETTE",
+        "severity": "error",
+        "nodePath": "style.palettes.road.surface"
+      },
+      {
+        "code": "LOAM-T106",
+        "name": "BAD_PALETTE",
+        "severity": "error",
+        "nodePath": "style.palettes.road.surface"
+      },
+      {
+        "code": "LOAM-T106",
+        "name": "BAD_PALETTE",
+        "severity": "error",
+        "nodePath": "style.palettes.road.surface"
+      },
+      {
+        "code": "LOAM-T106",
+        "name": "BAD_PALETTE",
+        "severity": "error",
+        "nodePath": "style.palettes.road.shoulder"
+      },
+      {
+        "code": "LOAM-T106",
+        "name": "BAD_PALETTE",
+        "severity": "error",
+        "nodePath": "style.palettes.road.shoulder"
+      },
+      {
+        "code": "LOAM-T106",
+        "name": "BAD_PALETTE",
+        "severity": "error",
+        "nodePath": "style.palettes.plaza.cobble"
+      },
+      {
+        "code": "LOAM-T106",
+        "name": "BAD_PALETTE",
+        "severity": "error",
+        "nodePath": "style.palettes.plaza.cobble"
+      },
+      {
+        "code": "LOAM-T106",
+        "name": "BAD_PALETTE",
+        "severity": "error",
+        "nodePath": "style.palettes.plaza.cobble"
+      },
+      {
+        "code": "LOAM-T106",
+        "name": "BAD_PALETTE",
+        "severity": "error",
+        "nodePath": "style.palettes.plaza.gravel"
+      },
+      {
+        "code": "LOAM-T106",
+        "name": "BAD_PALETTE",
+        "severity": "error",
+        "nodePath": "style.palettes.plaza.gravel"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.soot_basin_heightfield"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.industrial_climate"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.grimy_industrial_fringe"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.blackwood_industrial_district.central_rail_station"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.blackwood_industrial_district.junction_signal_box"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.blackwood_industrial_district.locomotive_roundhouse"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.blackwood_industrial_district.canal_coal_tipple"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.blackwood_industrial_district.canal_customs_office"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "root.blackwood_industrial_district.canal_maintenance_boathouse"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.basin_canal_lock"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.rail_telegraph_run"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.depot_locomotive"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.coal_freight_wagon"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.canal_barge_lead"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.canal_barge_cargo"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.dockside_heavy_cart"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.quayside_lamp"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.dock_notice_board"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.boiler_log_pile"
+      },
+      {
+        "code": "LOAM-T200",
+        "name": "STRUCTURE_GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.industrial_road_network"
+      },
+      {
+        "code": "LOAM-T003",
+        "name": "GENERATOR_CARDINALITY",
+        "severity": "error",
+        "nodePath": "root"
+      },
+      {
+        "code": "LOAM-T003",
+        "name": "GENERATOR_CARDINALITY",
+        "severity": "error",
+        "nodePath": "root"
+      }
+    ],
+    [
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "root.blackwood_industrial_district.central_rail_station"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "root.blackwood_industrial_district.junction_signal_box"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "root.blackwood_industrial_district.locomotive_roundhouse"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "root.blackwood_industrial_district.canal_coal_tipple"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "root.blackwood_industrial_district.canal_customs_office"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "root.blackwood_industrial_district.canal_maintenance_boathouse"
+      }
+    ],
+    []
+  ],
+  "usage": {
+    "promptTokens": 243591,
+    "completionTokens": 22213,
+    "reasoningTokens": 11039,
+    "cost": 0.081878925
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 25,
+    "maxDepth": 2,
+    "generators": [
+      "building.grammar@0",
+      "infra.entry@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "boathouse",
+      "brickworks",
+      "coal_tipple",
+      "cottage",
+      "customs_house",
+      "factory_hall",
+      "foundry",
+      "inn",
+      "machine_shop",
+      "roundhouse",
+      "signal_box",
+      "tavern",
+      "terraced_row",
+      "train_station",
+      "warehouse"
+    ],
+    "archetypesInCatalog": 15,
+    "formPacks": [],
+    "props": [
+      "barge",
+      "cart",
+      "freight_car",
+      "lamp_post",
+      "locomotive",
+      "log_pile",
+      "notice_board"
+    ],
+    "species": [
+      "soot_birch",
+      "stunted_oak"
+    ],
+    "envelopes": [
+      "512x512",
+      "32x32",
+      "220x200",
+      "15x13x21",
+      "9x13x11",
+      "15x14x21",
+      "13x14x17",
+      "13x12x13",
+      "13x14x17"
+    ],
+    "constraints": 4,
+    "constraintKinds": [
+      "adjacent_to",
+      "blend",
+      "gap",
+      "reference",
+      "terrain_conform",
+      "zone"
+    ],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 1,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 6,
+    "programReferences": 0,
+    "conformsTrue": 0,
+    "labels": 0,
+    "eras": [
+      "industrial"
+    ],
+    "bytes": 6625
+  },
+  "wallMs": 113984
+}

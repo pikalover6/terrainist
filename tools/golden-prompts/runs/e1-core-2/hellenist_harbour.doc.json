@@ -1,0 +1,629 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "hellenic_sea_siege",
+    "worldSeed": 305,
+    "prompt": "A modern Hellenist city being invaded by sea monsters.",
+    "spawn": {
+      "at": [
+        0.62,
+        0.62
+      ]
+    }
+  },
+  "style": {
+    "palettes": {
+      "plaza.cobble": "smooth_quartz",
+      "plaza.path": "quartz_block",
+      "road.surface": "smooth_stone",
+      "road.shoulder": "stone_brick_slab",
+      "ground.beach": "sand"
+    }
+  },
+  "intent": {
+    "era": "modern",
+    "wealth": 0.8,
+    "formality": 0.75,
+    "event": {
+      "kind": "siege",
+      "severity": 0.85,
+      "recency": 0
+    },
+    "climate": {
+      "temperature": 0.6,
+      "humidity": 0.2,
+      "snow": "never"
+    },
+    "character": {
+      "label": "modern Hellenist coastal metropolis under sea monster siege",
+      "materialTheme": "modern_city",
+      "formPacks": [
+        "classical_mediterranean"
+      ],
+      "archetypes": {
+        "prefer": [
+          "stoa",
+          "peripteral_temple",
+          "bouleuterion",
+          "palaestra",
+          "nymphaeum",
+          "skyscraper",
+          "town_hall"
+        ]
+      },
+      "urbanForm": "grid",
+      "motifs": {
+        "roofType": "flat",
+        "massing": "blocky",
+        "windowRhythm": "regular",
+        "ornamentDensity": 0.6
+      },
+      "programs": [
+        {
+          "id": "abyssal_leviathan",
+          "mode": "landmark",
+          "brief": "A colossal sea monster rising from the bay, with spined chitinous armor plates, bioluminescent cyan crests, and massive crushing mandibles lunging toward the city waterfront. Wading in deep water.",
+          "envelope": [
+            44,
+            48,
+            52
+          ]
+        },
+        {
+          "id": "helios_defense_spire",
+          "mode": "landmark",
+          "brief": "A modern Hellenist coastal defense tower featuring fluted white quartz peristyle pillars supporting an armored energy projector aiming out at the leviathan.",
+          "envelope": [
+            18,
+            32,
+            18
+          ]
+        },
+        {
+          "id": "abyssal_tentacle",
+          "mode": "plugin",
+          "brief": "A massive coiled sea-monster tentacle bursting vertically through the water surface with dripping barnacles, suction nodes, and serrated chitinous spines.",
+          "envelope": [
+            12,
+            22,
+            12
+          ],
+          "count": 10
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "a grand coastal metropolis fronting a deep harbour and open sea where sea monsters surface",
+      "event_direction": "giant sea monsters rise out of the ocean water attacking the harbour and waterfront avenues",
+      "infra": "barricade_line across the harbour promenade; emergency_cordon along the coastal boulevard",
+      "icons": "leviathans and sea monsters breaching along the modern docks; neoclassical porticos and high-rise stoas overlooking the bay; emergency barricades and defensive lines guarding the shore"
+    }
+  },
+  "root": {
+    "kind": "composite",
+    "id": "world",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "id": "base_terrain",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 70,
+          "amplitude": 22,
+          "octaves": 5,
+          "frequency": 0.0032,
+          "lacunarity": 2,
+          "gain": 0.5,
+          "erosionPasses": 2,
+          "continentalness": {
+            "frequency": 0.0022,
+            "seaFraction": 0.44
+          }
+        },
+        "children": [
+          {
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "id": "city_plateau",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.64,
+                0.64
+              ],
+              "radius": 140,
+              "height": 8,
+              "rim": 6,
+              "profile": "rounded"
+            }
+          },
+          {
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "id": "harbour_channel",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.1,
+                  0.1
+                ],
+                [
+                  0.36,
+                  0.38
+                ],
+                "coast"
+              ],
+              "width": 90,
+              "depth": 18,
+              "flooded": "auto"
+            }
+          },
+          {
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "id": "hymettus_ridge",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.75,
+                  0.96
+                ],
+                [
+                  0.96,
+                  0.75
+                ]
+              ],
+              "width": 50,
+              "height": 38,
+              "profile": "sharp"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "id": "aegean_climate",
+        "params": {
+          "forceTheme": "temperate"
+        }
+      },
+      {
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "id": "coastal_grove",
+        "params": {
+          "species": [
+            {
+              "id": "cypress",
+              "shape": "larch_columnar",
+              "weight": 3
+            },
+            {
+              "id": "aegean_oak",
+              "shape": "oak_spreading",
+              "weight": 2
+            },
+            {
+              "id": "shrub",
+              "shape": "hazel_shrub",
+              "weight": 1
+            }
+          ],
+          "area": {
+            "at": [
+              0.78,
+              0.62
+            ],
+            "radius": 110
+          },
+          "density": 0.06,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ]
+        }
+      },
+      {
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "id": "open_scatter",
+        "params": {
+          "species": [
+            {
+              "id": "olive_tree",
+              "shape": "oak_round",
+              "weight": 2
+            }
+          ],
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ]
+        }
+      },
+      {
+        "kind": "generator",
+        "generator": "precinct.harbour@0",
+        "id": "neoclassical_harbour",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            80,
+            20,
+            56
+          ]
+        },
+        "params": {
+          "piers": 3,
+          "ships": 3
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "adjacent_to": "hellenic_metropolis",
+            "gap": [
+              2,
+              10
+            ]
+          }
+        ],
+        "tags": [
+          "harbour",
+          "waterfront"
+        ]
+      },
+      {
+        "kind": "city",
+        "id": "hellenic_metropolis",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            280,
+            240
+          ]
+        },
+        "params": {
+          "size": "medium",
+          "coastal": true,
+          "mix": [
+            "skyscraper",
+            "office",
+            "apartment_block",
+            "museum",
+            "university_hall",
+            "brutalist_block",
+            "stoa",
+            "peripteral_temple",
+            "bouleuterion",
+            "palaestra",
+            "nymphaeum",
+            "customs_house",
+            "warehouse"
+          ],
+          "characters": {
+            "waterfront": [
+              "warehouse",
+              "customs_house",
+              "boathouse",
+              "bunker",
+              "stoa"
+            ],
+            "core": [
+              "skyscraper",
+              "office",
+              "apartment_block",
+              "museum",
+              "town_hall",
+              "bank"
+            ],
+            "civic": [
+              "university_hall",
+              "bouleuterion",
+              "peripteral_temple",
+              "courthouse",
+              "nymphaeum"
+            ],
+            "rowhouse": [
+              "apartment_block",
+              "townhouse",
+              "terraced_row"
+            ]
+          },
+          "walls": {
+            "style": "masonry",
+            "margin": 10,
+            "height": 8,
+            "towerPitch": 40,
+            "gates": true
+          }
+        },
+        "constraints": [
+          {
+            "at": [
+              0.65,
+              0.65
+            ]
+          }
+        ],
+        "children": [
+          {
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "id": "parthenon_tower",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                19,
+                20,
+                21
+              ]
+            },
+            "params": {
+              "archetype": "peripteral_temple",
+              "floors": 2,
+              "roof": "flat",
+              "vista": true
+            },
+            "ports": {
+              "main_door": {
+                "type": "door",
+                "face": "north"
+              }
+            },
+            "tags": [
+              "monument",
+              "civic"
+            ]
+          },
+          {
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "id": "bouleuterion_civic",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                15,
+                14,
+                17
+              ]
+            },
+            "params": {
+              "archetype": "bouleuterion",
+              "floors": 2,
+              "roof": "flat"
+            },
+            "ports": {
+              "main_door": {
+                "type": "door",
+                "face": "west"
+              }
+            },
+            "tags": [
+              "civic"
+            ]
+          },
+          {
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "id": "acropolis_highrise",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                18,
+                44,
+                18
+              ]
+            },
+            "params": {
+              "archetype": "skyscraper",
+              "floors": 10,
+              "roof": "flat"
+            },
+            "ports": {
+              "main_door": {
+                "type": "door",
+                "face": "north"
+              }
+            },
+            "tags": [
+              "skyscraper",
+              "core"
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "generator",
+        "generator": "authored:abyssal_leviathan",
+        "id": "leviathan_behemoth",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            44,
+            48,
+            52
+          ]
+        },
+        "params": {
+          "seat": "wade",
+          "face": {
+            "toward": "hellenic_metropolis"
+          }
+        },
+        "constraints": [
+          {
+            "at": [
+              0.28,
+              0.34
+            ]
+          },
+          {
+            "on": "@terrain:coastline",
+            "band": 32
+          },
+          {
+            "distance": "hellenic_metropolis",
+            "min": 35,
+            "max": 90
+          }
+        ],
+        "tags": [
+          "monster",
+          "invader"
+        ]
+      },
+      {
+        "kind": "generator",
+        "generator": "authored:helios_defense_spire",
+        "id": "helios_defense_tower",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            18,
+            32,
+            18
+          ]
+        },
+        "params": {
+          "seat": "pad",
+          "face": {
+            "toward": "leviathan_behemoth"
+          }
+        },
+        "constraints": [
+          {
+            "at": [
+              0.46,
+              0.48
+            ]
+          },
+          {
+            "distance": "hellenic_metropolis",
+            "min": 8,
+            "max": 24
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "main_door": {
+            "type": "door",
+            "face": "south"
+          }
+        },
+        "tags": [
+          "defense",
+          "military",
+          "landmark"
+        ]
+      },
+      {
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "id": "monster_tentacles_assault",
+        "params": {
+          "program": "abyssal_tentacle",
+          "seat": "wade",
+          "count": 10,
+          "spacing": 14,
+          "face": {
+            "toward": "hellenic_metropolis"
+          }
+        },
+        "area": {
+          "at": [
+            0.32,
+            0.38
+          ],
+          "radius": 0.28
+        }
+      },
+      {
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "id": "harbour_barricades",
+        "params": {
+          "entry": "barricade_line",
+          "route": {
+            "across": "hellenic_metropolis"
+          },
+          "gates": true
+        }
+      },
+      {
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "id": "coastal_battery_line",
+        "params": {
+          "entry": "cannon_battery",
+          "route": {
+            "along": "lanes",
+            "offset": 4,
+            "side": "left"
+          }
+        }
+      },
+      {
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "id": "warship_patrol",
+        "params": {
+          "prop": "fishing_trawler",
+          "on": "water",
+          "zone": "northwest"
+        }
+      },
+      {
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "id": "harbour_tug",
+        "params": {
+          "prop": "tugboat",
+          "on": "water",
+          "at": "pier"
+        }
+      },
+      {
+        "kind": "generator",
+        "generator": "road.network@0",
+        "id": "lanes",
+        "params": {
+          "anchors": [
+            "hellenic_metropolis",
+            "neoclassical_harbour",
+            "helios_defense_tower"
+          ],
+          "pattern": "grid",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 16
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,655 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "hellenist_coastal_siege",
+    "worldSeed": 305,
+    "prompt": "A modern Hellenist city being invaded by sea monsters.",
+    "spawn": {
+      "zone": "south"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:stone_bricks",
+      "road.shoulder": "minecraft:smooth_stone_slab",
+      "plaza.path": "minecraft:smooth_quartz",
+      "plaza.border": "minecraft:quartz_pillar",
+      "ground.beach": {
+        "mix": [
+          [
+            "minecraft:sand",
+            4
+          ],
+          [
+            "minecraft:gravel",
+            1
+          ],
+          [
+            "minecraft:smooth_sandstone",
+            1
+          ]
+        ]
+      }
+    }
+  },
+  "intent": {
+    "era": "modern",
+    "wealth": 0.8,
+    "formality": 0.75,
+    "event": {
+      "kind": "siege",
+      "severity": 0.85,
+      "recency": 0
+    },
+    "climate": {
+      "temperature": 0.6,
+      "humidity": 0.2,
+      "snow": "never"
+    },
+    "character": {
+      "label": "modern Hellenist coastal metropolis under sea monster siege",
+      "materialTheme": "modern_city",
+      "formPacks": [
+        "classical_mediterranean"
+      ],
+      "archetypes": {
+        "prefer": [
+          "stoa",
+          "peripteral_temple",
+          "bouleuterion",
+          "palaestra",
+          "nymphaeum"
+        ],
+        "forbid": [
+          "witch_hut",
+          "igloo",
+          "yurt"
+        ]
+      },
+      "urbanForm": "grid",
+      "motifs": {
+        "roofType": "flat",
+        "massing": "blocky",
+        "windowRhythm": "regular",
+        "ornamentDensity": 0.6
+      },
+      "programs": [
+        {
+          "id": "leviathan_beast",
+          "mode": "landmark",
+          "brief": "A gigantic abyssal sea monster breaching the bay waters with sharp fanged maw, cyan glowing eyes, spined dorsal crest, and thrashing serpentine tail attacking the waterfront.",
+          "envelope": [
+            54,
+            38,
+            54
+          ]
+        },
+        {
+          "id": "colossal_poseidon_statue",
+          "mode": "landmark",
+          "brief": "A monumental neoclassical statue of Poseidon in white quartz and weathered copper holding a trident aloft, standing atop a grand stepped plinth facing the bay.",
+          "envelope": [
+            22,
+            42,
+            22
+          ]
+        },
+        {
+          "id": "sea_monster",
+          "mode": "plugin",
+          "brief": "An aggressive spined sea monster or spiked serpent emerging from the ocean surface with claws and fins churning water.",
+          "envelope": [
+            14,
+            12,
+            14
+          ],
+          "count": 12
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "a grand coastal metropolis fronting a deep harbour and open sea where sea monsters surface",
+      "event_direction": "giant sea monsters rise out of the ocean water attacking the harbour and waterfront avenues",
+      "infra": "barricade_line across the harbour promenade; emergency_cordon along the coastal boulevard",
+      "icons": "leviathans and sea monsters breaching along the modern docks; neoclassical porticos and high-rise stoas overlooking the bay; emergency barricades and defensive lines guarding the shore"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "The Bay of Hellas under abyssal siege",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "coastal basin opening into deep ocean in the north with high shelves for the city in the south",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 68,
+          "amplitude": 26,
+          "octaves": 5,
+          "frequency": 0.0032,
+          "gain": 0.48,
+          "erosionPasses": 2,
+          "continentalness": {
+            "frequency": 0.0011,
+            "seaFraction": 0.45
+          },
+          "cliffThreshold": 55,
+          "soilDepth": 3,
+          "beachWidth": 5,
+          "snowLineFraction": 0.9
+        },
+        "children": [
+          {
+            "id": "the_abyssal_bay",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the deep ocean bay where sea monsters surface",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.45,
+                0.22
+              ],
+              "radius": 135,
+              "depth": 24,
+              "water": false,
+              "flooded": "auto",
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "metropolis_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the elevated coastal shelf where the metropolis stands",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.52,
+                0.65
+              ],
+              "radius": 160,
+              "height": 8,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "acropolis_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the headland ridge overlooking the harbour",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.75,
+                  0.32
+                ],
+                [
+                  0.66,
+                  0.46
+                ],
+                [
+                  0.54,
+                  0.58
+                ]
+              ],
+              "width": 42,
+              "height": 22,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0015
+        }
+      },
+      {
+        "id": "hellas_metropolis",
+        "kind": "city",
+        "label": "the modern Hellenist metropolis fronting the bay",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            340,
+            240
+          ]
+        },
+        "params": {
+          "size": "medium",
+          "coastal": true,
+          "diagonals": 1,
+          "mix": [
+            "office",
+            "skyscraper",
+            "apartment_block",
+            "department_store",
+            "stoa",
+            "museum",
+            "palaestra",
+            "townhouse"
+          ],
+          "characters": {
+            "waterfront": [
+              "warehouse",
+              "shop_row",
+              "stoa",
+              "boathouse"
+            ],
+            "core": [
+              "skyscraper",
+              "office",
+              "department_store",
+              "bouleuterion"
+            ],
+            "civic": [
+              "university_hall",
+              "museum",
+              "peripteral_temple",
+              "council_chamber"
+            ]
+          },
+          "setPieces": {
+            "max": 4,
+            "kinds": [
+              "landmark",
+              "promenade",
+              "square",
+              "bridge"
+            ]
+          }
+        },
+        "constraints": [
+          {
+            "at": [
+              0.5,
+              0.68
+            ]
+          }
+        ],
+        "tags": [
+          "city",
+          "urban",
+          "metropolis"
+        ],
+        "children": [
+          {
+            "id": "acropolis_tower",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the towering modern stoa spire on the boulevard",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                20,
+                68,
+                18
+              ]
+            },
+            "params": {
+              "archetype": "skyscraper",
+              "floors": 16,
+              "roof": "flat",
+              "vista": "spine"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark"
+            ]
+          },
+          {
+            "id": "grand_stoa_forum",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the grand civic auditorium and forum",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                25,
+                20,
+                19
+              ]
+            },
+            "params": {
+              "archetype": "opera_house",
+              "floors": 2,
+              "vista": "boulevard"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "civic"
+            ]
+          },
+          {
+            "id": "pantheon_hall",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the monumental neoclassical temple hall",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                19,
+                18,
+                23
+              ]
+            },
+            "params": {
+              "archetype": "cathedral",
+              "floors": 2
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "temple"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "harbour_precinct",
+        "kind": "generator",
+        "generator": "precinct.harbour@0",
+        "label": "the deepwater commercial harbour receiving the attack",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            108,
+            16,
+            72
+          ]
+        },
+        "params": {
+          "piers": 4,
+          "ships": "fill"
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "distance": "hellas_metropolis",
+            "min": 10,
+            "max": 40
+          }
+        ],
+        "tags": [
+          "precinct",
+          "harbour"
+        ]
+      },
+      {
+        "id": "the_leviathan",
+        "kind": "generator",
+        "generator": "authored:leviathan_beast",
+        "label": "the giant abyssal leviathan rising in the bay",
+        "params": {
+          "seat": "wade",
+          "face": {
+            "toward": "hellas_metropolis"
+          }
+        },
+        "constraints": [
+          {
+            "on": "@terrain:coastline",
+            "band": 36
+          },
+          {
+            "distance": "hellas_metropolis",
+            "min": 24,
+            "max": 75
+          }
+        ],
+        "tags": [
+          "landmark",
+          "monster"
+        ]
+      },
+      {
+        "id": "the_colossus",
+        "kind": "generator",
+        "generator": "authored:colossal_poseidon_statue",
+        "label": "the guardian Poseidon statue defending the harbour mouth",
+        "params": {
+          "seat": "pad",
+          "face": {
+            "toward": "the_leviathan"
+          }
+        },
+        "constraints": [
+          {
+            "at": [
+              0.68,
+              0.42
+            ]
+          },
+          {
+            "distance": "hellas_metropolis",
+            "min": 14,
+            "max": 40
+          }
+        ],
+        "tags": [
+          "landmark",
+          "colossus"
+        ]
+      },
+      {
+        "id": "invading_pack",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "the swarm of sea monsters breaching in the bay",
+        "params": {
+          "program": "sea_monster",
+          "count": 12,
+          "area": {
+            "zone": "north",
+            "radius": 0.42
+          },
+          "seat": "wade",
+          "spacing": 26,
+          "face": {
+            "toward": "hellas_metropolis"
+          }
+        }
+      },
+      {
+        "id": "coastal_defense_lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "arterial boulevards and emergency defense lanes connecting city to harbour",
+        "params": {
+          "anchors": [
+            "hellas_metropolis",
+            "harbour_precinct",
+            "the_colossus"
+          ],
+          "pattern": "grid",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 14
+        }
+      },
+      {
+        "id": "waterfront_barricade",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "military barricades erected across the primary coastal avenue",
+        "params": {
+          "entry": "barricade_line",
+          "route": {
+            "across": "hellas_metropolis"
+          }
+        }
+      },
+      {
+        "id": "coastal_artillery",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "defensive battery lines arrayed along the waterfront boulevard",
+        "params": {
+          "entry": "cannon_battery",
+          "route": {
+            "along": "coastal_defense_lanes",
+            "offset": 4,
+            "side": "left"
+          }
+        }
+      },
+      {
+        "id": "bay_buoy_north",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "buoy",
+          "zone": "northwest"
+        }
+      },
+      {
+        "id": "bay_buoy_center",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "buoy",
+          "zone": "north"
+        }
+      },
+      {
+        "id": "coastal_monolith",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "monolith",
+          "zone": "northeast"
+        }
+      },
+      {
+        "id": "mediterranean_woods",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "coastal pine, cypress, and oak groves along the hillsides",
+        "params": {
+          "area": {
+            "at": [
+              0.82,
+              0.62
+            ],
+            "radius": 110
+          },
+          "density": 0.18,
+          "spacing": 3,
+          "clumping": 0.45,
+          "maxSlope": 32,
+          "elevation": [
+            2,
+            90
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "undergrowth": {
+            "grass": 0.4,
+            "flowers": 0.08,
+            "deadwood": 0.02
+          },
+          "species": [
+            {
+              "id": "cypress",
+              "shape": "larch_columnar",
+              "weight": 3
+            },
+            {
+              "id": "coastal_pine",
+              "shape": "spruce_tall",
+              "weight": 2
+            },
+            {
+              "id": "ancient_oak",
+              "shape": "oak_spreading",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "wilderness_trees",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse background vegetation across the open grounds",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 34,
+          "elevation": [
+            2,
+            100
+          ],
+          "edgeFalloff": 12,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "species": [
+            {
+              "id": "sparse_pine",
+              "shape": "spruce_squat",
+              "weight": 1
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

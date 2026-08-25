@@ -1,0 +1,222 @@
+{
+  "id": "pirate_unicorn_isles",
+  "family": "pirates_v_unicorns",
+  "kit": "settlement",
+  "prompt": "A pirate island and a unicorn island, at war.",
+  "seed": 301,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "cache",
+    "value": {
+      "climate": {
+        "temperature": 0.6,
+        "humidity": 0.3,
+        "snow": "never"
+      },
+      "tokens": {
+        "terrain": "two distinct islands separated by a contested strait of open water",
+        "event_direction": "pirate sloops and coastal cannon batteries facing across the strait at the fortified unicorn island",
+        "infra": "cannon_battery along the pirate shore; beacon_tower and defensive_barricade along the unicorn island coastline",
+        "region_pirate_island": "era renaissance, wealth 0.35, decline 0.4, formality 0.15; materialTheme temperate_timber; formPacks [nautical_pirate]; prefer archetypes tavern, watchtower, warehouse, lighthouse; props galleon, cart; fortified buccaneer cove, ship repair yards, coastal artillery",
+        "region_unicorn_island": "era renaissance, wealth 0.85, decline 0.05, formality 0.75; materialTheme white_quartz; prefer archetypes church, manor, watchtower; props standing_stones, fountain; sacred unicorn pastures, pristine defensive ramparts and magical shrine towers"
+      }
+    }
+  },
+  "intentUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "reasoningTokens": 0,
+    "cost": 0,
+    "cached": true
+  },
+  "modules": {
+    "dir": "docs/kits/modules",
+    "selected": [
+      "1-document-skeleton (always)",
+      "2-coordinates-and-zones (always)",
+      "building-grammar (settlement)",
+      "district (settlement)",
+      "road-network (settlement)",
+      "the-plaza (settlement)",
+      "11-worked-settlement-fragments (settlement)",
+      "two-regions-in-one-world (two places)",
+      "precinct-harbour (water)"
+    ],
+    "used": [
+      "1-document-skeleton",
+      "2-coordinates-and-zones",
+      "building-grammar",
+      "district",
+      "road-network",
+      "the-plaza",
+      "11-worked-settlement-fragments",
+      "two-regions-in-one-world",
+      "precinct-harbour"
+    ],
+    "missing": [],
+    "bytes": 15242
+  },
+  "kitFile": "docs/kits/settlement-core.md",
+  "menu": {
+    "injected": false,
+    "reason": "flag off"
+  },
+  "attempts": 3,
+  "diagnostics": [
+    [
+      {
+        "code": "LOAM-T004",
+        "name": "EDIT_NOT_UNDER_HEIGHTFIELD",
+        "severity": "error",
+        "nodePath": "world.heightfield.island_pirate"
+      },
+      {
+        "code": "LOAM-T004",
+        "name": "EDIT_NOT_UNDER_HEIGHTFIELD",
+        "severity": "error",
+        "nodePath": "world.heightfield.island_unicorn"
+      },
+      {
+        "code": "LOAM-T004",
+        "name": "EDIT_NOT_UNDER_HEIGHTFIELD",
+        "severity": "error",
+        "nodePath": "world.heightfield.peak_unicorn"
+      },
+      {
+        "code": "LOAM-T004",
+        "name": "EDIT_NOT_UNDER_HEIGHTFIELD",
+        "severity": "error",
+        "nodePath": "world.heightfield.pirate_cove"
+      }
+    ],
+    [
+      {
+        "code": "LOAM-T008",
+        "name": "UNKNOWN_KEY",
+        "severity": "error",
+        "nodePath": "world.heightfield.island_pirate.params"
+      },
+      {
+        "code": "LOAM-T008",
+        "name": "UNKNOWN_KEY",
+        "severity": "error",
+        "nodePath": "world.heightfield.island_unicorn.params"
+      },
+      {
+        "code": "LOAM-T008",
+        "name": "UNKNOWN_KEY",
+        "severity": "error",
+        "nodePath": "world.heightfield.peak_unicorn.params"
+      },
+      {
+        "code": "LOAM-T008",
+        "name": "UNKNOWN_KEY",
+        "severity": "error",
+        "nodePath": "world.heightfield.pirate_cove.params"
+      }
+    ],
+    []
+  ],
+  "usage": {
+    "promptTokens": 258386,
+    "completionTokens": 25202,
+    "reasoningTokens": 11776,
+    "cost": 0.1192804875
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 24,
+    "maxDepth": 2,
+    "generators": [
+      "authored:pirate_flagship",
+      "authored:unicorn_colossus",
+      "building.grammar@0",
+      "precinct.farm@0",
+      "precinct.harbour@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "beacon_spire",
+      "cathedral",
+      "church",
+      "cloister",
+      "cooperage",
+      "cottage",
+      "courtyard_house",
+      "crystal_shrine",
+      "hall",
+      "library",
+      "manor_house",
+      "sawmill",
+      "tannery",
+      "tavern",
+      "temple",
+      "warehouse",
+      "watchtower"
+    ],
+    "archetypesInCatalog": 17,
+    "formPacks": [
+      "arcane_magical",
+      "nautical_pirate"
+    ],
+    "props": [
+      "galleon",
+      "portal_frame",
+      "standing_stones"
+    ],
+    "species": [
+      "birch",
+      "cherry",
+      "dark_oak",
+      "oak",
+      "spruce"
+    ],
+    "envelopes": [
+      "512x512",
+      "130x130",
+      "15x12x13",
+      "130x130",
+      "15x18x21",
+      "80x16x60",
+      "70x70",
+      "16x26x16",
+      "36x24x14",
+      "7x19x7",
+      "9x21x9"
+    ],
+    "constraints": 18,
+    "constraintKinds": [
+      "at",
+      "blend",
+      "distance",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform"
+    ],
+    "constraintsWithStrength": 6,
+    "hardConstraints": 0,
+    "forests": 3,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 4,
+    "programReferences": 2,
+    "conformsTrue": 0,
+    "labels": 12,
+    "eras": [
+      "renaissance",
+      "renaissance",
+      "renaissance"
+    ],
+    "bytes": 9359
+  },
+  "wallMs": 136010
+}

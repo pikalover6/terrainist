@@ -1,0 +1,189 @@
+{
+  "id": "walled_medieval_city",
+  "family": "new/set-piece",
+  "kit": "settlement",
+  "prompt": "A walled medieval city on a hill, its castle keep above the rooftops.",
+  "seed": 311,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "cache",
+    "value": {
+      "era": "medieval",
+      "wealth": 0.5,
+      "decline": 0.1,
+      "formality": 0.4,
+      "character": {
+        "label": "walled hill city",
+        "materialTheme": "temperate_timber",
+        "fortification": "walled",
+        "archetypes": {
+          "prefer": [
+            "manor",
+            "watchtower",
+            "tavern",
+            "church",
+            "granary"
+          ]
+        },
+        "motifs": {
+          "roofType": "gable",
+          "massing": "stepped"
+        },
+        "urbanForm": "hillside",
+        "ground": "stepped",
+        "courtyards": 0.4
+      },
+      "tokens": {
+        "terrain": "a prominent hill rising above the surrounding country",
+        "icons": "a towering stone castle keep crowning the peak above dense medieval rooftops, enclosed by circuit walls with gatehouses and towers"
+      }
+    }
+  },
+  "intentUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "reasoningTokens": 0,
+    "cost": 0,
+    "cached": true
+  },
+  "modules": {
+    "dir": "docs/kits/modules",
+    "selected": [
+      "1-document-skeleton (always)",
+      "2-coordinates-and-zones (always)",
+      "building-grammar (settlement)",
+      "district (settlement)",
+      "road-network (settlement)",
+      "the-plaza (settlement)",
+      "11-worked-settlement-fragments (settlement)",
+      "city (urbanForm hillside)",
+      "the-urban-forms (city forms)",
+      "9c-infra-entry (walled)",
+      "the-entries-and-one-worked-example-each (walled)",
+      "multi-level-ground (walled)",
+      "bespoke-programs-must-belong-to-the-worl (icons)",
+      "how-to-write-the-request (icons)",
+      "what-you-get-back-and-what-to-do-with-it (icons)",
+      "seating-how-a-grounded-thing-meets-the-g (icons)",
+      "facing-which-way-it-looks (icons)"
+    ],
+    "used": [
+      "1-document-skeleton",
+      "2-coordinates-and-zones",
+      "building-grammar",
+      "district",
+      "road-network",
+      "the-plaza",
+      "11-worked-settlement-fragments",
+      "city",
+      "the-urban-forms",
+      "9c-infra-entry",
+      "the-entries-and-one-worked-example-each",
+      "multi-level-ground",
+      "bespoke-programs-must-belong-to-the-worl",
+      "how-to-write-the-request",
+      "what-you-get-back-and-what-to-do-with-it",
+      "seating-how-a-grounded-thing-meets-the-g",
+      "facing-which-way-it-looks"
+    ],
+    "missing": [],
+    "bytes": 22603
+  },
+  "kitFile": "docs/kits/settlement-core.md",
+  "menu": {
+    "injected": false,
+    "reason": "flag off"
+  },
+  "attempts": 2,
+  "diagnostics": [
+    [
+      {
+        "code": "LOAM-T010",
+        "name": "BAD_TYPE",
+        "severity": "error",
+        "nodePath": "world.lowland_woods.params.strata"
+      }
+    ],
+    []
+  ],
+  "usage": {
+    "promptTokens": 164594,
+    "completionTokens": 11102,
+    "reasoningTokens": 5347,
+    "cost": 0.057669975
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 15,
+    "maxDepth": 2,
+    "generators": [
+      "building.grammar@0",
+      "precinct.farm@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "bakery",
+      "church",
+      "cottage",
+      "guildhall",
+      "inn",
+      "keep",
+      "manor_house",
+      "shop_row",
+      "tavern",
+      "terraced_row",
+      "townhouse",
+      "watchtower"
+    ],
+    "archetypesInCatalog": 12,
+    "formPacks": [],
+    "props": [],
+    "species": [
+      "round_oak",
+      "slim_birch",
+      "spreading_oak",
+      "tall_beech"
+    ],
+    "envelopes": [
+      "512x512",
+      "210x210",
+      "15x24x15",
+      "13x17x19",
+      "13x14x15",
+      "80x80",
+      "7x19x7"
+    ],
+    "constraints": 6,
+    "constraintKinds": [
+      "at",
+      "blend",
+      "distance",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform",
+      "zone"
+    ],
+    "constraintsWithStrength": 1,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 4,
+    "programReferences": 0,
+    "conformsTrue": 0,
+    "labels": 7,
+    "eras": [
+      "medieval"
+    ],
+    "bytes": 4942
+  },
+  "wallMs": 61145
+}

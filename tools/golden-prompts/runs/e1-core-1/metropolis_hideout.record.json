@@ -1,0 +1,278 @@
+{
+  "id": "metropolis_hideout",
+  "family": "metropolis_hideout",
+  "kit": "settlement",
+  "prompt": "A high-tech apocalyptic hideout in the massively overgrown ruins of a metropolis.",
+  "seed": 304,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "cache",
+    "value": {
+      "era": "far_future",
+      "wealth": 0.4,
+      "decline": 0.9,
+      "formality": 0.3,
+      "climate": {
+        "humidity": 0.7
+      },
+      "character": {
+        "label": "overgrown post-apocalyptic high-tech hideout",
+        "materialTheme": "modern_city",
+        "formPacks": [
+          "alien_scifi"
+        ],
+        "archetypes": {
+          "prefer": [
+            "bunker_complex",
+            "laboratory",
+            "field_station",
+            "hydroponics_bay",
+            "watchtower",
+            "office",
+            "apartment_block"
+          ],
+          "forbid": [
+            "cottage",
+            "manor",
+            "tavern",
+            "church",
+            "windmill"
+          ]
+        },
+        "flora": {
+          "prefer": [
+            "understory",
+            "emergent",
+            "old_growth"
+          ]
+        },
+        "motifs": {
+          "massing": "blocky",
+          "windowRhythm": "sparse"
+        },
+        "urbanForm": "grid"
+      },
+      "tokens": {
+        "fittings": "blast_door on the bunker_complex; airlock_vestibule on the laboratory",
+        "infra": "barricade_line across the fractured boulevard; quarantine_fence around the reinforced perimeter",
+        "terrain": "a ruined metropolis grid of shattered skyscrapers and collapsed elevated roads choked with deep canopy forest and dense undergrowth",
+        "icons": "a reinforced high-tech hideout nestled in the hollow base of a ruined skyscraper; solar panels and satellite dishes tangled in vines; defensive floodlights and sensor towers hidden in the foliage"
+      }
+    }
+  },
+  "intentUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "reasoningTokens": 0,
+    "cost": 0,
+    "cached": true
+  },
+  "kitFile": "docs/kits/settlement-core.md",
+  "menu": {
+    "injected": false,
+    "reason": "flag off"
+  },
+  "attempts": 3,
+  "diagnostics": [
+    [
+      {
+        "code": "LOAM-T009",
+        "name": "MISSING_KEY",
+        "severity": "error",
+        "nodePath": ""
+      },
+      {
+        "code": "LOAM-T004",
+        "name": "EDIT_NOT_UNDER_HEIGHTFIELD",
+        "severity": "error",
+        "nodePath": "root.terrain_heightfield.city_shelf"
+      },
+      {
+        "code": "LOAM-T004",
+        "name": "EDIT_NOT_UNDER_HEIGHTFIELD",
+        "severity": "error",
+        "nodePath": "root.terrain_heightfield.ruined_canal"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "root.main_command_bunker"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "root.research_laboratory"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "root.hydroponics_facility"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "root.power_battery_shed"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "root.perimeter_watchtower"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "root.secure_checkpoint"
+      },
+      {
+        "code": "LOAM-T008",
+        "name": "UNKNOWN_KEY",
+        "severity": "error",
+        "nodePath": "root.solar_power_array"
+      },
+      {
+        "code": "LOAM-T008",
+        "name": "UNKNOWN_KEY",
+        "severity": "error",
+        "nodePath": "root.solar_power_array.params"
+      },
+      {
+        "code": "LOAM-T008",
+        "name": "UNKNOWN_KEY",
+        "severity": "error",
+        "nodePath": "root.energy_wind_turbine"
+      },
+      {
+        "code": "LOAM-T008",
+        "name": "UNKNOWN_KEY",
+        "severity": "error",
+        "nodePath": "root.energy_wind_turbine.params"
+      },
+      {
+        "code": "LOAM-T008",
+        "name": "UNKNOWN_KEY",
+        "severity": "error",
+        "nodePath": "root.hideout_helipad"
+      }
+    ],
+    [
+      {
+        "code": "LOAM-T101",
+        "name": "BAD_ENUM",
+        "severity": "error",
+        "nodePath": "world_root.solar_power_array.params"
+      },
+      {
+        "code": "LOAM-T101",
+        "name": "BAD_ENUM",
+        "severity": "error",
+        "nodePath": "world_root.energy_wind_turbine.params"
+      }
+    ],
+    []
+  ],
+  "usage": {
+    "promptTokens": 247768,
+    "completionTokens": 32228,
+    "reasoningTokens": 16784,
+    "cost": 0.1257097125
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 23,
+    "maxDepth": 2,
+    "generators": [
+      "building.grammar@0",
+      "infra.entry@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "apartment_block",
+      "battery_shed",
+      "brutalist_block",
+      "bunker_complex",
+      "checkpoint",
+      "cottage",
+      "data_center",
+      "greenhouse",
+      "laboratory",
+      "office",
+      "parking_garage",
+      "skyscraper",
+      "subway_station",
+      "watchtower"
+    ],
+    "archetypesInCatalog": 14,
+    "formPacks": [
+      "alien_scifi"
+    ],
+    "props": [
+      "helipad",
+      "solar_array",
+      "wind_turbine"
+    ],
+    "species": [
+      "choked_birch",
+      "hanging_willow",
+      "overgrown_oak",
+      "wild_oak"
+    ],
+    "envelopes": [
+      "512x512",
+      "260x220",
+      "16x36x16",
+      "13x11x15",
+      "15x12x17",
+      "24x24",
+      "13x11x13",
+      "13x12x17",
+      "11x8x11",
+      "13x12x15",
+      "7x19x7",
+      "11x11x11"
+    ],
+    "constraints": 22,
+    "constraintKinds": [
+      "adjacent_to",
+      "at",
+      "blend",
+      "connected",
+      "distance",
+      "facing",
+      "gap",
+      "max",
+      "min",
+      "reference",
+      "style",
+      "terrain_conform",
+      "via"
+    ],
+    "constraintsWithStrength": 6,
+    "hardConstraints": 0,
+    "forests": 1,
+    "forestFillsAtOrAboveCoverage": 1,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 9,
+    "programReferences": 0,
+    "conformsTrue": 0,
+    "labels": 0,
+    "eras": [
+      "far_future"
+    ],
+    "bytes": 8942
+  },
+  "wallMs": 163604
+}

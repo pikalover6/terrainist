@@ -1,0 +1,449 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "walled_medieval_hill_city",
+    "worldSeed": 311,
+    "prompt": "A walled medieval city on a hill, its castle keep above the rooftops.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.5,
+    "decline": 0.1,
+    "formality": 0.4,
+    "character": {
+      "label": "walled hill city",
+      "materialTheme": "temperate_timber",
+      "fortification": "walled",
+      "archetypes": {
+        "prefer": [
+          "manor",
+          "watchtower",
+          "tavern",
+          "church",
+          "granary"
+        ]
+      },
+      "motifs": {
+        "roofType": "gable",
+        "massing": "stepped"
+      },
+      "urbanForm": "hillside",
+      "ground": "stepped",
+      "courtyards": 0.4
+    },
+    "tokens": {
+      "terrain": "a prominent hill rising above the surrounding country",
+      "icons": "a towering stone castle keep crowning the peak above dense medieval rooftops, enclosed by circuit walls with gatehouses and towers"
+    }
+  },
+  "style": {
+    "palettes": {}
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "base_terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "params": {
+          "baseHeight": 68,
+          "amplitude": 16,
+          "frequency": 0.0035,
+          "erosionPasses": 2
+        },
+        "children": [
+          {
+            "id": "city_hill_flank",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 135,
+              "height": 30,
+              "rim": 8,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "keep_hill_summit",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "peak",
+              "at": [
+                0.5,
+                0.48
+              ],
+              "radius": 48,
+              "height": 18,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "lowland_valley",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.12,
+                  0.15
+                ],
+                [
+                  0.22,
+                  0.5
+                ],
+                [
+                  0.15,
+                  0.85
+                ]
+              ],
+              "width": 36,
+              "depth": 10,
+              "flooded": "never"
+            }
+          }
+        ]
+      },
+      {
+        "id": "regional_climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate"
+        }
+      },
+      {
+        "id": "lowland_woods",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "params": {
+          "area": {
+            "zone": "southwest"
+          },
+          "density": 0.16,
+          "species": [
+            {
+              "id": "spreading_oak",
+              "shape": "oak_spreading",
+              "weight": 3
+            },
+            {
+              "id": "tall_beech",
+              "shape": "beech_giant",
+              "weight": 1
+            }
+          ],
+          "strata": true,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ]
+        }
+      },
+      {
+        "id": "wilds_scatter",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "species": [
+            {
+              "id": "round_oak",
+              "shape": "oak_round"
+            },
+            {
+              "id": "slim_birch",
+              "shape": "birch_slim"
+            }
+          ],
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ]
+        }
+      },
+      {
+        "id": "hill_city",
+        "kind": "district",
+        "label": "the walled medieval hill city",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            210,
+            210
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.5,
+              0.5
+            ]
+          }
+        ],
+        "params": {
+          "fabric": "hillside",
+          "density": "medium",
+          "blockSize": 36,
+          "courtyards": 0.4,
+          "ground": "stepped",
+          "mix": [
+            "townhouse",
+            "terraced_row",
+            "shop_row",
+            "tavern",
+            "inn",
+            "bakery",
+            "guildhall",
+            "church",
+            "manor_house"
+          ],
+          "walls": {
+            "style": "masonry",
+            "margin": 10,
+            "towerPitch": 36,
+            "height": 7,
+            "gates": true
+          }
+        },
+        "tags": [
+          "city",
+          "urban",
+          "fortified"
+        ],
+        "children": [
+          {
+            "id": "the_great_keep",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the massive castle keep rising high above the rooftops",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                15,
+                24,
+                15
+              ]
+            },
+            "params": {
+              "archetype": "keep",
+              "floors": 2,
+              "roof": "flat",
+              "basement": {
+                "depth": 5,
+                "style": "vault"
+              }
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "keep",
+              "house"
+            ]
+          },
+          {
+            "id": "city_minster",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the prominent church in the upper city",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                17,
+                19
+              ]
+            },
+            "params": {
+              "archetype": "church",
+              "floors": 2,
+              "roof": "gable"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "west",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "civic"
+            ]
+          },
+          {
+            "id": "moot_hall",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the municipal guildhall",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                14,
+                15
+              ]
+            },
+            "params": {
+              "archetype": "guildhall",
+              "floors": 1
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "civic"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "valley_crofts",
+        "kind": "generator",
+        "generator": "precinct.farm@0",
+        "label": "the supporting agricultural fields in the valley",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            80,
+            80
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "southwest"
+          },
+          {
+            "distance": "hill_city",
+            "min": 24,
+            "max": 75
+          }
+        ],
+        "params": {
+          "parcels": 5,
+          "parcelSize": 16,
+          "edge": "wall",
+          "crops": [
+            "wheat",
+            "carrots",
+            "potatoes",
+            "pasture"
+          ]
+        },
+        "tags": [
+          "farm",
+          "precinct"
+        ]
+      },
+      {
+        "id": "valley_watchtower",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "an outlying watchtower overlooking the valley road",
+        "optional": true,
+        "envelope": {
+          "shape": "box",
+          "size": [
+            7,
+            19,
+            7
+          ]
+        },
+        "params": {
+          "archetype": "watchtower",
+          "floors": 2,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "zone": "south"
+          },
+          {
+            "distance": "hill_city",
+            "min": 35,
+            "max": 90,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "max",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "lookout",
+          "landmark"
+        ]
+      },
+      {
+        "id": "approach_roads",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "arterials climbing the hill to the city gates and valley holdings",
+        "params": {
+          "anchors": [
+            "hill_city",
+            "valley_crofts",
+            "valley_watchtower"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 16
+        }
+      }
+    ]
+  }
+}

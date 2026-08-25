@@ -1,0 +1,127 @@
+{
+  "id": "fjord_terrain",
+  "family": "new/terrain-only",
+  "kit": "terrain",
+  "prompt": "A deep fjord cutting inland between pine ridges, its water open to the sea.",
+  "seed": 314,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "cache",
+    "value": {
+      "climate": {
+        "biome": "minecraft:old_growth_pine_taiga",
+        "temperature": -0.3,
+        "humidity": 0.5
+      },
+      "character": {
+        "label": "pine fjord",
+        "materialTheme": "boreal_pine",
+        "flora": {
+          "prefer": [
+            "spruce_tall",
+            "conifer",
+            "old_growth"
+          ]
+        }
+      },
+      "tokens": {
+        "terrain": "a deep fjord cutting inland between steep pine-covered ridges, opening to the open sea"
+      }
+    }
+  },
+  "intentUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "reasoningTokens": 0,
+    "cost": 0,
+    "cached": true
+  },
+  "modules": {
+    "dir": "docs/kits/modules",
+    "selected": [
+      "1-document-skeleton (always)",
+      "2-coordinates-and-zones (always)",
+      "3-terrain-heightfield (terrain kit)",
+      "5-terrain-climate (terrain kit)",
+      "6-scatter-forest (terrain kit)",
+      "strata (terrain kit)",
+      "8-worked-terrain-patterns (terrain kit)"
+    ],
+    "used": [
+      "1-document-skeleton",
+      "2-coordinates-and-zones",
+      "3-terrain-heightfield",
+      "5-terrain-climate",
+      "6-scatter-forest",
+      "strata",
+      "8-worked-terrain-patterns"
+    ],
+    "missing": [],
+    "bytes": 4580
+  },
+  "kitFile": "docs/kits/settlement-core.md",
+  "menu": {
+    "injected": false,
+    "reason": "flag off"
+  },
+  "attempts": 2,
+  "diagnostics": [
+    [
+      {
+        "code": "LOAM-T000",
+        "name": "BAD_DOCUMENT",
+        "severity": "error",
+        "nodePath": ""
+      }
+    ],
+    []
+  ],
+  "usage": {
+    "promptTokens": 149515,
+    "completionTokens": 6132,
+    "reasoningTokens": 2411,
+    "cost": 0.06756562499999999
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 8,
+    "maxDepth": 2,
+    "generators": [
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [],
+    "archetypesInCatalog": 0,
+    "formPacks": [],
+    "props": [],
+    "species": [
+      "columnar_larch",
+      "squat_spruce",
+      "tall_spruce",
+      "wild_pine",
+      "wild_squat"
+    ],
+    "envelopes": [
+      "512x512"
+    ],
+    "constraints": 0,
+    "constraintKinds": [],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 1,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 0,
+    "programReferences": 0,
+    "conformsTrue": 0,
+    "labels": 5,
+    "eras": [],
+    "bytes": 3177
+  },
+  "wallMs": 38153
+}

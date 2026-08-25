@@ -1,0 +1,150 @@
+{
+  "id": "desert_wilderness",
+  "family": "new/terrain-only",
+  "kit": "terrain",
+  "prompt": "A vast salt desert under a hard sun, cracked flat to the horizon, with nothing living on it.",
+  "seed": 313,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "cache",
+    "value": {
+      "climate": {
+        "biome": "minecraft:desert",
+        "temperature": 1,
+        "humidity": -1,
+        "snow": "never"
+      },
+      "character": {
+        "label": "salt desert"
+      },
+      "tokens": {
+        "terrain": "a vast, cracked salt flat stretching flat to the horizon under a hard sun; barren expanse with no vegetation, water, or living structures"
+      }
+    }
+  },
+  "intentUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "reasoningTokens": 0,
+    "cost": 0,
+    "cached": true
+  },
+  "kitFile": "docs/kits/settlement-core.md",
+  "menu": {
+    "injected": false,
+    "reason": "flag off"
+  },
+  "attempts": 2,
+  "diagnostics": [
+    [
+      {
+        "code": "LOAM-T000",
+        "name": "BAD_DOCUMENT",
+        "severity": "error",
+        "nodePath": ""
+      },
+      {
+        "code": "LOAM-T106",
+        "name": "BAD_PALETTE",
+        "severity": "error",
+        "nodePath": "style.palettes.ground.surface"
+      },
+      {
+        "code": "LOAM-T106",
+        "name": "BAD_PALETTE",
+        "severity": "error",
+        "nodePath": "style.palettes.ground.surface"
+      },
+      {
+        "code": "LOAM-T106",
+        "name": "BAD_PALETTE",
+        "severity": "error",
+        "nodePath": "style.palettes.ground.surface"
+      },
+      {
+        "code": "LOAM-T106",
+        "name": "BAD_PALETTE",
+        "severity": "error",
+        "nodePath": "style.palettes.ground.subsurface"
+      },
+      {
+        "code": "LOAM-T106",
+        "name": "BAD_PALETTE",
+        "severity": "error",
+        "nodePath": "style.palettes.ground.subsurface"
+      },
+      {
+        "code": "LOAM-T106",
+        "name": "BAD_PALETTE",
+        "severity": "error",
+        "nodePath": "style.palettes.ground.subsurface"
+      },
+      {
+        "code": "LOAM-T001",
+        "name": "GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.heightfield"
+      },
+      {
+        "code": "LOAM-T001",
+        "name": "GENERATOR_NOT_IN_PROFILE",
+        "severity": "error",
+        "nodePath": "root.climate"
+      },
+      {
+        "code": "LOAM-T003",
+        "name": "GENERATOR_CARDINALITY",
+        "severity": "error",
+        "nodePath": "root"
+      },
+      {
+        "code": "LOAM-T003",
+        "name": "GENERATOR_CARDINALITY",
+        "severity": "error",
+        "nodePath": "root"
+      }
+    ],
+    []
+  ],
+  "usage": {
+    "promptTokens": 144523,
+    "completionTokens": 5498,
+    "reasoningTokens": 4056,
+    "cost": 0.06450487499999999
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 4,
+    "maxDepth": 2,
+    "generators": [
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [],
+    "archetypesInCatalog": 0,
+    "formPacks": [],
+    "props": [],
+    "species": [],
+    "envelopes": [
+      "512x512"
+    ],
+    "constraints": 0,
+    "constraintKinds": [],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 0,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 0,
+    "programReferences": 0,
+    "conformsTrue": 0,
+    "labels": 0,
+    "eras": [],
+    "bytes": 1352
+  },
+  "wallMs": 36199
+}

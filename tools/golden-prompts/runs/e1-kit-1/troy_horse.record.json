@@ -1,0 +1,186 @@
+{
+  "id": "troy_horse",
+  "family": "troy",
+  "kit": "settlement",
+  "prompt": "The Trojan horse in Troy, right before the soldiers emerge.",
+  "seed": 303,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "cache",
+    "value": {
+      "era": "ancient",
+      "wealth": 0.7,
+      "decline": 0.1,
+      "formality": 0.6,
+      "event": {
+        "kind": "siege",
+        "severity": 0.9,
+        "recency": 0
+      },
+      "climate": {
+        "temperature": 0.7,
+        "humidity": -0.2,
+        "snow": "never"
+      },
+      "character": {
+        "label": "Walled Troy under the Greek stratagem",
+        "materialTheme": "sun_clay",
+        "fortification": "walled",
+        "formPacks": [
+          "classical_mediterranean"
+        ],
+        "archetypes": {
+          "prefer": [
+            "peristyle_house",
+            "megaron",
+            "stoa",
+            "peripteral_temple",
+            "palaestra",
+            "olive_press"
+          ],
+          "forbid": [
+            "townhouse",
+            "terraced_row",
+            "shop_row",
+            "office",
+            "apartment_block"
+          ]
+        },
+        "motifs": {
+          "roofType": "flat",
+          "massing": "stepped",
+          "windowRhythm": "sparse",
+          "ornamentDensity": 0.4
+        },
+        "urbanForm": "grown",
+        "courtyards": 0.6,
+        "ground": "stepped"
+      },
+      "tokens": {
+        "terrain": "a walled citadel city on a coastal rise above a sandy plain; the Aegean shore and open sea in view",
+        "icons": "the colossal wooden Trojan horse brought inside the Scaean gate; monumental stone ramparts and watchtowers; royal megaron palace overlooking the city; abandoned Greek camp and beached ship hulls on the distant shore",
+        "event_direction": "Greek soldiers concealed inside the belly of the wooden horse waiting for midnight to open the gates to the returning fleet"
+      }
+    }
+  },
+  "intentUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "reasoningTokens": 0,
+    "cost": 0,
+    "cached": true
+  },
+  "menu": {
+    "injected": false,
+    "reason": "flag off"
+  },
+  "attempts": 2,
+  "diagnostics": [
+    [
+      {
+        "code": "LOAM-T210",
+        "name": "DISTRICT_PARAM",
+        "severity": "error",
+        "nodePath": "world.troy_citadel.params"
+      },
+      {
+        "code": "LOAM-T231",
+        "name": "INFRA_ENTRY_PARAM",
+        "severity": "error",
+        "nodePath": "world.procession_track.params.route"
+      }
+    ],
+    []
+  ],
+  "usage": {
+    "promptTokens": 176423,
+    "completionTokens": 13666,
+    "reasoningTokens": 5478,
+    "cost": 0.0641488875
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 22,
+    "maxDepth": 2,
+    "generators": [
+      "authored:trojan_horse",
+      "building.grammar@0",
+      "infra.entry@0",
+      "precinct.farm@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "armory",
+      "castle",
+      "church",
+      "cottage",
+      "courtyard_house",
+      "gatehouse",
+      "granary",
+      "hall",
+      "kiln",
+      "megaron",
+      "olive_press",
+      "peripteral_temple",
+      "peristyle_house",
+      "stoa",
+      "temple"
+    ],
+    "archetypesInCatalog": 15,
+    "formPacks": [
+      "classical_mediterranean"
+    ],
+    "props": [
+      "cairn",
+      "campsite",
+      "longship",
+      "pier"
+    ],
+    "species": [
+      "aegean_oak",
+      "coastal_juniper",
+      "hill_pine",
+      "plain_oak",
+      "shrub_hazel"
+    ],
+    "envelopes": [
+      "512x512",
+      "210x190",
+      "15x16x19",
+      "15x17x21",
+      "13x15x11",
+      "11x12x17",
+      "100x84"
+    ],
+    "constraints": 5,
+    "constraintKinds": [
+      "at",
+      "distance",
+      "max",
+      "min",
+      "zone"
+    ],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 4,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 21,
+    "eras": [
+      "ancient"
+    ],
+    "bytes": 8478
+  },
+  "wallMs": 78870
+}

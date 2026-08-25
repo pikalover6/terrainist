@@ -1,0 +1,596 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "hellenist_sea_siege",
+    "worldSeed": 305,
+    "prompt": "A modern Hellenist city being invaded by sea monsters.",
+    "spawn": {
+      "at": [
+        0.5,
+        0.62
+      ]
+    }
+  },
+  "style": {
+    "palettes": {
+      "plaza.path": "minecraft:smooth_quartz",
+      "plaza.cobble": "minecraft:quartz_block",
+      "plaza.border": "minecraft:smooth_quartz_stairs",
+      "road.surface": "minecraft:polished_andesite",
+      "road.shoulder": "minecraft:smooth_stone",
+      "ground.beach": "minecraft:sand"
+    }
+  },
+  "intent": {
+    "era": "modern",
+    "wealth": 0.8,
+    "formality": 0.75,
+    "event": {
+      "kind": "siege",
+      "severity": 0.85,
+      "recency": 0
+    },
+    "climate": {
+      "temperature": 0.6,
+      "humidity": 0.2,
+      "snow": "never"
+    },
+    "character": {
+      "label": "modern Hellenist coastal metropolis under sea monster siege",
+      "materialTheme": "modern_city",
+      "formPacks": [
+        "classical_mediterranean"
+      ],
+      "archetypes": {
+        "prefer": [
+          "stoa",
+          "peripteral_temple",
+          "bouleuterion",
+          "palaestra",
+          "nymphaeum"
+        ],
+        "forbid": [
+          "witch_hut",
+          "igloo",
+          "yurt",
+          "fachwerk_barn"
+        ]
+      },
+      "urbanForm": "grid",
+      "motifs": {
+        "roofType": "flat",
+        "massing": "blocky",
+        "windowRhythm": "regular",
+        "ornamentDensity": 0.6
+      },
+      "programs": [
+        {
+          "id": "leviathan_beast",
+          "mode": "landmark",
+          "brief": "A colossal multi-eyed sea leviathan breaching out of the ocean waves with massive jaws, barnacle-encrusted scales, and glowing bioluminescent spines towering over the harbour quays.",
+          "envelope": [
+            48,
+            40,
+            48
+          ]
+        },
+        {
+          "id": "sea_monster",
+          "mode": "plugin",
+          "brief": "A serpentine sea beast lunging upward through foaming water towards the city quays, maw agape with jagged teeth and dorsal fins.",
+          "envelope": [
+            16,
+            20,
+            16
+          ],
+          "count": 10
+        },
+        {
+          "id": "tentacle_spire",
+          "mode": "plugin",
+          "brief": "A massive muscular cephalopod tentacle erupting from the sea, coiled and slick with dark suckers, thrashing toward the shoreline.",
+          "envelope": [
+            10,
+            26,
+            10
+          ],
+          "count": 14
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "a grand coastal metropolis fronting a deep harbour and open sea where sea monsters surface",
+      "event_direction": "giant sea monsters rise out of the ocean water attacking the harbour and waterfront avenues",
+      "infra": "barricade_line across the harbour promenade; emergency_cordon along the coastal boulevard",
+      "icons": "leviathans and sea monsters breaching along the modern docks; neoclassical porticos and high-rise stoas overlooking the bay; emergency barricades and defensive lines guarding the shore"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "heightfield",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "params": {
+          "baseHeight": 68,
+          "amplitude": 28,
+          "seaLevel": 63,
+          "frequency": 0.003,
+          "erosionPasses": 2,
+          "continentalness": {
+            "frequency": 0.0018,
+            "seaFraction": 0.42
+          },
+          "cliffThreshold": 55,
+          "beachWidth": 6
+        },
+        "children": [
+          {
+            "id": "city_coastal_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.68
+              ],
+              "radius": 135,
+              "height": 10,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "sea_monster_basin",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.5,
+                0.24
+              ],
+              "radius": 115,
+              "depth": 26,
+              "flooded": "auto"
+            }
+          },
+          {
+            "id": "harbour_channel",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.5,
+                  0.44
+                ],
+                [
+                  0.5,
+                  0.2
+                ],
+                "coast"
+              ],
+              "depth": 22,
+              "width": 90,
+              "flooded": "auto"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.002,
+          "humidityFrequency": 0.002
+        }
+      },
+      {
+        "id": "cypress_hills",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "coastal hills with Mediterranean cypress and oak",
+        "params": {
+          "area": {
+            "at": [
+              0.84,
+              0.72
+            ],
+            "radius": 75
+          },
+          "density": 0.12,
+          "spacing": 4,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "species": [
+            {
+              "id": "coastal_oak",
+              "shape": "oak_spreading",
+              "weight": 3
+            },
+            {
+              "id": "pale_cypress",
+              "shape": "birch_slim",
+              "weight": 2
+            },
+            {
+              "id": "scrub",
+              "shape": "juniper_scrub",
+              "weight": 2
+            }
+          ]
+        }
+      },
+      {
+        "id": "wilderness_scatter",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "species": [
+            {
+              "id": "wild_oak",
+              "shape": "oak_round",
+              "weight": 1
+            },
+            {
+              "id": "wild_shrub",
+              "shape": "hazel_shrub",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "leviathan_centerpiece",
+        "kind": "generator",
+        "generator": "authored:leviathan_beast",
+        "label": "the great sea leviathan breaching before the harbour",
+        "params": {
+          "seat": "wade",
+          "face": {
+            "toward": "city"
+          }
+        },
+        "constraints": [
+          {
+            "at": [
+              0.5,
+              0.24
+            ]
+          },
+          {
+            "on": "@terrain:coastline",
+            "band": 40
+          }
+        ]
+      },
+      {
+        "id": "breaching_monsters",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "sea beasts surging in the bay",
+        "params": {
+          "program": "sea_monster",
+          "count": 10,
+          "area": {
+            "at": [
+              0.5,
+              0.28
+            ],
+            "radius": 0.35
+          },
+          "spacing": 26,
+          "seat": "wade",
+          "face": {
+            "toward": "city"
+          },
+          "avoidTags": [
+            "structure",
+            "precinct"
+          ]
+        }
+      },
+      {
+        "id": "tentacle_spires",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "giant tentacles coiling out of the harbour water",
+        "params": {
+          "program": "tentacle_spire",
+          "count": 14,
+          "area": {
+            "at": [
+              0.5,
+              0.34
+            ],
+            "radius": 0.3
+          },
+          "spacing": 18,
+          "seat": "wade",
+          "face": {
+            "toward": "city"
+          }
+        }
+      },
+      {
+        "id": "harbour",
+        "kind": "generator",
+        "generator": "precinct.harbour@0",
+        "label": "the metropolitan waterfront quay and piers",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            96,
+            18,
+            64
+          ]
+        },
+        "params": {
+          "piers": 4,
+          "ships": "fill"
+        },
+        "constraints": [
+          {
+            "at": [
+              0.35,
+              0.44
+            ]
+          },
+          {
+            "on": "@terrain:coastline",
+            "band": 24
+          }
+        ],
+        "tags": [
+          "precinct",
+          "harbour"
+        ]
+      },
+      {
+        "id": "city",
+        "kind": "city",
+        "label": "modern Hellenist coastal metropolis",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            300,
+            220
+          ]
+        },
+        "params": {
+          "size": "large",
+          "coastal": true,
+          "diagonals": 1,
+          "mix": [
+            "stoa",
+            "peripteral_temple",
+            "bouleuterion",
+            "palaestra",
+            "nymphaeum",
+            "skyscraper",
+            "office",
+            "museum",
+            "shopping_mall",
+            "modern_villa",
+            "apartment_block"
+          ],
+          "characters": {
+            "core": [
+              "skyscraper",
+              "office",
+              "department_store",
+              "bouleuterion"
+            ],
+            "waterfront": [
+              "stoa",
+              "palaestra",
+              "museum",
+              "modern_villa"
+            ],
+            "civic": [
+              "peripteral_temple",
+              "bouleuterion",
+              "university_hall",
+              "museum",
+              "nymphaeum"
+            ],
+            "lanes": [
+              "modern_villa",
+              "courtyard_house",
+              "stoa"
+            ]
+          },
+          "setPieces": {
+            "max": 5,
+            "kinds": [
+              "landmark",
+              "promenade",
+              "square",
+              "bridge"
+            ]
+          }
+        },
+        "constraints": [
+          {
+            "at": [
+              0.5,
+              0.68
+            ]
+          }
+        ],
+        "tags": [
+          "city",
+          "urban"
+        ],
+        "children": [
+          {
+            "id": "grand_acropolis_temple",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "monumental neoclassical peripteral temple terminating the vista",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                21,
+                20,
+                25
+              ]
+            },
+            "params": {
+              "archetype": "cathedral",
+              "floors": 2,
+              "vista": "spine"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "north",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "civic"
+            ]
+          },
+          {
+            "id": "highrise_stoa_tower",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "modern glass and quartz high-rise tower",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                18,
+                56,
+                18
+              ]
+            },
+            "params": {
+              "archetype": "skyscraper",
+              "floors": 13,
+              "roof": "flat"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "north",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "skyscraper"
+            ]
+          },
+          {
+            "id": "council_bouleuterion",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "metropolitan civic council chamber",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                15,
+                14,
+                17
+              ]
+            },
+            "params": {
+              "archetype": "council_chamber",
+              "floors": 1
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "north",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "civic"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "waterfront_defense_battery",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "artillery and defensive positions overlooking the bay",
+        "params": {
+          "entry": "cannon_battery",
+          "route": {
+            "along": "harbour",
+            "offset": 4,
+            "side": "left"
+          }
+        }
+      },
+      {
+        "id": "coastal_barricade",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "emergency barricades thrown across the high street boulevard",
+        "params": {
+          "entry": "barricade_line",
+          "route": {
+            "across": "city"
+          }
+        }
+      },
+      {
+        "id": "boulevards",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "wide paved avenues connecting the city, harbour, and grand monuments",
+        "params": {
+          "anchors": [
+            "city",
+            "harbour",
+            "#tag:landmark"
+          ],
+          "pattern": "grid",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 12
+        }
+      }
+    ]
+  }
+}

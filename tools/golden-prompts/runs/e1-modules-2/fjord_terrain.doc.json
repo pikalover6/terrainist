@@ -1,0 +1,267 @@
+{
+  "loam": "0.1",
+  "profile": "terrain",
+  "meta": {
+    "name": "pine_fjord",
+    "worldSeed": 314,
+    "prompt": "A deep fjord cutting inland between pine ridges, its water open to the sea."
+  },
+  "intent": {
+    "climate": {
+      "biome": "minecraft:old_growth_pine_taiga",
+      "temperature": -0.3,
+      "humidity": 0.5
+    },
+    "character": {
+      "label": "pine fjord",
+      "materialTheme": "boreal_pine",
+      "flora": {
+        "prefer": [
+          "spruce_tall",
+          "spruce_squat"
+        ]
+      }
+    },
+    "tokens": {
+      "terrain": "a deep fjord cutting inland between steep pine-covered ridges, opening to the open sea"
+    }
+  },
+  "style": {
+    "palettes": {}
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 72,
+          "amplitude": 60,
+          "octaves": 5,
+          "frequency": 0.0032,
+          "lacunarity": 2,
+          "gain": 0.5,
+          "ridged": true,
+          "warp": {
+            "amount": 28,
+            "frequency": 0.004
+          },
+          "erosionPasses": 2,
+          "continentalness": {
+            "frequency": 0.0009,
+            "seaFraction": 0.45
+          },
+          "cliffThreshold": 50,
+          "soilDepth": 3,
+          "beachWidth": 2,
+          "snowLineFraction": 0.85
+        },
+        "children": [
+          {
+            "id": "north_pine_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.9,
+                  0.32
+                ],
+                [
+                  0.6,
+                  0.3
+                ],
+                [
+                  0.3,
+                  0.34
+                ]
+              ],
+              "width": 64,
+              "height": 75,
+              "profile": "sharp",
+              "meander": 0.4
+            }
+          },
+          {
+            "id": "south_pine_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.9,
+                  0.68
+                ],
+                [
+                  0.6,
+                  0.7
+                ],
+                [
+                  0.3,
+                  0.66
+                ]
+              ],
+              "width": 64,
+              "height": 75,
+              "profile": "sharp",
+              "meander": 0.4
+            }
+          },
+          {
+            "id": "deep_fjord_carve",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.85,
+                  0.5
+                ],
+                [
+                  0.55,
+                  0.49
+                ],
+                [
+                  0.3,
+                  0.51
+                ],
+                "coast"
+              ],
+              "width": 56,
+              "depth": 90,
+              "profile": "sharp",
+              "meander": 0.35,
+              "flooded": "auto"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "boreal",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0016,
+          "latitudeGradient": -0.3,
+          "blendRadius": 8
+        }
+      },
+      {
+        "id": "ridge_pine_forest",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "params": {
+          "area": {
+            "at": [
+              0.6,
+              0.5
+            ],
+            "radius": 220
+          },
+          "density": 0.18,
+          "spacing": 3,
+          "clumping": 0.45,
+          "maxSlope": 48,
+          "elevation": [
+            2,
+            120
+          ],
+          "edgeFalloff": 24,
+          "undergrowth": {
+            "grass": 0.45,
+            "flowers": 0.03,
+            "deadwood": 0.08
+          },
+          "species": [
+            {
+              "id": "tall_spruce",
+              "shape": "spruce_tall",
+              "weight": 4
+            },
+            {
+              "id": "squat_spruce",
+              "shape": "spruce_squat",
+              "weight": 2
+            },
+            {
+              "id": "larch",
+              "shape": "larch_columnar",
+              "weight": 1
+            }
+          ],
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "ancient_spruce",
+                  "shape": "spruce_ancient"
+                }
+              ]
+            },
+            "understory": {
+              "species": [
+                {
+                  "id": "juniper",
+                  "shape": "juniper_scrub"
+                }
+              ],
+              "density": 0.08
+            },
+            "floor": "default"
+          }
+        }
+      },
+      {
+        "id": "ambient_pines",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 4,
+          "clumping": 0.3,
+          "maxSlope": 40,
+          "elevation": [
+            2,
+            140
+          ],
+          "undergrowth": {
+            "grass": 0.3,
+            "flowers": 0.02,
+            "deadwood": 0.04
+          },
+          "species": [
+            {
+              "id": "sparse_spruce",
+              "shape": "spruce_tall",
+              "weight": 3
+            },
+            {
+              "id": "scrub_spruce",
+              "shape": "spruce_squat",
+              "weight": 1
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

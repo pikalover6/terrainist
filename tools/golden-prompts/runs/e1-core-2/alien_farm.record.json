@@ -1,0 +1,334 @@
+{
+  "id": "alien_farm",
+  "family": "alien_farm",
+  "kit": "settlement",
+  "prompt": "A small farm town being invaded by aliens.",
+  "seed": 302,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": false,
+  "intent": {
+    "source": "cache",
+    "value": {
+      "era": "industrial",
+      "wealth": 0.35,
+      "decline": 0.4,
+      "formality": 0.2,
+      "event": {
+        "kind": "siege",
+        "severity": 0.8,
+        "recency": 0
+      },
+      "climate": {
+        "biome": "minecraft:plains",
+        "temperature": 0,
+        "humidity": 0.1
+      },
+      "character": {
+        "label": "invaded farming community",
+        "materialTheme": "temperate_timber",
+        "formPacks": [
+          "agrarian",
+          "alien_scifi"
+        ],
+        "archetypes": {
+          "prefer": [
+            "cottage",
+            "granary",
+            "windmill",
+            "tavern",
+            "field_lab",
+            "hive_mound"
+          ]
+        },
+        "urbanForm": "linear",
+        "motifs": {
+          "roofType": "gable",
+          "massing": "sprawling"
+        }
+      },
+      "tokens": {
+        "terrain": "rolling farmland with grain fields surrounding a small rural crossroads town",
+        "event_direction": "extraterrestrial invaders and bio-structures spreading from the outer crop fields into the village centre",
+        "infra": "crop_circle pressed into the wheat fields; crash_furrow ending at a downed alien craft; quarantine_fence along the outer pasture; barricade_line across the main lane",
+        "icons": "strange metallic scout craft hovering or crashed in the fields; glowing alien pylons; abandoned farm equipment and hay wagons along the lanes"
+      }
+    }
+  },
+  "intentUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "reasoningTokens": 0,
+    "cost": 0,
+    "cached": true
+  },
+  "kitFile": "docs/kits/settlement-core.md",
+  "menu": {
+    "injected": false,
+    "reason": "flag off"
+  },
+  "attempts": 3,
+  "diagnostics": [
+    [
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "world.heightfield"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "world.climate"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "world.copse_woods"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "world.pasture_trees"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "world.west_farm"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "world.east_farm"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "world.town_hall"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "world.tavern"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "world.general_store"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "world.granary"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "world.windmill"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "world.cottage_north"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "world.cottage_south"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "world.defense_field_station"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "world.alien_mothership"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "world.crashed_saucer"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "world.alien_pods"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "world.quarantine_cordon"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "world.field_crop_circle"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "world.saucer_trench"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "world.road_barricade"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "world.town_well"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "world.abandoned_wagon"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "world.field_cart"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "world.defense_bulletin"
+      },
+      {
+        "code": "LOAM-T201",
+        "name": "STRUCTURE_NODE_SHAPE",
+        "severity": "error",
+        "nodePath": "world.town_lanes"
+      },
+      {
+        "code": "LOAM-T003",
+        "name": "GENERATOR_CARDINALITY",
+        "severity": "error",
+        "nodePath": "world"
+      },
+      {
+        "code": "LOAM-T003",
+        "name": "GENERATOR_CARDINALITY",
+        "severity": "error",
+        "nodePath": "world"
+      }
+    ],
+    [
+      {
+        "code": "LOAM-T101",
+        "name": "BAD_ENUM",
+        "severity": "error",
+        "nodePath": "world.copse_woods.params.area"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "world.town_hall"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "world.tavern"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "world.general_store"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "world.granary"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "world.windmill"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "world.cottage_north"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "world.cottage_south"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "world.defense_field_station"
+      },
+      {
+        "code": "LOAM-E338",
+        "name": "PROGRAM_SCHEMA",
+        "severity": "error",
+        "nodePath": "world.alien_mothership"
+      },
+      {
+        "code": "LOAM-E338",
+        "name": "PROGRAM_SCHEMA",
+        "severity": "error",
+        "nodePath": "world.crashed_saucer"
+      }
+    ],
+    [
+      {
+        "code": "LOAM-E338",
+        "name": "PROGRAM_SCHEMA",
+        "severity": "error",
+        "nodePath": "world.alien_mothership"
+      },
+      {
+        "code": "LOAM-E338",
+        "name": "PROGRAM_SCHEMA",
+        "severity": "error",
+        "nodePath": "world.crashed_saucer"
+      }
+    ]
+  ],
+  "usage": {
+    "promptTokens": 252571,
+    "completionTokens": 33559,
+    "reasoningTokens": 17852,
+    "cost": 0.15763725
+  },
+  "error": "authoring failed after 3 attempt(s); last attempt had 2 problem(s):\nerror LOAM-E338 PROGRAM_SCHEMA at world.alien_mothership: no program \"alien_mothership@0\" in the document's \"programs\" map, and no request for it in \"intent.character.programs\"\n  fix: known programs: (none) — either name one the document carries, or request it in \"intent.character.programs\": [{ \"id\": \"alien_mothership@0\", \"mode\": \"landmark\", \"brief\": \"…\" }]\nerror LOAM-E338 PROGRAM_SCHEMA at world.crashed_saucer: no program \"crashed_saucer@0\" in the document's \"programs\" map, and no request for it in \"intent.character.programs\"\n  fix: known programs: (none) — either name one the document carries, or request it in \"intent.character.programs\": [{ \"id\": \"crashed_saucer@0\", \"mode\": \"landmark\", \"brief\": \"…\" }]",
+  "wallMs": 166456
+}

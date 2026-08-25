@@ -1,0 +1,991 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "alien_invaded_farm_town",
+    "worldSeed": 302,
+    "prompt": "A small farm town being invaded by aliens.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {}
+  },
+  "intent": {
+    "era": "industrial",
+    "wealth": 0.35,
+    "decline": 0.4,
+    "formality": 0.2,
+    "event": {
+      "kind": "siege",
+      "severity": 0.8,
+      "recency": 0
+    },
+    "climate": {
+      "biome": "minecraft:plains",
+      "temperature": 0,
+      "humidity": 0.1
+    },
+    "character": {
+      "label": "invaded farming community",
+      "materialTheme": "temperate_timber",
+      "formPacks": [
+        "agrarian",
+        "alien_scifi"
+      ],
+      "archetypes": {
+        "prefer": [
+          "cottage",
+          "farmhouse",
+          "granary",
+          "windmill",
+          "tavern",
+          "general_store",
+          "field_station"
+        ]
+      },
+      "urbanForm": "linear",
+      "motifs": {
+        "roofType": "gable",
+        "massing": "sprawling"
+      },
+      "programs": [
+        {
+          "id": "mothership",
+          "mode": "landmark",
+          "brief": "A menacing, massive dark-metallic alien mothership hovering low directly over the town center, ribbed hull with a glowing central emitter facing the square.",
+          "envelope": [
+            56,
+            24,
+            56
+          ]
+        },
+        {
+          "id": "crashed_saucer",
+          "mode": "landmark",
+          "brief": "A disc-shaped alien scout craft half-buried in the soil at a sharp angle, torn plating, smoking hull breach with glowing interior consoles exposed.",
+          "envelope": [
+            32,
+            16,
+            32
+          ]
+        },
+        {
+          "id": "alien_pod",
+          "mode": "plugin",
+          "brief": "A spiked extraterrestrial drop pod punched into the earth with biological tendrils and a ruptured hatch.",
+          "envelope": [
+            7,
+            8,
+            7
+          ],
+          "count": 14
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "rolling farmland with grain fields surrounding a small rural crossroads town",
+      "event_direction": "extraterrestrial invaders and bio-structures spreading from the outer crop fields into the village centre",
+      "infra": "crop_circle pressed into the wheat fields; crash_furrow ending at a downed alien craft; quarantine_fence along the outer pasture; barricade_line across the main lane",
+      "icons": "strange metallic scout craft hovering or crashed in the fields; glowing alien pylons; abandoned farm equipment and hay wagons along the lanes"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "heightfield",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "params": {
+          "baseHeight": 70,
+          "amplitude": 18,
+          "octaves": 5,
+          "frequency": 0.0035,
+          "erosionPasses": 2,
+          "continentalness": {
+            "frequency": 0.0012,
+            "seaFraction": 0.15
+          }
+        },
+        "children": [
+          {
+            "id": "town_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 96,
+              "height": 6,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "drainage_creek",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.15,
+                  0.2
+                ],
+                [
+                  0.32,
+                  0.42
+                ],
+                [
+                  0.48,
+                  0.65
+                ],
+                "coast"
+              ],
+              "width": 8,
+              "depth": 5,
+              "flooded": "auto"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate"
+        }
+      },
+      {
+        "id": "north_woodlot",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "params": {
+          "species": [
+            {
+              "id": "oak",
+              "shape": "oak_spreading",
+              "weight": 2
+            },
+            {
+              "id": "birch",
+              "shape": "birch_slim",
+              "weight": 1
+            }
+          ],
+          "area": {
+            "zone": "north"
+          },
+          "density": 0.16,
+          "undergrowth": {
+            "grass": 0.4,
+            "flowers": 0.08,
+            "deadwood": 0.03
+          },
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ]
+        }
+      },
+      {
+        "id": "rural_scatter_trees",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "params": {
+          "species": [
+            {
+              "id": "pasture_oak",
+              "shape": "oak_round"
+            }
+          ],
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ]
+        }
+      },
+      {
+        "id": "plaza",
+        "kind": "primitive",
+        "label": "the crossroads town square",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            24,
+            24
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "east_holding",
+        "kind": "generator",
+        "generator": "precinct.farm@0",
+        "label": "the primary wheat and root fields",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            96,
+            80
+          ]
+        },
+        "params": {
+          "parcels": 6,
+          "parcelSize": 16,
+          "crops": [
+            "wheat",
+            "potatoes",
+            "pasture"
+          ],
+          "farmstead": "auto",
+          "edge": "fence"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "plaza"
+          },
+          {
+            "distance": "plaza",
+            "min": 12,
+            "max": 50
+          }
+        ],
+        "ports": {
+          "gate": {
+            "type": "road_stub",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "farm",
+          "rural"
+        ]
+      },
+      {
+        "id": "west_holding",
+        "kind": "generator",
+        "generator": "precinct.farm@0",
+        "label": "the western vegetable holding",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            80,
+            72
+          ]
+        },
+        "params": {
+          "parcels": 4,
+          "parcelSize": 16,
+          "crops": [
+            "carrots",
+            "pumpkin",
+            "pasture"
+          ],
+          "farmstead": "auto",
+          "edge": "fence"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "plaza"
+          },
+          {
+            "distance": "plaza",
+            "min": 14,
+            "max": 55
+          }
+        ],
+        "ports": {
+          "gate": {
+            "type": "road_stub",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "farm",
+          "rural"
+        ]
+      },
+      {
+        "id": "town_hall",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the municipal town hall and council",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            16,
+            13
+          ]
+        },
+        "params": {
+          "archetype": "town_hall",
+          "floors": 2,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "plaza",
+            "gap": [
+              2,
+              8
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "town_hall",
+          "civic",
+          "house"
+        ]
+      },
+      {
+        "id": "tavern",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the roadside taphouse and inn",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "archetype": "tavern",
+          "floors": 2,
+          "roof": "gable",
+          "basement": {
+            "depth": 4,
+            "style": "wine_cellar"
+          }
+        },
+        "constraints": [
+          {
+            "adjacent_to": "plaza",
+            "gap": [
+              1,
+              8
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "tavern",
+          "trade",
+          "house"
+        ]
+      },
+      {
+        "id": "general_store",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the farm supply store and grocer",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            10,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "general_store",
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "plaza",
+            "gap": [
+              1,
+              8
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "general_store",
+          "trade",
+          "house"
+        ]
+      },
+      {
+        "id": "church",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the rural parish church",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            15,
+            15
+          ]
+        },
+        "params": {
+          "archetype": "church",
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "plaza",
+            "min": 10,
+            "max": 40,
+            "strength": "soft"
+          },
+          {
+            "facing": "plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "church",
+          "public"
+        ]
+      },
+      {
+        "id": "grain_windmill",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the milling windmill on the rise",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            14,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "windmill",
+          "floors": 1,
+          "roof": "hip"
+        },
+        "constraints": [
+          {
+            "distance": "plaza",
+            "min": 24,
+            "max": 75,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "windmill",
+          "rural"
+        ]
+      },
+      {
+        "id": "central_granary",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the communal grain storehouse",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            10,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "warehouse",
+          "floors": 1,
+          "roof": "gable",
+          "basement": {
+            "depth": 4,
+            "style": "root_cellar"
+          }
+        },
+        "constraints": [
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 35,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "warehouse",
+          "store"
+        ]
+      },
+      {
+        "id": "cottage_north",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "cottage",
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 45,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "cottage",
+          "house"
+        ]
+      },
+      {
+        "id": "cottage_south",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "cottage",
+          "floors": 2,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "plaza",
+            "min": 10,
+            "max": 50,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "cottage",
+          "house"
+        ]
+      },
+      {
+        "id": "emergency_field_station",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the emergency defense and radio station",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "archetype": "field_station",
+          "floors": 1,
+          "roof": "flat",
+          "entrance": {
+            "treatment": "blast_door"
+          }
+        },
+        "constraints": [
+          {
+            "distance": "plaza",
+            "min": 14,
+            "max": 45,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "field_station",
+          "military",
+          "house"
+        ]
+      },
+      {
+        "id": "mothership_invader",
+        "kind": "generator",
+        "generator": "authored:mothership",
+        "label": "the alien mothership hovering directly over the square",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            56,
+            24,
+            56
+          ]
+        },
+        "params": {
+          "hover": 32,
+          "face": {
+            "toward": "plaza"
+          }
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          }
+        ],
+        "tags": [
+          "alien",
+          "landmark"
+        ]
+      },
+      {
+        "id": "crash_site",
+        "kind": "generator",
+        "generator": "authored:crashed_saucer",
+        "label": "the crashed scout saucer embedded in the field",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            32,
+            16,
+            32
+          ]
+        },
+        "params": {
+          "seat": "embed",
+          "embedDepth": 4,
+          "face": {
+            "toward": "plaza"
+          }
+        },
+        "constraints": [
+          {
+            "zone": "northeast"
+          },
+          {
+            "distance": "plaza",
+            "min": 45,
+            "max": 130
+          }
+        ],
+        "tags": [
+          "alien",
+          "crash",
+          "landmark"
+        ]
+      },
+      {
+        "id": "alien_pod_scatter",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "alien drop pods punched into the pastures",
+        "params": {
+          "program": "alien_pod",
+          "count": 14,
+          "area": {
+            "all": true
+          },
+          "spacing": 30,
+          "seat": "embed",
+          "embedDepth": 2,
+          "face": {
+            "toward": "plaza"
+          },
+          "avoidTags": [
+            "plaza"
+          ]
+        },
+        "tags": [
+          "alien"
+        ]
+      },
+      {
+        "id": "farm_cordon",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "containment fence around the contaminated eastern fields",
+        "params": {
+          "entry": "quarantine_fence",
+          "route": {
+            "ring": "east_holding",
+            "margin": 6
+          }
+        }
+      },
+      {
+        "id": "crop_glyph",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "alien crop circle pressed into the standing grain",
+        "params": {
+          "entry": "crop_circle",
+          "route": {
+            "over": "east_holding"
+          }
+        }
+      },
+      {
+        "id": "defensive_barricade",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "makeshift barricade thrown across the high lane",
+        "params": {
+          "entry": "barricade_line",
+          "route": {
+            "across": "lanes"
+          }
+        }
+      },
+      {
+        "id": "crash_scar",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "scorched impact furrow leading to the downed saucer",
+        "params": {
+          "entry": "crash_furrow",
+          "route": {
+            "into": "crash_site",
+            "run": 48
+          }
+        }
+      },
+      {
+        "id": "plaza_well",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "well_head",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "plaza_cart",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "cart",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "abandoned_wagon",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "covered_wagon",
+          "zone": "center",
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "plaza_board",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "notice_board",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "dirt and gravel lanes linking the farmsteads and town center",
+        "params": {
+          "anchors": [
+            "plaza",
+            "east_holding",
+            "west_holding",
+            "crash_site",
+            "#tag:house"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 14
+        }
+      }
+    ]
+  }
+}

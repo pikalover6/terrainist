@@ -1,0 +1,679 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "modern_hellenist_sea_siege",
+    "worldSeed": 305,
+    "prompt": "A modern Hellenist city being invaded by sea monsters.",
+    "spawn": {
+      "at": [
+        0.5,
+        0.65
+      ]
+    }
+  },
+  "style": {
+    "palettes": {
+      "plaza.path": "minecraft:smooth_quartz",
+      "plaza.border": "minecraft:prismarine_bricks",
+      "road.surface": "minecraft:smooth_stone",
+      "road.shoulder": "minecraft:stone_bricks",
+      "ground.beach": "minecraft:sand"
+    }
+  },
+  "intent": {
+    "era": "modern",
+    "wealth": 0.8,
+    "formality": 0.75,
+    "event": {
+      "kind": "siege",
+      "severity": 0.85,
+      "recency": 0
+    },
+    "climate": {
+      "temperature": 0.6,
+      "humidity": 0.2,
+      "snow": "never"
+    },
+    "character": {
+      "label": "modern Hellenist coastal metropolis under sea monster siege",
+      "materialTheme": "modern_city",
+      "formPacks": [
+        "classical_mediterranean"
+      ],
+      "archetypes": {
+        "prefer": [
+          "stoa",
+          "peripteral_temple",
+          "bouleuterion",
+          "palaestra",
+          "nymphaeum"
+        ]
+      },
+      "urbanForm": "grid",
+      "motifs": {
+        "roofType": "flat",
+        "massing": "blocky",
+        "windowRhythm": "regular",
+        "ornamentDensity": 0.6
+      },
+      "programs": [
+        {
+          "id": "kraken_leviathan",
+          "mode": "landmark",
+          "brief": "A colossal multi-tentacled abyssal sea leviathan rearing out of the ocean bay, dark scaly serpentine body, thrashing tentacle limbs, glowing eyes, and a gaping fanged maw assaulting the city waterfront.",
+          "envelope": [
+            48,
+            42,
+            48
+          ]
+        },
+        {
+          "id": "colossus_sentinel",
+          "mode": "landmark",
+          "brief": "A monumental bronze and white marble colossus statue of a Hellenic warrior with a raised spear and aegis shield standing guard upon the harbour mole against the sea monsters.",
+          "envelope": [
+            20,
+            36,
+            20
+          ]
+        },
+        {
+          "id": "sea_monster",
+          "mode": "plugin",
+          "brief": "A ferocious aquatic sea serpent beast breaching out of the water with spined dorsal crest, razor fins, and lunging predatory jaws aimed at the shoreline.",
+          "envelope": [
+            16,
+            18,
+            16
+          ],
+          "count": 14
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "a grand coastal metropolis fronting a deep harbour and open sea where sea monsters surface",
+      "event_direction": "giant sea monsters rise out of the ocean water attacking the harbour and waterfront avenues",
+      "infra": "barricade_line across the harbour promenade; emergency_cordon along the coastal boulevard",
+      "icons": "leviathans and sea monsters breaching along the modern docks; neoclassical porticos and high-rise stoas overlooking the bay; emergency barricades and defensive lines guarding the shore"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "heightfield",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 70,
+          "amplitude": 22,
+          "frequency": 0.003,
+          "octaves": 5,
+          "continentalness": {
+            "frequency": 0.0018,
+            "seaFraction": 0.42
+          },
+          "erosionPasses": 2,
+          "beachWidth": 6,
+          "soilDepth": 3
+        },
+        "children": [
+          {
+            "id": "coastal_plateau",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.68
+              ],
+              "radius": 150,
+              "height": 8,
+              "rim": 10,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "ocean_trench",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.5,
+                0.18
+              ],
+              "radius": 140,
+              "depth": 28,
+              "water": false,
+              "irregularity": 0.22,
+              "flooded": "auto"
+            }
+          },
+          {
+            "id": "harbour_cove",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.5,
+                  0.48
+                ],
+                [
+                  0.5,
+                  0.34
+                ],
+                "coast"
+              ],
+              "width": 64,
+              "depth": 18,
+              "profile": "rounded",
+              "flooded": "auto"
+            }
+          },
+          {
+            "id": "acropolis_mount",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "peak",
+              "at": [
+                0.24,
+                0.76
+              ],
+              "radius": 60,
+              "height": 26,
+              "profile": "rounded",
+              "irregularity": 0.15
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.004,
+          "humidityFrequency": 0.004,
+          "latitudeGradient": -0.8
+        }
+      },
+      {
+        "id": "coastal_groves",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "params": {
+          "species": [
+            {
+              "id": "mediterranean_oak",
+              "shape": "oak_spreading",
+              "weight": 4
+            },
+            {
+              "id": "column_cypress",
+              "shape": "birch_slim",
+              "weight": 3
+            },
+            {
+              "id": "scrub_oak",
+              "shape": "oak_round",
+              "weight": 2
+            }
+          ],
+          "area": {
+            "zone": "southwest"
+          },
+          "density": 0.12,
+          "spacing": 4,
+          "undergrowth": {
+            "grass": 0.4,
+            "flowers": 0.15,
+            "deadwood": 0.01
+          },
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ]
+        }
+      },
+      {
+        "id": "sparse_wilderness_trees",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "params": {
+          "species": [
+            {
+              "id": "wild_oak",
+              "shape": "oak_round",
+              "weight": 3
+            },
+            {
+              "id": "wild_juniper",
+              "shape": "juniper_scrub",
+              "weight": 2
+            }
+          ],
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 6,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ]
+        }
+      },
+      {
+        "id": "neopolis_city",
+        "kind": "city",
+        "label": "the grand modern Hellenist coastal metropolis",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            340,
+            260
+          ]
+        },
+        "params": {
+          "size": "large",
+          "coastal": true,
+          "diagonals": 1,
+          "mix": [
+            "stoa",
+            "peripteral_temple",
+            "bouleuterion",
+            "palaestra",
+            "nymphaeum",
+            "townhouse",
+            "shop_row",
+            "warehouse"
+          ],
+          "characters": {
+            "core": [
+              "peripteral_temple",
+              "bouleuterion",
+              "stoa",
+              "modern_villa"
+            ],
+            "waterfront": [
+              "stoa",
+              "warehouse",
+              "customs_house",
+              "shop_row"
+            ],
+            "civic": [
+              "bouleuterion",
+              "nymphaeum",
+              "museum",
+              "palaestra"
+            ],
+            "industrial": [
+              "warehouse",
+              "shipyard",
+              "foundry"
+            ],
+            "lanes": [
+              "courtyard_house",
+              "townhouse",
+              "stoa"
+            ]
+          },
+          "forms": {
+            "core": "grid",
+            "waterfront": "organic",
+            "civic": "grid"
+          },
+          "setPieces": {
+            "max": 4,
+            "kinds": [
+              "landmark",
+              "promenade",
+              "square",
+              "bridge"
+            ]
+          }
+        },
+        "constraints": [
+          {
+            "at": [
+              0.5,
+              0.68
+            ]
+          }
+        ],
+        "tags": [
+          "city",
+          "hellenist",
+          "urban"
+        ],
+        "children": [
+          {
+            "id": "acropolis_hall",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the grand neoclassical council hall on the central vista axis",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                19,
+                18,
+                23
+              ]
+            },
+            "params": {
+              "archetype": "town_hall",
+              "floors": 2,
+              "vista": "spine"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "north",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "civic"
+            ]
+          },
+          {
+            "id": "waterfront_stoa",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "a monumental colonnaded stoa commanding the waterfront boulevard",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                15,
+                14,
+                21
+              ]
+            },
+            "params": {
+              "archetype": "guildhall",
+              "floors": 2,
+              "vista": "boulevard"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "north",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "trade"
+            ]
+          },
+          {
+            "id": "defense_arsenal",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the municipal defense armory facing the bay",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                13,
+                19
+              ]
+            },
+            "params": {
+              "archetype": "arsenal",
+              "floors": 2
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "north",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "military"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "neopolis_harbour",
+        "kind": "generator",
+        "generator": "precinct.harbour@0",
+        "label": "the modern Hellenist maritime docks and quay",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            96,
+            18,
+            64
+          ]
+        },
+        "params": {
+          "piers": 4,
+          "ships": "fill"
+        },
+        "constraints": [
+          {
+            "at": [
+              0.5,
+              0.42
+            ]
+          },
+          {
+            "distance": "neopolis_city",
+            "min": 8,
+            "max": 40,
+            "strength": "soft"
+          },
+          {
+            "on": "@terrain:coastline",
+            "band": 30
+          }
+        ],
+        "tags": [
+          "precinct",
+          "harbour"
+        ]
+      },
+      {
+        "id": "waterfront_barricade",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "emergency defensive barricade line blocking the avenue from the docks",
+        "params": {
+          "entry": "barricade_line",
+          "route": {
+            "across": "neopolis_city"
+          }
+        }
+      },
+      {
+        "id": "coastal_battery",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "fortified coastal artillery battery aimed out at the invading sea monsters",
+        "params": {
+          "entry": "cannon_battery",
+          "route": {
+            "along": "neopolis_city",
+            "offset": 10,
+            "side": "left"
+          }
+        }
+      },
+      {
+        "id": "kraken_leviathan",
+        "kind": "generator",
+        "generator": "authored:kraken_leviathan",
+        "label": "the colossal kraken leviathan rising out of the harbour water",
+        "params": {
+          "seat": "wade",
+          "face": {
+            "toward": "neopolis_city"
+          }
+        },
+        "constraints": [
+          {
+            "at": [
+              0.46,
+              0.26
+            ]
+          },
+          {
+            "on": "@terrain:coastline",
+            "band": 36
+          }
+        ],
+        "tags": [
+          "monster",
+          "landmark"
+        ]
+      },
+      {
+        "id": "colossus_sentinel",
+        "kind": "generator",
+        "generator": "authored:colossus_sentinel",
+        "label": "colossal Hellenic bronze guardian statue at the harbour entrance",
+        "params": {
+          "seat": "pad",
+          "face": {
+            "toward": "kraken_leviathan"
+          }
+        },
+        "constraints": [
+          {
+            "at": [
+              0.36,
+              0.38
+            ]
+          },
+          {
+            "distance": "neopolis_city",
+            "min": 12,
+            "max": 60,
+            "strength": "soft"
+          },
+          {
+            "on": "@terrain:coastline",
+            "band": 24
+          }
+        ],
+        "tags": [
+          "monument",
+          "landmark"
+        ]
+      },
+      {
+        "id": "monster_pack",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "pack of aquatic sea monsters invading the bay",
+        "params": {
+          "program": "sea_monster",
+          "count": 14,
+          "area": {
+            "at": [
+              0.5,
+              0.2
+            ],
+            "radius": 0.28
+          },
+          "spacing": 24,
+          "seat": "wade",
+          "face": {
+            "toward": "neopolis_city"
+          },
+          "avoidTags": [
+            "structure",
+            "precinct"
+          ]
+        }
+      },
+      {
+        "id": "harbour_defense_vessel",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "naval galleon deployed in the bay waters",
+        "params": {
+          "prop": "galleon",
+          "zone": "north",
+          "on": "water"
+        }
+      },
+      {
+        "id": "nav_buoy_outer",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "buoy",
+          "zone": "north",
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "hero_statue",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "statue_plinth",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "central_fountain",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "fountain",
+          "zone": "south"
+        }
+      },
+      {
+        "id": "highways",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "grand avenues linking the harbour, citadel, and city boulevards",
+        "params": {
+          "anchors": [
+            "neopolis_city",
+            "neopolis_harbour",
+            "colossus_sentinel"
+          ],
+          "pattern": "grid",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 14
+        }
+      }
+    ]
+  }
+}

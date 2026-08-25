@@ -1,0 +1,83 @@
+{
+  "loam": "0.1",
+  "profile": "terrain",
+  "meta": {
+    "name": "vast_salt_desert",
+    "worldSeed": 313,
+    "prompt": "A vast salt desert under a hard sun, cracked flat to the horizon, with nothing living on it."
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": {
+        "mix": [
+          [
+            "minecraft:calcite",
+            7
+          ],
+          [
+            "minecraft:diorite",
+            2
+          ],
+          [
+            "minecraft:bone_block",
+            1
+          ]
+        ]
+      },
+      "ground.subsurface": "minecraft:calcite",
+      "ground.stone": "minecraft:diorite",
+      "ground.cliff": "minecraft:diorite",
+      "ground.beach": "minecraft:calcite"
+    }
+  },
+  "intent": {
+    "climate": {
+      "biome": "minecraft:desert",
+      "temperature": 1,
+      "humidity": -1,
+      "snow": "never"
+    },
+    "character": {
+      "label": "salt desert"
+    },
+    "tokens": {
+      "terrain": "a vast, cracked salt flat stretching flat to the horizon under a hard sun; barren expanse with no vegetation, water, or living structures"
+    }
+  },
+  "root": {
+    "id": "root",
+    "kind": "composite",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "base_terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "params": {
+          "baseHeight": 68,
+          "amplitude": 2,
+          "frequency": 0.0015,
+          "octaves": 4,
+          "erosionPasses": 3,
+          "cliffThreshold": 60
+        }
+      },
+      {
+        "id": "desert_climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "arid",
+          "temperatureFrequency": 0.001,
+          "humidityFrequency": 0.001
+        }
+      }
+    ]
+  }
+}

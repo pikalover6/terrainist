@@ -1,0 +1,768 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "redwood_logging_camp",
+    "worldSeed": 306,
+    "prompt": "An ancient forest of colossal redwoods with a small logging camp at its edge.",
+    "spawn": {
+      "zone": "southwest"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": {
+        "mix": [
+          [
+            "minecraft:podzol",
+            5
+          ],
+          [
+            "minecraft:coarse_dirt",
+            3
+          ],
+          [
+            "minecraft:grass_block",
+            2
+          ]
+        ]
+      },
+      "road.surface": "minecraft:dirt_path",
+      "road.shoulder": "minecraft:coarse_dirt",
+      "plaza.path": "minecraft:dirt_path",
+      "plaza.cobble": "minecraft:mossy_cobblestone"
+    }
+  },
+  "intent": {
+    "era": "industrial",
+    "wealth": 0.35,
+    "formality": 0.1,
+    "climate": {
+      "biome": "minecraft:old_growth_spruce_taiga",
+      "temperature": 0.25,
+      "humidity": 0.7,
+      "snow": "never"
+    },
+    "character": {
+      "label": "redwood logging camp",
+      "materialTheme": "boreal_pine",
+      "formPacks": [
+        "wilds_camps"
+      ],
+      "flora": {
+        "prefer": [
+          "spruce_tall",
+          "spruce_squat"
+        ]
+      },
+      "urbanForm": "linear",
+      "programs": [
+        {
+          "id": "colossal_ancient_redwood",
+          "mode": "landmark",
+          "brief": "A gargantuan primeval redwood tree standing over forty blocks tall, with massive buttressed root flanges, a colossal hollowed trunk base, and deep bark ridges.",
+          "envelope": [
+            28,
+            48,
+            28
+          ]
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "a primeval forest of colossal redwoods with a logging camp clearing at its perimeter",
+      "infra": "cut_over_ground clearing surrounding the camp; cart_track running into the deep timber",
+      "icons": "towering redwood canopy, log stacks, sawpits, bunk cabins, and timber skid trails"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "base_terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "params": {
+          "baseHeight": 72,
+          "amplitude": 36,
+          "frequency": 0.0032,
+          "octaves": 5,
+          "erosionPasses": 2,
+          "warp": {
+            "amount": 28,
+            "frequency": 0.004
+          }
+        },
+        "children": [
+          {
+            "id": "camp_clearing_bench",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.28,
+                0.74
+              ],
+              "radius": 88,
+              "height": 8,
+              "rim": 6,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "upland_timber_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.18,
+                  0.08
+                ],
+                [
+                  0.55,
+                  0.22
+                ],
+                [
+                  0.82,
+                  0.45
+                ],
+                [
+                  0.94,
+                  0.82
+                ]
+              ],
+              "width": 72,
+              "height": 48,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "forest_creek",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.82,
+                  0.12
+                ],
+                [
+                  0.54,
+                  0.42
+                ],
+                [
+                  0.36,
+                  0.64
+                ],
+                [
+                  0.12,
+                  0.88
+                ]
+              ],
+              "width": 12,
+              "depth": 6,
+              "flooded": "never"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "boreal"
+        }
+      },
+      {
+        "id": "ancient_redwood_forest",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "the towering old-growth redwood grove",
+        "params": {
+          "area": {
+            "at": [
+              0.58,
+              0.38
+            ],
+            "radius": 175
+          },
+          "density": 0.24,
+          "spacing": 4,
+          "clumping": 0.45,
+          "species": [
+            {
+              "id": "ancient_redwood",
+              "shape": "spruce_ancient",
+              "weight": 5,
+              "minHeight": 26,
+              "maxHeight": 34
+            },
+            {
+              "id": "tall_redwood",
+              "shape": "spruce_tall",
+              "weight": 4,
+              "minHeight": 14,
+              "maxHeight": 22
+            },
+            {
+              "id": "columnar_larch",
+              "shape": "larch_columnar",
+              "weight": 2,
+              "minHeight": 12,
+              "maxHeight": 18
+            }
+          ],
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "redwood_colossus",
+                  "shape": "spruce_ancient",
+                  "weight": 1,
+                  "minHeight": 30,
+                  "maxHeight": 38
+                }
+              ]
+            },
+            "understory": {
+              "species": [
+                {
+                  "id": "juniper_bush",
+                  "shape": "juniper_scrub",
+                  "weight": 2
+                },
+                {
+                  "id": "forest_fern",
+                  "shape": "tree_fern",
+                  "weight": 1
+                }
+              ],
+              "density": 0.35
+            },
+            "floor": "default"
+          },
+          "undergrowth": {
+            "grass": 0.45,
+            "flowers": 0.05,
+            "deadwood": 0.15
+          },
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "camp"
+          ]
+        }
+      },
+      {
+        "id": "wilderness_fringe_forest",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "ambient taiga canopy across the perimeter",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 5,
+          "species": [
+            {
+              "id": "fringe_spruce",
+              "shape": "spruce_tall",
+              "weight": 3,
+              "minHeight": 8,
+              "maxHeight": 14
+            },
+            {
+              "id": "fringe_scrub",
+              "shape": "spruce_squat",
+              "weight": 1,
+              "minHeight": 5,
+              "maxHeight": 7
+            }
+          ],
+          "undergrowth": {
+            "grass": 0.35,
+            "flowers": 0.05,
+            "deadwood": 0.08
+          },
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "camp"
+          ]
+        }
+      },
+      {
+        "id": "ancient_redwood_patriarch",
+        "kind": "generator",
+        "generator": "authored:colossal_ancient_redwood",
+        "label": "the ancient grandfather redwood deep in the timber",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            28,
+            48,
+            28
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.65,
+              0.32
+            ]
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 6
+          }
+        ],
+        "params": {
+          "seat": "pad"
+        },
+        "tags": [
+          "landmark",
+          "ancient_tree"
+        ]
+      },
+      {
+        "id": "camp_yard",
+        "kind": "primitive",
+        "label": "the central log yard and skidway clearing",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            24,
+            24
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "southwest"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public",
+          "camp"
+        ]
+      },
+      {
+        "id": "sawmill",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the camp steam sawmill with open log decks",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            17
+          ]
+        },
+        "params": {
+          "archetype": "sawmill",
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "camp_yard",
+            "gap": [
+              2,
+              8
+            ]
+          },
+          {
+            "facing": "camp_yard"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "craft",
+          "industry",
+          "camp"
+        ]
+      },
+      {
+        "id": "loggers_bunkhouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the lumberjack dormitory bunkhouse",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            19
+          ]
+        },
+        "params": {
+          "archetype": "dormitory",
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "camp_yard",
+            "gap": [
+              2,
+              10
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "camp_yard"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house",
+          "camp"
+        ]
+      },
+      {
+        "id": "foreman_cabin",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the camp foreman office and cabin",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            13
+          ]
+        },
+        "params": {
+          "archetype": "log_cabin",
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "camp_yard",
+            "gap": [
+              1,
+              8
+            ]
+          },
+          {
+            "facing": "camp_yard"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house",
+          "office",
+          "camp"
+        ]
+      },
+      {
+        "id": "camp_cookhouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the mess hall and cookhouse",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "archetype": "tavern",
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "camp_yard",
+            "min": 4,
+            "max": 22,
+            "strength": "soft"
+          },
+          {
+            "facing": "camp_yard"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house",
+          "trade",
+          "camp"
+        ]
+      },
+      {
+        "id": "smithy",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the tool maintenance and blacksmith forge",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            15
+          ]
+        },
+        "params": {
+          "archetype": "smithy",
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "distance": "sawmill",
+            "min": 6,
+            "max": 24,
+            "strength": "soft"
+          },
+          {
+            "facing": "camp_yard"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "craft",
+          "camp"
+        ]
+      },
+      {
+        "id": "timber_warehouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the dry tool and equipment storehouse",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            10,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "warehouse",
+          "floors": 1,
+          "roof": "gable",
+          "basement": {
+            "depth": 4
+          }
+        },
+        "constraints": [
+          {
+            "distance": "sawmill",
+            "min": 8,
+            "max": 30,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "warehouse",
+          "camp"
+        ]
+      },
+      {
+        "id": "log_stack_primary",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "felled redwood log stack beside the sawmill",
+        "params": {
+          "prop": "log_pile",
+          "zone": "southwest"
+        }
+      },
+      {
+        "id": "log_stack_secondary",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "stacked timber rounds waiting for transport",
+        "params": {
+          "prop": "log_pile",
+          "zone": "southwest"
+        }
+      },
+      {
+        "id": "log_stack_clearing",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "split firewood stack at the camp edge",
+        "params": {
+          "prop": "log_pile",
+          "zone": "south"
+        }
+      },
+      {
+        "id": "timber_wagon",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "heavy timber freight wagon",
+        "params": {
+          "prop": "covered_wagon",
+          "zone": "southwest"
+        }
+      },
+      {
+        "id": "camp_hauling_cart",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "two-wheel timber hauling cart",
+        "params": {
+          "prop": "cart",
+          "zone": "southwest"
+        }
+      },
+      {
+        "id": "seasonal_campsite",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "seasonal timber feller tent camp",
+        "params": {
+          "prop": "campsite",
+          "zone": "southwest"
+        }
+      },
+      {
+        "id": "camp_notice_board",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "camp work orders and timber tally board",
+        "params": {
+          "prop": "notice_board",
+          "zone": "southwest"
+        }
+      },
+      {
+        "id": "horse_water_trough",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "stone watering trough for hauling teams",
+        "params": {
+          "prop": "horse_trough",
+          "zone": "southwest"
+        }
+      },
+      {
+        "id": "camp_roads",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "dirt haul roads connecting the camp buildings to the timber tracks",
+        "params": {
+          "anchors": [
+            "camp_yard",
+            "sawmill",
+            "smithy",
+            "timber_warehouse",
+            "#tag:house"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 16
+        }
+      }
+    ]
+  }
+}

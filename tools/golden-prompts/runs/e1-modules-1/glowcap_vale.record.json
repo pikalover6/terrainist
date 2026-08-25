@@ -1,0 +1,191 @@
+{
+  "id": "glowcap_vale",
+  "family": "glowcap_vale",
+  "kit": "settlement",
+  "prompt": "A glowing mushroom vale where a strange village has grown between the caps.",
+  "seed": 307,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "cache",
+    "value": {
+      "era": "medieval",
+      "wealth": 0.35,
+      "formality": 0.1,
+      "climate": {
+        "humidity": 0.8,
+        "temperature": 0.2
+      },
+      "character": {
+        "label": "glowing mushroom vale village",
+        "materialTheme": "temperate_timber",
+        "formPacks": [
+          "swamp_witch"
+        ],
+        "urbanForm": "grown",
+        "flora": {
+          "prefer": [
+            "fungal",
+            "glow",
+            "mushroom_giant_red",
+            "mushroom_shelf_brown",
+            "glowcap"
+          ]
+        },
+        "archetypes": {
+          "prefer": [
+            "cottage",
+            "watchtower"
+          ]
+        }
+      },
+      "tokens": {
+        "terrain": "a secluded mountain vale nestled between steep ridges, sheltered beneath a canopy of giant glowing mushrooms",
+        "icons": "rustic wooden cottages and stilt dwellings built between and around giant mushroom stems; rope bridges and elevated walkways connecting mushroom caps; spore lanterns illuminating the vale floor"
+      }
+    }
+  },
+  "intentUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "reasoningTokens": 0,
+    "cost": 0,
+    "cached": true
+  },
+  "modules": {
+    "dir": "docs/kits/modules",
+    "selected": [
+      "1-document-skeleton (always)",
+      "2-coordinates-and-zones (always)",
+      "building-grammar (settlement)",
+      "district (settlement)",
+      "road-network (settlement)",
+      "the-plaza (settlement)",
+      "11-worked-settlement-fragments (settlement)",
+      "bespoke-programs-must-belong-to-the-worl (icons)",
+      "how-to-write-the-request (icons)",
+      "what-you-get-back-and-what-to-do-with-it (icons)",
+      "seating-how-a-grounded-thing-meets-the-g (icons)",
+      "facing-which-way-it-looks (icons)",
+      "a-fungal-grove-you-can-copy (fungal pack)"
+    ],
+    "used": [
+      "1-document-skeleton",
+      "2-coordinates-and-zones",
+      "building-grammar",
+      "district",
+      "road-network",
+      "the-plaza",
+      "11-worked-settlement-fragments",
+      "bespoke-programs-must-belong-to-the-worl",
+      "how-to-write-the-request",
+      "what-you-get-back-and-what-to-do-with-it",
+      "seating-how-a-grounded-thing-meets-the-g",
+      "facing-which-way-it-looks",
+      "a-fungal-grove-you-can-copy"
+    ],
+    "missing": [],
+    "bytes": 18116
+  },
+  "kitFile": "docs/kits/settlement-core.md",
+  "menu": {
+    "injected": false,
+    "reason": "flag off"
+  },
+  "attempts": 1,
+  "diagnostics": [
+    []
+  ],
+  "usage": {
+    "promptTokens": 77799,
+    "completionTokens": 12809,
+    "reasoningTokens": 7692,
+    "cost": 0.0531915
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 24,
+    "maxDepth": 2,
+    "generators": [
+      "authored:elder_glowcap",
+      "building.grammar@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "apothecary",
+      "cottage",
+      "granary",
+      "inn",
+      "mushroom_house",
+      "root_cellar_mound",
+      "stilt_house",
+      "watchtower",
+      "witch_hut"
+    ],
+    "archetypesInCatalog": 9,
+    "formPacks": [
+      "swamp_witch"
+    ],
+    "props": [
+      "bench",
+      "signpost",
+      "standing_stones",
+      "well_head"
+    ],
+    "species": [
+      "glowcap_mid",
+      "pale_birch",
+      "shelf_brown",
+      "vale_spruce",
+      "wild_birch",
+      "wild_spruce"
+    ],
+    "envelopes": [
+      "512x512",
+      "24x24",
+      "24x32x24",
+      "11x16x11",
+      "11x12x11",
+      "11x12x11",
+      "9x10x9",
+      "11x14x13",
+      "11x16x11",
+      "11x14x11",
+      "7x19x7"
+    ],
+    "constraints": 26,
+    "constraintKinds": [
+      "adjacent_to",
+      "blend",
+      "distance",
+      "facing",
+      "gap",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform",
+      "zone"
+    ],
+    "constraintsWithStrength": 9,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 8,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 17,
+    "eras": [
+      "medieval"
+    ],
+    "bytes": 9317
+  },
+  "wallMs": 70084
+}

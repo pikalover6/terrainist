@@ -1,0 +1,1015 @@
+{
+  "run": "e1-core-1",
+  "scoredAt": "2026-08-25",
+  "thresholds": {
+    "dominantHeight": 1.5,
+    "dominantFootprint": 2
+  },
+  "scores": [
+    {
+      "id": "troy_horse",
+      "icons": [
+        {
+          "id": "trojan_horse",
+          "dominantRequired": true,
+          "inDocument": [
+            "world.the_trojan_horse",
+            "intent.tokens"
+          ],
+          "inWorld": [],
+          "present": true,
+          "note": "asked for as a program this document has no source for (authoring-only run): document read",
+          "dominance": {
+            "dominant": false,
+            "note": "program not authored in this run"
+          }
+        },
+        {
+          "id": "citadel",
+          "dominantRequired": true,
+          "inDocument": [
+            "world.base_terrain.hissarlik_citadel_hill",
+            "world.troy_citadel",
+            "world.troy_citadel.citadel_armory",
+            "world.troy_citadel.citadel_stoa",
+            "intent.tokens",
+            "world.troy_citadel.priams_megaron",
+            "world.temple_of_athena"
+          ],
+          "inWorld": [
+            "troy_citadel",
+            "priams_megaron",
+            "citadel_stoa",
+            "citadel_armory",
+            "terrace_84_-69",
+            "terrace_99_-69",
+            "terrace_21_-20",
+            "terrace_21_26",
+            "terrace_21_45",
+            "infill_56_-69",
+            "infill_68_-69",
+            "infill_132_-69"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": false,
+            "by": "terrace_21_45",
+            "height": 24,
+            "footprint": 275,
+            "medianHeight": 15,
+            "medianFootprint": 144,
+            "heightRatio": 1.6,
+            "footprintRatio": 1.91
+          }
+        },
+        {
+          "id": "walls",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.troy_citadel",
+            "intent.tokens",
+            "world.scaean_plaza"
+          ],
+          "inWorld": [
+            "wall:world.troy_citadel"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "districts",
+        "lots": 52,
+        "blocks": 17,
+        "envelope": 23088,
+        "lotsPer10k": 22.5,
+        "floor": 15,
+        "ok": true
+      },
+      "boxes": {
+        "era": "ancient",
+        "preModern": true,
+        "count": 0,
+        "of": 30,
+        "sample": []
+      },
+      "era": {
+        "era": "ancient",
+        "forbidden": [
+          "townhouse",
+          "terraced_row",
+          "shop_row",
+          "office",
+          "apartment_block"
+        ],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 0,
+        "diagnostics": 32
+      },
+      "alarms": [
+        "icon trojan_horse placed but unmeasured (program not authored in this run)",
+        "icon citadel not dominant (h×1.6, a×1.91)"
+      ]
+    },
+    {
+      "id": "pirate_unicorn_isles",
+      "icons": [
+        {
+          "id": "pirate_island",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.base_terrain.pirate_island_base",
+            "world.base_terrain.pirate_crags",
+            "world.pirate_woods",
+            "world.pirate_haven",
+            "world.pirate_harbour",
+            "world.pirate_dreadnought",
+            "world.pirate_coastal_battery",
+            "intent.tokens",
+            "world.pirate_haven.buccaneer_hall"
+          ],
+          "inWorld": [
+            "pirate_haven",
+            "pirate_harbour",
+            "buccaneer_hall",
+            "coastal_armory",
+            "the_black_dog_tavern",
+            "infill_-153_-7",
+            "infill_-125_28",
+            "infill_-149_13",
+            "world.pirate_haven.buccaneer_hall",
+            "world.pirate_haven.coastal_armory",
+            "world.pirate_haven.the_black_dog_tavern",
+            "world.pirate_haven.infill_-153_-7"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "unicorn_island",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.base_terrain.unicorn_island_base",
+            "world.base_terrain.unicorn_acropolis_mount",
+            "world.unicorn_enchanted_grove",
+            "world.unicorn_citadel",
+            "world.celestial_colossus",
+            "intent.tokens"
+          ],
+          "inWorld": [
+            "unicorn_citadel",
+            "celestial_cathedral",
+            "celestial_manor",
+            "arcane_observatory",
+            "infill_121_22",
+            "infill_136_22",
+            "infill_74_33",
+            "infill_83_42",
+            "infill_66_49",
+            "infill_95_-18",
+            "world.unicorn_citadel.celestial_cathedral",
+            "world.unicorn_citadel.celestial_manor"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "war",
+          "dominantRequired": false,
+          "inDocument": [
+            "intent.tokens",
+            "world.pirate_coastal_battery"
+          ],
+          "inWorld": [
+            "world.pirate_harbour.warehouse_0"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "districts",
+        "lots": 23,
+        "blocks": 19,
+        "envelope": 21560,
+        "lotsPer10k": 10.7,
+        "floor": 6,
+        "ok": true
+      },
+      "boxes": {
+        "era": "renaissance",
+        "preModern": true,
+        "count": 0,
+        "of": 19,
+        "sample": []
+      },
+      "era": {
+        "era": "renaissance",
+        "forbidden": [],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 8,
+        "diagnostics": 40
+      },
+      "alarms": []
+    },
+    {
+      "id": "hellenist_harbour",
+      "icons": [
+        {
+          "id": "sea_monsters",
+          "dominantRequired": true,
+          "inDocument": [
+            "root_region.heightfield_base.leviathan_bay",
+            "root_region.leviathan_prime",
+            "root_region.leviathan_brood",
+            "intent.tokens"
+          ],
+          "inWorld": [
+            "marker:leviathan_bay.head",
+            "marker:leviathan_bay.mouth"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": false,
+            "note": "nothing placed to measure"
+          }
+        },
+        {
+          "id": "harbour",
+          "dominantRequired": false,
+          "inDocument": [
+            "root_region.metropolis_harbour",
+            "intent.tokens"
+          ],
+          "inWorld": [
+            "metropolis_harbour",
+            "prop:root_region.metropolis_harbour.pier_0",
+            "prop:root_region.metropolis_harbour.ship_0",
+            "prop:root_region.metropolis_harbour.pier_1",
+            "prop:root_region.metropolis_harbour.ship_1",
+            "prop:root_region.metropolis_harbour.pier_2",
+            "prop:root_region.metropolis_harbour.ship_2",
+            "prop:root_region.metropolis_harbour.pier_3",
+            "prop:root_region.metropolis_harbour.ship_3"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "hellenic_forms",
+          "dominantRequired": false,
+          "inDocument": [
+            "root_region.neopolis_city.stoa_grand_colonnade",
+            "intent.tokens",
+            "root_region.neopolis_city.pantheon_rotunda",
+            "root_region.neopolis_city.acropolis_tower"
+          ],
+          "inWorld": [
+            "stoa_grand_colonnade",
+            "root_region.neopolis_city.stoa_grand_colonnade",
+            "root_region.neopolis_city.cell_0.infill_-47_-162",
+            "root_region.neopolis_city.cell_0.infill_57_-146",
+            "root_region.neopolis_city.cell_4.infill_-95_-75",
+            "root_region.neopolis_city.cell_4.infill_62_-50",
+            "root_region.neopolis_city.cell_4.infill_2_-17",
+            "root_region.neopolis_city.cell_0.infill_86_-186",
+            "root_region.neopolis_city.cell_0.infill_72_-135",
+            "root_region.neopolis_city.cell_1.infill_-120_-153",
+            "root_region.neopolis_city.cell_4.infill_34_-17",
+            "root_region.neopolis_city.cell_4.infill_92_-17"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "districts",
+        "lots": 99,
+        "blocks": 33,
+        "envelope": 69730,
+        "lotsPer10k": 14.2,
+        "floor": 15,
+        "ok": false
+      },
+      "boxes": {
+        "era": "modern",
+        "preModern": false,
+        "count": 0,
+        "of": 68,
+        "sample": []
+      },
+      "era": {
+        "era": "modern",
+        "forbidden": [],
+        "violations": [],
+        "packEraMismatch": 1
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 0,
+        "diagnostics": 16
+      },
+      "alarms": [
+        "icon sea_monsters placed but unmeasured (nothing placed to measure)",
+        "density 14.2 < floor 15"
+      ]
+    },
+    {
+      "id": "alien_farm",
+      "icons": [
+        {
+          "id": "farm_town",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.heightfield.farm_brook",
+            "world.damaged_farmhouse",
+            "intent.tokens",
+            "world.heightfield",
+            "world.grange_windmill"
+          ],
+          "inWorld": [
+            "damaged_farmhouse",
+            "world.damaged_farmhouse",
+            "world.holding_north.farmhouse",
+            "world.holding_west.farmhouse",
+            "farms",
+            "marker:farm_brook.head",
+            "marker:farm_brook.mouth",
+            "world.holding_north.barn",
+            "world.holding_west.barn",
+            "grange_windmill",
+            "world.grange_windmill"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "aliens",
+          "dominantRequired": true,
+          "inDocument": [
+            "world.mothership",
+            "world.alien_wreck",
+            "world.alien_incursion_pods",
+            "intent.tokens"
+          ],
+          "inWorld": [],
+          "present": true,
+          "note": "asked for as a program this document has no source for (authoring-only run): document read",
+          "dominance": {
+            "dominant": false,
+            "note": "program not authored in this run"
+          }
+        }
+      ],
+      "density": {
+        "basis": "buildings-hull",
+        "lots": 14,
+        "blocks": 0,
+        "envelope": 61661,
+        "lotsPer10k": 2.3,
+        "floor": 6,
+        "ok": false
+      },
+      "boxes": {
+        "era": "industrial",
+        "preModern": false,
+        "count": 0,
+        "of": 14,
+        "sample": []
+      },
+      "era": {
+        "era": "industrial",
+        "forbidden": [],
+        "violations": [],
+        "packEraMismatch": 1
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 6,
+        "diagnostics": 19
+      },
+      "alarms": [
+        "icon aliens placed but unmeasured (program not authored in this run)",
+        "density 2.3 < floor 6"
+      ]
+    },
+    {
+      "id": "metropolis_hideout",
+      "icons": [
+        {
+          "id": "ruined_towers",
+          "dominantRequired": false,
+          "inDocument": [
+            "world_root.terrain_heightfield.ruined_canal",
+            "world_root.metropolis_ruins",
+            "world_root.metropolis_ruins.ruined_corporate_tower",
+            "world_root.metropolis_ruins.shattered_subway_terminal",
+            "world_root.metropolis_ruins.derelict_data_hub",
+            "world_root.ruins_access_barricade",
+            "intent.tokens",
+            "world_root.perimeter_watchtower"
+          ],
+          "inWorld": [
+            "metropolis_ruins",
+            "ruined_corporate_tower",
+            "derelict_data_hub",
+            "shattered_subway_terminal",
+            "terrace_-131_-192",
+            "terrace_-93_-192",
+            "terrace_-49_-192",
+            "terrace_-7_-192",
+            "terrace_36_-192",
+            "terrace_74_-192",
+            "terrace_-131_-170",
+            "terrace_-4_-167"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "overgrowth",
+          "dominantRequired": false,
+          "inDocument": [
+            "world_root.overgrown_canopy_forest",
+            "intent.tokens"
+          ],
+          "inWorld": [
+            "forest:overgrown_canopy_forest"
+          ],
+          "present": true,
+          "note": "terrain icon: document read",
+          "dominance": null
+        },
+        {
+          "id": "hideout",
+          "dominantRequired": false,
+          "inDocument": [
+            "world_root.hideout_plaza",
+            "world_root.main_command_bunker",
+            "world_root.research_laboratory",
+            "world_root.hydroponics_facility",
+            "world_root.power_battery_shed",
+            "world_root.perimeter_watchtower",
+            "world_root.secure_checkpoint",
+            "world_root.hideout_helipad",
+            "intent.tokens"
+          ],
+          "inWorld": [
+            "hideout_plaza",
+            "prop:world_root.hideout_helipad",
+            "main_command_bunker",
+            "world_root.main_command_bunker",
+            "world_root.metropolis_ruins.infill_17_-182",
+            "research_laboratory",
+            "world_root.research_laboratory",
+            "world_root.metropolis_ruins.infill_-131_-130",
+            "world_root.metropolis_ruins.infill_-48_-21"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "districts",
+        "lots": 130,
+        "blocks": 39,
+        "envelope": 57200,
+        "lotsPer10k": 22.7,
+        "floor": 15,
+        "ok": true
+      },
+      "boxes": {
+        "era": "far_future",
+        "preModern": false,
+        "count": 0,
+        "of": 87,
+        "sample": []
+      },
+      "era": {
+        "era": "far_future",
+        "forbidden": [
+          "cottage",
+          "manor_house",
+          "tavern",
+          "church",
+          "windmill"
+        ],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 0,
+        "diagnostics": 22
+      },
+      "alarms": []
+    },
+    {
+      "id": "redwood_camp",
+      "icons": [
+        {
+          "id": "redwoods",
+          "dominantRequired": true,
+          "inDocument": [
+            "world.colossal_redwood_forest",
+            "intent.tokens"
+          ],
+          "inWorld": [
+            "forest:colossal_redwood_forest"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": false,
+            "note": "nothing placed to measure"
+          }
+        },
+        {
+          "id": "logging_camp",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.heightfield.logging_creek",
+            "world.camp_lanes",
+            "intent.tokens",
+            "world.heightfield.camp_shelf",
+            "world.timber_sawmill",
+            "world.foreman_cabin",
+            "world.lumberjack_bunkhouse",
+            "world.camp_cookhouse",
+            "world.scaler_hut",
+            "world.supply_wagon",
+            "world.camp_hitching_post",
+            "world.camp_water_trough"
+          ],
+          "inWorld": [
+            "marker:logging_creek.head",
+            "marker:logging_creek.mouth",
+            "camp_cookhouse",
+            "world.camp_cookhouse",
+            "prop:world.camp_hitching_post",
+            "prop:world.camp_water_trough",
+            "prop:world.camp_notice_board",
+            "prop:world.fallers_timber_campsite",
+            "marker:camp_shelf.center",
+            "marker:camp_shelf.peak",
+            "marker:camp_shelf.foot",
+            "timber_sawmill"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "buildings-hull",
+        "lots": 7,
+        "blocks": 0,
+        "envelope": 8424,
+        "lotsPer10k": 8.3,
+        "floor": 2,
+        "ok": true
+      },
+      "boxes": {
+        "era": "industrial",
+        "preModern": false,
+        "count": 0,
+        "of": 7,
+        "sample": []
+      },
+      "era": {
+        "era": "industrial",
+        "forbidden": [],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 6,
+        "diagnostics": 12
+      },
+      "alarms": [
+        "icon redwoods placed but unmeasured (nothing placed to measure)"
+      ]
+    },
+    {
+      "id": "glowcap_vale",
+      "icons": [
+        {
+          "id": "glowing_mushrooms",
+          "dominantRequired": true,
+          "inDocument": [
+            "root.glowing_mushroom_grove",
+            "root.mushroom_dwelling_west",
+            "root.mushroom_dwelling_east",
+            "intent.tokens",
+            "root.elder_glowshroom_spire",
+            "root.mycelium_cellar"
+          ],
+          "inWorld": [
+            "mushroom_dwelling_west",
+            "mushroom_dwelling_east",
+            "root.mushroom_dwelling_west",
+            "root.mushroom_dwelling_east",
+            "forest:glowing_mushroom_grove",
+            "mycelium_cellar",
+            "root.mycelium_cellar"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": false,
+            "by": "mushroom_dwelling_west",
+            "height": 16,
+            "footprint": 121,
+            "medianHeight": 15,
+            "medianFootprint": 121,
+            "heightRatio": 1.07,
+            "footprintRatio": 1
+          }
+        },
+        {
+          "id": "village",
+          "dominantRequired": false,
+          "inDocument": [
+            "root.witch_hut",
+            "root.mushroom_dwelling_west",
+            "root.mushroom_dwelling_east",
+            "root.stilt_lodge",
+            "intent.tokens"
+          ],
+          "inWorld": [
+            "witch_hut",
+            "root.witch_hut",
+            "root.mushroom_dwelling_west",
+            "root.mushroom_dwelling_east",
+            "root.stilt_lodge",
+            "mushroom_dwelling_west",
+            "mushroom_dwelling_east"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "buildings-hull",
+        "lots": 9,
+        "blocks": 0,
+        "envelope": 9120,
+        "lotsPer10k": 9.9,
+        "floor": 4,
+        "ok": true
+      },
+      "boxes": {
+        "era": "medieval",
+        "preModern": true,
+        "count": 0,
+        "of": 9,
+        "sample": []
+      },
+      "era": {
+        "era": "medieval",
+        "forbidden": [],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 8,
+        "diagnostics": 13
+      },
+      "alarms": [
+        "icon glowing_mushrooms not dominant (h×1.07, a×1)"
+      ]
+    },
+    {
+      "id": "walled_medieval_city",
+      "icons": [
+        {
+          "id": "wall",
+          "dominantRequired": false,
+          "inDocument": [
+            "intent.tokens"
+          ],
+          "inWorld": [
+            "wall:world.hill_city"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "keep",
+          "dominantRequired": true,
+          "inDocument": [
+            "world.hill_city.castle_keep",
+            "intent.tokens"
+          ],
+          "inWorld": [],
+          "present": false,
+          "dominance": {
+            "dominant": false,
+            "note": "nothing placed to measure"
+          }
+        },
+        {
+          "id": "town",
+          "dominantRequired": false,
+          "inDocument": [
+            "intent.tokens",
+            "world.hill_city.hill_church"
+          ],
+          "inWorld": [
+            "world.hill_city.infill_6_-67",
+            "world.hill_city.infill_-30_-53",
+            "world.hill_city.infill_-50_30",
+            "world.hill_city.infill_-95_-24",
+            "world.hill_city.infill_-69_-14",
+            "world.lowland_farmstead.farmhouse",
+            "world.hill_city.infill_-28_-16",
+            "world.hill_city.infill_-43_-40"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "districts",
+        "lots": 41,
+        "blocks": 8,
+        "envelope": 48400,
+        "lotsPer10k": 8.5,
+        "floor": 15,
+        "ok": false
+      },
+      "boxes": {
+        "era": "medieval",
+        "preModern": true,
+        "count": 0,
+        "of": 23,
+        "sample": []
+      },
+      "era": {
+        "era": "medieval",
+        "forbidden": [],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 2,
+        "diagnostics": 26
+      },
+      "alarms": [
+        "icon keep absent",
+        "density 8.5 < floor 15"
+      ]
+    },
+    {
+      "id": "railway_town",
+      "icons": [
+        {
+          "id": "railway",
+          "dominantRequired": true,
+          "inDocument": [
+            "root.blackwood_industrial_district.central_rail_station",
+            "root.blackwood_industrial_district.junction_signal_box",
+            "root.blackwood_industrial_district.locomotive_roundhouse",
+            "root.rail_telegraph_run",
+            "intent.tokens",
+            "root.depot_locomotive"
+          ],
+          "inWorld": [
+            "central_rail_station",
+            "root.blackwood_industrial_district.central_rail_station",
+            "root.blackwood_industrial_district.infill_-22_-149",
+            "root.blackwood_industrial_district.infill_-43_-120",
+            "root.blackwood_industrial_district.infill_9_-110",
+            "root.blackwood_industrial_district.infill_-161_-100",
+            "root.blackwood_industrial_district.infill_-161_-45",
+            "locomotive_roundhouse",
+            "root.blackwood_industrial_district.locomotive_roundhouse",
+            "prop:root.depot_locomotive"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": false,
+            "by": "root.blackwood_industrial_district.central_rail_station",
+            "height": 15,
+            "footprint": 315,
+            "medianHeight": 15,
+            "medianFootprint": 180,
+            "heightRatio": 1,
+            "footprintRatio": 1.75
+          }
+        },
+        {
+          "id": "canal",
+          "dominantRequired": false,
+          "inDocument": [
+            "root.soot_basin_heightfield.freight_canal_cut",
+            "root.canal_basin_wharf",
+            "root.blackwood_industrial_district.canal_coal_tipple",
+            "root.blackwood_industrial_district.canal_customs_office",
+            "root.blackwood_industrial_district.canal_maintenance_boathouse",
+            "root.basin_canal_lock",
+            "root.canal_barge_lead",
+            "root.canal_barge_cargo",
+            "intent.tokens",
+            "root.soot_basin_heightfield"
+          ],
+          "inWorld": [
+            "canal_basin_wharf",
+            "canal_coal_tipple",
+            "canal_maintenance_boathouse",
+            "canal_customs_office",
+            "root.blackwood_industrial_district.canal_coal_tipple",
+            "root.blackwood_industrial_district.canal_maintenance_boathouse",
+            "root.blackwood_industrial_district.canal_customs_office",
+            "prop:root.canal_barge_lead",
+            "prop:root.canal_barge_cargo",
+            "marker:freight_canal_cut.head",
+            "marker:freight_canal_cut.mouth"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "industry",
+          "dominantRequired": false,
+          "inDocument": [
+            "intent.tokens",
+            "root.soot_basin_heightfield"
+          ],
+          "inWorld": [
+            "root.blackwood_industrial_district.infill_23_-142",
+            "root.blackwood_industrial_district.infill_9_-67",
+            "root.blackwood_industrial_district.infill_-44_-29",
+            "root.blackwood_industrial_district.infill_23_8"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "districts",
+        "lots": 103,
+        "blocks": 36,
+        "envelope": 44000,
+        "lotsPer10k": 23.4,
+        "floor": 8,
+        "ok": true
+      },
+      "boxes": {
+        "era": "industrial",
+        "preModern": false,
+        "count": 0,
+        "of": 45,
+        "sample": []
+      },
+      "era": {
+        "era": "industrial",
+        "forbidden": [],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 0,
+        "diagnostics": 39
+      },
+      "alarms": [
+        "icon railway not dominant (h×1, a×1.75)"
+      ]
+    },
+    {
+      "id": "desert_wilderness",
+      "icons": [
+        {
+          "id": "salt_flat",
+          "dominantRequired": false,
+          "inDocument": [
+            "intent.tokens",
+            "root.desert_climate"
+          ],
+          "inWorld": [
+            "marker:largest_flat"
+          ],
+          "present": true,
+          "note": "terrain icon: document read",
+          "dominance": null
+        },
+        {
+          "id": "nothing_living",
+          "dominantRequired": false,
+          "inDocument": [],
+          "inWorld": [],
+          "present": true,
+          "note": "0 building(s)",
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "none",
+        "lots": 0,
+        "blocks": 0,
+        "envelope": 0,
+        "lotsPer10k": 0,
+        "floor": 0,
+        "ok": true
+      },
+      "boxes": {
+        "era": "",
+        "preModern": false,
+        "count": 0,
+        "of": 0,
+        "sample": []
+      },
+      "era": {
+        "era": "",
+        "forbidden": [],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 0,
+        "diagnostics": 0
+      },
+      "alarms": []
+    },
+    {
+      "id": "fjord_terrain",
+      "icons": [
+        {
+          "id": "fjord",
+          "dominantRequired": false,
+          "inDocument": [
+            "root.base_terrain.fjord_channel",
+            "intent.tokens"
+          ],
+          "inWorld": [
+            "marker:fjord_channel.head",
+            "marker:fjord_channel.mouth"
+          ],
+          "present": true,
+          "note": "terrain icon: document read",
+          "dominance": null
+        },
+        {
+          "id": "pine_ridges",
+          "dominantRequired": false,
+          "inDocument": [
+            "root.pine_flanks_forest",
+            "intent.tokens",
+            "root.base_terrain.ridge_north",
+            "root.base_terrain.ridge_south"
+          ],
+          "inWorld": [
+            "forest:pine_flanks_forest",
+            "marker:ridge_north.head",
+            "marker:ridge_north.mouth",
+            "marker:ridge_north.peak",
+            "marker:ridge_south.head",
+            "marker:ridge_south.mouth",
+            "marker:ridge_south.peak"
+          ],
+          "present": true,
+          "note": "terrain icon: document read",
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "none",
+        "lots": 0,
+        "blocks": 0,
+        "envelope": 0,
+        "lotsPer10k": 0,
+        "floor": 0,
+        "ok": true
+      },
+      "boxes": {
+        "era": "",
+        "preModern": false,
+        "count": 0,
+        "of": 0,
+        "sample": []
+      },
+      "era": {
+        "era": "",
+        "forbidden": [],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 0,
+        "diagnostics": 0
+      },
+      "alarms": []
+    }
+  ]
+}

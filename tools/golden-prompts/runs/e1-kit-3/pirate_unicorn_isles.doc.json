@@ -1,0 +1,805 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "isles_at_war",
+    "worldSeed": 301,
+    "prompt": "A pirate island and a unicorn island, at war.",
+    "spawn": {
+      "zone": "southwest"
+    }
+  },
+  "intent": {
+    "era": "renaissance",
+    "wealth": 0.5,
+    "formality": 0.4,
+    "climate": {
+      "temperature": 0.6,
+      "humidity": 0.3,
+      "snow": "never"
+    },
+    "character": {
+      "label": "The Contested Archipelagos",
+      "programs": [
+        {
+          "id": "pirate_flagship",
+          "mode": "landmark",
+          "brief": "A menacing pirate war galleon anchored offshore facing the unicorn island, dark weathered hull, skull-and-cutlass figurehead, double gun decks with cannons run out over the water.",
+          "envelope": [
+            48,
+            36,
+            16
+          ]
+        },
+        {
+          "id": "unicorn_colossus",
+          "mode": "landmark",
+          "brief": "A towering crystalline white quartz statue of a rearing horned unicorn guardian on a fortified seawall, horn alight with sea lanterns, glaring directly across the strait at the pirate fleet.",
+          "envelope": [
+            18,
+            32,
+            18
+          ]
+        },
+        {
+          "id": "coastal_battery",
+          "mode": "plugin",
+          "brief": "A timber and stone gun redoubt with heavy iron cannons pointed across the water, powder barrels, and barricaded sandbags.",
+          "envelope": [
+            9,
+            6,
+            9
+          ],
+          "count": 6
+        }
+      ]
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:cobblestone",
+      "road.shoulder": "minecraft:gravel"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "The Contested Strait",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "open ocean and two fortified rival islands",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 48,
+          "amplitude": 32,
+          "octaves": 5,
+          "frequency": 0.0035,
+          "warp": {
+            "amount": 18,
+            "frequency": 0.004
+          },
+          "erosionPasses": 2,
+          "continentalness": {
+            "frequency": 0.0016,
+            "seaFraction": 0.62
+          },
+          "cliffThreshold": 55,
+          "soilDepth": 3,
+          "beachWidth": 4
+        },
+        "children": [
+          {
+            "id": "pirate_island_mass",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the rugged southwestern pirate isle",
+            "params": {
+              "verb": "island",
+              "at": [
+                0.26,
+                0.72
+              ],
+              "radius": 110,
+              "height": 26,
+              "profile": "sharp",
+              "irregularity": 0.22
+            }
+          },
+          {
+            "id": "unicorn_island_mass",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the enchanted northeastern unicorn isle",
+            "params": {
+              "verb": "island",
+              "at": [
+                0.74,
+                0.28
+              ],
+              "radius": 110,
+              "height": 28,
+              "profile": "rounded",
+              "irregularity": 0.18
+            }
+          },
+          {
+            "id": "pirate_cove_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "level ground for the pirate haven",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.28,
+                0.68
+              ],
+              "radius": 65,
+              "height": 6,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "unicorn_citadel_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "level ground for the unicorn citadel",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.72,
+                0.32
+              ],
+              "radius": 65,
+              "height": 6,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "the_strait",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the contested open water separating the two powers",
+            "params": {
+              "verb": "valley",
+              "course": [
+                "coast",
+                [
+                  0.42,
+                  0.42
+                ],
+                [
+                  0.58,
+                  0.58
+                ],
+                "coast"
+              ],
+              "width": 50,
+              "depth": 20,
+              "profile": "rounded",
+              "flooded": "auto"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0014,
+          "latitudeGradient": -0.1
+        }
+      },
+      {
+        "id": "pirate_jungle",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "dense coastal timber on the pirate stronghold",
+        "params": {
+          "area": {
+            "at": [
+              0.22,
+              0.78
+            ],
+            "radius": 75
+          },
+          "density": 0.16,
+          "spacing": 3,
+          "clumping": 0.45,
+          "maxSlope": 32,
+          "elevation": [
+            2,
+            50
+          ],
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "undergrowth": {
+            "grass": 0.4,
+            "flowers": 0.02,
+            "deadwood": 0.08
+          },
+          "species": [
+            {
+              "id": "dense_oak",
+              "shape": "oak_spreading",
+              "weight": 2
+            },
+            {
+              "id": "dark_pine",
+              "shape": "spruce_tall",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "unicorn_grove",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "enchanted blossoming woods of the unicorn kingdom",
+        "params": {
+          "area": {
+            "at": [
+              0.78,
+              0.22
+            ],
+            "radius": 75
+          },
+          "density": 0.18,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 30,
+          "elevation": [
+            2,
+            55
+          ],
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "amethyst_spire",
+                  "shape": "crystal_spire"
+                }
+              ]
+            },
+            "understory": {
+              "species": [
+                {
+                  "id": "hazel",
+                  "shape": "hazel_shrub"
+                }
+              ],
+              "density": 0.08
+            },
+            "floor": "glow"
+          },
+          "species": [
+            {
+              "id": "sakura_bloom",
+              "shape": "cherry_blossom",
+              "weight": 3
+            },
+            {
+              "id": "pale_birch",
+              "shape": "birch_slim",
+              "weight": 2
+            }
+          ]
+        }
+      },
+      {
+        "id": "sparse_wilderness",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "light ambient cover across outlying islets",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 4,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "species": [
+            {
+              "id": "coastal_scrub",
+              "shape": "oak_round",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "pirate_haven",
+        "kind": "district",
+        "label": "fortified buccaneer cove and war port",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            140,
+            130
+          ]
+        },
+        "intent": {
+          "era": "pirate",
+          "wealth": 0.35,
+          "decline": 0.35,
+          "formality": 0.15,
+          "character": {
+            "label": "Corsair Stronghold",
+            "materialTheme": "temperate_timber",
+            "formPacks": [
+              "nautical_pirate"
+            ],
+            "archetypes": {
+              "prefer": [
+                "tavern",
+                "warehouse",
+                "watchtower",
+                "cooperage",
+                "distillery",
+                "armory"
+              ],
+              "forbid": [
+                "cathedral",
+                "synagogue",
+                "office",
+                "bank",
+                "modern_villa"
+              ]
+            },
+            "motifs": {
+              "roofType": "shed",
+              "massing": "blocky",
+              "windowRhythm": "sparse",
+              "ornamentDensity": 0.2
+            }
+          }
+        },
+        "params": {
+          "fabric": "grown",
+          "density": "medium",
+          "mix": [
+            "tavern",
+            "warehouse",
+            "cottage",
+            "cooperage",
+            "distillery",
+            "armory"
+          ],
+          "plaza": true,
+          "walls": {
+            "style": "palisade",
+            "margin": 8,
+            "towerPitch": 32,
+            "height": 5
+          }
+        },
+        "constraints": [
+          {
+            "at": [
+              0.28,
+              0.68
+            ]
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6
+          }
+        ],
+        "tags": [
+          "pirate",
+          "settlement"
+        ],
+        "children": [
+          {
+            "id": "corsair_alehouse",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the raucous sea-dog tavern",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                12,
+                15
+              ]
+            },
+            "params": {
+              "archetype": "tavern",
+              "floors": 2,
+              "roof": "gable"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "tavern",
+              "landmark"
+            ]
+          },
+          {
+            "id": "pirate_lookout",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "coastal watchtower watching the strait",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                7,
+                19,
+                7
+              ]
+            },
+            "params": {
+              "archetype": "watchtower",
+              "floors": 2,
+              "roof": "flat"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "east",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "watchtower",
+              "landmark"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "unicorn_sanctuary",
+        "kind": "district",
+        "label": "the pristine quartz citadel of the unicorn realm",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            140,
+            130
+          ]
+        },
+        "intent": {
+          "era": "renaissance",
+          "wealth": 0.85,
+          "decline": 0.05,
+          "formality": 0.75,
+          "character": {
+            "label": "Unicorn Citadel Sanctuary",
+            "materialTheme": "white_quartz",
+            "formPacks": [
+              "arcane_magical",
+              "classical_mediterranean"
+            ],
+            "archetypes": {
+              "prefer": [
+                "crystal_shrine",
+                "manor_house",
+                "cathedral",
+                "observatory",
+                "cloister",
+                "library"
+              ],
+              "forbid": [
+                "tannery",
+                "charcoal_burner",
+                "mine_head",
+                "factory_hall",
+                "cannery"
+              ]
+            },
+            "motifs": {
+              "roofType": "dome",
+              "massing": "stepped",
+              "windowRhythm": "dense",
+              "ornamentDensity": 0.85
+            }
+          }
+        },
+        "params": {
+          "fabric": "radial",
+          "density": "medium",
+          "mix": [
+            "crystal_shrine",
+            "manor_house",
+            "library",
+            "cloister",
+            "townhouse",
+            "observatory"
+          ],
+          "plaza": true,
+          "courtyards": 0.4,
+          "walls": {
+            "style": "masonry",
+            "margin": 10,
+            "towerPitch": 36,
+            "height": 7
+          }
+        },
+        "constraints": [
+          {
+            "at": [
+              0.72,
+              0.32
+            ]
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6
+          }
+        ],
+        "tags": [
+          "unicorn",
+          "settlement"
+        ],
+        "children": [
+          {
+            "id": "sanctuary_temple",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "high temple of the sacred unicorn",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                15,
+                18,
+                21
+              ]
+            },
+            "params": {
+              "archetype": "cathedral",
+              "floors": 2
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "cathedral",
+              "landmark"
+            ]
+          },
+          {
+            "id": "celestial_observatory",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "observatory tracking astral omens of war",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                11,
+                15,
+                11
+              ]
+            },
+            "params": {
+              "archetype": "observatory",
+              "floors": 1
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "west",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "observatory",
+              "landmark"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "flagship_corsair",
+        "kind": "generator",
+        "generator": "authored:pirate_flagship",
+        "label": "the pirate dreadnought anchored in firing position",
+        "params": {
+          "seat": "wade",
+          "face": {
+            "toward": "unicorn_sanctuary"
+          }
+        },
+        "constraints": [
+          {
+            "at": [
+              0.44,
+              0.56
+            ]
+          },
+          {
+            "distance": "pirate_haven",
+            "min": 16,
+            "max": 60
+          },
+          {
+            "on": "@terrain:coastline",
+            "band": 28
+          }
+        ],
+        "tags": [
+          "landmark",
+          "ship",
+          "pirate"
+        ]
+      },
+      {
+        "id": "unicorn_guardian",
+        "kind": "generator",
+        "generator": "authored:unicorn_colossus",
+        "label": "the towering quartz colossus guarding the strait",
+        "params": {
+          "seat": "pad",
+          "face": {
+            "toward": "pirate_haven"
+          }
+        },
+        "constraints": [
+          {
+            "at": [
+              0.56,
+              0.44
+            ]
+          },
+          {
+            "distance": "unicorn_sanctuary",
+            "min": 16,
+            "max": 60
+          },
+          {
+            "on": "@terrain:coastline",
+            "band": 24
+          }
+        ],
+        "tags": [
+          "landmark",
+          "monument",
+          "unicorn"
+        ]
+      },
+      {
+        "id": "pirate_battery_line",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "battery of siege guns pointed at unicorn waters",
+        "params": {
+          "program": "coastal_battery",
+          "count": 6,
+          "area": {
+            "at": [
+              0.38,
+              0.6
+            ],
+            "radius": 0.15
+          },
+          "spacing": 20,
+          "seat": "conform",
+          "face": {
+            "toward": "unicorn_sanctuary"
+          },
+          "avoidTags": [
+            "structure",
+            "plaza"
+          ]
+        }
+      },
+      {
+        "id": "pirate_coastal_battery",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "fortified shoreline gun rampart protecting the pirate haven",
+        "params": {
+          "entry": "cannon_battery",
+          "route": {
+            "ring": "pirate_haven",
+            "margin": 14
+          }
+        }
+      },
+      {
+        "id": "pirate_pier",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the timber quay where sloops outfit for battle",
+        "params": {
+          "prop": "pier",
+          "zone": "southwest",
+          "length": 14,
+          "width": 3
+        }
+      },
+      {
+        "id": "raiding_sloop",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "armed sloop moored at the dock ready to raid",
+        "params": {
+          "prop": "fishing_sloop",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "sacred_standing_stones",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "ancient arcane megalith ring on the unicorn isle",
+        "params": {
+          "prop": "standing_stones",
+          "zone": "northeast"
+        }
+      },
+      {
+        "id": "sanctuary_fountain",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the pristine quartz spring in the citadel plaza",
+        "params": {
+          "prop": "fountain",
+          "zone": "northeast"
+        }
+      },
+      {
+        "id": "island_lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "thoroughfares linking each fortress to its coastal defense positions",
+        "params": {
+          "anchors": [
+            "pirate_haven",
+            "unicorn_sanctuary",
+            "sacred_standing_stones"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 14
+        }
+      }
+    ]
+  }
+}

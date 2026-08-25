@@ -1,0 +1,284 @@
+{
+  "loam": "0.1",
+  "profile": "terrain",
+  "meta": {
+    "name": "pine_fjord",
+    "worldSeed": 314,
+    "prompt": "A deep fjord cutting inland between pine ridges, its water open to the sea."
+  },
+  "intent": {
+    "climate": {
+      "biome": "minecraft:old_growth_pine_taiga",
+      "temperature": -0.3,
+      "humidity": 0.5
+    },
+    "character": {
+      "label": "pine fjord",
+      "materialTheme": "boreal_pine",
+      "flora": {
+        "prefer": [
+          "spruce_tall"
+        ]
+      }
+    },
+    "tokens": {
+      "terrain": "a deep fjord cutting inland between steep pine-covered ridges, opening to the open sea"
+    }
+  },
+  "root": {
+    "kind": "composite",
+    "id": "root",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "kind": "generator",
+        "id": "base_terrain",
+        "generator": "terrain.heightfield@0",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 72,
+          "amplitude": 75,
+          "octaves": 5,
+          "frequency": 0.0032,
+          "lacunarity": 2,
+          "gain": 0.55,
+          "ridged": true,
+          "warp": {
+            "amount": 24,
+            "frequency": 0.0035
+          },
+          "erosionPasses": 2,
+          "cliffThreshold": 50,
+          "continentalness": {
+            "frequency": 0.0018,
+            "seaFraction": 0.35
+          }
+        },
+        "children": [
+          {
+            "kind": "generator",
+            "id": "ridge_north",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.85,
+                  0.65
+                ],
+                [
+                  0.6,
+                  0.4
+                ],
+                [
+                  0.35,
+                  0.22
+                ],
+                [
+                  0.15,
+                  0.12
+                ]
+              ],
+              "width": 64,
+              "height": 70,
+              "profile": "sharp",
+              "meander": 0.4
+            }
+          },
+          {
+            "kind": "generator",
+            "id": "ridge_south",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.75,
+                  0.9
+                ],
+                [
+                  0.5,
+                  0.7
+                ],
+                [
+                  0.28,
+                  0.52
+                ],
+                [
+                  0.1,
+                  0.38
+                ]
+              ],
+              "width": 64,
+              "height": 75,
+              "profile": "sharp",
+              "meander": 0.4
+            }
+          },
+          {
+            "kind": "generator",
+            "id": "peak_north",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "peak",
+              "at": [
+                0.58,
+                0.38
+              ],
+              "radius": 50,
+              "height": 55,
+              "profile": "sharp"
+            }
+          },
+          {
+            "kind": "generator",
+            "id": "peak_south",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "peak",
+              "at": [
+                0.45,
+                0.72
+              ],
+              "radius": 52,
+              "height": 60,
+              "profile": "sharp"
+            }
+          },
+          {
+            "kind": "generator",
+            "id": "fjord_channel",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.82,
+                  0.78
+                ],
+                [
+                  0.56,
+                  0.54
+                ],
+                [
+                  0.32,
+                  0.36
+                ],
+                "coast"
+              ],
+              "width": 52,
+              "depth": 50,
+              "profile": "sharp",
+              "meander": 0.4,
+              "flooded": "auto"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "generator",
+        "id": "climate",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "boreal",
+          "temperatureFrequency": 0.003,
+          "humidityFrequency": 0.003,
+          "latitudeGradient": -0.5
+        }
+      },
+      {
+        "kind": "generator",
+        "id": "pine_flanks_forest",
+        "generator": "scatter.forest@0",
+        "params": {
+          "species": [
+            {
+              "id": "tall_pine",
+              "shape": "spruce_tall",
+              "weight": 4
+            },
+            {
+              "id": "squat_spruce",
+              "shape": "spruce_squat",
+              "weight": 2
+            },
+            {
+              "id": "columnar_larch",
+              "shape": "larch_columnar",
+              "weight": 1
+            }
+          ],
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "ancient_pine",
+                  "shape": "spruce_ancient",
+                  "weight": 1
+                }
+              ]
+            },
+            "understory": {
+              "species": [
+                {
+                  "id": "juniper_brush",
+                  "shape": "juniper_scrub",
+                  "weight": 1
+                }
+              ],
+              "density": 0.25
+            }
+          },
+          "density": 0.2,
+          "undergrowth": {
+            "grass": 0.4,
+            "flowers": 0.04,
+            "deadwood": 0.08
+          },
+          "elevation": [
+            2,
+            110
+          ],
+          "maxSlope": 42,
+          "clumping": 0.45,
+          "area": {
+            "all": true
+          }
+        }
+      },
+      {
+        "kind": "generator",
+        "id": "taiga_wilderness",
+        "generator": "scatter.forest@0",
+        "params": {
+          "species": [
+            {
+              "id": "sparse_pine",
+              "shape": "spruce_tall",
+              "weight": 3
+            },
+            {
+              "id": "sparse_spruce",
+              "shape": "spruce_squat",
+              "weight": 1
+            }
+          ],
+          "density": 0.012,
+          "elevation": [
+            1,
+            140
+          ],
+          "area": {
+            "all": true
+          }
+        }
+      }
+    ]
+  }
+}

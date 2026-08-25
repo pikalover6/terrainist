@@ -1,0 +1,254 @@
+{
+  "id": "hellenist_harbour",
+  "family": "hellenist_city",
+  "kit": "settlement",
+  "prompt": "A modern Hellenist city being invaded by sea monsters.",
+  "seed": 305,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "cache",
+    "value": {
+      "era": "modern",
+      "wealth": 0.8,
+      "formality": 0.75,
+      "event": {
+        "kind": "siege",
+        "severity": 0.85,
+        "recency": 0
+      },
+      "climate": {
+        "temperature": 0.6,
+        "humidity": 0.2,
+        "snow": "never"
+      },
+      "character": {
+        "label": "modern Hellenist coastal metropolis under sea monster siege",
+        "materialTheme": "modern_city",
+        "formPacks": [
+          "classical_mediterranean"
+        ],
+        "archetypes": {
+          "prefer": [
+            "stoa",
+            "peripteral_temple",
+            "bouleuterion",
+            "palaestra",
+            "nymphaeum"
+          ]
+        },
+        "urbanForm": "grid",
+        "motifs": {
+          "roofType": "flat",
+          "massing": "blocky",
+          "windowRhythm": "regular",
+          "ornamentDensity": 0.6
+        }
+      },
+      "tokens": {
+        "terrain": "a grand coastal metropolis fronting a deep harbour and open sea where sea monsters surface",
+        "event_direction": "giant sea monsters rise out of the ocean water attacking the harbour and waterfront avenues",
+        "infra": "barricade_line across the harbour promenade; emergency_cordon along the coastal boulevard",
+        "icons": "leviathans and sea monsters breaching along the modern docks; neoclassical porticos and high-rise stoas overlooking the bay; emergency barricades and defensive lines guarding the shore"
+      }
+    }
+  },
+  "intentUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "reasoningTokens": 0,
+    "cost": 0,
+    "cached": true
+  },
+  "kitFile": "docs/kits/settlement-core.md",
+  "menu": {
+    "injected": false,
+    "reason": "flag off"
+  },
+  "attempts": 2,
+  "diagnostics": [
+    [
+      {
+        "code": "LOAM-T008",
+        "name": "UNKNOWN_KEY",
+        "severity": "error",
+        "nodePath": "world.base_terrain.city_plateau"
+      },
+      {
+        "code": "LOAM-T008",
+        "name": "UNKNOWN_KEY",
+        "severity": "error",
+        "nodePath": "world.base_terrain.city_plateau"
+      },
+      {
+        "code": "LOAM-T101",
+        "name": "BAD_ENUM",
+        "severity": "error",
+        "nodePath": "world.base_terrain.city_plateau.params"
+      },
+      {
+        "code": "LOAM-T008",
+        "name": "UNKNOWN_KEY",
+        "severity": "error",
+        "nodePath": "world.base_terrain.harbour_channel"
+      },
+      {
+        "code": "LOAM-T008",
+        "name": "UNKNOWN_KEY",
+        "severity": "error",
+        "nodePath": "world.base_terrain.harbour_channel"
+      },
+      {
+        "code": "LOAM-T101",
+        "name": "BAD_ENUM",
+        "severity": "error",
+        "nodePath": "world.base_terrain.harbour_channel.params"
+      },
+      {
+        "code": "LOAM-T008",
+        "name": "UNKNOWN_KEY",
+        "severity": "error",
+        "nodePath": "world.base_terrain.hymettus_ridge"
+      },
+      {
+        "code": "LOAM-T008",
+        "name": "UNKNOWN_KEY",
+        "severity": "error",
+        "nodePath": "world.base_terrain.hymettus_ridge"
+      },
+      {
+        "code": "LOAM-T101",
+        "name": "BAD_ENUM",
+        "severity": "error",
+        "nodePath": "world.base_terrain.hymettus_ridge.params"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "world.hellenic_metropolis.parthenon_tower"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "world.hellenic_metropolis.bouleuterion_civic"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "world.hellenic_metropolis.acropolis_highrise"
+      },
+      {
+        "code": "LOAM-T205",
+        "name": "BAD_PORT",
+        "severity": "error",
+        "nodePath": "world.helios_defense_tower"
+      },
+      {
+        "code": "LOAM-T101",
+        "name": "BAD_ENUM",
+        "severity": "error",
+        "nodePath": "world.warship_patrol.params"
+      }
+    ],
+    []
+  ],
+  "usage": {
+    "promptTokens": 152144,
+    "completionTokens": 18710,
+    "reasoningTokens": 10539,
+    "cost": 0.068648625
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 21,
+    "maxDepth": 2,
+    "generators": [
+      "authored:abyssal_leviathan",
+      "authored:helios_defense_spire",
+      "building.grammar@0",
+      "infra.entry@0",
+      "precinct.harbour@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "apartment_block",
+      "bouleuterion",
+      "brutalist_block",
+      "cottage",
+      "customs_house",
+      "museum",
+      "nymphaeum",
+      "office",
+      "palaestra",
+      "peripteral_temple",
+      "skyscraper",
+      "stoa",
+      "university_hall",
+      "warehouse"
+    ],
+    "archetypesInCatalog": 14,
+    "formPacks": [
+      "classical_mediterranean"
+    ],
+    "props": [
+      "fishing_trawler",
+      "tugboat"
+    ],
+    "species": [
+      "aegean_oak",
+      "cypress",
+      "olive_tree",
+      "shrub"
+    ],
+    "envelopes": [
+      "512x512",
+      "80x20x56",
+      "280x240",
+      "19x20x21",
+      "15x14x17",
+      "18x44x18",
+      "44x48x52",
+      "18x32x18"
+    ],
+    "constraints": 9,
+    "constraintKinds": [
+      "adjacent_to",
+      "at",
+      "band",
+      "blend",
+      "distance",
+      "gap",
+      "max",
+      "min",
+      "on",
+      "reference",
+      "terrain_conform",
+      "zone"
+    ],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 3,
+    "programReferences": 2,
+    "conformsTrue": 0,
+    "labels": 0,
+    "eras": [
+      "modern"
+    ],
+    "bytes": 7480
+  },
+  "wallMs": 100522
+}
