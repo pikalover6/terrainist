@@ -189,6 +189,26 @@ analysis harness over it:
   **Recommendation on record: flag stays OFF; re-measure ON-only (~$0.64)
   after cluster 3 removes the prohibition and fences a pack that spends
   menu ids.** Machinery committed and free while off.
+- **RE-MEASURED at the cluster-3 kit (3×3, $0.31, one runner, no
+  truncations): THE MENU WORKS where the menu is right.** troy pack-member
+  uses OFF 3/5/5 vs ON 11/11/11 — disjoint ranges, ON identical across
+  three runs; **pithos_store, trireme, votive_column (each 0/50 in the
+  corpus) in all three ON runs and none of the OFF** — no floor argument
+  needed. The pre-registered prediction held: explicitArchetypeParams OFF
+  2/3/3 vs ON 4/4/3; the earlier 7 → 0 was the old prohibition, dissolved
+  by cluster 3 — that objection is dead. **walled_medieval_city 0/0/0 of
+  60 is the menu's defect, not the model's:** with no named pack it fell
+  to the era-affine tier, and era `medieval` spans eight culturally
+  incompatible packs — a European hill town was offered torii,
+  ger_round_tent, dzong_hall, yamashiro_tenshu, machiya_shop_row; the
+  model wrote a coherent European town instead. So the binding hypothesis
+  narrows to the named-pack cases (glowcap_vale, redwood_camp: right pack,
+  coherent menu, zero adoption); walled and railway_town are retired as
+  its evidence. fjord control 0/0/0. **Kai's ruling pending: cut tier 2,
+  or gate it on the cultural affinity FORM_PACKS already carries
+  (materialTheme / characters); re-test on walled + railway ~$0.15. The
+  flag question is now genuinely open — "not yet" until the era tier is
+  fixed.**
 
 ## WS-D — Price optimization
 
