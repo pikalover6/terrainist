@@ -42,14 +42,15 @@ the Claude Code orchestration workflow live in `CLAUDE.md`.
   LOAM-SPEC §15.2). `LOAM-E494`/`LOAM-E495` are compiler bugs, not gate
   checks, and are never suppressible.
 
-## Current state (keep this section current, not historical)
+## Current state
 
-The **GROUND-CONTRACT-v1 ladder** is mid-flight: stages G0–G5 shipped, the
-WP-G4 flip is live (`GROUND_V1_RANKS` and `GROUND_V1_SEAMS` are true in
-`layout/types.ts`), G6 (tier order + freeze) is next. The probe harness
+The active campaign is the **Stocktake Run**: `docs/STOCKTAKE-RUN-SPEC.md`
+(immutable ground truth) and `docs/STOCKTAKE-RUN-LEDGER.md` (the one running
+state file — read its NOW block for what is in flight). Ground work is at
+the GROUND-CONTRACT-v1 end state; the probe harness
 (`tools/worlds/ground-probe.mjs` + `tools/worlds/ground-probe-baselines/`)
-is the acceptance bar: its committed baselines describe the shipped state and
-`packages/compiler/test/ground-probe-harness.test.ts` enforces them.
+is the acceptance bar and `packages/compiler/test/ground-probe-harness.test.ts`
+enforces it.
 
 ## Build, test, verify
 
