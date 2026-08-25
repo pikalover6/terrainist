@@ -54,9 +54,15 @@ is the acceptance bar: its committed baselines describe the shipped state and
 ## Build, test, verify
 
 - Build: `npm run build` (`tsc -b`, incremental, safe to run any time).
-- Tests: run **one** vitest at a time, always `--maxWorkers=4`, with
-  `NODE_OPTIONS=--max-old-space-size=8192` for the compiler package. Pipes
-  swallow vitest exit codes — read the printed COUNTS.
+- Tests: the constraint is heavy runs colliding, not vitest itself. A
+  **FULL suite** (or any compiler-package run — those compile real 512×512
+  worlds in-process, 4 workers × an 8 GB heap ceiling on a 32 GB machine)
+  runs **one at a time**, always `--maxWorkers=4` with
+  `NODE_OPTIONS=--max-old-space-size=8192`, and while it runs nobody else
+  rebuilds dist in that tree, regenerates baselines, or starts another
+  compiler-package run. Light targeted runs (spec, stdlib, agents, cli,
+  render — nothing that compiles a world) may overlap a FULL run freely.
+  Pipes swallow vitest exit codes — read the printed COUNTS.
 - **Never run formatters.**
 - Byte-identity work: build baselines from a clean checkout FIRST, in an
   isolated `git worktree` — and give the worktree its **own**
