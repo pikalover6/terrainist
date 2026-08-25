@@ -7,26 +7,28 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 11 (the icon metric) is committed.
-- **Next unit:** unit 12 — **the rules-only kit** (spec §7 E1, arm 2): a
-  settlement kit built from the Loam spec and validator-derived tables with
-  zero fenced examples, as a file beside `docs/kits/settlement-author.md`
-  selectable by the harness (`run.mjs --kit-file` or an env var — add the
-  smallest switch that keeps the default byte-identical). First read what A3
-  dynamic assembly is in the tree (the candidate-menu flag, `catalog --menu`,
-  `packages/agents`), so arm 3 is named before arm 2 is written. Then
-  pre-register E1 in this ledger (prediction, arms, cost, decision rule per
-  law 9) and run it: 3 arms × 3 repeats on the authoring harness (~$0.64 a
-  pass, ~$5.8) + free compiles, scored by the icon metric and `score.mjs`;
-  law 8 decides whether a kit ships. Interleave F10, F4, F14.
-- **Last commit:** 249a903 (unit 10). Convention: this line names the
+- **In flight:** nothing — unit 12 (the E1 arms built, E1 pre-registered)
+  is committed.
+- **Next unit:** unit 13 — **run E1** as pre-registered in D31: nine
+  authoring-only harness passes (3 arms × 3 repeats, ≈ $0.64 each, ≈ $5.8,
+  concurrency 3, ~20 min a pass; run detached, one pass at a time):
+  `run.mjs --label e1-kit-{1,2,3}`, `--label e1-core-{1,2,3} --kit-file
+  docs/kits/settlement-core.md`, `--label e1-modules-{1,2,3} --kit-file
+  docs/kits/settlement-core.md --modules docs/kits/modules`. Then, free:
+  `icon-metric.mjs` on each run directory (in-process compiles) and
+  `score.mjs` arm vs arm; the decision by D31's rule; the write-up in
+  `docs/decks/e1/E1-VERDICT.md` (icons 3-of-3 tables, noise, cost per pass).
+  On a 402 or at the cap: `STATUS: BLOCKED`. Interleave F10, F4, F14 after.
+- **Last commit:** 78e8f40 (unit 11). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
 - **Spend:** $2.29 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
+  E1 is budgeted at ≤ $6.00 (D31).
 - **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19, D25.)
 - **Findings queue (law 1: bugs before anything else):**
   - F1 — `railway_town` `LOAM-T110 UNSTABLE_FLUID` at emit.
   - F2 — anchors at HEAD: all four attributed (units 4, 8).
-  - F3 — metropolis authoring regression, lost 3-of-3. E2/E3.
+  - F3 — metropolis authoring regression, lost 3-of-3. E2/E3 (E1's arms
+    will show whether the core or the modules bring the skeleton field back).
   - F4 — `LOAM-I512` "ruined shells" vs intact boxes — street-level probe.
   - F5, F6, F7, F11, F12, F13 — fixed (units 5–10).
   - F8 — `frontageLots` drops (~70 % starvation → F10, ~30 % geometry → P1).
@@ -35,11 +37,13 @@ running state. The NOW block is rewritten at the end of every turn.
   - F10 — `LOT_PARCEL_OWN_STATIONS` orphans 24 % of the plane; off.
   - F14 — pre-existing physics findings on shipped worlds; one physics
     unit, probe first.
-  - F15 — the icon metric's before-sample alarms not yet owned by a unit:
-    the Trojan horse and citadel under the dominance line (T2), the
-    redwoods (h×1.14: the colossal trees are not taller than the camp's
-    buildings by the report's measure — instrument or world, probe), the
-    farm town at 3.4 buildings per 10k of its own hull.
+  - F15 — the icon metric's before-sample alarms not yet owned by a unit
+    (horse/citadel dominance, the redwoods' measure, the farm town's hull
+    density).
+  - F16 — the settlement kit's core is 88 % of the kit: its 67 fences are
+    34.5 KB and the worked sections' prose 2.3 KB. The "core ~⅓ the size"
+    that wave 2B expected would need the prose cut, not the examples — a
+    kit-writing job, not a split (D31 arm 2 is the honest version).
 ## DECISIONS
 
 (every fork taken: the reversible default chosen, why, and how to undo it)
@@ -202,6 +206,35 @@ running state. The NOW block is rewritten at the end of every turn.
   (authoring-only) scores at the current compiler — which is the point:
   the same documents, re-scored after a compiler change, show the
   compiler's half. Undo: n/a.
+- **D31 (unit 12) — E1 pre-registration (law 9).** *Question:* should the
+  author see examples at all? *Arms* (same prose, same model, same seeds,
+  intent cached): (1) the kit as shipped; (2) the core —
+  `docs/kits/settlement-core.md`, every fence withheld, worked sections
+  removed, 251 KB; (3) the core + topic modules chosen per prompt by
+  `assemble.mjs` (7–17 modules, 4.6–22.6 KB; the complete example never).
+  Per-pack modules (wave 2B's A3 as designed) do not exist in this kit — one
+  fence in 67 names a pack — so arm 3 is A3's honest offline form and the
+  ledger says so. *Repeats:* 3 per arm, authoring-only (`run.mjs`),
+  compiles free. *Cost:* ≤ $6.00 (9 × ~$0.64). *Measures:* the icon metric
+  on every run (presence per icon 3-of-3, dominance count, density,
+  boxes, era, compiled), `score.mjs` (pass rate, attempts, cost,
+  `kitLiteralEnvelopePct`, archetype reach — reach read at n=3 only).
+  *Prediction, written before a cent:* arm 2 keeps every icon present
+  (icons come from the prompt, not the fences) but loses the fenced pack's
+  reach (classical_mediterranean archetypes churn), drops
+  `kitLiteralEnvelopePct` toward zero, and may cost an attempt on the
+  validator; arm 3 recovers the envelope parroting where a module fences
+  one and matches arm 1 on presence; neither arm changes dominance or
+  density, which are the compiler's. The metropolis skeleton field (F3)
+  returns in no arm — it is a program the author stopped asking for, not
+  an example. *Decision rule (law 8):* a kit arm ships only if, on the
+  icon metric, it loses no icon 3-of-3 that arm 1 has 3-of-3, matches or
+  beats arm 1's dominant-icon count, and beats arm 1 on at least one of
+  {cost per pass, one-shot rate, archetype reach} by more than the
+  measured spread across arm 1's own three repeats, with `score.mjs
+  --gate` green against arm 1. Anything less is a write-up
+  (`docs/decks/e1/E1-VERDICT.md`) and the kit stays. Undo: n/a — a
+  pre-registration is a record.
 
 ## SPEND
 
@@ -218,6 +251,7 @@ running state. The NOW block is rewritten at the end of every turn.
 | 9 | the city flips + the highrise head fix — compiles, lints, traces, baselines, two FULL suites | 0.00 | 2.29 |
 | 10 | F6/F7 — diagnostics only; compiles, the FULL suite | 0.00 | 2.29 |
 | 11 | the icon metric — in-process compiles only | 0.00 | 2.29 |
+| 12 | the E1 arms — the kit split, harness flags, dry runs only | 0.00 | 2.29 |
 
 ## VERDICTS
 
@@ -426,3 +460,13 @@ running state. The NOW block is rewritten at the end of every turn.
   alarms — hellenist 11.6, walled 8.2, alien farm 3.4, railway (F1).
   F15 logged. Tests: `icon-metric.test.ts 7 passed`, `test-census.mjs` all
   checks passed; no compiler code changed. Spend $0.
+- **unit 12 — the E1 arms (2026-08-25):** `tools/golden-prompts/
+  split-kit.mjs` splits the settlement kit into `docs/kits/settlement-core.md`
+  (67 fences withheld with markers, §8/§11/§13 removed; 249 KB of 284, F16)
+  and 39 topic modules under `docs/kits/modules/`; `assemble.mjs` chooses a
+  prompt's modules from its intent and words (never the complete example)
+  and `run.mjs` gains `--kit-file` and `--modules` (kit text override,
+  modules injected on the candidate-menu seam, fingerprint and record name
+  what was sent). Dry runs green; 7 tests (`kit-assembly.test.ts`) pin the
+  split and the selection; README section. E1 pre-registered (D31). No
+  compiler code changed; no spend.

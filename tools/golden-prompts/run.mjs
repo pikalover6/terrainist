@@ -40,6 +40,7 @@ const {
   kitRelativePath,
   sumUsage,
 } = agents;
+import { assembleModules, selectModules } from "./assemble.mjs";
 
 /* -------------------------------------------------------------------------- */
 /* arguments                                                                  */
@@ -78,6 +79,12 @@ function parseArgs(argv) {
       case "--refresh": out.refresh = true; break;
       case "--keep-failures": out.keepFailures = true; break;
       case "--out-root": out.outRoot = path.resolve(next()); break;
+      // The Stocktake Run's E1 arms: a kit file that replaces the on-disk kit
+      // (arm 2, the core), and a modules directory whose examples are chosen
+      // per prompt from the cached intent and injected as the second system
+      // message the menu seam carries (arm 3, A3 offline).
+      case "--kit-file": out.kitFile = path.resolve(next()); break;
+      case "--modules": out.modulesDir = path.resolve(next()); break;
       case "--help": case "-h": out.help = true; break;
       default: throw new Error(`unexpected argument ${arg}`);
     }
@@ -357,6 +364,19 @@ async function runOne(entry, options, cache) {
       ? stdlib.candidateMenuForIntent(intent)
       : undefined;
   if (menu !== undefined && menu.entries.length > 0) candidateMenu = menu.text;
+  if (options.modulesDir !== undefined) {
+    const selected = selectModules(entry, kitName, intent);
+    const assembled = assembleModules(options.modulesDir, selected);
+    if (assembled.text !== "") candidateMenu = assembled.text;
+    record.modules = {
+      dir: path.relative(REPO, options.modulesDir),
+      selected: selected.map(([slug, why]) => `${slug} (${why})`),
+      used: assembled.used,
+      missing: assembled.missing,
+      bytes: assembled.bytes,
+    };
+  }
+  if (options.kitFile !== undefined) record.kitFile = path.relative(REPO, options.kitFile);
   record.menu = !options.candidateMenu
     ? { injected: false, reason: "flag off" }
     : intent === undefined
@@ -381,6 +401,7 @@ async function runOne(entry, options, cache) {
       model: options.model,
       reasoningEffort: options.effort,
       kitName,
+      ...(options.kitFile === undefined ? {} : { kit: fs.readFileSync(options.kitFile, "utf8") }),
       ...(intent === undefined ? {} : { intent }),
       ...(candidateMenu === undefined ? {} : { candidateMenu }),
     });
@@ -488,10 +509,15 @@ function kitEnvelopeLiterals(markdown) {
 }
 
 /** The sha of the kit bytes this run will send, per kit actually used. */
-function kitFingerprints(entries) {
+function kitFingerprints(entries, options = {}) {
   const out = {};
   for (const kit of new Set(entries.map((e) => e.kit))) {
-    const relative = kitRelativePath(kit);
+    // `--kit-file` replaces the settlement kit's bytes (the terrain kit is
+    // never overridden); the fingerprint names the bytes the model was sent.
+    const relative =
+      options.kitFile !== undefined && kit === "settlement"
+        ? path.relative(REPO, options.kitFile)
+        : kitRelativePath(kit);
     const bytes = fs.readFileSync(path.join(REPO, relative));
     out[kit] = {
       path: relative,
@@ -543,7 +569,7 @@ async function main() {
   }
 
   const { entries } = loadSuite(options);
-  const kits = kitFingerprints(entries);
+  const kits = kitFingerprints(entries, options);
 
   if (options.dryRun) {
     // The estimate is WS-C's measured authoring median ($0.2391/world) times
@@ -556,6 +582,7 @@ async function main() {
     for (const [kit, fp] of Object.entries(kits)) {
       console.log(`kit      ${kit}: ${fp.path} ${fp.sha256.slice(0, 12)} (${fp.bytes} B)`);
     }
+    if (options.modulesDir !== undefined) console.log(`modules  ${path.relative(REPO, options.modulesDir)} (selected per prompt from the cached intent)`);
     console.log(`prompts  ${entries.length}\n`);
     const cache = readIntentCache();
     for (const e of entries) {
@@ -679,6 +706,8 @@ async function main() {
     effort: options.effort,
     intentPrepass: options.intent,
     kits,
+    ...(options.kitFile === undefined ? {} : { kitFile: path.relative(REPO, options.kitFile) }),
+    ...(options.modulesDir === undefined ? {} : { modulesDir: path.relative(REPO, options.modulesDir) }),
     totals,
     records,
   };

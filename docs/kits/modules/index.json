@@ -1,0 +1,236 @@
+[
+  {
+    "module": "1-document-skeleton",
+    "heading": "1. Document skeleton",
+    "fences": 1,
+    "bytes": 471
+  },
+  {
+    "module": "2-coordinates-and-zones",
+    "heading": "2. Coordinates and zones",
+    "fences": 1,
+    "bytes": 345
+  },
+  {
+    "module": "3-terrain-heightfield",
+    "heading": "3. `terrain.heightfield@0` — the base terrain",
+    "fences": 1,
+    "bytes": 750
+  },
+  {
+    "module": "5-terrain-climate",
+    "heading": "5. `terrain.climate@0` — temperature and humidity",
+    "fences": 1,
+    "bytes": 476
+  },
+  {
+    "module": "6-scatter-forest",
+    "heading": "6. `scatter.forest@0` — vegetation",
+    "fences": 1,
+    "bytes": 756
+  },
+  {
+    "module": "strata",
+    "heading": "`strata` — the layer above the wood and the layer below it",
+    "fences": 2,
+    "bytes": 464
+  },
+  {
+    "module": "a-fungal-grove-you-can-copy",
+    "heading": "A fungal grove you can copy",
+    "fences": 1,
+    "bytes": 892
+  },
+  {
+    "module": "palette-symbols",
+    "heading": "Palette symbols",
+    "fences": 1,
+    "bytes": 354
+  },
+  {
+    "module": "8-worked-terrain-patterns",
+    "heading": "8. Worked terrain patterns",
+    "fences": 4,
+    "bytes": 1136
+  },
+  {
+    "module": "the-plaza",
+    "heading": "The plaza",
+    "fences": 1,
+    "bytes": 424
+  },
+  {
+    "module": "building-grammar",
+    "heading": "`building.grammar@0`",
+    "fences": 4,
+    "bytes": 1739
+  },
+  {
+    "module": "road-network",
+    "heading": "`road.network@0`",
+    "fences": 1,
+    "bytes": 438
+  },
+  {
+    "module": "district",
+    "heading": "`district` — a quarter with a street grid",
+    "fences": 1,
+    "bytes": 1468
+  },
+  {
+    "module": "a-ruined-city-is-a-district-with-a-high-",
+    "heading": "A ruined city is a district with a high `decline`",
+    "fences": 1,
+    "bytes": 654
+  },
+  {
+    "module": "the-urban-forms",
+    "heading": "The urban forms",
+    "fences": 1,
+    "bytes": 570
+  },
+  {
+    "module": "courtyard-blocks",
+    "heading": "Courtyard blocks — `params.courtyards`",
+    "fences": 1,
+    "bytes": 488
+  },
+  {
+    "module": "multi-level-ground",
+    "heading": "Multi-level ground — `params.ground`",
+    "fences": 1,
+    "bytes": 490
+  },
+  {
+    "module": "city",
+    "heading": "`city` — a whole city, planned from its arterials down",
+    "fences": 4,
+    "bytes": 2134
+  },
+  {
+    "module": "prop-place",
+    "heading": "`prop.place@0`",
+    "fences": 1,
+    "bytes": 464
+  },
+  {
+    "module": "9c-infra-entry",
+    "heading": "9c. `infra.entry@0` — lines, chords and treatments",
+    "fences": 1,
+    "bytes": 463
+  },
+  {
+    "module": "the-entries-and-one-worked-example-each",
+    "heading": "The entries, and one worked example each",
+    "fences": 8,
+    "bytes": 1698
+  },
+  {
+    "module": "the-peacetime-fabric",
+    "heading": "The peacetime fabric",
+    "fences": 1,
+    "bytes": 346
+  },
+  {
+    "module": "worked-water",
+    "heading": "Worked water — when the prompt says a millpond, a harbour behind a dam, a canal step",
+    "fences": 1,
+    "bytes": 443
+  },
+  {
+    "module": "two-regions-in-one-world",
+    "heading": "Two regions in one world",
+    "fences": 1,
+    "bytes": 1621
+  },
+  {
+    "module": "bespoke-programs-must-belong-to-the-worl",
+    "heading": "Bespoke programs must belong to the world",
+    "fences": 1,
+    "bytes": 657
+  },
+  {
+    "module": "how-to-write-the-request",
+    "heading": "How to write the request",
+    "fences": 1,
+    "bytes": 759
+  },
+  {
+    "module": "budgets",
+    "heading": "Budgets",
+    "fences": 1,
+    "bytes": 239
+  },
+  {
+    "module": "what-you-get-back-and-what-to-do-with-it",
+    "heading": "What you get back, and what to do with it",
+    "fences": 5,
+    "bytes": 1372
+  },
+  {
+    "module": "routing-a-road-to-a-landmark",
+    "heading": "Routing a road to a landmark",
+    "fences": 1,
+    "bytes": 520
+  },
+  {
+    "module": "facing-which-way-it-looks",
+    "heading": "Facing: which way it looks",
+    "fences": 2,
+    "bytes": 650
+  },
+  {
+    "module": "hovering-airborne-things",
+    "heading": "Hovering: airborne things",
+    "fences": 2,
+    "bytes": 558
+  },
+  {
+    "module": "seating-how-a-grounded-thing-meets-the-g",
+    "heading": "Seating: how a grounded thing meets the ground",
+    "fences": 2,
+    "bytes": 625
+  },
+  {
+    "module": "tunnels-and-cellars",
+    "heading": "Tunnels and cellars",
+    "fences": 2,
+    "bytes": 749
+  },
+  {
+    "module": "ports",
+    "heading": "Ports",
+    "fences": 1,
+    "bytes": 282
+  },
+  {
+    "module": "11-worked-settlement-fragments",
+    "heading": "11. Worked settlement fragments",
+    "fences": 4,
+    "bytes": 8058
+  },
+  {
+    "module": "precinct-airport",
+    "heading": "`precinct.airport@0`",
+    "fences": 1,
+    "bytes": 466
+  },
+  {
+    "module": "precinct-harbour",
+    "heading": "`precinct.harbour@0`",
+    "fences": 1,
+    "bytes": 484
+  },
+  {
+    "module": "precinct-farm",
+    "heading": "`precinct.farm@0`",
+    "fences": 1,
+    "bytes": 664
+  },
+  {
+    "module": "13-complete-example",
+    "heading": "13. Complete example",
+    "fences": 1,
+    "bytes": 6476
+  }
+]
