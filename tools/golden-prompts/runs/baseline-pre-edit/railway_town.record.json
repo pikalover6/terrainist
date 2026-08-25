@@ -1,0 +1,149 @@
+{
+  "id": "railway_town",
+  "family": "new/alias",
+  "kit": "settlement",
+  "prompt": "A soot-blackened industrial town where the railway meets the canal.",
+  "seed": 312,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "fresh",
+    "value": {
+      "era": "industrial",
+      "wealth": 0.35,
+      "decline": 0.25,
+      "formality": 0.5,
+      "character": {
+        "label": "soot-blackened canal and rail town",
+        "materialTheme": "temperate_timber",
+        "urbanForm": "canal",
+        "archetypes": {
+          "prefer": [
+            "warehouse",
+            "tavern",
+            "cottage",
+            "watchtower"
+          ]
+        },
+        "props": {
+          "prefer": [
+            "cart",
+            "notice_board"
+          ]
+        },
+        "motifs": {
+          "roofType": "gable",
+          "massing": "blocky",
+          "windowRhythm": "regular",
+          "ornamentDensity": 0.2
+        }
+      },
+      "tokens": {
+        "terrain": "a commercial canal network intersecting a railway corridor and freight rail lines",
+        "icons": "soot-stained brick warehouses, smoking factory chimneys, iron rail bridges over the canal, barge docks, coal yards and rail depots"
+      }
+    },
+    "failed": false
+  },
+  "intentUsage": {
+    "promptTokens": 7187,
+    "completionTokens": 1216,
+    "reasoningTokens": 943,
+    "cost": 0.004975125
+  },
+  "attempts": 1,
+  "diagnostics": [
+    []
+  ],
+  "usage": {
+    "promptTokens": 81786,
+    "completionTokens": 10777,
+    "reasoningTokens": 6800,
+    "cost": 0.050876625
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 25,
+    "maxDepth": 2,
+    "generators": [
+      "building.grammar@0",
+      "infra.entry@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "brickworks",
+      "coal_tipple",
+      "cottage",
+      "customs_house",
+      "factory_hall",
+      "machine_shop",
+      "roundhouse",
+      "sawmill",
+      "signal_box",
+      "steam_plant",
+      "tavern",
+      "terraced_row",
+      "train_station",
+      "warehouse",
+      "water_tower"
+    ],
+    "archetypesInCatalog": 15,
+    "formPacks": [],
+    "props": [
+      "barge",
+      "cart",
+      "freight_car",
+      "locomotive",
+      "log_pile",
+      "notice_board",
+      "rail_line"
+    ],
+    "species": [
+      "damp_hazel",
+      "pollard_willow",
+      "soot_oak",
+      "stunted_pine"
+    ],
+    "envelopes": [
+      "512x512",
+      "220x200",
+      "15x13x21",
+      "13x12x17",
+      "13x14x19",
+      "15x14x21",
+      "9x13x11",
+      "13x21x13"
+    ],
+    "constraints": 8,
+    "constraintKinds": [
+      "blend",
+      "distance",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform",
+      "zone"
+    ],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 1,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 0,
+    "programReferences": 0,
+    "conformsTrue": 0,
+    "labels": 24,
+    "eras": [
+      "industrial"
+    ],
+    "bytes": 8290
+  },
+  "wallMs": 218304
+}

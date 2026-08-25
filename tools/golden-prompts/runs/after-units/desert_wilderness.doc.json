@@ -1,0 +1,162 @@
+{
+  "loam": "0.1",
+  "profile": "terrain",
+  "meta": {
+    "name": "vast_salt_desert",
+    "worldSeed": 313,
+    "prompt": "A vast salt desert under a hard sun, cracked flat to the horizon, with nothing living on it.",
+    "spawn": {
+      "at": [
+        0.5,
+        0.5
+      ]
+    }
+  },
+  "intent": {
+    "climate": {
+      "biome": "minecraft:desert",
+      "temperature": 1,
+      "humidity": -1,
+      "snow": "never"
+    },
+    "character": {
+      "label": "salt desert"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": {
+        "mix": [
+          [
+            "minecraft:calcite",
+            6
+          ],
+          [
+            "minecraft:diorite",
+            2
+          ],
+          [
+            "minecraft:smooth_basalt",
+            1
+          ],
+          [
+            "minecraft:white_terracotta",
+            1
+          ]
+        ]
+      },
+      "ground.subsurface": "minecraft:calcite",
+      "ground.cliff": "minecraft:smooth_basalt",
+      "ground.beach": "minecraft:calcite",
+      "ground.stone": "minecraft:sandstone"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "The Salt Flats",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "vast flat salt crust",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 66,
+          "amplitude": 3,
+          "octaves": 4,
+          "frequency": 0.0015,
+          "erosionPasses": 2,
+          "cliffThreshold": 75,
+          "soilDepth": 1,
+          "beachWidth": 2
+        },
+        "children": [
+          {
+            "id": "central_salt_pan",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "wide shallow dry salt depression",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 190,
+              "depth": 3,
+              "water": false,
+              "flooded": "never",
+              "irregularity": 0.22,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "label": "blistering arid climate",
+        "params": {
+          "forceTheme": "arid",
+          "temperatureFrequency": 0.001,
+          "humidityFrequency": 0.001,
+          "latitudeGradient": 0
+        }
+      },
+      {
+        "id": "barren_waste",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "lifeless expanse with sparse dry detritus",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0,
+          "undergrowth": {
+            "grass": 0,
+            "flowers": 0,
+            "deadwood": 0.004
+          },
+          "species": [
+            {
+              "id": "dead_ironwood",
+              "shape": "desert_ironwood",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "deep_crust_fissures",
+        "kind": "generator",
+        "generator": "cave.carver@0",
+        "label": "narrow subterranean fissures beneath the salt pan",
+        "params": {
+          "style": "ravine",
+          "density": 0.2,
+          "radius": [
+            1,
+            3
+          ],
+          "yRange": [
+            20,
+            58
+          ],
+          "entrances": 0,
+          "decorate": false
+        }
+      }
+    ]
+  }
+}

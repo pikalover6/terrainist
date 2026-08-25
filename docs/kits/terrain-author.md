@@ -265,7 +265,7 @@ Any number of nodes. Each one scatters trees over a coarse `area`.
 |---|---|---|
 | `species` | **required** | non-empty array. Each entry: `id` (loam id), `shape` (required), optional `weight`, `minHeight`/`maxHeight` (2..64, int), optional `snowLine` (absolute Y ceiling for this species). |
 | `area` | `{"all": true}` | `{"zone": "<token>"}`, `{"at": [fx,fz], "radius": <blocks>}`, or `{"all": true}`. |
-| `density` | 0.15 | 0..1, trees per eligible column. 0.15–0.3 = closed-canopy forest, 0.02–0.05 = wilderness fill. |
+| `density` | 0.15 | 0..1, trees per eligible column. 0.15–0.3 = closed-canopy forest. **0.02 is the line where a node becomes a wood**: at 0.02 and above it claims the `forest`/`taiga` biome over every eligible column of its `area`. A background scatter belongs below it, at ≈ 0.012. |
 | `undergrowth` | `{grass: 0.35, flowers: 0.05, deadwood: 0.02}` | per-column probabilities, each 0..1: grass/ferns, flower patches, dead bushes and fallen logs. Raise `grass`/`flowers` for a lush floor, `deadwood` for an old or blighted wood. |
 | `spacing` | 3 | 1..64, minimum blocks between trunks. |
 | `clumping` | 0.4 | 0..1, how much trees gather into groves. |
@@ -405,14 +405,15 @@ the document has to change.
 
 Use two forest nodes as a default pattern: one deliberate forest over the zone
 or radius the prompt calls for, and one sparse `{"all": true}` wilderness fill
-at low density so the rest of the world is not bald.
+at `density` ≈ 0.012 so the rest of the world is not bald.
 
 **A wilderness fill is not woods.** `area: {"all": true}` covers the whole
-region, and below `density` 0.02 it plants scattered trees over open country —
-which is what it is for, but it will not read as forest and no longer paints
-the `forest` biome. If the prompt wants a wooded world, say so with density
-(0.15+) or with a bounded forest node; do not expect a trace-density all-region
-node to make the map green.
+region, so its `density` decides what the whole map is. **0.02 is the line**: at
+0.02 and above the node claims the `forest`/`taiga` biome over every eligible
+column of its area, so a fill at 0.03 makes the entire world forest whatever the
+trees look like. Keep a wilderness fill at **≈ 0.012**, below the line, where it
+scatters trees over open country without claiming the ground. If the prompt
+wants a wooded world, say so with a bounded forest node at density 0.15+.
 
 ---
 
@@ -503,7 +504,9 @@ much better worlds than fighting them.
    standing fresh water away from the coast. `"flooded": "never"` forces a carve
    dry if you want a canyon that a sea connection would otherwise flood.
 3. **Dense forest is `density` 0.15–0.3** with `undergrowth`; 0.15 is already a
-   closed canopy (≈ 1 tree per 8 columns). Wilderness fill: `density` ≈ 0.02–0.05.
+   closed canopy (≈ 1 tree per 8 columns). **0.02 is where a node starts claiming
+   the `forest` biome over its whole area**, so a `{"all": true}` wilderness fill
+   belongs below it, at `density` ≈ 0.012.
 4. **Leave `irregularity` and `meander` at their defaults.** They give organic
    outlines and wandering channels for free. Set them to `0` only when you
    deliberately want a geometric circle or a ruled channel.
@@ -628,7 +631,7 @@ the deliberate wood declares `strata`.
         "generator": "scatter.forest@0",
         "params": {
           "area": { "all": true },
-          "density": 0.04,
+          "density": 0.012,
           "clumping": 0.6,
           "species": [
             { "id": "scrub_birch", "shape": "birch_slim" },
@@ -787,7 +790,7 @@ Prompt: *"a small volcanic island ringed by black beaches"*.
                                  { "id": "scrub_pine", "weight": 1, "shape": "spruce_squat" } ] } },
       { "id": "wilderness", "kind": "generator", "generator": "scatter.forest@0",
         "label": "sparse cover everywhere else",
-        "params": { "area": { "all": true }, "density": 0.03, "spacing": 4, "clumping": 0.6,
+        "params": { "area": { "all": true }, "density": 0.012, "spacing": 4, "clumping": 0.6,
                     "maxSlope": 40, "elevation": [2, 50], "edgeFalloff": 12,
                     "species": [ { "id": "wind_pine", "weight": 1, "shape": "spruce_squat" } ] } }
     ]

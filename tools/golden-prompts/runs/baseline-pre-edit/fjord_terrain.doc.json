@@ -1,0 +1,305 @@
+{
+  "loam": "0.1",
+  "profile": "terrain",
+  "meta": {
+    "name": "pine_fjord",
+    "worldSeed": 314,
+    "prompt": "A deep fjord cutting inland between pine ridges, its water open to the sea.",
+    "spawn": {
+      "at": [
+        0.2,
+        0.35
+      ]
+    }
+  },
+  "intent": {
+    "climate": {
+      "biome": "minecraft:old_growth_pine_taiga",
+      "temperature": -0.3,
+      "humidity": 0.5,
+      "snow": "auto"
+    },
+    "character": {
+      "label": "pine fjord",
+      "materialTheme": "boreal_pine",
+      "flora": {
+        "prefer": [
+          "spruce_tall",
+          "conifer",
+          "old_growth"
+        ]
+      }
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.beach": {
+        "mix": [
+          [
+            "minecraft:gravel",
+            3
+          ],
+          [
+            "minecraft:coarse_dirt",
+            2
+          ],
+          [
+            "minecraft:stone",
+            1
+          ]
+        ]
+      },
+      "ground.cliff": {
+        "mix": [
+          [
+            "minecraft:stone",
+            4
+          ],
+          [
+            "minecraft:andesite",
+            2
+          ],
+          [
+            "minecraft:cobblestone",
+            1
+          ]
+        ]
+      }
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 72,
+          "amplitude": 54,
+          "octaves": 5,
+          "frequency": 0.0032,
+          "lacunarity": 2,
+          "gain": 0.56,
+          "ridged": true,
+          "warp": {
+            "amount": 26,
+            "frequency": 0.0035
+          },
+          "erosionPasses": 2,
+          "continentalness": {
+            "frequency": 0.0012,
+            "seaFraction": 0.32
+          },
+          "cliffThreshold": 48,
+          "soilDepth": 3,
+          "beachWidth": 3,
+          "snowLineFraction": 0.88
+        },
+        "children": [
+          {
+            "id": "north_pine_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the steep northern ridge flanking the fjord",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.1,
+                  0.28
+                ],
+                [
+                  0.48,
+                  0.24
+                ],
+                [
+                  0.85,
+                  0.32
+                ]
+              ],
+              "width": 88,
+              "height": 58,
+              "profile": "sharp",
+              "meander": 0.4
+            }
+          },
+          {
+            "id": "south_pine_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the steep southern ridge flanking the fjord",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.1,
+                  0.72
+                ],
+                [
+                  0.52,
+                  0.76
+                ],
+                [
+                  0.85,
+                  0.68
+                ]
+              ],
+              "width": 88,
+              "height": 58,
+              "profile": "sharp",
+              "meander": 0.4
+            }
+          },
+          {
+            "id": "inland_head_peak",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "high peak anchoring the head of the fjord",
+            "params": {
+              "verb": "peak",
+              "at": [
+                0.9,
+                0.5
+              ],
+              "radius": 84,
+              "height": 72,
+              "profile": "sharp",
+              "irregularity": 0.2
+            }
+          },
+          {
+            "id": "main_fjord_valley",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "deep drowned valley cutting inland to the sea",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.82,
+                  0.5
+                ],
+                [
+                  0.55,
+                  0.48
+                ],
+                [
+                  0.28,
+                  0.53
+                ],
+                [
+                  0,
+                  0.5
+                ]
+              ],
+              "width": 56,
+              "depth": 72,
+              "profile": "sharp",
+              "meander": 0.38,
+              "flooded": "auto"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "boreal",
+          "latitudeGradient": -0.25,
+          "temperatureFrequency": 0.0014,
+          "humidityFrequency": 0.0016
+        }
+      },
+      {
+        "id": "ridge_pines",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "old-growth boreal pine forest on the fjord slopes and ridges",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.22,
+          "spacing": 3,
+          "clumping": 0.45,
+          "maxSlope": 44,
+          "elevation": [
+            2,
+            115
+          ],
+          "edgeFalloff": 16,
+          "undergrowth": {
+            "grass": 0.42,
+            "flowers": 0.02,
+            "deadwood": 0.09
+          },
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "ancient_pine",
+                  "shape": "spruce_ancient"
+                }
+              ]
+            },
+            "understory": {
+              "species": [
+                {
+                  "id": "juniper_brush",
+                  "shape": "juniper_scrub"
+                }
+              ],
+              "density": 0.08
+            }
+          },
+          "species": [
+            {
+              "id": "tall_spruce",
+              "shape": "spruce_tall",
+              "weight": 5
+            },
+            {
+              "id": "ridge_larch",
+              "shape": "larch_columnar",
+              "weight": 2
+            },
+            {
+              "id": "squat_pine",
+              "shape": "spruce_squat",
+              "weight": 2
+            }
+          ]
+        }
+      },
+      {
+        "id": "fjord_chasms",
+        "kind": "generator",
+        "generator": "cave.carver@0",
+        "label": "deep rocky rifts beneath the fjord flanks",
+        "params": {
+          "style": "ravine",
+          "density": 0.24,
+          "yRange": [
+            16,
+            75
+          ],
+          "verticality": 0.25,
+          "entrances": 2,
+          "decorate": true
+        }
+      }
+    ]
+  }
+}

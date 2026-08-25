@@ -1,0 +1,585 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "hellenist_sea_siege",
+    "worldSeed": 305,
+    "prompt": "A modern Hellenist city being invaded by sea monsters.",
+    "spawn": {
+      "at": [
+        0.5,
+        0.62
+      ]
+    }
+  },
+  "intent": {
+    "era": "modern",
+    "wealth": 0.8,
+    "formality": 0.75,
+    "event": {
+      "kind": "siege",
+      "severity": 0.85,
+      "recency": 0
+    },
+    "climate": {
+      "temperature": 0.6,
+      "humidity": 0.2,
+      "snow": "never"
+    },
+    "character": {
+      "label": "modern Hellenist coastal metropolis under sea monster siege",
+      "materialTheme": "modern_city",
+      "formPacks": [
+        "classical_mediterranean"
+      ],
+      "archetypes": {
+        "prefer": [
+          "stoa",
+          "peripteral_temple",
+          "bouleuterion",
+          "palaestra",
+          "nymphaeum"
+        ]
+      },
+      "urbanForm": "grid",
+      "motifs": {
+        "roofType": "flat",
+        "massing": "blocky",
+        "windowRhythm": "regular",
+        "ornamentDensity": 0.6
+      },
+      "programs": [
+        {
+          "id": "leviathan_kraken_prime",
+          "mode": "landmark",
+          "brief": "A colossal abyssal sea kraken breaching violently out of the bay water, towering bioluminescent tentacles, dark prismarine crested serpent neck and gaping jaws surging towards the modern city docks.",
+          "envelope": [
+            56,
+            44,
+            56
+          ]
+        },
+        {
+          "id": "hydra_behemoth",
+          "mode": "landmark",
+          "brief": "A titanic three-headed Hellenic sea hydra emerging from the coastal shallows, serpentine necks lunging toward the waterfront promenade, webbed frills and clawed forelimbs.",
+          "envelope": [
+            36,
+            32,
+            40
+          ]
+        },
+        {
+          "id": "sea_spawn_stalker",
+          "mode": "plugin",
+          "brief": "A breaching aquatic serpent beast or massive barbed tentacle thrashing upwards out of the sea water, glowing eyes and spiked scales, charging the seawalls.",
+          "envelope": [
+            14,
+            16,
+            14
+          ],
+          "count": 14
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "a grand coastal metropolis fronting a deep harbour and open sea where sea monsters surface",
+      "event_direction": "giant sea monsters rise out of the ocean water attacking the harbour and waterfront avenues",
+      "infra": "barricade_line across the harbour promenade; emergency_cordon along the coastal boulevard",
+      "icons": "leviathans and sea monsters breaching along the modern docks; neoclassical porticos and high-rise stoas overlooking the bay; emergency barricades and defensive lines guarding the shore"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:smooth_stone",
+      "road.shoulder": "minecraft:stone_bricks",
+      "plaza.path": "minecraft:smooth_quartz",
+      "plaza.border": "minecraft:quartz_pillar",
+      "ground.beach": "minecraft:sand"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Neopolis under siege by the deep ocean leviathans",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "southern coastal terrace dropping into a deep northern marine gulf",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 72,
+          "amplitude": 28,
+          "octaves": 5,
+          "frequency": 0.003,
+          "erosionPasses": 2,
+          "cliffThreshold": 55,
+          "beachWidth": 4,
+          "continentalness": {
+            "frequency": 0.001,
+            "seaFraction": 0.42
+          }
+        },
+        "children": [
+          {
+            "id": "northern_gulf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "broad deep ocean bay where sea monsters surface",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.5,
+                0.22
+              ],
+              "radius": 140,
+              "depth": 30,
+              "profile": "rounded",
+              "flooded": "auto"
+            }
+          },
+          {
+            "id": "coastal_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "broad elevated coastal plateau holding the city grid",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.68
+              ],
+              "radius": 150,
+              "height": 6,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "harbour_inlet",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "harbour basin cutting into the waterfront",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.5,
+                  0.52
+                ],
+                [
+                  0.5,
+                  0.38
+                ],
+                "coast"
+              ],
+              "width": 60,
+              "depth": 18,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0012,
+          "latitudeGradient": -0.2
+        }
+      },
+      {
+        "id": "coastal_pines",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "Mediterranean stone pines and cypress groves on the eastern bluffs",
+        "params": {
+          "area": {
+            "at": [
+              0.8,
+              0.75
+            ],
+            "radius": 100
+          },
+          "density": 0.16,
+          "spacing": 3,
+          "clumping": 0.5,
+          "maxSlope": 32,
+          "elevation": [
+            2,
+            80
+          ],
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "undergrowth": {
+            "grass": 0.4,
+            "flowers": 0.08,
+            "deadwood": 0.02
+          },
+          "strata": true,
+          "species": [
+            {
+              "id": "mediterranean_pine",
+              "weight": 3,
+              "shape": "spruce_tall"
+            },
+            {
+              "id": "coastal_oak",
+              "weight": 2,
+              "shape": "oak_spreading"
+            },
+            {
+              "id": "column_cypress",
+              "weight": 2,
+              "shape": "larch_columnar"
+            }
+          ]
+        }
+      },
+      {
+        "id": "hinterland_trees",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse hinterland scatter",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 5,
+          "clumping": 0.3,
+          "maxSlope": 35,
+          "elevation": [
+            2,
+            120
+          ],
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "species": [
+            {
+              "id": "wild_oak",
+              "weight": 2,
+              "shape": "oak_spreading"
+            },
+            {
+              "id": "wild_pine",
+              "weight": 1,
+              "shape": "spruce_squat"
+            }
+          ]
+        }
+      },
+      {
+        "id": "hellenic_metropolis",
+        "kind": "city",
+        "label": "the modern Hellenist coastal metropolis",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            340,
+            200
+          ]
+        },
+        "params": {
+          "size": "large",
+          "coastal": true,
+          "diagonals": 1,
+          "mix": [
+            "skyscraper",
+            "office",
+            "apartment_block",
+            "shop_row",
+            "townhouse",
+            "modern_villa"
+          ],
+          "characters": {
+            "waterfront": [
+              "peripteral_temple",
+              "stoa",
+              "shop_row",
+              "food_court"
+            ],
+            "core": [
+              "skyscraper",
+              "office",
+              "hotel",
+              "department_store"
+            ],
+            "civic": [
+              "university_hall",
+              "museum",
+              "courthouse",
+              "bouleuterion",
+              "peripteral_temple"
+            ],
+            "lanes": [
+              "townhouse",
+              "stoa",
+              "shop_row"
+            ]
+          },
+          "setPieces": {
+            "max": 5,
+            "kinds": [
+              "landmark",
+              "promenade",
+              "square",
+              "bridge",
+              "stair"
+            ]
+          }
+        },
+        "constraints": [
+          {
+            "zone": "south"
+          }
+        ],
+        "tags": [
+          "city",
+          "urban",
+          "hellenist"
+        ],
+        "children": [
+          {
+            "id": "acropolis_spire",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the great modern acropolis skyscraper overlooking the bay",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                21,
+                72,
+                21
+              ]
+            },
+            "params": {
+              "floors": 16,
+              "roof": "flat",
+              "vista": "spine"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "north",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "skyscraper",
+              "landmark"
+            ]
+          },
+          {
+            "id": "pantheon_civic",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the grand neoclassical temple hall",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                21,
+                18,
+                29
+              ]
+            },
+            "params": {
+              "floors": 2,
+              "roof": "gable",
+              "vista": "boulevard"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "north",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "peripteral_temple",
+              "landmark",
+              "civic"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "neopolis_harbour",
+        "kind": "generator",
+        "generator": "precinct.harbour@0",
+        "label": "the grand waterfront quays and piers under attack",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            112,
+            18,
+            72
+          ]
+        },
+        "params": {
+          "piers": 4,
+          "ships": "fill"
+        },
+        "constraints": [
+          {
+            "at": [
+              0.5,
+              0.48
+            ]
+          },
+          {
+            "distance": "hellenic_metropolis",
+            "min": 8,
+            "max": 36
+          }
+        ],
+        "tags": [
+          "precinct",
+          "harbour"
+        ]
+      },
+      {
+        "id": "leviathan_prime",
+        "kind": "generator",
+        "generator": "authored:leviathan_kraken_prime",
+        "label": "the titanic kraken breaching in the central harbour waters",
+        "params": {
+          "seat": "wade",
+          "face": {
+            "toward": "hellenic_metropolis"
+          }
+        },
+        "constraints": [
+          {
+            "at": [
+              0.48,
+              0.28
+            ]
+          },
+          {
+            "on": "@terrain:coastline",
+            "band": 48
+          }
+        ],
+        "tags": [
+          "monster",
+          "invader"
+        ]
+      },
+      {
+        "id": "hydra_flank",
+        "kind": "generator",
+        "generator": "authored:hydra_behemoth",
+        "label": "the three-headed sea hydra storming the western shallows",
+        "params": {
+          "seat": "wade",
+          "face": {
+            "toward": "hellenic_metropolis"
+          }
+        },
+        "constraints": [
+          {
+            "at": [
+              0.26,
+              0.34
+            ]
+          },
+          {
+            "on": "@terrain:coastline",
+            "band": 36
+          }
+        ],
+        "tags": [
+          "monster",
+          "invader"
+        ]
+      },
+      {
+        "id": "monster_breach_swarm",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "swarm of sea serpents and thrashing tentacles assaulting the shoreline",
+        "params": {
+          "program": "sea_spawn_stalker",
+          "count": 14,
+          "area": {
+            "at": [
+              0.5,
+              0.32
+            ],
+            "radius": 0.28
+          },
+          "spacing": 20,
+          "seat": "wade",
+          "face": {
+            "toward": "hellenic_metropolis"
+          }
+        }
+      },
+      {
+        "id": "waterfront_defense_barricade",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "emergency defensive barricade line thrown across the main arterial into the city",
+        "params": {
+          "entry": "barricade_line",
+          "route": {
+            "across": "hellenic_metropolis"
+          }
+        }
+      },
+      {
+        "id": "harbour_perimeter_cordon",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "security cordon enclosing the embattled harbour zone",
+        "params": {
+          "entry": "quarantine_fence",
+          "route": {
+            "ring": "neopolis_harbour",
+            "margin": 8
+          }
+        }
+      },
+      {
+        "id": "metropolitan_highways",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "the primary thoroughfares and avenues linking the metropolis and harbour",
+        "params": {
+          "anchors": [
+            "hellenic_metropolis",
+            "neopolis_harbour",
+            "#tag:landmark"
+          ],
+          "pattern": "grid",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 14
+        }
+      }
+    ]
+  }
+}

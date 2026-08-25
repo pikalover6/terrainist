@@ -1,0 +1,501 @@
+{
+  "suite": "golden-prompts-v0",
+  "label": "after-units-v2",
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "intentPrepass": true,
+  "kits": {
+    "settlement": {
+      "path": "docs/kits/settlement-author.md",
+      "sha256": "5a75e53ba911265689f13b53014f94a4b258918a7837009635a8b7b7b0985734",
+      "bytes": 278366,
+      "envelopeLiterals": [
+        "11x11x9",
+        "11x14x9",
+        "11x8x9",
+        "120x120",
+        "13x10x11",
+        "13x11x13",
+        "13x11x9",
+        "13x16x13",
+        "13x9x11",
+        "140x120",
+        "140x24x92",
+        "15x17x21",
+        "16x52x14",
+        "180x160",
+        "18x18",
+        "18x44x15",
+        "200x180",
+        "21x76x19",
+        "21x78x19",
+        "220x200",
+        "22x22",
+        "25x22x19",
+        "288x288",
+        "30x30",
+        "440x400",
+        "512x512",
+        "5x4",
+        "7x19x7",
+        "8x8x8",
+        "96x16x72",
+        "96x80",
+        "9x11x9",
+        "9x12x9",
+        "9x8x8",
+        "9x8x9"
+      ]
+    }
+  },
+  "totals": {
+    "ok": 3,
+    "attempts": 3,
+    "oneShot": 3,
+    "promptTokens": 246739,
+    "completionTokens": 31322,
+    "cost": 0.151255875,
+    "diagnosticCodes": {}
+  },
+  "records": [
+    {
+      "id": "hellenist_harbour",
+      "family": "hellenist_city",
+      "kit": "settlement",
+      "prompt": "A modern Hellenist city being invaded by sea monsters.",
+      "seed": 305,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "source": "cache",
+        "value": {
+          "era": "modern",
+          "wealth": 0.8,
+          "formality": 0.75,
+          "event": {
+            "kind": "siege",
+            "severity": 0.85,
+            "recency": 0
+          },
+          "climate": {
+            "temperature": 0.6,
+            "humidity": 0.2,
+            "snow": "never"
+          },
+          "character": {
+            "label": "modern Hellenist coastal metropolis under sea monster siege",
+            "materialTheme": "modern_city",
+            "formPacks": [
+              "classical_mediterranean"
+            ],
+            "archetypes": {
+              "prefer": [
+                "stoa",
+                "peripteral_temple",
+                "bouleuterion",
+                "palaestra",
+                "nymphaeum"
+              ]
+            },
+            "urbanForm": "grid",
+            "motifs": {
+              "roofType": "flat",
+              "massing": "blocky",
+              "windowRhythm": "regular",
+              "ornamentDensity": 0.6
+            }
+          },
+          "tokens": {
+            "terrain": "a grand coastal metropolis fronting a deep harbour and open sea where sea monsters surface",
+            "event_direction": "giant sea monsters rise out of the ocean water attacking the harbour and waterfront avenues",
+            "infra": "barricade_line across the harbour promenade; emergency_cordon along the coastal boulevard",
+            "icons": "leviathans and sea monsters breaching along the modern docks; neoclassical porticos and high-rise stoas overlooking the bay; emergency barricades and defensive lines guarding the shore"
+          }
+        }
+      },
+      "intentUsage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "reasoningTokens": 0,
+        "cost": 0,
+        "cached": true
+      },
+      "attempts": 1,
+      "diagnostics": [
+        []
+      ],
+      "usage": {
+        "promptTokens": 82322,
+        "completionTokens": 11266,
+        "reasoningTokens": 7396,
+        "cost": 0.0519945
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 21,
+        "maxDepth": 2,
+        "generators": [
+          "authored:colossus_of_rhodes_modern",
+          "authored:leviathan_colossus",
+          "building.grammar@0",
+          "infra.entry@0",
+          "precinct.harbour@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "scatter.program@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "cathedral",
+          "cottage",
+          "department_store",
+          "modern_villa",
+          "museum",
+          "office",
+          "shop_row",
+          "skyscraper",
+          "townhouse"
+        ],
+        "archetypesInCatalog": 9,
+        "formPacks": [
+          "classical_mediterranean"
+        ],
+        "props": [
+          "buoy",
+          "statue_plinth"
+        ],
+        "species": [
+          "aegean_oak",
+          "coastal_pine",
+          "cypress_larch",
+          "wild_oak"
+        ],
+        "envelopes": [
+          "512x512",
+          "320x240",
+          "18x68x16",
+          "17x16x21",
+          "112x16x72"
+        ],
+        "constraints": 7,
+        "constraintKinds": [
+          "at",
+          "band",
+          "distance",
+          "max",
+          "min",
+          "on",
+          "zone"
+        ],
+        "constraintsWithStrength": 0,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 2,
+        "programReferences": 2,
+        "conformsTrue": 0,
+        "labels": 18,
+        "eras": [
+          "modern"
+        ],
+        "bytes": 8221
+      },
+      "wallMs": 60438
+    },
+    {
+      "id": "redwood_camp",
+      "family": "redwood_camp",
+      "kit": "settlement",
+      "prompt": "An ancient forest of colossal redwoods with a small logging camp at its edge.",
+      "seed": 306,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "source": "cache",
+        "value": {
+          "era": "industrial",
+          "wealth": 0.35,
+          "formality": 0.1,
+          "climate": {
+            "biome": "minecraft:old_growth_spruce_taiga",
+            "temperature": 0.25,
+            "humidity": 0.7,
+            "snow": "never"
+          },
+          "character": {
+            "label": "redwood logging camp",
+            "materialTheme": "boreal_pine",
+            "formPacks": [
+              "wilds_camps"
+            ],
+            "flora": {
+              "prefer": [
+                "emergent",
+                "ancient",
+                "old_growth",
+                "spruce_ancient",
+                "giant"
+              ]
+            },
+            "urbanForm": "linear"
+          },
+          "tokens": {
+            "terrain": "a primeval forest of colossal redwoods with a logging camp clearing at its perimeter",
+            "infra": "cut_over_ground clearing surrounding the camp; cart_track running into the deep timber",
+            "icons": "towering redwood canopy, log stacks, sawpits, bunk cabins, and timber skid trails"
+          }
+        }
+      },
+      "intentUsage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "reasoningTokens": 0,
+        "cost": 0,
+        "cached": true
+      },
+      "attempts": 1,
+      "diagnostics": [
+        []
+      ],
+      "usage": {
+        "promptTokens": 82213,
+        "completionTokens": 9229,
+        "reasoningTokens": 5083,
+        "cost": 0.04813425
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 25,
+        "maxDepth": 2,
+        "generators": [
+          "building.grammar@0",
+          "infra.entry@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "cottage",
+          "dormitory",
+          "log_cabin",
+          "longhouse",
+          "sawmill",
+          "smithy",
+          "warehouse"
+        ],
+        "archetypesInCatalog": 7,
+        "formPacks": [
+          "wilds_camps"
+        ],
+        "props": [
+          "campsite",
+          "cart",
+          "covered_wagon",
+          "log_pile",
+          "notice_board",
+          "well_head"
+        ],
+        "species": [
+          "fringe_spruce",
+          "redwood_canopy",
+          "understory_conifer"
+        ],
+        "envelopes": [
+          "512x512",
+          "24x20",
+          "11x11x17",
+          "13x12x19",
+          "11x12x13",
+          "11x13x21",
+          "11x10x13",
+          "9x8x9"
+        ],
+        "constraints": 23,
+        "constraintKinds": [
+          "adjacent_to",
+          "blend",
+          "distance",
+          "facing",
+          "gap",
+          "max",
+          "min",
+          "reference",
+          "terrain_conform",
+          "zone"
+        ],
+        "constraintsWithStrength": 0,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 0,
+        "programReferences": 0,
+        "conformsTrue": 0,
+        "labels": 24,
+        "eras": [
+          "industrial"
+        ],
+        "bytes": 8565
+      },
+      "wallMs": 55724
+    },
+    {
+      "id": "glowcap_vale",
+      "family": "glowcap_vale",
+      "kit": "settlement",
+      "prompt": "A glowing mushroom vale where a strange village has grown between the caps.",
+      "seed": 307,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "source": "cache",
+        "value": {
+          "era": "medieval",
+          "wealth": 0.35,
+          "formality": 0.1,
+          "climate": {
+            "humidity": 0.8,
+            "temperature": 0.2
+          },
+          "character": {
+            "label": "glowing mushroom vale village",
+            "materialTheme": "temperate_timber",
+            "formPacks": [
+              "swamp_witch"
+            ],
+            "urbanForm": "grown",
+            "flora": {
+              "prefer": [
+                "fungal",
+                "glow",
+                "mushroom_giant_red",
+                "mushroom_shelf_brown",
+                "glowcap"
+              ]
+            },
+            "archetypes": {
+              "prefer": [
+                "cottage",
+                "watchtower"
+              ]
+            }
+          },
+          "tokens": {
+            "terrain": "a secluded mountain vale nestled between steep ridges, sheltered beneath a canopy of giant glowing mushrooms",
+            "icons": "rustic wooden cottages and stilt dwellings built between and around giant mushroom stems; rope bridges and elevated walkways connecting mushroom caps; spore lanterns illuminating the vale floor"
+          }
+        }
+      },
+      "intentUsage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "reasoningTokens": 0,
+        "cost": 0,
+        "cached": true
+      },
+      "attempts": 1,
+      "diagnostics": [
+        []
+      ],
+      "usage": {
+        "promptTokens": 82204,
+        "completionTokens": 10827,
+        "reasoningTokens": 5650,
+        "cost": 0.051127125
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 24,
+        "maxDepth": 2,
+        "generators": [
+          "authored:elder_glowcap",
+          "building.grammar@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "apothecary",
+          "cottage",
+          "mushroom_house",
+          "stilt_house",
+          "tavern",
+          "watchtower",
+          "witch_hut"
+        ],
+        "archetypesInCatalog": 7,
+        "formPacks": [
+          "swamp_witch"
+        ],
+        "props": [
+          "cairn",
+          "log_pile",
+          "notice_board",
+          "well_head"
+        ],
+        "species": [
+          "brown_shelf",
+          "damp_birch",
+          "red_canopy",
+          "slope_birch",
+          "slope_pine"
+        ],
+        "envelopes": [
+          "512x512",
+          "20x20",
+          "11x16x11",
+          "9x10x9",
+          "13x11x13",
+          "11x12x11",
+          "11x12x11",
+          "11x14x13",
+          "11x16x11",
+          "7x19x7"
+        ],
+        "constraints": 27,
+        "constraintKinds": [
+          "adjacent_to",
+          "blend",
+          "distance",
+          "facing",
+          "gap",
+          "max",
+          "min",
+          "reference",
+          "terrain_conform",
+          "zone"
+        ],
+        "constraintsWithStrength": 0,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 0,
+        "programReferences": 1,
+        "conformsTrue": 0,
+        "labels": 21,
+        "eras": [
+          "medieval"
+        ],
+        "bytes": 9465
+      },
+      "wallMs": 59897
+    }
+  ]
+}

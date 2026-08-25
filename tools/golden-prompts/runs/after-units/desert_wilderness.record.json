@@ -1,0 +1,81 @@
+{
+  "id": "desert_wilderness",
+  "family": "new/terrain-only",
+  "kit": "terrain",
+  "prompt": "A vast salt desert under a hard sun, cracked flat to the horizon, with nothing living on it.",
+  "seed": 313,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "cache",
+    "value": {
+      "climate": {
+        "biome": "minecraft:desert",
+        "temperature": 1,
+        "humidity": -1,
+        "snow": "never"
+      },
+      "character": {
+        "label": "salt desert"
+      },
+      "tokens": {
+        "terrain": "a vast, cracked salt flat stretching flat to the horizon under a hard sun; barren expanse with no vegetation, water, or living structures"
+      }
+    }
+  },
+  "intentUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "reasoningTokens": 0,
+    "cost": 0,
+    "cached": true
+  },
+  "attempts": 1,
+  "diagnostics": [
+    []
+  ],
+  "usage": {
+    "promptTokens": 12429,
+    "completionTokens": 4324,
+    "reasoningTokens": 3260,
+    "cost": 0.012768375
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 6,
+    "maxDepth": 2,
+    "generators": [
+      "cave.carver@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [],
+    "archetypesInCatalog": 0,
+    "formPacks": [],
+    "props": [],
+    "species": [
+      "dead_ironwood"
+    ],
+    "envelopes": [
+      "512x512"
+    ],
+    "constraints": 0,
+    "constraintKinds": [],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 1,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 0,
+    "programReferences": 0,
+    "conformsTrue": 0,
+    "labels": 6,
+    "eras": [],
+    "bytes": 2051
+  },
+  "wallMs": 57818
+}
