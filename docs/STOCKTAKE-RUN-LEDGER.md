@@ -7,21 +7,21 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 24 (D3 probed: footprints and the frozen
-  ground agree everywhere; `LOAM-I501` and its test pin it) is committed.
-- **Next unit:** unit 25 — **F21, the parcel that takes the orchard**.
-  Probe first on montfort at own-stations on (dist-patched, D42): which
-  scatter/program placed the compound's trees (`life` props by program
-  and node), which lot parcels' `member` columns cover them, and whether
-  `withoutReserved`/the district's reservation mask knows the program's
-  ground at all. Then the smallest honest fix behind a switch: a parcel
-  does not grow into a column a scattered program dressed (a reservation),
-  or the compile says it did (`LOAM-W…`); attributed on the thirteen, the
-  own-stations flip re-measured on montfort after it. Then F4 (`LOAM-I512`
-  street probe), F14 (physics unit), F17 (the keep 1-of-3), census 1.21
-  (wire `stats.ground`); §10.5 probe prompts; the remaining stations,
-  G2's named worlds, the final deck.
-- **Last commit:** c7be0d6 (unit 23). Convention: this line names the
+- **In flight:** nothing — unit 25 (F21 probed: nobody's orchard; the
+  brown is the lane network; P5 opened) is committed.
+- **Next unit:** unit 26 — **F4, the `LOAM-I512` street probe**: the
+  metropolis's "ruined shells" vs intact boxes at street level. Probe the
+  overgrown_metropolis_hideout_k1 world (`bi/u25`) with a bespoke reader:
+  per building, the share of wall blocks missing / replaced by the ruin
+  palette, vines on walls, trees in the street columns, the `boxes` the
+  icon metric counts; compare with the r5 anchor's numbers
+  (`docs/decks/anchors/METROPOLIS-R5-*.md`) and the census's T6 line.
+  Write the verdict station; fix in code only what the probe names as a
+  bug (law 3), behind a switch. Then F14 (physics unit: the pre-existing
+  findings on shipped worlds, probe first), F17 (the keep 1-of-3), census
+  1.21, P5 if cheap; §10.5 probe prompts (~40 % of the spend unspent); the
+  remaining verdict stations, G2's named worlds, the final deck.
+- **Last commit:** 0fa9c5e (unit 24). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
 - **Spend:** $8.19 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
 - **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19, D25,
@@ -57,11 +57,11 @@ running state. The NOW block is rewritten at the end of every turn.
     fixed behind `ROUTE_PINS_HELD_GROUND` (unit 19): pinned, the fixture's
     island joins main (898 → 23 orphans), the fourteen identical. Flipped
     (unit 20): shipped.
-  - F21 — **a parcel grows through ground a scatter program dressed, and
-    the scatter yields silently** (montfort's orchard at own-stations on:
-    cherry leaves 476 → 140, `life` 259 → 179, grass −5.8k columns, no
-    diagnostic). A reservation for scattered programs, or a note; the
-    thing that makes `LOT_PARCEL_OWN_STATIONS` shippable.
+  - F21 — withdrawn (unit 25): montfort's "orchard" was the life pass's
+    street trees on the starved parcels' leftover (a ≥ 320-column patch
+    read as a public square), and the brown is the lane network growing
+    with the dwellings it anchors (lane columns 3,535 → 6,661, coarse-dirt
+    shoulders). No program yielded. The taste question is P5.
 ## DECISIONS
 
 (every fork taken: the reversible default chosen, why, and how to undo it)
@@ -412,6 +412,21 @@ running state. The NOW block is rewritten at the end of every turn.
   another footprint or the streets won under a region, are not D3's
   disagreement. The walk was split by owner before any number was written
   down; the census row carries the split. Undo: n/a.
+- **D58 (unit 25):** F21 is withdrawn rather than fixed: the column-level
+  attribution (13,051 changed surface columns, each classified by new top
+  block and footprint) shows no program's ground was taken — the trees
+  were the life pass's own dressing of an artefact of starvation, and the
+  brown is road surface and shoulder soil. Building a reservation for a
+  program that does not exist would have been the census's class 2 in
+  reverse. The flag stays off on the accidental square's evidence alone,
+  which is thinner than unit 21 believed; Kai's walk can overturn it. Undo:
+  n/a.
+- **D59 (unit 25):** the lanes' dressing inside a district is logged as a
+  proposal (P5), not fixed here: a `road.network` inside a walled hill town
+  laying dirt paths with coarse-dirt shoulders is the rural lane's cross
+  section applied where the district's street family belongs, and changing
+  it moves every document with lanes through a town — a law-5 unit with
+  its own attribution. Undo: n/a.
 
 ## SPEND
 
@@ -441,6 +456,7 @@ running state. The NOW block is rewritten at the end of every turn.
 | 22 | census batch two — two bi14 runs, the FULL suite | 0.00 | 8.19 |
 | 23 | the kerb flip — censuses, renders, one bi14 run, the FULL suite | 0.00 | 8.19 |
 | 24 | D3 probed — thirteen in-process compiles, one bi14 run, the FULL suite | 0.00 | 8.19 |
+| 25 | F21 probed — two top-block maps, one bi14 run, the FULL suite | 0.00 | 8.19 |
 
 ## VERDICTS
 
@@ -469,6 +485,17 @@ running state. The NOW block is rewritten at the end of every turn.
   9 lots, 665 free columns, nothing built). SITE-PLAN §4.2 keeps rectangular
   axis-aligned buildings "for v0"; the grammar takes a rectangle. Seating
   at the street's yaw is a grammar-facing change of more than a day.
+- **P5 — lanes inside a district take the district's street family**
+  (unit 25). A `road.network` routed through a walled hill town lays the
+  rural lane's cross section — `dirt_path` surface, `coarse_dirt` shoulders
+  (`roads.ts` `soilA`), gravel — where the district's own streets are
+  cobbled with kerbs and verges. Montfort at own-stations on: lane columns
+  3,535 → 6,661 and 2,340 of 2,344 new coarse-dirt columns within two of a
+  lane — the "brown bowl" of §H/§I. A lane whose columns fall inside a
+  district's bounds should resolve its states through the district's
+  `resolveStreetStates` family (surface, kerb, verge) rather than the
+  rural set; byte-moving on every document with lanes through a town;
+  switch + attribution.
 - **P4 — a wet-neighbour constraint in the ground contract** (unit 14). A
   pad or platform whose ground claim would lower a column beside standing
   water below that water's surface is refused or raised to it — the rule
@@ -839,3 +866,16 @@ running state. The NOW block is rewritten at the end of every turn.
   (`stats.ground` is only wired under the test-only option). The thirteen:
   all thirteen payload-identical to unit 23. Tests: FULL suite COUNTS Test Files 346 passed | 1 skipped (347), Tests 5678 passed | 31 skipped (5709). Files: `diagnostics.ts`,
   `compile.ts`, the test, the census. Spend $0.
+- **unit 25 — F21 probed: nobody's orchard (2026-08-25):**
+  `F10-LOWER-SQUARE` §I. Top-block maps of montfort's compound from the
+  HEAD and own-stations worlds (`scratchpad/f21/`, 34,225 columns, 13,051
+  differ), every changed column classified: the compound's trees are
+  `dressOpenGround`'s street trees (142 → 40) on the starved parcels'
+  leftover — a ≥ 320-column patch touching a street, read as a public
+  square — and the document has no orchard node; the brown is road surface
+  and shoulder soil (`dirt_path` +2,620, `coarse_dirt` +2,203 of which
+  2,340 within two columns of a lane, `gravel` +1,324; lane columns 3,535
+  → 6,661) from `city_lanes` growing with the dwellings it anchors (11 →
+  14). F21 withdrawn (D58); P5 opened (D59); the switch's docblock
+  corrected (comment only). The thirteen: all thirteen payload-identical to unit 24. Tests: FULL suite COUNTS
+  Test Files 346 passed | 1 skipped (347), Tests 5678 passed | 31 skipped (5709). Files: `layout/district.ts` (comment), the record §I. Spend $0.

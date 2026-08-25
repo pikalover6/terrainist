@@ -235,3 +235,41 @@ clean is:
 The three golden fixtures were not re-pinned (nothing shipped). The FULL
 suite at own-stations on was run once to size the re-pin for a later flip:
 see the ledger's unit entry.
+
+## §I Unit 25 — F21 probed: nobody's orchard, and the brown is the lanes
+
+§H read montfort's compound at own-stations on as "the parcels take the
+orchard and re-dress the ground as yards". Unit 25 attributed every changed
+surface column instead (`scratchpad/f21/`: top-block maps of the compound
+from both worlds, 34,225 columns; 13,051 differ).
+
+**The trees were nobody's.** Montfort's document has no orchard: its only
+scatter nodes are two `scatter.forest` areas outside the town. The
+compound's trees are `streetTree`s (142 → 40), planted by the life pass's
+`dressOpenGround` on a *leftover* patch — ground no lot, street, building
+or claim took, flooded by `free()` — that touches a street and holds ≥ 320
+columns (`PLAZA_MIN_AREA`), which the pass reads as a public square: a
+market row, a fountain, seating and trees along its edges. HEAD's starved
+parcels (F8) leave exactly such a patch; own-station parcels own it. No
+program had a claim on those columns and nothing yielded silently.
+
+**The brown is the lane network.** By new top block, off every footprint:
+`dirt_path` +2,620, `coarse_dirt` +2,203, `gravel` +1,324 — the road pass's
+surface, shoulder soil and lane gravel. 2,340 of the 2,344 new coarse-dirt
+columns lie within two columns of a lane column; lane columns
+(`dirt_path` + `gravel`) go 3,535 → 6,661 (+88 %); leaf-topped columns
+1,152 → 234. `city_lanes` is a `road.network` anchored on `#tag:house`, and
+the flag seats more, bigger dwellings (11 → 14): more anchors, longer
+lanes around larger pads, and every lane carries its coarse-dirt shoulders.
+Walls grow with the lots too (1,571 → 1,866 columns, 2 → 6 gates).
+
+**Verdict.** F21 as stated — a reservation for scattered programs — is
+withdrawn: there is no program to reserve for. What the flag costs on
+montfort is an *accidental* square (a starvation artefact the life pass
+dressed well) and what it buys is a denser lane network dressed for the
+countryside — dirt paths with coarse-dirt shoulders inside a walled hill
+town. The taste question is the lanes' dressing, not the parcels; it is
+**P5** in the ledger (lanes inside a district take the district's street
+family — a paved or cobbled surface, grass verges — instead of the rural
+lane's), and `LOT_PARCEL_OWN_STATIONS` stays off until P5 or Kai's walk
+says the brown is fine. The switch's docblock is corrected.

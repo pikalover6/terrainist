@@ -3339,10 +3339,16 @@ export function boundingSeams(seams: readonly LevelSeam[]): readonly LevelSeam[]
  * yards and paving (grass −5.8k columns; path, coarse dirt, gravel, cobble
  * +9k blocks): the green inhabited interior becomes a brown one with
  * bigger houses — T5's wrong shape on a named world, by the Run's
- * pre-registered rule a regression that keeps the flag off. The finding is
- * F21: a parcel grows through the ground a scatter program dressed, and
- * the scatter yields without a word. Kai's post-hoc veto stands open on
- * the render pair (`scratchpad/u21/renders/`).
+ * pre-registered rule a regression that keeps the flag off. Probed in unit
+ * 25 (`F10-LOWER-SQUARE` §I): the orchard was never a program's — it was
+ * `dressOpenGround`'s street trees on the starved parcels' leftover, a
+ * ≥ 320-column patch touching a street that the life pass reads as a public
+ * square — and the brown is the lane network (`road.network`, dirt-path
+ * surface, coarse-dirt shoulders) growing with the dwellings it anchors
+ * (11 → 14) and their bigger pads. Nothing yields silently; the flag's
+ * price is the accidental square, and the lanes' dressing inside a walled
+ * hill town is the taste question (proposal P5). Kai's post-hoc veto
+ * stands open on the render pair (`scratchpad/u21/renders/`).
  */
 export const LOT_PARCEL_OWN_STATIONS = false;
 
