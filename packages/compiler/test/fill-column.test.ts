@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { WORLD_HEIGHT, WORLD_MIN_Y, loadPrismarine } from "../src/emit/prismarine.js";
+import {
+  WORLD_HEIGHT,
+  WORLD_MIN_Y,
+  loadPrismarine,
+  runFillFallbackCount,
+} from "../src/emit/prismarine.js";
 import { EMIT_MINECRAFT_VERSION } from "../src/emit/world.js";
 
 /**
@@ -55,5 +60,38 @@ describe("fillColumn's run-fill path", () => {
     };
 
     expect(readAll(filled)).toBe(readAll(looped));
+  }, 60_000);
+
+  /**
+   * Kai's guard on the silent fallback: the run-fill path degrades to the
+   * per-block setter if `prismarine-chunk`'s palette internals ever move, and
+   * a real compile takes the fast path for *every* slice (2,580,152 slices /
+   * 31,029,614 blocks on a 512x512 troy, zero fallbacks). Without this the
+   * degradation would be invisible and cost ~300 ms a compile. So CI fails
+   * loudly on a dependency bump while production keeps falling back quietly.
+   */
+  it("takes the fast path for every slice a real terrain fill produces", () => {
+    const stack = loadPrismarine(EMIT_MINECRAFT_VERSION);
+    const chunk = stack.createChunk();
+    const before = runFillFallbackCount();
+
+    // The shape the terrain materializer actually writes: a deep stone body,
+    // a subsurface band, a surface run and a fluid column, over every column
+    // of the chunk — runs that cross section boundaries and grow the palette.
+    const deepslate = 1;
+    const stone = 2;
+    const soil = 9;
+    const water = 80;
+    for (let z = 0; z < 16; z++) {
+      for (let x = 0; x < 16; x++) {
+        const top = 60 + ((x * 7 + z * 13) % 24);
+        chunk.fillColumn(x, z, WORLD_MIN_Y + 1, -8, deepslate);
+        chunk.fillColumn(x, z, -7, top - 4, stone);
+        chunk.fillColumn(x, z, top - 3, top, soil);
+        if (top < 63) chunk.fillColumn(x, z, top + 1, 63, water);
+      }
+    }
+
+    expect(runFillFallbackCount() - before).toBe(0);
   }, 60_000);
 });

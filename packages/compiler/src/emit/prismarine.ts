@@ -122,6 +122,28 @@ type RawChunkCtor = new (options: { minY: number; worldHeight: number }) => RawC
 /* Public, typed surface.                                                     */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * How many `fillColumn` slices have taken the per-block fallback instead of
+ * the run-fill fast path.
+ *
+ * Compiling a real world takes the fast path for every slice — a 512x512 troy
+ * measures 2,580,152 slices and 31,029,614 blocks with zero fallbacks. The
+ * fallback exists so that a `prismarine-chunk` upgrade which moves the palette
+ * internals degrades to *slow* rather than to *wrong*; the cost of that safety
+ * is that such an upgrade would otherwise be silent, and worth ~300 ms a
+ * compile. So CI asserts this stays zero (`fill-column.test.ts`) while the
+ * runtime keeps falling back quietly.
+ *
+ * The counter is incremented only on the fallback branch, so the fast path
+ * pays nothing for it.
+ */
+let runFillFallbacks = 0;
+
+/** Read the fallback counter — see {@link runFillFallbacks}. */
+export function runFillFallbackCount(): number {
+  return runFillFallbacks;
+}
+
 /** World vertical extent for 1.18+ worlds. */
 export const WORLD_MIN_Y = -64;
 export const WORLD_HEIGHT = 384;
@@ -493,6 +515,7 @@ class ChunkAdapter implements EmitChunk {
     const bits = section?.data.data;
     const paletteIndex = palette === undefined ? -1 : palette.indexOf(stateId);
     if (section === undefined || palette === undefined || bits === undefined || paletteIndex < 0) {
+      runFillFallbacks += 1;
       for (let y = y0; y <= y1; y++) {
         p.y = y;
         this.raw.setBlockStateId(p, stateId);
