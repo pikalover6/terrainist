@@ -77,8 +77,8 @@ per-pack EXAMPLE modules (fences, not ids; named-pack selection; region
 scope B behind A; measure copy-mode side effect); B3 probes DONE: omitted
 strength = per-type default (§4.5, nothing to teach); demotion census:
 terrain_conform 100 / distance 62 / adjacent_to 51 — kit fences write
-conform without maxSlope (DEFAULT_MAX_SLOPE 35) → one real cluster. Kai
-decides B1 go / B2 timing / A-vs-B / campaign window.
+conform without maxSlope (DEFAULT_MAX_SLOPE 35) → one real cluster. **Kai RULED: B1
+now (after clusters 5–6), B2 = next wave with its own session/window.**
 
 **Parked troy queue (not cancelled):** flight object native-first
 (junction cliffs customer #1; stairs = architecture for real drops, never

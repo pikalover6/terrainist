@@ -1,6 +1,9 @@
 # STOCKTAKE Wave 2b — consult (drafted 2026-08-24, orchestrator)
 
-**Status:** consult, no code. Written while Wave 2a's last kit clusters land,
+**Status:** RULED by Kai (2026-08-24): **B1 now, B2 next wave.** kit-fix
+finishes Phase-1 clusters 5–6, then B1 (a)+(c) and the terrain_conform
+cluster, each 3×3 with before-samples collected BEFORE the bytes move; A3
+(B2) gets its own wave, session and window. Consult text below unchanged. Written while Wave 2a's last kit clusters land,
 so Kai has a Wave-2b decision ready the moment they do. Everything below is
 grounded in Wave 2a's measured record (`docs/STOCKTAKE-v0.md`, `docs/audits/`,
 `tools/golden-prompts/runs/`), not in the pre-campaign audits alone.

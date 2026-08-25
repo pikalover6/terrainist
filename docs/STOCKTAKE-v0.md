@@ -130,6 +130,10 @@ Seed findings already in hand:
   and 4 both had their "before" by luck. Remaining Phase-1 clusters: 5
   (vocabulary contradictions + the two farm-example defects) and 6
   (semantics); Kai's pick.
+- **Wave 2b RULED (Kai, 2026-08-24): B1 now, B2 next wave** — see
+  docs/STOCKTAKE-WAVE-2B-v0.md. kit-fix's queue after Phase 1: B1 (fence
+  the civic set-piece + name the acropolis class, 3×3 on troy, ~$0.35) and
+  the terrain_conform cluster; A3 is its own wave.
 
 ## WS-B — Terrain-kit audit
 
