@@ -67,3 +67,28 @@ the lesson that became ROAD_PULL: grader heroic on cliffs, noise on
 flats. Rule-web artifact published (2a3ce715). The residual-lip probe at
 (108,89,-194) — the election's step, not the road's — seeded the blend.
 
+
+## The pull saga's finish, n13 ratified, the stair saga (08-22 → 08-24) — compressed from cell 3
+
+Full record docs/SESSION-HANDOFF-2026-08-23.md. Kai (08-23): "the most
+coherent troy generation ever" — **n13 IS the line**: y = round(drape +
+pull·(n5_arc − drape)); grade = max(longitudinal P95 over 13, cross-fall
+across the road's width) [PULL_CROSS — the axis three ladders missed];
+smoothstep boost 2.2·t², PEAK_KEEP envelope, CLOSE over 21 (pullField +
+phase 1b after junction pooling), 1/6 ramp, SAT .7, TREAD 1 (n12 pick
+open); one pooled pull per junction plane. Ladder n7 f5ef2a3 → n8
+b0d2e14 → n9 60d6626 → n13 a063804 (street cliff census 141→26 troy /
+143→20 hellenist); freeze/troy-iter-{7,8,9,13}; suite 5,566/0 at every
+flip. THE POC IS DEAD (ideas absorbed). Shipped flags TRUE: GROUND_V1_*,
+ELECTION_SOLVE, STREET_PLANE_HARMONIZE, FACE_FINISH, DESCENT_SOLVE
+(bypassed), ROAD_SOVEREIGN, ROAD_PULL, PULL_CROSS. **Stair saga:** Kai
+gated the native flight object on a dressing-pass demo; STAIR_DRESS
+shipped (a5e4573/26637a4/3c78232) — enforceRoadSovereignty had eaten all
+818 stairs (not in ROAD_SOVEREIGN_OWN_EMITTERS; the report's blockSpans ≠
+the emitted world); n14b was the demo; gate PASSED, then **taste retired
+it** (stairs "read as stairs") — STAIR_DRESS=false, code kept as flight
+vocabulary. Box (72,88,-95): junctions pool PULL not LEVELS (flight
+object customer #1); bend quantization; terrace_steps missited at the
+region edge → landmark-border rule. E2E control trojan_horse_in_troy_e2e1.
+Ladder debt: chunk-2 internals → G7 → G8; troy W413; quay 118; S8 crown;
+levelNear §7.1; side branches (packs d3d4193, freerect 24cb2c1).
