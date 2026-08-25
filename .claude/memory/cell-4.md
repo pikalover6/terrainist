@@ -74,8 +74,13 @@ since fabric v2). **Cluster 3 0e17fd0 = first floor-clearing claim**
 (3×3): explicit archetypes troy [0,0,0]→[2,3,3], walled [0,0,0]→[3,5,3],
 fjord control flat; 3 fences had built the WRONG thing (harbour_light→
 watchtower vs lighthouse; the_long_house→cottage vs longhouse;
-assay_office→smithy). Re-measure of the menu redesigned: ON 3×3 on
-troy+walled(+fjord) vs c3-after triplicate, ~$0.31, Kai's go pending.
+assay_office→smithy). **RE-MEASURED at the cluster-3 kit (3×3, $0.31, 55ca8e1): THE MENU
+WORKS where it is right** — troy pack uses OFF 3/5/5 vs ON 11/11/11,
+pithos_store/trireme/votive_column (0/50 corpus) 3/3 ON, 0/3 OFF;
+explicitArchetypeParams held (prediction pre-registered); walled 0/0/0
+= the era tier's defect (medieval spans 8 incompatible packs — a
+European town offered torii); binding hypothesis narrowed to named-pack
+cases. Kai's ruling pending: cut or affinity-gate tier 2; flag "not yet".
 **Region scope** (consult 82216ce): two-place prompts empty world scope
 BY INSTRUCTION (one region_<place> token each, hand-off in prose nobody
 structural reads) — a prompt class the menu and A3 are blind to; Kai:
