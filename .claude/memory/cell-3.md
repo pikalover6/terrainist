@@ -70,3 +70,29 @@ installed vs the r22 overfit worry. Ladder debt parked: chunk-2 internals
 → G7 (walk-gated) → G8 collapse; troy W413, quay 118, S8 crown, levelNear
 §7.1, glow-lichen lint, side branches (packs d3d4193, freerect 24cb2c1),
 §15.1 + W337 + dev-app.
+
+## The stocktake's compiler week (08-24) — compressed from cell 4
+
+**Task #27 (e792d16):** resolveGround ×5 = §1.6 design (four tier
+prefixes + the generating fifth); I497's hard-coded resolves:1 fixed
+(report bytes only). Retaining probe (env-guarded wrappers on the built
+dist, troy): 40 tiered stacks 349 ms, 22 PARTIAL (233 ms; 10 tiers
+unplaced, 52 columns uncovered — the shoulder/verge customer); on
+thalassa retaining is 30 ms, so it is a correctness question with no perf
+case either way. **Perf ladder (Kai-driven session "perf", own worktree
+terrainist-wt-perf / perf/compile-ladder, CLOSED by Kai "stop the ladder,
+bank the win"):** three rungs, byte-identical ×3 docs at every step, FULL
+gate each — c446041 single-compression position hash (1123→243 ns, hash
+15.8 %→1 % of wall), c18c9fe run-filled fillColumn (prismarine's linear
+palette scan was the "16 ns/block"; first block per section slice via the
+public setter, stable remainder bit-packed, shape-check + silent
+fallback), dbb47fd zero-fallback CI guard (Kai's pick). Result troy
+5.0→3.9 s, pirates 6.8→4.7, thalassa 9.4→8.5 (~4.8 honest): profile FLAT
+(top self 205 ms); E1's per-item numbers were INCLUSIVE (bucketTrees 27
+ms self, deflate 136 ms). Thalassa's "4.6 s structures" = the programs'
+declare half mis-billed (timings fixed 88adae5); 3.7 s = ONE authored
+program (leviathan_prime re-filling voxels 70×) — **Kai: program cost is
+NOT an authoring burden** (no diagnostic, no kit law). Unspent → WS-F:
+roads.js 654 ms on thalassa, flora parts ~250 ms, retaining density
+inversion. Vitest rule loosened (AGENTS.md): heavy runs one at a time,
+light targeted runs overlap.
