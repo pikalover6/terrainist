@@ -1122,12 +1122,19 @@ export function generateBuilding(request: BuildingRequest): BuildingResult {
       ...(params.cornerEnd === undefined ? {} : { cornerEnd: params.cornerEnd }),
       stream: streamSeed(request.seed, "terrace"),
     });
+    /** The terrace's decay record, for a terrace that asked (P6, unit 36). */
+    const terraceDecay: DecayPassReport | undefined =
+      params.decay === undefined || params.decay <= 0
+        ? undefined
+        : { written: 0, quenched: 0, withdrawn: 0, settled: 0, refused: false, mode: "none" };
     return emitTerrace({
       put,
       cells,
       style,
       grammar,
       choice,
+      ...(params.decay === undefined ? {} : { decay: Math.min(1, Math.max(0, params.decay)) }),
+      ...(terraceDecay === undefined ? {} : { decayReport: terraceDecay }),
       sx,
       sy,
       sz,

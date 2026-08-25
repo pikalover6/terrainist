@@ -7,9 +7,22 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 35 (probe pass 4: six of six one-shot, every icon present, zero boxes; four of six pass by read — the pueblos and their bridge, the lava field, the windmill (dominant by rule; its fit-out ran), the meteorite (dominant, though demoted out of its square); the frontier water tower fails on F27's remainder and the flood delta on a new cause, F30, no seat over water (P8) — G4 not met. Pass 3's "thin yurt rings" corrected: seven yurts placed) is committed.
-- **Next unit:** unit 36 — **P6, the terrace decay mode, part one** — the road to DONE runs through it: G2 (the fresh metropolis matches r5 on T6) and G3 (the metropolis anchor read WORSE, D6) both need a grid district that can ruin, and unit 26 showed none of its 132 terrace lots can (F22). Part one: the `terrace` archetype in `stdlib` takes `decay` (bays lose storeys and roofs, party walls stand as the fallen-tower silhouette; `W511` stops firing for terraces), behind a switch, byte-identical off, unit-tested on a terrace at decay 0/0.5/0.9. Part two (unit 37): `ruinDecayOf` rolled per terrace run in `district.ts`, attributed on the two metropolis documents, flipped. Then the road (D77): G2 fresh named worlds (≈ $1), G1 the eleven golden fresh at final bytes (≈ $2.6, repeats where contested), G6 kit 3×3 (≈ $2), G4 six probes at final bytes (≈ $1.5), G5/G7 census dispositions, the final deck with walk cards, the closing report, `STATUS: DONE`.
-- **Last commit:** 243dce0 (unit 34). Convention: this line names the
+- **In flight:** nothing — unit 36 (P6 part one: a terrace can ruin, bay
+  by bay, behind `TERRACE_DECAY`, landed off) is committed.
+- **Next unit:** unit 37 — **P6 part two: the roll over terrace runs, and
+  the flip.** In `layout/district.ts`, after `terraceRuns`, roll
+  `ruinDecayOf` per terrace run (the run's first lot and its block, so the
+  cluster keys as the infill roll's) and attach `decay: intensity` to the
+  terrace job under a switch; flip both switches together (`TERRACE_DECAY`,
+  the roll) with attribution: the two metropolis documents move — measure
+  ruin yards / field / green skin and `I512` before and after, render the
+  k1 metropolis at the flip, read it against T6 (fallen towers, ruined
+  palette), and pin the k1 numbers. If the read is not-worse or better,
+  ship; else keep off and write the attribution. Then the road (D77): G2
+  fresh named worlds, G1 the eleven golden fresh, G6 kit 3×3, G4 six
+  probes at final bytes, G5/G7, the final deck, the closing report,
+  `STATUS: DONE`.
+- **Last commit:** ede7a08 (unit 35). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
 - **Spend:** $14.96 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
 - **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19, D25,
@@ -88,12 +101,10 @@ running state. The NOW block is rewritten at the end of every turn.
     read as a public square), and the brown is the lane network growing
     with the dwellings it anchors (lane columns 3,535 → 6,661, coarse-dirt
     shoulders). No program yielded. The taste question is P5.
-  - F22 — **the decay roll is per infill lot and the archetypes that carry
-    a grid metropolis have no shell decay mode**: on the k1 metropolis 132
-    of 142 lots are terraces that never roll, and `terrace`, `office`,
-    `apartment_block` answer `LOAM-W511` when asked — zero buildings ruin at
-    `decline 0.92`, no ruin field, no green skin (`METROPOLIS-F4`). The T6
-    regression is structural; the fix is P6.
+  - F22 — in progress (unit 36): the terrace archetype can now ruin bay by
+    bay with the shell's operators (`TERRACE_DECAY`, landed off); the roll
+    over terrace runs and the flip are unit 37. `office` and
+    `apartment_block` still answer `W511`.
 ## DECISIONS
 
 (every fork taken: the reversible default chosen, why, and how to undo it)
@@ -562,6 +573,19 @@ running state. The NOW block is rewritten at the end of every turn.
   building on piles over water is a new pad class and a grammar change,
   and the author's own answer (raise the land) is what the product does
   today. The stilt village stays a fail on the record. Undo: n/a.
+- **D79 (unit 36):** the terrace is decayed with the shell's own operators,
+  bay by bay in a bay-local frame, rather than by a terrace-specific ruin
+  builder: RUINS-PLAN's law is "a ruined building is the ordinary shell
+  fit-out decayed, not a second grammar", and a bay — party walls at 0 and
+  w + 1, the shared rows, a cornice at floors × storey — is the plain rect
+  `decayPlan` demands. The pass is a pure function over the cells map,
+  exported and tested without the switch. Undo: delete the function and the
+  call.
+- **D80 (unit 36):** landed off although on it moves nothing today (no
+  terrace job carries `decay` until the roll of part two): law 5 wants the
+  behaviour switch and the roll switch flipped *together* with one
+  attribution on the two metropolis documents, not a switch that is "on"
+  with no reader. Undo: n/a.
 - **D73 (unit 33):** pass 3 does not close G4: four of six read as their
   prompts, the mammoth fails on a known cause, and the lighthouse on a new
   one (F29). The rule is the pre-registered one — a new cause gets its
@@ -623,6 +647,7 @@ running state. The NOW block is rewritten at the end of every turn.
 | 33 | probe pass 3 — six new worlds generated end to end (`runs/probe-3`), the icon metric | 1.70 | 13.47 |
 | 34 | F29 — one in-process compile, one bi14 run, the FULL suite | 0.00 | 13.47 |
 | 35 | probe pass 4 — six new worlds generated end to end (`runs/probe-4`), the icon metric | 1.49 | 14.96 |
+| 36 | P6 part one — one bi14 run, the FULL suite | 0.00 | 14.96 |
 
 ## VERDICTS
 
@@ -1318,3 +1343,17 @@ F-number; G4 is met if these six surface no new failure class.
   full-height renders (`docs/decks/probes/PROBE-PASS-4-2026-08-25.md`).
   six of six one-shot, every icon present, zero boxes; four of six pass by read — the pueblos and their bridge, the lava field, the windmill (dominant by rule; its fit-out ran), the meteorite (dominant, though demoted out of its square); the frontier water tower fails on F27's remainder and the flood delta on a new cause, F30, no seat over water (P8) — G4 not met. Pass 3's "thin yurt rings" corrected: seven yurts placed Tests: FULL suite COUNTS none run — no compiler, stdlib or tool code moved in this unit. Files: the roster,
   `runs/probe-4`, the record, the ledger. Spend $1.49.
+- **unit 36 — P6 part one: a terrace can ruin (2026-08-25):**
+  `stdlib/structures/terrace.ts` gains `TERRACE_DECAY` (off),
+  `decayTerraceBays` — each bay in its own frame (interior `1..w`, party
+  walls at `0` and `w + 1`, the shared near and far rows, `wallTop =
+  floors × storey`, the bay's coping as `roofTop`, its door on the front
+  row) run through `decayShellChecked`, `decayProfileFor` and
+  `settleDecayedFixtures`, the reports summed — and the call under the
+  switch; `TerraceRequest` takes `decay`/`decayReport`, `core.ts` passes
+  them and the result meta carries `decay` (so `W511` stops naming the
+  terrace once on). `stdlib/test/terrace-decay.test.ts` (3): ships off; off,
+  a terrace asked for with decay is byte-identical to one without; the
+  per-bay pass on an emitted 31 × 13 two-storey terrace writes air over standing courses (mode "shell", written > 0). The
+  thirteen: all thirteen payload-identical to unit 34. Tests: FULL suite COUNTS Test Files 349 passed | 1 skipped (350), Tests 5689 passed | 31 skipped (5720). Files: `terrace.ts`,
+  `core.ts`, the test, the ledger. Spend $0.

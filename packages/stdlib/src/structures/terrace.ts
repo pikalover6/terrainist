@@ -91,6 +91,8 @@ import type {
   Shell,
 } from "./core.js";
 import { materialKey, type BuildingMaterials, type MaterialTheme } from "./themes.js";
+import { PropCounter, type FitOutContext } from "./archetypes-civic.js";
+import { decayProfileFor, decayShellChecked, settleDecayedFixtures, type DecayPassReport } from "./decay.js";
 
 /* -------------------------------------------------------------------------- */
 /* the archetype                                                               */
@@ -367,6 +369,13 @@ export interface TerraceRequest {
   readonly plan: TerracePlan;
   readonly footprint: Footprint;
   readonly shell: Shell;
+  /**
+   * The ruin dial, `params.decay` in (0, 1]; absent or 0 leaves the terrace
+   * whole. Honoured only under {@link TERRACE_DECAY} (P6, Stocktake unit 36).
+   */
+  readonly decay?: number;
+  /** Where the decay pass writes its record, for a terrace that asked for one. */
+  readonly decayReport?: DecayPassReport;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -384,6 +393,93 @@ export interface TerraceRequest {
  * so a later stage overwriting an earlier one is explicit rather than dependent
  * on emit order.
  */
+/**
+ * **A terrace can ruin.** Off — `false` is today's bytes — a terrace ignores
+ * `params.decay`: the roll is per infill lot and the party-wall block is
+ * built by its own emitter, so a grid district at any `decline` is intact by
+ * construction (the Stocktake Run's F22: on the k1 metropolis 132 of 142
+ * lots are terraces, and `decline 0.92` moves nothing but a note). On, the
+ * shell's own decay operators run **bay by bay**, each bay in its own frame —
+ * interior `1..w`, party walls at `0` and `w + 1`, the shared near and far
+ * rows, `wallTop = floors × storey` — so a terrace ruins the way a shell
+ * does, with no second grammar (RUINS-PLAN's law). Staged under law 5:
+ * landed `false`; flipped with the district's roll over terrace runs (P6
+ * part two), attributed on the two metropolis documents.
+ */
+export const TERRACE_DECAY = false;
+
+/** What {@link decayTerraceBays} needs of an emitted terrace. */
+export interface TerraceDecayInput {
+  readonly put: Put;
+  readonly cells: Map<string, LocalVoxelOp>;
+  readonly bays: readonly TerraceBayPlan[];
+  /** Per-bay style maps, as `emitTerrace` clad them. */
+  readonly bayStyle: readonly Readonly<Record<string, string>>[];
+  readonly storeyHeight: number;
+  readonly sz: number;
+  /** The interior's near and far rows in z, shared by every bay. */
+  readonly iz0: number;
+  readonly iz1: number;
+  /** Y of each bay's coping — the highest course the bay owns. */
+  readonly copingOf: (i: number) => number;
+  readonly decay: number;
+}
+
+/**
+ * Decay an emitted terrace bay by bay with the shell's operators, and return
+ * the pass's record summed over the bays. Pure over the cells map it is
+ * handed; exported so a test can run it on a whole terrace without the
+ * switch.
+ */
+export function decayTerraceBays(input: TerraceDecayInput): DecayPassReport {
+  const report: DecayPassReport = { written: 0, quenched: 0, withdrawn: 0, settled: 0, refused: false, mode: "none" };
+  const { put, cells, bays, storeyHeight, sz, iz0, iz1 } = input;
+  for (const [i, bay] of bays.entries()) {
+    if (bay.x1 < bay.x0 || iz1 < iz0) continue;
+    const ox = bay.wall0; // bay-local x = terrace-local x − ox
+    const w = bay.x1 - bay.x0 + 1;
+    const sx = w + 2;
+    const interior = { x0: 1, z0: iz0, x1: w, z1: iz1 };
+    const wallTop = bay.floors * storeyHeight;
+    const roofTop = input.copingOf(i);
+    const floorCells: { x: number; z: number }[] = [];
+    for (let z = iz0; z <= iz1; z++) for (let x = 1; x <= w; x++) floorCells.push({ x, z });
+    const inside = (x: number, z: number): boolean => x >= 1 && x <= w && z >= iz0 && z <= iz1;
+    const ctx: FitOutContext = {
+      put: (x, y, z, block, props) => put(x + ox, y, z, block, props),
+      style: input.bayStyle[i] ?? input.bayStyle[0] ?? {},
+      archetype: "terrace",
+      interior,
+      door: { x: bay.doorX - ox, z: sz - 1, face: "south" },
+      storyHeight: storeyHeight,
+      floors: bay.floors,
+      free: inside,
+      place: (x, z, block, props) => {
+        if (!inside(x, z)) return;
+        put(x + ox, 1, z, block, props);
+      },
+      placeBed: () => {},
+      take: () => true,
+      size: [sx, roofTop + 1, sz],
+      wallTop,
+      roofTop,
+      floorCells,
+      blockAt: (x, y, z) => cells.get(`${x + ox},${y},${z}`),
+      decay: input.decay,
+    };
+    const c = new PropCounter(ctx);
+    const outcome = decayShellChecked(ctx, c, decayProfileFor(ctx, input.decay));
+    const settled = settleDecayedFixtures(ctx);
+    report.written += outcome.written;
+    report.quenched += outcome.quenched;
+    report.withdrawn += outcome.withdrawn;
+    report.settled += settled;
+    report.refused = report.refused || outcome.refused;
+    if (outcome.mode !== "none") report.mode = outcome.mode;
+  }
+  return report;
+}
+
 /**
  * How far apart the upper-storey windows of a bay stand.
  *
@@ -785,6 +881,22 @@ export function emitTerrace(r: TerraceRequest): BuildingResult {
       ? { x0: first.x0, z0: iz0, x1: first.x1, z1: iz1 }
       : { x0: 1, z0: 1, x1: 0, z1: 0 };
 
+  /* --- decay (P6 part one, Stocktake unit 36) ------------------------------ */
+  if (TERRACE_DECAY && r.decay !== undefined && r.decay > 0 && hasInterior) {
+    const decayed = decayTerraceBays({
+      put,
+      cells,
+      bays,
+      bayStyle,
+      storeyHeight: h,
+      sz,
+      iz0,
+      iz1,
+      copingOf,
+      decay: Math.min(1, Math.max(0, r.decay)),
+    });
+    if (r.decayReport !== undefined) Object.assign(r.decayReport, decayed);
+  }
   const meta: BuildingMeta = {
     params: { ...r.params, floors: maxFloors, storyHeight: h },
     size: [sx, sy, sz],
@@ -813,6 +925,7 @@ export function emitTerrace(r: TerraceRequest): BuildingResult {
     furnitureCount,
     chimney: false,
     materialKey: materialKey(r.materials),
+    ...(r.decayReport === undefined ? {} : { decay: r.decayReport }),
   };
   return { ops: sortOpsLocal([...cells.values()]), meta };
 }
