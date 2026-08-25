@@ -44,6 +44,23 @@ Seed findings already in hand:
   authoring behavior on ~10 representative prompts so every kit edit is
   measured against it. Kit edits are not byte-gated (LLM nondeterminism);
   the golden-prompt suite is their regression harness.
+- **A0 LANDED + cluster 1 (Wave 2a, session "kit-fix"):** `tools/golden-
+  prompts/` — 11 prompts, authoring-only, ~**$0.64 and ~20 min of wall per
+  pass** (an authoring call is 60–360 s, median ~2.5 min against the 277 KB
+  kit: **the kit is the latency as well as the bill**; the earlier $2.6
+  estimate used WS-C's per-world figure). Baseline caught the units
+  contradiction live (three docs wrote fractional forest radii as the
+  kit's table said; a fourth copied the example's 120 blocks) and audit C9
+  (a forest of density 0 named barren_waste, authored to satisfy "at least
+  one forest"). Cluster 1 result: T118 2 → 0, whole-region fills at
+  coverage 3 → 0, diagnostics 4 → 0, one-shot 2 → 3, prompt tokens −26 %.
+  **The finding the suite alone could catch:** the deleted "fraction of the
+  region radius" sentence was the `scatter.program@0` rule
+  (programs/validate.ts:487-494, whose own comment names the trap) misfiled
+  into the forest row — true about the wrong node; a blind fix shipped two
+  new T104s until the kit taught the split with a fenced example. Filed
+  for a later wave as a real interface fix (WS-F seam list): rename to
+  `radiusBlocks` / `radiusFraction` so the two nodes cannot share a word.
 
 ## WS-B — Terrain-kit audit
 
