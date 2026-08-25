@@ -89,7 +89,8 @@ iter-N. Candidates: probe for real spread BEFORE install.
 **STANDING:** caps 4/≤2med/≤1high; delegation economics; implementers
 opus-5-low; orchestrator commits, single-sentence subjects; probe-first;
 byte-identity staging; screening install-anyway; popups liberally;
-NEVER-WAIT; never --replace; battery/ read-only; one vitest
---maxWorkers=4 heap-flagged; agents never spawn agents; walk-taste lands
+NEVER-WAIT; never --replace; battery/ read-only; heavy vitest runs (FULL /
+compiler-package) one at a time, --maxWorkers=4 heap-flagged, light
+targeted runs may overlap (loosened 08-24); agents never spawn agents; walk-taste lands
 only on Kai's verdicts; zsh does not word-split unquoted vars; the
 report's blockSpans ≠ the emitted world.
