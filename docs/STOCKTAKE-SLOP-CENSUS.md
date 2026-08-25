@@ -656,5 +656,7 @@ reversible default is to correct the five comments and file the precedence quest
 6. **M3** — the table-vs-derivation agreement test over `ALL_MATERIAL_THEMES`.
    — done (unit 22): `packages/compiler/test/ground-materials-tables.test.ts` (5). The table now covers 7 of 7 themes, so the derivation is unreachable in a compile; and it diverges from the table in **every** theme (ten solid roles each; `boreal_pine` + `bank`, `xeno_resin` + `bank` + `scree`) — pinned as the finding, not a design. No street derivation exists.
 7. **M2** — exempt `street.curb` from the `scoped` palette skip (`roads.ts:3587`). — switch
-   `KERB_SYMBOL_UNSCOPED` landed off (unit 22), attributed on the fourteen; flip pending.
+   `KERB_SYMBOL_UNSCOPED` landed off (unit 22), attributed on the fourteen — two move,
+   the pirate cities' scoped districts, each an exact kerb swap polished diorite → andesite —
+   and flipped (unit 23). Done.
 8. **D3 (note half)** — a post-freeze `foundationY` vs `resolved.ground` delta note.

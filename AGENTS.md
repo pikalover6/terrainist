@@ -95,6 +95,9 @@ enforces it.
 - `tools/worlds/block-census.mjs <worldDir> [--bbox x0,z0,x1,z1] [--match re]`
   — block-id counts read from the region files (vines, palette, water…
   inside a district); the number a render cannot give.
+  It prints the top 40 ids by default: to *diff* two worlds pass
+  `--top 100000 --json` and compare the full lists — a diff of two top-forty
+  lists shows ids entering and leaving the list, not deltas (Stocktake D55).
 - Installs go to the PrismLauncher "Fabulously Optimized" instance:
   `terrainist install <worldDir> --saves "/Users/kaihoward/Library/Application Support/PrismLauncher/instances/Fabulously Optimized/minecraft/saves"`.
   **Never `--replace`** — install alongside with `--channel <x>` or

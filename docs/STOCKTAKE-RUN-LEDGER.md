@@ -7,19 +7,21 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 22 (census batch two: M1, M3, S5, S6
-  landed; the M2 kerb switch landed off and attributed) is committed.
-- **Next unit:** unit 23 — **flip `KERB_SYMBOL_UNSCOPED`** (law 5's second
-  half): the attribution is two documents, pirates_r22 and
-  pirates_vs_unicorns_k1, {KERB} — a kerb course changing material where a
-  scoped district meets the root palette's sidewalk. Render the pirate
-  city's kerb before/after (`shot.mjs`, the district bounds), read it, flip
-  the constant, re-check the twelve identical, FULL suite, the census M2
-  row. Then D3's note (probe first: how often does a footprint's
-  `foundationY` disagree with the frozen ground, on the fourteen — a
-  report stat before a diagnostic), F21 (the parcel that takes the
-  orchard), F4, F14, F17; §10.5 probe prompts; the remaining stations.
-- **Last commit:** 1ef869b (unit 21). Convention: this line names the
+- **In flight:** nothing — unit 23 (`KERB_SYMBOL_UNSCOPED` flipped; two
+  pirate cities' kerb courses now one material with their sidewalks) is
+  committed.
+- **Next unit:** unit 24 — **D3's probe**: how often does a placed
+  footprint's `foundationY` disagree with the frozen ground beneath it, on
+  the fourteen — per document, per column, won by which claim class
+  (`ResolvedGround.owner` → the intent's `sourceClass`); a report stat
+  first (`stats.ground.footprintDrift` or similar, report-only, payload
+  identity), and only if the number is not zero a note diagnostic from the
+  free `LOAM-I5xx` numbers. Then F21 (a reservation for scattered programs,
+  or a note when a parcel takes one — probe the montfort orchard first), F4
+  (`LOAM-I512` street probe), F14 (physics unit), F17 (the keep authored
+  1-of-3); §10.5 probe prompts (~40 % of the spend still unspent); the
+  remaining verdict stations, G2's named worlds, the final deck.
+- **Last commit:** 3874b07 (unit 22). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
 - **Spend:** $8.19 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
 - **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19, D25,
@@ -386,6 +388,18 @@ running state. The NOW block is rewritten at the end of every turn.
   diagnostic about `foundationY` vs the frozen ground needs the disagreement
   measured first (law 4) — how many footprint columns, on which documents,
   won by which class — and that probe is its own unit. Undo: n/a.
+- **D54 (unit 23):** the kerb flip ships on the census alone: on both
+  movers the entire delta is one block id for another in equal numbers
+  (polished diorite → andesite, the kerb course), the render pair at
+  district scale shows nothing else changed, and the change is the stated
+  invariant ("one continuous course of one material"). Undo: one constant.
+- **D55 (unit 23):** unit 22's attribution sentence ("2,686 glass panes …
+  → andesite") was wrong: `tools/worlds/block-census.mjs` defaults to
+  `--top 40`, and the diff of two top-forty lists showed ids entering and
+  leaving the list, not deltas. Re-measured with `--top 100000 --json`.
+  The unit-22 entry stands as written (append-only) with this correction
+  beside it; the census tool's default is noted in `AGENTS.md`'s
+  byte-identity paragraph. Undo: n/a.
 
 ## SPEND
 
@@ -413,6 +427,7 @@ running state. The NOW block is rewritten at the end of every turn.
 | 20 | the pins flip — one bi14 run, the FULL suite | 0.00 | 8.19 |
 | 21 | own stations retried — two bi14 runs, renders, censuses, the FULL suite twice | 0.00 | 8.19 |
 | 22 | census batch two — two bi14 runs, the FULL suite | 0.00 | 8.19 |
+| 23 | the kerb flip — censuses, renders, one bi14 run, the FULL suite | 0.00 | 8.19 |
 
 ## VERDICTS
 
@@ -788,3 +803,14 @@ running state. The NOW block is rewritten at the end of every turn.
   fourteen with the switch off. Tests: FULL suite COUNTS Test Files 344 passed | 1 skipped (345), Tests 5676 passed | 31 skipped (5707). Files:
   `roads.ts`, `streetscape.ts`, `structures/index.ts`, `props.ts`,
   `site-treatment.ts`, two tests, the census. Spend $0.
+- **unit 23 — the kerb flip (2026-08-25):** `KERB_SYMBOL_UNSCOPED`
+  `false → true` in `structures/roads.ts`; `test/kerb-unscoped.test.ts`
+  ("ships on"). Attribution re-measured with the full block list (D55):
+  pirates_r22 polished diorite 1,983 → 810 and andesite 2,427 → 3,600;
+  pirates_vs_unicorns_k1 1,718 → 704 and 1,781 → 2,795 — the scoped
+  districts' kerb course becoming the block their sidewalk curb already
+  is, and nothing else (two ids per world). **Correction to unit 22's
+  entry:** its "2,686 glass panes" sentence was the census tool's top-40
+  artefact; the citadel's window panes are all present in both worlds. The
+  fourteen on the real build: twelve payload-identical to `u10`, pirates_r22 and pirates_vs_unicorns_k1 moved with payloads identical to the unit-22 dist-patched attribution run (`bi/u22-kerb`). Tests: FULL suite COUNTS Test Files 345 passed | 1 skipped (346), Tests 5677 passed | 31 skipped (5708).
+  Files: `roads.ts`, the test, the census M2 row, `AGENTS.md`. Spend $0.

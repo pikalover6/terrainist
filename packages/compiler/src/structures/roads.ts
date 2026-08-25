@@ -178,10 +178,15 @@ export const ROUTE_PINS_HELD_GROUND = true;
  * course of one material" (the slop census's class-3 M2). On, `street.curb`
  * alone is exempt from the skip: the kerb follows the palette symbol wherever
  * the sidewalk's does, and the two courses are one line again. Staged under
- * the Stocktake Run's law 5: landed `false`; attributed on the fourteen and
- * flipped in its own unit.
+ * the Stocktake Run's law 5: landed `false` (unit 22); **`true` ships**
+ * (2026-08-25, unit 23). Attributed on the fourteen: two move, both with a
+ * district in its own theme — pirates_r22 and pirates_vs_unicorns_k1 — and
+ * on each the whole change is the kerb course, polished diorite (the
+ * district table) → andesite (the root palette's `street.curb`, the block
+ * the sidewalk curb beside it already is): −1,173/+1,173 and −1,014/+1,014
+ * blocks, no other id moving. The other twelve are payload-identical.
  */
-export const KERB_SYMBOL_UNSCOPED = false;
+export const KERB_SYMBOL_UNSCOPED = true;
 /** Extra cost for a 90° change of heading; a 45° kink costs half of it. */
 export const ROAD_TURN_COST = 6;
 /** Longest straight a smoothing pass will pull, in cells. */
