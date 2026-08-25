@@ -133,7 +133,10 @@ Seed findings already in hand:
 - **Wave 2b RULED (Kai, 2026-08-24): B1 now, B2 next wave** — see
   docs/STOCKTAKE-WAVE-2B-v0.md. kit-fix's queue after Phase 1: B1 (fence
   the civic set-piece + name the acropolis class, 3×3 on troy, ~$0.35) and
-  the terrain_conform cluster; A3 is its own wave.
+  the terrain_conform CONSULT (the slope story was overturned by probe:
+  the conform is the demotion order's designated first casualty — weight
+  1.0, last-written, index tiebreak — see the 2b consult §B3); A3 is its
+  own wave.
 
 ## WS-B — Terrain-kit audit
 
