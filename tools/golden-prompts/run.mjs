@@ -76,6 +76,7 @@ function parseArgs(argv) {
       case "--candidate-menu": out.candidateMenu = true; break;
       case "--dry-run": out.dryRun = true; break;
       case "--refresh": out.refresh = true; break;
+      case "--keep-failures": out.keepFailures = true; break;
       case "--out-root": out.outRoot = path.resolve(next()); break;
       case "--help": case "-h": out.help = true; break;
       default: throw new Error(`unexpected argument ${arg}`);
@@ -101,10 +102,13 @@ usage: node tools/golden-prompts/run.mjs [flags]
   --dry-run            Print the plan and the cost estimate; make no API calls.
   --refresh            Re-author prompts this run directory already has, instead
                        of resuming past them.
+  --keep-failures      On resume, keep records that failed instead of
+                       re-authoring them. Default is to retry a failure.
   --out-root <dir>     Where run directories go (default tools/golden-prompts/runs).
 
 A run RESUMES by default: every prompt's record is written the moment it
-finishes, and re-invoking with the same --label authors only what is missing.
+finishes, and re-invoking with the same --label authors only what is missing —
+plus anything that FAILED, which is re-authored rather than skipped past.
 A pass is ~20 minutes of wall time and real money; it must never lose a
 completed call to an interrupted process.
 `;
@@ -582,15 +586,33 @@ async function main() {
   // attempt lost four completed authoring calls to a harness timeout because
   // nothing was written until the end; a record now lands the moment its call
   // returns, and a re-run with the same label authors only what is missing.
+  //
+  // A FAILED record is re-authored, not resumed past. Cluster 3 found the hole:
+  // run 2 lost a prompt to a provider-side truncation and then died, and
+  // resuming skipped its own failure — so the run "completed" permanently short
+  // of the sample it was paid to collect. A failure is the one record you
+  // almost always want again. `--keep-failures` restores the old behaviour for
+  // the case where pinning a failure is the point.
   const recordPath = (id) => path.join(outDir, `${id}.record.json`);
   const resumed = [];
   const todo = [];
+  const retried = [];
   for (const entry of entries) {
-    if (!options.refresh && fs.existsSync(recordPath(entry.id))) {
-      resumed.push(JSON.parse(fs.readFileSync(recordPath(entry.id), "utf8")));
-    } else {
+    const existing =
+      options.refresh || !fs.existsSync(recordPath(entry.id))
+        ? undefined
+        : JSON.parse(fs.readFileSync(recordPath(entry.id), "utf8"));
+    if (existing === undefined) {
       todo.push(entry);
+    } else if (existing.ok === false && !options.keepFailures) {
+      retried.push(entry.id);
+      todo.push(entry);
+    } else {
+      resumed.push(existing);
     }
+  }
+  if (retried.length > 0) {
+    console.log(`  re-authoring ${retried.length} failed record(s): ${retried.join(", ")}\n`);
   }
 
   console.log(
