@@ -156,3 +156,37 @@ Measured 2026-08-25: ~$0.20 per world, ~56 min for 11 at concurrency 3.
 node tools/golden-prompts/generate-all.mjs /path/to/out 3
 node tools/golden-prompts/record-generate-run.mjs /path/to/out runs/<label> <label>
 ```
+
+## The icon metric
+
+`icon-metric.mjs` is the Stocktake Run's instrument for **law #1 of taste —
+a generation must scream its prompt** (`docs/STOCKTAKE-RUN-SPEC.md` §6). Each
+prompt in `prompts.json` carries an `icons` list written from the prompt text
+before any document was read, and a `densityFloor` (lots per 10k envelope
+cells; 0 for terrain-only). For every document in a run directory the tool
+compiles it in-process for its report and scores:
+
+- **presence** — each icon's terms against the document (node ids, labels,
+  archetypes, tags, programs, intent tokens: *asked for*) and against the
+  compiled world (placements and the program each carries, buildings by
+  archetype, wall circuits, props, farms, forests by node, placed programs
+  and markers: *placed*); a `terrain` icon is a document read and says so;
+- **dominance** — a `dominant` icon's tallest and broadest placed match
+  against the median building (height ≥ 1.5×, footprint ≥ 2×), or a placed
+  program's block volume against the median building's (≥ 4×);
+- **density** — lots per 10k envelope cells across the districts, or, with no
+  district, buildings against their own hull (the basis is named);
+- **archetype-less boxes** in a pre-modern world (T3: zero is the bar);
+- **era** — archetypes the intent forbids that were placed, and the
+  pack/era mismatch note;
+- **the old floors** — compiled, errors, diagnostics.
+
+```
+node tools/golden-prompts/icon-metric.mjs runs/before-sample          # table + runs/before-sample/icon-metric.json
+node tools/golden-prompts/icon-metric.mjs runs/<label> --only troy_horse --json
+```
+
+Law 7 governs it: every line is a floor or an alarm, never the verdict. A
+node *named* for an icon that is a box passes presence and fails dominance;
+a world can pass every line and fail the walk. The thresholds are alarms and
+are printed with the ratios so the read can overrule them.

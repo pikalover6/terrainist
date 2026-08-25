@@ -53,3 +53,12 @@ units with a `VERDICT.md` each.
 
 The four anchor recompiles collected alongside are in
 `docs/decks/anchors/RECOMPILE-2026-08-25.md`.
+
+**Icon metric (unit 11):** `tools/golden-prompts/runs/before-sample/icon-metric.json`
+— the spec §6 metric scored on these documents (compiled in-process at
+249a903+): icons present 11/11 prompts; dominance where measurable — the
+leviathan, the mothership (×28 the median building's volume, hovering), the
+keep and the elder glowcap dominant; the Trojan horse (h×1.87, a×1.91) and
+the citadel (h×1.33) under the alarm line; density alarms on hellenist
+(11.6 < 15), the walled city (8.2 < 15), alien_farm (3.4 < 6, buildings
+against their own hull) and railway_town (did not compile — F1).

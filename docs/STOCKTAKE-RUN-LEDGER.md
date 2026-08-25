@@ -7,25 +7,19 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 10 (F6/F7: the walled guard on the planned
-  path, the dissolved-strip note) is committed.
-- **Next unit:** unit 11 — spec §10.3, **the icon metric**
-  (`tools/golden-prompts/`): per spec §6 — (i) icon presence: a pre-written
-  icon list per golden prompt (from the prompt text, `prompts.json`
-  `icons`), matched against named nodes / archetypes / programs in the
-  document and against the compiled world's placements; (ii) dominance:
-  the icon's height and footprint vs the median building; (iii) density:
-  lots per 10k envelope cells (from the compile report) vs a per-prompt
-  floor; (iv) archetype-less box count in pre-modern worlds; (v) era
-  fidelity; (vi) the old metrics as floors. Reads a run directory's
-  `*.doc.json` (`run.mjs` or `record-generate-run.mjs` shape) plus compile
-  reports (`--report`, or compiled in-process); prints a scoreboard and
-  writes `icon-metric.json` beside `summary.json`. First target: the
-  before-sample (free — the documents exist; compiles are free). Law 7
-  applies: the read wins over the number; the metric is a floor and an
-  alarm. Then the rules-only kit and E1's three arms (spend: ~$0.64 ×
-  9 authoring passes + compiles), F10, F4, F14 interleaved.
-- **Last commit:** 4f6f373 (unit 9). Convention: this line names the
+- **In flight:** nothing — unit 11 (the icon metric) is committed.
+- **Next unit:** unit 12 — **the rules-only kit** (spec §7 E1, arm 2): a
+  settlement kit built from the Loam spec and validator-derived tables with
+  zero fenced examples, as a file beside `docs/kits/settlement-author.md`
+  selectable by the harness (`run.mjs --kit-file` or an env var — add the
+  smallest switch that keeps the default byte-identical). First read what A3
+  dynamic assembly is in the tree (the candidate-menu flag, `catalog --menu`,
+  `packages/agents`), so arm 3 is named before arm 2 is written. Then
+  pre-register E1 in this ledger (prediction, arms, cost, decision rule per
+  law 9) and run it: 3 arms × 3 repeats on the authoring harness (~$0.64 a
+  pass, ~$5.8) + free compiles, scored by the icon metric and `score.mjs`;
+  law 8 decides whether a kit ships. Interleave F10, F4, F14.
+- **Last commit:** 249a903 (unit 10). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
 - **Spend:** $2.29 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
 - **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19, D25.)
@@ -34,14 +28,18 @@ running state. The NOW block is rewritten at the end of every turn.
   - F2 — anchors at HEAD: all four attributed (units 4, 8).
   - F3 — metropolis authoring regression, lost 3-of-3. E2/E3.
   - F4 — `LOAM-I512` "ruined shells" vs intact boxes — street-level probe.
-  - F5, F11, F12, F13 — fixed (units 5–9). **F6, F7 — fixed (unit 10).**
+  - F5, F6, F7, F11, F12, F13 — fixed (units 5–10).
   - F8 — `frontageLots` drops (~70 % starvation → F10, ~30 % geometry → P1).
   - F9 — new hillside lots' cut faces undressed (P2); walkability audit
     reads zero entrance reach on montfort/walled — instrument gap.
-  - F10 — `LOT_PARCEL_OWN_STATIONS` orphans 24 % of the plane; two-phase
-    growth needed; off.
+  - F10 — `LOT_PARCEL_OWN_STATIONS` orphans 24 % of the plane; off.
   - F14 — pre-existing physics findings on shipped worlds; one physics
     unit, probe first.
+  - F15 — the icon metric's before-sample alarms not yet owned by a unit:
+    the Trojan horse and citadel under the dominance line (T2), the
+    redwoods (h×1.14: the colossal trees are not taller than the camp's
+    buildings by the report's measure — instrument or world, probe), the
+    farm town at 3.4 buildings per 10k of its own hull.
 ## DECISIONS
 
 (every fork taken: the reversible default chosen, why, and how to undo it)
@@ -191,6 +189,19 @@ running state. The NOW block is rewritten at the end of every turn.
   land, because the natural ground inside the wall is the sparse part;
   diagnostics change the report only — no switch, worlds payload-identical.
   Undo: revert the branch.
+- **D29 (unit 11):** the icon lists live in `prompts.json` beside each
+  prompt, written from the prompt text; the metric's thresholds (height
+  ≥ 1.5×, footprint ≥ 2×, program volume ≥ 4× the median building;
+  `densityFloor` 15 for cities, 6–8 for towns, 2–4 for camps and villages,
+  0 for terrain) are alarms printed with their ratios, never the verdict
+  (law 7). Terrain icons are a document read and say so; a settlement with
+  no district is read against its buildings' own hull and says so. Undo:
+  edit `prompts.json`.
+- **D30 (unit 11):** the metric compiles each document in-process rather
+  than reading a stored report, so a run directory from `run.mjs`
+  (authoring-only) scores at the current compiler — which is the point:
+  the same documents, re-scored after a compiler change, show the
+  compiler's half. Undo: n/a.
 
 ## SPEND
 
@@ -206,6 +217,7 @@ running state. The NOW block is rewritten at the end of every turn.
 | 8 | hellenist's density — instrumented probe, two switches off, trials, the FULL suite | 0.00 | 2.29 |
 | 9 | the city flips + the highrise head fix — compiles, lints, traces, baselines, two FULL suites | 0.00 | 2.29 |
 | 10 | F6/F7 — diagnostics only; compiles, the FULL suite | 0.00 | 2.29 |
+| 11 | the icon metric — in-process compiles only | 0.00 | 2.29 |
 
 ## VERDICTS
 
@@ -400,3 +412,17 @@ running state. The NOW block is rewritten at the end of every turn.
   `spec/terrain/diagnostics.ts`, `layout/forms/types.ts`,
   `layout/forms/hillside.ts`, `layout/district.ts`, the test,
   `docs/SITE-PLAN-v0.md`, `MONTFORT-HILLSIDE-2026-08-25.md` §J. Spend $0.
+- **unit 11 — the icon metric (2026-08-25):** `tools/golden-prompts/
+  icon-metric.mjs` per spec §6 — presence (document vs world: placements
+  and the program each carries, buildings, walls, props, farms, forests by
+  node, placed programs, markers), dominance (placement height/footprint or
+  program volume vs the median building), density (districts, or the
+  buildings' own hull), archetype-less boxes, era, the old floors; icon
+  lists and density floors on every prompt in `prompts.json` (D29); 7 unit
+  tests on a synthetic document; README section. Scored the before-sample
+  (`runs/before-sample/icon-metric.json`): icons 11/11 present; dominant —
+  leviathan, mothership (v×28), keep, elder glowcap; under the line — the
+  horse (h×1.87), the citadel (h×1.33), the redwoods (h×1.14); density
+  alarms — hellenist 11.6, walled 8.2, alien farm 3.4, railway (F1).
+  F15 logged. Tests: `icon-metric.test.ts 7 passed`, `test-census.mjs` all
+  checks passed; no compiler code changed. Spend $0.

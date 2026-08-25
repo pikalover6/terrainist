@@ -1,70 +1,382 @@
 {
   "suite": "golden-prompts-v0",
-  "note": "The A0 regression suite for kit edits. Kit edits cannot be byte-gated (the model is nondeterministic even at temperature 0), so this is their harness: author every prompt once, before and after, and score the deltas. Seven prompts are the battery's own families, so a run is directly comparable to the WS-C corpus statistics. Seeds are the battery's seeds where a family has one, so a golden run and an archived battery world differ by kit bytes and compiler build alone.",
-  "defaults": { "size": 512, "kit": "settlement" },
+  "note": "The A0 regression suite for kit edits. Kit edits cannot be byte-gated (the model is nondeterministic even at temperature 0), so this is their harness: author every prompt once, before and after, and score the deltas. Seven prompts are the battery's own families, so a run is directly comparable to the WS-C corpus statistics. Seeds are the battery's seeds where a family has one, so a golden run and an archived battery world differ by kit bytes and compiler build alone. Icons (Stocktake Run, 2026-08-25): each prompt carries the icon list its verdict is written against - written from the prompt text, before any document (spec section 6); a `dominant` icon must out-scale the median building; `densityFloor` is the lots per 10k envelope cells the prompt's settlement needs to read as itself (0 = terrain-only).",
+  "defaults": {
+    "size": 512,
+    "kit": "settlement"
+  },
   "prompts": [
     {
       "id": "troy_horse",
       "family": "troy",
       "seed": 303,
       "prompt": "The Trojan horse in Troy, right before the soldiers emerge.",
-      "watches": ["era implied but never named in the prompt", "the citadel set-piece question: 9 of 10 archived rolls make it a plain grammar box with no archetype", "classical_mediterranean reach — the only pack a fenced example spells"]
+      "watches": [
+        "era implied but never named in the prompt",
+        "the citadel set-piece question: 9 of 10 archived rolls make it a plain grammar box with no archetype",
+        "classical_mediterranean reach \u2014 the only pack a fenced example spells"
+      ],
+      "icons": [
+        {
+          "id": "trojan_horse",
+          "terms": [
+            "horse"
+          ],
+          "dominant": true
+        },
+        {
+          "id": "citadel",
+          "terms": [
+            "citadel",
+            "megaron",
+            "palace",
+            "acropolis",
+            "keep",
+            "priam"
+          ],
+          "dominant": true
+        },
+        {
+          "id": "walls",
+          "terms": [
+            "wall",
+            "rampart",
+            "gate"
+          ]
+        }
+      ],
+      "densityFloor": 15
     },
     {
       "id": "pirate_unicorn_isles",
       "family": "pirates_v_unicorns",
       "seed": 301,
       "prompt": "A pirate island and a unicorn island, at war.",
-      "watches": ["two landmasses with water preserved between them", "nautical_pirate pack reach — 0/20 members in the whole corpus", "galleon placement: a water prop that the kit's plateau guidance treats as a ground prop (C16)"]
+      "watches": [
+        "two landmasses with water preserved between them",
+        "nautical_pirate pack reach \u2014 0/20 members in the whole corpus",
+        "galleon placement: a water prop that the kit's plateau guidance treats as a ground prop (C16)"
+      ],
+      "icons": [
+        {
+          "id": "pirate_island",
+          "terms": [
+            "pirate",
+            "corsair",
+            "buccaneer",
+            "galleon",
+            "ship"
+          ]
+        },
+        {
+          "id": "unicorn_island",
+          "terms": [
+            "unicorn",
+            "alicorn"
+          ]
+        },
+        {
+          "id": "war",
+          "terms": [
+            "war",
+            "siege",
+            "battle",
+            "cannon",
+            "fort",
+            "battery"
+          ]
+        }
+      ],
+      "densityFloor": 6
     },
     {
       "id": "hellenist_harbour",
       "family": "hellenist_city",
       "seed": 305,
       "prompt": "A modern Hellenist city being invaded by sea monsters.",
-      "watches": ["land budget vs the prompt's water — the walked failure was 'basically no water with sea monsters on land'", "harbour precinct vs scattered props", "era: 'modern Hellenist' is the era vocabulary's hardest case"]
+      "watches": [
+        "land budget vs the prompt's water \u2014 the walked failure was 'basically no water with sea monsters on land'",
+        "harbour precinct vs scattered props",
+        "era: 'modern Hellenist' is the era vocabulary's hardest case"
+      ],
+      "icons": [
+        {
+          "id": "sea_monsters",
+          "terms": [
+            "leviathan",
+            "monster",
+            "kraken",
+            "beast",
+            "sea_"
+          ],
+          "dominant": true
+        },
+        {
+          "id": "harbour",
+          "terms": [
+            "harbour",
+            "harbor",
+            "port",
+            "quay",
+            "dock"
+          ]
+        },
+        {
+          "id": "hellenic_forms",
+          "terms": [
+            "stoa",
+            "temple",
+            "agora",
+            "colonnade",
+            "peristyle",
+            "odeon",
+            "acropolis"
+          ]
+        }
+      ],
+      "densityFloor": 15
     },
     {
       "id": "alien_farm",
       "family": "alien_farm",
       "seed": 302,
       "prompt": "A small farm town being invaded by aliens.",
-      "watches": ["precinct.farm@0 reached at all", "terrain_conform on a holding (the kit says never flatten one)", "alien_scifi pack reach — 0/19 members corpus-wide"]
+      "watches": [
+        "precinct.farm@0 reached at all",
+        "terrain_conform on a holding (the kit says never flatten one)",
+        "alien_scifi pack reach \u2014 0/19 members corpus-wide"
+      ],
+      "icons": [
+        {
+          "id": "farm_town",
+          "terms": [
+            "farm",
+            "barn",
+            "silo",
+            "field",
+            "grange"
+          ]
+        },
+        {
+          "id": "aliens",
+          "terms": [
+            "alien",
+            "ufo",
+            "saucer",
+            "invader",
+            "mothership",
+            "crash"
+          ],
+          "dominant": true
+        }
+      ],
+      "densityFloor": 6
     },
     {
       "id": "metropolis_hideout",
       "family": "metropolis_hideout",
       "seed": 304,
       "prompt": "A high-tech apocalyptic hideout in the massively overgrown ruins of a metropolis.",
-      "watches": ["ruin authored as a district with high decline, not a bag of ruin archetypes", "tall grammar: floors above 2 and footprints above 13 — the rules the final checklist contradicts (C4)", "intent.decline written at all"]
+      "watches": [
+        "ruin authored as a district with high decline, not a bag of ruin archetypes",
+        "tall grammar: floors above 2 and footprints above 13 \u2014 the rules the final checklist contradicts (C4)",
+        "intent.decline written at all"
+      ],
+      "icons": [
+        {
+          "id": "ruined_towers",
+          "terms": [
+            "ruin",
+            "skeleton",
+            "collapse",
+            "shattered",
+            "tower",
+            "skyscraper"
+          ]
+        },
+        {
+          "id": "overgrowth",
+          "terms": [
+            "overgrow",
+            "vine",
+            "jungle",
+            "forest",
+            "canopy"
+          ],
+          "terrain": true
+        },
+        {
+          "id": "hideout",
+          "terms": [
+            "hideout",
+            "bunker",
+            "shelter",
+            "lab",
+            "sanctuary"
+          ]
+        }
+      ],
+      "densityFloor": 15
     },
     {
       "id": "redwood_camp",
       "family": "redwood_camp",
       "seed": 306,
       "prompt": "An ancient forest of colossal redwoods with a small logging camp at its edge.",
-      "watches": ["forest species reach beyond the kit's worked list", "emergent strata and the 'reach for a giant sparingly' rule", "a settlement small enough that the district machinery should stay out of it"]
+      "watches": [
+        "forest species reach beyond the kit's worked list",
+        "emergent strata and the 'reach for a giant sparingly' rule",
+        "a settlement small enough that the district machinery should stay out of it"
+      ],
+      "icons": [
+        {
+          "id": "redwoods",
+          "terms": [
+            "redwood",
+            "sequoia",
+            "giant",
+            "colossal",
+            "ancient"
+          ],
+          "dominant": true
+        },
+        {
+          "id": "logging_camp",
+          "terms": [
+            "logging",
+            "camp",
+            "sawmill",
+            "lumber",
+            "timber",
+            "log"
+          ]
+        }
+      ],
+      "densityFloor": 2
     },
     {
       "id": "glowcap_vale",
       "family": "glowcap_vale",
       "seed": 307,
       "prompt": "A glowing mushroom vale where a strange village has grown between the caps.",
-      "watches": ["the fantasy-species gate: glowcap/crystal_spire are opt-in by name", "the fungal grove pattern — canopy layer fungal, not a forest with mushrooms in it", "arcane_magical pack reach — 0/16 corpus-wide"]
+      "watches": [
+        "the fantasy-species gate: glowcap/crystal_spire are opt-in by name",
+        "the fungal grove pattern \u2014 canopy layer fungal, not a forest with mushrooms in it",
+        "arcane_magical pack reach \u2014 0/16 corpus-wide"
+      ],
+      "icons": [
+        {
+          "id": "glowing_mushrooms",
+          "terms": [
+            "mushroom",
+            "glow",
+            "shroom",
+            "cap",
+            "fung",
+            "mycel"
+          ],
+          "dominant": true
+        },
+        {
+          "id": "village",
+          "terms": [
+            "village",
+            "hut",
+            "house",
+            "dwelling",
+            "hamlet"
+          ]
+        }
+      ],
+      "densityFloor": 4
     },
     {
       "id": "walled_medieval_city",
       "family": "new/set-piece",
       "seed": 311,
       "prompt": "A walled medieval city on a hill, its castle keep above the rooftops.",
-      "watches": ["Kai's citadel: castle/keep/gatehouse/acropolis_terrace have never once been reached in 50 archived docs", "params.walls vs the infra.wall@0 name the kit leaks (H11)", "grand-named buildings are only 1.8x ordinary floor area, capped by the kit's cathedral box"]
+      "watches": [
+        "Kai's citadel: castle/keep/gatehouse/acropolis_terrace have never once been reached in 50 archived docs",
+        "params.walls vs the infra.wall@0 name the kit leaks (H11)",
+        "grand-named buildings are only 1.8x ordinary floor area, capped by the kit's cathedral box"
+      ],
+      "icons": [
+        {
+          "id": "wall",
+          "terms": [
+            "wall",
+            "rampart",
+            "gate"
+          ]
+        },
+        {
+          "id": "keep",
+          "terms": [
+            "keep",
+            "castle",
+            "donjon"
+          ],
+          "dominant": true
+        },
+        {
+          "id": "town",
+          "terms": [
+            "town",
+            "house",
+            "market",
+            "church",
+            "chapel"
+          ]
+        }
+      ],
+      "densityFloor": 15
     },
     {
       "id": "railway_town",
       "family": "new/alias",
       "seed": 312,
       "prompt": "A soot-blackened industrial town where the railway meets the canal.",
-      "watches": ["the bare `station` alias, whose ownership the kit states twice and differently (C8)", "era: industrial", "infrastructure category reach — 0/27 corpus-wide"]
+      "watches": [
+        "the bare `station` alias, whose ownership the kit states twice and differently (C8)",
+        "era: industrial",
+        "infrastructure category reach \u2014 0/27 corpus-wide"
+      ],
+      "icons": [
+        {
+          "id": "railway",
+          "terms": [
+            "rail",
+            "station",
+            "locomotive",
+            "gantry",
+            "track",
+            "siding"
+          ],
+          "dominant": true
+        },
+        {
+          "id": "canal",
+          "terms": [
+            "canal",
+            "lock",
+            "wharf",
+            "narrowboat",
+            "basin"
+          ]
+        },
+        {
+          "id": "industry",
+          "terms": [
+            "mill",
+            "factory",
+            "works",
+            "chimney",
+            "foundry",
+            "soot"
+          ]
+        }
+      ],
+      "densityFloor": 8
     },
     {
       "id": "desert_wilderness",
@@ -72,7 +384,28 @@
       "kit": "terrain",
       "seed": 313,
       "prompt": "A vast salt desert under a hard sun, cracked flat to the horizon, with nothing living on it.",
-      "watches": ["zero forests: the final checklist demands 'at least one forest' and the validator does not (C9, both kits)", "a treeless world is the case that checklist was never written for"]
+      "watches": [
+        "zero forests: the final checklist demands 'at least one forest' and the validator does not (C9, both kits)",
+        "a treeless world is the case that checklist was never written for"
+      ],
+      "icons": [
+        {
+          "id": "salt_flat",
+          "terms": [
+            "salt",
+            "desert",
+            "flat",
+            "playa"
+          ],
+          "terrain": true
+        },
+        {
+          "id": "nothing_living",
+          "terms": [],
+          "absentBuildings": true
+        }
+      ],
+      "densityFloor": 0
     },
     {
       "id": "fjord_terrain",
@@ -80,7 +413,33 @@
       "kit": "terrain",
       "seed": 314,
       "prompt": "A deep fjord cutting inland between pine ridges, its water open to the sea.",
-      "watches": ["whole-region wilderness fill density vs FOREST_COVERAGE_DENSITY = 0.02 (terrain C3) — the silent biome bug", "sea connectivity: water that must flood needs a real route to the sea", "scaleReference, which the kit never mentions (terrain C5)"]
+      "watches": [
+        "whole-region wilderness fill density vs FOREST_COVERAGE_DENSITY = 0.02 (terrain C3) \u2014 the silent biome bug",
+        "sea connectivity: water that must flood needs a real route to the sea",
+        "scaleReference, which the kit never mentions (terrain C5)"
+      ],
+      "icons": [
+        {
+          "id": "fjord",
+          "terms": [
+            "fjord",
+            "inlet",
+            "sound"
+          ],
+          "terrain": true
+        },
+        {
+          "id": "pine_ridges",
+          "terms": [
+            "pine",
+            "spruce",
+            "ridge",
+            "conifer"
+          ],
+          "terrain": true
+        }
+      ],
+      "densityFloor": 0
     }
   ]
 }
