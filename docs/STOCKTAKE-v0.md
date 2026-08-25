@@ -124,17 +124,30 @@ analysis harness over it:
   for catalog, or satisfy it with districts? Deliverable ends in a design
   consult: catalog set-pieces vs bespoke budget vs kit steering.
 - **Addendum (Wave 2a, session "menus", 2026-08-24): "six packs at zero"
-  is two bugs.** Reading the golden harness's cached intents:
-  pirate_unicorn_isles, desert_wilderness and fjord_terrain get NO era and
-  NO pack from the classifier pre-pass, so nautical_pirate (the audit's
-  0/20) was never reachable by the author at all — no menu or kit teaching
-  can fix a pack the pre-pass never names. Bug 1 = retrieval at the author
-  (the candidate menu, landed OFF in `b638439`); bug 2 = classification in
-  `intent-prepass.ts` (menus' scope, next step). Measurement design follows
-  from it: the ON arm runs only on prompts whose intent builds a non-empty
-  menu (troy_horse, alien_farm, redwood_camp, glowcap_vale — four of the six
-  zero-reach packs plus the citadel), ~$0.23, against the after-units-v2
-  baseline at the same kit sha.
+  is two different things.** Reading the golden harness's cached intents:
+  pirate_unicorn_isles gets NO era and NO pack at world scope, so
+  nautical_pirate (the audit's 0/20) was never reachable by the author —
+  no menu or kit teaching can fix a pack the pre-pass never names at the
+  scope the consumers read. (desert_wilderness and fjord_terrain also build
+  empty menus, and that is CORRECT: terrain-only prompts with no
+  habitation carry biome/climate/flora richly; an era or a pack would be
+  wrong for a salt flat.) **Corrected framing — it is NOT a classifier
+  bug** (docs/INTENT-REGION-SCOPE-CONSULT-2026-08-24.md): the pre-pass is
+  instructed, rightly, never to average two places into one `character`
+  block; it emits one `region_<place>` token per place and hands off in
+  prose — "the document author turns one token into one region's own
+  character block". That hand-off is prose-to-prose: `intentKitContext` is
+  the only consumer of `region_*`; every structural consumer (the menu,
+  mix-intent pack expansion, W517) reads world scope, and `tokens` is
+  documented as never switched on. So **any prompt with two characters —
+  two islands, a city and its ruin, a town and the camp besieging it —
+  empties world scope by instruction and is unreachable by anything
+  conditioned on it; the candidate menu inherits that blind spot
+  completely, and so would A3's dynamic assembly.** Options in the
+  consult: A union-at-world-scope behind the array rule; B structured
+  `regions: [{name, intent}]` in the pre-pass output; C parse the free
+  text (not recommended); D nothing. Recommended B staged behind A, riding
+  A3. Kai's ruling pending.
 - **MEASURED (Kai bought the complete 11×11 pair, $1.29, at the frozen
   kit; menus, 2026-08-24):** the menu does NOT move catalog reach at n=1 —
   archetypes 62 → 64 and reach 14.5 → 15.0 % within noise, formPacks 7 → 7,
