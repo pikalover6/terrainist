@@ -45,6 +45,12 @@ import { validateIntentValue, type SemanticIntent } from "@terrainist/spec";
 import { formatDiagnostic } from "@terrainist/compiler";
 import { resolveWorldSeed } from "@terrainist/stdlib";
 
+import {
+  assembleCandidateMenu,
+  candidateMenuEnabled,
+  formatCandidateMenu,
+} from "./candidate-menu.js";
+
 /** Parsed `generate` options. */
 export interface GenerateOptions {
   readonly prompt: string;
@@ -82,6 +88,14 @@ export interface GenerateOptions {
   readonly programs: boolean;
   /** Per-world bespoke authoring spend stop, in USD. */
   readonly bespokeBudget: number;
+  /**
+   * Inject the per-run candidate menu (`--candidate-menu`).
+   *
+   * `undefined` means the command line said nothing, and the environment
+   * decides — see `candidate-menu.ts`. Off is the shipped default, and off is
+   * byte-for-byte the conversation as it was before the menu existed.
+   */
+  readonly candidateMenu?: boolean;
 }
 
 /** The reasoning-effort levels OpenRouter's unified `reasoning` parameter accepts. */
@@ -109,6 +123,7 @@ export function parseGenerateArgs(args: readonly string[]): GenerateOptions {
   let intent: SemanticIntent | undefined;
   let programs = true;
   let bespokeBudget = DEFAULT_BESPOKE_BUDGET_USD;
+  let candidateMenu: boolean | undefined;
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
@@ -166,6 +181,10 @@ export function parseGenerateArgs(args: readonly string[]): GenerateOptions {
         );
       }
       intent = validation.intent;
+    } else if (arg === "--candidate-menu") {
+      candidateMenu = true;
+    } else if (arg === "--no-candidate-menu") {
+      candidateMenu = false;
     } else if (arg === "--no-programs") {
       programs = false;
     } else if (arg === "--bespoke-budget") {
@@ -209,6 +228,7 @@ export function parseGenerateArgs(args: readonly string[]): GenerateOptions {
     programs,
     bespokeBudget,
     ...(intent === undefined ? {} : { intent }),
+    ...(candidateMenu === undefined ? {} : { candidateMenu }),
   };
 }
 
@@ -304,6 +324,19 @@ export async function authorAndWriteDocument(
     }
   }
 
+  // --- the candidate menu ------------------------------------------------
+  // Assembled from the live registries and conditioned on the intent just
+  // classified, so it can only be built here, after the pre-pass. Off by
+  // default: `undefined` means no second system message and a conversation
+  // identical to the one this command sent before the menu existed.
+  const menuEnabled = candidateMenuEnabled(options.candidateMenu);
+  const menu = assembleCandidateMenu({
+    enabled: menuEnabled,
+    ...(intent === undefined ? {} : { intent }),
+  });
+  const menuLine = formatCandidateMenu(menu, menuEnabled);
+  if (menuLine !== "") console.log(`${menuLine}\n`);
+
   let result: AuthorResult;
   try {
     result = await authorLoamDoc({
@@ -314,6 +347,7 @@ export async function authorAndWriteDocument(
       reasoningEffort: options.effort,
       kitName: options.kit,
       ...(intent === undefined ? {} : { intent }),
+      ...(menu === undefined ? {} : { candidateMenu: menu.text }),
     });
   } catch (err) {
     if (err instanceof AuthoringFailedError) {

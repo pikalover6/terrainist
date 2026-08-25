@@ -51,6 +51,7 @@ import type { Usage } from "@terrainist/agents";
 import {
   STRUCTURE_CATALOG,
   STRUCTURE_CATEGORIES,
+  buildCandidateMenu,
   summarizeCatalog,
   type StructureStatus,
 } from "@terrainist/stdlib";
@@ -117,6 +118,7 @@ Usage:
                            [--manifest <file>] [--out <session.json>]
                            [--world <name>] [--report <file.json>]
   terrainist catalog [--json] [--category <name>] [--status <name>]
+  terrainist catalog --menu [--era <name>] [--packs <a,b>] [--max <N>] [--json]
   terrainist emit <spec.json> [--out <dir>] [--no-zip]
   terrainist render <worldDir> --out <file.png> [--scale <N>]
   terrainist render <worldDir> --views all --out <dir> [--scale <N>] [--surface-y <Y>]
@@ -229,6 +231,20 @@ review-import options:
   --out <file>      Session JSON to write (default: review-session.json). A
                     markdown summary is written alongside it as <file>.md.
 
+catalog options:
+  --json            The machine form: the summary, the categories and the
+                    matching entries. With --menu, the menu as an object.
+  --category <name> Show one category only.
+  --status <name>   Show one status only.
+  --menu            Print the per-run candidate menu instead of the table —
+                    the exact bytes "terrainist generate --candidate-menu"
+                    injects as its second system message, for the era and
+                    packs given. Reads the live registries; no model is called.
+  --era <name>      The era the menu is conditioned on ("classical", "ancient",
+                    "medieval", …; aliases resolve as the classifier's do).
+  --packs <a,b>     Form-pack ids the menu spends first and whole.
+  --max <N>         Entry cap (default 60).
+
 emit options:
   --out <dir>       Output directory (default: out). The world folder is
                     written to <dir>/<name>/ and the archive to
@@ -245,20 +261,47 @@ render options:
 `;
 
 /**
- * `terrainist catalog [--json] [--category <c>] [--status <s>]`.
+ * `terrainist catalog [--json] [--category <c>] [--status <s>]`, and
+ * `terrainist catalog --menu [--era <e>] [--packs <a,b>] [--max <N>]`.
  *
  * The structure registry, printed. `--json` is the machine form the artifact
  * build reads; without it the same data comes out as a coverage table, which
  * is what a human wants when the question is "how much of this is real".
+ *
+ * `--menu` answers a different question — *what does the model actually get
+ * shown for this prompt?* — with the same registries and no model call. It
+ * prints the bytes `generate --candidate-menu` would inject verbatim, so the
+ * per-run context is inspectable before a run rather than reconstructed from a
+ * log after one.
  */
 export function runCatalog(args: readonly string[]): number {
   let asJson = false;
   let category: string | undefined;
   let status: string | undefined;
+  let asMenu = false;
+  let era: string | undefined;
+  let packs: string[] = [];
+  let maxEntries: number | undefined;
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     if (arg === "--json") {
       asJson = true;
+    } else if (arg === "--menu") {
+      asMenu = true;
+    } else if (arg === "--era") {
+      era = args[i + 1];
+      if (era === undefined) throw new Error("--era requires a name");
+      i++;
+    } else if (arg === "--packs") {
+      const value = args[i + 1];
+      if (value === undefined) throw new Error("--packs requires a comma-separated list");
+      packs = value.split(",").map((id) => id.trim()).filter((id) => id !== "");
+      i++;
+    } else if (arg === "--max") {
+      const value = Number(args[i + 1]);
+      if (!Number.isInteger(value) || value < 0) throw new Error("--max requires a whole number");
+      maxEntries = value;
+      i++;
     } else if (arg === "--category") {
       category = args[i + 1];
       if (category === undefined) throw new Error("--category requires a name");
@@ -271,6 +314,30 @@ export function runCatalog(args: readonly string[]): number {
       throw new Error(`unexpected argument ${String(arg)}`);
     }
   }
+  if (asMenu) {
+    const menu = buildCandidateMenu({
+      ...(era === undefined ? {} : { era }),
+      ...(packs.length === 0 ? {} : { formPacks: packs }),
+      ...(maxEntries === undefined ? {} : { maxEntries }),
+    });
+    if (asJson) {
+      console.log(JSON.stringify(menu, null, 2));
+      return 0;
+    }
+    if (menu.entries.length === 0) {
+      console.log(
+        "no candidates: name a form pack with --packs or an era with --era.\n" +
+          "A run in this state injects no menu at all, which is the flag's off state.",
+      );
+      return 0;
+    }
+    console.log(menu.text);
+    console.log(
+      `\n${menu.entries.length} ids, ${menu.chars} chars, ~${menu.estimatedTokens} tokens.`,
+    );
+    return 0;
+  }
+
   const rows = STRUCTURE_CATALOG.filter(
     (e) => (category === undefined || e.category === category) && (status === undefined || e.status === status),
   );
