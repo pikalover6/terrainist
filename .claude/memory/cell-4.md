@@ -68,7 +68,19 @@ Cluster 1–2 archetype deltas WITHDRAWN. Menus step 4 (CLI seam, flag
 OFF) LANDED b638439; Kai bought the complete ~$1.00 ON/OFF pair at the
 FROZEN kit 58e7d2e0 (menu-on + after-root-union filled to 11); "six
 packs at zero" = two bugs (author retrieval + pre-pass classification,
-intent-prepass.ts next). Menus design ratified by Kai: two
+intent-prepass.ts next).
+**MENU MEASURED ($1.29, 136020e):** reach does NOT move at n=1 (62→64
+within noise; packs 7→7); floor-proof signal = pack-member uses 5→16, 15
+classical (the one fenced pack), 3 corpus-firsts; five prompts wrote the
+familiar generic id over the handed pack id → **retrieval necessary, not
+sufficient; the fenced example supplies the binding** (A3 input: teach
+preference, not more ids). params.archetype vanished under the menu
+(kit :1464 forbids it; compiler made it canonical in fabric v2); envelope
+parroting +9 pts. Flag stays OFF; Kai: re-measure after cluster 3 (the
+honest test). Cluster 3 staged: 2 false sentences + 18 examples gain
+params.archetype; 3 examples build the WRONG thing today (harbour_light→
+watchtower, the_long_house→cottage, assay_office→smithy) — reach-is-
+retrieval with names; verified 3×3 vs noise-1..3. Menus design ratified by Kai: two
 tiers (named packs whole, era-affine round-robin), ~60 entries/2.1k
 tokens, statuses=[implemented], empty menu ⇒ no message.
 
