@@ -45,6 +45,14 @@ git history, `battery/RELEASES.md`, the memory cells).
   whose wrongness would compound. This never overrides the manual
   critique→repair law: visual *taste* lands only on Kai's walk verdicts, and
   autonomous repair iteration is never built.
+- **No teaching around bugs (Kai, 2026-08-24).** When a kit finding turns
+  out to be a code bug, the code is fixed FIRST (orchestrator-owned,
+  byte-identity staged like any behavior change) and only then does the
+  kit teach what the code does. Never write a workaround into a kit or a
+  golden baseline: the kit is downstream of the code, and a taught
+  workaround becomes wrong a second time when the code is fixed — the
+  mirror-drift both kit audits named as the disease. Kit sessions stop the
+  affected cluster, report file:line + disposition, and wait for "fixed".
 - **Probe before theorize.** Walk impressions and renders both lie; custom
   probes (plan-vs-voxel attribution, pristine-vs-baseline diffs, ASCII
   windows) are how ground truth is established. When Kai reports a confusing

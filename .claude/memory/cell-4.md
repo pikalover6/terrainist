@@ -1,105 +1,83 @@
-# Cell 4 — n13 RATIFIED, consolidation pause (2026-08-23)
+# Cell 4 — the Great Stocktake (2026-08-24 →)
 
-**READ FIRST: docs/SESSION-HANDOFF-2026-08-23.md** (the pull saga's full
-commit-anchored record; prior epoch docs/SESSION-HANDOFF-2026-08-22.md).
+**READ FIRST: docs/STOCKTAKE-v0.md** (campaign plan, Wave-1 findings,
+WS-F seeds) + docs/audits/*.md (the evidence). Prior epoch: cell 3 +
+docs/SESSION-HANDOFF-2026-08-23.md.
 
-**THE RATIFIED STATE** (Kai, 2026-08-23: "that essentially just solved
-it… the most coherent troy generation ever"): the n13 generator IS the
-cutting-edge line. y = round(drape + pull·(n5_arc − drape));
-**grade = max(longitudinal P95 over 13, cross-fall across the road's own
-width)** (PULL_CROSS — the axis three curve ladders missed; probe found
-a 7-wide road with 10-block cross-tilt at pull 0.04); raw =
-smoothstep(t·(1+BOOST 2.2·t^POW 2)); field = max(movavg9, upper
-envelope) [PEAK_KEEP] + flat closing over 21 [CLOSE, run in pullField
-AND phase 1b after junction pooling] + 1/6 ramp; backstop scaled
-min(1, pull/SAT .7); TREAD 1 shipped (n12 decks hold 2/2.5/3, **pick
-open**); one pooled pull per junction plane; sidewalks blend at own
-column; sovereign items (drape oracle, mask+headroom, borders, NO
-stairs) ride the blend. Ladder: n7 f5ef2a3 (orphans 2,591→9) → n8
-b0d2e14 → n9 60d6626 (the closing) → n13 a063804 (cross; street cliff
-census 141→26 troy / 143→20 hellenist — the shelves WERE the census).
-freeze/troy-iter-{7,8,9,13}. Suite 5,566/0 at every flip; flats
-byte-still throughout; riser law 0 violations always.
+**THE PIVOT (Kai, 08-24):** weeks of surface sprinting left slop → a
+deliberate, parallel, measured campaign over six workstreams: A settlement
+kit (A0 golden prompts FIRST), B terrain kit, C model behavior, D price,
+E performance, F architectural inventory / kill-list. Laws: measure before
+rebuilding, ratify before deleting; read-only audits + consult before ANY
+fix; no delicate task is one-shot by a fire-and-forget agent.
 
-**Decks:** trojan_horse_troy_n13 = THE deck. n7-n9, n8b, n11_*, n12_*
-comparative; n10_* dead (deletable). POC decks (troy_rootpoc*) dead.
+**WAVE 1 (landed 04633eb, docs/audits/):** compile = **5.4 s** (my "3–4
+min" was generate's LLM wall — wrong by 40×); emit 31 / structures 27 /
+scatter 18 / layout 9 %; BLAKE3 15.8 % of wall; floors 2.7 s → 1.25 s →
+0.4 s (layout solver = asymptote, sequential by design); **Bun DECLINED**
+(5–10 % for a doubled byte-identity surface), node canonical.
+**Parroting CONFIRMED:** 84 % of docs use kit-spelled vocab only;
+envelopes 84 % kit-literal (cathedral box [15,17,21] ×7); reach 147/722
+catalog, 99/428 archetypes; 6/7 form packs at 0 %; 170/175 never-spelled
+archetypes never used; ONE hallucination in 50 docs → **reach is
+RETRIEVAL, not capability; fenced examples ARE the spec**. Citadel
+answered: acropolis_terrace 0× ever; 9/10 troy rolls = archetype-less
+15×21 box; landmark budget chases the prompt noun 11/11. Price = loop
+cost: $0.34/world (authoring .24 / programs .12), median 3 model runs ×
+99k tokens (277KB kit resent each time); **T118 SCATTER_RADIUS_UNITS =
+53 % of retries** — kit says fraction, CODE says BLOCKS
+(validate.ts:1031-1044; the audit's C17 blamed the wrong side). Authored
+layer barely binds (`hard` never written; conforms 1/108; E404 in 38/48
+runs). Terrain kit: correctness pass only; silent bug — its wilderness
+density band ≥ FOREST_COVERAGE_DENSITY paints whole regions forest.
+Convergent insight: the kit is at once the cost lever, the e2e speed
+lever and the creative-reach bottleneck; the compiler is healthy.
 
-**THE POC IS DEAD** (ratified 08-23): tools/root-poc +
-COHERENT-SOURCE-v0 historical only (status header on the doc); ideas
-absorbed (one ground author = drape oracle; coherence at source = the
-verdict; verify court = probe discipline).
+**WAVE 2a (LIVE):** Kai runs three parallel CC sessions in this repo and
+STEPS THROUGH each (never one-shot; popups per step; if Kai is idle the
+session is idle). This session = MASTER ORCHESTRATOR (ListAgents names
+kit-fix / menus / perf; briefs + corrections via SendMessage). Scopes
+disjoint: **kit-fix** = docs/kits/** + spec/test/kit.test.ts +
+tools/golden-prompts/ (A0 baseline, ~$2.6/pass → units cluster (T118 +
+terrain C3) → root union → archetype identity [kit:1447 "no archetype
+param" is the defect; validate.ts:2396 validates it] → envelopes/
+checklist → vocab contradictions → semantics; code bugs reported to me
+and taught around); **menus** = packages/agents/** + new stdlib
+registry-export + cli `catalog` + generate.ts seam + candidate-menu.ts
+(opaque-string menu, second system message after the kit so revision
+rounds keep it, flag OFF = messages byte-identical; implemented-only
+ids, three tiers ~60 entries / 2.5k tokens); **perf** = stdlib/
+determinism/** + compiler/emit/** in its OWN WORKTREE, every rung shasum-
+identical ×3 baseline docs (troy_r22 / hellenist_r22 / pirates_r22).
+Rules: sessions never commit or `git add` (shared index — I commit on
+their reports); targeted vitest only, FULL suite scheduled by me; subagent
+cap shared across all sessions. Wave 2b after 1+2: civic set-piece budget
+line (the citadel, ~$0.04/world), A3 dynamic context assembly, binding-
+contracts teaching. The campaign window (caps) is Kai's to design.
 
-**STAIR SAGA (2026-08-24, gate open):** Kai: dressing-pass demo GATES the
-flight-object mini-project; old stair corpus = flag-alive fallback.
-STAIR_DRESS shipped (a5e4573 neutral, 26637a4 flip, 3c78232 cull fix):
-road-risers.ts swaps every honest 1-riser top course for a stair facing the
-rise; ledge/crest/flooded/occupied refuse. LESSON: enforceRoadSovereignty
-ate all 818 stairs (not in ROAD_SOVEREIGN_OWN_EMITTERS — the street-lamp
-scar relearnt); n14 deck shipped STAIRLESS (Kai walked it), **n14b = the
-real demonstration deck** (freeze/troy-iter-14b). undressedCutoffs 88→70,
-first DOWN since G6 freeze. **Box (72,88,-95) diagnosis (probed+blinded
-Gemini concur):** (1) cut08 descends 1:1 then falls 5-6 blocks into the
-cut07 junction plane — junctions pool PULL not LEVELS, two lawful arcs
-cross at different heights = the residual cliff census class; (2) cut07's
-bend: rotating swept cross-sections quantize 2-4 block inter-tread cliffs
-on the raster at max grade; (3) terrace_steps NOT in box — missited at
-region edge (209,-255), 41/95 no-stand OFF-EDGE (border-rule cousin).
-**E2E control:** trojan_horse_in_troy_e2e1 (fresh Gemini spec + seed 1184,
-$0.34, credits UNBLOCKED) installed side-by-side vs r22 overfit worry.
+**#27 closed (e792d16):** resolveGround ×5 = §1.6 design (four prefixes +
+the generating fifth); I497's hard-coded resolves:1 fixed (report bytes
+only). Retaining probe (env-guarded wrappers on the built dist): 40
+tiered stacks 349 ms, 22 PARTIAL (233 ms; 10 tiers unplaced, 52 columns
+uncovered) — correctness before perf; shoulder/verge's customer.
 
-**LAST-LEG QUEUE (consult after compaction):**
-1. Entry-grade residue, minor: flat/medium very slightly regressed, no
-   benefit. Shipped R_FLAT never moved (.25; n11 ladder uncommitted) —
-   the residue is the boost's moderate creep + closing's trace fills
-   (139 stations 0→≤.039). Trim those, don't raise R_FLAT blindly.
-2. Landmark-border rule (queued 08-22, DO NOT build without consult):
-   no bespoke artifact within 10% of world size (side-to-side) of the
-   border; the horse needs full re-siting logic.
-3. Stairs need a lot of work (all silenced under sovereign; descent
-   solver alive under its flag).
-4. Shoulder/verge revival — pays every raw cut face the saga minted
-   (stress fixture ledger: buried 106, plinth 17/34, sheer 163@≤25).
-5. n12 tread pick. 6. Pirates staged awaiting GO (6b52fe3); catalog
-   go-ham on side branches; r23 credit-blocked (Gemini vision only).
+**Parked troy queue (not cancelled):** flight object native-first
+(junction cliffs customer #1; stairs = architecture for real drops, never
+road texture); landmark-border rule (+ terrace_steps mis-siting); entry-
+grade residue trim (boost creep + closing trace fills — don't raise
+R_FLAT blindly); n12 tread pick; shoulder/verge; WP ladder #10; pirates
+staged awaiting GO (6b52fe3); catalog go-ham on side branches.
 
-**Shipped flags TRUE:** GROUND_V1_{RANKS,SEAMS,FREEZE}, ELECTION_SOLVE,
-TERRACE_BY_TERRAIN(moot), STREET_PLANE_HARMONIZE, FACE_FINISH,
-DESCENT_SOLVE (bypassed under sovereign), ROAD_SOVEREIGN, ROAD_PULL,
-PULL_CROSS; PULL_* levers per handoff §1.
-
-**The loop:** deep-probe deck → walk card → chat-log parse → probe to
-mechanism → popup consult → ratify → neutral-land byte-identical → flip
-→ FULL gate + re-pin triage (movers to one opus-5-low) → regen
-baselines (NEVER concurrent with the suite — harness races the file) →
-deck _nN + freeze/troy-iter-N. Candidate triplets: probe for real
-spread BEFORE install (n10 died on the bench).
-
-**Ladder debt:** chunk-2 internals → G7 (walk-gated) → G8 collapse;
-troy W413, quay 118, S8 crown, levelNear §7.1, glow-lichen lint, side
-branches (packs d3d4193, freerect 24cb2c1), §15.1 + W337 + dev-app.
-Funnel compression: paid 08-23 (cell-4 distilled into cell-3).
-
-**STOCKTAKE WAVE 1 LANDED (08-24, docs/STOCKTAKE-v0.md; reports in
-scratchpad {behavior-audit,perf}/REPORT.md + audit-terrain-kit.md):**
-compile is **5.4s not minutes** (ladder retired; sub-second reachable;
-node canonical, Bun declined; BLAKE3=15.8% of wall); **parroting
-CONFIRMED** (84% of docs use kit-spelled vocab only; envelopes 84% kit-
-verbatim; reach 23% of 428 archetypes; 6/7 form packs at 0%; reach is
-RETRIEVAL not capability); citadel answered (9/10 troys = archetype-less
-15×21 box; landmark budget chases the prompt noun 11/11); price = loop
-cost ($0.34/world; T118 units = 53% of retries); authored layer barely
-binds (`hard` never written, conforms 1/108). Smells for F: resolveGround
-×5 vs "1 resolve(s)"; retaining.ts 9% of wall computing refused seams.
-Terrain kit: correctness pass only + silent forest-biome bug; settlement
-C17 re-graded (code sides with examples). STAIR_DRESS off by walked
-verdict (gate PASSED, taste retired it; stairs = flight architecture
-only). Wave 2 = Kai-driven parallel sessions, this session = MASTER
-ORCHESTRATOR (scopes disjoint, briefs via inter-session messaging).
+**The loop:** deep-probe deck → walk card (numbered stations, /tp + ONE
+question) → chat-log parse → probe to mechanism → popup consult → ratify
+→ neutral-land byte-identical → flip → FULL gate + re-pin triage → regen
+baselines (never concurrent with the suite) → deck _nN + freeze/troy-
+iter-N. Candidates: probe for real spread BEFORE install.
 
 **STANDING:** caps 4/≤2med/≤1high; delegation economics; implementers
 opus-5-low; orchestrator commits, single-sentence subjects; probe-first;
 byte-identity staging; screening install-anyway; popups liberally;
 NEVER-WAIT; never --replace; battery/ read-only; one vitest
---maxWorkers=4 heap-flagged, FULL at gates; agents never spawn agents;
-walk-taste lands only on Kai's verdicts; zsh does not word-split
-unquoted vars.
+--maxWorkers=4 heap-flagged; agents never spawn agents; walk-taste lands
+only on Kai's verdicts; zsh does not word-split unquoted vars; the
+report's blockSpans ≠ the emitted world.

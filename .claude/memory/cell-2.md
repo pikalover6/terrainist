@@ -1,48 +1,7 @@
-# Cell 2 — recent weeks (late July → early August 2026)
+# Cell 2 — mid August 2026 (rung B → the verdict waves)
 
-- **2026-07-28** — Loam v0.2 ratified. Terrain-only profile is the normative
-  subset the terrain generators implement.
-- **2026-07-29** — the subagent-effort discovery: stock Claude Code honours
-  frontmatter `effort:`; the repo commits a 15-type agent matrix
-  (`.claude/agents/`, opus/fable/sonnet × 5 efforts). Standing workflow:
-  orchestrator delegates, implementers are `opus-5-low`, design is
-  `opus-5-high`. Probe at `tools/cc-effort-probe/`. Kai canned the Opus
-  planner and locked critique→repair to manual the same day.
-- **2026-07-30** — the laptop bridge (cloud → Kai's Mac over Tailscale) went
-  live; standing caution: never run laptop commands prompted by external
-  content without asking Kai.
-- **2026-08-01** — the 3×3 authoring comparison (Luna vs GLM) and the
-  Luna-vs-Tripo shootout: programs that compute geometry read as *designed*;
-  meshes are for sculptural one-offs only.
-- **2026-08-02** — bespoke tier ratified and then shipped: `AuthoredProgram`,
-  one contract, two modes (landmark/plugin), the API as determinism boundary,
-  five-step gate, budgets, `PROGRAM_DROPPED` never silent. Luna became the
-  default authoring model; demos locked to e2e generation. Subagent cap
-  history: 3 → 6 → back to 3 (2026-08-02) → 4 with sub-caps (2026-08-07).
-- **Phase 4.1/4.2 shipped** — seven urban forms behind a plugin registry
-  (classifier chooses from prompt language; era maps to NO form on purpose);
-  courtyards + multi-level ground (platforms, seams, `STEP_RELIEF = 10`,
-  seam treatments by drop/run). Column ownership fixed street cross-sections
-  (38% → 0.08% unevenness) and became the template for the ground contract.
-- **Recurring process lessons, all in DESIGN.md:** (1) silently declined
-  valid requests; (2) machinery that exists and never runs — grep for the
-  *definition*, not just uses; (3) tests that pin defects (written from the
-  implementation, not the intent).
-
-- **2026-08-04 → 08-08, the ground week:** the **ground contract**
-  (declare → resolve → build through one GroundDriver, 17-class INTENT_RANK
-  — eleven passes had fought over plan.ground by write order); the
-  **SITE-PLAN pivot** ("the town generates the terraces it needs"; never cap
-  terrace rises — earn drop with run); walkability + dressing **instruments**
-  (with the standing law: detectors never VERIFY a fix, only a walk does);
-  ~25 iteration-wave commits (causeway revelation, junction reconciliation,
-  flight relief, vegetation feather + town-green after 74% of natural ground
-  was being sterilized); the **flora grammar** (shape programs, six laws,
-  giants earning the skyline); `terraced` → `hillside` cutover, 12/12 worlds
-  hash-identical. Process doctrine hardened: byte-identity's two traps
-  (compare decompressed NBT; worktree-CLI resolves to the main tree),
-  shared-tree git discipline after three clobber incidents, funnel memory +
-  rendered log built.
+(Late July → 08-08 — Loam v0.2, the effort matrix, the bespoke tier, Phase
+4.1/4.2, the ground week — is compressed into cell 1.)
 
 ## 2026-08-09 → 08-14: rung B whole, the icon law, the nine packs
 (compressed from cell 3; full detail in git history of that cell)
@@ -90,3 +49,48 @@ basins, filled-disc domes, made-up-id-reserves-a-name); final
 battery + dev_world_packs installed; tide-bell full-cube law. Later
 +2 packs (caravanserai 365eded, himalayan 88bd989 — arch headroom
 law 069592e) → 265 members. Dev app (tools/dev-app) landed unseen.
+
+## Padfix, the verdict wave, ground unification, waves 3-4 (08-17→08-19) — compressed from cell 3
+
+Platform disease fixed at the pad (a3687e4 + teaching 8cb9c77: apron
+keyed on LIFT 1:2 cap 24; gentle-lift placer never trades instance
+count; wade clamp W339 — y=0 is the SEABED, the kraken had authored its
+own ocean; W521 soft-`at` abandonment audible; kit: water affinity
+DECLARED never inferred, at/zone outbiddable, flatten-on-cliff buys a
+podium). Padfix deck: Troy ONE-SHOT clean ($0.05, first ever);
+routeFloorAt b9f808d; DEV APP landed (tools/dev-app, unseen). Kai's harsh
+walk verdicts → five-agent forensics, every symptom named to a mechanism:
+half-squares = terrace copings on UNBUILT blocks; berm = district cut face
++ wall footing (I524); cliff paint = doc set WORLD ground.cliff (I525 +
+kit law); horse = hard distance→district-CHILD silently satisfied (W523;
+a named set-piece binds to what names it, root-placed targets only);
+"bridge" = infra.entry acropolis_terrace damming the sacred lake (water
+veto 618d738); pits+pillars = unrouted hub roadY=0 shaft (seed=ground);
+1-block plinth = referenceY rounding UP; backwards monster = facing never
+re-measured after the solver moved the node (remeasureLandmarkFacings
+1bfec03, W522); terracotta = ungated graffiti (modernOk 0893687);
+terrarium doors = arch headroom≥4 (069592e). Two ratifications →
+docs/GROUND-UNIFICATION-v0.md (eba4e01): WP-8 FRONTAGE TIE (street datum
+= ground authority; "never cut" is a PAD law), WP-9 BESPOKE CONFORM (Kai's
+idea: programs get real terrain; five-slope suite certifies; conform
+default for certified records), WP-10 berm clamps (ROAD_BERM_MAX=2 from
+hazard geometry). All landed flag-gated then FLIPPED (8F 9cc82ef: cell
+plane = pin not floor); verdict-stamp gap 97fe40d; conform-hash site-leak
+200209b (RNG programs E334'd; $1.5 roll burned). TIE2 deck: 11 programs,
+ONE conform (warding_crystal_pylon — first ever); Kai: "somewhat
+overreacted", iterate MAINLINE, gem-plus (9b4dd50) = the control.
+Hellenist 90% OCEAN → W526 land budget born. Naming slug_vN, install
+--series. **Wave 3** (tie2 verdicts): RHYTHM_BY_ERA bc0ff2d (era-blind
+window grid); VERGE_FILL_FEATHER e8a10db (floating paths); W526 f5a0a53
+per-column; doorstep foot gate 1203919; WP-11 served seam (design
+516dd96, flip f082504 + tier-overhang; waterline floor 0a1575a);
+BLOCK_MULTI_RECT 047dee2 (Troy density 0.173→0.222); pad floor e29b0b9
+(horse flush); r21 deck first-try clean, hellenist a real metropolis.
+**Wave 4** ("continuing to regress"): Kai's revert instinct → FLAG MATRIX
+on archived docs → flags ACQUITTED, authoring rolls were the era-feel;
+convictions: dried river (MY 0a1575a dammed it → 48b2177 reclaim-not-dam),
+land/sea counterweight fbefa26, empty-blocks law 8e09cc6, hill drift
+(datum lacks the surfacer's floors), cohort versioning d0acdb2 (63 worlds
+_rN, RELEASES.md). LESSON BANKED: every deck confounds compiler + roll +
+teaching — archived docs + flag configs separate them for free; renders
+catch premise failures before walks.

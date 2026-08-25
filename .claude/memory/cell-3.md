@@ -1,6 +1,6 @@
-# Cell 3 — Gemini era → the ground saga's first half (2026-08-14 → 08-22)
+# Cell 3 — the ground saga (2026-08-19 → 08-24)
 
-(The Gemini head-to-head/harness-reshape arc is compressed in cell 2.)
+(The padfix era, ground unification and waves 3-4 are compressed in cell 2.)
 
 ## The ground saga, first half (08-19 → 08-22) — compressed from cell 4
 
@@ -21,91 +21,52 @@ the lesson that became ROAD_PULL: grader heroic on cliffs, noise on
 flats. Rule-web artifact published (2a3ce715). The residual-lip probe at
 (108,89,-194) — the election's step, not the road's — seeded the blend.
 
-## The padfix era and the verdict wave (2026-08-17/18) — compressed from cell 4
+## The pull saga's finish, n13 ratified, the stair saga (08-22 → 08-24) — compressed from cell 4
 
-- **Platform disease fixed at the pad** (a3687e4 + teaching 8cb9c77):
-  apron keyed on LIFT (1:2, cap 24 ∧ long side), gentle-lift placer
-  (never trades instance count), wade water clamp W339 (y=0 is the
-  SEABED — the kraken authored its own ocean, 1,811 cols → 0), W521
-  soft-`at` abandonment made audible. Kit: water affinity DECLARED
-  never inferred; don't model your own sea; at/zone outbiddable;
-  flatten-on-cliff buys a podium.
-- **Padfix deck** (*_padfix, archived battery/candidates/*-padfix):
-  Troy ONE-SHOT clean ($0.05, first ever). p1's T110 = pre-existing
-  gradeProfile cut floor (world-constant seaLevel+1) shaving a lake
-  rim → routeFloorAt (b9f808d). DEV APP landed (tools/dev-app,
-  SwiftUI, make-app.sh; window still unseen by humans).
-- **Kai's harsh walk verdicts → forensics (5 agents), mechanisms:**
-  half-squares = terrace copings on UNBUILT blocks (bank-not-wall fix
-  queued for WP-8 retaining); berm = district cut face (min blend
-  from fill) + wall footing extrudes ≤18 sheer (I524 notes it now);
-  cliff paint = doc set WORLD ground.cliff to city masonry (I525 +
-  kit law); horse = hard distance→district-CHILD silently
-  satisfied:true (W523 CONSTRAINT_TARGET_UNRESOLVED; kit: named
-  set-piece binds to what names it, root-placed targets only);
-  "bridge" = infra.entry acropolis_terrace damming the sacred lake
-  (water veto 618d738, lake 607→810; retaining.seam-needs-a-seam
-  queued); pits+pillars = unrouted hub seeded roadY=0, blendShoulders
-  graded toward it (90-block shaft; seed=ground + verge sanity,
-  618d738); monument 1-block plinth = referenceY rounds median UP
-  (dies in WP-8F datum floor()); backwards monster = pre-solve facing
-  estimate never re-measured after the solver walked the node 408
-  blocks (remeasureLandmarkFacings 1bfec03, W522, footprint-
-  preserving turns only; §15.1 amended, ratification queued);
-  terracotta = ungated graffiti murals (modernOk, 0893687);
-  terrarium doors = my gatehouses' one-course arches on wallTop-4
-  (headroom≥4, 069592e — NOT the hub/veto commit).
-- **Two Kai ratifications** → docs/GROUND-UNIFICATION-v0.md
-  (eba4e01): WP-8 FRONTAGE TIE (street datum = ground authority;
-  "never cut" is a PAD law — lot pads already cut; city cells
-  already do the per-cell tie, which is why dense worlds hid the
-  lips) + WP-9 BESPOKE CONFORM (Kai's own idea: feed programs real
-  terrain; five-slope suite certifies; conform default for certified
-  records, archived docs stay pad) + WP-10 berm clamps (cone
-  propagation makes the water floor an embankment; ROAD_BERM_MAX=2
-  pinned from hazard geometry — no walked berm exists).
+Full record: docs/SESSION-HANDOFF-2026-08-23.md. Kai (08-23): "that
+essentially just solved it… the most coherent troy generation ever" —
+**n13 IS the line**: y = round(drape + pull·(n5_arc − drape)); grade =
+max(longitudinal P95 over 13, cross-fall across the road's own width)
+[PULL_CROSS — the axis three curve ladders missed; probe found a 7-wide
+road with 10-block cross-tilt at pull 0.04]; raw = smoothstep(t·(1+BOOST
+2.2·t^POW 2)); field = max(movavg9, upper envelope) [PEAK_KEEP] + flat
+closing over 21 [CLOSE, in pullField AND phase 1b after junction pooling]
++ 1/6 ramp; backstop min(1, pull/SAT .7); TREAD 1 (n12 decks 2/2.5/3,
+pick open); one pooled pull per junction plane; sidewalks blend at own
+column; sovereign items (drape oracle, mask+headroom, borders) ride the
+blend. Ladder n7 f5ef2a3 (orphans 2,591→9) → n8 b0d2e14 → n9 60d6626
+(the closing) → n13 a063804 (cross; street cliff census 141→26 troy /
+143→20 hellenist — the shelves WERE the census). freeze/troy-iter-
+{7,8,9,13}; suite 5,566/0 at every flip; flats byte-still; riser law 0
+violations. Decks: trojan_horse_troy_n13 = THE deck; n10_* and
+troy_rootpoc* dead. **THE POC IS DEAD** (ratified 08-23; status header on
+COHERENT-SOURCE-v0; absorbed: one ground author = drape oracle; coherence
+at source = the verdict; verify court = probe discipline). Shipped flags
+TRUE: GROUND_V1_{RANKS,SEAMS,FREEZE}, ELECTION_SOLVE, TERRACE_BY_TERRAIN
+(moot), STREET_PLANE_HARMONIZE, FACE_FINISH, DESCENT_SOLVE (bypassed under
+sovereign), ROAD_SOVEREIGN, ROAD_PULL, PULL_CROSS; PULL_* levers per the
+handoff §1.
 
-## Ground unification ships, tie2 walks (2026-08-18/19) — compressed from cell 4
-
-WP-8/9/10 all landed flag-gated then FLIPPED (8F 9cc82ef: cell plane
-= pin not floor — floor inverted harbourtown's lip 25/90): datum
-kernel, frontage record, apronBySide, surfacer-as-consumer
-(STREET_CUT_MAX=2), clients, conform suite+seat+teaching (five
-grounds; W340/T341/T342), berm clamps (T239), bed skirt (span set —
-apron may not tunnel under a viaduct; devworld deck regression
-caught at the gate). Verdict stamp gap found (97fe40d gate.freeze)
-then conform-hash site-leak (200209b CONFORM_RUN pins loam.verify —
-RNG programs E334'd; $1.5 roll burned, kept docs recompiled free).
-TIE2 deck: 11 programs judged, ONE conform (warding_crystal_pylon —
-first ever). Kai's tie2 walk: "somewhat overreacted" on regression;
-iterate MAINLINE; gem-plus branch (9b4dd50 + packs + teaching +
-facing only) = completed CONTROL, gem2 deck archived there.
-Hellenist = 90% OCEAN (rendered): W526 land budget born. Naming:
-slug_vN across the saves (troy_v13, pirates_v16), install --series.
-
-## Waves 3-4: the verdict loop learns its own name (2026-08-19) — compressed from cell 4
-
-Wave 3 (tie2 verdicts): naming slug_vN (superseded by cohorts);
-modern houses = era-blind "regular" window grid on facade-less
-archetypes (RHYTHM_BY_ERA hole-filler bc0ff2d); floating paths =
-blendShoulders fill stopping 1 short of EVERY carriageway
-(VERGE_FILL_FEATHER e8a10db); land budget W526 f5a0a53 (per-COLUMN;
-E406 judges by median); doorstep foot gate 1203919; density diagnosed
-= grown-fabric dead block cores. WP-11 served seam (design 516dd96,
-waves 600df49/e3ce5fb/09379fe/e96bfc8/e1c797c/5d6bb6a, flip f082504
-+3 bugs incl. tier-overhang; waterline floor 0a1575a). Density
-BLOCK_MULTI_RECT 047dee2 (rectsOf was one-rect for non-grid; Troy
-0.173→0.222); pad floor e29b0b9 (horse flush 122/122); lamp
-attribution 52ebf21. v14/r21 deck rolled first-try clean; hellenist
-render = real metropolis (vs r-old 90% ocean).
-Wave 4 (r21 verdicts, "continuing to regress"): Kai's revert
-instinct → FLAG MATRIX on archived docs (same doc × flag configs =
-attribution by his walk). VERDICT: flags acquitted, authoring rolls
-were the era-feel; convictions = dried river (MY 0a1575a dammed it;
-damsWater reclaim-not-dam 48b2177), land/sea teaching counterweight
-fbefa26, empty-blocks law 8e09cc6 (no bare block inside walls),
-hill drift (datum lacks the surfacer's floors), cohort versioning
-d0acdb2 (63 worlds _rN, RELEASES.md, r16+r5 good / r21 regressed).
-LESSON BANKED: every deck confounds compiler+roll+teaching —
-archived docs + flags separate them for free; renders catch premise
-failures before walks.
+**Stair saga (08-24, complete):** Kai: purpose-build a native flight
+object for the insane conditions rather than patch an ordinary stair
+generator; two-track, native GATED on a dressing-pass demo. STAIR_DRESS
+shipped (a5e4573 neutral, 26637a4 flip, 3c78232 cull fix): road-risers.ts
+swaps every honest 1-riser top course for a stair facing the rise;
+ledge/crest/flooded/occupied refuse. LESSON: enforceRoadSovereignty ate
+all 818 stairs (not in ROAD_SOVEREIGN_OWN_EMITTERS — the street-lamp scar
+relearnt; the report's blockSpans snapshot diverges from the emitted
+world). n14 walked STAIRLESS; n14b (freeze/troy-iter-14b) was the real
+demo. Gate PASSED, then **taste retired it** (Kai: stairs "read as
+stairs" and feel less natural than bare voxel risers) — STAIR_DRESS=false,
+code kept as flight vocabulary, undressedCutoffs 88→70→88 with full
+attribution. **Box (72,88,-95) diagnosis** (probed + blinded Gemini
+concurred): cut08 descends 1:1 then falls 5-6 into cut07's junction plane
+— junctions pool PULL not LEVELS → the flight object's customer #1;
+cut07's bend quantizes 2-4 block inter-tread cliffs on the raster;
+terrace_steps missited at region edge (209,-255), 41/95 no-stand → folded
+into the landmark-border rule. **E2E control** trojan_horse_in_troy_e2e1
+(fresh Gemini spec, seed 1184, $0.34, OpenRouter credits unblocked)
+installed vs the r22 overfit worry. Ladder debt parked: chunk-2 internals
+→ G7 (walk-gated) → G8 collapse; troy W413, quay 118, S8 crown, levelNear
+§7.1, glow-lichen lint, side branches (packs d3d4193, freerect 24cb2c1),
+§15.1 + W337 + dev-app.
