@@ -1,0 +1,343 @@
+{
+  "suite": "golden-prompts-v0",
+  "label": "c4-after-2",
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "intentPrepass": true,
+  "kits": {
+    "settlement": {
+      "path": "docs/kits/settlement-author.md",
+      "sha256": "c13d6d2056d6cd097391ec1405b65dd5e2974832d317924389b6722ab4ca5a70",
+      "bytes": 280908,
+      "envelopeLiterals": [
+        "11x11x9",
+        "11x14x9",
+        "11x8x9",
+        "120x120",
+        "13x10x11",
+        "13x11x13",
+        "13x11x9",
+        "13x16x13",
+        "13x9x11",
+        "140x120",
+        "140x24x92",
+        "15x17x21",
+        "16x52x14",
+        "180x160",
+        "18x18",
+        "18x44x15",
+        "200x180",
+        "21x76x19",
+        "21x78x19",
+        "220x200",
+        "22x22",
+        "25x22x19",
+        "288x288",
+        "30x30",
+        "440x400",
+        "512x512",
+        "5x4",
+        "7x19x7",
+        "8x8x8",
+        "96x16x72",
+        "96x80",
+        "9x11x9",
+        "9x12x9",
+        "9x8x8",
+        "9x8x9"
+      ]
+    },
+    "terrain": {
+      "path": "docs/kits/terrain-author.md",
+      "sha256": "cb2c6263b7944e564329c6eff8a97fc49d63902664a3d8cef8c142ac52db9ba4",
+      "bytes": 41063,
+      "envelopeLiterals": [
+        "384x384",
+        "512x512"
+      ]
+    }
+  },
+  "totals": {
+    "ok": 2,
+    "attempts": 3,
+    "oneShot": 1,
+    "promptTokens": 189662,
+    "completionTokens": 20168,
+    "cost": 0.052294612500000004,
+    "diagnosticCodes": {
+      "LOAM-T008": 2
+    }
+  },
+  "records": [
+    {
+      "id": "metropolis_hideout",
+      "family": "metropolis_hideout",
+      "kit": "settlement",
+      "prompt": "A high-tech apocalyptic hideout in the massively overgrown ruins of a metropolis.",
+      "seed": 304,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "source": "cache",
+        "value": {
+          "era": "far_future",
+          "wealth": 0.4,
+          "decline": 0.9,
+          "formality": 0.3,
+          "climate": {
+            "humidity": 0.7
+          },
+          "character": {
+            "label": "overgrown post-apocalyptic high-tech hideout",
+            "materialTheme": "modern_city",
+            "formPacks": [
+              "alien_scifi"
+            ],
+            "archetypes": {
+              "prefer": [
+                "bunker_complex",
+                "laboratory",
+                "field_station",
+                "hydroponics_bay",
+                "watchtower",
+                "office",
+                "apartment_block"
+              ],
+              "forbid": [
+                "cottage",
+                "manor",
+                "tavern",
+                "church",
+                "windmill"
+              ]
+            },
+            "flora": {
+              "prefer": [
+                "understory",
+                "emergent",
+                "old_growth"
+              ]
+            },
+            "motifs": {
+              "massing": "blocky",
+              "windowRhythm": "sparse"
+            },
+            "urbanForm": "grid"
+          },
+          "tokens": {
+            "fittings": "blast_door on the bunker_complex; airlock_vestibule on the laboratory",
+            "infra": "barricade_line across the fractured boulevard; quarantine_fence around the reinforced perimeter",
+            "terrain": "a ruined metropolis grid of shattered skyscrapers and collapsed elevated roads choked with deep canopy forest and dense undergrowth",
+            "icons": "a reinforced high-tech hideout nestled in the hollow base of a ruined skyscraper; solar panels and satellite dishes tangled in vines; defensive floodlights and sensor towers hidden in the foliage"
+          }
+        }
+      },
+      "intentUsage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "reasoningTokens": 0,
+        "cost": 0,
+        "cached": true
+      },
+      "menu": {
+        "injected": false,
+        "reason": "flag off"
+      },
+      "attempts": 2,
+      "diagnostics": [
+        [
+          {
+            "code": "LOAM-T008",
+            "name": "UNKNOWN_KEY",
+            "severity": "error",
+            "nodePath": "world.hideout_solar.params"
+          },
+          {
+            "code": "LOAM-T008",
+            "name": "UNKNOWN_KEY",
+            "severity": "error",
+            "nodePath": "world.hideout_turbine.params"
+          }
+        ],
+        []
+      ],
+      "usage": {
+        "promptTokens": 176239,
+        "completionTokens": 16811,
+        "reasoningTokens": 6992,
+        "cost": 0.0437233125
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 26,
+        "maxDepth": 2,
+        "generators": [
+          "authored:skyrise_bunker_nexus",
+          "building.grammar@0",
+          "infra.entry@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "apartment_block",
+          "battery_shed",
+          "beacon_tower",
+          "brutalist_block",
+          "bunker_complex",
+          "cottage",
+          "data_center",
+          "department_store",
+          "field_station",
+          "laboratory",
+          "office",
+          "parking_garage",
+          "ruined_cottage",
+          "skyscraper",
+          "subway_station",
+          "warehouse"
+        ],
+        "archetypesInCatalog": 16,
+        "formPacks": [
+          "alien_scifi"
+        ],
+        "props": [
+          "campsite",
+          "dig_site",
+          "helipad",
+          "solar_array",
+          "wind_turbine"
+        ],
+        "species": [
+          "hanging_willow",
+          "reclaimed_oak",
+          "spire_birch",
+          "wild_oak"
+        ],
+        "envelopes": [
+          "512x512",
+          "320x300",
+          "19x52x19",
+          "17x44x17",
+          "15x13x21",
+          "13x11x13",
+          "13x12x17",
+          "13x12x15",
+          "11x11x13",
+          "9x18x9"
+        ],
+        "constraints": 15,
+        "constraintKinds": [
+          "blend",
+          "distance",
+          "facing",
+          "max",
+          "min",
+          "reference",
+          "terrain_conform",
+          "zone"
+        ],
+        "constraintsWithStrength": 0,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 8,
+        "programReferences": 1,
+        "conformsTrue": 0,
+        "labels": 25,
+        "eras": [
+          "far_future"
+        ],
+        "bytes": 10571
+      },
+      "wallMs": 88900
+    },
+    {
+      "id": "desert_wilderness",
+      "family": "new/terrain-only",
+      "kit": "terrain",
+      "prompt": "A vast salt desert under a hard sun, cracked flat to the horizon, with nothing living on it.",
+      "seed": 313,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "source": "cache",
+        "value": {
+          "climate": {
+            "biome": "minecraft:desert",
+            "temperature": 1,
+            "humidity": -1,
+            "snow": "never"
+          },
+          "character": {
+            "label": "salt desert"
+          },
+          "tokens": {
+            "terrain": "a vast, cracked salt flat stretching flat to the horizon under a hard sun; barren expanse with no vegetation, water, or living structures"
+          }
+        }
+      },
+      "intentUsage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "reasoningTokens": 0,
+        "cost": 0,
+        "cached": true
+      },
+      "menu": {
+        "injected": false,
+        "reason": "flag off"
+      },
+      "attempts": 1,
+      "diagnostics": [
+        []
+      ],
+      "usage": {
+        "promptTokens": 13423,
+        "completionTokens": 3357,
+        "reasoningTokens": 2267,
+        "cost": 0.0085713
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 6,
+        "maxDepth": 2,
+        "generators": [
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [],
+        "archetypesInCatalog": 0,
+        "formPacks": [],
+        "props": [],
+        "species": [],
+        "envelopes": [
+          "512x512"
+        ],
+        "constraints": 0,
+        "constraintKinds": [],
+        "constraintsWithStrength": 0,
+        "hardConstraints": 0,
+        "forests": 0,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 0,
+        "programReferences": 0,
+        "conformsTrue": 0,
+        "labels": 4,
+        "eras": [],
+        "bytes": 2033
+      },
+      "wallMs": 19667
+    }
+  ]
+}

@@ -745,8 +745,12 @@ on a cottage, use `adjacent_to` the plaza instead.
 **`envelope`** is `{ "shape": "box", "size": [x, y, z] }` in blocks — the
 footprint and the total height, walls *and* roof. The hard-won numbers:
 
-- **width and depth 7–13.** Below 7 there is no room for a door and a window;
-  above 13 a house stops reading as a house. A hall may go to 15.
+- **An ordinary house is 7–13 wide and deep.** Below 7 there is no room for a
+  door and a window; above 13 a *house* stops reading as a house, and a hall
+  may go to 15. This is the ordinary shell's range, **not a limit on
+  buildings**: an archetype's own "envelope that works" column governs — many
+  civic and classical entries sit at 15–21 — and the tall grammar runs to 24
+  wide.
 - **`sizeY ≥ floors × 3 + 4`.** A storey is 3 blocks minimum and the roof needs
   about 4. Give a 1-storey cottage `y = 7..8`, a 2-storey house `y = 10..12`, a
   2-storey hall `y = 12..13`. Too little `y` and the roof crushes the walls
@@ -759,7 +763,7 @@ footprint and the total height, walls *and* roof. The hard-won numbers:
 
 | param | values | notes |
 |---|---|---|
-| `floors` | 1..2 | more is clamped to 2 |
+| `floors` | 1..2 on an ordinary shell | more is clamped to 2. The tall archetypes are the exception and carry their own caps: `skyscraper` 20, `office` 16, `hotel` 14, `apartment_block` 10 |
 | `floorHeight` | 3..8 | blocks per storey; default 4 |
 | `roof` | `gable`, `hip`, `flat` | `gable` for houses, `hip` for civic buildings, `flat` for towers |
 | `windowRhythm` | `regular`, `dense`, `sparse`, `paired`, `none` | `sparse` for a smithy or a granary, `dense` for an inn |
@@ -4407,15 +4411,19 @@ far shore"*.
 ## 14. Before you answer
 
 - Output **only** the JSON object. No fences, no explanation.
-- `"profile": "settlement"`. One heightfield, one climate, at least one forest.
+- `"profile": "settlement"`. Exactly one heightfield, exactly one climate.
+  Forests are optional: a desert, a salt flat, a lava waste or a bare alpine
+  world has none, and writing an empty one to satisfy a checklist is worse than
+  writing none.
 - Every edit is under the heightfield and has exactly one placement key.
 - Every shape param belongs to its verb.
 - Every fraction is inside `[0, 1]`; north is small `fz`.
 - Ids are lowercase, meaningful, unique among siblings.
 - If the prompt asks for habitation: at most one plaza, buildings with a box
-  `envelope` (width 7–13, `sizeY ≥ floors × 3 + 4`), an archetype tag, a `door`
-  port, a `terrain_conform`, and one `road.network@0` anchored on the plaza and
-  `#tag:house`. If it does not: no structure nodes at all.
+  `envelope` sized the way §9 sizes them — by the archetype, not by one global
+  rule — a named `archetype`, a `door` port, a `terrain_conform`, and one
+  `road.network@0` anchored on the plaza and `#tag:house`. If it does not: no
+  structure nodes at all.
 - No absolute coordinates on any building — constraints only.
 - If the prompt says anything about the *wood* — old, ancient, giant trees,
   mushroom, glowing, deep undergrowth, sparse — say it with a species and with
@@ -4424,8 +4432,10 @@ far shore"*.
 - If the prompt names farming — a farm, a croft, an agricultural village, a
   place that feeds a town — write at least one `precinct.farm@0` holding with a
   region envelope on gentle ground. Nothing else in the language tills a field.
-- **The stranger test, before you finish**: list the prompt's icons and find
-  each one in your document by node id. A stranger must name the prompt from
+- **The stranger test, before you finish**: check the prompt's icons against
+  your document *silently* — the output is JSON alone — and confirm each one is
+  delivered by something: a node, a prop, a palette choice or a terrain form.
+  A stranger must name the prompt from
   ten seconds at any street corner — if an icon has no node, the document is
   not done, and if the theme lives only in one centerpiece, scatter its small
   repetitions until it lives in the streets.

@@ -875,7 +875,9 @@ Prompt: *"a small volcanic island ringed by black beaches"*.
 ## 11. Before you answer
 
 - Output **only** the JSON object. No fences, no explanation.
-- One heightfield, one climate, at least one forest.
+- Exactly one heightfield, exactly one climate. Forests are optional: a salt
+  flat, a lava waste, an ice sheet or a moonscape has none, and writing an
+  empty one to satisfy a checklist is worse than writing none.
 - Every edit is under the heightfield and has exactly one placement key.
 - Every shape param belongs to its verb.
 - Every fraction is inside `[0, 1]`; north is small `fz`.

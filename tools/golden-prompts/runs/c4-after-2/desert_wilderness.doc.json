@@ -1,0 +1,177 @@
+{
+  "loam": "0.1",
+  "profile": "terrain",
+  "meta": {
+    "name": "salt_desert",
+    "worldSeed": 313,
+    "prompt": "A vast salt desert under a hard sun, cracked flat to the horizon, with nothing living on it.",
+    "spawn": {
+      "at": [
+        0.5,
+        0.5
+      ]
+    }
+  },
+  "intent": {
+    "climate": {
+      "biome": "minecraft:desert",
+      "temperature": 1,
+      "humidity": -1,
+      "snow": "never"
+    },
+    "character": {
+      "label": "salt desert"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": {
+        "mix": [
+          [
+            "minecraft:calcite",
+            5
+          ],
+          [
+            "minecraft:diorite",
+            2
+          ],
+          [
+            "minecraft:white_terracotta",
+            2
+          ],
+          [
+            "minecraft:smooth_basalt",
+            1
+          ]
+        ]
+      },
+      "ground.subsurface": {
+        "mix": [
+          [
+            "minecraft:calcite",
+            4
+          ],
+          [
+            "minecraft:sandstone",
+            3
+          ],
+          [
+            "minecraft:white_terracotta",
+            1
+          ]
+        ]
+      },
+      "ground.stone": "minecraft:sandstone",
+      "ground.cliff": {
+        "mix": [
+          [
+            "minecraft:white_terracotta",
+            3
+          ],
+          [
+            "minecraft:calcite",
+            2
+          ]
+        ]
+      },
+      "ground.beach": "minecraft:calcite",
+      "ground.peak": "minecraft:calcite"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Vast Salt Desert",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 65,
+          "amplitude": 4,
+          "octaves": 4,
+          "frequency": 0.002,
+          "gain": 0.4,
+          "erosionPasses": 3,
+          "cliffThreshold": 65,
+          "soilDepth": 2,
+          "beachWidth": 2,
+          "snowLineFraction": 1
+        },
+        "children": [
+          {
+            "id": "central_salt_pan",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "broad flat salt basin depression",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 220,
+              "depth": 3,
+              "water": false,
+              "irregularity": 0.2
+            }
+          },
+          {
+            "id": "crust_rim_northeast",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "subtle raised salt crust shelf toward the horizon",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.8,
+                0.25
+              ],
+              "radius": 130,
+              "height": 4,
+              "rim": 24,
+              "irregularity": 0.22
+            }
+          },
+          {
+            "id": "crust_rim_southwest",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "low distant mineral terrace",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.2,
+                0.78
+              ],
+              "radius": 110,
+              "height": 3,
+              "rim": 20,
+              "irregularity": 0.2
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "arid",
+          "temperatureFrequency": 0.001,
+          "humidityFrequency": 0.001,
+          "latitudeGradient": 0
+        }
+      }
+    ]
+  }
+}
