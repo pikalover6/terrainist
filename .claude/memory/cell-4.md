@@ -95,11 +95,12 @@ grade residue trim (boost creep + closing trace fills — don't raise
 R_FLAT blindly); n12 tread pick; shoulder/verge; WP ladder #10; pirates
 staged awaiting GO (6b52fe3); catalog go-ham on side branches.
 
-**The loop:** deep-probe deck → walk card (numbered stations, /tp + ONE
-question) → chat-log parse → probe to mechanism → popup consult → ratify
-→ neutral-land byte-identical → flip → FULL gate + re-pin triage → regen
-baselines (never concurrent with the suite) → deck _nN + freeze/troy-
-iter-N. Candidates: probe for real spread BEFORE install.
+**The loop:** deep-probe deck → walk card (numbered stations, ONE question
+each) → chat-log parse → probe to mechanism → popup consult → ratify →
+neutral-land byte-identical → flip → FULL gate + re-pin triage → regen
+baselines (never concurrent with the suite) → deck _nN + freeze/troy-iter-N.
+Campaign variant: probe → consult → 3×3 at fixed bytes (before-samples
+FIRST) → commit on the session's report.
 
 **STANDING:** caps 4/≤2med/≤1high; delegation economics; implementers
 opus-5-low; orchestrator commits, single-sentence subjects; probe-first;
