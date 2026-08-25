@@ -19,8 +19,8 @@ import { ROUTE_PINS_HELD_GROUND, gradeProfile } from "../src/structures/roads.js
 import type { ColumnPlan } from "../src/terrain/columns.js";
 
 describe("a route is graded against the ground it will get", () => {
-  it("ships off", () => {
-    expect(ROUTE_PINS_HELD_GROUND).toBe(false);
+  it("ships on", () => {
+    expect(ROUTE_PINS_HELD_GROUND).toBe(true);
   });
 
   // Stations 0…7 on the terrace at 109, the edge rows 5, 6, 7 held by the

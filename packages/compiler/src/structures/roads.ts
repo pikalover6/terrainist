@@ -159,9 +159,13 @@ export const ROAD_SLOPE_COST = 8;
  * envelope passes through it exactly and the descent is graded past it — a
  * cutting only where the road may cut. Pins are read at the centreline
  * station, as the profile's ground is. Staged under the Run's law 5: landed
- * `false`; flipped in its own unit with every moved baseline attributed.
+ * `false` (unit 19); **`true` ships** (2026-08-25, unit 20) with **no law-5
+ * document moving** — all fourteen payload-identical either way, because no
+ * anchor's lane has an envelope crossing a held column. Its evidence is the
+ * hillside fixture at own-stations on (898 → 23 orphan columns, the square
+ * rejoined) and the grader's test in `test/route-pins.test.ts`.
  */
-export const ROUTE_PINS_HELD_GROUND = false;
+export const ROUTE_PINS_HELD_GROUND = true;
 /** Extra cost for a 90° change of heading; a 45° kink costs half of it. */
 export const ROAD_TURN_COST = 6;
 /** Longest straight a smoothing pass will pull, in cells. */

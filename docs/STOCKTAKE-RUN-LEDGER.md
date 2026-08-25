@@ -7,21 +7,23 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 19 (F20 in code: `GroundView.held` and
-  `ROUTE_PINS_HELD_GROUND`, landed off, proven on the fixture) is committed.
-- **Next unit:** unit 20 — **flip `ROUTE_PINS_HELD_GROUND`** (law 5's
-  second half): one constant, the fourteen re-checked (all identical with
-  it on — no baseline moves; D45), the FULL suite, the census 1.20 row and
-  the switch's docblock updated, `F10-LOWER-SQUARE` §G's table cited as
-  the flip's evidence. Then unit 21 — **re-try `LOT_PARCEL_OWN_STATIONS`
-  on the fourteen** under law 5 with the pins shipped: its 24 % orphans
-  were F20; what remains is a byte-moving flip to attribute (buildings,
-  drops, orphans, entrance reach per document; the unit-7 re-pin's method
-  in `scratchpad/REPIN-UNIT7.md`), and the walled city's church (`E170`,
-  D22) may finally seat. Then census batch two (M1, M2 by law 5, M3,
+- **In flight:** nothing — unit 20 (`ROUTE_PINS_HELD_GROUND` flipped; the
+  fourteen identical) is committed.
+- **Next unit:** unit 21 — **re-try `LOT_PARCEL_OWN_STATIONS` on the
+  fourteen** under law 5 with the pins shipped. Its 24 % orphans were F20;
+  what remains is a byte-moving flip to attribute. Method: flip in the dist
+  first (D42), `bi14` against `u10` to name the movers, then for each mover
+  the walk audit before/after (`scratchpad/f10/orphans.mjs`: buildings,
+  network, orphans, entrance reach, components by emitter) and the icon
+  metric where the document has icons; the three golden fixtures re-pinned
+  in the tests' own convention (`scratchpad/REPIN-UNIT7.md` is the
+  template — its numbers are stale, its method stands). Ship only if no
+  document loses a walk or an icon; the walled city's church (`E170`, D22)
+  is the thing to look for. If a mover regresses, keep it off and write the
+  attribution as the finding. Then census batch two (M1, M2 by law 5, M3,
   class-2 S5/S6, D3 note), F4, F14, F17; §10.5 probe prompts; the
   remaining stations.
-- **Last commit:** 8d3bedb (unit 18). Convention: this line names the
+- **Last commit:** 9e3f737 (unit 19). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
 - **Spend:** $8.19 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
 - **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19, D25,
@@ -54,8 +56,8 @@ running state. The NOW block is rewritten at the end of every turn.
   - F20 — **a lane's cutting through held ground is refused by the
     resolver and painted as a cliff** (the grader could not see ownership);
     fixed behind `ROUTE_PINS_HELD_GROUND` (unit 19): pinned, the fixture's
-    island joins main (898 → 23 orphans), the fourteen identical. Flip:
-    unit 20.
+    island joins main (898 → 23 orphans), the fourteen identical. Flipped
+    (unit 20): shipped.
 ## DECISIONS
 
 (every fork taken: the reversible default chosen, why, and how to undo it)
@@ -336,6 +338,12 @@ running state. The NOW block is rewritten at the end of every turn.
   measured 898 → 23 and the grader's pure test, recorded in
   `F10-LOWER-SQUARE` §G. The pins' shoulder-column gap (§G "what stays
   open") is noted, unmeasured, and not blocking. Undo: n/a.
+- **D46 (unit 20):** the flip ships on the fixture's evidence and the
+  grader's test alone, with the fourteen re-checked identical on the real
+  build (not only the dist patch): law 5's "attribute every moved baseline"
+  has nothing to attribute, and D22 is the precedent. The hillside fixture
+  is not a law-5 document; it is the one where the bug lives, and its
+  numbers at own-stations on are unit 21's baseline. Undo: one constant.
 
 ## SPEND
 
@@ -360,6 +368,7 @@ running state. The NOW block is rewritten at the end of every turn.
 | 17 | census S items, batch one — one bi14 identity run, the FULL suite | 0.00 | 8.19 |
 | 18 | F10 probe — compiles only, the FULL suite | 0.00 | 8.19 |
 | 19 | F20 in code — dist-patched measurements, two bi14 runs, the FULL suite | 0.00 | 8.19 |
+| 20 | the pins flip — one bi14 run, the FULL suite | 0.00 | 8.19 |
 
 ## VERDICTS
 
@@ -699,3 +708,8 @@ running state. The NOW block is rewritten at the end of every turn.
   Census 1.20. Tests: FULL suite COUNTS Test Files 342 passed | 1 skipped (343), Tests 5668 passed | 31 skipped (5699). Files: `ground-contract.ts`,
   `ground-driver.ts`, `roads.ts`, the test, the record §G, the census.
   Spend $0.
+- **unit 20 — the pins flip (2026-08-25):** `ROUTE_PINS_HELD_GROUND`
+  `false → true` in `structures/roads.ts`, its docblock and
+  `test/route-pins.test.ts` ("ships on") updated, census 1.20 closed. The
+  fourteen payload-identical to `u10` on the real build (D46). Tests: FULL
+  suite COUNTS Test Files 342 passed | 1 skipped (343), Tests 5668 passed | 31 skipped (5699). Files: `roads.ts`, the test, the census. Spend $0.
