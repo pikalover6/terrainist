@@ -76,6 +76,24 @@ export interface AuthorRequest {
    * rather than only in a log line.
    */
   readonly intent?: SemanticIntent;
+  /**
+   * The per-run **candidate menu**, already rendered, or absent.
+   *
+   * Opaque on purpose. The menu is assembled from the live structure registries
+   * by `@terrainist/stdlib` (`buildCandidateMenu`), and this package does not
+   * depend on stdlib and is not about to start: an agent talks to the *spec*,
+   * not to the block palettes, which is the same line `MATERIAL_THEME_IDS` and
+   * `FORM_PACK_THESES` in `intent-prepass.ts` are drawn along. So the caller —
+   * the CLI, which already depends on both — assembles the text and hands it
+   * over, and this module only knows where in the conversation it goes.
+   *
+   * Absent or empty means **nothing is injected at all**, and the messages
+   * array is then byte-for-byte the one this function built before the menu
+   * existed. `packages/agents/test/candidate-menu.test.ts` asserts exactly
+   * that, because a context feature whose off-state is not provable is a
+   * confound in every measurement taken afterwards.
+   */
+  readonly candidateMenu?: string;
 }
 
 /** Request for {@link reviseLoamDoc}: another turn on an existing conversation. */
@@ -167,8 +185,17 @@ export async function authorLoamDoc(request: AuthorRequest): Promise<AuthorResul
   const kit = request.kit ?? (await loadAuthorKit(kitName));
   const size = request.size ?? DEFAULT_SIZE;
 
+  // The kit stays message 0, byte for byte: it is the largest and most stable
+  // prefix in the conversation, so anything a provider caches it as stays
+  // cached. The menu follows it as a second *system* message rather than
+  // riding the user turn, because `trimRevisionConversation` preserves every
+  // leading system message — which is what carries the menu into each compile-
+  // feedback round without the trim having to learn about it.
   const messages: ChatMessage[] = [
     { role: "system", content: kit },
+    ...(request.candidateMenu === undefined || request.candidateMenu.trim() === ""
+      ? []
+      : [{ role: "system", content: request.candidateMenu } as ChatMessage]),
     {
       role: "user",
       content: [

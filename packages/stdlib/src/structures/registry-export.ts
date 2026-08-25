@@ -167,7 +167,13 @@ function blurbOf(entry: StructureEntry, max: number): string {
   if (note.length <= max) return note;
   const head = note.slice(0, max + 1);
   const stop = Math.max(head.lastIndexOf(". "), head.lastIndexOf(": "), head.lastIndexOf("; "));
-  if (stop > max / 2) return note.slice(0, stop + 1);
+  // A clause boundary is a fine place to stop reading and a poor place to stop
+  // writing: cutting at one leaves a dangling `:` promising a list that is not
+  // there, so the punctuation itself becomes the ellipsis.
+  if (stop > max / 2) {
+    const kept = note.slice(0, stop + 1);
+    return kept.endsWith(".") ? kept : `${kept.slice(0, -1)}…`;
+  }
   const space = head.lastIndexOf(" ");
   return `${note.slice(0, space > 0 ? space : max)}…`;
 }
