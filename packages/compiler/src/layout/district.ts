@@ -1834,8 +1834,7 @@ export function layDistrict(
   // A seam shallower than {@link SEAM_BLOCK_MIN_DROP} is dressed but does not
   // bound a block: a kerb is a step a lot walks over, not a wall between two
   // lots (see the constant).
-  for (const seam of seams) {
-    if (seam.drop < SEAM_BLOCK_MIN_DROP) continue;
+  for (const seam of boundingSeams(seams)) {
     for (const point of seam.cells) {
       const k = grid.index(point.x, point.z);
       if (k >= 0) blocked[k] = 1;
@@ -2367,10 +2366,9 @@ export function layDistrict(
   // every quarter that declared no platforms, so the ordinary path is a `Set`
   // of size zero and one `has` per building.
   const seamColumns = new Set<number>();
-  for (const seam of seams) {
-    // The guard protects a wall; a seam below {@link SEAM_BLOCK_MIN_DROP} has
-    // none and may run under a lot, whose apron blends as any lot's does.
-    if (seam.drop < SEAM_BLOCK_MIN_DROP) continue;
+  // The guard protects a wall; a seam below {@link SEAM_BLOCK_MIN_DROP} has
+  // none and may run under a lot, whose apron blends as any lot's does.
+  for (const seam of boundingSeams(seams)) {
     for (const point of seam.cells) {
       const k = grid.index(point.x, point.z);
       if (k >= 0) seamColumns.add(k);
@@ -3232,12 +3230,29 @@ export const BLOCK_MULTI_RECT = true;
  * run that spans it takes its min-corner platform (`levels.at(rect.x0,
  * rect.z0)`) and the pad grades the one-block difference, which is the kerb.
  *
+ * `3` was tried and is out: a two-block seam holds water somewhere on the
+ * same shelf, and a lot spanning it released 121 blocks (`LOAM-T110`).
+ *
  * Staged under the Run's law 5: landed at `1`, byte-identical on the three
- * baselines and the six k1 documents; flipped in its own commit with every
- * moved baseline attributed. One line to undo, the shape `BLOCK_MULTI_RECT`
- * and `SEAM_TIERS` have.
+ * baselines and the six k1 documents; **`2` ships** in its own commit. Four
+ * of the nine moved and each is attributed in
+ * `docs/decks/anchors/METROPOLIS-R5-BISECTION-2026-08-25.md` §D — the r5
+ * metropolis 45 → 55 terraces, and Troy's walled quarter 31 → 45 buildings
+ * with `LOAM-W527 WALLED_QUARTER_SPARSE` falling silent, because the same
+ * kerb mosaic was starving the town inside the wall. One line to undo, the
+ * shape `BLOCK_MULTI_RECT` and `SEAM_TIERS` have.
  */
-export const SEAM_BLOCK_MIN_DROP = 1;
+export const SEAM_BLOCK_MIN_DROP = 2;
+
+/**
+ * The seams that bound a block: those that drop at least
+ * {@link SEAM_BLOCK_MIN_DROP}. The `blocked` mask before `blocksOf` and the
+ * building-apron guard both ask this and nothing else does, so the two cannot
+ * disagree about which seam is a wall.
+ */
+export function boundingSeams(seams: readonly LevelSeam[]): readonly LevelSeam[] {
+  return seams.filter((seam) => seam.drop >= SEAM_BLOCK_MIN_DROP);
+}
 
 /**
  * Most rectangles a curved block is cut into. `subdivide` is cheap and

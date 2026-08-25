@@ -148,3 +148,58 @@ sha-of-shas identical on all nine (troy_r22 198ea9f1…, thalassa_polis
 hellenist_sea_siege_k1 d4f8c454…, montfort_hill_k1 2a60ca7c…,
 overgrown_metropolis_hideout_k1 04265b12…, pirates_vs_unicorns_k1
 c215780c…, troy_k1 af3dc5e3…). FULL suite: see the ledger's unit 3 entry.
+
+## D. The flip (unit 4, 2026-08-25): `SEAM_BLOCK_MIN_DROP` 1 → 2
+
+Law 5, second half: the switch flips in its own commit, every moved world
+attributed, the instrument reads each pair. The gate is factored into
+`boundingSeams()` and pinned by `packages/compiler/test/seam-blocking.test.ts`
+on real `levelSeams` output (a one-block seam is a `kerb` and bounds nothing;
+two bounds; the filter keeps the compiler's own objects).
+
+**The nine law-5 worlds** (`bi/before` vs `bi/after-on`; the refactor is a
+no-op — `after-on2` identical to `after-on` on all nine):
+
+| world | bytes | placements | terraces | infill | buildingCount | buildingBlocks | diagnostics | read |
+|---|---|---:|---:|---:|---:|---:|---|---|
+| troy_r22 | **moved** | 33 → 47 | 0 → 5 | 28 → 37 | 31 → 45 | 43,445 → 86,959 | `W527 WALLED_QUARTER_SPARSE` 1 → 0, `W413` 12 → 11, `T224` 1 → 0 | **better** — the same kerb mosaic (44 kerb seams in the citadel) was starving the town inside the wall; T4's own diagnostic falls silent |
+| pirates_r22 | moved | 75 → 76 | 4 → 4 | 62 → 63 | 72 → 73 | 107,643 → 114,413 | `W527` 1 → 0, `W511` 1 → 0 | not-worse (+1 building, green skin 159 → 433) |
+| troy_k1 | moved | 46 → 47 | 4 → 5 | 36 → 36 | 46 → 47 | 119,332 → 122,601 | none | not-worse |
+| pirates_vs_unicorns_k1 | moved | 26 → 28 | 3 → 2 | 15 → 18 | 22 → 24 | 35,672 → 41,362 | `W413` 4 → 3 | not-worse (+2 buildings; one run re-cut into three infill lots — a run that spanned a kerb now groups differently) |
+| hellenist_r22, alien_farm_k1, hellenist_sea_siege_k1, montfort_hill_k1, metropolis_k1 | identical | | | | | | | no kerb seam bounds a block in these quarters |
+
+**The r5 document at HEAD:** 45 → 55 terraces, 90 → 101 placements,
+buildingBlocks 283,976 → 334,052 (anchor 384,674), greenSkin 5,171 → 7,376
+(anchor 6,207), physics clean, `W511` 16 → 15 and nothing else. Render pair:
+`scratchpad/anchors/renders/metropolis_r5-head.png` (before) vs
+`scratchpad/bi/renders/metropolis_r5-after-on.png` (after) — the north-east
+rows regain their full-block buildings; the south-east quadrant keeps small
+lots. Troy pair: `bi/renders/troy_r22-{before,after-on}.png` — blocks inside
+the wall that were bare ground carry roofs.
+
+**The 13 terraces still lost at 2** (attributed; the residual loss is accepted
+under ratified laws, with Kai's post-hoc veto open — law 6):
+seven sit across `retaining@2` seams — two-block drops that stand a wall and,
+as the trial at 3 showed, sometimes hold water: they stay walls by design;
+three sit on a single level and were lost to the subdivision changes —
+`terrace_122_-132` is now two infill lots, `terrace_16_-57` four infill lots
+around an alley (the leaf cap), `terrace_53_-57` a bare block the empty-block
+law made a plaza; the remaining three span 1–5 blocks of election relief
+across mixed seams. None is a kerb-only loss; recovering them means arguing
+with `BLOCK_MULTI_RECT`, the empty-block law or the election's weights —
+each a ratified law, each a separate proposal, not this fix.
+
+**Ground-probe baselines** (`tools/worlds/ground-probe-baselines/`): troy and
+pirates regenerated at the flipped dist, hellenist unchanged. troy: owned
+columns 36,538 → 37,115, building seats 8 → 18 (ten new seats, all at
+delta 0 or −1; the one sink-10 seat, `infill_153_-96`, is pre-existing),
+floaters identical, cliff census ±4 columns. pirates: seats 36 → 38 (delta
+0), `unsupported.multiface` 12,434 → 12,465 (props on the two new
+buildings), cliff census ±2.
+
+**G3 for the metropolis:** the difference is now attributed in full — 10
+terraces recovered by this fix, 13 attributed to ratified laws as an
+accepted residual loss, everything else (retaining dressing, road churn, vines
+−16 % in-district before the fix) traced to WP-11B/10A/12A and the election
+in §A–§B. The anchor does not reproduce byte-for-byte and will not; the
+read is **better than HEAD, worse than the anchor on tower mass, attributed**.

@@ -57,8 +57,11 @@ even the r5 document would not reproduce the walked r5 world today.
 
 ### What the Run will do
 
-1. Fix the compiler regression code-first (its own unit; the bisection names
-   the commits).
+1. ~~Fix the compiler regression code-first~~ — done (units 3–4):
+   `SEAM_BLOCK_MIN_DROP = 2`; the r5 document at HEAD recovers 10 of its 23
+   lost terraces, the other 13 are attributed to ratified laws (bisection
+   §D). Side effect read as a T4 gain: Troy's walled quarter 31 → 45
+   buildings, `W527 WALLED_QUARTER_SPARSE` silent.
 2. Probe what a "ruined shell" (`I512`) actually puts in the voxels, street
    level, ≥3 columns wide — class-1 census finding either way.
 3. Treat the skeleton-scatter loss as an E2 *machinery* question (a

@@ -7,40 +7,35 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 3 (the lever, landed off) is committed.
-- **Next unit:** unit 4 — flip `SEAM_BLOCK_MIN_DROP` 1 → 2
-  (`packages/compiler/src/layout/district.ts`, beside `BLOCK_MULTI_RECT`).
-  The trial says the r5 document goes 45 → 55 terraces (buildingBlocks
-  +18 %, physics clean); 3 is out (a 2-block seam holds water — `T110`).
-  The flip commit must carry: (a) a test pinning "a kerb seam does not
-  split a block" on a synthetic field (style of
-  `packages/compiler/test/deep-blocks.test.ts`); (b) the nine law-5
-  shasums (`<scratchpad>/bi/bi.sh <out>` compiles them; `bi/before/SHASUMS`
-  is the reference) with every moved world attributed — expect the
-  `stepped` and relief-elected quarters to move; (c) regenerated
-  ground-probe baselines only where their worlds moved, each attributed;
-  (d) a before/after render pair for r5 and for each moved k1 world, read
-  not-worse by the instrument; (e) the 13 terraces still lost at 2
-  attributed (7 on `retaining@2` seams — walls, correct; 3 single-level:
-  `terrace_122_-132` → two infills, `terrace_16_-57` → four infills + an
-  alley, `terrace_53_-57` → a bare block/plaza; the rest across 1–5 blocks
-  of election relief); (f) FULL suite. Then the `I512` ruined-shell probe
-  (F4), montfort's hillside replan and hellenist's density (§10.2), then the
-  icon metric (§10.3).
-- **Last commit:** 19fb6ce (unit 2). Convention: this line names the
+- **In flight:** nothing — unit 4 (the flip) is committed.
+- **Next unit:** unit 5 — spec §10.2, second item: **montfort's hillside
+  replan** (T4: one keep and five houses in a full circuit,
+  `docs/decks/montfort_hill_k1/`; the before-sample `walled_medieval_city`
+  reads ~12 buildings in a full wall). montfort_k1 was byte-identical at the
+  kerb flip, so its sparsity has another cause. Probe first: the compile
+  report's district stats (blocks, lots, lotsDropped, bareBlocks, terraces),
+  its `levels`/`seams`, `W527 WALLED_QUARTER_SPARSE` and the walled-coverage
+  numbers, then the lot planner on that hillside (`hillside` site plan,
+  `frontageLots`, the leaf cap). Compare against troy_r22 at the flip (45
+  buildings inside its wall). Bug → code-first under law 5; feature → staged
+  or proposed. Open a station 7 (walled_medieval_city) read in
+  `docs/decks/before-sample/VERDICT.md` with the result. After that:
+  hellenist's density (§10.2), the `I512` street probe (F4), then the icon
+  metric and the rules-only kit (§10.3).
+- **Last commit:** 6019bc8 (unit 3). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
 - **Spend:** $2.29 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
-- **Open decisions for Kai:** none.
+- **Open decisions for Kai:** none. (Kai's post-hoc veto is open on D12.)
 - **Findings queue (law 1: bugs before anything else):**
   - F1 — `railway_town` (seed 312) authored one-shot, kept 3 programs, then
     the emit refused with `LOAM-T110 UNSTABLE_FLUID` (71 canal-water blocks
     would flow); the CLI labels it a compiler bug. Document and an
     `--allow-unstable` world are recorded. Fix code-first in its own unit.
-  - F2 — all four anchors differ at HEAD. **Metropolis: attributed, read
-    WORSE, lever found** (unit 3: kerb seams from the election split blocks
-    before subdivision; `SEAM_BLOCK_MIN_DROP` landed at 1) → unit 4 flips
-    it. Hellenist (4 regions), troy (2), pirates (3): unattributed until
-    their stations.
+  - F2 — all four anchors differ at HEAD. **Metropolis: fixed as far as the
+    ratified laws allow** (units 3–4: `SEAM_BLOCK_MIN_DROP = 2`, r5 45 → 55
+    terraces; 13 attributed as an accepted residual, D12). Troy and pirates
+    moved with the flip (both better); hellenist untouched — their own
+    anchor diffs are still unattributed until their stations.
   - F3 — authoring regression on the metropolis prompt, lost 3-of-3 at kit
     c22cb4fe: the program-backed skyscraper-skeleton field, the river,
     `era: modern` (now `far_future`), unnamed decayed generators (now six
@@ -102,6 +97,21 @@ running state. The NOW block is rewritten at the end of every turn.
 - **D10 (unit 3):** the switch lands in its own commit at the off-state
   (law 5), FULL suite run for it; the flip gets its own commit, test,
   shasums, renders and suite (unit 4). Undo: n/a.
+- **D11 (unit 4):** `empty-block-law.test.ts`'s pinned census (bare 162 /
+  redrawn 5 / dressed 152, itself re-pinned twice before "with cause") is
+  re-pinned a third time at bare 38 / redrawn 14 / dressed 26 with the cause
+  written in the test, in its own convention — the flip *answers* the
+  fixture's bare blocks, it does not hide them. Undo: revert the test hunk.
+- **D12 (unit 4):** the 13 r5 terraces still lost at 2 are NOT chased:
+  seven are two-block walls (the trial at 3 released water), three fell to
+  `BLOCK_MULTI_RECT` / the empty-block law / the leaf cap, three span mixed
+  election relief — each a ratified law; the residual (−13 % building blocks
+  vs the anchor) is accepted and written down. Undo: Kai's veto here; a
+  proposal per law if he wants them back.
+- **D13 (unit 4):** the FULL suite at the flipped bytes had exactly one
+  failure, the D11 census; the file was re-run green after the re-pin
+  rather than the whole suite (same dist, same test set, one expectation
+  changed). Undo: n/a.
 
 ## SPEND
 
@@ -110,6 +120,7 @@ running state. The NOW block is rewritten at the end of every turn.
 | 1 | before-sample: 11 golden generates (10 worlds + 1 document), 4 anchor recompiles (free) | 2.19 | 2.19 |
 | 2 | metropolis bisection: one authoring-only roll (metro-roll3); recompiles, renders, bisect free | 0.10 | 2.29 |
 | 3 | the lever landed off — compiles and the FULL suite only | 0.00 | 2.29 |
+| 4 | the flip — compiles, renders, baselines, the FULL suite | 0.00 | 2.29 |
 
 ## VERDICTS
 
@@ -177,3 +188,19 @@ running state. The NOW block is rewritten at the end of every turn.
   COUNTS `Test Files 332 passed | 1 skipped (333)`, `Tests 5622 passed | 31
   skipped (5653)`. Files: `packages/compiler/src/layout/district.ts`,
   `docs/decks/anchors/METROPOLIS-R5-BISECTION-2026-08-25.md` (§C). Spend $0.
+- **unit 4 — the flip (2026-08-25):** `SEAM_BLOCK_MIN_DROP` 1 → 2, gate
+  factored into `boundingSeams()`, pinned by
+  `packages/compiler/test/seam-blocking.test.ts` (5 tests on real
+  `levelSeams` output). Four of nine law-5 worlds moved, all attributed
+  (bisection §D): r5 45 → 55 terraces; **troy_r22 31 → 45 buildings inside
+  its wall, `W527 WALLED_QUARTER_SPARSE` silent** (T4); pirates_r22 +1,
+  troy_k1 +1, pirates_k1 +2. Ground-probe baselines troy + pirates
+  regenerated and attributed (new seats at delta 0/−1; floaters +31 props);
+  hellenist unchanged. `empty-block-law` census re-pinned with cause (D11).
+  Render pairs read by the instrument (r5 north-east rows regain their
+  blocks; Troy's bare blocks carry roofs). Tests: FULL suite COUNTS at the
+  flipped bytes `Test Files 1 failed | 332 passed | 1 skipped (334)`,
+  `Tests 1 failed | 5626 passed | 31 skipped (5658)` — the one failure is
+  the D11 census, re-run green `43 passed (43)`; seam-blocking `5 passed`.
+  Files: `layout/district.ts`, two tests, two baselines, bisection §D,
+  VERDICT station 1. Spend $0.

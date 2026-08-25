@@ -193,10 +193,24 @@ describe("a walled quarter leaves no block bare", () => {
     // escapes either side. Nothing here is A5's doing: this fixture hands
     // `solveDistricts` no water mask, so every clause of the wet invariant is
     // vacuous over it, and the whole delta is the flip's.
+    //
+    // **Re-pinned a third time at `SEAM_BLOCK_MIN_DROP` 1 → 2** (the Stocktake
+    // Run, `docs/decks/anchors/METROPOLIS-R5-BISECTION-2026-08-25.md` §D), and
+    // the cause is the paragraph above run *forwards* again. The election
+    // still gives this ramp a step every fourteen columns, but a one-block
+    // step is a kerb, and a kerb no longer goes into `blocked` before
+    // `blocksOf` — so a block that steps by one is one block with one plane
+    // again, and the first-tier lot draw stands buildings on it: **bare
+    // 162 → 38**, below even the tie's 51. The answering tiers follow: the
+    // re-draw finds whole lots (**redrawn 5 → 14**) and the dressing tier has
+    // less left to pick up (**dressed 152 → 26**). 40 answers for 38 bare
+    // blocks: for the first time the sum clears `bare` with no
+    // `MIN_INFILL_SIDE` escape left on this fixture. The two-block and taller
+    // seams still bound their blocks, which is why the count is not zero.
     expect({ bare, redrawn, dressed: dressedCount }).toEqual({
-      bare: 162,
-      redrawn: 5,
-      dressed: 152,
+      bare: 38,
+      redrawn: 14,
+      dressed: 26,
     });
     // The direction of the law still holds where it can be stated without the
     // remainder tier's padding: the re-draw and the dressings between them
