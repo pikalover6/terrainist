@@ -1,0 +1,848 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "glowcap_vale",
+    "worldSeed": 307,
+    "prompt": "A glowing mushroom vale where a strange village has grown between the caps.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.35,
+    "formality": 0.1,
+    "climate": {
+      "humidity": 0.8,
+      "temperature": 0.2
+    },
+    "character": {
+      "label": "glowing mushroom vale village",
+      "materialTheme": "temperate_timber",
+      "formPacks": [
+        "swamp_witch"
+      ],
+      "urbanForm": "grown",
+      "flora": {
+        "prefer": [
+          "mushroom_giant_red",
+          "mushroom_shelf_brown",
+          "glowcap"
+        ]
+      },
+      "archetypes": {
+        "prefer": [
+          "mushroom_house",
+          "witch_hut",
+          "stilt_house",
+          "cottage",
+          "apothecary",
+          "watchtower"
+        ]
+      },
+      "props": {
+        "prefer": [
+          "standing_stones",
+          "cairn",
+          "well_head",
+          "notice_board"
+        ]
+      }
+    },
+    "tokens": {
+      "terrain": "a secluded mountain vale nestled between steep ridges, sheltered beneath a canopy of giant glowing mushrooms",
+      "icons": "rustic wooden cottages and stilt dwellings built between and around giant mushroom stems; rope bridges and elevated walkways connecting mushroom caps; spore lanterns illuminating the vale floor"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": "minecraft:podzol",
+      "ground.subsurface": "minecraft:dirt",
+      "road.surface": "minecraft:dirt_path",
+      "road.shoulder": "minecraft:coarse_dirt",
+      "plaza.path": "minecraft:rooted_dirt"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "The Glowing Mushroom Vale",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "a secluded highland vale surrounded by protective ridges",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 74,
+          "amplitude": 44,
+          "octaves": 5,
+          "frequency": 0.0032,
+          "gain": 0.48,
+          "erosionPasses": 2,
+          "warp": {
+            "amount": 28,
+            "frequency": 0.0035
+          },
+          "cliffThreshold": 54,
+          "soilDepth": 4,
+          "beachWidth": 3,
+          "snowLineFraction": 0.95
+        },
+        "children": [
+          {
+            "id": "ridge_north",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the northern sheltering mountain wall",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.12,
+                  0.16
+                ],
+                [
+                  0.5,
+                  0.08
+                ],
+                [
+                  0.88,
+                  0.16
+                ]
+              ],
+              "width": 64,
+              "height": 52,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "ridge_south",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the southern ridge enclosing the vale",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.12,
+                  0.84
+                ],
+                [
+                  0.5,
+                  0.92
+                ],
+                [
+                  0.88,
+                  0.84
+                ]
+              ],
+              "width": 64,
+              "height": 52,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "ridge_west",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the western ridge",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.1,
+                  0.22
+                ],
+                [
+                  0.06,
+                  0.5
+                ],
+                [
+                  0.1,
+                  0.78
+                ]
+              ],
+              "width": 56,
+              "height": 48,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "ridge_east",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the eastern ridge",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.9,
+                  0.22
+                ],
+                [
+                  0.94,
+                  0.5
+                ],
+                [
+                  0.9,
+                  0.78
+                ]
+              ],
+              "width": 56,
+              "height": 48,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "vale_hollow",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the sheltered depression of the vale",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 140,
+              "depth": 14,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "village_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the plateau holding the fungal village",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.48,
+                0.5
+              ],
+              "radius": 88,
+              "height": 6,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "spore_pool",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "a small clear pond in the hollow",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.36,
+                0.42
+              ],
+              "radius": 24,
+              "depth": 6,
+              "water": true,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0015
+        }
+      },
+      {
+        "id": "glowing_fungal_forest",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "the glowing mushroom canopy over the vale",
+        "params": {
+          "area": {
+            "at": [
+              0.5,
+              0.5
+            ],
+            "radius": 190
+          },
+          "density": 0.16,
+          "spacing": 4,
+          "clumping": 0.65,
+          "maxSlope": 30,
+          "edgeFalloff": 24,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.22,
+            "flowers": 0.08,
+            "deadwood": 0.06
+          },
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "ancient_glowcap",
+                  "shape": "glowcap",
+                  "weight": 3
+                },
+                {
+                  "id": "giant_red_cap",
+                  "shape": "mushroom_giant_red",
+                  "weight": 2
+                }
+              ]
+            },
+            "understory": {
+              "species": [
+                {
+                  "id": "moss_shrub",
+                  "shape": "hazel_shrub"
+                }
+              ],
+              "density": 0.08
+            },
+            "floor": "glow"
+          },
+          "species": [
+            {
+              "id": "brown_shelf_mushroom",
+              "shape": "mushroom_shelf_brown",
+              "weight": 4
+            },
+            {
+              "id": "weeping_spore_willow",
+              "shape": "willow_weeping",
+              "weight": 1
+            },
+            {
+              "id": "pale_spore_birch",
+              "shape": "birch_slim",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "outer_wilderness_pines",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse spruce on the high surrounding ridges",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 5,
+          "clumping": 0.5,
+          "maxSlope": 35,
+          "elevation": [
+            2,
+            120
+          ],
+          "edgeFalloff": 12,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "species": [
+            {
+              "id": "ridge_spruce",
+              "shape": "spruce_tall",
+              "weight": 2
+            },
+            {
+              "id": "scattered_glowcap",
+              "shape": "glowcap",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "spore_square",
+        "kind": "primitive",
+        "label": "the central clearing and spore circle",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            22,
+            22
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "elder_mushroom_home",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the elder dwelling carved into a giant toadstool",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            16,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "hip"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "spore_square",
+            "gap": [
+              2,
+              8
+            ]
+          },
+          {
+            "facing": "spore_square"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "mushroom_house",
+          "house"
+        ]
+      },
+      {
+        "id": "stilt_dwelling_north",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a stilt hut perched above the damp floor",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "spore_square",
+            "gap": [
+              2,
+              8
+            ]
+          },
+          {
+            "facing": "spore_square"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "witch_hut",
+          "stilt_house",
+          "house"
+        ]
+      },
+      {
+        "id": "spore_apothecary",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the apothecary brewing drafts from glow-caps",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            10,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "basement": {
+            "depth": 4,
+            "style": "root_cellar"
+          }
+        },
+        "constraints": [
+          {
+            "adjacent_to": "spore_square",
+            "gap": [
+              1,
+              9
+            ]
+          },
+          {
+            "facing": "spore_square"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "apothecary",
+          "trade"
+        ]
+      },
+      {
+        "id": "herb_drying_loft",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a drying loft for strange fungal herbs and lichen",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            13
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "spore_square",
+            "min": 8,
+            "max": 45
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "granary",
+          "store"
+        ]
+      },
+      {
+        "id": "moss_cottage_east",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a cottage overgrown with velvety moss",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            11,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "spore_square",
+            "min": 8,
+            "max": 48
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "cottage",
+          "house"
+        ]
+      },
+      {
+        "id": "moss_cottage_west",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a low cottage tucked beneath an arching stalk",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "spore_square",
+            "min": 10,
+            "max": 52
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "cottage",
+          "house"
+        ]
+      },
+      {
+        "id": "alchemists_spire",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a tall tower tapping the luminescence of giant caps",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            19,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "hip",
+          "basement": {
+            "depth": 4,
+            "style": "vault"
+          }
+        },
+        "constraints": [
+          {
+            "distance": "spore_square",
+            "min": 14,
+            "max": 62
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "alchemists_tower",
+          "wizard"
+        ]
+      },
+      {
+        "id": "vale_watchtower",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a wooden lookout keeping watch over the fungal vale",
+        "optional": true,
+        "envelope": {
+          "shape": "box",
+          "size": [
+            7,
+            19,
+            7
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "distance": "spore_square",
+            "min": 36,
+            "max": 90
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "max",
+            "blend": 6
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "watchtower",
+          "lookout"
+        ]
+      },
+      {
+        "id": "coven_circle",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "an ancient stone circle illuminated by fungal growth",
+        "params": {
+          "prop": "standing_stones",
+          "zone": "north",
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "vale_cairn",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a lichen-covered waystone cairn",
+        "params": {
+          "prop": "cairn",
+          "zone": "south",
+          "jitter": 0.25
+        }
+      },
+      {
+        "id": "fungal_well",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a covered spring well on the square",
+        "params": {
+          "prop": "well_head",
+          "zone": "center",
+          "jitter": 0.1
+        }
+      },
+      {
+        "id": "village_notice",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a rustic board for foraging charts",
+        "params": {
+          "prop": "notice_board",
+          "zone": "center",
+          "jitter": 0.08
+        }
+      },
+      {
+        "id": "fungal_paths",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "lantern-lit earthen tracks winding between stems and doors",
+        "params": {
+          "anchors": [
+            "spore_square",
+            "#tag:house",
+            "spore_apothecary",
+            "alchemists_spire"
+          ],
+          "pattern": "organic",
+          "width": 2,
+          "lanterns": true,
+          "lanternSpacing": 12
+        }
+      }
+    ]
+  }
+}

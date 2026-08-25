@@ -1,0 +1,217 @@
+{
+  "id": "metropolis_hideout",
+  "family": "metropolis_hideout",
+  "kit": "settlement",
+  "prompt": "A high-tech apocalyptic hideout in the massively overgrown ruins of a metropolis.",
+  "seed": 304,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "cache",
+    "value": {
+      "era": "far_future",
+      "wealth": 0.4,
+      "decline": 0.9,
+      "formality": 0.3,
+      "climate": {
+        "humidity": 0.7
+      },
+      "character": {
+        "label": "overgrown post-apocalyptic high-tech hideout",
+        "materialTheme": "modern_city",
+        "formPacks": [
+          "alien_scifi"
+        ],
+        "archetypes": {
+          "prefer": [
+            "bunker_complex",
+            "laboratory",
+            "field_station",
+            "hydroponics_bay",
+            "watchtower",
+            "office",
+            "apartment_block"
+          ],
+          "forbid": [
+            "cottage",
+            "manor",
+            "tavern",
+            "church",
+            "windmill"
+          ]
+        },
+        "flora": {
+          "prefer": [
+            "understory",
+            "emergent",
+            "old_growth"
+          ]
+        },
+        "motifs": {
+          "massing": "blocky",
+          "windowRhythm": "sparse"
+        },
+        "urbanForm": "grid"
+      },
+      "tokens": {
+        "fittings": "blast_door on the bunker_complex; airlock_vestibule on the laboratory",
+        "infra": "barricade_line across the fractured boulevard; quarantine_fence around the reinforced perimeter",
+        "terrain": "a ruined metropolis grid of shattered skyscrapers and collapsed elevated roads choked with deep canopy forest and dense undergrowth",
+        "icons": "a reinforced high-tech hideout nestled in the hollow base of a ruined skyscraper; solar panels and satellite dishes tangled in vines; defensive floodlights and sensor towers hidden in the foliage"
+      }
+    }
+  },
+  "intentUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "reasoningTokens": 0,
+    "cost": 0,
+    "cached": true
+  },
+  "menu": {
+    "injected": true,
+    "ids": 19,
+    "estimatedTokens": 804,
+    "packs": [
+      "alien_scifi"
+    ],
+    "eraClass": "far_future",
+    "menuIds": [
+      "crop_circle",
+      "quarantine_fence",
+      "containment_tent",
+      "field_lab_trailer",
+      "sensor_mast",
+      "dish_array",
+      "xeno_spire",
+      "hive_mound",
+      "bio_pod_cluster",
+      "crash_furrow",
+      "barricade_line",
+      "sandbag_emplacement",
+      "mobile_command_post",
+      "blast_door",
+      "hydroponics_bay",
+      "sentry_turret",
+      "airlock_vestibule",
+      "maglev_pylon",
+      "derelict_mech"
+    ]
+  },
+  "attempts": 2,
+  "diagnostics": [
+    [
+      {
+        "code": "LOAM-T204",
+        "name": "BAD_CONSTRAINT",
+        "severity": "error",
+        "nodePath": "world.skyneedle_hideout.constraints[1]"
+      },
+      {
+        "code": "LOAM-T204",
+        "name": "BAD_CONSTRAINT",
+        "severity": "error",
+        "nodePath": "world.comm_dish_array.constraints[1]"
+      },
+      {
+        "code": "LOAM-T008",
+        "name": "UNKNOWN_KEY",
+        "severity": "error",
+        "nodePath": "world.solar_power_farm.params"
+      },
+      {
+        "code": "LOAM-T008",
+        "name": "UNKNOWN_KEY",
+        "severity": "error",
+        "nodePath": "world.auxiliary_wind_turbine.params"
+      }
+    ],
+    []
+  ],
+  "usage": {
+    "promptTokens": 175894,
+    "completionTokens": 16975,
+    "reasoningTokens": 8238,
+    "cost": 0.09778837500000001
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 21,
+    "maxDepth": 2,
+    "generators": [
+      "authored:dish_array_outpost",
+      "authored:overgrown_skyneedle_base",
+      "building.grammar@0",
+      "infra.entry@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "apartment_block",
+      "botanical_garden",
+      "brutalist_block",
+      "bunker_complex",
+      "cottage",
+      "data_center",
+      "laboratory",
+      "office",
+      "parking_garage",
+      "skyscraper",
+      "subway_station"
+    ],
+    "archetypesInCatalog": 11,
+    "formPacks": [
+      "alien_scifi"
+    ],
+    "props": [
+      "solar_array",
+      "wind_turbine"
+    ],
+    "species": [
+      "jungle_bulk",
+      "spreading_oak",
+      "weeping_willow",
+      "wild_birch",
+      "wild_oak"
+    ],
+    "envelopes": [
+      "512x512",
+      "260x240",
+      "15x14x15",
+      "13x12x17",
+      "15x13x19",
+      "13x11x13"
+    ],
+    "constraints": 6,
+    "constraintKinds": [
+      "at",
+      "blend",
+      "distance",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform"
+    ],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 0,
+    "programReferences": 2,
+    "conformsTrue": 0,
+    "labels": 20,
+    "eras": [
+      "far_future"
+    ],
+    "bytes": 9339
+  },
+  "wallMs": 306161
+}

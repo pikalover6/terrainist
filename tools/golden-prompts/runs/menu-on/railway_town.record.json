@@ -1,0 +1,206 @@
+{
+  "id": "railway_town",
+  "family": "new/alias",
+  "kit": "settlement",
+  "prompt": "A soot-blackened industrial town where the railway meets the canal.",
+  "seed": 312,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "cache",
+    "value": {
+      "era": "industrial",
+      "wealth": 0.35,
+      "decline": 0.25,
+      "formality": 0.5,
+      "character": {
+        "label": "soot-blackened canal and rail town",
+        "materialTheme": "temperate_timber",
+        "urbanForm": "canal",
+        "archetypes": {
+          "prefer": [
+            "warehouse",
+            "tavern",
+            "cottage",
+            "watchtower"
+          ]
+        },
+        "props": {
+          "prefer": [
+            "cart",
+            "notice_board"
+          ]
+        },
+        "motifs": {
+          "roofType": "gable",
+          "massing": "blocky",
+          "windowRhythm": "regular",
+          "ornamentDensity": 0.2
+        }
+      },
+      "tokens": {
+        "terrain": "a commercial canal network intersecting a railway corridor and freight rail lines",
+        "icons": "soot-stained brick warehouses, smoking factory chimneys, iron rail bridges over the canal, barge docks, coal yards and rail depots"
+      }
+    }
+  },
+  "intentUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "reasoningTokens": 0,
+    "cost": 0,
+    "cached": true
+  },
+  "menu": {
+    "injected": true,
+    "ids": 58,
+    "estimatedTokens": 2266,
+    "packs": [],
+    "eraClass": "industrial",
+    "menuIds": [
+      "jolly_roger_mast",
+      "hedgerow",
+      "logging_camp",
+      "false_front_saloon",
+      "gallows",
+      "dry_stone_wall",
+      "log_landing",
+      "boardwalk",
+      "gibbet_cage",
+      "field_gate",
+      "sawpit",
+      "water_tank_trestle",
+      "careening_beach",
+      "cart_track",
+      "fire_lookout_tower",
+      "assay_office",
+      "beached_wreck",
+      "cow_byre",
+      "stump_field",
+      "stamp_mill",
+      "cannon_battery",
+      "duck_pond",
+      "waystation",
+      "placer_claim",
+      "powder_magazine",
+      "midden_heap",
+      "hunting_lodge",
+      "telegraph_office",
+      "martello_tower",
+      "dutch_barn",
+      "spar_pole",
+      "livery_stable",
+      "chandlery",
+      "smokehouse",
+      "hunters_cache",
+      "wagon_shop",
+      "sail_loft",
+      "dairy",
+      "mission_church",
+      "fish_drying_rack",
+      "sheep_dip",
+      "cantina",
+      "salt_house",
+      "wool_shed",
+      "boot_hill_row",
+      "treasure_cache",
+      "staddle_granary",
+      "dugout_shanty",
+      "smugglers_landing",
+      "hop_yard",
+      "capstan",
+      "stock_pens",
+      "treadwheel_crane",
+      "well_sweep",
+      "anchor_stack",
+      "daymark",
+      "harbour_chain_tower",
+      "whalebone_arch"
+    ]
+  },
+  "attempts": 1,
+  "diagnostics": [
+    []
+  ],
+  "usage": {
+    "promptTokens": 84683,
+    "completionTokens": 8792,
+    "reasoningTokens": 5178,
+    "cost": 0.048241125
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 23,
+    "maxDepth": 2,
+    "generators": [
+      "building.grammar@0",
+      "infra.entry@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "brickworks",
+      "coal_tipple",
+      "cottage",
+      "factory_hall",
+      "foundry",
+      "machine_shop",
+      "roundhouse",
+      "sawmill",
+      "tavern",
+      "townhouse",
+      "train_station",
+      "warehouse"
+    ],
+    "archetypesInCatalog": 12,
+    "formPacks": [],
+    "props": [
+      "barge",
+      "bollard_row",
+      "freight_car",
+      "locomotive",
+      "log_pile",
+      "notice_board"
+    ],
+    "species": [
+      "dark_oak",
+      "lone_birch",
+      "scrub_pine"
+    ],
+    "envelopes": [
+      "512x512",
+      "220x200",
+      "15x13x21",
+      "13x11x17",
+      "15x14x21",
+      "13x12x17"
+    ],
+    "constraints": 2,
+    "constraintKinds": [
+      "blend",
+      "reference",
+      "terrain_conform",
+      "zone"
+    ],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 0,
+    "programReferences": 0,
+    "conformsTrue": 0,
+    "labels": 22,
+    "eras": [
+      "industrial"
+    ],
+    "bytes": 7699
+  },
+  "wallMs": 132152
+}

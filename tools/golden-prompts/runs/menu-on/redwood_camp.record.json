@@ -1,0 +1,210 @@
+{
+  "id": "redwood_camp",
+  "family": "redwood_camp",
+  "kit": "settlement",
+  "prompt": "An ancient forest of colossal redwoods with a small logging camp at its edge.",
+  "seed": 306,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "cache",
+    "value": {
+      "era": "industrial",
+      "wealth": 0.35,
+      "formality": 0.1,
+      "climate": {
+        "biome": "minecraft:old_growth_spruce_taiga",
+        "temperature": 0.25,
+        "humidity": 0.7,
+        "snow": "never"
+      },
+      "character": {
+        "label": "redwood logging camp",
+        "materialTheme": "boreal_pine",
+        "formPacks": [
+          "wilds_camps"
+        ],
+        "flora": {
+          "prefer": [
+            "emergent",
+            "ancient",
+            "old_growth",
+            "spruce_ancient",
+            "giant"
+          ]
+        },
+        "urbanForm": "linear"
+      },
+      "tokens": {
+        "terrain": "a primeval forest of colossal redwoods with a logging camp clearing at its perimeter",
+        "infra": "cut_over_ground clearing surrounding the camp; cart_track running into the deep timber",
+        "icons": "towering redwood canopy, log stacks, sawpits, bunk cabins, and timber skid trails"
+      }
+    }
+  },
+  "intentUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "reasoningTokens": 0,
+    "cost": 0,
+    "cached": true
+  },
+  "menu": {
+    "injected": true,
+    "ids": 58,
+    "estimatedTokens": 2279,
+    "packs": [
+      "wilds_camps"
+    ],
+    "eraClass": "industrial",
+    "menuIds": [
+      "logging_camp",
+      "log_landing",
+      "sawpit",
+      "fire_lookout_tower",
+      "stump_field",
+      "waystation",
+      "hunting_lodge",
+      "spar_pole",
+      "hunters_cache",
+      "jolly_roger_mast",
+      "hedgerow",
+      "false_front_saloon",
+      "gallows",
+      "dry_stone_wall",
+      "boardwalk",
+      "gibbet_cage",
+      "field_gate",
+      "water_tank_trestle",
+      "careening_beach",
+      "cart_track",
+      "assay_office",
+      "beached_wreck",
+      "cow_byre",
+      "stamp_mill",
+      "cannon_battery",
+      "duck_pond",
+      "placer_claim",
+      "powder_magazine",
+      "midden_heap",
+      "telegraph_office",
+      "martello_tower",
+      "dutch_barn",
+      "livery_stable",
+      "chandlery",
+      "smokehouse",
+      "wagon_shop",
+      "sail_loft",
+      "dairy",
+      "mission_church",
+      "fish_drying_rack",
+      "sheep_dip",
+      "cantina",
+      "salt_house",
+      "wool_shed",
+      "boot_hill_row",
+      "treasure_cache",
+      "staddle_granary",
+      "dugout_shanty",
+      "smugglers_landing",
+      "hop_yard",
+      "capstan",
+      "stock_pens",
+      "treadwheel_crane",
+      "well_sweep",
+      "anchor_stack",
+      "daymark",
+      "harbour_chain_tower",
+      "whalebone_arch"
+    ]
+  },
+  "attempts": 1,
+  "diagnostics": [
+    []
+  ],
+  "usage": {
+    "promptTokens": 84708,
+    "completionTokens": 10232,
+    "reasoningTokens": 5416,
+    "cost": 0.0509505
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 22,
+    "maxDepth": 2,
+    "generators": [
+      "building.grammar@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "cottage",
+      "dormitory",
+      "log_cabin",
+      "sawmill",
+      "smithy",
+      "warehouse"
+    ],
+    "archetypesInCatalog": 6,
+    "formPacks": [
+      "wilds_camps"
+    ],
+    "props": [
+      "cart",
+      "covered_wagon",
+      "log_pile",
+      "notice_board",
+      "well_head"
+    ],
+    "species": [
+      "columnar_redwood",
+      "fringe_spruce",
+      "fringe_squat",
+      "squat_redwood",
+      "tall_redwood"
+    ],
+    "envelopes": [
+      "512x512",
+      "24x24",
+      "11x11x17",
+      "13x12x19",
+      "11x12x13",
+      "9x11x9",
+      "9x8x9",
+      "11x10x13"
+    ],
+    "constraints": 22,
+    "constraintKinds": [
+      "adjacent_to",
+      "blend",
+      "distance",
+      "facing",
+      "gap",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform",
+      "zone"
+    ],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 0,
+    "programReferences": 0,
+    "conformsTrue": 0,
+    "labels": 19,
+    "eras": [
+      "industrial"
+    ],
+    "bytes": 8326
+  },
+  "wallMs": 188523
+}

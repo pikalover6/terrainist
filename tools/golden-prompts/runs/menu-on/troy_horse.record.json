@@ -1,0 +1,266 @@
+{
+  "id": "troy_horse",
+  "family": "troy",
+  "kit": "settlement",
+  "prompt": "The Trojan horse in Troy, right before the soldiers emerge.",
+  "seed": 303,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "cache",
+    "value": {
+      "era": "ancient",
+      "wealth": 0.7,
+      "decline": 0.1,
+      "formality": 0.6,
+      "event": {
+        "kind": "siege",
+        "severity": 0.9,
+        "recency": 0
+      },
+      "climate": {
+        "temperature": 0.7,
+        "humidity": -0.2,
+        "snow": "never"
+      },
+      "character": {
+        "label": "Walled Troy under the Greek stratagem",
+        "materialTheme": "sun_clay",
+        "fortification": "walled",
+        "formPacks": [
+          "classical_mediterranean"
+        ],
+        "archetypes": {
+          "prefer": [
+            "peristyle_house",
+            "megaron",
+            "stoa",
+            "peripteral_temple",
+            "palaestra",
+            "olive_press"
+          ],
+          "forbid": [
+            "townhouse",
+            "terraced_row",
+            "shop_row",
+            "office",
+            "apartment_block"
+          ]
+        },
+        "motifs": {
+          "roofType": "flat",
+          "massing": "stepped",
+          "windowRhythm": "sparse",
+          "ornamentDensity": 0.4
+        },
+        "urbanForm": "grown",
+        "courtyards": 0.6,
+        "ground": "stepped"
+      },
+      "tokens": {
+        "terrain": "a walled citadel city on a coastal rise above a sandy plain; the Aegean shore and open sea in view",
+        "icons": "the colossal wooden Trojan horse brought inside the Scaean gate; monumental stone ramparts and watchtowers; royal megaron palace overlooking the city; abandoned Greek camp and beached ship hulls on the distant shore",
+        "event_direction": "Greek soldiers concealed inside the belly of the wooden horse waiting for midnight to open the gates to the returning fleet"
+      }
+    }
+  },
+  "intentUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "reasoningTokens": 0,
+    "cost": 0,
+    "cached": true
+  },
+  "menu": {
+    "injected": true,
+    "ids": 60,
+    "estimatedTokens": 2451,
+    "packs": [
+      "classical_mediterranean"
+    ],
+    "eraClass": "ancient",
+    "menuIds": [
+      "stoa",
+      "peristyle_house",
+      "megaron",
+      "propylaea",
+      "bouleuterion",
+      "peripteral_temple",
+      "tholos",
+      "sanctuary_treasury",
+      "palaestra",
+      "gymnasion",
+      "odeon",
+      "hippodrome_spina",
+      "agora_colonnade",
+      "triumphal_arch",
+      "rostra",
+      "herm_post",
+      "votive_column",
+      "column_drums",
+      "ship_shed",
+      "trireme",
+      "nymphaeum",
+      "acropolis_terrace",
+      "olive_press",
+      "pithos_store",
+      "rune_circle",
+      "pyramid",
+      "step_pyramid",
+      "great_forge",
+      "tidal_palace",
+      "ley_marker",
+      "mastaba",
+      "jaguar_temple",
+      "dwarf_hold_gate",
+      "trident_temple",
+      "crystal_outcrop",
+      "hypostyle_hall",
+      "serpent_stair",
+      "deep_hall",
+      "sea_oracle_rotunda",
+      "arcane_academy",
+      "mortuary_temple",
+      "stela_plaza",
+      "smelter_works",
+      "conch_amphitheater",
+      "summoning_hall",
+      "pylon_gate",
+      "ball_court",
+      "gem_cutter_workshop",
+      "pearl_diver_hall",
+      "arcane_library",
+      "sphinx_avenue",
+      "round_observatory",
+      "stone_brewhouse",
+      "hippocamp_stable",
+      "scrying_pool",
+      "nilometer",
+      "palace_range",
+      "miners_dormitory",
+      "tide_gate_arch",
+      "blossom_shrine"
+    ]
+  },
+  "attempts": 2,
+  "diagnostics": [
+    [
+      {
+        "code": "LOAM-T204",
+        "name": "BAD_CONSTRAINT",
+        "severity": "error",
+        "nodePath": "world.trojan_horse.constraints[1]"
+      },
+      {
+        "code": "LOAM-T204",
+        "name": "BAD_CONSTRAINT",
+        "severity": "error",
+        "nodePath": "world.scamander_farms.constraints[1]"
+      },
+      {
+        "code": "LOAM-W407",
+        "name": "CONSTRAINT_NOT_IMPLEMENTED",
+        "severity": "warning",
+        "nodePath": "world.scamander_farms.constraints[2]"
+      },
+      {
+        "code": "LOAM-T206",
+        "name": "PORT_FEATURE_NOT_IMPLEMENTED",
+        "severity": "warning",
+        "nodePath": "world.scamander_farms.ports.gate"
+      }
+    ],
+    []
+  ],
+  "usage": {
+    "promptTokens": 179349,
+    "completionTokens": 17137,
+    "reasoningTokens": 8381,
+    "cost": 0.09938775
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 23,
+    "maxDepth": 2,
+    "generators": [
+      "authored:trojan_horse",
+      "building.grammar@0",
+      "precinct.farm@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "bouleuterion",
+      "cottage",
+      "courtyard_house",
+      "hall",
+      "megaron",
+      "olive_press",
+      "palaestra",
+      "peripteral_temple",
+      "peristyle_house",
+      "sanctuary_treasury",
+      "stoa",
+      "temple"
+    ],
+    "archetypesInCatalog": 12,
+    "formPacks": [
+      "classical_mediterranean"
+    ],
+    "props": [
+      "campsite",
+      "column_drums",
+      "longship",
+      "votive_column"
+    ],
+    "species": [
+      "ancient_olive",
+      "dry_juniper",
+      "hill_oak",
+      "mountain_pine",
+      "umbrella_pine",
+      "wild_oak"
+    ],
+    "envelopes": [
+      "512x512",
+      "15x24x21",
+      "190x180",
+      "15x15x21",
+      "15x14x21",
+      "13x12x15",
+      "13x12x21",
+      "15x11x15",
+      "96x80"
+    ],
+    "constraints": 7,
+    "constraintKinds": [
+      "at",
+      "blend",
+      "distance",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform"
+    ],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 3,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 0,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 22,
+    "eras": [
+      "ancient"
+    ],
+    "bytes": 8942
+  },
+  "wallMs": 142942
+}

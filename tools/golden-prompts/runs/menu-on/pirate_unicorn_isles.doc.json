@@ -1,0 +1,750 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "pirate_vs_unicorn_isles",
+    "worldSeed": 301,
+    "prompt": "A pirate island and a unicorn island, at war.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:dirt_path",
+      "road.shoulder": "minecraft:gravel"
+    }
+  },
+  "intent": {
+    "era": "renaissance",
+    "wealth": 0.5,
+    "decline": 0.2,
+    "formality": 0.4,
+    "climate": {
+      "temperature": 0.6,
+      "humidity": 0.3,
+      "snow": "never"
+    },
+    "character": {
+      "label": "Isles at War",
+      "programs": [
+        {
+          "id": "pirate_skull_bastion",
+          "mode": "landmark",
+          "brief": "A menacing pirate coastal redoubt carved with iron-trimmed skull motifs and heavy cannon ports facing across the strait.",
+          "envelope": [
+            24,
+            22,
+            24
+          ]
+        },
+        {
+          "id": "unicorn_crystal_colossus",
+          "mode": "landmark",
+          "brief": "A towering radiant quartz and amethyst unicorn colossus with a glowing spiraling horn poised on the coastal cliff facing the pirate fleet.",
+          "envelope": [
+            20,
+            32,
+            20
+          ]
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "two distinct islands separated by a contested strait of open water",
+      "event_direction": "pirate sloops and coastal cannon batteries facing across the strait at the fortified unicorn island",
+      "infra": "cannon_battery along the pirate shore; beacon_tower and defensive_barricade along the unicorn island coastline",
+      "region_pirate_island": "era renaissance, wealth 0.35, decline 0.4, formality 0.15; materialTheme temperate_timber; formPacks [nautical_pirate]; prefer archetypes tavern, watchtower, warehouse, lighthouse; props galleon, cart; fortified buccaneer cove, ship repair yards, coastal artillery",
+      "region_unicorn_island": "era renaissance, wealth 0.85, decline 0.05, formality 0.75; materialTheme white_quartz; prefer archetypes church, manor, watchtower; props standing_stones, fountain; sacred unicorn pastures, pristine defensive ramparts and magical shrine towers"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 56,
+          "amplitude": 26,
+          "octaves": 5,
+          "frequency": 0.0035,
+          "erosionPasses": 2,
+          "continentalness": {
+            "frequency": 0.002,
+            "seaFraction": 0.58
+          },
+          "cliffThreshold": 55,
+          "soilDepth": 3,
+          "beachWidth": 4
+        },
+        "children": [
+          {
+            "id": "pirate_isle_land",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "island",
+              "at": [
+                0.26,
+                0.26
+              ],
+              "radius": 105,
+              "height": 30,
+              "profile": "sharp"
+            }
+          },
+          {
+            "id": "unicorn_isle_land",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "island",
+              "at": [
+                0.74,
+                0.74
+              ],
+              "radius": 110,
+              "height": 34,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "unicorn_high_spur",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "peak",
+              "at": [
+                0.82,
+                0.78
+              ],
+              "radius": 45,
+              "height": 24,
+              "profile": "sharp"
+            }
+          },
+          {
+            "id": "strait_channel",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.05,
+                  0.9
+                ],
+                [
+                  0.5,
+                  0.5
+                ],
+                [
+                  0.95,
+                  0.1
+                ]
+              ],
+              "width": 70,
+              "depth": 24,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0015,
+          "humidityFrequency": 0.0015
+        }
+      },
+      {
+        "id": "pirate_haven",
+        "kind": "district",
+        "label": "the pirate stronghold and buccaneer haven",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            130,
+            130
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.25,
+              0.25
+            ]
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6
+          }
+        ],
+        "params": {
+          "fabric": "grown",
+          "density": "medium",
+          "mix": [
+            "tavern",
+            "warehouse",
+            "armory",
+            "townhouse",
+            "sawmill",
+            "shipyard"
+          ],
+          "walls": {
+            "style": "palisade",
+            "margin": 8,
+            "towerPitch": 32,
+            "height": 6
+          }
+        },
+        "intent": {
+          "era": "pirate",
+          "wealth": 0.35,
+          "decline": 0.4,
+          "formality": 0.15,
+          "character": {
+            "label": "Fortified Pirate Cove",
+            "materialTheme": "temperate_timber",
+            "formPacks": [
+              "nautical_pirate"
+            ],
+            "archetypes": {
+              "prefer": [
+                "tavern",
+                "warehouse",
+                "shipyard",
+                "armory",
+                "inn"
+              ],
+              "forbid": [
+                "church",
+                "cathedral",
+                "monastery"
+              ]
+            },
+            "props": {
+              "prefer": [
+                "galleon",
+                "caravel",
+                "cart",
+                "log_pile"
+              ]
+            },
+            "motifs": {
+              "roofType": "shed",
+              "ornamentDensity": 0.2
+            }
+          }
+        },
+        "tags": [
+          "pirate",
+          "settlement"
+        ],
+        "children": [
+          {
+            "id": "black_dog_tavern",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the rowdy corsair tavern",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                11,
+                13
+              ]
+            },
+            "params": {
+              "floors": 2,
+              "roof": "gable"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "tavern",
+              "house"
+            ]
+          },
+          {
+            "id": "corsair_armory",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "gunpowder and shot store",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                11,
+                12,
+                17
+              ]
+            },
+            "params": {
+              "floors": 2,
+              "roof": "gable"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "east",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "armory"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "unicorn_citadel",
+        "kind": "district",
+        "label": "the sacred sanctuary of the unicorn realm",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            130,
+            130
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.75,
+              0.75
+            ]
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6
+          }
+        ],
+        "params": {
+          "fabric": "radial",
+          "density": "medium",
+          "mix": [
+            "crystal_shrine",
+            "beacon_spire",
+            "manor_house",
+            "cathedral",
+            "bathhouse",
+            "herbarium"
+          ],
+          "walls": {
+            "style": "masonry",
+            "margin": 10,
+            "towerPitch": 36,
+            "height": 8
+          }
+        },
+        "intent": {
+          "era": "fantasy",
+          "wealth": 0.85,
+          "decline": 0.05,
+          "formality": 0.75,
+          "climate": {
+            "temperature": 0.4,
+            "snow": "never"
+          },
+          "character": {
+            "label": "Sacred Unicorn Citadel",
+            "materialTheme": "white_quartz",
+            "formPacks": [
+              "arcane_magical"
+            ],
+            "archetypes": {
+              "prefer": [
+                "crystal_shrine",
+                "beacon_spire",
+                "manor_house",
+                "cathedral",
+                "botanical_garden"
+              ],
+              "forbid": [
+                "tavern",
+                "warehouse",
+                "tannery",
+                "cannery"
+              ]
+            },
+            "props": {
+              "prefer": [
+                "fountain",
+                "standing_stones",
+                "portal_frame",
+                "planter"
+              ]
+            },
+            "motifs": {
+              "roofType": "dome",
+              "ornamentDensity": 0.85
+            }
+          }
+        },
+        "tags": [
+          "unicorn",
+          "settlement"
+        ],
+        "children": [
+          {
+            "id": "crystal_cathedral",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "grand cathedral of radiant light",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                15,
+                17,
+                21
+              ]
+            },
+            "params": {
+              "floors": 2,
+              "roof": "gable"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "north",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "cathedral"
+            ]
+          },
+          {
+            "id": "celestial_spire",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "shining beacon spire overlooking the strait",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                7,
+                21,
+                7
+              ]
+            },
+            "params": {
+              "floors": 1,
+              "roof": "flat"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "west",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "beacon_spire"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "skull_bastion_fort",
+        "kind": "generator",
+        "generator": "authored:pirate_skull_bastion",
+        "label": "the pirate shoreline fortress aimed at the unicorn island",
+        "constraints": [
+          {
+            "at": [
+              0.38,
+              0.38
+            ]
+          },
+          {
+            "distance": "pirate_haven",
+            "min": 12,
+            "max": 60
+          }
+        ],
+        "params": {
+          "seat": "pad",
+          "face": {
+            "toward": "unicorn_citadel"
+          }
+        },
+        "tags": [
+          "landmark",
+          "military"
+        ]
+      },
+      {
+        "id": "unicorn_guardian",
+        "kind": "generator",
+        "generator": "authored:unicorn_crystal_colossus",
+        "label": "the massive quartz unicorn colossus guarding the strait",
+        "constraints": [
+          {
+            "at": [
+              0.62,
+              0.62
+            ]
+          },
+          {
+            "distance": "unicorn_citadel",
+            "min": 12,
+            "max": 60
+          }
+        ],
+        "params": {
+          "seat": "pad",
+          "face": {
+            "toward": "pirate_haven"
+          }
+        },
+        "tags": [
+          "landmark",
+          "monument"
+        ]
+      },
+      {
+        "id": "pirate_shore_battery",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "coastal cannons ringing the pirate forward bastion",
+        "params": {
+          "entry": "cannon_battery",
+          "route": {
+            "ring": "pirate_haven",
+            "margin": 14
+          }
+        }
+      },
+      {
+        "id": "unicorn_defense_barricade",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "fortified barricade across the unicorn harbor approach",
+        "params": {
+          "entry": "barricade_line",
+          "route": {
+            "across": "unicorn_citadel"
+          }
+        }
+      },
+      {
+        "id": "pirate_pier",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "pier",
+          "zone": "northwest",
+          "length": 18,
+          "width": 3
+        }
+      },
+      {
+        "id": "pirate_flagship",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the dread pirate galleon moored at the pier",
+        "params": {
+          "prop": "galleon",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "contested_buoy",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "buoy",
+          "zone": "center",
+          "jitter": 0.2,
+          "on": "water"
+        }
+      },
+      {
+        "id": "unicorn_standing_stones",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "sacred standing stone circle on unicorn island",
+        "params": {
+          "prop": "standing_stones",
+          "zone": "southeast"
+        }
+      },
+      {
+        "id": "unicorn_mana_fountain",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "glowing fountain in the unicorn citadel",
+        "params": {
+          "prop": "fountain",
+          "zone": "southeast"
+        }
+      },
+      {
+        "id": "war_roads",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "thoroughfares linking district centers to strategic redoubts",
+        "params": {
+          "anchors": [
+            "pirate_haven",
+            "unicorn_citadel",
+            "skull_bastion_fort",
+            "unicorn_guardian"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true
+        }
+      },
+      {
+        "id": "pirate_swamp_woods",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "gnarled dark oak woods of the pirate coast",
+        "params": {
+          "area": {
+            "at": [
+              0.26,
+              0.26
+            ],
+            "radius": 90
+          },
+          "density": 0.16,
+          "spacing": 3,
+          "clumping": 0.5,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.25,
+            "flowers": 0.02,
+            "deadwood": 0.15
+          },
+          "species": [
+            {
+              "id": "dark_oak",
+              "shape": "oak_spreading",
+              "weight": 3
+            },
+            {
+              "id": "coastal_spruce",
+              "shape": "spruce_squat",
+              "weight": 2
+            }
+          ]
+        }
+      },
+      {
+        "id": "unicorn_fae_grove",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "radiant enchanted fae grove on the unicorn island",
+        "params": {
+          "area": {
+            "at": [
+              0.74,
+              0.74
+            ],
+            "radius": 95
+          },
+          "density": 0.18,
+          "spacing": 4,
+          "clumping": 0.6,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.5,
+            "flowers": 0.25,
+            "deadwood": 0.01
+          },
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "fae_glowcap",
+                  "shape": "glowcap"
+                },
+                {
+                  "id": "crystal_tree",
+                  "shape": "crystal_spire"
+                }
+              ]
+            },
+            "understory": "none",
+            "floor": "glow"
+          },
+          "species": [
+            {
+              "id": "sakura_bloom",
+              "shape": "cherry_blossom",
+              "weight": 3
+            },
+            {
+              "id": "silver_birch",
+              "shape": "birch_slim",
+              "weight": 2
+            }
+          ]
+        }
+      },
+      {
+        "id": "sparse_islands_fill",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "ambient wilderness scatter",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 5,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "species": [
+            {
+              "id": "wild_oak",
+              "shape": "oak_round"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

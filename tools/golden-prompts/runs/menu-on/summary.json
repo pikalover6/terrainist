@@ -1,6 +1,6 @@
 {
   "suite": "golden-prompts-v0",
-  "label": "after-root-union",
+  "label": "menu-on",
   "model": "google/gemini-3.7-flash",
   "effort": "high",
   "intentPrepass": true,
@@ -61,14 +61,13 @@
     "ok": 11,
     "attempts": 15,
     "oneShot": 7,
-    "promptTokens": 1138477,
-    "completionTokens": 127423,
-    "cost": 0.6382138500000001,
+    "promptTokens": 1158968,
+    "completionTokens": 130216,
+    "cost": 0.6511345125000001,
     "diagnosticCodes": {
+      "LOAM-T204": 7,
       "LOAM-W407": 4,
       "LOAM-T206": 3,
-      "LOAM-T101": 1,
-      "LOAM-T204": 7,
       "LOAM-T008": 2
     }
   },
@@ -148,32 +147,116 @@
         "cost": 0,
         "cached": true
       },
-      "attempts": 1,
+      "menu": {
+        "injected": true,
+        "ids": 60,
+        "estimatedTokens": 2451,
+        "packs": [
+          "classical_mediterranean"
+        ],
+        "eraClass": "ancient",
+        "menuIds": [
+          "stoa",
+          "peristyle_house",
+          "megaron",
+          "propylaea",
+          "bouleuterion",
+          "peripteral_temple",
+          "tholos",
+          "sanctuary_treasury",
+          "palaestra",
+          "gymnasion",
+          "odeon",
+          "hippodrome_spina",
+          "agora_colonnade",
+          "triumphal_arch",
+          "rostra",
+          "herm_post",
+          "votive_column",
+          "column_drums",
+          "ship_shed",
+          "trireme",
+          "nymphaeum",
+          "acropolis_terrace",
+          "olive_press",
+          "pithos_store",
+          "rune_circle",
+          "pyramid",
+          "step_pyramid",
+          "great_forge",
+          "tidal_palace",
+          "ley_marker",
+          "mastaba",
+          "jaguar_temple",
+          "dwarf_hold_gate",
+          "trident_temple",
+          "crystal_outcrop",
+          "hypostyle_hall",
+          "serpent_stair",
+          "deep_hall",
+          "sea_oracle_rotunda",
+          "arcane_academy",
+          "mortuary_temple",
+          "stela_plaza",
+          "smelter_works",
+          "conch_amphitheater",
+          "summoning_hall",
+          "pylon_gate",
+          "ball_court",
+          "gem_cutter_workshop",
+          "pearl_diver_hall",
+          "arcane_library",
+          "sphinx_avenue",
+          "round_observatory",
+          "stone_brewhouse",
+          "hippocamp_stable",
+          "scrying_pool",
+          "nilometer",
+          "palace_range",
+          "miners_dormitory",
+          "tide_gate_arch",
+          "blossom_shrine"
+        ]
+      },
+      "attempts": 2,
       "diagnostics": [
         [
+          {
+            "code": "LOAM-T204",
+            "name": "BAD_CONSTRAINT",
+            "severity": "error",
+            "nodePath": "world.trojan_horse.constraints[1]"
+          },
+          {
+            "code": "LOAM-T204",
+            "name": "BAD_CONSTRAINT",
+            "severity": "error",
+            "nodePath": "world.scamander_farms.constraints[1]"
+          },
           {
             "code": "LOAM-W407",
             "name": "CONSTRAINT_NOT_IMPLEMENTED",
             "severity": "warning",
-            "nodePath": "world.scamander_farm.constraints[2]"
+            "nodePath": "world.scamander_farms.constraints[2]"
           },
           {
             "code": "LOAM-T206",
             "name": "PORT_FEATURE_NOT_IMPLEMENTED",
             "severity": "warning",
-            "nodePath": "world.scamander_farm.ports.gate"
+            "nodePath": "world.scamander_farms.ports.gate"
           }
-        ]
+        ],
+        []
       ],
       "usage": {
-        "promptTokens": 82621,
-        "completionTokens": 9572,
-        "reasoningTokens": 5921,
-        "cost": 0.048930375
+        "promptTokens": 179349,
+        "completionTokens": 17137,
+        "reasoningTokens": 8381,
+        "cost": 0.09938775
       },
       "resolvedModel": "google/gemini-3.7-flash",
       "census": {
-        "nodes": 18,
+        "nodes": 23,
         "maxDepth": 2,
         "generators": [
           "authored:trojan_horse",
@@ -182,71 +265,78 @@
           "prop.place@0",
           "road.network@0",
           "scatter.forest@0",
-          "scatter.program@0",
           "terrain.climate@0",
           "terrain.edit@0",
           "terrain.heightfield@0"
         ],
         "archetypes": [
-          "castle",
-          "church",
+          "bouleuterion",
           "cottage",
           "courtyard_house",
           "hall",
           "megaron",
           "olive_press",
+          "palaestra",
+          "peripteral_temple",
           "peristyle_house",
+          "sanctuary_treasury",
           "stoa",
           "temple"
         ],
-        "archetypesInCatalog": 10,
+        "archetypesInCatalog": 12,
         "formPacks": [
           "classical_mediterranean"
         ],
         "props": [
           "campsite",
+          "column_drums",
           "longship",
-          "pier"
+          "votive_column"
         ],
         "species": [
-          "dry_oak",
-          "low_juniper",
-          "scrub_juniper",
-          "shrub_hazel",
-          "spreading_oak"
+          "ancient_olive",
+          "dry_juniper",
+          "hill_oak",
+          "mountain_pine",
+          "umbrella_pine",
+          "wild_oak"
         ],
         "envelopes": [
           "512x512",
-          "220x200",
-          "15x14x19",
-          "13x14x17",
-          "13x20x19",
-          "84x84"
+          "15x24x21",
+          "190x180",
+          "15x15x21",
+          "15x14x21",
+          "13x12x15",
+          "13x12x21",
+          "15x11x15",
+          "96x80"
         ],
-        "constraints": 6,
+        "constraints": 7,
         "constraintKinds": [
-          "adjacent_to",
           "at",
+          "blend",
           "distance",
           "max",
           "min",
+          "reference",
           "terrain_conform"
         ],
         "constraintsWithStrength": 0,
         "hardConstraints": 0,
-        "forests": 2,
+        "forests": 3,
         "forestFillsAtOrAboveCoverage": 0,
         "forestRadiiBelowTwo": 0,
         "explicitArchetypeParams": 0,
         "programReferences": 1,
         "conformsTrue": 0,
-        "labels": 17,
+        "labels": 22,
         "eras": [
           "ancient"
         ],
-        "bytes": 7656
+        "bytes": 8942
       },
-      "wallMs": 54306
+      "wallMs": 142942
     },
     {
       "id": "pirate_unicorn_isles",
@@ -284,99 +374,94 @@
       },
       "menu": {
         "injected": false,
-        "reason": "flag off"
+        "reason": "empty menu (no pack, no era)",
+        "packs": [],
+        "ids": []
       },
       "attempts": 2,
       "diagnostics": [
         [
           {
-            "code": "LOAM-T101",
-            "name": "BAD_ENUM",
+            "code": "LOAM-T204",
+            "name": "BAD_CONSTRAINT",
             "severity": "error",
-            "nodePath": "world.unicorn_citadel.intent.character.motifs.windowRhythm"
+            "nodePath": "world.skull_bastion_fort.constraints[1]"
           },
           {
             "code": "LOAM-T204",
             "name": "BAD_CONSTRAINT",
             "severity": "error",
-            "nodePath": "world.unicorn_guardian_colossus.constraints[1]"
-          },
-          {
-            "code": "LOAM-T204",
-            "name": "BAD_CONSTRAINT",
-            "severity": "error",
-            "nodePath": "world.pirate_siege_battery.constraints[1]"
+            "nodePath": "world.unicorn_guardian.constraints[1]"
           }
         ],
         []
       ],
       "usage": {
-        "promptTokens": 174954,
-        "completionTokens": 18618,
-        "reasoningTokens": 8794,
-        "cost": 0.10051650000000001
+        "promptTokens": 173994,
+        "completionTokens": 17273,
+        "reasoningTokens": 8333,
+        "cost": 0.0700011375
       },
       "resolvedModel": "google/gemini-3.7-flash",
       "census": {
-        "nodes": 25,
+        "nodes": 26,
         "maxDepth": 2,
         "generators": [
-          "authored:pirate_siege_mortar",
-          "authored:unicorn_colossus",
+          "authored:pirate_skull_bastion",
+          "authored:unicorn_crystal_colossus",
           "building.grammar@0",
           "infra.entry@0",
-          "precinct.harbour@0",
           "prop.place@0",
+          "road.network@0",
           "scatter.forest@0",
-          "scatter.program@0",
           "terrain.climate@0",
           "terrain.edit@0",
           "terrain.heightfield@0"
         ],
         "archetypes": [
-          "apothecary",
+          "armory",
           "bathhouse",
           "beacon_spire",
           "cathedral",
-          "church",
           "cottage",
           "crystal_shrine",
+          "herbarium",
           "manor_house",
           "sawmill",
-          "shop_row",
-          "tannery",
+          "shipyard",
           "tavern",
           "townhouse",
-          "warehouse",
-          "watchtower"
+          "warehouse"
         ],
-        "archetypesInCatalog": 15,
+        "archetypesInCatalog": 13,
         "formPacks": [
           "arcane_magical",
           "nautical_pirate"
         ],
         "props": [
           "buoy",
-          "longship"
+          "fountain",
+          "galleon",
+          "pier",
+          "standing_stones"
         ],
         "species": [
-          "dark_pine",
-          "field_oak",
-          "pink_blossom",
-          "scrub_pine",
-          "white_birch"
+          "coastal_spruce",
+          "dark_oak",
+          "sakura_bloom",
+          "silver_birch",
+          "wild_oak"
         ],
         "envelopes": [
           "512x512",
-          "140x130",
+          "130x130",
           "13x11x13",
-          "7x19x7",
-          "140x130",
+          "11x12x17",
+          "130x130",
           "15x17x21",
-          "7x21x7",
-          "80x16x60"
+          "7x21x7"
         ],
-        "constraints": 9,
+        "constraints": 8,
         "constraintKinds": [
           "at",
           "blend",
@@ -391,18 +476,18 @@
         "forests": 3,
         "forestFillsAtOrAboveCoverage": 0,
         "forestRadiiBelowTwo": 0,
-        "explicitArchetypeParams": 2,
+        "explicitArchetypeParams": 0,
         "programReferences": 2,
         "conformsTrue": 0,
-        "labels": 23,
+        "labels": 17,
         "eras": [
           "renaissance",
           "pirate",
-          "renaissance"
+          "fantasy"
         ],
-        "bytes": 10455
+        "bytes": 9529
       },
-      "wallMs": 159075
+      "wallMs": 113553
     },
     {
       "id": "hellenist_harbour",
@@ -469,8 +554,58 @@
         "cached": true
       },
       "menu": {
-        "injected": false,
-        "reason": "flag off"
+        "injected": true,
+        "ids": 43,
+        "estimatedTokens": 1729,
+        "packs": [
+          "classical_mediterranean"
+        ],
+        "eraClass": "modern",
+        "menuIds": [
+          "stoa",
+          "peristyle_house",
+          "megaron",
+          "propylaea",
+          "bouleuterion",
+          "peripteral_temple",
+          "tholos",
+          "sanctuary_treasury",
+          "palaestra",
+          "gymnasion",
+          "odeon",
+          "hippodrome_spina",
+          "agora_colonnade",
+          "triumphal_arch",
+          "rostra",
+          "herm_post",
+          "votive_column",
+          "column_drums",
+          "ship_shed",
+          "trireme",
+          "nymphaeum",
+          "acropolis_terrace",
+          "olive_press",
+          "pithos_store",
+          "crop_circle",
+          "quarantine_fence",
+          "containment_tent",
+          "field_lab_trailer",
+          "sensor_mast",
+          "dish_array",
+          "xeno_spire",
+          "hive_mound",
+          "bio_pod_cluster",
+          "crash_furrow",
+          "barricade_line",
+          "sandbag_emplacement",
+          "mobile_command_post",
+          "blast_door",
+          "hydroponics_bay",
+          "sentry_turret",
+          "airlock_vestibule",
+          "maglev_pylon",
+          "derelict_mech"
+        ]
       },
       "attempts": 2,
       "diagnostics": [
@@ -479,36 +614,23 @@
             "code": "LOAM-T204",
             "name": "BAD_CONSTRAINT",
             "severity": "error",
-            "nodePath": "world.hellenic_port.constraints[1]"
-          },
-          {
-            "code": "LOAM-T204",
-            "name": "BAD_CONSTRAINT",
-            "severity": "error",
-            "nodePath": "world.kraken_overlord.constraints[2]"
-          },
-          {
-            "code": "LOAM-T204",
-            "name": "BAD_CONSTRAINT",
-            "severity": "error",
-            "nodePath": "world.coastal_defense_battery.constraints[1]"
+            "nodePath": "world.great_leviathan.constraints[1]"
           }
         ],
         []
       ],
       "usage": {
-        "promptTokens": 173732,
-        "completionTokens": 17047,
-        "reasoningTokens": 8696,
-        "cost": 0.069479475
+        "promptTokens": 178765,
+        "completionTokens": 18422,
+        "reasoningTokens": 8367,
+        "cost": 0.10157812499999999
       },
       "resolvedModel": "google/gemini-3.7-flash",
       "census": {
-        "nodes": 24,
+        "nodes": 23,
         "maxDepth": 2,
         "generators": [
-          "authored:kraken_colossus",
-          "authored:olympian_defense_battery",
+          "authored:leviathan_colossus",
           "building.grammar@0",
           "infra.entry@0",
           "precinct.harbour@0",
@@ -522,43 +644,43 @@
         ],
         "archetypes": [
           "apartment_block",
+          "bouleuterion",
           "cottage",
-          "council_chamber",
           "department_store",
-          "museum",
+          "nymphaeum",
           "office",
+          "palaestra",
+          "peripteral_temple",
           "shop_row",
           "skyscraper",
-          "stoa",
-          "university_hall"
+          "stoa"
         ],
-        "archetypesInCatalog": 10,
+        "archetypesInCatalog": 11,
         "formPacks": [
           "classical_mediterranean"
         ],
         "props": [
-          "buoy",
-          "helipad",
-          "statue_plinth",
-          "tugboat"
+          "bollard_row",
+          "statue_plinth"
         ],
         "species": [
-          "coastal_pine",
-          "cypress_columnar",
+          "cypress",
           "med_oak",
-          "sparse_juniper",
-          "sparse_olive_oak"
+          "stone_pine",
+          "wild_oak"
         ],
         "envelopes": [
           "512x512",
-          "320x240",
-          "21x76x19",
-          "19x16x17",
-          "17x14x19",
-          "108x18x76"
+          "340x240",
+          "21x64x21",
+          "15x14x25",
+          "19x16x25",
+          "15x12x17",
+          "96x16x64"
         ],
-        "constraints": 8,
+        "constraints": 6,
         "constraintKinds": [
+          "adjacent_to",
           "at",
           "band",
           "distance",
@@ -572,16 +694,16 @@
         "forests": 2,
         "forestFillsAtOrAboveCoverage": 0,
         "forestRadiiBelowTwo": 0,
-        "explicitArchetypeParams": 3,
-        "programReferences": 2,
+        "explicitArchetypeParams": 0,
+        "programReferences": 1,
         "conformsTrue": 0,
-        "labels": 18,
+        "labels": 19,
         "eras": [
           "modern"
         ],
-        "bytes": 8949
+        "bytes": 9343
       },
-      "wallMs": 100172
+      "wallMs": 173653
     },
     {
       "id": "alien_farm",
@@ -648,14 +770,86 @@
         "cost": 0,
         "cached": true
       },
-      "attempts": 2,
+      "menu": {
+        "injected": true,
+        "ids": 60,
+        "estimatedTokens": 2393,
+        "packs": [
+          "alien_scifi",
+          "agrarian"
+        ],
+        "eraClass": "industrial",
+        "menuIds": [
+          "crop_circle",
+          "quarantine_fence",
+          "containment_tent",
+          "field_lab_trailer",
+          "sensor_mast",
+          "dish_array",
+          "xeno_spire",
+          "hive_mound",
+          "bio_pod_cluster",
+          "crash_furrow",
+          "barricade_line",
+          "sandbag_emplacement",
+          "mobile_command_post",
+          "blast_door",
+          "hydroponics_bay",
+          "sentry_turret",
+          "airlock_vestibule",
+          "maglev_pylon",
+          "derelict_mech",
+          "hedgerow",
+          "dry_stone_wall",
+          "field_gate",
+          "cart_track",
+          "cow_byre",
+          "duck_pond",
+          "midden_heap",
+          "dutch_barn",
+          "smokehouse",
+          "dairy",
+          "sheep_dip",
+          "wool_shed",
+          "staddle_granary",
+          "hop_yard",
+          "stock_pens",
+          "well_sweep",
+          "jolly_roger_mast",
+          "logging_camp",
+          "false_front_saloon",
+          "gallows",
+          "log_landing",
+          "boardwalk",
+          "gibbet_cage",
+          "sawpit",
+          "water_tank_trestle",
+          "careening_beach",
+          "fire_lookout_tower",
+          "assay_office",
+          "beached_wreck",
+          "stump_field",
+          "stamp_mill",
+          "cannon_battery",
+          "waystation",
+          "placer_claim",
+          "powder_magazine",
+          "hunting_lodge",
+          "telegraph_office",
+          "martello_tower",
+          "spar_pole",
+          "livery_stable",
+          "chandlery"
+        ]
+      },
+      "attempts": 1,
       "diagnostics": [
         [
           {
             "code": "LOAM-W407",
             "name": "CONSTRAINT_NOT_IMPLEMENTED",
             "severity": "warning",
-            "nodePath": "world.north_holding.constraints[1]"
+            "nodePath": "world.north_holding.constraints[2]"
           },
           {
             "code": "LOAM-T206",
@@ -667,36 +861,29 @@
             "code": "LOAM-W407",
             "name": "CONSTRAINT_NOT_IMPLEMENTED",
             "severity": "warning",
-            "nodePath": "world.south_holding.constraints[1]"
+            "nodePath": "world.south_holding.constraints[2]"
           },
           {
             "code": "LOAM-T206",
             "name": "PORT_FEATURE_NOT_IMPLEMENTED",
             "severity": "warning",
             "nodePath": "world.south_holding.ports.gate"
-          },
-          {
-            "code": "LOAM-T204",
-            "name": "BAD_CONSTRAINT",
-            "severity": "error",
-            "nodePath": "world.crashed_saucer.constraints[1]"
           }
-        ],
-        []
+        ]
       ],
       "usage": {
-        "promptTokens": 175394,
-        "completionTokens": 18330,
-        "reasoningTokens": 8447,
-        "cost": 0.1001415
+        "promptTokens": 84908,
+        "completionTokens": 11791,
+        "reasoningTokens": 8500,
+        "cost": 0.053948625
       },
       "resolvedModel": "google/gemini-3.7-flash",
       "census": {
-        "nodes": 29,
+        "nodes": 31,
         "maxDepth": 2,
         "generators": [
-          "authored:crashed_saucer",
-          "authored:hovering_scout",
+          "authored:crashed_scout",
+          "authored:mothership",
           "building.grammar@0",
           "infra.entry@0",
           "precinct.farm@0",
@@ -710,42 +897,47 @@
         ],
         "archetypes": [
           "cottage",
+          "field_station",
           "general_store",
-          "infirmary",
+          "laboratory",
+          "smithy",
           "tavern",
           "town_hall",
+          "warehouse",
           "windmill"
         ],
-        "archetypesInCatalog": 6,
+        "archetypesInCatalog": 9,
         "formPacks": [
           "agrarian",
           "alien_scifi"
         ],
         "props": [
-          "cairn",
           "cart",
-          "covered_wagon",
-          "notice_board"
+          "sandbag_emplacement",
+          "well_head"
         ],
         "species": [
+          "field_birch",
           "field_oak",
-          "lone_oak",
-          "spreading_oak"
+          "valley_oak",
+          "valley_willow"
         ],
         "envelopes": [
           "512x512",
           "22x22",
-          "110x96",
-          "96x84",
-          "13x11x13",
+          "112x96",
+          "96x80",
           "13x16x13",
+          "13x11x13",
+          "11x15x11",
+          "11x10x11",
           "13x10x11",
-          "11x11x15",
-          "9x10x9",
-          "9x11x11",
-          "9x15x9"
+          "9x8x9",
+          "9x8x8",
+          "9x11x9",
+          "11x11x13"
         ],
-        "constraints": 28,
+        "constraints": 36,
         "constraintKinds": [
           "adjacent_to",
           "at",
@@ -767,13 +959,13 @@
         "explicitArchetypeParams": 0,
         "programReferences": 2,
         "conformsTrue": 0,
-        "labels": 23,
+        "labels": 27,
         "eras": [
           "industrial"
         ],
-        "bytes": 10442
+        "bytes": 11795
       },
-      "wallMs": 132554
+      "wallMs": 125817
     },
     {
       "id": "metropolis_hideout",
@@ -848,8 +1040,34 @@
         "cached": true
       },
       "menu": {
-        "injected": false,
-        "reason": "flag off"
+        "injected": true,
+        "ids": 19,
+        "estimatedTokens": 804,
+        "packs": [
+          "alien_scifi"
+        ],
+        "eraClass": "far_future",
+        "menuIds": [
+          "crop_circle",
+          "quarantine_fence",
+          "containment_tent",
+          "field_lab_trailer",
+          "sensor_mast",
+          "dish_array",
+          "xeno_spire",
+          "hive_mound",
+          "bio_pod_cluster",
+          "crash_furrow",
+          "barricade_line",
+          "sandbag_emplacement",
+          "mobile_command_post",
+          "blast_door",
+          "hydroponics_bay",
+          "sentry_turret",
+          "airlock_vestibule",
+          "maglev_pylon",
+          "derelict_mech"
+        ]
       },
       "attempts": 2,
       "diagnostics": [
@@ -858,35 +1076,42 @@
             "code": "LOAM-T204",
             "name": "BAD_CONSTRAINT",
             "severity": "error",
-            "nodePath": "world.skyline_hideout_spire.constraints[1]"
+            "nodePath": "world.skyneedle_hideout.constraints[1]"
+          },
+          {
+            "code": "LOAM-T204",
+            "name": "BAD_CONSTRAINT",
+            "severity": "error",
+            "nodePath": "world.comm_dish_array.constraints[1]"
           },
           {
             "code": "LOAM-T008",
             "name": "UNKNOWN_KEY",
             "severity": "error",
-            "nodePath": "world.hideout_solar_power.params"
+            "nodePath": "world.solar_power_farm.params"
           },
           {
             "code": "LOAM-T008",
             "name": "UNKNOWN_KEY",
             "severity": "error",
-            "nodePath": "world.hideout_wind_turbine.params"
+            "nodePath": "world.auxiliary_wind_turbine.params"
           }
         ],
         []
       ],
       "usage": {
-        "promptTokens": 175323,
-        "completionTokens": 18015,
-        "reasoningTokens": 8207,
-        "cost": 0.09952425000000001
+        "promptTokens": 175894,
+        "completionTokens": 16975,
+        "reasoningTokens": 8238,
+        "cost": 0.09778837500000001
       },
       "resolvedModel": "google/gemini-3.7-flash",
       "census": {
-        "nodes": 22,
+        "nodes": 21,
         "maxDepth": 2,
         "generators": [
-          "authored:shattered_spire_hideout",
+          "authored:dish_array_outpost",
+          "authored:overgrown_skyneedle_base",
           "building.grammar@0",
           "infra.entry@0",
           "prop.place@0",
@@ -899,20 +1124,18 @@
         ],
         "archetypes": [
           "apartment_block",
+          "botanical_garden",
           "brutalist_block",
           "bunker_complex",
           "cottage",
           "data_center",
-          "department_store",
-          "field_station",
           "laboratory",
           "office",
           "parking_garage",
-          "ruined_cottage",
           "skyscraper",
-          "watchtower"
+          "subway_station"
         ],
-        "archetypesInCatalog": 13,
+        "archetypesInCatalog": 11,
         "formPacks": [
           "alien_scifi"
         ],
@@ -921,52 +1144,45 @@
           "wind_turbine"
         ],
         "species": [
-          "jungle_broadleaf",
+          "jungle_bulk",
           "spreading_oak",
           "weeping_willow",
+          "wild_birch",
           "wild_oak"
         ],
         "envelopes": [
           "512x512",
           "260x240",
-          "17x44x15",
-          "15x36x15",
-          "11x10x11",
+          "15x14x15",
           "13x12x17",
-          "11x11x13",
-          "7x19x7"
+          "15x13x19",
+          "13x11x13"
         ],
-        "constraints": 14,
+        "constraints": 6,
         "constraintKinds": [
-          "adjacent_to",
+          "at",
           "blend",
-          "connected",
           "distance",
-          "facing",
-          "gap",
           "max",
           "min",
           "reference",
-          "style",
-          "terrain_conform",
-          "via",
-          "zone"
+          "terrain_conform"
         ],
         "constraintsWithStrength": 0,
         "hardConstraints": 0,
         "forests": 2,
-        "forestFillsAtOrAboveCoverage": 1,
+        "forestFillsAtOrAboveCoverage": 0,
         "forestRadiiBelowTwo": 0,
-        "explicitArchetypeParams": 2,
-        "programReferences": 1,
+        "explicitArchetypeParams": 0,
+        "programReferences": 2,
         "conformsTrue": 0,
         "labels": 20,
         "eras": [
           "far_future"
         ],
-        "bytes": 9701
+        "bytes": 9339
       },
-      "wallMs": 131169
+      "wallMs": 306161
     },
     {
       "id": "redwood_camp",
@@ -1022,22 +1238,87 @@
         "cached": true
       },
       "menu": {
-        "injected": false,
-        "reason": "flag off"
+        "injected": true,
+        "ids": 58,
+        "estimatedTokens": 2279,
+        "packs": [
+          "wilds_camps"
+        ],
+        "eraClass": "industrial",
+        "menuIds": [
+          "logging_camp",
+          "log_landing",
+          "sawpit",
+          "fire_lookout_tower",
+          "stump_field",
+          "waystation",
+          "hunting_lodge",
+          "spar_pole",
+          "hunters_cache",
+          "jolly_roger_mast",
+          "hedgerow",
+          "false_front_saloon",
+          "gallows",
+          "dry_stone_wall",
+          "boardwalk",
+          "gibbet_cage",
+          "field_gate",
+          "water_tank_trestle",
+          "careening_beach",
+          "cart_track",
+          "assay_office",
+          "beached_wreck",
+          "cow_byre",
+          "stamp_mill",
+          "cannon_battery",
+          "duck_pond",
+          "placer_claim",
+          "powder_magazine",
+          "midden_heap",
+          "telegraph_office",
+          "martello_tower",
+          "dutch_barn",
+          "livery_stable",
+          "chandlery",
+          "smokehouse",
+          "wagon_shop",
+          "sail_loft",
+          "dairy",
+          "mission_church",
+          "fish_drying_rack",
+          "sheep_dip",
+          "cantina",
+          "salt_house",
+          "wool_shed",
+          "boot_hill_row",
+          "treasure_cache",
+          "staddle_granary",
+          "dugout_shanty",
+          "smugglers_landing",
+          "hop_yard",
+          "capstan",
+          "stock_pens",
+          "treadwheel_crane",
+          "well_sweep",
+          "anchor_stack",
+          "daymark",
+          "harbour_chain_tower",
+          "whalebone_arch"
+        ]
       },
       "attempts": 1,
       "diagnostics": [
         []
       ],
       "usage": {
-        "promptTokens": 82428,
-        "completionTokens": 9180,
-        "reasoningTokens": 4843,
-        "cost": 0.048123
+        "promptTokens": 84708,
+        "completionTokens": 10232,
+        "reasoningTokens": 5416,
+        "cost": 0.0509505
       },
       "resolvedModel": "google/gemini-3.7-flash",
       "census": {
-        "nodes": 24,
+        "nodes": 22,
         "maxDepth": 2,
         "generators": [
           "building.grammar@0",
@@ -1054,27 +1335,24 @@
           "log_cabin",
           "sawmill",
           "smithy",
-          "tavern",
           "warehouse"
         ],
-        "archetypesInCatalog": 7,
+        "archetypesInCatalog": 6,
         "formPacks": [
           "wilds_camps"
         ],
         "props": [
           "cart",
           "covered_wagon",
-          "hitching_post",
-          "horse_trough",
           "log_pile",
           "notice_board",
           "well_head"
         ],
         "species": [
-          "columnar_pine",
-          "perimeter_pine",
-          "scrub_spruce",
-          "stout_spruce",
+          "columnar_redwood",
+          "fringe_spruce",
+          "fringe_squat",
+          "squat_redwood",
           "tall_redwood"
         ],
         "envelopes": [
@@ -1083,14 +1361,13 @@
           "11x11x17",
           "13x12x19",
           "11x12x13",
-          "13x11x13",
-          "9x9x9",
-          "13x11x15"
+          "9x11x9",
+          "9x8x9",
+          "11x10x13"
         ],
-        "constraints": 20,
+        "constraints": 22,
         "constraintKinds": [
           "adjacent_to",
-          "at",
           "blend",
           "distance",
           "facing",
@@ -1098,7 +1375,8 @@
           "max",
           "min",
           "reference",
-          "terrain_conform"
+          "terrain_conform",
+          "zone"
         ],
         "constraintsWithStrength": 0,
         "hardConstraints": 0,
@@ -1108,13 +1386,13 @@
         "explicitArchetypeParams": 0,
         "programReferences": 0,
         "conformsTrue": 0,
-        "labels": 23,
+        "labels": 19,
         "eras": [
           "industrial"
         ],
-        "bytes": 8966
+        "bytes": 8326
       },
-      "wallMs": 108795
+      "wallMs": 188523
     },
     {
       "id": "glowcap_vale",
@@ -1173,18 +1451,85 @@
         "cached": true
       },
       "menu": {
-        "injected": false,
-        "reason": "flag off"
+        "injected": true,
+        "ids": 60,
+        "estimatedTokens": 2459,
+        "packs": [
+          "swamp_witch"
+        ],
+        "eraClass": "medieval",
+        "menuIds": [
+          "witch_stilt_hut",
+          "herb_drying_loft",
+          "bog_apothecary",
+          "fen_chapel_ruin",
+          "eel_smokehouse",
+          "moss_cottage",
+          "fen_landing_stage",
+          "leech_pools",
+          "candle_workshop",
+          "black_goat_pen",
+          "fortune_tellers_tent",
+          "mangrove_root_cellar",
+          "coven_stone_circle",
+          "bone_charm_rack",
+          "waterlogged_shrine",
+          "rune_circle",
+          "hedgerow",
+          "logging_camp",
+          "torii",
+          "norse_mead_hall",
+          "great_forge",
+          "ger_round_tent",
+          "serai_court",
+          "dzong_hall",
+          "yamashiro_tenshu",
+          "ley_marker",
+          "dry_stone_wall",
+          "log_landing",
+          "zen_garden",
+          "jarls_hall",
+          "dwarf_hold_gate",
+          "khans_ger",
+          "caravan_gatehouse",
+          "prayer_wheel_gallery",
+          "machiya_shop_row",
+          "crystal_outcrop",
+          "field_gate",
+          "sawpit",
+          "tenshu_keep",
+          "longship_shed",
+          "deep_hall",
+          "cart_ger",
+          "qanat_wellhead",
+          "chorten_shrine",
+          "gojunoto_pagoda",
+          "arcane_academy",
+          "cart_track",
+          "fire_lookout_tower",
+          "castle_base_wall",
+          "turf_house",
+          "smelter_works",
+          "kumis_tent",
+          "windcatcher_house",
+          "butter_tea_kitchen",
+          "sando_torii",
+          "summoning_hall",
+          "cow_byre",
+          "stump_field",
+          "drum_tower",
+          "stave_belfry"
+        ]
       },
       "attempts": 1,
       "diagnostics": [
         []
       ],
       "usage": {
-        "promptTokens": 82419,
-        "completionTokens": 9220,
-        "reasoningTokens": 4106,
-        "cost": 0.048194625
+        "promptTokens": 84964,
+        "completionTokens": 10871,
+        "reasoningTokens": 5471,
+        "cost": 0.052244625
       },
       "resolvedModel": "google/gemini-3.7-flash",
       "census": {
@@ -1200,44 +1545,46 @@
           "terrain.heightfield@0"
         ],
         "archetypes": [
+          "alchemists_tower",
           "apothecary",
           "cottage",
+          "granary",
           "mushroom_house",
           "stilt_house",
-          "tavern",
           "watchtower",
-          "witch_hut"
+          "witch_hut",
+          "wizard_tower"
         ],
-        "archetypesInCatalog": 7,
+        "archetypesInCatalog": 9,
         "formPacks": [
           "swamp_witch"
         ],
         "props": [
-          "bench",
           "cairn",
-          "log_pile",
           "notice_board",
+          "standing_stones",
           "well_head"
         ],
         "species": [
-          "brown_bracket_shelf",
+          "brown_shelf_mushroom",
           "pale_spore_birch",
-          "scrub_shelf",
-          "slope_birch"
+          "ridge_spruce",
+          "scattered_glowcap",
+          "weeping_spore_willow"
         ],
         "envelopes": [
           "512x512",
           "22x22",
           "11x16x11",
-          "9x10x9",
-          "13x11x13",
           "11x12x11",
-          "11x13x11",
-          "11x14x13",
-          "11x16x11",
+          "9x10x9",
+          "11x12x13",
+          "9x11x9",
+          "11x11x9",
+          "9x19x9",
           "7x19x7"
         ],
-        "constraints": 25,
+        "constraints": 24,
         "constraintKinds": [
           "adjacent_to",
           "blend",
@@ -1262,9 +1609,9 @@
         "eras": [
           "medieval"
         ],
-        "bytes": 9240
+        "bytes": 9687
       },
-      "wallMs": 125916
+      "wallMs": 179292
     },
     {
       "id": "walled_medieval_city",
@@ -1317,6 +1664,75 @@
         "cost": 0,
         "cached": true
       },
+      "menu": {
+        "injected": true,
+        "ids": 60,
+        "estimatedTokens": 2429,
+        "packs": [],
+        "eraClass": "medieval",
+        "menuIds": [
+          "rune_circle",
+          "hedgerow",
+          "logging_camp",
+          "torii",
+          "norse_mead_hall",
+          "great_forge",
+          "ger_round_tent",
+          "witch_stilt_hut",
+          "serai_court",
+          "dzong_hall",
+          "yamashiro_tenshu",
+          "ley_marker",
+          "dry_stone_wall",
+          "log_landing",
+          "zen_garden",
+          "jarls_hall",
+          "dwarf_hold_gate",
+          "khans_ger",
+          "herb_drying_loft",
+          "caravan_gatehouse",
+          "prayer_wheel_gallery",
+          "machiya_shop_row",
+          "crystal_outcrop",
+          "field_gate",
+          "sawpit",
+          "tenshu_keep",
+          "longship_shed",
+          "deep_hall",
+          "cart_ger",
+          "bog_apothecary",
+          "qanat_wellhead",
+          "chorten_shrine",
+          "gojunoto_pagoda",
+          "arcane_academy",
+          "cart_track",
+          "fire_lookout_tower",
+          "castle_base_wall",
+          "turf_house",
+          "smelter_works",
+          "kumis_tent",
+          "fen_chapel_ruin",
+          "windcatcher_house",
+          "butter_tea_kitchen",
+          "sando_torii",
+          "summoning_hall",
+          "cow_byre",
+          "stump_field",
+          "drum_tower",
+          "stave_belfry",
+          "gem_cutter_workshop",
+          "horse_line",
+          "eel_smokehouse",
+          "spice_godown",
+          "monk_cell_row",
+          "dojo_hall",
+          "arcane_library",
+          "duck_pond",
+          "waystation",
+          "shoji_teahouse",
+          "norse_forge"
+        ]
+      },
       "attempts": 1,
       "diagnostics": [
         [
@@ -1324,15 +1740,15 @@
             "code": "LOAM-W407",
             "name": "CONSTRAINT_NOT_IMPLEMENTED",
             "severity": "warning",
-            "nodePath": "world.valley_farm.constraints[2]"
+            "nodePath": "world.lowland_farm.constraints[2]"
           }
         ]
       ],
       "usage": {
-        "promptTokens": 82387,
-        "completionTokens": 7600,
-        "reasoningTokens": 4538,
-        "cost": 0.045145125
+        "promptTokens": 84900,
+        "completionTokens": 9174,
+        "reasoningTokens": 6136,
+        "cost": 0.04903875
       },
       "resolvedModel": "google/gemini-3.7-flash",
       "census": {
@@ -1340,8 +1756,8 @@
         "maxDepth": 2,
         "generators": [
           "building.grammar@0",
+          "infra.entry@0",
           "precinct.farm@0",
-          "prop.place@0",
           "road.network@0",
           "scatter.forest@0",
           "terrain.climate@0",
@@ -1349,47 +1765,46 @@
           "terrain.heightfield@0"
         ],
         "archetypes": [
-          "castle",
+          "bakery",
+          "barracks",
+          "cathedral",
           "church",
           "cottage",
-          "granary",
-          "guildhall",
+          "guard_post",
           "keep",
           "manor_house",
           "shop_row",
-          "smithy",
           "tavern",
-          "townhouse"
+          "town_hall",
+          "townhouse",
+          "warehouse"
         ],
-        "archetypesInCatalog": 11,
+        "archetypesInCatalog": 13,
         "formPacks": [],
-        "props": [
-          "cart"
-        ],
+        "props": [],
         "species": [
-          "east_birch",
-          "east_oak",
+          "common_oak",
           "field_oak",
-          "field_shrub",
-          "standard_oak",
-          "valley_oak",
-          "white_birch"
+          "ridge_birch",
+          "ridge_oak",
+          "slim_birch",
+          "wild_oak"
         ],
         "envelopes": [
           "512x512",
-          "200x200",
-          "15x20x15",
-          "13x16x19",
-          "13x14x15",
-          "100x80"
+          "240x240",
+          "15x26x15",
+          "15x17x21",
+          "13x16x13",
+          "112x96"
         ],
         "constraints": 4,
         "constraintKinds": [
+          "at",
           "distance",
           "max",
           "min",
-          "terrain_conform",
-          "zone"
+          "terrain_conform"
         ],
         "constraintsWithStrength": 0,
         "hardConstraints": 0,
@@ -1403,9 +1818,9 @@
         "eras": [
           "medieval"
         ],
-        "bytes": 6105
+        "bytes": 6036
       },
-      "wallMs": 44602
+      "wallMs": 136575
     },
     {
       "id": "railway_town",
@@ -1463,22 +1878,85 @@
         "cached": true
       },
       "menu": {
-        "injected": false,
-        "reason": "flag off"
+        "injected": true,
+        "ids": 58,
+        "estimatedTokens": 2266,
+        "packs": [],
+        "eraClass": "industrial",
+        "menuIds": [
+          "jolly_roger_mast",
+          "hedgerow",
+          "logging_camp",
+          "false_front_saloon",
+          "gallows",
+          "dry_stone_wall",
+          "log_landing",
+          "boardwalk",
+          "gibbet_cage",
+          "field_gate",
+          "sawpit",
+          "water_tank_trestle",
+          "careening_beach",
+          "cart_track",
+          "fire_lookout_tower",
+          "assay_office",
+          "beached_wreck",
+          "cow_byre",
+          "stump_field",
+          "stamp_mill",
+          "cannon_battery",
+          "duck_pond",
+          "waystation",
+          "placer_claim",
+          "powder_magazine",
+          "midden_heap",
+          "hunting_lodge",
+          "telegraph_office",
+          "martello_tower",
+          "dutch_barn",
+          "spar_pole",
+          "livery_stable",
+          "chandlery",
+          "smokehouse",
+          "hunters_cache",
+          "wagon_shop",
+          "sail_loft",
+          "dairy",
+          "mission_church",
+          "fish_drying_rack",
+          "sheep_dip",
+          "cantina",
+          "salt_house",
+          "wool_shed",
+          "boot_hill_row",
+          "treasure_cache",
+          "staddle_granary",
+          "dugout_shanty",
+          "smugglers_landing",
+          "hop_yard",
+          "capstan",
+          "stock_pens",
+          "treadwheel_crane",
+          "well_sweep",
+          "anchor_stack",
+          "daymark",
+          "harbour_chain_tower",
+          "whalebone_arch"
+        ]
       },
       "attempts": 1,
       "diagnostics": [
         []
       ],
       "usage": {
-        "promptTokens": 82416,
-        "completionTokens": 11076,
-        "reasoningTokens": 6185,
-        "cost": 0.0516735
+        "promptTokens": 84683,
+        "completionTokens": 8792,
+        "reasoningTokens": 5178,
+        "cost": 0.048241125
       },
       "resolvedModel": "google/gemini-3.7-flash",
       "census": {
-        "nodes": 31,
+        "nodes": 23,
         "maxDepth": 2,
         "generators": [
           "building.grammar@0",
@@ -1491,59 +1969,45 @@
           "terrain.heightfield@0"
         ],
         "archetypes": [
-          "blast_furnace_works",
+          "brickworks",
           "coal_tipple",
           "cottage",
-          "counting_house",
           "factory_hall",
           "foundry",
           "machine_shop",
           "roundhouse",
-          "signal_box",
-          "steam_plant",
+          "sawmill",
           "tavern",
-          "terraced_row",
+          "townhouse",
           "train_station",
-          "warehouse",
-          "workhouse"
+          "warehouse"
         ],
-        "archetypesInCatalog": 15,
+        "archetypesInCatalog": 12,
         "formPacks": [],
         "props": [
           "barge",
-          "drydock",
+          "bollard_row",
           "freight_car",
-          "lamp_post",
           "locomotive",
+          "log_pile",
           "notice_board"
         ],
         "species": [
-          "hill_birch",
-          "hill_pine",
-          "scraggy_birch",
-          "stunted_oak"
+          "dark_oak",
+          "lone_birch",
+          "scrub_pine"
         ],
         "envelopes": [
           "512x512",
-          "240x220",
-          "13x12x15",
-          "13x12x15",
-          "13x11x13",
+          "220x200",
           "15x13x21",
-          "9x13x11",
+          "13x11x17",
           "15x14x21",
-          "13x14x17",
-          "13x14x19",
-          "13x13x15"
+          "13x12x17"
         ],
-        "constraints": 14,
+        "constraints": 2,
         "constraintKinds": [
-          "adjacent_to",
           "blend",
-          "distance",
-          "gap",
-          "max",
-          "min",
           "reference",
           "terrain_conform",
           "zone"
@@ -1556,13 +2020,13 @@
         "explicitArchetypeParams": 0,
         "programReferences": 0,
         "conformsTrue": 0,
-        "labels": 25,
+        "labels": 22,
         "eras": [
           "industrial"
         ],
-        "bytes": 10037
+        "bytes": 7699
       },
-      "wallMs": 157993
+      "wallMs": 132152
     },
     {
       "id": "desert_wilderness",
@@ -1598,19 +2062,25 @@
         "cost": 0,
         "cached": true
       },
+      "menu": {
+        "injected": false,
+        "reason": "empty menu (no pack, no era)",
+        "packs": [],
+        "ids": []
+      },
       "attempts": 1,
       "diagnostics": [
         []
       ],
       "usage": {
         "promptTokens": 13385,
-        "completionTokens": 3472,
-        "reasoningTokens": 2288,
-        "cost": 0.011529375
+        "completionTokens": 3821,
+        "reasoningTokens": 2784,
+        "cost": 0.01218375
       },
       "resolvedModel": "google/gemini-3.7-flash",
       "census": {
-        "nodes": 6,
+        "nodes": 5,
         "maxDepth": 2,
         "generators": [
           "scatter.forest@0",
@@ -1623,7 +2093,7 @@
         "formPacks": [],
         "props": [],
         "species": [
-          "desiccated_ironwood"
+          "scorched_ironwood"
         ],
         "envelopes": [
           "512x512"
@@ -1638,11 +2108,11 @@
         "explicitArchetypeParams": 0,
         "programReferences": 0,
         "conformsTrue": 0,
-        "labels": 4,
+        "labels": 3,
         "eras": [],
-        "bytes": 2222
+        "bytes": 1903
       },
-      "wallMs": 30272
+      "wallMs": 124294
     },
     {
       "id": "fjord_terrain",
@@ -1685,19 +2155,25 @@
         "cost": 0,
         "cached": true
       },
+      "menu": {
+        "injected": false,
+        "reason": "empty menu (no pack, no era)",
+        "packs": [],
+        "ids": []
+      },
       "attempts": 1,
       "diagnostics": [
         []
       ],
       "usage": {
         "promptTokens": 13418,
-        "completionTokens": 5293,
-        "reasoningTokens": 3112,
-        "cost": 0.014956125
+        "completionTokens": 5728,
+        "reasoningTokens": 3114,
+        "cost": 0.01577175
       },
       "resolvedModel": "google/gemini-3.7-flash",
       "census": {
-        "nodes": 10,
+        "nodes": 11,
         "maxDepth": 2,
         "generators": [
           "cave.carver@0",
@@ -1712,10 +2188,13 @@
         "props": [],
         "species": [
           "columnar_larch",
-          "crag_pine",
-          "high_scrub_spruce",
-          "squat_spruce",
-          "tall_spruce"
+          "ridge_scrub",
+          "scrub_spruce",
+          "tall_larch",
+          "tall_pine",
+          "tall_spruce",
+          "wild_scrub",
+          "wild_spruce"
         ],
         "envelopes": [
           "512x512"
@@ -1724,7 +2203,7 @@
         "constraintKinds": [],
         "constraintsWithStrength": 0,
         "hardConstraints": 0,
-        "forests": 2,
+        "forests": 3,
         "forestFillsAtOrAboveCoverage": 0,
         "forestRadiiBelowTwo": 0,
         "explicitArchetypeParams": 0,
@@ -1732,9 +2211,9 @@
         "conformsTrue": 0,
         "labels": 8,
         "eras": [],
-        "bytes": 3781
+        "bytes": 4381
       },
-      "wallMs": 47556
+      "wallMs": 104331
     }
   ]
 }

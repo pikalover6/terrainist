@@ -1,0 +1,172 @@
+{
+  "loam": "0.1",
+  "profile": "terrain",
+  "meta": {
+    "name": "salt_desert",
+    "worldSeed": 313,
+    "prompt": "A vast salt desert under a hard sun, cracked flat to the horizon, with nothing living on it.",
+    "spawn": {
+      "at": [
+        0.5,
+        0.5
+      ]
+    }
+  },
+  "intent": {
+    "climate": {
+      "biome": "minecraft:desert",
+      "temperature": 1,
+      "humidity": -1,
+      "snow": "never"
+    },
+    "character": {
+      "label": "salt desert"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": {
+        "mix": [
+          [
+            "minecraft:calcite",
+            5
+          ],
+          [
+            "minecraft:diorite",
+            2
+          ],
+          [
+            "minecraft:smooth_basalt",
+            1
+          ],
+          [
+            "minecraft:dead_brain_coral_block",
+            1
+          ]
+        ]
+      },
+      "ground.subsurface": {
+        "mix": [
+          [
+            "minecraft:diorite",
+            3
+          ],
+          [
+            "minecraft:sandstone",
+            2
+          ],
+          [
+            "minecraft:smooth_sandstone",
+            1
+          ]
+        ]
+      },
+      "ground.cliff": {
+        "mix": [
+          [
+            "minecraft:calcite",
+            3
+          ],
+          [
+            "minecraft:diorite",
+            2
+          ],
+          [
+            "minecraft:terracotta",
+            1
+          ]
+        ]
+      },
+      "ground.stone": "minecraft:diorite",
+      "ground.beach": "minecraft:calcite",
+      "ground.underwater": "minecraft:calcite"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Salt Flats Expanse",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 66,
+          "amplitude": 4,
+          "octaves": 3,
+          "frequency": 0.0012,
+          "gain": 0.3,
+          "erosionPasses": 3,
+          "soilDepth": 2,
+          "cliffThreshold": 65,
+          "beachWidth": 0
+        },
+        "children": [
+          {
+            "id": "central_playa",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "broad flat depression in the salt crust",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 180,
+              "depth": 2,
+              "water": false,
+              "flooded": "never",
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "arid",
+          "temperatureFrequency": 0.001,
+          "humidityFrequency": 0.001,
+          "latitudeGradient": 0
+        }
+      },
+      {
+        "id": "barren_waste",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "lifeless expanse",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0,
+          "spacing": 16,
+          "undergrowth": {
+            "grass": 0,
+            "flowers": 0,
+            "deadwood": 0
+          },
+          "species": [
+            {
+              "id": "scorched_ironwood",
+              "shape": "desert_ironwood",
+              "weight": 1
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

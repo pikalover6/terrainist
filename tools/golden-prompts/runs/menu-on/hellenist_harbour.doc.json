@@ -1,0 +1,725 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "thalassa_polis",
+    "worldSeed": 305,
+    "prompt": "A modern Hellenist city being invaded by sea monsters.",
+    "spawn": {
+      "at": [
+        0.5,
+        0.52
+      ]
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.beach": {
+        "mix": [
+          [
+            "minecraft:sand",
+            3
+          ],
+          [
+            "minecraft:smooth_sandstone",
+            1
+          ]
+        ]
+      },
+      "road.surface": "minecraft:smooth_stone",
+      "road.shoulder": "minecraft:polished_diorite",
+      "plaza.path": "minecraft:quartz_block",
+      "plaza.cobble": "minecraft:smooth_quartz"
+    }
+  },
+  "intent": {
+    "era": "modern",
+    "wealth": 0.8,
+    "formality": 0.75,
+    "event": {
+      "kind": "siege",
+      "severity": 0.85,
+      "recency": 0
+    },
+    "climate": {
+      "temperature": 0.6,
+      "humidity": 0.2,
+      "snow": "never"
+    },
+    "character": {
+      "label": "modern Hellenist coastal metropolis under sea monster siege",
+      "materialTheme": "modern_city",
+      "formPacks": [
+        "classical_mediterranean"
+      ],
+      "programs": [
+        {
+          "id": "leviathan_colossus",
+          "mode": "landmark",
+          "brief": "A towering primordial sea titan emerging from the harbour waves, with armored chitin crests, bioluminescent glowing gills, massive curved horns, and thrashing claws lunging toward the city shoreline.",
+          "envelope": [
+            48,
+            38,
+            48
+          ]
+        },
+        {
+          "id": "kraken_tentacle",
+          "mode": "plugin",
+          "brief": "A massive barbed sea-monster tentacle coiling up from the deep water, churning foam and grasping toward the waterfront.",
+          "envelope": [
+            14,
+            24,
+            14
+          ],
+          "count": 8
+        },
+        {
+          "id": "sea_serpent",
+          "mode": "plugin",
+          "brief": "A predatory spined sea serpent breaching above the water surface with jaws agape toward the urban boulevard.",
+          "envelope": [
+            20,
+            14,
+            20
+          ],
+          "count": 6
+        }
+      ],
+      "archetypes": {
+        "prefer": [
+          "stoa",
+          "peripteral_temple",
+          "bouleuterion",
+          "palaestra",
+          "nymphaeum"
+        ],
+        "forbid": [
+          "witch_hut",
+          "log_cabin",
+          "igloo",
+          "yurt",
+          "thatched_roundhouse"
+        ]
+      },
+      "urbanForm": "grid",
+      "motifs": {
+        "roofType": "flat",
+        "massing": "blocky",
+        "windowRhythm": "regular",
+        "ornamentDensity": 0.6
+      }
+    },
+    "tokens": {
+      "terrain": "a grand coastal metropolis fronting a deep harbour and open sea where sea monsters surface",
+      "event_direction": "giant sea monsters rise out of the ocean water attacking the harbour and waterfront avenues",
+      "infra": "barricade_line across the harbour promenade; emergency_cordon along the coastal boulevard",
+      "icons": "leviathans and sea monsters breaching along the modern docks; neoclassical porticos and high-rise stoas overlooking the bay; emergency barricades and defensive lines guarding the shore"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "coastal plain rising to a southern acropolis ridge, fronting a deep northern marine bay",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 72,
+          "amplitude": 24,
+          "octaves": 5,
+          "frequency": 0.0035,
+          "gain": 0.48,
+          "erosionPasses": 2,
+          "continentalness": {
+            "frequency": 0.001,
+            "seaFraction": 0.35
+          },
+          "cliffThreshold": 55,
+          "soilDepth": 3,
+          "beachWidth": 5,
+          "snowLineFraction": 0.95
+        },
+        "children": [
+          {
+            "id": "harbour_basin",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "deep ocean basin where the leviathans surface",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.5,
+                0.18
+              ],
+              "radius": 115,
+              "depth": 22,
+              "water": true,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "harbour_inlet",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "navigable sea channel from the deep water to the port quay",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.5,
+                  0.36
+                ],
+                [
+                  0.5,
+                  0.15
+                ],
+                "coast"
+              ],
+              "width": 75,
+              "depth": 18,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "metropolis_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "level coastal terrace for the modern Hellenist city",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.6
+              ],
+              "radius": 145,
+              "height": 7,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "acropolis_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "southern high ridge overlooking the bay",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.15,
+                  0.82
+                ],
+                [
+                  0.5,
+                  0.86
+                ],
+                [
+                  0.85,
+                  0.82
+                ]
+              ],
+              "width": 55,
+              "height": 28,
+              "profile": "sharp"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0015,
+          "humidityFrequency": 0.002,
+          "latitudeGradient": -0.2
+        }
+      },
+      {
+        "id": "hellenist_metropolis",
+        "kind": "city",
+        "label": "the modern Hellenist metropolis fronting the bay",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            340,
+            240
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.5,
+              0.62
+            ]
+          }
+        ],
+        "params": {
+          "size": "large",
+          "coastal": true,
+          "diagonals": 1,
+          "mix": [
+            "office",
+            "stoa",
+            "peripteral_temple",
+            "apartment_block",
+            "bouleuterion",
+            "palaestra",
+            "shop_row",
+            "department_store",
+            "nymphaeum"
+          ],
+          "characters": {
+            "core": [
+              "office",
+              "skyscraper",
+              "department_store",
+              "bouleuterion"
+            ],
+            "waterfront": [
+              "stoa",
+              "shop_row",
+              "food_court",
+              "nymphaeum"
+            ],
+            "civic": [
+              "peripteral_temple",
+              "bouleuterion",
+              "palaestra",
+              "museum"
+            ],
+            "industrial": [
+              "warehouse",
+              "shipyard",
+              "machine_shop"
+            ],
+            "lanes": [
+              "peristyle_house",
+              "townhouse",
+              "shop_row"
+            ]
+          },
+          "forms": {
+            "core": "grid",
+            "waterfront": "grid",
+            "civic": "grid",
+            "lanes": "grown"
+          },
+          "setPieces": {
+            "max": 4,
+            "kinds": [
+              "promenade",
+              "landmark",
+              "square",
+              "bridge"
+            ]
+          }
+        },
+        "tags": [
+          "city",
+          "urban",
+          "hellenist"
+        ],
+        "children": [
+          {
+            "id": "parthenon_tower",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the grand neoclassical glass-and-quartz skyscraper",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                21,
+                64,
+                21
+              ]
+            },
+            "params": {
+              "floors": 15,
+              "roof": "flat",
+              "windowRhythm": "dense",
+              "vista": "spine"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "skyscraper",
+              "landmark"
+            ]
+          },
+          {
+            "id": "monumental_stoa",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the great civic stoa along the avenue",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                15,
+                14,
+                25
+              ]
+            },
+            "params": {
+              "floors": 2,
+              "roof": "flat",
+              "vista": "boulevard"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "stoa",
+              "landmark"
+            ]
+          },
+          {
+            "id": "high_temple",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the modern peripteral temple of the city",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                19,
+                16,
+                25
+              ]
+            },
+            "params": {
+              "floors": 1,
+              "roof": "gable",
+              "vista": "diagonal"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "peripteral_temple",
+              "landmark"
+            ]
+          },
+          {
+            "id": "bouleuterion_hall",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the city council hall",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                15,
+                12,
+                17
+              ]
+            },
+            "params": {
+              "floors": 1,
+              "roof": "flat"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "bouleuterion",
+              "civic"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "trireme_harbour",
+        "kind": "generator",
+        "generator": "precinct.harbour@0",
+        "label": "the modern deepwater port and naval quays",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            96,
+            16,
+            64
+          ]
+        },
+        "params": {
+          "piers": 4,
+          "ships": "fill"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "hellenist_metropolis"
+          },
+          {
+            "zone": "north"
+          },
+          {
+            "on": "@terrain:coastline",
+            "band": 24
+          }
+        ],
+        "tags": [
+          "precinct",
+          "harbour"
+        ]
+      },
+      {
+        "id": "great_leviathan",
+        "kind": "generator",
+        "generator": "authored:leviathan_colossus",
+        "label": "the colossal sea titan rising in the harbour bay",
+        "params": {
+          "seat": "wade",
+          "face": {
+            "toward": "hellenist_metropolis"
+          }
+        },
+        "constraints": [
+          {
+            "at": [
+              0.5,
+              0.22
+            ]
+          },
+          {
+            "distance": "trireme_harbour",
+            "min": 18,
+            "max": 65
+          }
+        ]
+      },
+      {
+        "id": "tentacle_surge",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "massive tentacles breaching in the bay shallows",
+        "params": {
+          "program": "kraken_tentacle",
+          "count": 8,
+          "area": {
+            "at": [
+              0.5,
+              0.28
+            ],
+            "radius": 0.2
+          },
+          "spacing": 20,
+          "seat": "wade",
+          "face": {
+            "toward": "hellenist_metropolis"
+          }
+        }
+      },
+      {
+        "id": "serpent_pod",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "spined sea serpents flanking the bay attack",
+        "params": {
+          "program": "sea_serpent",
+          "count": 6,
+          "area": {
+            "at": [
+              0.35,
+              0.2
+            ],
+            "radius": 0.25
+          },
+          "spacing": 24,
+          "seat": "wade",
+          "face": {
+            "toward": "hellenist_metropolis"
+          }
+        }
+      },
+      {
+        "id": "waterfront_barricade",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "emergency defense barricade thrown across the high street toward the harbour",
+        "params": {
+          "entry": "barricade_line",
+          "route": {
+            "across": "hellenist_metropolis"
+          }
+        }
+      },
+      {
+        "id": "coastal_battery",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "cannon battery defending the harbour mouth against the leviathans",
+        "params": {
+          "entry": "cannon_battery",
+          "route": {
+            "along": "harbour_inlet",
+            "offset": 6,
+            "side": "left"
+          }
+        }
+      },
+      {
+        "id": "harbour_bollards",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "bollard_row",
+          "zone": "north",
+          "length": 17
+        }
+      },
+      {
+        "id": "forum_statue",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "statue_plinth",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "metro_roads",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "arterial boulevards connecting the city to the port and public monuments",
+        "params": {
+          "anchors": [
+            "hellenist_metropolis",
+            "trireme_harbour",
+            "#tag:landmark"
+          ],
+          "pattern": "grid",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 14
+        }
+      },
+      {
+        "id": "coastal_groves",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "cypress and stone pine groves on the acropolis slopes",
+        "params": {
+          "area": {
+            "zone": "southwest"
+          },
+          "density": 0.16,
+          "spacing": 4,
+          "clumping": 0.45,
+          "maxSlope": 32,
+          "elevation": [
+            2,
+            90
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "undergrowth": {
+            "grass": 0.4,
+            "flowers": 0.08,
+            "deadwood": 0.02
+          },
+          "strata": {
+            "understory": {
+              "species": [
+                {
+                  "id": "laurel_scrub",
+                  "shape": "hazel_shrub"
+                }
+              ],
+              "density": 0.08
+            },
+            "floor": "default"
+          },
+          "species": [
+            {
+              "id": "stone_pine",
+              "shape": "spruce_tall",
+              "weight": 2
+            },
+            {
+              "id": "med_oak",
+              "shape": "oak_spreading",
+              "weight": 3
+            },
+            {
+              "id": "cypress",
+              "shape": "birch_slim",
+              "weight": 2
+            }
+          ]
+        }
+      },
+      {
+        "id": "wilderness_cover",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse natural scatter across open terrain",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 5,
+          "clumping": 0.5,
+          "maxSlope": 34,
+          "elevation": [
+            2,
+            100
+          ],
+          "edgeFalloff": 12,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "species": [
+            {
+              "id": "wild_oak",
+              "shape": "oak_round",
+              "weight": 1
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

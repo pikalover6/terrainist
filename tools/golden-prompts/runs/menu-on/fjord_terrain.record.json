@@ -1,0 +1,101 @@
+{
+  "id": "fjord_terrain",
+  "family": "new/terrain-only",
+  "kit": "terrain",
+  "prompt": "A deep fjord cutting inland between pine ridges, its water open to the sea.",
+  "seed": 314,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "cache",
+    "value": {
+      "climate": {
+        "biome": "minecraft:old_growth_pine_taiga",
+        "temperature": -0.3,
+        "humidity": 0.5
+      },
+      "character": {
+        "label": "pine fjord",
+        "materialTheme": "boreal_pine",
+        "flora": {
+          "prefer": [
+            "spruce_tall",
+            "conifer",
+            "old_growth"
+          ]
+        }
+      },
+      "tokens": {
+        "terrain": "a deep fjord cutting inland between steep pine-covered ridges, opening to the open sea"
+      }
+    }
+  },
+  "intentUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "reasoningTokens": 0,
+    "cost": 0,
+    "cached": true
+  },
+  "menu": {
+    "injected": false,
+    "reason": "empty menu (no pack, no era)",
+    "packs": [],
+    "ids": []
+  },
+  "attempts": 1,
+  "diagnostics": [
+    []
+  ],
+  "usage": {
+    "promptTokens": 13418,
+    "completionTokens": 5728,
+    "reasoningTokens": 3114,
+    "cost": 0.01577175
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 11,
+    "maxDepth": 2,
+    "generators": [
+      "cave.carver@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [],
+    "archetypesInCatalog": 0,
+    "formPacks": [],
+    "props": [],
+    "species": [
+      "columnar_larch",
+      "ridge_scrub",
+      "scrub_spruce",
+      "tall_larch",
+      "tall_pine",
+      "tall_spruce",
+      "wild_scrub",
+      "wild_spruce"
+    ],
+    "envelopes": [
+      "512x512"
+    ],
+    "constraints": 0,
+    "constraintKinds": [],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 3,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 0,
+    "programReferences": 0,
+    "conformsTrue": 0,
+    "labels": 8,
+    "eras": [],
+    "bytes": 4381
+  },
+  "wallMs": 104331
+}

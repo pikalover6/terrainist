@@ -1,0 +1,209 @@
+{
+  "id": "walled_medieval_city",
+  "family": "new/set-piece",
+  "kit": "settlement",
+  "prompt": "A walled medieval city on a hill, its castle keep above the rooftops.",
+  "seed": 311,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "cache",
+    "value": {
+      "era": "medieval",
+      "wealth": 0.5,
+      "decline": 0.1,
+      "formality": 0.4,
+      "character": {
+        "label": "walled hill city",
+        "materialTheme": "temperate_timber",
+        "fortification": "walled",
+        "archetypes": {
+          "prefer": [
+            "manor",
+            "watchtower",
+            "tavern",
+            "church",
+            "granary"
+          ]
+        },
+        "motifs": {
+          "roofType": "gable",
+          "massing": "stepped"
+        },
+        "urbanForm": "hillside",
+        "ground": "stepped",
+        "courtyards": 0.4
+      },
+      "tokens": {
+        "terrain": "a prominent hill rising above the surrounding country",
+        "icons": "a towering stone castle keep crowning the peak above dense medieval rooftops, enclosed by circuit walls with gatehouses and towers"
+      }
+    }
+  },
+  "intentUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "reasoningTokens": 0,
+    "cost": 0,
+    "cached": true
+  },
+  "menu": {
+    "injected": true,
+    "ids": 60,
+    "estimatedTokens": 2429,
+    "packs": [],
+    "eraClass": "medieval",
+    "menuIds": [
+      "rune_circle",
+      "hedgerow",
+      "logging_camp",
+      "torii",
+      "norse_mead_hall",
+      "great_forge",
+      "ger_round_tent",
+      "witch_stilt_hut",
+      "serai_court",
+      "dzong_hall",
+      "yamashiro_tenshu",
+      "ley_marker",
+      "dry_stone_wall",
+      "log_landing",
+      "zen_garden",
+      "jarls_hall",
+      "dwarf_hold_gate",
+      "khans_ger",
+      "herb_drying_loft",
+      "caravan_gatehouse",
+      "prayer_wheel_gallery",
+      "machiya_shop_row",
+      "crystal_outcrop",
+      "field_gate",
+      "sawpit",
+      "tenshu_keep",
+      "longship_shed",
+      "deep_hall",
+      "cart_ger",
+      "bog_apothecary",
+      "qanat_wellhead",
+      "chorten_shrine",
+      "gojunoto_pagoda",
+      "arcane_academy",
+      "cart_track",
+      "fire_lookout_tower",
+      "castle_base_wall",
+      "turf_house",
+      "smelter_works",
+      "kumis_tent",
+      "fen_chapel_ruin",
+      "windcatcher_house",
+      "butter_tea_kitchen",
+      "sando_torii",
+      "summoning_hall",
+      "cow_byre",
+      "stump_field",
+      "drum_tower",
+      "stave_belfry",
+      "gem_cutter_workshop",
+      "horse_line",
+      "eel_smokehouse",
+      "spice_godown",
+      "monk_cell_row",
+      "dojo_hall",
+      "arcane_library",
+      "duck_pond",
+      "waystation",
+      "shoji_teahouse",
+      "norse_forge"
+    ]
+  },
+  "attempts": 1,
+  "diagnostics": [
+    [
+      {
+        "code": "LOAM-W407",
+        "name": "CONSTRAINT_NOT_IMPLEMENTED",
+        "severity": "warning",
+        "nodePath": "world.lowland_farm.constraints[2]"
+      }
+    ]
+  ],
+  "usage": {
+    "promptTokens": 84900,
+    "completionTokens": 9174,
+    "reasoningTokens": 6136,
+    "cost": 0.04903875
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 16,
+    "maxDepth": 2,
+    "generators": [
+      "building.grammar@0",
+      "infra.entry@0",
+      "precinct.farm@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "bakery",
+      "barracks",
+      "cathedral",
+      "church",
+      "cottage",
+      "guard_post",
+      "keep",
+      "manor_house",
+      "shop_row",
+      "tavern",
+      "town_hall",
+      "townhouse",
+      "warehouse"
+    ],
+    "archetypesInCatalog": 13,
+    "formPacks": [],
+    "props": [],
+    "species": [
+      "common_oak",
+      "field_oak",
+      "ridge_birch",
+      "ridge_oak",
+      "slim_birch",
+      "wild_oak"
+    ],
+    "envelopes": [
+      "512x512",
+      "240x240",
+      "15x26x15",
+      "15x17x21",
+      "13x16x13",
+      "112x96"
+    ],
+    "constraints": 4,
+    "constraintKinds": [
+      "at",
+      "distance",
+      "max",
+      "min",
+      "terrain_conform"
+    ],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 3,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 0,
+    "programReferences": 0,
+    "conformsTrue": 0,
+    "labels": 15,
+    "eras": [
+      "medieval"
+    ],
+    "bytes": 6036
+  },
+  "wallMs": 136575
+}
