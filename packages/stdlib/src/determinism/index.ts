@@ -8,6 +8,8 @@
 
 import { blake3 } from "@noble/hashes/blake3.js";
 
+import { positionDigestInto, positionHigh, positionLow32 } from "./position-hash.js";
+
 import {
   TWO_POW_NEG53,
   cos as mathCos,
@@ -66,9 +68,19 @@ export function resolveWorldSeed(input: string | number | bigint): bigint {
 
 /** Read the first 8 bytes of a digest as a little-endian u64. */
 export function truncate64(bytes: Uint8Array): bigint {
-  let v = 0n;
-  for (let i = 7; i >= 0; i--) v = (v << 8n) | BigInt(bytes[i] as number);
-  return v;
+  const lo =
+    ((bytes[0] as number) |
+      ((bytes[1] as number) << 8) |
+      ((bytes[2] as number) << 16) |
+      ((bytes[3] as number) << 24)) >>>
+    0;
+  const hi =
+    ((bytes[4] as number) |
+      ((bytes[5] as number) << 8) |
+      ((bytes[6] as number) << 16) |
+      ((bytes[7] as number) << 24)) >>>
+    0;
+  return (BigInt(hi) << 32n) | BigInt(lo);
 }
 
 /** Encode a bigint as 8 little-endian bytes (`LE64`). */
@@ -156,13 +168,23 @@ export type ReservedStream = (typeof RESERVED_STREAMS)[number];
  * chunked / parallel / partial evaluation agree.
  */
 export function positionDigest(stream: Seed256, x: number, y: number, z: number): Seed256 {
-  return blake3(concat([stream, le32(x), le32(y), le32(z)]), { dkLen: 32 });
+  const out = new Uint8Array(32);
+  positionDigestInto(stream, x, y, z, out);
+  return out;
 }
 
-/** Position-keyed uniform float in `[0, 1)` — the column/block decision workhorse. */
+/**
+ * Position-keyed uniform float in `[0, 1)` — the column/block decision
+ * workhorse, and by some distance the hottest function in the compiler
+ * (~578K calls on a 512x512 world; BLAKE3 was 15.8% of the whole compile).
+ * It therefore takes the short path: only the first 8 digest bytes are ever
+ * produced, and `(u64 >> 11) * 2^-53` is assembled from the two 32-bit halves
+ * rather than through a BigInt.
+ */
 export function positionFloat(stream: Seed256, x: number, y: number, z: number): number {
-  const d = positionDigest(stream, x, y, z);
-  return Number(truncate64(d) >> 11n) * TWO_POW_NEG53;
+  const lo = positionLow32(stream, x, y, z);
+  // (hi*2^32 + lo) >> 11, exactly, as a double: 2^53 headroom is precisely enough.
+  return (positionHigh * 2097152 + (lo >>> 11)) * TWO_POW_NEG53;
 }
 
 /** Position-keyed uniform integer in `[lo, hi]` (inclusive both ends). */
@@ -176,11 +198,12 @@ export function positionInt(
 ): number {
   if (hi < lo) throw new RangeError(`positionInt: empty range [${lo}, ${hi}]`);
   const span = BigInt(hi - lo + 1);
-  const digest = positionDigest(stream, x, y, z);
+  const low = positionLow32(stream, x, y, z);
+  const draw = (BigInt(positionHigh) << 32n) | BigInt(low);
   // Lemire multiply-shift, no rejection loop: a position-keyed draw cannot
   // "draw again" without becoming order-dependent, so we take the (negligible,
   // < 2^-64 relative) bias and document it here.
-  return lo + Number((truncate64(digest) * span) >> 64n);
+  return lo + Number((draw * span) >> 64n);
 }
 
 /**
