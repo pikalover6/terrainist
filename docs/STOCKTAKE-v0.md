@@ -71,10 +71,19 @@ Seed findings already in hand:
   "drape"` does nothing (W407, audit H4). **Method problem, open:** at
   temperature 0 with identical kit bytes, troy's archetype count moved
   13 → 11 and 13 → 10 across runs, swapping ids — the vocabulary metrics
-  have an unmeasured noise floor, so single-sample archetype deltas (and
-  WS-D's planned shootout scoring) are unreadable until a ~$0.15 floor run
-  (one prompt × 3 at frozen bytes) lands. Kit FROZEN at 58e7d2e0 /
-  f98c5e85 for the menu measurement.
+  have a noise floor — now MEASURED (3 prompts × 3 repeats at frozen bytes,
+  $0.31): walled_medieval_city archetypes 15/14/11, archetype SET only 35 %
+  stable (7 of 20 ids in one run only); troy 10/12/10, set 69 % stable;
+  fjord species 4/4/8; constraint counts spread 46–67 %. **Campaign reading
+  rule:** a one-sample vocabulary delta below ~4 archetypes on a settlement
+  prompt is a re-roll, and any single swapped id is churn. Stable at n=1:
+  node count, formPacks, generators, docBytes (±5–13 %), and diagnostics
+  tied to specific edits (T118 2 → 0 held across every run). The archetype
+  deltas reported for clusters 1–2 were within noise and are withdrawn as
+  results; their diagnostic/token/cost numbers stand. WS-D's shootout must
+  run repeats or score on stable metrics + pass-rate + cost. score.mjs will
+  print `within noise` beside sub-floor deltas. Kit FROZEN at 58e7d2e0 /
+  f98c5e85 for the menu measurement (Kai: the complete ~$1.00 pair).
 
 ## WS-B — Terrain-kit audit
 
