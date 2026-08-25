@@ -1,0 +1,21 @@
+prompt     The Trojan horse in Troy, right before the soldiers emerge.
+seed       303
+size       512x512
+model      google/gemini-3.7-flash
+effort     high
+kit        settlement
+
+intent     {"era":"ancient","wealth":0.7,"decline":0.1,"formality":0.6,"event":{"kind":"siege","severity":0.8,"recency":0},"climate":{"temperature":0.7,"humidity":-0.2,"snow":"never"},"character":{"label":"Troy before the fall","materialTheme":"sun_clay","fortification":"walled","formPacks":["classical_mediterranean"],"archetypes":{"prefer":["peristyle_house","megaron","stoa","peripteral_temple","palaestra","olive_press","sanctuary_treasury"],"forbid":["townhouse","terraced_row","shop_row","office","apartment_block"]},"motifs":{"roofType":"flat","massing":"blocky","ornamentDensity":0.4},"urbanForm":"grown","courtyards":0.6,"ground":"stepped"},"tokens":{"terrain":"a walled citadel city on a tell rise above a coastal plain, with the Aegean shore in view","icons":"a colossal wooden horse standing in the public square just inside the Scaean gate; massive stone ramparts and watchtowers; royal megaron palace at the citadel summit; abandoned Greek siege camp and beached ship traces on the distant shore","event_direction":"the wooden horse brought inside the main gates, looming over the silent evening streets before the soldiers emerge"}}
+           1 attempt(s), 8273 tokens
+
+authored with google/gemini-3.7-flash in 1 attempt(s)
+  attempt 1   valid
+  tokens     83739 in + 9725 out = 93464  ($0.0496)
+programs   1 of 1 kept (budget 3 landmark / 3 plugin)
+  ok     trojan_horse [landmark]  1 attempt(s), 30243 tokens  ($0.0516), 13 warning(s)
+  tokens     3423 in + 26820 out = 30243  (19746 of the out reasoning)  ($0.0516)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/k1/out/trojan_horse_troy.loam.json
+
+terrainist: ground stage: doorstep.landing (tier D) declared after tier E was read — declaration must run in tier order (v1 §1.6)
+exit=1
