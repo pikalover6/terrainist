@@ -7,22 +7,26 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 4 (the flip) is committed.
-- **Next unit:** unit 5 — spec §10.2, second item: **montfort's hillside
-  replan** (T4: one keep and five houses in a full circuit,
-  `docs/decks/montfort_hill_k1/`; the before-sample `walled_medieval_city`
-  reads ~12 buildings in a full wall). montfort_k1 was byte-identical at the
-  kerb flip, so its sparsity has another cause. Probe first: the compile
-  report's district stats (blocks, lots, lotsDropped, bareBlocks, terraces),
-  its `levels`/`seams`, `W527 WALLED_QUARTER_SPARSE` and the walled-coverage
-  numbers, then the lot planner on that hillside (`hillside` site plan,
-  `frontageLots`, the leaf cap). Compare against troy_r22 at the flip (45
-  buildings inside its wall). Bug → code-first under law 5; feature → staged
-  or proposed. Open a station 7 (walled_medieval_city) read in
-  `docs/decks/before-sample/VERDICT.md` with the result. After that:
-  hellenist's density (§10.2), the `I512` street probe (F4), then the icon
-  metric and the rules-only kit (§10.3).
-- **Last commit:** 6019bc8 (unit 3). Convention: this line names the
+- **In flight:** nothing — unit 5 (montfort's cause found; the switch landed
+  off) is committed.
+- **Next unit:** unit 6 — flip `STRIP_FRONTAGE_BY_CLAIM` false → true
+  (`packages/compiler/src/layout/forms/hillside.ts`). Trial: montfort 5 → 13
+  buildings, the fresh walled city 13 → 24, site-plan-hillside 11 → 16,
+  -steep 7 → 14, all physics clean. The flip commit must carry: (a) the
+  fourteen law-5 shasums (`bi/bi.sh` + the five hillside documents; refs in
+  `bi/after-on` and `bi/ex-off5`) with every moved world attributed; (b) an
+  answer for `E170 CANNOT_FIT` on the walled city's `summit_church` 13 × 17
+  — true-width frontage lots are narrower than the landmark, so a landmark on
+  a planned strip must take the stations it needs (design it from
+  `frontageLots` / the landmark seat; small → same commit behind the same
+  switch or its own, medium → proposal); (c) the dropped-lots probe (montfort
+  20 → 55 dropped at the flip: which test drops them — the seated rectangle
+  of a diagonal parcel vs `MIN_INFILL_SIDE`, presumably; measure first); (d)
+  before/after renders read by the instrument; (e) tests re-pinned with
+  cause; (f) FULL suite; (g) station 7 re-read. Then: `W527` on the planned
+  path + the `SITE_STRIP_DISSOLVED` note (small unit); hellenist's density
+  (§10.2); the `I512` street probe (F4); the icon metric (§10.3).
+- **Last commit:** b3e84d7 (unit 4). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
 - **Spend:** $2.29 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
 - **Open decisions for Kai:** none. (Kai's post-hoc veto is open on D12.)
@@ -31,11 +35,10 @@ running state. The NOW block is rewritten at the end of every turn.
     the emit refused with `LOAM-T110 UNSTABLE_FLUID` (71 canal-water blocks
     would flow); the CLI labels it a compiler bug. Document and an
     `--allow-unstable` world are recorded. Fix code-first in its own unit.
-  - F2 — all four anchors differ at HEAD. **Metropolis: fixed as far as the
-    ratified laws allow** (units 3–4: `SEAM_BLOCK_MIN_DROP = 2`, r5 45 → 55
-    terraces; 13 attributed as an accepted residual, D12). Troy and pirates
-    moved with the flip (both better); hellenist untouched — their own
-    anchor diffs are still unattributed until their stations.
+  - F2 — all four anchors differ at HEAD. Metropolis: fixed as far as the
+    ratified laws allow (units 3–4). Troy and pirates moved with the kerb
+    flip (both better); hellenist untouched — their own anchor diffs are
+    still unattributed until their stations.
   - F3 — authoring regression on the metropolis prompt, lost 3-of-3 at kit
     c22cb4fe: the program-backed skyscraper-skeleton field, the river,
     `era: modern` (now `far_future`), unnamed decayed generators (now six
@@ -43,6 +46,16 @@ running state. The NOW block is rewritten at the end of every turn.
   - F4 — `LOAM-I512` claims 77 % of infill lots are "ruined shells"; the
     isometric shows intact boxes on both the anchor and the fresh world.
     Street-level probe (≥3 columns) — slop class 1 either way.
+  - F5 — **the hillside planner counts a raster artefact as frontage**
+    (unit 5): on diagonal contours `held` reads `1010…` from the
+    nearest-point tie, so `stations` is half the frontage; strips dissolve
+    on it and lots are cut on it. Switch landed off; flip is unit 6.
+  - F6 — `W527 WALLED_QUARTER_SPARSE` is gated `planned === undefined`:
+    blind on the planned hillside path, the form every walled hill town
+    gets (class 1). F7 — `SITE_STRIP_DISSOLVED` (SITE-PLAN §3.7) does not
+    exist as a diagnostic (class 6). One small unit for both.
+  - F8 — `frontageLots` drops most of the lots the planner cuts on a hill
+    (montfort 20 of 28 before, 55 of 75 at the flip); cause unmeasured.
 ## DECISIONS
 
 (every fork taken: the reversible default chosen, why, and how to undo it)
@@ -112,6 +125,21 @@ running state. The NOW block is rewritten at the end of every turn.
   failure, the D11 census; the file was re-run green after the re-pin
   rather than the whole suite (same dist, same test set, one expectation
   changed). Undo: n/a.
+- **D14 (unit 5):** montfort's cause was established by instrumenting a copy
+  of the built planner (dist patched under an env guard, restored
+  byte-for-byte, sha recorded) rather than by reading the code alone — law 4;
+  the probe's classification of every refused station is committed verbatim
+  in `docs/decks/anchors/MONTFORT-HILLSIDE-2026-08-25.md` §E. Undo: n/a.
+- **D15 (unit 5):** the fix is "a station with claimable depth is frontage"
+  (`STRIP_FRONTAGE_BY_CLAIM`), NOT a change to the nearest-point tie or to
+  `minStripRun`/`TERRACE_RISE` — the tie is `SweptProfile`'s band rule and
+  the constants are Sol's, both ratified; the belief the comment states
+  ("the frontage it actually holds") is what the code is made to do. Landed
+  off with fourteen-of-fourteen byte-identity. Undo: delete the constant,
+  the helper and the one ternary.
+- **D16 (unit 5):** the law-5 set for hillside work is the nine worlds plus
+  five hillside documents (three `examples/` fixtures, montfort_k1, the
+  before-sample walled city); references live in `bi/ex-off5/SHASUMS`.
 
 ## SPEND
 
@@ -121,13 +149,15 @@ running state. The NOW block is rewritten at the end of every turn.
 | 2 | metropolis bisection: one authoring-only roll (metro-roll3); recompiles, renders, bisect free | 0.10 | 2.29 |
 | 3 | the lever landed off — compiles and the FULL suite only | 0.00 | 2.29 |
 | 4 | the flip — compiles, renders, baselines, the FULL suite | 0.00 | 2.29 |
+| 5 | montfort's cause — instrumented probe, switch landed off, the FULL suite | 0.00 | 2.29 |
 
 ## VERDICTS
 
 (pointers to `docs/decks/<deck>/VERDICT.md`)
 
 - `docs/decks/before-sample/VERDICT.md` — station 1 metropolis_hideout:
-  **FAIL** (T6, T9); stations 2–11 pending.
+  **FAIL** (T6, T9); station 7 walled_medieval_city: **FAIL** (T4, T7);
+  stations 2–6, 8–11 pending.
 
 ## REACH
 
@@ -204,3 +234,19 @@ running state. The NOW block is rewritten at the end of every turn.
   the D11 census, re-run green `43 passed (43)`; seam-blocking `5 passed`.
   Files: `layout/district.ts`, two tests, two baselines, bisection §D,
   VERDICT station 1. Spend $0.
+- **unit 5 — montfort's hillside replan (2026-08-25):** cause found by
+  probe: the `hillside` site plan dissolved 4 of montfort's 5 frontage
+  strips (11 of the fresh walled city's) because `held` — the station count
+  it dissolves on and cuts lots on — is a raster artefact of the
+  nearest-point tie (`1010…` on diagonals), not the frontage; the hill is
+  0.09–0.45 blocks/column everywhere, never too steep (F5). Switch
+  `STRIP_FRONTAGE_BY_CLAIM` (`forms/hillside.ts`) + pure
+  `claimableStations()`, pinned by `strip-frontage.test.ts` (5 tests);
+  landed off, fourteen of fourteen byte-identical. Trial on: buildings
+  roughly double on every planned hill (montfort 5 → 13; walled 13 → 24 with
+  `E170` on a 13 × 17 landmark; fixtures 11 → 16, 7 → 14). Findings F6–F8
+  logged. Station 7 opened FAIL (T4, T7). Tests: FULL suite COUNTS
+  `Test Files 334 passed | 1 skipped (335)`, `Tests 5632 passed | 31 skipped
+  (5663)`. Files: `forms/hillside.ts`, `test/strip-frontage.test.ts`,
+  `docs/decks/anchors/MONTFORT-HILLSIDE-2026-08-25.md`, VERDICT station 7.
+  Subagent: 1 (opus-5-medium, the instrumented probe). Spend $0.

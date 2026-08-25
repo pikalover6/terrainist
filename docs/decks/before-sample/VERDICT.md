@@ -72,8 +72,31 @@ even the r5 document would not reproduce the walked r5 world today.
 
 ---
 
-## Stations 2–11 — pending
+## Station 7 — walled_medieval_city (seed 311) — **FAIL** (T4, T7)
+
+**Prompt:** "A walled medieval city on a hill, its castle keep above the rooftops."
+
+**Icons (from the prompt, before the document was read):** (1) a full wall
+circuit; (2) a town inside it — buildings dominate the wall; (3) the castle
+keep above the rooftops — the tallest thing, inside the circuit.
+
+| # | question | read | backed by |
+|---|---|---|---|
+| 1 | The wall? | Full masonry circuit, gates, towers at pitch 38, height 8. Present. | document `params.walls`; top-down render |
+| 2 | A town inside? | **11 district buildings in a 240 × 240 circuit**; 38 lots cut, 23 dropped; 10 frontage strips drawn, 11 dissolved back to natural ground. The circuit encloses grass. `W527` silent — blind on the planned path. | compile report `layout.districts[0].stats` / `form.adapted`; `docs/decks/anchors/MONTFORT-HILLSIDE-2026-08-25.md` |
+| 3 | The keep? | `high_keep` and `summit_church` placed as landmarks; dominance not measured (icon metric pending). | `layout.placements` |
+
+**Verdict: FAIL** on T4 (one order of magnitude short of "a town inside the
+wall") and T7 (density). Cause established by probe, not the hill's slope:
+the hillside planner counts a raster artefact as its frontage and dissolves
+strips it had already claimed (unit 5). **What the Run will do:** flip
+`STRIP_FRONTAGE_BY_CLAIM` (trial: 13 → 24 buildings here, 5 → 13 on
+montfort), then the dropped-lots probe, then re-read this station.
+
+---
+
+## Stations 2–6, 8–11 — pending
 
 troy_horse, pirate_unicorn_isles, hellenist_harbour, alien_farm, redwood_camp,
-glowcap_vale, walled_medieval_city, railway_town (document only — F1),
-desert_wilderness, fjord_terrain. First looks are in this folder's README.
+glowcap_vale, railway_town (document only — F1), desert_wilderness,
+fjord_terrain. First looks are in this folder's README.

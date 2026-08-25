@@ -109,6 +109,55 @@ import {
  */
 export const TERRACE_RISE = RETAIN_MAX;
 
+/**
+ * **A station with claimable ground is frontage, whether or not the raster
+ * handed it a column.**
+ *
+ * Off — `false` is today's bytes — a station is `held` only when some column's
+ * nearest point on the polyline is that station (the tie-breaking rule below,
+ * strict `<`, lower index wins). On an axis-aligned run every station is
+ * nearest to its own band and `held` reads `1111…`; on a 45° diagonal it reads
+ * `1010…` and on a 2:1 staircase `100100…`, because the equidistant columns
+ * all go to the lower index. `stations` — which is compared with
+ * `minStripRun` to dissolve a strip and handed to `allocateFrontage` to cut
+ * its lots — is then the frontage divided by two or three, not "the frontage
+ * it actually holds" that the compaction comment promises. Measured on
+ * montfort_hill_k1 (2026-08-25, `scratchpad/hillside-probe/HILLSIDE-PROBE.md`):
+ * 66 % of the refused stations had cleared the depth floor and were refused
+ * for this alone; four of five strips dissolved, one on 29 stations against a
+ * minimum of 30, and the walled town came out as a keep and a handful of
+ * houses. The hill's slope was 0.09–0.45 blocks per column at held and refused
+ * stations alike.
+ *
+ * On, a station whose probed depth on this side is positive is `held` too: the
+ * ground exists and the strip claims it through its neighbours, so the frontage
+ * line is continuous and `stations` is its arc length. The column → station map
+ * is untouched; a lot that spans such a station simply gathers its columns from
+ * the neighbours the tie gave them to (`frontageLots` partitions stations, not
+ * columns). Staged under the Run's law 5: landed `false`, flipped in its own
+ * commit with every moved world attributed.
+ */
+export const STRIP_FRONTAGE_BY_CLAIM = false;
+
+/**
+ * The frontage a strip holds: {@link STRIP_FRONTAGE_BY_CLAIM}'s rule as a pure
+ * function, so a test can hand it the raster's `held` and the probe's `depths`
+ * and read the answer. `side` is +1 for `depths[i][0]`, −1 for `depths[i][1]`.
+ */
+export function claimableStations(
+  held: Uint8Array,
+  depths: readonly (readonly [number, number])[],
+  from: number,
+  side: number,
+): Uint8Array {
+  const out = Uint8Array.from(held);
+  for (let i = 0; i < out.length; i++) {
+    const d = depths[from + i];
+    if (d !== undefined && d[side === 1 ? 0 : 1] > 0) out[i] = 1;
+  }
+  return out;
+}
+
 /** Sol's floor. One contour street is `linear` on a slope. */
 export const MIN_PRINCIPAL_STREETS = 2;
 
@@ -762,8 +811,13 @@ function draw(ctx: FormContext): FormResult {
         const compact = new Int32Array(run.length).fill(-1);
         const outward: Point2[] = [];
         let stations = 0;
-        for (let i = 0; i < held.length; i++) {
-          if (held[i] !== 1) continue;
+        // See {@link STRIP_FRONTAGE_BY_CLAIM}: the raster's `held`, or the
+        // probe's — a station with claimable depth is frontage.
+        const frontage = STRIP_FRONTAGE_BY_CLAIM
+          ? claimableStations(held, depths, from, sign)
+          : held;
+        for (let i = 0; i < frontage.length; i++) {
+          if (frontage[i] !== 1) continue;
           compact[i] = stations++;
           const n = normals[from + i] as Point2;
           outward.push({ x: n.x * sign, z: n.z * sign });
