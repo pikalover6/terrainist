@@ -85,6 +85,18 @@ analysis harness over it:
   demands grandeur, does the model spend its bespoke budget there, reach
   for catalog, or satisfy it with districts? Deliverable ends in a design
   consult: catalog set-pieces vs bespoke budget vs kit steering.
+- **Addendum (Wave 2a, session "menus", 2026-08-24): "six packs at zero"
+  is two bugs.** Reading the golden harness's cached intents:
+  pirate_unicorn_isles, desert_wilderness and fjord_terrain get NO era and
+  NO pack from the classifier pre-pass, so nautical_pirate (the audit's
+  0/20) was never reachable by the author at all — no menu or kit teaching
+  can fix a pack the pre-pass never names. Bug 1 = retrieval at the author
+  (the candidate menu, landed OFF in `b638439`); bug 2 = classification in
+  `intent-prepass.ts` (menus' scope, next step). Measurement design follows
+  from it: the ON arm runs only on prompts whose intent builds a non-empty
+  menu (troy_horse, alien_farm, redwood_camp, glowcap_vale — four of the six
+  zero-reach packs plus the citadel), ~$0.23, against the after-units-v2
+  baseline at the same kit sha.
 
 ## WS-D — Price optimization
 
