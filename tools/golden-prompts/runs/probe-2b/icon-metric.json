@@ -44,7 +44,11 @@
             "medianHeight": 13,
             "medianFootprint": 121,
             "heightRatio": 1.08,
-            "footprintRatio": 1
+            "footprintRatio": 1,
+            "base": 154,
+            "medianBase": 159,
+            "elevation": -5,
+            "spanRatio": 1
           }
         },
         {
@@ -221,7 +225,12 @@
             "medianHeight": 15,
             "medianFootprint": 126,
             "heightRatio": 1.07,
-            "footprintRatio": 8
+            "footprintRatio": 8,
+            "base": 70,
+            "medianBase": 82,
+            "elevation": -12,
+            "spanRatio": 4,
+            "readRequired": true
           }
         }
       ],
@@ -253,7 +262,7 @@
         "diagnostics": 39
       },
       "alarms": [
-        "icon ferry not dominant (h×1.07, a×8)"
+        "icon ferry not dominant by the rule (h×1.07, a×8) — read it: span ×4"
       ]
     },
     {
@@ -298,7 +307,11 @@
             "medianHeight": 14,
             "medianFootprint": 81,
             "heightRatio": 0.93,
-            "footprintRatio": 5.98
+            "footprintRatio": 5.98,
+            "base": 77,
+            "medianBase": 77,
+            "elevation": 0,
+            "spanRatio": 2.44
           }
         },
         {
@@ -409,7 +422,11 @@
             "medianHeight": 15,
             "medianFootprint": 119,
             "heightRatio": 1.2,
-            "footprintRatio": 3.03
+            "footprintRatio": 3.03,
+            "base": 74,
+            "medianBase": 86,
+            "elevation": -12,
+            "spanRatio": 1.46
           }
         },
         {

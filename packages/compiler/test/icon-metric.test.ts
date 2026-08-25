@@ -99,3 +99,56 @@ describe("density and boxes", () => {
     expect(s.alarms.some((a) => a.includes("archetype-less"))).toBe(true);
   });
 });
+
+describe("icon dominance — the data a read needs (Stocktake unit 32, F28)", () => {
+  // Two villages on a fjord: houses 15 high on 10 × 10 footprints at base 82;
+  // a rope ferry 16 high, 18 × 56, on the water at base 70; a bell pavilion
+  // 18 high, 19 × 19, in the valley at base 74.
+  const fdoc = {
+    intent: { era: "medieval", tokens: { icons: "a rope ferry, a temple bell" }, character: {} },
+    programs: { rope_ferry: {}, bell_pavilion: {} },
+    root: {
+      kind: "composite", id: "world",
+      children: [
+        { kind: "district", id: "stone_village", children: [] },
+        { kind: "generator", id: "fjord_rope_ferry", params: { program: "rope_ferry" } },
+        { kind: "generator", id: "temple_bell_pavilion", params: { program: "bell_pavilion" } },
+      ],
+    },
+  };
+  const house = (n: number) => ({
+    nodePath: `world.stone_village.infill_${n}`, footprint: fp(n * 12, 0, 10, 10), meta: { height: 15, params: { archetype: "house" } },
+  });
+  const housePlacement = (n: number) => ({
+    id: `infill_${n}`, nodePath: `world.stone_village.infill_${n}`, size: [10, 15, 10], footprint: fp(n * 12, 0, 10, 10), foundationY: 82,
+  });
+  const freport = {
+    diagnostics: [],
+    layout: {
+      districts: [{ bounds: fp(0, 0, 120, 120), stats: { lots: 20, blocks: 5 } }],
+      placements: [
+        { id: "stone_village", nodePath: "world.stone_village", size: [120, 1, 120], footprint: fp(0, 0, 120, 120), foundationY: 82 },
+        { id: "fjord_rope_ferry", nodePath: "world.fjord_rope_ferry", size: [18, 16, 56], footprint: fp(40, 40, 18, 56), foundationY: 70 },
+        { id: "temple_bell_pavilion", nodePath: "world.temple_bell_pavilion", size: [19, 18, 19], footprint: fp(80, 80, 19, 19), foundationY: 74 },
+        ...[1, 2, 3, 4, 5].map(housePlacement),
+      ],
+      structures: { buildings: [1, 2, 3, 4, 5].map(house) },
+    },
+    stats: { programs: [] },
+  };
+  it("keeps the rule's answer for a long low ferry and asks for a read, with its span", () => {
+    const icon = { id: "ferry", terms: ["ferry"], dominant: true };
+    const d = metric.iconDominance(icon, freport, metric.iconPresence(icon, fdoc, freport)) as Record<string, unknown>;
+    expect(d.dominant).toBe(false);
+    expect(d.readRequired).toBe(true);
+    expect(d.spanRatio as number).toBeGreaterThanOrEqual(3);
+    expect(d.elevation).toBe(70 - 82);
+  });
+  it("does not ask for a read of a pavilion in the valley below the village", () => {
+    const icon = { id: "bell", terms: ["bell", "pavilion"], dominant: true };
+    const d = metric.iconDominance(icon, freport, metric.iconPresence(icon, fdoc, freport)) as Record<string, unknown>;
+    expect(d.dominant).toBe(false);
+    expect(d.readRequired).toBeUndefined();
+    expect(d.elevation).toBe(74 - 82);
+  });
+});

@@ -39,6 +39,8 @@ export const DOMINANT_HEIGHT = 1.5;
 export const DOMINANT_FOOTPRINT = 2;
 /** A placed program's block volume against the median building's: dominant at this multiple. */
 export const DOMINANT_VOLUME = 4;
+/** Span (longest side against the median building's) at which a non-dominant icon asks to be read rather than scored. */
+export const READ_SPAN = 3;
 export const MODERN_ERAS = new Set(["modern", "contemporary", "industrial", "far_future", "future", "near_future", "sci_fi", "victorian"]);
 
 /** Every node in the document, flattened, with the strings an icon may match. */
@@ -150,7 +152,13 @@ export function medianBuilding(report) {
   const heights = B.map((b) => b.meta?.height ?? b.meta?.size?.[1] ?? 0).sort((a, b) => a - b);
   const areas = B.map((b) => (b.footprint.x1 - b.footprint.x0 + 1) * (b.footprint.z1 - b.footprint.z0 + 1)).sort((a, b) => a - b);
   const med = (a) => (a.length === 0 ? 0 : a[a.length >> 1]);
-  return { count: B.length, height: med(heights), footprint: med(areas) };
+  const sides = B.map((b) => Math.max(b.footprint.x1 - b.footprint.x0 + 1, b.footprint.z1 - b.footprint.z0 + 1)).sort((a, b) => a - b);
+  // The buildings' base elevation, from their placements (a building's
+  // `foundationY` lives on its placement, keyed by nodePath or leaf id).
+  const placements = report?.layout?.placements ?? [];
+  const bases = B.map((b) => placements.find((pl) => pl.nodePath === b.nodePath || pl.id === b.nodePath.split(".").pop())?.foundationY)
+    .filter((y) => typeof y === "number").sort((a, b) => a - b);
+  return { count: B.length, height: med(heights), footprint: med(areas), side: med(sides), base: bases.length === 0 ? undefined : med(bases) };
 }
 
 /** (ii) dominance: the biggest placed match of an icon against the median building. */
@@ -164,13 +172,16 @@ export function iconDominance(icon, report, presence) {
     if (pl.size?.[1] <= 1 && (pl.size?.[0] ?? 0) * (pl.size?.[2] ?? 0) > 2000) continue;
     const h = pl.size?.[1] ?? 0;
     const a = (pl.footprint.x1 - pl.footprint.x0 + 1) * (pl.footprint.z1 - pl.footprint.z0 + 1);
-    if (best === null || h * a > best.h * best.a) best = { id: pl.id, h, a };
+    const side = Math.max(pl.footprint.x1 - pl.footprint.x0 + 1, pl.footprint.z1 - pl.footprint.z0 + 1);
+    if (best === null || h * a > best.h * best.a) best = { id: pl.id, h, a, side, base: pl.foundationY };
   }
   for (const b of report.layout?.structures?.buildings ?? []) {
     if (!presence.inWorld.includes(b.nodePath)) continue;
     const h = b.meta?.height ?? 0;
     const a = (b.footprint.x1 - b.footprint.x0 + 1) * (b.footprint.z1 - b.footprint.z0 + 1);
-    if (best === null || h * a > best.h * best.a) best = { id: b.nodePath, h, a };
+    const side = Math.max(b.footprint.x1 - b.footprint.x0 + 1, b.footprint.z1 - b.footprint.z0 + 1);
+    const base = (report.layout?.placements ?? []).find((pl) => pl.nodePath === b.nodePath || pl.id === b.nodePath.split(".").pop())?.foundationY;
+    if (best === null || h * a > best.h * best.a) best = { id: b.nodePath, h, a, side, base };
   }
   // A bespoke program that ran has no placement height; it has a block
   // volume and a site footprint (`stats.programs`), read against the median
@@ -198,11 +209,31 @@ export function iconDominance(icon, report, presence) {
   if (best === null) return { dominant: false, note: presence.note ? "program not authored in this run" : "nothing placed to measure" };
   const heightRatio = median.height === 0 ? Infinity : best.h / median.height;
   const footprintRatio = median.footprint === 0 ? Infinity : best.a / median.footprint;
+  // **The data a read needs, not a second rule** (Stocktake Run unit 32, F28).
+  // Four reads on the same worlds disagreed with the height-and-footprint
+  // rule — a rope ferry across a fjord (span ×8, no taller than a shed), a
+  // monastery whose "ordinary buildings" are its own outbuildings on the
+  // peak — and a prominence rule reconciled none of them. So `dominant`
+  // keeps its meaning and its comparability, and beside it the metric says
+  // what a stranger's eye would weigh: how far the icon's base stands above
+  // the buildings' median base, and how long it is against them. When
+  // either is large and the rule still says no, the alarm says *read it*
+  // (law 7: a metric is a floor and an alarm, never the verdict).
+  const elevation = best.base === undefined || median.base === undefined ? undefined : best.base - median.base;
+  const spanRatio = median.side === 0 || best.side === undefined ? undefined : +(best.side / median.side).toFixed(2);
+  const dominant = heightRatio >= DOMINANT_HEIGHT && footprintRatio >= DOMINANT_FOOTPRINT;
+  const readRequired =
+    !dominant &&
+    ((spanRatio !== undefined && spanRatio >= READ_SPAN) ||
+      (elevation !== undefined && median.height > 0 && elevation >= median.height));
   return {
-    dominant: heightRatio >= DOMINANT_HEIGHT && footprintRatio >= DOMINANT_FOOTPRINT,
+    dominant,
     by: best.id, height: best.h, footprint: best.a,
     medianHeight: median.height, medianFootprint: median.footprint,
     heightRatio: +heightRatio.toFixed(2), footprintRatio: +footprintRatio.toFixed(2),
+    ...(elevation === undefined ? {} : { base: best.base, medianBase: median.base, elevation }),
+    ...(spanRatio === undefined ? {} : { spanRatio }),
+    ...(readRequired ? { readRequired: true } : {}),
   };
 }
 
@@ -269,7 +300,9 @@ export function scoreDocument(prompt, doc, report, ok) {
       alarms.push(
         d.note ? `icon ${i.id} placed but unmeasured (${d.note})`
         : d.volumeRatio !== undefined ? `icon ${i.id} not dominant (v×${d.volumeRatio}, a×${d.footprintRatio})`
-        : `icon ${i.id} not dominant (h×${d.heightRatio}, a×${d.footprintRatio})`,
+        : d.readRequired
+          ? `icon ${i.id} not dominant by the rule (h×${d.heightRatio}, a×${d.footprintRatio}) — read it: ${d.spanRatio !== undefined && d.spanRatio >= READ_SPAN ? `span ×${d.spanRatio}` : ""}${d.elevation !== undefined && d.elevation >= d.medianHeight ? ` base +${d.elevation} over the buildings` : ""}`
+          : `icon ${i.id} not dominant (h×${d.heightRatio}, a×${d.footprintRatio})`,
       );
     }
   }

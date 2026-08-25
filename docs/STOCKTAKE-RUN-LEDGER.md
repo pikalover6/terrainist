@@ -7,9 +7,19 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 31 (F27 in the kit; the golden gate green (11 of 11, 10 one-shot, no golden icon lost, `railway_town` FIXED), the kit paragraph shipped; of the four probes re-run through the program stage, the two villages have their fjord and its ferry and the monastery perches on its peak — two of four read as their prompts, none by the metric, which refuses span and elevation (F28)) is committed.
-- **Next unit:** unit 32 — **F28, the metric's prominence rule** (law 7): `icon-metric.mjs` scores a dominant icon by height ≥ 1.5× *and* footprint ≥ 2×; add prominence — the icon's base elevation above the ordinary buildings' median base — and span, so a ferry across a fjord, a monastery on a peak and a mine working can be what the eye says they are; re-score `runs/probe-2b`, `runs/probe-2` and the before-sample without re-authoring ($0) and pin the four reads as the rule's evidence; retire nothing that still agrees. Then probe pass 3 — six *new* prompts, pre-registered, through the program stage (≈ $1.70) for G4. Then F17, census 1.21, P5/P6/P7; the remaining verdict stations, G2, the final deck and closing report.
-- **Last commit:** 108b305 (unit 30). Convention: this line names the
+- **In flight:** nothing — unit 32 (F28: the metric's dominance kept as a
+  rule and retired as a verdict for centrepieces; it now carries the read's
+  data) is committed.
+- **Next unit:** unit 33 — **probe pass 3**: six *new* prompts for G4,
+  pre-registered (one per spec §6 category again, none of pass 1's), through
+  the program stage (`generate-all.mjs` with a `probes-3.json` roster,
+  ≈ $1.70, cap $3.00), scored by the metric and **read** from full-height
+  renders; a probe fails only on a read. G4 is met when these six surface
+  no new failure class; a new class gets an F-number and the pass that
+  follows its fix. Then F17, census 1.21, P5/P6/P7 first steps if cheap;
+  the remaining verdict stations, G2's named worlds, the final deck and
+  closing report.
+- **Last commit:** a382ef5 (unit 31). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
 - **Spend:** $11.77 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
 - **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19, D25,
@@ -34,11 +44,11 @@ running state. The NOW block is rewritten at the end of every turn.
     column): the two-villages fjord, 14 % of its floor wet, up to 31 blocks
     dry. Fixed (unit 30): `LOAM-I502 CARVE_MOSTLY_DRY`, measured along the
     floor samples, below half wet.
-  - F28 — **the icon metric's dominance rule cannot see span or elevation**:
-    height ≥ 1.5× and footprint ≥ 2× both required; after F27 the ferry
-    (×8 footprint), the mine working (×6), the bell (×3) and the monastery
-    on its peak all fail it while two of them read as their prompts. Four
-    reads against the rule on the same worlds — law 7. Unit 32.
+  - F28 — closed (unit 32): a prominence rule would reconcile none of the
+    four (the gompa's "ordinary buildings" are its own outbuildings; the
+    bell sits *below* its village; the ferry is span), so `dominant` keeps
+    its rule and stops being the verdict for a centrepiece; the metric now
+    carries elevation and span and says *read it*. F15 closes with it.
   - F27 — **the icon is authored at house scale**: the bell pavilion ×1.27,
     the ferry rig ×0.93, the pit heads as huts, the monastery ×1.7 on a
     200× mountain; the whale (×2.8, ×6.8) proves the model can. Nothing in
@@ -527,6 +537,20 @@ running state. The NOW block is rewritten at the end of every turn.
   rule for span or elevation. That is the evidence law 7 asks for before a
   metric is changed, and it is now in hand (F28); the metric is not
   changed in the same unit that produced the evidence. Undo: n/a.
+- **D71 (unit 32):** the dominance rule is not extended. The elevation
+  data that a prominence rule would use says the opposite of the reads on
+  two of the four: the gompa's base (154) is below its own complex's median
+  (159) because the buildings it is measured against are its outbuildings
+  on the peak, and the bell pavilion (74) sits below the village (86) — a
+  fail by any rule, which the eye agreed with. A rule that reconciles the
+  ferry alone is optimisation, which law 7 forbids. Undo: n/a.
+- **D72 (unit 32):** what changes instead is what the metric *says*: beside
+  `dominant` it now reports the icon's base elevation over the buildings'
+  median base and its span against theirs, and when either is large and
+  the rule still says no, the alarm reads "not dominant by the rule — read
+  it". `dominant` itself is unchanged, so every score in every run stays
+  comparable; the verdict on a program-carried centrepiece is the read's,
+  as D70 already ruled. Undo: revert the tool.
 
 ## SPEND
 
@@ -563,6 +587,7 @@ running state. The NOW block is rewritten at the end of every turn.
 | 29 | probe pass 1 — six prompts authored (`runs/probe-1`), the icon metric | 0.36 | 8.55 |
 | 30 | probe pass 2 — six worlds generated end to end (`runs/probe-2`), the icon metric | 1.67 | 10.22 |
 | 31 | F27 in the kit — the golden gate (`runs/after-f27`) and four probes re-run (`runs/probe-2b`) | 1.55 | 11.77 |
+| 32 | F28 — the metric re-scored on `runs/probe-2b`, no authoring | 0.00 | 11.77 |
 
 ## VERDICTS
 
@@ -1156,3 +1181,16 @@ Golden gate `runs/after-f27`: 11 of 11, 10 one-shot, `gate: pass`, 28 of 28 icon
   through the program stage (`runs/probe-2b`). the golden gate green (11 of 11, 10 one-shot, no golden icon lost, `railway_town` FIXED), the kit paragraph shipped; of the four probes re-run through the program stage, the two villages have their fjord and its ferry and the monastery perches on its peak — two of four read as their prompts, none by the metric, which refuses span and elevation (F28) Tests: FULL suite
   COUNTS kit suites 13 files / 267 tests (kit-assembly, spec kit, agents); the golden harness is the kit gate (spec §9) and passed; no compiler code moved. Files: the kit and its generated copies, the two runs,
   `docs/decks/probes/F27-2026-08-25.md`, the ledger. Spend $1.55.
+- **unit 32 — F28: the metric keeps its rule and loses the verdict
+  (2026-08-25):** the four F27 probes' elevation data (`grand_gompa` base
+  154 vs its complex's median 159; the bell pavilion 74 vs the village 86;
+  the ferry 18 × 56 on the water at 70; the mine working at the camp's
+  own base) show that no prominence rule reconciles the reads (D71).
+  `icon-metric.mjs`: `medianBuilding` gains the buildings' median base and
+  side; `iconDominance` reports `base`, `medianBase`, `elevation`,
+  `spanRatio` and `readRequired`, and the alarm says "read it" when span
+  ≥ 3× or elevation ≥ a building's height and the rule says no; `dominant`
+  unchanged (D72). `icon-metric.test.ts` +2 (a long low ferry asks for a
+  read with its span; a valley pavilion does not). `runs/probe-2b`
+  re-scored: the ferry alone asks for a read ("not dominant by the rule (h×1.07, a×8) — read it: span ×4"); the gompa sits 5 below its complex, the bell 12 below its village, the mine level with the camp — three alarms unchanged. Tests: FULL suite COUNTS Test Files 347 passed | 1 skipped (348), Tests 5684 passed | 31 skipped (5715). Files: the tool,
+  the test, the re-scored `icon-metric.json`, the ledger. Spend $0.
