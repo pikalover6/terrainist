@@ -31,53 +31,26 @@ teaches); heavy vitest one at a time. Wave 2b after 2a; campaign window
 **Perf ladder CLOSED** — see cell 3 (troy 5.0→3.9 s, byte-identical ×3
 docs; profile flat; program cost = non-goal; #27 = correctness only).
 
-**KIT LADDER (session kit-fix) + MENUS (session menus), all committed:**
-A0 golden prompts 85420f7 (11 prompts, $0.64/~20 min per pass — the kit
-is the latency); cluster 1 (units: T118 2→0; the deleted "fraction"
-sentence was the scatter.program rule misfiled — taught the split);
-cluster 2 2c77126 (root union; terrain §7b bespoke tier fenced);
-**NOISE FLOOR** ($0.31, 3×3 at fixed bytes): archetype SET only 35 %
-stable at temp 0 → one-sample vocabulary deltas < ~4 are re-rolls,
-parroting floor 7.7 pts; score.mjs prints `within noise`; cluster 1–2
-archetype deltas withdrawn. **Menu measured** ($1.29, 136020e): reach
-does NOT move (62→64 within noise, packs 7→7); floor-proof signal =
-pack-member uses 5→16, 15 classical (the one fenced pack), 3 corpus-
-firsts; five prompts wrote the familiar generic id over the handed pack
-id → **retrieval necessary, not sufficient; the fenced example supplies
-the binding** (A3 input: teach preference). Flag OFF. Under the menu
-params.archetype vanished (kit :1464 forbade it; compiler canonical
-since fabric v2). **Cluster 3 0e17fd0 = first floor-clearing claim**
-(3×3): explicit archetypes troy [0,0,0]→[2,3,3], walled [0,0,0]→[3,5,3],
-fjord control flat; 3 fences had built the WRONG thing (harbour_light→
-watchtower vs lighthouse; the_long_house→cottage vs longhouse;
-assay_office→smithy). **RE-MEASURED at the cluster-3 kit (3×3, $0.31, 55ca8e1): THE MENU
-WORKS where it is right** — troy pack uses OFF 3/5/5 vs ON 11/11/11,
-pithos_store/trireme/votive_column (0/50 corpus) 3/3 ON, 0/3 OFF;
-explicitArchetypeParams held (prediction pre-registered); walled 0/0/0
-= the era tier's defect (medieval spans 8 incompatible packs — a
-European town offered torii); binding hypothesis narrowed to named-pack
-cases. Kai: DROP tier 2 (580 shown / 0 adopted vs 198/49) — **WS-A2 CLOSED
-5893621**, menu named-pack-only ~1k tokens, flag OFF "not yet". Cluster 4
-(checklists: no forest-count law exists; envelope rules unenforced)
-applied, triplicates in flight ($0.35).
-**Region scope** (consult 82216ce): two-place prompts empty world scope
-BY INSTRUCTION (one region_<place> token each, hand-off in prose nobody
-structural reads) — a prompt class the menu and A3 are blind to; Kai:
-DEFERRED to Wave 2b/A3 (B staged behind A). Harness wrinkle: resume
-skips failed records (fix scheduled). radiusBlocks/radiusFraction rename
-→ WS-F.
-
-**Cluster 4 LANDED 8cb1578:** desert forests [1,1,1,1]→[0,0,0] across four
-kit versions (no forest-count law exists); envelope half suggestive only.
-Rule: collect before-samples BEFORE bytes move. **Cluster 5 LANDED 1493b50:**
-cost.ts:309 makes SURFACE the default distance measure (kit taught centre
-→ every spacing in every doc off by half an envelope); era class is
-renaissance; farm example's two advisory diagnostics → zero. B3 slope story
-RETRACTED (kit-fix probed: zero demotions on alpine ground); conform = the
-demotion order's first casualty (weight 1.0, last-written, index tiebreak);
-census: 92/100 conform-demoted nodes also lost a second constraint —
-hard distance tethers are the over-constraint → consult for Kai. Cluster
-6 (semantics) next.
+**KIT LADDER — PHASE 1 COMPLETE (session kit-fix, six clusters, all
+committed; detail in cell 3 + docs/STOCKTAKE-v0.md §WS-A):** A0 golden
+prompts ($0.64/~20 min per pass; the kit IS the latency); noise floor
+measured (archetype set 35 % stable; score.mjs `within noise`; before-
+samples BEFORE bytes move); clusters 1–6 each decided against the code,
+four verified 3×3. Headlines: T118 2→0 (radius = BLOCKS; the "fraction"
+sentence was the scatter.program rule misfiled); root union fixed;
+params.archetype is canonical and three fences had built the WRONG
+building; the desert's density-0 forest gone [1,1,1,1]→[0,0,0]; **distance
+measures SURFACE by default (kit taught centre — every spacing off by half
+an envelope)**; galleon is a water prop; prominence law taught a
+district-child landmark validate.ts:698 rejects. **Open, Kai's call:
+LOAM-T204 = two bespoke fences write the invalid nested distance form —
+29/30 T204s in the campaign, a retry round per landmark.** Menus (WS-A2
+CLOSED 5893621): named-pack-only menu ~1k tokens, flag OFF; proven effect
+on troy (pack uses 3/5/5→11/11/11, three corpus-first ids 3/3); era tier
+killed 580/0; binding finding + region-scope consult → A3. B3 slope story
+RETRACTED: the conform is the demotion order's first casualty; 92/100
+conform-demoted nodes also lost a second constraint (hard distance
+tethers) → consult.
 
 **WAVE 2b CONSULT drafted (docs/STOCKTAKE-WAVE-2B-v0.md, e891c43+):** B1
 citadel = fence the civic set-piece (a)+(c), 3×3 ~$0.35; B2 A3 = core kit +
