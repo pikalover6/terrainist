@@ -61,23 +61,17 @@ terrain_conform 100 / distance 62 / adjacent_to 51 — kit fences write
 conform without maxSlope (DEFAULT_MAX_SLOPE 35) → one real cluster. **Kai RULED: B1
 now (after clusters 5–6), B2 = next wave with its own session/window.**
 
-**FRESH TROY k1 (Kai: generate now; docs/decks/troy_k1; freeze/troy-k1 @
-771cbe4; deck trojan_horse_troy_k1):** authored ONE-SHOT, zero diagnostics,
-at the post-Phase-1 kit; the compile found TWO latent compiler bugs (fixed
-by me under the bug-first law, Kai: "fix it myself inline"): farm.ts forced
-the fifth resolve in the declaring half (bafb179; private resolve, byte-
-identical); a mostly-water bench graded to the sea bed drained the bay
-(771cbe4; SUBMERGED_BENCH_UNGRADED — bench stays in levels, pad edits
-withheld; dropping the bench dammed the river fixture; pirates moved 43
-sea columns, attributed; baseline re-pinned). Third item → WS-F: sealess
-river ponded (T112) leaves unstable water (terrain-only). B1 (a) NULL
-($0.47; "a fence teaches the number, not the ratio; fence both sides") →
-(b) agents-side later. **Conform lever LANDED 34ad114:** 12 tethers soft /
-11 hard, redwood E404 11/4/10→0/0/0 — "never slope, never maxSlope; the
-kit taught hard tethers 25× with no soft". kit-fix's remediation write-up
-docs/audits/kit-remediation-2026-08-24.md; campaign spend $4.82; kit-fix
-stood down (Phase 1 + T204 + B1 + conform done). Walk: 6 stations in the
-deck's WALK-CARD.
+**FRESH TROY k1 (docs/decks/troy_k1; freeze/troy-k1 @ 771cbe4):** authored
+ONE-SHOT at the post-Phase-1 kit; its compile found TWO latent compiler
+bugs, fixed by me (Kai: inline): farm.ts forced the fifth resolve
+(bafb179, byte-identical) and a mostly-water bench graded to the sea bed
+drained the bay (SUBMERGED_BENCH_UNGRADED 771cbe4 — bench stays in levels,
+pad edits withheld; pirates moved 43 sea columns, attributed). WS-F: a
+sealess river ponded leaves unstable water (terrain-only). B1(a) NULL
+("fence both sides of a ratio") → (b) later. Conform lever LANDED 34ad114
+(redwood E404 11/4/10→0/0/0; the kit taught hard tethers 25×). kit-fix's
+write-up docs/audits/kit-remediation-2026-08-24.md; spend $4.82 + decks
+~$1.30; all three sessions stood down.
 
 **k1 DECK SET (docs/decks/*_k1, ~$0.95):** montfort_hill (walled city;
 hillside form replan dissolved 4/5 strips → 5 houses in a full wall),
