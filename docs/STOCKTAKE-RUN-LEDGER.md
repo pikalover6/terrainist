@@ -7,29 +7,31 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 14 (F1/T110 attributed; two switches landed
-  off) is committed.
-- **Next unit:** unit 15 — flip `OCEAN_FILL_CONTINUES`
-  (`packages/stdlib/src/classify/index.ts`) and `POOL_NEVER_LOWERS`
-  (`packages/compiler/src/terrain/columns.ts`) to true. The trial says the
-  fourteen law-5 worlds are payload-identical either way and four of the
-  five refused documents compile clean; the flip commit carries the
-  fourteen payload shas (reference `bi/u10/PAYLOADS`), the five documents'
-  T110 counts, the switch tests flipped to "ships on", the FULL suite, and
-  the four documents re-scored by the icon metric (railway_town's
-  before-sample station can then be read on a compiled world). Then F10,
-  F4, F14, F17; §10.5 probe prompts; the remaining verdict stations.
-- **Last commit:** e7dbdd4 (unit 13). Convention: this line names the
+- **In flight:** nothing — unit 15 (the fluid switches flipped) is
+  committed.
+- **Next unit:** unit 16 — **the slop census, classes 1–3** (gate G5): write
+  `docs/STOCKTAKE-SLOP-CENSUS.md` listing every finding by class with a
+  disposition (delete / fix / rewrite / keep-with-note / proposal), seeded
+  from what the Run has already established — class 1 belief vs behaviour
+  (`BLOCK_MULTI_RECT`'s "grid worlds untouched", `W527` blind on the planned
+  path, `SITE_STRIP_DISSOLVED` absent, the highrise head course, `held` as
+  frontage, the ocean fill's `never` repair, `mostlyWater`'s majority vote,
+  `TERRACE_BY_TERRAIN` "nothing consults this value" — verify), class 2
+  abandoned seams (the spec's list: declare/build split, report `blockSpans`
+  vs emit, driver write-through, the two kit files vs the compiler
+  registries), class 3 duplicated authorities (heights, placement,
+  palettes) — probing each with a bounded read or a compile, then executing
+  the small class-1–3 items code-first under law 5 and writing the rest up.
+  Budget the unit at one turn; carry the remainder in the census document.
+  Then F10, F4, F14, F17; §10.5 probe prompts; the remaining stations.
+- **Last commit:** 5809500 (unit 14). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
 - **Spend:** $8.19 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
 - **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19, D25,
   D32.)
 - **Findings queue (law 1: bugs before anything else):**
-  - F1 — `LOAM-T110 UNSTABLE_FLUID`: **attributed** to three mechanisms
-    (`docs/decks/anchors/T110-2026-08-25.md`); two fixed behind switches
-    (F-A the ocean fill past a `never` column, F-B a second pool lowering
-    the first — four of five documents), one a subsystem (a terrace pad
-    graded into a lake — proposal P4). Flip is unit 15.
+  - F1 — T110: **fixed for four of five** (units 14–15); open on #5 only
+    (a pad graded into a lake, proposal P4).
   - F2 — anchors at HEAD: all four attributed (units 4, 8).
   - F3 — metropolis authoring regression, lost 3-of-3; E2.
   - F4 — `LOAM-I512` "ruined shells" vs intact boxes — street-level probe.
@@ -41,7 +43,7 @@ running state. The NOW block is rewritten at the end of every turn.
   - F14 — pre-existing physics findings on shipped worlds; one physics
     unit, probe first.
   - F15 — the icon metric's before-sample alarms (horse/citadel dominance,
-    the redwoods' measure, the farm town's hull density).
+    the redwoods' measure, the farm town's hull density; the rail gantry).
   - F16 — the kit's core is 88 % of the kit; a smaller kit is a prose job.
   - F17 — the walled city's keep authored in 1 of 3 kit rolls; kit-teaching.
 ## DECISIONS
@@ -279,6 +281,7 @@ running state. The NOW block is rewritten at the end of every turn.
 | 12 | the E1 arms — the kit split, harness flags, dry runs only | 0.00 | 2.29 |
 | 13 | E1: 9 authoring passes (3 arms × 3 repeats) + one resumed pass; compiles free | 5.90 | 8.19 |
 | 14 | T110 attributed — probe, two switches off, trials, the FULL suite | 0.00 | 8.19 |
+| 15 | the fluid flip — compiles, re-score, the FULL suite | 0.00 | 8.19 |
 
 ## VERDICTS
 
@@ -536,4 +539,13 @@ running state. The NOW block is rewritten at the end of every turn.
   suite COUNTS `Test Files 341 passed | 1 skipped (342)`, `Tests 5664 passed
   | 31 skipped (5695)`. Files: `stdlib/classify/index.ts`,
   `terrain/columns.ts`, the test, the record. Subagent: 1 (opus-5-medium).
+  Spend $0.
+- **unit 15 — the fluid flip (2026-08-25):** `OCEAN_FILL_CONTINUES` and
+  `POOL_NEVER_LOWERS` → true; fourteen of fourteen law-5 worlds
+  payload-identical; four of the five refused documents compile clean,
+  #5 keeps 396 (P4); the before-sample re-scored with the railway town
+  compiled (26.1 lots/10k, icons 3/3). Tests: FULL suite COUNTS `Test Files
+  341 passed | 1 skipped (342)`, `Tests 5664 passed | 31 skipped (5695)`;
+  `fluid-stability-fixes 5 passed`. Files: the two sources, the test, the
+  T110 record §D, `runs/before-sample/icon-metric.json`, the deck README.
   Spend $0.

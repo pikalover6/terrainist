@@ -39,8 +39,8 @@ function fixture(): { field: HeightField; noFlood: Uint8Array; gap: number; behi
 }
 
 describe("the ocean fill continues past a never column it had to flood", () => {
-  it("lands off", () => {
-    expect(OCEAN_FILL_CONTINUES).toBe(false);
+  it("ships on", () => {
+    expect(OCEAN_FILL_CONTINUES).toBe(true);
   });
 
   it("today strands the column behind the flooded gap dry against the sea", () => {
@@ -68,7 +68,7 @@ describe("the ocean fill continues past a never column it had to flood", () => {
 });
 
 describe("a second pool never lowers the first", () => {
-  it("lands off", () => {
-    expect(POOL_NEVER_LOWERS).toBe(false);
+  it("ships on", () => {
+    expect(POOL_NEVER_LOWERS).toBe(true);
   });
 });

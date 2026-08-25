@@ -62,3 +62,6 @@ keep and the elder glowcap dominant; the Trojan horse (h×1.87, a×1.91) and
 the citadel (h×1.33) under the alarm line; density alarms on hellenist
 (11.6 < 15), the walled city (8.2 < 15), alien_farm (3.4 < 6, buildings
 against their own hull) and railway_town (did not compile — F1).
+Re-scored at unit 15 (the fluid fixes flipped): railway_town compiles —
+icons 3/3, 26.1 lots per 10k (floor 8), the rail gantry at h×1.47 under the
+dominance line; every other row unchanged.

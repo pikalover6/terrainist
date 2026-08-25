@@ -801,6 +801,7 @@ export function stoneBandState(
  * `LOAM-T110 UNSTABLE_FLUID` (`scratchpad/t110/T110-PROBE.md`, 2026-08-25).
  * On, a column already holding the same fluid above the new level keeps its
  * surface. Pools that do not overlap are byte-identical. Staged under the
- * Run's law 5: landed `false`; flipped in its own commit.
+ * Run's law 5: landed `false`; **`true` ships** (2026-08-25, unit 15) — no
+ * law-5 world moves; the railway town compiles clean.
  */
-export const POOL_NEVER_LOWERS = false;
+export const POOL_NEVER_LOWERS = true;

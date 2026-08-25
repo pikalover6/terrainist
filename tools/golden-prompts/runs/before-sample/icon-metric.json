@@ -423,6 +423,7 @@
           ],
           "inWorld": [
             "program:world.mothership",
+            "scout_ship",
             "program:world.scout_ship",
             "marker:world.mothership"
           ],
@@ -484,6 +485,7 @@
             "intent.tokens",
             "world.metro_terrain.collapsed_highway",
             "world.ruined_metropolis.shattered_tower_prime",
+            "world.satellite_uplink",
             "program:comm_array_tower"
           ],
           "inWorld": [
@@ -711,9 +713,9 @@
             "world.mushroom_dwelling_north",
             "world.mushroom_dwelling_east",
             "forest:glowing_mushroom_grove",
+            "the_elder_cap",
             "program:world.the_elder_cap",
             "cap_plaza",
-            "the_elder_cap",
             "marker:world.the_elder_cap",
             "prop:world.mycelium_bench"
           ],
@@ -902,9 +904,29 @@
             "intent.tokens",
             "world.locomotive_engine"
           ],
-          "inWorld": [],
+          "inWorld": [
+            "coal_transshipment_gantry",
+            "rail_signal_box",
+            "world.rail_signal_box",
+            "program:world.coal_transshipment_gantry",
+            "marker:world.coal_transshipment_gantry",
+            "central_station",
+            "world.canal_quarter.central_station",
+            "world.canal_quarter.infill_-36_78",
+            "world.canal_quarter.infill_-36_158",
+            "prop:world.locomotive_engine"
+          ],
           "present": true,
-          "dominance": null
+          "dominance": {
+            "dominant": false,
+            "by": "coal_transshipment_gantry",
+            "height": 22,
+            "footprint": 480,
+            "medianHeight": 15,
+            "medianFootprint": 156,
+            "heightRatio": 1.47,
+            "footprintRatio": 3.08
+          }
         },
         {
           "id": "canal",
@@ -923,7 +945,20 @@
             "program:canal_lock_gates",
             "intent.tokens"
           ],
-          "inWorld": [],
+          "inWorld": [
+            "canal_quarter",
+            "central_station",
+            "central_steam_plant",
+            "town_gasworks",
+            "coal_tipple_dock",
+            "terrace_-116_-13",
+            "terrace_-116_8",
+            "terrace_-191_29",
+            "terrace_-149_29",
+            "terrace_-116_29",
+            "terrace_-36_29",
+            "terrace_-116_47"
+          ],
           "present": true,
           "dominance": null
         },
@@ -937,25 +972,38 @@
             "world.canal_quarter.town_gasworks",
             "world.sooty_outskirts_trees"
           ],
-          "inWorld": [],
+          "inWorld": [
+            "world.canal_quarter.infill_-101_-1",
+            "world.canal_quarter.infill_14_11",
+            "world.canal_quarter.infill_-139_68",
+            "world.canal_quarter.infill_-23_78",
+            "world.canal_quarter.infill_-78_113",
+            "world.canal_quarter.infill_-191_148",
+            "world.canal_quarter.infill_-4_154",
+            "world.canal_quarter.infill_-101_160",
+            "world.canal_quarter.infill_-138_161",
+            "world.canal_quarter.infill_-191_171",
+            "town_gasworks",
+            "world.canal_quarter.town_gasworks"
+          ],
           "present": true,
           "dominance": null
         }
       ],
       "density": {
-        "basis": "none",
-        "lots": 0,
-        "blocks": 0,
-        "envelope": 0,
-        "lotsPer10k": 0,
+        "basis": "districts",
+        "lots": 138,
+        "blocks": 43,
+        "envelope": 52800,
+        "lotsPer10k": 26.1,
         "floor": 8,
-        "ok": false
+        "ok": true
       },
       "boxes": {
         "era": "industrial",
         "preModern": false,
         "count": 0,
-        "of": 0,
+        "of": 72,
         "sample": []
       },
       "era": {
@@ -970,13 +1018,12 @@
         "packEraMismatch": 0
       },
       "floors": {
-        "compiled": false,
+        "compiled": true,
         "errors": 0,
-        "diagnostics": 0
+        "diagnostics": 23
       },
       "alarms": [
-        "density 0 < floor 8",
-        "did not compile"
+        "icon railway not dominant (h×1.47, a×3.08)"
       ]
     },
     {

@@ -115,9 +115,11 @@ export interface OceanMask {
  * carve at the shore. On, a repaired column joins the same queue the fill
  * uses, and the fill drains from it under the same rules (blocked columns
  * still refuse). A world with no `noFlood` mask is byte-identical either way.
- * Staged under the Run's law 5: landed `false`; flipped in its own commit.
+ * Staged under the Run's law 5: landed `false`; **`true` ships** (2026-08-25,
+ * unit 15) — fourteen of fourteen law-5 worlds payload-identical either way,
+ * three refused documents compile clean.
  */
-export const OCEAN_FILL_CONTINUES = false;
+export const OCEAN_FILL_CONTINUES = true;
 
 export function computeOceanMask(
   field: HeightField,
