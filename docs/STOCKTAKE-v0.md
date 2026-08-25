@@ -81,8 +81,10 @@ Seed findings already in hand:
   tied to specific edits (T118 2 → 0 held across every run). The archetype
   deltas reported for clusters 1–2 were within noise and are withdrawn as
   results; their diagnostic/token/cost numbers stand. WS-D's shootout must
-  run repeats or score on stable metrics + pass-rate + cost. score.mjs will
-  print `within noise` beside sub-floor deltas. Kit FROZEN at 58e7d2e0 /
+  run repeats or score on stable metrics + pass-rate + cost. score.mjs now
+  prints `within noise` beside sub-floor deltas (floors: archetypeReachPct
+  1.2 pts, **kitLiteralEnvelopePct 7.7 pts — the parroting metric must
+  move ~8 points to mean anything**; summed metrics scale by √n). Kit FROZEN at 58e7d2e0 /
   f98c5e85 for the menu measurement (Kai: the complete ~$1.00 pair).
 
 ## WS-B — Terrain-kit audit
