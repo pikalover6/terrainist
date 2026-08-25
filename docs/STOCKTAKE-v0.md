@@ -117,6 +117,19 @@ Seed findings already in hand:
 - **Region-scope ruling (Kai, 2026-08-24): DEFERRED to Wave 2b / A3** —
   recorded as A3's design input; A/B decided when dynamic assembly is
   designed.
+- **Cluster 4 LANDED (checklists):** both kits asserted laws the validator
+  never had — no forest-count check exists; neither checklist envelope rule
+  is enforced. Proven: desert_wilderness forests before [1,1,1,1] across
+  FOUR kit versions → after [0,0,0]; `barren_waste` (a density-0 forest
+  invented to obey the line) is gone; node counts held; metropolis forests
+  unchanged as the negative control. Envelope half suggestive only
+  (metropolis max width [21,17,15] → [32,19,28], overlapping, no floor
+  measured) — a ~$0.30 triplicate on a classical civic prompt would settle
+  it when someone wants the claim. $0.19. **Method rule to add to the
+  README: collect the before-samples BEFORE the bytes move** — clusters 3
+  and 4 both had their "before" by luck. Remaining Phase-1 clusters: 5
+  (vocabulary contradictions + the two farm-example defects) and 6
+  (semantics); Kai's pick.
 
 ## WS-B — Terrain-kit audit
 
