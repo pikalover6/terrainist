@@ -1,0 +1,784 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "fjord_rivals",
+    "worldSeed": 902,
+    "prompt": "Two rival fishing villages on opposite shores of a narrow fjord, one of stone and one of timber, joined only by a rope ferry.",
+    "spawn": {
+      "zone": "west"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:dirt_path",
+      "road.shoulder": "minecraft:gravel",
+      "ground.beach": "minecraft:gravel"
+    }
+  },
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.45,
+    "decline": 0.15,
+    "formality": 0.25,
+    "climate": {
+      "biome": "minecraft:taiga",
+      "temperature": -0.4,
+      "humidity": 0.3,
+      "snow": "auto"
+    },
+    "character": {
+      "label": "fjord rivals",
+      "programs": [
+        {
+          "id": "rope_ferry_rig",
+          "mode": "landmark",
+          "brief": "A heavy timber-and-iron windlass winch post and haul-pulley frame anchored onto a stone-and-timber slipway, holding taut guide cables for a rope ferry spanning the fjord.",
+          "envelope": [
+            13,
+            11,
+            13
+          ]
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "two steep opposing shores of a narrow fjord separated by deep cold water",
+      "infra": "rope_ferry cable stretched across the narrow fjord connecting the two village landings; fish_drying_racks along both waterfronts; timber and stone jetties projecting into the water",
+      "event_direction": "two rival fishing settlements facing directly across the fjord water at one another",
+      "region_stone_village": "era medieval, wealth 0.45, decline 0.15, formality 0.25; built of rough stone and slate; steep stone retaining walls, rocky quays, smokehouse, tavern, watchtower",
+      "region_timber_village": "era medieval, wealth 0.4, decline 0.2, formality 0.2; materialTheme boreal_pine; formPacks [nordic_viking]; dark timber halls, stilt cottages, boat sheds, wooden slipways, tavern"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "the narrow fjord and its opposing fishing villages",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "steep rocky fjord walls plunging into cold sea water",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 74,
+          "amplitude": 52,
+          "octaves": 5,
+          "frequency": 0.0035,
+          "gain": 0.52,
+          "ridged": true,
+          "warp": {
+            "amount": 28,
+            "frequency": 0.004
+          },
+          "erosionPasses": 2,
+          "cliffThreshold": 46,
+          "soilDepth": 3,
+          "beachWidth": 2,
+          "snowLineFraction": 0.88
+        },
+        "children": [
+          {
+            "id": "fjord_channel",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the narrow sea channel cleaving the two shores",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.51,
+                  0.95
+                ],
+                [
+                  0.52,
+                  0.65
+                ],
+                [
+                  0.48,
+                  0.35
+                ],
+                "coast"
+              ],
+              "width": 52,
+              "depth": 54,
+              "profile": "sharp",
+              "meander": 0.3
+            }
+          },
+          {
+            "id": "west_stone_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the stepped plateau shelf for the stone village",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.32,
+                0.5
+              ],
+              "radius": 72,
+              "height": 8,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "east_timber_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the wooded shelf for the timber village",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.68,
+                0.5
+              ],
+              "radius": 72,
+              "height": 8,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "west_cliff_wall",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the towering western fjord wall",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.14,
+                  0.1
+                ],
+                [
+                  0.18,
+                  0.5
+                ],
+                [
+                  0.15,
+                  0.9
+                ]
+              ],
+              "width": 64,
+              "height": 58,
+              "profile": "sharp"
+            }
+          },
+          {
+            "id": "east_cliff_wall",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the towering eastern fjord wall",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.86,
+                  0.1
+                ],
+                [
+                  0.82,
+                  0.5
+                ],
+                [
+                  0.85,
+                  0.9
+                ]
+              ],
+              "width": 64,
+              "height": 58,
+              "profile": "sharp"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "boreal",
+          "temperatureFrequency": 0.0014,
+          "latitudeGradient": -0.2
+        }
+      },
+      {
+        "id": "wilderness_pines",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse pine scatter over the cliffs",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 38,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "species": [
+            {
+              "id": "scrub_spruce",
+              "shape": "spruce_squat",
+              "weight": 2
+            },
+            {
+              "id": "cliff_pine",
+              "shape": "spruce_tall",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "west_pine_woods",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "windswept pine slopes behind the stone village",
+        "params": {
+          "area": {
+            "at": [
+              0.22,
+              0.5
+            ],
+            "radius": 95
+          },
+          "density": 0.16,
+          "spacing": 3,
+          "clumping": 0.5,
+          "maxSlope": 34,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "strata": true,
+          "species": [
+            {
+              "id": "stone_side_spruce",
+              "shape": "spruce_tall",
+              "weight": 3
+            },
+            {
+              "id": "larch_accent",
+              "shape": "larch_columnar",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "east_taiga_woods",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "dense boreal forest behind the timber village",
+        "params": {
+          "area": {
+            "at": [
+              0.78,
+              0.5
+            ],
+            "radius": 105
+          },
+          "density": 0.22,
+          "spacing": 3,
+          "clumping": 0.6,
+          "maxSlope": 34,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "strata": true,
+          "species": [
+            {
+              "id": "dense_tall_spruce",
+              "shape": "spruce_tall",
+              "weight": 4
+            },
+            {
+              "id": "ancient_grandfather_pine",
+              "shape": "spruce_ancient",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "stone_village",
+        "kind": "district",
+        "label": "Skagarvik - the stone fishing village on the western shore",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            130,
+            120
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.3,
+              0.5
+            ]
+          }
+        ],
+        "params": {
+          "fabric": "grown",
+          "density": "medium",
+          "ground": "stepped",
+          "mix": [
+            "cottage",
+            "tavern",
+            "cannery",
+            "warehouse",
+            "butchery",
+            "watchtower"
+          ],
+          "courtyards": 0.3
+        },
+        "intent": {
+          "wealth": 0.45,
+          "decline": 0.15,
+          "formality": 0.3,
+          "character": {
+            "label": "stone fishing village",
+            "palettes": {
+              "road.surface": "minecraft:cobblestone",
+              "road.shoulder": "minecraft:gravel"
+            },
+            "motifs": {
+              "roofType": "gable",
+              "massing": "blocky",
+              "windowRhythm": "sparse"
+            },
+            "archetypes": {
+              "prefer": [
+                "tavern",
+                "cannery",
+                "warehouse",
+                "watchtower",
+                "cottage"
+              ],
+              "forbid": [
+                "skyscraper",
+                "office",
+                "apartment_block",
+                "department_store"
+              ]
+            }
+          }
+        },
+        "tags": [
+          "stone_village",
+          "settlement",
+          "fishing_port"
+        ],
+        "children": [
+          {
+            "id": "stone_smokehouse",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the stone fish smokehouse and cure hall",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                11,
+                11,
+                15
+              ]
+            },
+            "params": {
+              "archetype": "cannery",
+              "floors": 1,
+              "roof": "gable"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "east",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "smokehouse",
+              "fish_curing"
+            ]
+          },
+          {
+            "id": "stone_lookout",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the stone watchtower overlooking the fjord",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                7,
+                19,
+                7
+              ]
+            },
+            "params": {
+              "archetype": "watchtower",
+              "floors": 2,
+              "roof": "flat"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "east",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "lookout",
+              "defence"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "timber_village",
+        "kind": "district",
+        "label": "Fjordsheim - the timber fishing village on the eastern shore",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            130,
+            120
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.7,
+              0.5
+            ]
+          }
+        ],
+        "params": {
+          "fabric": "grown",
+          "density": "medium",
+          "ground": "stepped",
+          "mix": [
+            "longhouse",
+            "stilt_house",
+            "boathouse",
+            "tavern",
+            "cottage",
+            "sawmill"
+          ],
+          "courtyards": 0.2
+        },
+        "intent": {
+          "wealth": 0.4,
+          "decline": 0.2,
+          "formality": 0.2,
+          "character": {
+            "label": "timber fishing village",
+            "materialTheme": "boreal_pine",
+            "formPacks": [
+              "nordic_viking"
+            ],
+            "motifs": {
+              "roofType": "gable",
+              "massing": "sprawling",
+              "windowRhythm": "regular"
+            },
+            "archetypes": {
+              "prefer": [
+                "longhouse",
+                "stilt_house",
+                "boathouse",
+                "sawmill",
+                "tavern"
+              ],
+              "forbid": [
+                "skyscraper",
+                "office",
+                "apartment_block",
+                "townhouse"
+              ]
+            }
+          }
+        },
+        "tags": [
+          "timber_village",
+          "settlement",
+          "fishing_port"
+        ],
+        "children": [
+          {
+            "id": "timber_great_hall",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the chieftain mead hall of dark timber",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                11,
+                13,
+                21
+              ]
+            },
+            "params": {
+              "archetype": "longhouse",
+              "floors": 2,
+              "roof": "gable"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "west",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "longhouse",
+              "great_hall"
+            ]
+          },
+          {
+            "id": "timber_boat_shed",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the timber slipway and boat repair shed",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                14,
+                17
+              ]
+            },
+            "params": {
+              "archetype": "boathouse",
+              "floors": 1,
+              "roof": "gable"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "west",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "boathouse",
+              "fishery"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "west_ferry_post",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the stone quay landing for the rope ferry",
+        "params": {
+          "prop": "pier",
+          "zone": "west",
+          "length": 14,
+          "width": 3
+        }
+      },
+      {
+        "id": "west_ferry_winch",
+        "kind": "generator",
+        "generator": "authored:rope_ferry_rig",
+        "label": "the mechanical rope ferry winch station",
+        "constraints": [
+          {
+            "at": [
+              0.42,
+              0.5
+            ]
+          },
+          {
+            "distance": "stone_village",
+            "min": 6,
+            "max": 24
+          }
+        ],
+        "params": {
+          "face": {
+            "toward": "east_ferry_post"
+          }
+        }
+      },
+      {
+        "id": "east_ferry_post",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the timber pier landing on the opposite shore",
+        "params": {
+          "prop": "pier",
+          "zone": "east",
+          "length": 14,
+          "width": 3
+        }
+      },
+      {
+        "id": "ferry_cable",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "the heavy ferry haul cable stretched across the water",
+        "params": {
+          "entry": "harbour_chain_tower",
+          "route": {
+            "between": [
+              "west_ferry_post",
+              "east_ferry_post"
+            ]
+          }
+        }
+      },
+      {
+        "id": "west_fishing_sloop",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "stone village fishing vessel",
+        "params": {
+          "prop": "fishing_sloop",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "west_skiff",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "stone village rowboat",
+        "params": {
+          "prop": "rowboat",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "east_longship",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "timber village clinker-built longship",
+        "params": {
+          "prop": "longship",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "east_skiff",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "timber village rowboat",
+        "params": {
+          "prop": "rowboat",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "crossing_ferry_barge",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the flat-bottomed rope ferry barge in the channel",
+        "params": {
+          "prop": "barge",
+          "zone": "center",
+          "on": "water",
+          "yaw": 90
+        }
+      },
+      {
+        "id": "west_log_pile",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "log_pile",
+          "zone": "west"
+        }
+      },
+      {
+        "id": "west_boundary_cairn",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "cairn",
+          "zone": "west"
+        }
+      },
+      {
+        "id": "west_parish_notice",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "notice_board",
+          "zone": "west"
+        }
+      },
+      {
+        "id": "east_timber_pile",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "log_pile",
+          "zone": "east"
+        }
+      },
+      {
+        "id": "east_shore_sign",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "signpost",
+          "zone": "east"
+        }
+      },
+      {
+        "id": "east_village_trough",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "horse_trough",
+          "zone": "east"
+        }
+      },
+      {
+        "id": "fjord_roads",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "the coastal paths connecting both villages to their ferry landings",
+        "params": {
+          "anchors": [
+            "stone_village",
+            "timber_village",
+            "west_ferry_post",
+            "east_ferry_post",
+            "#tag:stone_village",
+            "#tag:timber_village"
+          ],
+          "pattern": "organic",
+          "width": 2,
+          "lanterns": true,
+          "lanternSpacing": 16
+        }
+      }
+    ]
+  }
+}

@@ -303,12 +303,13 @@ async function main() {
   const args = process.argv.slice(2);
   const runDir = args.find((a) => !a.startsWith("--"));
   if (!runDir) {
-    console.error("usage: icon-metric.mjs <runDir> [--only a,b] [--json] [--out <file>]");
+    console.error("usage: icon-metric.mjs <runDir> [--only a,b] [--prompts <file>] [--json] [--out <file>]");
     process.exit(2);
   }
   const only = args.includes("--only") ? args[args.indexOf("--only") + 1].split(",") : null;
   const outFile = args.includes("--out") ? args[args.indexOf("--out") + 1] : path.join(runDir, "icon-metric.json");
-  const suite = JSON.parse(fs.readFileSync(path.join(HERE, "prompts.json"), "utf8"));
+  const promptsFile = args.includes("--prompts") ? path.resolve(args[args.indexOf("--prompts") + 1]) : path.join(HERE, "prompts.json");
+  const suite = JSON.parse(fs.readFileSync(promptsFile, "utf8"));
   const { compileTerrain } = await import(path.join(REPO, "packages/compiler/dist/terrain/compile.js"));
   const scores = [];
   for (const prompt of suite.prompts) {

@@ -1,0 +1,702 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "himalayan_monastery_glacier",
+    "worldSeed": 901,
+    "prompt": "A Himalayan monastery clinging to a cliff face above a glacier, prayer flags strung across the gorge, a village of yak herders on the moraine below.",
+    "spawn": {
+      "at": [
+        0.46,
+        0.72
+      ]
+    }
+  },
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.4,
+    "decline": 0.1,
+    "formality": 0.3,
+    "climate": {
+      "biome": "minecraft:jagged_peaks",
+      "temperature": -0.8,
+      "humidity": -0.3,
+      "snow": "always"
+    },
+    "character": {
+      "label": "cliffside Himalayan monastery and yak herder settlement",
+      "materialTheme": "boreal_pine",
+      "formPacks": [
+        "himalayan_monastery"
+      ],
+      "archetypes": {
+        "prefer": [
+          "assembly_hall",
+          "monks_cells",
+          "scripture_library",
+          "hermit_retreat",
+          "yak_byre",
+          "kora_gatehouse",
+          "butter_tea_kitchen"
+        ],
+        "forbid": [
+          "townhouse",
+          "terraced_row",
+          "shop_row",
+          "office",
+          "apartment_block"
+        ]
+      },
+      "urbanForm": "hillside",
+      "ground": "stepped",
+      "motifs": {
+        "roofType": "flat",
+        "massing": "stepped",
+        "windowRhythm": "banded"
+      },
+      "programs": [
+        {
+          "id": "prayer_flag_span",
+          "mode": "landmark",
+          "brief": "Cables and heavy rope lines strung across the gorge between tall timber masts, carrying fluttering runs of multi-colored Tibetan prayer flags spanning high over the icy glacier chasms.",
+          "envelope": [
+            56,
+            18,
+            14
+          ]
+        },
+        {
+          "id": "mani_stone_cairn",
+          "mode": "plugin",
+          "brief": "A sacred drystone mani cairn piled with inscribed mantra slates, yak horn offerings, and prayer flag branches.",
+          "envelope": [
+            5,
+            6,
+            5
+          ],
+          "count": 6
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "a sheer cliff face above a glaciated gorge, with a wide moraine basin below the glacier",
+      "icons": "whitewashed monastery complex clinging to the vertical rock face; prayer flag lines strung across the gorge; icy glacier tongue; yak herder stone huts and stone-walled pens on the moraine",
+      "infra": "prayer_flag lines strung across the gorge; mani_stone_cairns along the pilgrim trail; dry_stone_wall enclosing yak paddocks on the moraine"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:packed_mud",
+      "road.shoulder": "minecraft:gravel"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "The high Himalayan pass, monastery cliff, and moraine settlement",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "towering alpine peaks and jagged cliffs over a deep gorge",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 118,
+          "amplitude": 88,
+          "octaves": 5,
+          "frequency": 0.0038,
+          "gain": 0.52,
+          "ridged": true,
+          "erosionPasses": 2,
+          "cliffThreshold": 48,
+          "soilDepth": 2,
+          "snowLineFraction": 0.3
+        },
+        "children": [
+          {
+            "id": "north_peaks",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the sheer northern rock massif",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.15,
+                  0.12
+                ],
+                [
+                  0.5,
+                  0.08
+                ],
+                [
+                  0.85,
+                  0.15
+                ]
+              ],
+              "width": 96,
+              "height": 92,
+              "profile": "sharp"
+            }
+          },
+          {
+            "id": "glacier_gorge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the deep gorge carrying the glacier tongue",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.22,
+                  0.24
+                ],
+                [
+                  0.48,
+                  0.44
+                ],
+                [
+                  0.78,
+                  0.64
+                ]
+              ],
+              "width": 46,
+              "depth": 54,
+              "profile": "sharp",
+              "flooded": "never"
+            }
+          },
+          {
+            "id": "monastery_cliff_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the perched bedrock shelf for the monastery dzong",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.52,
+                0.3
+              ],
+              "radius": 64,
+              "height": 22,
+              "profile": "sharp"
+            }
+          },
+          {
+            "id": "moraine_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the wide moraine shelf below the glacier tongue",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.46,
+                0.74
+              ],
+              "radius": 110,
+              "height": 14,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "boreal",
+          "temperatureFrequency": 0.001,
+          "latitudeGradient": -0.5
+        }
+      },
+      {
+        "id": "high_scrub",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse sub-alpine scrub and hardy pines along the lower slopes",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 30,
+          "elevation": [
+            2,
+            80
+          ],
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "species": [
+            {
+              "id": "squat_spruce",
+              "weight": 2,
+              "shape": "spruce_squat"
+            },
+            {
+              "id": "juniper",
+              "weight": 3,
+              "shape": "juniper_scrub"
+            }
+          ]
+        }
+      },
+      {
+        "id": "monastery_dzong",
+        "kind": "district",
+        "label": "the cliffside monastery complex clinging to the rock face",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            130,
+            110
+          ]
+        },
+        "intent": {
+          "wealth": 0.6,
+          "character": {
+            "label": "sacred dzong monastery",
+            "archetypes": {
+              "prefer": [
+                "monastery",
+                "stupa",
+                "library",
+                "hermitage",
+                "bell_tower",
+                "gatehouse"
+              ]
+            },
+            "motifs": {
+              "roofType": "flat",
+              "massing": "towered"
+            }
+          }
+        },
+        "params": {
+          "fabric": "hillside",
+          "density": "medium",
+          "mix": [
+            "monastery",
+            "stupa",
+            "library",
+            "hermitage",
+            "bell_tower"
+          ],
+          "ground": "stepped"
+        },
+        "constraints": [
+          {
+            "at": [
+              0.52,
+              0.3
+            ]
+          }
+        ],
+        "tags": [
+          "monastery",
+          "sacred"
+        ],
+        "children": [
+          {
+            "id": "assembly_hall",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the central assembly hall of the dzong",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                15,
+                17,
+                19
+              ]
+            },
+            "params": {
+              "archetype": "monastery",
+              "floors": 2
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "hall"
+            ]
+          },
+          {
+            "id": "sacred_chorten",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the great white chorten spire",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                19,
+                13
+              ]
+            },
+            "params": {
+              "archetype": "stupa",
+              "floors": 1
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "stupa"
+            ]
+          },
+          {
+            "id": "scripture_hall",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the monastic scripture library",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                11,
+                13,
+                15
+              ]
+            },
+            "params": {
+              "archetype": "library",
+              "floors": 1
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "library"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "moraine_village",
+        "kind": "district",
+        "label": "the stone-built village of yak herders on the moraine",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            140,
+            120
+          ]
+        },
+        "intent": {
+          "wealth": 0.3,
+          "character": {
+            "label": "yak herder settlement",
+            "archetypes": {
+              "prefer": [
+                "shepherds_bothy",
+                "sod_house",
+                "hut",
+                "barn",
+                "byre",
+                "cottage"
+              ]
+            },
+            "motifs": {
+              "roofType": "flat",
+              "massing": "blocky"
+            }
+          }
+        },
+        "params": {
+          "fabric": "grown",
+          "density": "medium",
+          "mix": [
+            "shepherds_bothy",
+            "sod_house",
+            "hut",
+            "barn",
+            "cottage"
+          ],
+          "courtyards": 0.2
+        },
+        "constraints": [
+          {
+            "at": [
+              0.46,
+              0.74
+            ]
+          }
+        ],
+        "tags": [
+          "village",
+          "herders"
+        ],
+        "children": [
+          {
+            "id": "headman_bothy",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the stone hearth bothy of the head herder",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                11,
+                11,
+                11
+              ]
+            },
+            "params": {
+              "archetype": "shepherds_bothy",
+              "floors": 1
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "north",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "house"
+            ]
+          },
+          {
+            "id": "village_byre",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the large communal winter yak byre",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                12,
+                17
+              ]
+            },
+            "params": {
+              "archetype": "barn",
+              "floors": 1
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "north",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "byre"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "yak_pastures",
+        "kind": "generator",
+        "generator": "precinct.farm@0",
+        "label": "stone-walled yak paddocks and grazing ground on the moraine",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            100,
+            80
+          ]
+        },
+        "params": {
+          "parcels": 5,
+          "parcelSize": 16,
+          "crops": [
+            "pasture"
+          ],
+          "edge": "wall",
+          "farmstead": [
+            "barn",
+            "shepherds_bothy"
+          ]
+        },
+        "constraints": [
+          {
+            "adjacent_to": "moraine_village"
+          },
+          {
+            "distance": "moraine_village",
+            "min": 6,
+            "max": 28
+          }
+        ],
+        "ports": {
+          "gate": {
+            "type": "road_stub",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "farm",
+          "pasture",
+          "rural"
+        ]
+      },
+      {
+        "id": "gorge_prayer_flags",
+        "kind": "generator",
+        "generator": "authored:prayer_flag_span",
+        "label": "dense lines of prayer flags spanning the glacier gorge",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            56,
+            18,
+            14
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.46,
+              0.44
+            ]
+          },
+          {
+            "distance": "monastery_dzong",
+            "min": 16,
+            "max": 64
+          }
+        ],
+        "params": {
+          "face": {
+            "toward": "monastery_dzong"
+          }
+        },
+        "tags": [
+          "landmark",
+          "prayer_flags"
+        ]
+      },
+      {
+        "id": "trail_cairns",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "carved mani stone cairns along the approach paths",
+        "params": {
+          "program": "mani_stone_cairn",
+          "count": 6,
+          "area": {
+            "at": [
+              0.48,
+              0.58
+            ],
+            "radius": 0.26
+          },
+          "spacing": 22,
+          "avoidTags": [
+            "road",
+            "building"
+          ]
+        }
+      },
+      {
+        "id": "cliff_revetment",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "stone revetment and retaining wall anchoring the monastery terrace",
+        "params": {
+          "entry": "retaining_wall",
+          "route": {
+            "ring": "monastery_dzong",
+            "margin": 4
+          }
+        }
+      },
+      {
+        "id": "paddock_walls",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "upland dry stone boundary enclosing the herding perimeter",
+        "params": {
+          "entry": "dry_stone_wall",
+          "route": {
+            "ring": "yak_pastures",
+            "margin": 4
+          }
+        }
+      },
+      {
+        "id": "village_fuel_store",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "stacked fuel and firewood in the herder village",
+        "params": {
+          "prop": "log_pile",
+          "zone": "south"
+        }
+      },
+      {
+        "id": "village_trough",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "water trough for the livestock",
+        "params": {
+          "prop": "horse_trough",
+          "zone": "south"
+        }
+      },
+      {
+        "id": "pilgrim_trail",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "the steep mountain trail connecting the moraine to the sacred cliff",
+        "params": {
+          "anchors": [
+            "monastery_dzong",
+            "moraine_village",
+            "yak_pastures",
+            "gorge_prayer_flags",
+            "#tag:landmark"
+          ],
+          "pattern": "organic",
+          "width": 2,
+          "lanterns": false
+        }
+      }
+    ]
+  }
+}

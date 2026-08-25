@@ -1,0 +1,543 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "skywhale_spine_town",
+    "worldSeed": 906,
+    "prompt": "A desert town built inside the ribcage of a fossilised sky-whale: the ribs form the market hall, the skull is the temple, and the spine is the main street.",
+    "spawn": {
+      "at": [
+        0.5,
+        0.46
+      ]
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:cut_sandstone",
+      "road.shoulder": "minecraft:sand",
+      "plaza.path": "minecraft:smooth_sandstone",
+      "plaza.cobble": "minecraft:sandstone",
+      "plaza.border": "minecraft:cut_sandstone"
+    }
+  },
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.5,
+    "decline": 0.2,
+    "climate": {
+      "biome": "minecraft:desert",
+      "temperature": 0.9,
+      "humidity": -0.9,
+      "snow": "never"
+    },
+    "character": {
+      "label": "desert sky-whale carcass settlement",
+      "materialTheme": "sun_clay",
+      "formPacks": [
+        "desert_caravanserai"
+      ],
+      "urbanForm": "linear",
+      "motifs": {
+        "roofType": "flat",
+        "windowRhythm": "sparse"
+      },
+      "archetypes": {
+        "prefer": [
+          "courtyard_house",
+          "cistern",
+          "spice_market",
+          "tea_house",
+          "adobe_pueblo"
+        ],
+        "forbid": [
+          "townhouse",
+          "terraced_row",
+          "office",
+          "skyscraper"
+        ]
+      },
+      "programs": [
+        {
+          "id": "skywhale_skull_temple",
+          "mode": "landmark",
+          "brief": "A colossal fossilised sky-whale skull partially submerged in sand dunes, hollowed into a monumental temple sanctuary with sandstone altars, bone archways, and torchlit eye sockets looking down the spine street.",
+          "envelope": [
+            38,
+            26,
+            44
+          ]
+        },
+        {
+          "id": "whale_ribcage_market",
+          "mode": "landmark",
+          "brief": "A grand avenue of paired fossilised whale ribs curving high overhead like cathedral arches, sheltering a bustling desert market bazaar with hanging fabric canopies, merchant stalls, and bone timber walkways.",
+          "envelope": [
+            32,
+            22,
+            54
+          ]
+        },
+        {
+          "id": "vertebrae_arch",
+          "mode": "plugin",
+          "brief": "A massive fossilised sky-whale vertebra segment half-buried in the desert sands, worn into an archway or boundary marker along the thoroughfare.",
+          "envelope": [
+            9,
+            10,
+            9
+          ],
+          "count": 8
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "a barren desert plain with shifting sand dunes centered on the colossal skeleton of a sky-whale",
+      "icons": "a fossilised sky-whale skeleton forming the civic framework: vertebrae line the main street spine, arched rib bones shelter the market hall bazaar, and the hollow skull forms the monumental desert temple"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "The Desert Sky-Whale Carcass Settlement",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "desert_terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "desert dune hollow cradling the sky-whale skeleton",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 72,
+          "amplitude": 24,
+          "octaves": 5,
+          "frequency": 0.0032,
+          "warp": {
+            "amount": 28,
+            "frequency": 0.0035
+          },
+          "erosionPasses": 2,
+          "cliffThreshold": 55,
+          "soilDepth": 3,
+          "beachWidth": 2,
+          "snowLineFraction": 1
+        },
+        "children": [
+          {
+            "id": "spine_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the stable plateau shelf supporting the whale carcass town",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 130,
+              "height": 5,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "west_dune_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "sweeping desert dunes flanking the western hollow",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.16,
+                  0.15
+                ],
+                [
+                  0.22,
+                  0.5
+                ],
+                [
+                  0.18,
+                  0.85
+                ]
+              ],
+              "width": 64,
+              "height": 30,
+              "profile": "sharp"
+            }
+          },
+          {
+            "id": "east_dune_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "sweeping desert dunes flanking the eastern hollow",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.84,
+                  0.15
+                ],
+                [
+                  0.78,
+                  0.5
+                ],
+                [
+                  0.82,
+                  0.85
+                ]
+              ],
+              "width": 64,
+              "height": 30,
+              "profile": "sharp"
+            }
+          }
+        ]
+      },
+      {
+        "id": "desert_climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "arid",
+          "temperatureFrequency": 0.001
+        }
+      },
+      {
+        "id": "desert_scrub",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse desert ironwood and dry scrub in the dunes",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.008,
+          "spacing": 6,
+          "clumping": 0.3,
+          "maxSlope": 30,
+          "elevation": [
+            1,
+            120
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "undergrowth": {
+            "grass": 0.02,
+            "flowers": 0.01,
+            "deadwood": 0.16
+          },
+          "species": [
+            {
+              "id": "desert_hardwood",
+              "shape": "desert_ironwood",
+              "weight": 1
+            },
+            {
+              "id": "arid_scrub",
+              "shape": "juniper_scrub",
+              "weight": 3
+            }
+          ]
+        }
+      },
+      {
+        "id": "skull_temple",
+        "kind": "generator",
+        "generator": "authored:skywhale_skull_temple",
+        "label": "The Sky-Whale Skull Temple at the northern head of the spine",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            38,
+            26,
+            44
+          ]
+        },
+        "params": {
+          "seat": "pad",
+          "face": {
+            "toward": "spine_district"
+          }
+        },
+        "constraints": [
+          {
+            "at": [
+              0.5,
+              0.28
+            ]
+          },
+          {
+            "distance": "spine_district",
+            "min": 18,
+            "max": 48
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6
+          }
+        ],
+        "tags": [
+          "temple",
+          "landmark",
+          "public"
+        ]
+      },
+      {
+        "id": "ribcage_market",
+        "kind": "generator",
+        "generator": "authored:whale_ribcage_market",
+        "label": "The Great Ribcage Market Hall in the center of the spine",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            32,
+            22,
+            54
+          ]
+        },
+        "params": {
+          "seat": "pad",
+          "face": {
+            "toward": "skull_temple"
+          }
+        },
+        "constraints": [
+          {
+            "at": [
+              0.5,
+              0.44
+            ]
+          },
+          {
+            "distance": "skull_temple",
+            "min": 14,
+            "max": 36
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "tags": [
+          "market",
+          "trade",
+          "landmark"
+        ]
+      },
+      {
+        "id": "spine_district",
+        "kind": "district",
+        "label": "The residential and trading quarter along the southern whale spine",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            130,
+            170
+          ]
+        },
+        "params": {
+          "fabric": "linear",
+          "density": "medium",
+          "mix": [
+            "adobe_pueblo",
+            "courtyard_house",
+            "spice_market",
+            "tea_house",
+            "caravanserai",
+            "cistern",
+            "apothecary"
+          ],
+          "blockSize": 36,
+          "courtyards": 0.3
+        },
+        "constraints": [
+          {
+            "at": [
+              0.5,
+              0.64
+            ]
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6
+          }
+        ],
+        "tags": [
+          "quarter",
+          "settlement",
+          "residential"
+        ],
+        "children": [
+          {
+            "id": "serai_inn",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "The desert caravanserai inn",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                15,
+                12,
+                17
+              ]
+            },
+            "params": {
+              "archetype": "caravanserai",
+              "floors": 1
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "north",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "trade"
+            ]
+          },
+          {
+            "id": "oasis_cistern",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "The sunken town water cistern",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                15,
+                12,
+                17
+              ]
+            },
+            "params": {
+              "archetype": "cistern",
+              "floors": 1
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "east",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "water"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "spine_vertebrae",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "Fossilised sky-whale vertebrae lining the spine corridor",
+        "params": {
+          "program": "vertebrae_arch",
+          "count": 8,
+          "area": {
+            "at": [
+              0.5,
+              0.48
+            ],
+            "radius": 0.28
+          },
+          "spacing": 22,
+          "seat": "embed",
+          "embedDepth": 2,
+          "avoidTags": [
+            "structure"
+          ]
+        }
+      },
+      {
+        "id": "spine_road",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "The spine thoroughfare joining the skull temple, ribcage market, and town",
+        "params": {
+          "anchors": [
+            "skull_temple",
+            "ribcage_market",
+            "spine_district",
+            "#tag:trade"
+          ],
+          "pattern": "ribbon",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 12
+        }
+      },
+      {
+        "id": "caravan_hitching_post",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "Hitching post outside the ribcage market",
+        "params": {
+          "prop": "hitching_post",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "market_barrows",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "Merchant barrow on the market concourse",
+        "params": {
+          "prop": "market_barrow",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "spine_well",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "Covered well in the settlement",
+        "params": {
+          "prop": "well_head",
+          "zone": "south"
+        }
+      },
+      {
+        "id": "desert_waypost_cairn",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "Wayside stone cairn near the northern temple approach",
+        "params": {
+          "prop": "cairn",
+          "zone": "north"
+        }
+      },
+      {
+        "id": "caravan_camp",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "Nomad caravan camp outside the southern entrance",
+        "params": {
+          "prop": "campsite",
+          "zone": "southwest"
+        }
+      }
+    ]
+  }
+}

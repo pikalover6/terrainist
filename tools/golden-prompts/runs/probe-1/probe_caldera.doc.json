@@ -1,0 +1,312 @@
+{
+  "loam": "0.1",
+  "profile": "terrain",
+  "meta": {
+    "name": "volcanic_caldera_lake",
+    "worldSeed": 904,
+    "prompt": "A volcanic caldera lake with black-sand shores, steaming vents along the rim and a lava tube opening on the outer slope — no settlement of any kind.",
+    "spawn": {
+      "at": [
+        0.5,
+        0.82
+      ]
+    }
+  },
+  "intent": {
+    "climate": {
+      "temperature": 0.9,
+      "humidity": -0.5,
+      "snow": "never"
+    },
+    "character": {
+      "label": "volcanic wilderness",
+      "flora": {
+        "prefer": [
+          "sparse",
+          "deadwood"
+        ]
+      },
+      "programs": [
+        {
+          "id": "steaming_vent",
+          "mode": "plugin",
+          "brief": "A steaming geothermal fumarole vent mound: jagged basalt, blackstone, and magma crust surrounding an active smoke vent emitting steady plumes.",
+          "envelope": [
+            4,
+            5,
+            4
+          ]
+        }
+      ]
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": {
+        "mix": [
+          [
+            "minecraft:coarse_dirt",
+            3
+          ],
+          [
+            "minecraft:basalt",
+            2
+          ],
+          [
+            "minecraft:tuff",
+            1
+          ]
+        ]
+      },
+      "ground.beach": {
+        "mix": [
+          [
+            "minecraft:black_concrete_powder",
+            4
+          ],
+          [
+            "minecraft:blackstone",
+            2
+          ],
+          [
+            "minecraft:gravel",
+            1
+          ]
+        ]
+      },
+      "ground.cliff": {
+        "mix": [
+          [
+            "minecraft:basalt",
+            4
+          ],
+          [
+            "minecraft:blackstone",
+            2
+          ],
+          [
+            "minecraft:deepslate",
+            1
+          ]
+        ]
+      },
+      "ground.peak": "minecraft:basalt",
+      "ground.underwater": {
+        "mix": [
+          [
+            "minecraft:gravel",
+            3
+          ],
+          [
+            "minecraft:magma_block",
+            2
+          ],
+          [
+            "minecraft:basalt",
+            1
+          ]
+        ]
+      }
+    }
+  },
+  "root": {
+    "id": "caldera_realm",
+    "kind": "composite",
+    "label": "Volcanic Caldera Lake",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 66,
+          "amplitude": 32,
+          "octaves": 5,
+          "frequency": 0.0032,
+          "erosionPasses": 2,
+          "cliffThreshold": 48,
+          "soilDepth": 2,
+          "beachWidth": 6,
+          "snowLineFraction": 1,
+          "warp": {
+            "amount": 22,
+            "frequency": 0.0035
+          }
+        },
+        "children": [
+          {
+            "id": "volcano_massif",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the primary volcanic cone and caldera rim",
+            "params": {
+              "verb": "volcano",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 170,
+              "height": 88,
+              "caldera": true,
+              "calderaDepth": 26,
+              "lava": false,
+              "lavaFlows": 3,
+              "profile": "sharp",
+              "irregularity": 0.18
+            }
+          },
+          {
+            "id": "caldera_lake_basin",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the enclosed crater lake inside the caldera rim",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 68,
+              "depth": 22,
+              "water": true,
+              "profile": "rounded",
+              "irregularity": 0.16
+            }
+          },
+          {
+            "id": "flank_gully",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "an eroded gully cutting down the southern outer flank",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.5,
+                  0.64
+                ],
+                [
+                  0.54,
+                  0.78
+                ],
+                [
+                  0.58,
+                  0.94
+                ]
+              ],
+              "width": 26,
+              "depth": 16,
+              "flooded": "never"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "arid",
+          "temperatureFrequency": 0.0014,
+          "humidityFrequency": 0.0016
+        }
+      },
+      {
+        "id": "flank_vegetation",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse blighted scrub on the outer slopes",
+        "params": {
+          "area": {
+            "at": [
+              0.5,
+              0.5
+            ],
+            "radius": 220
+          },
+          "density": 0.014,
+          "spacing": 5,
+          "clumping": 0.5,
+          "maxSlope": 36,
+          "elevation": [
+            2,
+            60
+          ],
+          "edgeFalloff": 16,
+          "undergrowth": {
+            "grass": 0.12,
+            "flowers": 0.01,
+            "deadwood": 0.22
+          },
+          "species": [
+            {
+              "id": "charred_scrub",
+              "shape": "juniper_scrub",
+              "weight": 3
+            },
+            {
+              "id": "desert_snag",
+              "shape": "desert_ironwood",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "lava_tube_system",
+        "kind": "generator",
+        "generator": "cave.carver@0",
+        "label": "subterranean lava tube passage opening onto the outer slope",
+        "params": {
+          "style": "worm",
+          "density": 0.24,
+          "frequency": 0.014,
+          "radius": [
+            3,
+            6
+          ],
+          "yRange": [
+            45,
+            105
+          ],
+          "verticality": 0.22,
+          "chambers": {
+            "count": 2,
+            "radius": 10,
+            "chance": 0.45,
+            "spacing": 60
+          },
+          "entrances": 1,
+          "decorate": true
+        }
+      },
+      {
+        "id": "steaming_vents",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "geothermal fumarole vents situated along the caldera rim",
+        "params": {
+          "program": "steaming_vent",
+          "count": 7,
+          "area": {
+            "at": [
+              0.5,
+              0.5
+            ],
+            "radius": 0.24
+          },
+          "spacing": 28,
+          "maxSlope": 32
+        }
+      }
+    ]
+  }
+}

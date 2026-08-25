@@ -1,0 +1,712 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "bell_ridge_village",
+    "worldSeed": 905,
+    "prompt": "A feudal Japanese hill village of terraced paddies, with a great bronze temple bell in its own pavilion on the ridge above, rung at dusk.",
+    "spawn": {
+      "at": [
+        0.48,
+        0.62
+      ]
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:dirt_path",
+      "road.shoulder": "minecraft:gravel"
+    }
+  },
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.4,
+    "decline": 0.1,
+    "formality": 0.3,
+    "character": {
+      "label": "feudal Japanese terraced hill village",
+      "materialTheme": "temperate_timber",
+      "formPacks": [
+        "feudal_japanese"
+      ],
+      "archetypes": {
+        "prefer": [
+          "machiya",
+          "tea_house",
+          "bathhouse",
+          "dojo_hall",
+          "pagoda"
+        ],
+        "forbid": [
+          "townhouse",
+          "terraced_row",
+          "shop_row",
+          "office",
+          "apartment_block",
+          "skyscraper"
+        ]
+      },
+      "props": {
+        "prefer": [
+          "lamp_post",
+          "notice_board",
+          "well_head",
+          "bench",
+          "cairn"
+        ]
+      },
+      "motifs": {
+        "roofType": "hip",
+        "massing": "stepped",
+        "windowRhythm": "regular",
+        "ornamentDensity": 0.6
+      },
+      "urbanForm": "hillside",
+      "ground": "stepped",
+      "programs": [
+        {
+          "id": "bell_pavilion",
+          "mode": "landmark",
+          "brief": "A feudal Japanese temple belfry (shoro) pavilion standing on an elevated dressed stone plinth. Four heavy dark timber pillars support an upturned hip-and-gable tiled roof with wooden bracket complexes. Suspended within is a massive cast bronze temple bell (bonsho) hung by heavy iron chains, flanked by a horizontal wooden striking log hung from hemp cords.",
+          "envelope": [
+            13,
+            16,
+            13
+          ]
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "a steep hillside carved into stepped rice paddy terraces, rising to a high ridge",
+      "icons": "a great bronze temple bell in an open-sided timber belfry pavilion on the ridge above; flooded terrace paddies stepped down the hillside; machiya farmsteads with dark timber framing; stone lanterns along the stepped lanes",
+      "infra": "stone_retaining_wall along the terraces; stone_stair paths climbing between the paddies up to the ridge"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "the mountain village beneath the temple bell",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "mountain valley rising northward to a steep crest",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 76,
+          "amplitude": 44,
+          "octaves": 5,
+          "frequency": 0.0032,
+          "gain": 0.48,
+          "erosionPasses": 2,
+          "warp": {
+            "amount": 22,
+            "frequency": 0.0035
+          },
+          "cliffThreshold": 52,
+          "soilDepth": 4,
+          "beachWidth": 3,
+          "snowLineFraction": 0.92
+        },
+        "children": [
+          {
+            "id": "north_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the high mountain ridge overlooking the valley",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.15,
+                  0.22
+                ],
+                [
+                  0.5,
+                  0.18
+                ],
+                [
+                  0.85,
+                  0.24
+                ]
+              ],
+              "width": 72,
+              "height": 52,
+              "profile": "rounded",
+              "meander": 0.4
+            }
+          },
+          {
+            "id": "temple_spur",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "a prominent high spur along the crest for the belfry",
+            "params": {
+              "verb": "peak",
+              "at": [
+                0.5,
+                0.2
+              ],
+              "radius": 46,
+              "height": 18,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "village_bench",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the broad hillside bench cradling the settlement",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.48,
+                0.5
+              ],
+              "radius": 90,
+              "height": 8,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "valley_stream",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "mountain brook through the lower valley feeding the paddies",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.1,
+                  0.82
+                ],
+                [
+                  0.48,
+                  0.86
+                ],
+                [
+                  0.9,
+                  0.8
+                ]
+              ],
+              "width": 8,
+              "depth": 5,
+              "meander": 0.6,
+              "flooded": "never"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0014,
+          "humidityFrequency": 0.0018
+        }
+      },
+      {
+        "id": "ridge_forest",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "dark cryptomeria and mountain pines across the upper slopes",
+        "params": {
+          "area": {
+            "at": [
+              0.5,
+              0.24
+            ],
+            "radius": 190
+          },
+          "density": 0.18,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 38,
+          "elevation": [
+            10,
+            110
+          ],
+          "edgeFalloff": 20,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "undergrowth": {
+            "grass": 0.4,
+            "flowers": 0.05,
+            "deadwood": 0.04
+          },
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "ancient_pine",
+                  "shape": "spruce_ancient"
+                }
+              ]
+            },
+            "understory": {
+              "species": [
+                {
+                  "id": "juniper",
+                  "shape": "juniper_scrub"
+                },
+                {
+                  "id": "hazel",
+                  "shape": "hazel_shrub"
+                }
+              ],
+              "density": 0.08
+            },
+            "floor": "default"
+          },
+          "species": [
+            {
+              "id": "cryptomeria",
+              "shape": "spruce_tall",
+              "weight": 4
+            },
+            {
+              "id": "mountain_larch",
+              "shape": "larch_columnar",
+              "weight": 2
+            },
+            {
+              "id": "ridge_sakura",
+              "shape": "cherry_blossom",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "slope_groves",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "cherry blossom groves and oaks around the village terraces",
+        "params": {
+          "area": {
+            "at": [
+              0.5,
+              0.6
+            ],
+            "radius": 170
+          },
+          "density": 0.06,
+          "spacing": 4,
+          "clumping": 0.45,
+          "maxSlope": 32,
+          "elevation": [
+            2,
+            60
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "undergrowth": {
+            "grass": 0.45,
+            "flowers": 0.12,
+            "deadwood": 0.02
+          },
+          "species": [
+            {
+              "id": "sakura",
+              "shape": "cherry_blossom",
+              "weight": 5
+            },
+            {
+              "id": "hill_oak",
+              "shape": "oak_spreading",
+              "weight": 3
+            },
+            {
+              "id": "pale_birch",
+              "shape": "birch_slim",
+              "weight": 2
+            }
+          ]
+        }
+      },
+      {
+        "id": "wilderness_fill",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse background mountain trees",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 4,
+          "clumping": 0.6,
+          "maxSlope": 36,
+          "elevation": [
+            2,
+            120
+          ],
+          "edgeFalloff": 12,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "species": [
+            {
+              "id": "wild_pine",
+              "shape": "spruce_tall",
+              "weight": 2
+            },
+            {
+              "id": "wild_oak",
+              "shape": "oak_round",
+              "weight": 2
+            }
+          ]
+        }
+      },
+      {
+        "id": "bonsho_belfry",
+        "kind": "generator",
+        "generator": "authored:bell_pavilion",
+        "label": "the great bronze temple bell pavilion on the ridge above",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            16,
+            13
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.5,
+              0.2
+            ]
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "params": {
+          "face": {
+            "toward": "village_quarter"
+          },
+          "seat": "pad"
+        },
+        "tags": [
+          "landmark",
+          "temple",
+          "sacred"
+        ]
+      },
+      {
+        "id": "village_quarter",
+        "kind": "district",
+        "label": "the hillside village of machiya, tea houses, and stepped lanes",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            160,
+            140
+          ]
+        },
+        "params": {
+          "fabric": "hillside",
+          "density": "medium",
+          "ground": "stepped",
+          "courtyards": 0.3,
+          "mix": [
+            "machiya",
+            "tea_house",
+            "bathhouse",
+            "dojo_hall",
+            "cottage"
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.48,
+              0.5
+            ]
+          }
+        ],
+        "tags": [
+          "village",
+          "settlement"
+        ],
+        "children": [
+          {
+            "id": "village_shrine",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the tiered shrine pagoda overlooking the village street",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                11,
+                16,
+                11
+              ]
+            },
+            "params": {
+              "archetype": "pagoda",
+              "floors": 2
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "temple"
+            ]
+          },
+          {
+            "id": "village_teahouse",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the village tea house",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                11,
+                13
+              ]
+            },
+            "params": {
+              "archetype": "tea_house",
+              "floors": 1
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "trade"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "west_paddies",
+        "kind": "generator",
+        "generator": "precinct.farm@0",
+        "label": "terraced agricultural paddies along the western slope",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            112,
+            96
+          ]
+        },
+        "params": {
+          "parcels": 6,
+          "parcelSize": 16,
+          "crops": [
+            "wheat",
+            "carrots",
+            "potatoes",
+            "pasture"
+          ],
+          "edge": "wall"
+        },
+        "constraints": [
+          {
+            "at": [
+              0.24,
+              0.58
+            ]
+          },
+          {
+            "distance": "village_quarter",
+            "min": 8,
+            "max": 40,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "gate": {
+            "type": "road_stub",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "farm",
+          "paddies"
+        ]
+      },
+      {
+        "id": "east_paddies",
+        "kind": "generator",
+        "generator": "precinct.farm@0",
+        "label": "terraced crop paddies along the eastern slope",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            112,
+            96
+          ]
+        },
+        "params": {
+          "parcels": 6,
+          "parcelSize": 16,
+          "crops": [
+            "wheat",
+            "beetroots",
+            "pasture"
+          ],
+          "edge": "wall"
+        },
+        "constraints": [
+          {
+            "at": [
+              0.72,
+              0.58
+            ]
+          },
+          {
+            "distance": "village_quarter",
+            "min": 8,
+            "max": 40,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "gate": {
+            "type": "road_stub",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "farm",
+          "paddies"
+        ]
+      },
+      {
+        "id": "west_terrace_wall",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "stone retaining wall bounding the western terrace slope",
+        "params": {
+          "entry": "retaining_wall",
+          "route": {
+            "ring": "west_paddies",
+            "margin": 6
+          }
+        }
+      },
+      {
+        "id": "east_terrace_wall",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "stone retaining wall bounding the eastern terrace slope",
+        "params": {
+          "entry": "retaining_wall",
+          "route": {
+            "ring": "east_paddies",
+            "margin": 6
+          }
+        }
+      },
+      {
+        "id": "village_terrace_steps",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "stepped stone flight traversing the village contours",
+        "params": {
+          "entry": "terrace_steps",
+          "route": {
+            "across": "village_quarter"
+          }
+        }
+      },
+      {
+        "id": "ridge_cairn",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "wayside stone cairn along the mountain approach",
+        "params": {
+          "prop": "cairn",
+          "zone": "north"
+        }
+      },
+      {
+        "id": "village_notice_board",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "village notice board at the street terrace",
+        "params": {
+          "prop": "notice_board",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "spring_well",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "mountain spring well head",
+        "params": {
+          "prop": "well_head",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "ridge_lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "lanes winding between the paddies and climbing to the temple belfry",
+        "params": {
+          "anchors": [
+            "village_quarter",
+            "bonsho_belfry",
+            "west_paddies",
+            "east_paddies"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 14
+        }
+      }
+    ]
+  }
+}

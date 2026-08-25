@@ -1,0 +1,938 @@
+{
+  "suite": "golden-prompts-v0",
+  "label": "probe-1",
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "intentPrepass": true,
+  "kits": {
+    "settlement": {
+      "path": "docs/kits/settlement-author.md",
+      "sha256": "c22cb4fe309b1f692cb3cdfcb3d98c454440186b0928807c8efd6aee893dfbae",
+      "bytes": 284406,
+      "envelopeLiterals": [
+        "11x11x9",
+        "11x14x9",
+        "11x8x9",
+        "120x120",
+        "13x10x11",
+        "13x11x13",
+        "13x11x9",
+        "13x16x13",
+        "13x9x11",
+        "140x120",
+        "140x24x92",
+        "15x17x21",
+        "16x52x14",
+        "180x160",
+        "18x18",
+        "18x44x15",
+        "200x180",
+        "21x76x19",
+        "21x78x19",
+        "220x200",
+        "22x22",
+        "25x22x19",
+        "288x288",
+        "30x30",
+        "440x400",
+        "512x512",
+        "5x4",
+        "7x19x7",
+        "8x8x8",
+        "96x16x72",
+        "96x80",
+        "9x11x9",
+        "9x12x9",
+        "9x8x8",
+        "9x8x9"
+      ]
+    },
+    "terrain": {
+      "path": "docs/kits/terrain-author.md",
+      "sha256": "0adfac8d77042820afec8495258497e5cd44aa2a4391a585ac942518717f331b",
+      "bytes": 41193,
+      "envelopeLiterals": [
+        "384x384",
+        "512x512"
+      ]
+    }
+  },
+  "totals": {
+    "ok": 6,
+    "attempts": 7,
+    "oneShot": 5,
+    "promptTokens": 525781,
+    "completionTokens": 73196,
+    "cost": 0.361822875,
+    "diagnosticCodes": {
+      "LOAM-W519": 1,
+      "LOAM-T210": 1
+    }
+  },
+  "records": [
+    {
+      "id": "probe_monastery",
+      "family": "probe",
+      "kit": "settlement",
+      "prompt": "A Himalayan monastery clinging to a cliff face above a glacier, prayer flags strung across the gorge, a village of yak herders on the moraine below.",
+      "seed": 901,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "source": "fresh",
+        "value": {
+          "era": "medieval",
+          "wealth": 0.4,
+          "decline": 0.1,
+          "formality": 0.3,
+          "climate": {
+            "biome": "minecraft:jagged_peaks",
+            "temperature": -0.8,
+            "humidity": -0.3,
+            "snow": "always"
+          },
+          "character": {
+            "label": "cliffside Himalayan monastery and yak herder settlement",
+            "materialTheme": "boreal_pine",
+            "formPacks": [
+              "himalayan_monastery"
+            ],
+            "archetypes": {
+              "prefer": [
+                "assembly_hall",
+                "monks_cells",
+                "scripture_library",
+                "hermit_retreat",
+                "yak_byre",
+                "kora_gatehouse",
+                "butter_tea_kitchen"
+              ],
+              "forbid": [
+                "townhouse",
+                "terraced_row",
+                "shop_row",
+                "office",
+                "apartment_block"
+              ]
+            },
+            "urbanForm": "hillside",
+            "ground": "stepped",
+            "motifs": {
+              "roofType": "flat",
+              "massing": "stepped",
+              "windowRhythm": "banded"
+            }
+          },
+          "tokens": {
+            "terrain": "a sheer cliff face above a glaciated gorge, with a wide moraine basin below the glacier",
+            "icons": "whitewashed monastery complex clinging to the vertical rock face; prayer flag lines strung across the gorge; icy glacier tongue; yak herder stone huts and stone-walled pens on the moraine",
+            "infra": "prayer_flag lines strung across the gorge; mani_stone_cairns along the pilgrim trail; dry_stone_wall enclosing yak paddocks on the moraine"
+          }
+        },
+        "failed": false
+      },
+      "intentUsage": {
+        "promptTokens": 7204,
+        "completionTokens": 1074,
+        "reasoningTokens": 623,
+        "cost": 0.00471525
+      },
+      "menu": {
+        "injected": false,
+        "reason": "flag off"
+      },
+      "attempts": 1,
+      "diagnostics": [
+        []
+      ],
+      "usage": {
+        "promptTokens": 84019,
+        "completionTokens": 11916,
+        "reasoningTokens": 7706,
+        "cost": 0.053849625
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 23,
+        "maxDepth": 2,
+        "generators": [
+          "authored:prayer_flag_span",
+          "building.grammar@0",
+          "infra.entry@0",
+          "precinct.farm@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "scatter.program@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "barn",
+          "bell_tower",
+          "cottage",
+          "hall",
+          "hermitage",
+          "hut",
+          "library",
+          "monastery",
+          "shepherds_bothy",
+          "sod_house",
+          "stupa"
+        ],
+        "archetypesInCatalog": 11,
+        "formPacks": [
+          "himalayan_monastery"
+        ],
+        "props": [
+          "horse_trough",
+          "log_pile"
+        ],
+        "species": [
+          "juniper",
+          "squat_spruce"
+        ],
+        "envelopes": [
+          "512x512",
+          "130x110",
+          "15x17x19",
+          "13x19x13",
+          "11x13x15",
+          "140x120",
+          "11x11x11",
+          "13x12x17",
+          "100x80",
+          "56x18x14"
+        ],
+        "constraints": 6,
+        "constraintKinds": [
+          "adjacent_to",
+          "at",
+          "distance",
+          "max",
+          "min"
+        ],
+        "constraintsWithStrength": 0,
+        "hardConstraints": 0,
+        "forests": 1,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 5,
+        "programReferences": 1,
+        "conformsTrue": 0,
+        "labels": 22,
+        "eras": [
+          "medieval"
+        ],
+        "bytes": 8861
+      },
+      "wallMs": 81263
+    },
+    {
+      "id": "probe_two_villages",
+      "family": "probe",
+      "kit": "settlement",
+      "prompt": "Two rival fishing villages on opposite shores of a narrow fjord, one of stone and one of timber, joined only by a rope ferry.",
+      "seed": 902,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "source": "fresh",
+        "value": {
+          "era": "medieval",
+          "climate": {
+            "biome": "minecraft:taiga",
+            "temperature": -0.4,
+            "humidity": 0.3,
+            "snow": "auto"
+          },
+          "tokens": {
+            "terrain": "two steep opposing shores of a narrow fjord separated by deep cold water",
+            "infra": "rope_ferry cable stretched across the narrow fjord connecting the two village landings; fish_drying_racks along both waterfronts; timber and stone jetties projecting into the water",
+            "event_direction": "two rival fishing settlements facing directly across the fjord water at one another",
+            "region_stone_village": "era medieval, wealth 0.45, decline 0.15, formality 0.25; built of rough stone and slate; steep stone retaining walls, rocky quays, smokehouse, tavern, watchtower",
+            "region_timber_village": "era medieval, wealth 0.4, decline 0.2, formality 0.2; materialTheme boreal_pine; formPacks [nordic_viking]; dark timber halls, stilt cottages, boat sheds, wooden slipways, tavern"
+          }
+        },
+        "failed": false
+      },
+      "intentUsage": {
+        "promptTokens": 7200,
+        "completionTokens": 1133,
+        "reasoningTokens": 858,
+        "cost": 0.004824375
+      },
+      "menu": {
+        "injected": false,
+        "reason": "flag off"
+      },
+      "attempts": 1,
+      "diagnostics": [
+        []
+      ],
+      "usage": {
+        "promptTokens": 83835,
+        "completionTokens": 15199,
+        "reasoningTokens": 10322,
+        "cost": 0.05993625
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 33,
+        "maxDepth": 2,
+        "generators": [
+          "authored:rope_ferry_rig",
+          "building.grammar@0",
+          "infra.entry@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "boathouse",
+          "butchery",
+          "cannery",
+          "cottage",
+          "longhouse",
+          "sawmill",
+          "smokehouse",
+          "stilt_house",
+          "tavern",
+          "warehouse",
+          "watchtower"
+        ],
+        "archetypesInCatalog": 11,
+        "formPacks": [
+          "nordic_viking"
+        ],
+        "props": [
+          "barge",
+          "cairn",
+          "fishing_sloop",
+          "horse_trough",
+          "log_pile",
+          "longship",
+          "notice_board",
+          "pier",
+          "rowboat",
+          "signpost"
+        ],
+        "species": [
+          "ancient_grandfather_pine",
+          "cliff_pine",
+          "dense_tall_spruce",
+          "larch_accent",
+          "scrub_spruce",
+          "stone_side_spruce"
+        ],
+        "envelopes": [
+          "512x512",
+          "130x120",
+          "11x11x15",
+          "7x19x7",
+          "130x120",
+          "11x13x21",
+          "13x14x17"
+        ],
+        "constraints": 4,
+        "constraintKinds": [
+          "at",
+          "distance",
+          "max",
+          "min"
+        ],
+        "constraintsWithStrength": 0,
+        "hardConstraints": 0,
+        "forests": 3,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 4,
+        "programReferences": 1,
+        "conformsTrue": 0,
+        "labels": 26,
+        "eras": [
+          "medieval"
+        ],
+        "bytes": 10349
+      },
+      "wallMs": 104838
+    },
+    {
+      "id": "probe_bronze_tundra",
+      "family": "probe",
+      "kit": "settlement",
+      "prompt": "A Bronze Age tin-mining camp on a frozen tundra coast in midwinter: pit heads, smelting fires, hide tents and a beached trading ship.",
+      "seed": 903,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "source": "fresh",
+        "value": {
+          "era": "ancient",
+          "wealth": 0.25,
+          "decline": 0.2,
+          "formality": 0.1,
+          "climate": {
+            "biome": "minecraft:snowy_plains",
+            "temperature": -0.9,
+            "humidity": -0.3,
+            "snow": "always"
+          },
+          "character": {
+            "label": "Bronze Age tin-mining camp",
+            "materialTheme": "boreal_pine",
+            "formPacks": [
+              "wilds_camps"
+            ],
+            "urbanForm": "grown",
+            "flora": {
+              "prefer": [
+                "sparse",
+                "juniper_scrub"
+              ]
+            },
+            "motifs": {
+              "roofType": "shed",
+              "massing": "sprawling",
+              "ornamentDensity": 0.05
+            }
+          },
+          "tokens": {
+            "terrain": "a frozen tundra coastline with an icy sea shore and exposed rocky mineral bluffs",
+            "icons": "tin pit-head excavations and spoil heaps, outdoor ore-roasting hearths and smelting fires, conical hide tents and timber lean-tos, a beached Bronze Age wooden trading ship iced into the frozen shore",
+            "infra": "beaten frozen paths between pit heads and smelting hearths; crude log revetments and windbreaks"
+          }
+        },
+        "failed": false
+      },
+      "intentUsage": {
+        "promptTokens": 7204,
+        "completionTokens": 1260,
+        "reasoningTokens": 920,
+        "cost": 0.005064
+      },
+      "menu": {
+        "injected": false,
+        "reason": "flag off"
+      },
+      "attempts": 1,
+      "diagnostics": [
+        [
+          {
+            "code": "LOAM-W519",
+            "name": "LANDMARK_CONSTRAINT_IGNORED",
+            "severity": "warning",
+            "nodePath": "world.smelting_terrace.constraints[1]"
+          }
+        ]
+      ],
+      "usage": {
+        "promptTokens": 83908,
+        "completionTokens": 11069,
+        "reasoningTokens": 5385,
+        "cost": 0.052219875
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 25,
+        "maxDepth": 2,
+        "generators": [
+          "authored:beached_trading_ship",
+          "authored:ore_smelting_battery",
+          "building.grammar@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "beacon_tower",
+          "charcoal_burner",
+          "cottage",
+          "dormitory",
+          "granary",
+          "mine_head",
+          "smithy",
+          "sod_house",
+          "warehouse",
+          "watchtower"
+        ],
+        "archetypesInCatalog": 10,
+        "formPacks": [
+          "wilds_camps"
+        ],
+        "props": [
+          "cairn",
+          "campsite",
+          "dig_site",
+          "log_pile"
+        ],
+        "species": [
+          "juniper_bush",
+          "stunted_spruce",
+          "windswept_shrub"
+        ],
+        "envelopes": [
+          "512x512",
+          "24x24",
+          "28x14x12",
+          "18x8x16",
+          "9x12x9",
+          "9x12x9",
+          "13x11x13",
+          "9x8x9",
+          "9x13x9",
+          "13x12x19",
+          "11x10x11",
+          "9x18x9"
+        ],
+        "constraints": 29,
+        "constraintKinds": [
+          "adjacent_to",
+          "band",
+          "blend",
+          "connected",
+          "distance",
+          "facing",
+          "gap",
+          "max",
+          "min",
+          "on",
+          "oreChamber",
+          "reference",
+          "style",
+          "terrain_conform",
+          "via",
+          "zone"
+        ],
+        "constraintsWithStrength": 6,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 8,
+        "programReferences": 2,
+        "conformsTrue": 0,
+        "labels": 24,
+        "eras": [
+          "ancient"
+        ],
+        "bytes": 10522
+      },
+      "wallMs": 71595
+    },
+    {
+      "id": "probe_caldera",
+      "family": "probe",
+      "kit": "terrain",
+      "prompt": "A volcanic caldera lake with black-sand shores, steaming vents along the rim and a lava tube opening on the outer slope — no settlement of any kind.",
+      "seed": 904,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "source": "fresh",
+        "value": {
+          "climate": {
+            "temperature": 0.9,
+            "humidity": -0.5,
+            "snow": "never"
+          },
+          "character": {
+            "label": "volcanic wilderness",
+            "flora": {
+              "prefer": [
+                "sparse",
+                "deadwood"
+              ]
+            }
+          },
+          "tokens": {
+            "terrain": "a volcanic caldera crater lake enclosed by rim ridges, with black-sand shores, steaming geothermal vents along the crater crest, and an open lava tube entrance on the outer slope; wilderness with no settlement of any kind",
+            "icons": "steaming fumarole vents along the rim; black-sand beach ringing the crater lake; dark basalt slopes; yawning lava tube cave opening on the outer flank"
+          }
+        },
+        "failed": false
+      },
+      "intentUsage": {
+        "promptTokens": 7204,
+        "completionTokens": 718,
+        "reasoningTokens": 534,
+        "cost": 0.00404775
+      },
+      "menu": {
+        "injected": false,
+        "reason": "flag off"
+      },
+      "attempts": 1,
+      "diagnostics": [
+        []
+      ],
+      "usage": {
+        "promptTokens": 13552,
+        "completionTokens": 7512,
+        "reasoningTokens": 5644,
+        "cost": 0.019167
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 9,
+        "maxDepth": 2,
+        "generators": [
+          "cave.carver@0",
+          "scatter.forest@0",
+          "scatter.program@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [],
+        "archetypesInCatalog": 0,
+        "formPacks": [],
+        "props": [],
+        "species": [
+          "charred_scrub",
+          "desert_snag"
+        ],
+        "envelopes": [
+          "512x512"
+        ],
+        "constraints": 0,
+        "constraintKinds": [],
+        "constraintsWithStrength": 0,
+        "hardConstraints": 0,
+        "forests": 1,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 0,
+        "programReferences": 0,
+        "conformsTrue": 0,
+        "labels": 7,
+        "eras": [],
+        "bytes": 3571
+      },
+      "wallMs": 53047
+    },
+    {
+      "id": "probe_temple_bell",
+      "family": "probe",
+      "kit": "settlement",
+      "prompt": "A feudal Japanese hill village of terraced paddies, with a great bronze temple bell in its own pavilion on the ridge above, rung at dusk.",
+      "seed": 905,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "source": "fresh",
+        "value": {
+          "era": "medieval",
+          "wealth": 0.4,
+          "decline": 0.1,
+          "formality": 0.2,
+          "character": {
+            "label": "feudal Japanese terraced hill village",
+            "materialTheme": "temperate_timber",
+            "formPacks": [
+              "feudal_japanese"
+            ],
+            "archetypes": {
+              "prefer": [
+                "machiya",
+                "tea_room",
+                "rice_store",
+                "bathhouse",
+                "dojo"
+              ],
+              "forbid": [
+                "townhouse",
+                "terraced_row",
+                "shop_row",
+                "office",
+                "apartment_block"
+              ]
+            },
+            "urbanForm": "hillside",
+            "ground": "stepped",
+            "motifs": {
+              "roofType": "hip",
+              "massing": "stepped"
+            }
+          },
+          "tokens": {
+            "terrain": "a steep hillside carved into stepped rice paddy terraces, rising to a high ridge",
+            "icons": "a great bronze temple bell in an open-sided timber belfry pavilion on the ridge above; flooded terrace paddies stepped down the hillside; machiya farmsteads with dark timber framing; stone lanterns along the stepped lanes",
+            "infra": "stone_retaining_wall along the terraces; stone_stair paths climbing between the paddies up to the ridge"
+          }
+        },
+        "failed": false
+      },
+      "intentUsage": {
+        "promptTokens": 7203,
+        "completionTokens": 988,
+        "reasoningTokens": 635,
+        "cost": 0.004553625
+      },
+      "menu": {
+        "injected": false,
+        "reason": "flag off"
+      },
+      "attempts": 2,
+      "diagnostics": [
+        [
+          {
+            "code": "LOAM-T210",
+            "name": "DISTRICT_PARAM",
+            "severity": "error",
+            "nodePath": "world.village_quarter.params"
+          }
+        ],
+        []
+      ],
+      "usage": {
+        "promptTokens": 176615,
+        "completionTokens": 17153,
+        "reasoningTokens": 8521,
+        "cost": 0.0983925
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 23,
+        "maxDepth": 2,
+        "generators": [
+          "authored:bell_pavilion",
+          "building.grammar@0",
+          "infra.entry@0",
+          "precinct.farm@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "bathhouse",
+          "church",
+          "cottage",
+          "dojo_hall",
+          "inn",
+          "machiya",
+          "pagoda",
+          "tea_house",
+          "temple"
+        ],
+        "archetypesInCatalog": 9,
+        "formPacks": [
+          "feudal_japanese"
+        ],
+        "props": [
+          "cairn",
+          "notice_board",
+          "well_head"
+        ],
+        "species": [
+          "cryptomeria",
+          "hill_oak",
+          "mountain_larch",
+          "pale_birch",
+          "ridge_sakura",
+          "sakura",
+          "wild_oak",
+          "wild_pine"
+        ],
+        "envelopes": [
+          "512x512",
+          "13x16x13",
+          "160x140",
+          "11x16x11",
+          "13x11x13",
+          "112x96",
+          "112x96"
+        ],
+        "constraints": 7,
+        "constraintKinds": [
+          "at",
+          "blend",
+          "distance",
+          "max",
+          "min",
+          "reference",
+          "terrain_conform"
+        ],
+        "constraintsWithStrength": 2,
+        "hardConstraints": 0,
+        "forests": 3,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 2,
+        "programReferences": 1,
+        "conformsTrue": 0,
+        "labels": 22,
+        "eras": [
+          "medieval"
+        ],
+        "bytes": 9039
+      },
+      "wallMs": 106756
+    },
+    {
+      "id": "probe_sky_whale",
+      "family": "probe",
+      "kit": "settlement",
+      "prompt": "A desert town built inside the ribcage of a fossilised sky-whale: the ribs form the market hall, the skull is the temple, and the spine is the main street.",
+      "seed": 906,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "source": "fresh",
+        "value": {
+          "era": "medieval",
+          "wealth": 0.5,
+          "decline": 0.2,
+          "climate": {
+            "biome": "minecraft:desert",
+            "temperature": 0.9,
+            "humidity": -0.9,
+            "snow": "never"
+          },
+          "character": {
+            "label": "desert sky-whale carcass settlement",
+            "materialTheme": "sun_clay",
+            "formPacks": [
+              "desert_caravanserai"
+            ],
+            "urbanForm": "linear",
+            "motifs": {
+              "roofType": "flat"
+            },
+            "archetypes": {
+              "prefer": [
+                "courtyard_house",
+                "cistern"
+              ]
+            }
+          },
+          "tokens": {
+            "terrain": "a barren desert plain with shifting sand dunes centered on the colossal skeleton of a sky-whale",
+            "icons": "a fossilised sky-whale skeleton forming the civic framework: vertebrae line the main street spine, arched rib bones shelter the market hall bazaar, and the hollow skull forms the monumental desert temple"
+          }
+        },
+        "failed": false
+      },
+      "intentUsage": {
+        "promptTokens": 7210,
+        "completionTokens": 802,
+        "reasoningTokens": 530,
+        "cost": 0.0042075
+      },
+      "menu": {
+        "injected": false,
+        "reason": "flag off"
+      },
+      "attempts": 1,
+      "diagnostics": [
+        []
+      ],
+      "usage": {
+        "promptTokens": 83852,
+        "completionTokens": 10347,
+        "reasoningTokens": 6506,
+        "cost": 0.050845125
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 19,
+        "maxDepth": 2,
+        "generators": [
+          "authored:skywhale_skull_temple",
+          "authored:whale_ribcage_market",
+          "building.grammar@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "scatter.program@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "adobe_pueblo",
+          "apothecary",
+          "caravanserai",
+          "church",
+          "cistern",
+          "cottage",
+          "courtyard_house",
+          "inn",
+          "market_stall",
+          "spice_market",
+          "tea_house",
+          "temple"
+        ],
+        "archetypesInCatalog": 12,
+        "formPacks": [
+          "desert_caravanserai"
+        ],
+        "props": [
+          "cairn",
+          "campsite",
+          "hitching_post",
+          "market_barrow",
+          "well_head"
+        ],
+        "species": [
+          "arid_scrub",
+          "desert_hardwood"
+        ],
+        "envelopes": [
+          "512x512",
+          "38x26x44",
+          "32x22x54",
+          "130x170",
+          "15x12x17",
+          "15x12x17"
+        ],
+        "constraints": 8,
+        "constraintKinds": [
+          "at",
+          "blend",
+          "distance",
+          "max",
+          "min",
+          "reference",
+          "terrain_conform"
+        ],
+        "constraintsWithStrength": 0,
+        "hardConstraints": 0,
+        "forests": 1,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 2,
+        "programReferences": 2,
+        "conformsTrue": 0,
+        "labels": 18,
+        "eras": [
+          "medieval"
+        ],
+        "bytes": 7452
+      },
+      "wallMs": 63934
+    }
+  ]
+}

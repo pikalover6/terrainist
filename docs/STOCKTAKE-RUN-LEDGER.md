@@ -7,22 +7,12 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 28 (F23 attributed: the lattice link fixed
-  in the lint, the rest is authored-program geometry; P7 proposed) is
-  committed.
-- **Next unit:** unit 29 — **§10.5 probe prompts, the first pass**: the
-  spend is $8.19 of $35 and the spec's step 5 ("probe prompts interleaved
-  from step 3 on") has had none. Pre-register (law 9) in the ledger before
-  a cent: the prompt list from the spec's REACH section, arms (the current
-  kit, authoring-only where a compile is not needed — $0.64/pass), the
-  prediction and the decision rule (icon metric present/dominant per
-  prompt; any lost icon is a finding, not a score); then run one pass and
-  score it with `icon-metric.mjs`. Then F17 (the keep 1-of-3), census 1.21,
-  P5/P6/P7 first steps if cheap; the remaining verdict stations, G2's
-  named worlds, the final deck and closing report.
-- **Last commit:** 2503100 (unit 27). Convention: this line names the
+- **In flight:** nothing — unit 29 (probe pass 1: six prompts authored and
+  scored; six of six authored (five one-shot), every icon present at document level, four form packs and the terrain kit reached for the first time, zero boxes and zero era violations; the icon verdict is deferred — the harness is authoring-only and five probes carry their icon in an `authored:` program the mode never writes (F24), so G4 is not yet counted) is committed.
+- **Next unit:** unit 30 — **probe pass 2, the program stage**: the same six through the full pipeline (`generate-all.mjs` needs the same `--prompts` roster option `run.mjs` got; then `record-generate-run.mjs` → `icon-metric.mjs --prompts probes.json`), pre-registered first: prediction (the ferry, bell, ribcage and pit heads are placed and the whale and bell dominate; the monastery still fails the footprint half), cost (≈ $0.24 per world measured, ≈ $1.50 the pass; cap $3.00), decision rule as pass 1. A program that does not place, or an icon that is placed and not dominant, is a finding with a cause. Then F17, census 1.21, P5/P6/P7 first steps if cheap; the remaining verdict stations, G2, the final deck and closing report.
+- **Last commit:** 27cc137 (unit 28). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
-- **Spend:** $8.19 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
+- **Spend:** $8.55 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
 - **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19, D25,
   D32.)
 - **Findings queue (law 1: bugs before anything else):**
@@ -40,6 +30,13 @@ running state. The NOW block is rewritten at the end of every turn.
   - F14 — closed (unit 27): 13,624 lint findings on the thirteen were
     97 % two instrument false positives (floor lichen; `sea_lantern` read
     as a lamp), fixed; the real remainder is F23.
+  - F24 — **probe verdicts need the program stage**: the golden harness is
+    authoring-only, and five of six probes carry their icon in an
+    `authored:<id>` program the mode never writes (`W337 PROGRAM_DROPPED`),
+    so the icon metric reads presence at document level and no dominance.
+    A method gap, not a compiler one; pass 2 (unit 30) runs the full
+    pipeline. Also: terrain-only icons have nothing to be dominant over
+    (`probe_caldera`) — the metric needs a terrain rule.
   - F23 — attributed (unit 28): {TOTAL} real findings on the thirteen after
     the lattice link; all but eight belong to **authored programs** (the
     Trojan horse, the siege debris, the leviathan, the colossi, the skull
@@ -479,6 +476,14 @@ running state. The NOW block is rewritten at the end of every turn.
   ops at compile time, so the author hears "17 of your railing's blocks
   stand on air" — and, until then, the record names each program. Undo:
   n/a.
+- **D66 (unit 29):** the probe prompts live in their own roster
+  (`tools/golden-prompts/probes.json`) and the two tools take
+  `--prompts <file>`, so the golden roster and every score against it are
+  untouched; the run directory (`runs/probe-1`: documents, records,
+  summary, icon scores) is committed as the before-sample was, worlds not.
+  Pass 1's icon verdict is deferred rather than read as six failures: the
+  mode cannot place a program, and a verdict that the instrument cannot
+  reach is not a verdict (law 7). Undo: n/a.
 
 ## SPEND
 
@@ -512,6 +517,7 @@ running state. The NOW block is rewritten at the end of every turn.
 | 26 | F4 probed — one dist-patched compile, one bi14 run, the FULL suite | 0.00 | 8.19 |
 | 27 | F14 probed — two lint passes over the thirteen, three baseline re-pins, one bi14 run, the FULL suite | 0.00 | 8.19 |
 | 28 | F23 attributed — three lint passes, three baseline re-pins, one bi14 run, the FULL suite | 0.00 | 8.19 |
+| 29 | probe pass 1 — six prompts authored (`runs/probe-1`), the icon metric | 0.36 | 8.55 |
 
 ## VERDICTS
 
@@ -528,6 +534,36 @@ running state. The NOW block is rewritten at the end of every turn.
 ## REACH
 
 (probe prompts: prompt, what it targeted, what it exercised, what failed, the cause, promoted?)
+
+**Pass 1 — pre-registered (unit 29, 2026-08-25), before any spend.**
+Roster `tools/golden-prompts/probes.json`, six prompts, one per spec §6
+category: `probe_monastery` (himalayan_monastery pack, 0 % reach in the
+before-sample), `probe_two_villages` (two places, a rope ferry),
+`probe_bronze_tundra` (Bronze Age, frozen coast), `probe_caldera`
+(terrain-only, the terrain kit), `probe_temple_bell` (an icon that lives
+in a prop pack, feudal_japanese at 0 %), `probe_sky_whale` (bespoke, T8).
+Arm: the current kit, authoring-only (`run.mjs --prompts probes.json
+--label probe-1`, ≈ $0.06 per prompt measured, ≈ $0.35 the pass; the
+tool's own dry-run estimate is the conservative per-world $1.43), scored by the
+icon metric compiling each document in-process (free). **Prediction:** ≥ 5
+of 6 author one-shot; icons present on ≥ 5; the sky-whale and the ferry
+are the likely absences (a program the model must write); the caldera is
+the likely validator failure (a rim that does not close, T105).
+**Decision rule:** a probe whose dominant icon is absent or not dominant,
+or that fails validation or compile, is a *finding* with a cause; its cause
+gets an F-number, and the prompt is promoted into `prompts.json` once the
+cause is fixed. Passes stay one-off. G4 counts the last six probes with no
+*new failure class*; this pass is the first six. Spend cap for the unit:
+$1.50 (log-derived, D4).
+
+| probe | targeted | exercised | failed | cause | promoted? |
+|---|---|---|---|---|---|
+| `probe_monastery` | himalayan_monastery at 0 % | the pack, a cliff district, a flag-span program | not dominant: h ×2.0, a ×1.58 | the metric wants both ratios (F15 family) | no — passes stay one-off |
+| `probe_two_villages` | two places, a rope ferry | two districts, nordic_viking, `authored:rope_ferry_rig` | ferry unmeasured | the program is not authored in authoring-only mode (F24) | deferred to pass 2 |
+| `probe_bronze_tundra` | Bronze Age, frozen coast | wilds_camps, two programs, `W517` era mismatch | mine measured on a hut; density 1.5 < 2 | pit heads are a program (F24); a camp is sparse | deferred to pass 2 |
+| `probe_caldera` | terrain-only, the terrain kit | `cave.carver`, vents as a scatter program | dominance unmeasurable | nothing placed to compare a lake against — instrument gap for terrain icons | no |
+| `probe_temple_bell` | an icon in a prop pack, feudal_japanese at 0 % | the pack, `authored:bell_pavilion`; `T210` once, clean retry | bell unmeasured | the program is not authored in this mode (F24) | deferred to pass 2 |
+| `probe_sky_whale` | bespoke (T8), desert_caravanserai at 0 % | the pack, two `authored:` programs | not dominant on what stood: h ×0.8, a ×1.33 | the ribcage and skull are programs (F24) | deferred to pass 2 |
 
 ## PROPOSALS
 
@@ -992,3 +1028,11 @@ running state. The NOW block is rewritten at the end of every turn.
   pass). P7 proposed (D65). Baselines: unchanged by the lattice link — troy 14, hellenist 10, pirates 8, as unit 27 pinned them. The thirteen: all thirteen payload-identical to unit 27. Tests:
   FULL suite COUNTS Test Files 347 passed | 1 skipped (348), Tests 5680 passed | 31 skipped (5711). Files: `physics.ts`, the baselines, the
   record. Spend $0.
+- **unit 29 — probe pass 1 (2026-08-25):** six probe prompts
+  (`tools/golden-prompts/probes.json`, one per spec §6 category),
+  pre-registered in REACH before the spend, authored once against the
+  current kit (`runs/probe-1`, $0.36) and scored by the icon metric
+  compiling each document in-process. six of six authored (five one-shot), every icon present at document level, four form packs and the terrain kit reached for the first time, zero boxes and zero era violations; the icon verdict is deferred — the harness is authoring-only and five probes carry their icon in an `authored:` program the mode never writes (F24), so G4 is not yet counted Tools: `run.mjs` and
+  `icon-metric.mjs` take `--prompts <file>` so the golden roster stays
+  untouched. Tests: FULL suite COUNTS Test Files 347 passed | 1 skipped (348), Tests 5680 passed | 31 skipped (5711). Files: `probes.json`, the
+  two tools, the ledger. Spend $0.36.

@@ -422,5 +422,222 @@
       }
     },
     "failed": false
+  },
+  "probe_monastery::google/gemini-3.7-flash": {
+    "prompt": "A Himalayan monastery clinging to a cliff face above a glacier, prayer flags strung across the gorge, a village of yak herders on the moraine below.",
+    "intent": {
+      "era": "medieval",
+      "wealth": 0.4,
+      "decline": 0.1,
+      "formality": 0.3,
+      "climate": {
+        "biome": "minecraft:jagged_peaks",
+        "temperature": -0.8,
+        "humidity": -0.3,
+        "snow": "always"
+      },
+      "character": {
+        "label": "cliffside Himalayan monastery and yak herder settlement",
+        "materialTheme": "boreal_pine",
+        "formPacks": [
+          "himalayan_monastery"
+        ],
+        "archetypes": {
+          "prefer": [
+            "assembly_hall",
+            "monks_cells",
+            "scripture_library",
+            "hermit_retreat",
+            "yak_byre",
+            "kora_gatehouse",
+            "butter_tea_kitchen"
+          ],
+          "forbid": [
+            "townhouse",
+            "terraced_row",
+            "shop_row",
+            "office",
+            "apartment_block"
+          ]
+        },
+        "urbanForm": "hillside",
+        "ground": "stepped",
+        "motifs": {
+          "roofType": "flat",
+          "massing": "stepped",
+          "windowRhythm": "banded"
+        }
+      },
+      "tokens": {
+        "terrain": "a sheer cliff face above a glaciated gorge, with a wide moraine basin below the glacier",
+        "icons": "whitewashed monastery complex clinging to the vertical rock face; prayer flag lines strung across the gorge; icy glacier tongue; yak herder stone huts and stone-walled pens on the moraine",
+        "infra": "prayer_flag lines strung across the gorge; mani_stone_cairns along the pilgrim trail; dry_stone_wall enclosing yak paddocks on the moraine"
+      }
+    },
+    "failed": false
+  },
+  "probe_two_villages::google/gemini-3.7-flash": {
+    "prompt": "Two rival fishing villages on opposite shores of a narrow fjord, one of stone and one of timber, joined only by a rope ferry.",
+    "intent": {
+      "era": "medieval",
+      "climate": {
+        "biome": "minecraft:taiga",
+        "temperature": -0.4,
+        "humidity": 0.3,
+        "snow": "auto"
+      },
+      "tokens": {
+        "terrain": "two steep opposing shores of a narrow fjord separated by deep cold water",
+        "infra": "rope_ferry cable stretched across the narrow fjord connecting the two village landings; fish_drying_racks along both waterfronts; timber and stone jetties projecting into the water",
+        "event_direction": "two rival fishing settlements facing directly across the fjord water at one another",
+        "region_stone_village": "era medieval, wealth 0.45, decline 0.15, formality 0.25; built of rough stone and slate; steep stone retaining walls, rocky quays, smokehouse, tavern, watchtower",
+        "region_timber_village": "era medieval, wealth 0.4, decline 0.2, formality 0.2; materialTheme boreal_pine; formPacks [nordic_viking]; dark timber halls, stilt cottages, boat sheds, wooden slipways, tavern"
+      }
+    },
+    "failed": false
+  },
+  "probe_bronze_tundra::google/gemini-3.7-flash": {
+    "prompt": "A Bronze Age tin-mining camp on a frozen tundra coast in midwinter: pit heads, smelting fires, hide tents and a beached trading ship.",
+    "intent": {
+      "era": "ancient",
+      "wealth": 0.25,
+      "decline": 0.2,
+      "formality": 0.1,
+      "climate": {
+        "biome": "minecraft:snowy_plains",
+        "temperature": -0.9,
+        "humidity": -0.3,
+        "snow": "always"
+      },
+      "character": {
+        "label": "Bronze Age tin-mining camp",
+        "materialTheme": "boreal_pine",
+        "formPacks": [
+          "wilds_camps"
+        ],
+        "urbanForm": "grown",
+        "flora": {
+          "prefer": [
+            "sparse",
+            "juniper_scrub"
+          ]
+        },
+        "motifs": {
+          "roofType": "shed",
+          "massing": "sprawling",
+          "ornamentDensity": 0.05
+        }
+      },
+      "tokens": {
+        "terrain": "a frozen tundra coastline with an icy sea shore and exposed rocky mineral bluffs",
+        "icons": "tin pit-head excavations and spoil heaps, outdoor ore-roasting hearths and smelting fires, conical hide tents and timber lean-tos, a beached Bronze Age wooden trading ship iced into the frozen shore",
+        "infra": "beaten frozen paths between pit heads and smelting hearths; crude log revetments and windbreaks"
+      }
+    },
+    "failed": false
+  },
+  "probe_caldera::google/gemini-3.7-flash": {
+    "prompt": "A volcanic caldera lake with black-sand shores, steaming vents along the rim and a lava tube opening on the outer slope — no settlement of any kind.",
+    "intent": {
+      "climate": {
+        "temperature": 0.9,
+        "humidity": -0.5,
+        "snow": "never"
+      },
+      "character": {
+        "label": "volcanic wilderness",
+        "flora": {
+          "prefer": [
+            "sparse",
+            "deadwood"
+          ]
+        }
+      },
+      "tokens": {
+        "terrain": "a volcanic caldera crater lake enclosed by rim ridges, with black-sand shores, steaming geothermal vents along the crater crest, and an open lava tube entrance on the outer slope; wilderness with no settlement of any kind",
+        "icons": "steaming fumarole vents along the rim; black-sand beach ringing the crater lake; dark basalt slopes; yawning lava tube cave opening on the outer flank"
+      }
+    },
+    "failed": false
+  },
+  "probe_temple_bell::google/gemini-3.7-flash": {
+    "prompt": "A feudal Japanese hill village of terraced paddies, with a great bronze temple bell in its own pavilion on the ridge above, rung at dusk.",
+    "intent": {
+      "era": "medieval",
+      "wealth": 0.4,
+      "decline": 0.1,
+      "formality": 0.2,
+      "character": {
+        "label": "feudal Japanese terraced hill village",
+        "materialTheme": "temperate_timber",
+        "formPacks": [
+          "feudal_japanese"
+        ],
+        "archetypes": {
+          "prefer": [
+            "machiya",
+            "tea_room",
+            "rice_store",
+            "bathhouse",
+            "dojo"
+          ],
+          "forbid": [
+            "townhouse",
+            "terraced_row",
+            "shop_row",
+            "office",
+            "apartment_block"
+          ]
+        },
+        "urbanForm": "hillside",
+        "ground": "stepped",
+        "motifs": {
+          "roofType": "hip",
+          "massing": "stepped"
+        }
+      },
+      "tokens": {
+        "terrain": "a steep hillside carved into stepped rice paddy terraces, rising to a high ridge",
+        "icons": "a great bronze temple bell in an open-sided timber belfry pavilion on the ridge above; flooded terrace paddies stepped down the hillside; machiya farmsteads with dark timber framing; stone lanterns along the stepped lanes",
+        "infra": "stone_retaining_wall along the terraces; stone_stair paths climbing between the paddies up to the ridge"
+      }
+    },
+    "failed": false
+  },
+  "probe_sky_whale::google/gemini-3.7-flash": {
+    "prompt": "A desert town built inside the ribcage of a fossilised sky-whale: the ribs form the market hall, the skull is the temple, and the spine is the main street.",
+    "intent": {
+      "era": "medieval",
+      "wealth": 0.5,
+      "decline": 0.2,
+      "climate": {
+        "biome": "minecraft:desert",
+        "temperature": 0.9,
+        "humidity": -0.9,
+        "snow": "never"
+      },
+      "character": {
+        "label": "desert sky-whale carcass settlement",
+        "materialTheme": "sun_clay",
+        "formPacks": [
+          "desert_caravanserai"
+        ],
+        "urbanForm": "linear",
+        "motifs": {
+          "roofType": "flat"
+        },
+        "archetypes": {
+          "prefer": [
+            "courtyard_house",
+            "cistern"
+          ]
+        }
+      },
+      "tokens": {
+        "terrain": "a barren desert plain with shifting sand dunes centered on the colossal skeleton of a sky-whale",
+        "icons": "a fossilised sky-whale skeleton forming the civic framework: vertebrae line the main street spine, arched rib bones shelter the market hall bazaar, and the hollow skull forms the monumental desert temple"
+      }
+    },
+    "failed": false
   }
 }

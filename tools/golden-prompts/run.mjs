@@ -69,6 +69,7 @@ function parseArgs(argv) {
     switch (arg) {
       case "--label": out.label = next(); break;
       case "--only": out.only = next().split(",").map((s) => s.trim()).filter(Boolean); break;
+      case "--prompts": out.promptsFile = path.resolve(next()); break;
       case "--concurrency": out.concurrency = Math.max(1, Number(next())); break;
       case "--model": out.model = next(); break;
       case "--effort": out.effort = next(); break;
@@ -97,6 +98,7 @@ usage: node tools/golden-prompts/run.mjs [flags]
 
   --label <name>       Run directory name under runs/. Required unless --dry-run.
   --only a,b,c         Run only these prompt ids.
+  --prompts <file>     Roster file (default prompts.json; probes.json for probe prompts).
   --concurrency N      Parallel authoring calls (default 3).
   --model <id>         Override the pinned authoring model.
   --effort <level>     Override the pinned reasoning effort.
@@ -457,7 +459,9 @@ function sha256(bytes) {
 }
 
 function loadSuite(options) {
-  const suite = JSON.parse(fs.readFileSync(path.join(HERE, "prompts.json"), "utf8"));
+  // `--prompts` names another roster (the Stocktake Run's probe prompts,
+  // `probes.json`); the golden roster stays `prompts.json`.
+  const suite = JSON.parse(fs.readFileSync(options.promptsFile ?? path.join(HERE, "prompts.json"), "utf8"));
   const defaults = suite.defaults ?? {};
   let entries = suite.prompts.map((p) => ({
     ...p,

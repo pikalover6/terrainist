@@ -1,0 +1,134 @@
+{
+  "id": "probe_two_villages",
+  "family": "probe",
+  "kit": "settlement",
+  "prompt": "Two rival fishing villages on opposite shores of a narrow fjord, one of stone and one of timber, joined only by a rope ferry.",
+  "seed": 902,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "fresh",
+    "value": {
+      "era": "medieval",
+      "climate": {
+        "biome": "minecraft:taiga",
+        "temperature": -0.4,
+        "humidity": 0.3,
+        "snow": "auto"
+      },
+      "tokens": {
+        "terrain": "two steep opposing shores of a narrow fjord separated by deep cold water",
+        "infra": "rope_ferry cable stretched across the narrow fjord connecting the two village landings; fish_drying_racks along both waterfronts; timber and stone jetties projecting into the water",
+        "event_direction": "two rival fishing settlements facing directly across the fjord water at one another",
+        "region_stone_village": "era medieval, wealth 0.45, decline 0.15, formality 0.25; built of rough stone and slate; steep stone retaining walls, rocky quays, smokehouse, tavern, watchtower",
+        "region_timber_village": "era medieval, wealth 0.4, decline 0.2, formality 0.2; materialTheme boreal_pine; formPacks [nordic_viking]; dark timber halls, stilt cottages, boat sheds, wooden slipways, tavern"
+      }
+    },
+    "failed": false
+  },
+  "intentUsage": {
+    "promptTokens": 7200,
+    "completionTokens": 1133,
+    "reasoningTokens": 858,
+    "cost": 0.004824375
+  },
+  "menu": {
+    "injected": false,
+    "reason": "flag off"
+  },
+  "attempts": 1,
+  "diagnostics": [
+    []
+  ],
+  "usage": {
+    "promptTokens": 83835,
+    "completionTokens": 15199,
+    "reasoningTokens": 10322,
+    "cost": 0.05993625
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 33,
+    "maxDepth": 2,
+    "generators": [
+      "authored:rope_ferry_rig",
+      "building.grammar@0",
+      "infra.entry@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "boathouse",
+      "butchery",
+      "cannery",
+      "cottage",
+      "longhouse",
+      "sawmill",
+      "smokehouse",
+      "stilt_house",
+      "tavern",
+      "warehouse",
+      "watchtower"
+    ],
+    "archetypesInCatalog": 11,
+    "formPacks": [
+      "nordic_viking"
+    ],
+    "props": [
+      "barge",
+      "cairn",
+      "fishing_sloop",
+      "horse_trough",
+      "log_pile",
+      "longship",
+      "notice_board",
+      "pier",
+      "rowboat",
+      "signpost"
+    ],
+    "species": [
+      "ancient_grandfather_pine",
+      "cliff_pine",
+      "dense_tall_spruce",
+      "larch_accent",
+      "scrub_spruce",
+      "stone_side_spruce"
+    ],
+    "envelopes": [
+      "512x512",
+      "130x120",
+      "11x11x15",
+      "7x19x7",
+      "130x120",
+      "11x13x21",
+      "13x14x17"
+    ],
+    "constraints": 4,
+    "constraintKinds": [
+      "at",
+      "distance",
+      "max",
+      "min"
+    ],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 3,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 4,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 26,
+    "eras": [
+      "medieval"
+    ],
+    "bytes": 10349
+  },
+  "wallMs": 104838
+}

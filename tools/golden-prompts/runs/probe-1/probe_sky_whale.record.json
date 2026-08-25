@@ -1,0 +1,145 @@
+{
+  "id": "probe_sky_whale",
+  "family": "probe",
+  "kit": "settlement",
+  "prompt": "A desert town built inside the ribcage of a fossilised sky-whale: the ribs form the market hall, the skull is the temple, and the spine is the main street.",
+  "seed": 906,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "fresh",
+    "value": {
+      "era": "medieval",
+      "wealth": 0.5,
+      "decline": 0.2,
+      "climate": {
+        "biome": "minecraft:desert",
+        "temperature": 0.9,
+        "humidity": -0.9,
+        "snow": "never"
+      },
+      "character": {
+        "label": "desert sky-whale carcass settlement",
+        "materialTheme": "sun_clay",
+        "formPacks": [
+          "desert_caravanserai"
+        ],
+        "urbanForm": "linear",
+        "motifs": {
+          "roofType": "flat"
+        },
+        "archetypes": {
+          "prefer": [
+            "courtyard_house",
+            "cistern"
+          ]
+        }
+      },
+      "tokens": {
+        "terrain": "a barren desert plain with shifting sand dunes centered on the colossal skeleton of a sky-whale",
+        "icons": "a fossilised sky-whale skeleton forming the civic framework: vertebrae line the main street spine, arched rib bones shelter the market hall bazaar, and the hollow skull forms the monumental desert temple"
+      }
+    },
+    "failed": false
+  },
+  "intentUsage": {
+    "promptTokens": 7210,
+    "completionTokens": 802,
+    "reasoningTokens": 530,
+    "cost": 0.0042075
+  },
+  "menu": {
+    "injected": false,
+    "reason": "flag off"
+  },
+  "attempts": 1,
+  "diagnostics": [
+    []
+  ],
+  "usage": {
+    "promptTokens": 83852,
+    "completionTokens": 10347,
+    "reasoningTokens": 6506,
+    "cost": 0.050845125
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 19,
+    "maxDepth": 2,
+    "generators": [
+      "authored:skywhale_skull_temple",
+      "authored:whale_ribcage_market",
+      "building.grammar@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "adobe_pueblo",
+      "apothecary",
+      "caravanserai",
+      "church",
+      "cistern",
+      "cottage",
+      "courtyard_house",
+      "inn",
+      "market_stall",
+      "spice_market",
+      "tea_house",
+      "temple"
+    ],
+    "archetypesInCatalog": 12,
+    "formPacks": [
+      "desert_caravanserai"
+    ],
+    "props": [
+      "cairn",
+      "campsite",
+      "hitching_post",
+      "market_barrow",
+      "well_head"
+    ],
+    "species": [
+      "arid_scrub",
+      "desert_hardwood"
+    ],
+    "envelopes": [
+      "512x512",
+      "38x26x44",
+      "32x22x54",
+      "130x170",
+      "15x12x17",
+      "15x12x17"
+    ],
+    "constraints": 8,
+    "constraintKinds": [
+      "at",
+      "blend",
+      "distance",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform"
+    ],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 1,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 2,
+    "programReferences": 2,
+    "conformsTrue": 0,
+    "labels": 18,
+    "eras": [
+      "medieval"
+    ],
+    "bytes": 7452
+  },
+  "wallMs": 63934
+}

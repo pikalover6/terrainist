@@ -1,0 +1,168 @@
+{
+  "id": "probe_bronze_tundra",
+  "family": "probe",
+  "kit": "settlement",
+  "prompt": "A Bronze Age tin-mining camp on a frozen tundra coast in midwinter: pit heads, smelting fires, hide tents and a beached trading ship.",
+  "seed": 903,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "fresh",
+    "value": {
+      "era": "ancient",
+      "wealth": 0.25,
+      "decline": 0.2,
+      "formality": 0.1,
+      "climate": {
+        "biome": "minecraft:snowy_plains",
+        "temperature": -0.9,
+        "humidity": -0.3,
+        "snow": "always"
+      },
+      "character": {
+        "label": "Bronze Age tin-mining camp",
+        "materialTheme": "boreal_pine",
+        "formPacks": [
+          "wilds_camps"
+        ],
+        "urbanForm": "grown",
+        "flora": {
+          "prefer": [
+            "sparse",
+            "juniper_scrub"
+          ]
+        },
+        "motifs": {
+          "roofType": "shed",
+          "massing": "sprawling",
+          "ornamentDensity": 0.05
+        }
+      },
+      "tokens": {
+        "terrain": "a frozen tundra coastline with an icy sea shore and exposed rocky mineral bluffs",
+        "icons": "tin pit-head excavations and spoil heaps, outdoor ore-roasting hearths and smelting fires, conical hide tents and timber lean-tos, a beached Bronze Age wooden trading ship iced into the frozen shore",
+        "infra": "beaten frozen paths between pit heads and smelting hearths; crude log revetments and windbreaks"
+      }
+    },
+    "failed": false
+  },
+  "intentUsage": {
+    "promptTokens": 7204,
+    "completionTokens": 1260,
+    "reasoningTokens": 920,
+    "cost": 0.005064
+  },
+  "menu": {
+    "injected": false,
+    "reason": "flag off"
+  },
+  "attempts": 1,
+  "diagnostics": [
+    [
+      {
+        "code": "LOAM-W519",
+        "name": "LANDMARK_CONSTRAINT_IGNORED",
+        "severity": "warning",
+        "nodePath": "world.smelting_terrace.constraints[1]"
+      }
+    ]
+  ],
+  "usage": {
+    "promptTokens": 83908,
+    "completionTokens": 11069,
+    "reasoningTokens": 5385,
+    "cost": 0.052219875
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 25,
+    "maxDepth": 2,
+    "generators": [
+      "authored:beached_trading_ship",
+      "authored:ore_smelting_battery",
+      "building.grammar@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "beacon_tower",
+      "charcoal_burner",
+      "cottage",
+      "dormitory",
+      "granary",
+      "mine_head",
+      "smithy",
+      "sod_house",
+      "warehouse",
+      "watchtower"
+    ],
+    "archetypesInCatalog": 10,
+    "formPacks": [
+      "wilds_camps"
+    ],
+    "props": [
+      "cairn",
+      "campsite",
+      "dig_site",
+      "log_pile"
+    ],
+    "species": [
+      "juniper_bush",
+      "stunted_spruce",
+      "windswept_shrub"
+    ],
+    "envelopes": [
+      "512x512",
+      "24x24",
+      "28x14x12",
+      "18x8x16",
+      "9x12x9",
+      "9x12x9",
+      "13x11x13",
+      "9x8x9",
+      "9x13x9",
+      "13x12x19",
+      "11x10x11",
+      "9x18x9"
+    ],
+    "constraints": 29,
+    "constraintKinds": [
+      "adjacent_to",
+      "band",
+      "blend",
+      "connected",
+      "distance",
+      "facing",
+      "gap",
+      "max",
+      "min",
+      "on",
+      "oreChamber",
+      "reference",
+      "style",
+      "terrain_conform",
+      "via",
+      "zone"
+    ],
+    "constraintsWithStrength": 6,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 8,
+    "programReferences": 2,
+    "conformsTrue": 0,
+    "labels": 24,
+    "eras": [
+      "ancient"
+    ],
+    "bytes": 10522
+  },
+  "wallMs": 71595
+}

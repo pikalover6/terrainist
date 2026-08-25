@@ -1,0 +1,853 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "tin_coast_camp",
+    "worldSeed": 903,
+    "prompt": "A Bronze Age tin-mining camp on a frozen tundra coast in midwinter: pit heads, smelting fires, hide tents and a beached trading ship.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "intent": {
+    "era": "ancient",
+    "wealth": 0.25,
+    "decline": 0.2,
+    "formality": 0.1,
+    "climate": {
+      "biome": "minecraft:snowy_plains",
+      "temperature": -0.9,
+      "humidity": -0.3,
+      "snow": "always"
+    },
+    "character": {
+      "label": "Bronze Age tin-mining camp",
+      "materialTheme": "boreal_pine",
+      "formPacks": [
+        "wilds_camps"
+      ],
+      "urbanForm": "grown",
+      "flora": {
+        "prefer": [
+          "spruce_squat",
+          "juniper_scrub"
+        ]
+      },
+      "motifs": {
+        "roofType": "shed",
+        "massing": "sprawling",
+        "ornamentDensity": 0.05
+      },
+      "programs": [
+        {
+          "id": "beached_trading_ship",
+          "mode": "landmark",
+          "brief": "A Bronze Age wooden trading knarr or hulc run aground and iced into the coastal shelf, tilted on its bilge with rough timber shoring, bundled tin ingots and hide bales on the frost around it.",
+          "envelope": [
+            28,
+            14,
+            12
+          ]
+        },
+        {
+          "id": "ore_smelting_battery",
+          "mode": "landmark",
+          "brief": "A battery of stone-lined tin-smelting bowl furnaces and open charcoal roasting hearths with glowing embers, clay tuyeres, ore baskets and slag pits.",
+          "envelope": [
+            18,
+            8,
+            16
+          ]
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "a frozen tundra coastline with an icy sea shore and exposed rocky mineral bluffs",
+      "icons": "tin pit-head excavations and spoil heaps, outdoor ore-roasting hearths and smelting fires, conical hide tents and timber lean-tos, a beached Bronze Age wooden trading ship iced into the frozen shore",
+      "infra": "beaten frozen paths between pit heads and smelting hearths; crude log revetments and windbreaks"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.beach": "minecraft:packed_ice",
+      "road.surface": "minecraft:coarse_dirt",
+      "road.shoulder": "minecraft:gravel",
+      "plaza.path": "minecraft:coarse_dirt",
+      "plaza.cobble": "minecraft:cobblestone"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Frozen Tundra Tin-Mining Shore",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "rocky tundra bluffs falling to a frozen northern shore",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 72,
+          "amplitude": 32,
+          "octaves": 5,
+          "frequency": 0.0032,
+          "gain": 0.5,
+          "erosionPasses": 2,
+          "cliffThreshold": 52,
+          "soilDepth": 3,
+          "beachWidth": 6,
+          "snowLineFraction": 0.1,
+          "continentalness": {
+            "frequency": 0.0011,
+            "seaFraction": 0.42
+          }
+        },
+        "children": [
+          {
+            "id": "tin_lode_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the rocky mineral bluff containing the tin veins",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.2,
+                  0.8
+                ],
+                [
+                  0.55,
+                  0.74
+                ],
+                [
+                  0.85,
+                  0.82
+                ]
+              ],
+              "width": 56,
+              "height": 38,
+              "profile": "sharp"
+            }
+          },
+          {
+            "id": "tin_open_cut",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "open-cast trench cut into the mineral slope",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.44,
+                  0.7
+                ],
+                [
+                  0.5,
+                  0.6
+                ],
+                [
+                  0.54,
+                  0.52
+                ]
+              ],
+              "width": 24,
+              "depth": 15,
+              "profile": "sharp",
+              "flooded": "never"
+            }
+          },
+          {
+            "id": "camp_terrace",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the broad terrace between the mine bluffs and the shore",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.48,
+                0.46
+              ],
+              "radius": 92,
+              "height": 7,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "frozen_inlet",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the frozen coastal inlet where the ship ran aground",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.48,
+                  0.38
+                ],
+                [
+                  0.44,
+                  0.24
+                ],
+                "coast"
+              ],
+              "width": 46,
+              "depth": 18,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "boreal",
+          "temperatureFrequency": 0.001,
+          "humidityFrequency": 0.0015,
+          "latitudeGradient": -0.4
+        }
+      },
+      {
+        "id": "camp_hearth_square",
+        "kind": "primitive",
+        "label": "the central ore-sorting ground and communal fire clearing",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            24,
+            24
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "the_beached_ship",
+        "kind": "generator",
+        "generator": "authored:beached_trading_ship",
+        "label": "the icebound trading ship propped up on the frozen shore",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            28,
+            14,
+            12
+          ]
+        },
+        "constraints": [
+          {
+            "on": "@terrain:coastline",
+            "band": 24
+          },
+          {
+            "distance": "camp_hearth_square",
+            "min": 40,
+            "max": 120,
+            "strength": "soft"
+          }
+        ],
+        "params": {
+          "face": {
+            "toward": "camp_hearth_square"
+          }
+        },
+        "tags": [
+          "landmark"
+        ]
+      },
+      {
+        "id": "smelting_terrace",
+        "kind": "generator",
+        "generator": "authored:ore_smelting_battery",
+        "label": "outdoor tin-smelting hearths and roasting fires",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            18,
+            8,
+            16
+          ]
+        },
+        "constraints": [
+          {
+            "adjacent_to": "camp_hearth_square",
+            "gap": [
+              2,
+              8
+            ]
+          },
+          {
+            "facing": "camp_hearth_square"
+          }
+        ],
+        "params": {
+          "face": {
+            "toward": "camp_hearth_square"
+          }
+        },
+        "tags": [
+          "landmark",
+          "craft"
+        ]
+      },
+      {
+        "id": "pithead_east",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the eastern mine headframe and shaft entry",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            12,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "mine_head",
+          "floors": 1,
+          "roof": "gable",
+          "basement": {
+            "depth": 4,
+            "style": "mine"
+          }
+        },
+        "constraints": [
+          {
+            "on": "@terrain:ridge",
+            "band": 36
+          },
+          {
+            "distance": "camp_hearth_square",
+            "min": 25,
+            "max": 75,
+            "strength": "soft"
+          },
+          {
+            "connected": "pithead_west",
+            "via": "tunnel",
+            "style": "mine",
+            "oreChamber": true
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "mine_head"
+        ]
+      },
+      {
+        "id": "pithead_west",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the western mining cut pithead",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            12,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "mine_head",
+          "floors": 1,
+          "roof": "gable",
+          "basement": {
+            "depth": 4,
+            "style": "mine"
+          }
+        },
+        "constraints": [
+          {
+            "distance": "pithead_east",
+            "min": 18,
+            "max": 42
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "mine_head"
+        ]
+      },
+      {
+        "id": "charcoal_kiln_shed",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "charcoal burning and fuel preparation hut",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "archetype": "charcoal_burner",
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "camp_hearth_square",
+            "gap": [
+              2,
+              8
+            ]
+          },
+          {
+            "facing": "camp_hearth_square"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "craft"
+        ]
+      },
+      {
+        "id": "bronze_smithy",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "casting forge and tool repair smithy",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "smithy",
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "camp_hearth_square",
+            "gap": [
+              2,
+              8
+            ]
+          },
+          {
+            "facing": "camp_hearth_square"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "craft",
+          "house"
+        ]
+      },
+      {
+        "id": "overseer_sod_house",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "turf-insulated camp headman lodge",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            13,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "sod_house",
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "adjacent_to": "camp_hearth_square",
+            "gap": [
+              2,
+              10
+            ]
+          },
+          {
+            "facing": "camp_hearth_square"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "miners_bunk_shelter",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "low timber miners bunkhouse",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            19
+          ]
+        },
+        "params": {
+          "archetype": "dormitory",
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "camp_hearth_square",
+            "min": 8,
+            "max": 38,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "tin_ingot_store",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "crude timber storehouse for ore and cast tin ingots",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            10,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "warehouse",
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "distance": "camp_hearth_square",
+            "min": 8,
+            "max": 40,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "store"
+        ]
+      },
+      {
+        "id": "bluff_beacon",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "coastal watchfire beacon on the high bluff",
+        "optional": true,
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            18,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "beacon_tower",
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "on": "@terrain:ridge",
+            "band": 20
+          },
+          {
+            "distance": "camp_hearth_square",
+            "min": 45,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "max",
+            "blend": 5
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "lookout"
+        ]
+      },
+      {
+        "id": "hide_tent_camp",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "cluster of hide tents around the camp",
+        "params": {
+          "prop": "campsite",
+          "zone": "center",
+          "jitter": 0.12
+        }
+      },
+      {
+        "id": "fuel_wood_pile",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "stacked firewood for the smelting hearths",
+        "params": {
+          "prop": "log_pile",
+          "zone": "center",
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "ore_spoil_cairn",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "spoil stone marker cairn",
+        "params": {
+          "prop": "cairn",
+          "zone": "south",
+          "jitter": 0.22
+        }
+      },
+      {
+        "id": "tin_prospect_trench",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "shallow ore test trench and spoil heap",
+        "params": {
+          "prop": "dig_site",
+          "zone": "south",
+          "jitter": 0.18
+        }
+      },
+      {
+        "id": "lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "beaten frozen paths between pitheads, hearths and the shore",
+        "params": {
+          "anchors": [
+            "camp_hearth_square",
+            "#tag:house",
+            "#tag:craft",
+            "the_beached_ship",
+            "pithead_east"
+          ],
+          "pattern": "organic",
+          "width": 2,
+          "lanterns": true,
+          "lanternSpacing": 16
+        }
+      },
+      {
+        "id": "tundra_spruce_scrub",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "windswept stunted spruce and juniper in sheltered hollows",
+        "params": {
+          "area": {
+            "at": [
+              0.75,
+              0.55
+            ],
+            "radius": 130
+          },
+          "density": 0.035,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 30,
+          "elevation": [
+            2,
+            80
+          ],
+          "edgeFalloff": 14,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.2,
+            "flowers": 0,
+            "deadwood": 0.12
+          },
+          "species": [
+            {
+              "id": "stunted_spruce",
+              "shape": "spruce_squat",
+              "weight": 3
+            },
+            {
+              "id": "juniper_bush",
+              "shape": "juniper_scrub",
+              "weight": 2
+            }
+          ]
+        }
+      },
+      {
+        "id": "tundra_open_wilderness",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse scattered scrub across the frozen plateau",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.01,
+          "spacing": 5,
+          "clumping": 0.6,
+          "maxSlope": 35,
+          "elevation": [
+            2,
+            100
+          ],
+          "edgeFalloff": 12,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.15,
+            "flowers": 0,
+            "deadwood": 0.08
+          },
+          "species": [
+            {
+              "id": "windswept_shrub",
+              "shape": "juniper_scrub",
+              "weight": 1
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

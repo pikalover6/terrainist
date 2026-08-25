@@ -1,0 +1,687 @@
+{
+  "run": "probe-1",
+  "scoredAt": "2026-08-25",
+  "thresholds": {
+    "dominantHeight": 1.5,
+    "dominantFootprint": 2
+  },
+  "scores": [
+    {
+      "id": "probe_monastery",
+      "icons": [
+        {
+          "id": "monastery",
+          "dominantRequired": true,
+          "inDocument": [
+            "world",
+            "world.terrain.monastery_cliff_shelf",
+            "world.monastery_dzong",
+            "world.monastery_dzong.assembly_hall",
+            "world.cliff_revetment",
+            "intent.tokens",
+            "world.monastery_dzong.sacred_chorten"
+          ],
+          "inWorld": [
+            "monastery_dzong",
+            "assembly_hall",
+            "sacred_chorten",
+            "scripture_hall",
+            "infill_-99_-93",
+            "infill_-82_-93",
+            "infill_-183_-84",
+            "world.monastery_dzong.assembly_hall",
+            "world.monastery_dzong.sacred_chorten",
+            "world.monastery_dzong.scripture_hall",
+            "world.monastery_dzong.infill_-99_-93",
+            "world.monastery_dzong.infill_-82_-93"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": false,
+            "by": "world.monastery_dzong.assembly_hall",
+            "height": 20,
+            "footprint": 285,
+            "medianHeight": 10,
+            "medianFootprint": 180,
+            "heightRatio": 2,
+            "footprintRatio": 1.58
+          }
+        },
+        {
+          "id": "prayer_flags",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.gorge_prayer_flags",
+            "intent.tokens"
+          ],
+          "inWorld": [
+            "world.moraine_village.infill_-85_123",
+            "world.moraine_village.infill_-35_153"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "yak_village",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.moraine_village",
+            "world.moraine_village.village_byre",
+            "world.yak_pastures",
+            "intent.tokens",
+            "world.moraine_village.headman_bothy",
+            "world.village_fuel_store",
+            "world.village_trough"
+          ],
+          "inWorld": [
+            "yak_pastures",
+            "moraine_village",
+            "village_byre",
+            "headman_bothy",
+            "terrace_-85_179",
+            "infill_-7_81",
+            "infill_-73_90",
+            "infill_-9_98",
+            "infill_22_104",
+            "infill_39_104",
+            "infill_-73_107",
+            "infill_-85_123"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "districts",
+        "lots": 52,
+        "blocks": 36,
+        "envelope": 31100,
+        "lotsPer10k": 16.7,
+        "floor": 3,
+        "ok": true
+      },
+      "boxes": {
+        "era": "medieval",
+        "preModern": true,
+        "count": 0,
+        "of": 23,
+        "sample": []
+      },
+      "era": {
+        "era": "medieval",
+        "forbidden": [
+          "townhouse",
+          "terraced_row",
+          "shop_row",
+          "office",
+          "apartment_block"
+        ],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 3,
+        "diagnostics": 44
+      },
+      "alarms": [
+        "icon monastery not dominant (h×2, a×1.58)"
+      ]
+    },
+    {
+      "id": "probe_two_villages",
+      "icons": [
+        {
+          "id": "stone_village",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.terrain.west_stone_shelf",
+            "world.west_pine_woods",
+            "world.stone_village",
+            "world.stone_village.stone_smokehouse",
+            "world.stone_village.stone_lookout",
+            "world.west_ferry_post",
+            "world.west_fishing_sloop",
+            "world.west_skiff",
+            "intent.tokens",
+            "world",
+            "world.terrain.east_timber_shelf",
+            "world.east_taiga_woods"
+          ],
+          "inWorld": [
+            "stone_village",
+            "stone_smokehouse",
+            "stone_lookout",
+            "terrace_-65_-56",
+            "infill_-144_-77",
+            "infill_-98_-50",
+            "infill_-114_-33",
+            "infill_-99_-33",
+            "infill_-144_-11",
+            "infill_-111_-11",
+            "infill_-95_-11",
+            "infill_-107_24"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "timber_village",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.terrain.east_timber_shelf",
+            "world.east_taiga_woods",
+            "world.timber_village",
+            "world.timber_village.timber_great_hall",
+            "world.timber_village.timber_boat_shed",
+            "world.east_ferry_post",
+            "world.east_longship",
+            "world.east_skiff",
+            "world.east_timber_pile",
+            "intent.tokens",
+            "world.west_pine_woods",
+            "world"
+          ],
+          "inWorld": [
+            "timber_village",
+            "timber_great_hall",
+            "timber_boat_shed",
+            "terrace_71_-47",
+            "terrace_71_-34",
+            "terrace_103_7",
+            "infill_107_-46",
+            "infill_31_-36",
+            "infill_107_-32",
+            "infill_73_-12",
+            "infill_35_0",
+            "infill_73_9"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "ferry",
+          "dominantRequired": true,
+          "inDocument": [
+            "world.west_ferry_post",
+            "world.west_ferry_winch",
+            "world.east_ferry_post",
+            "world.ferry_cable",
+            "world.crossing_ferry_barge",
+            "world.fjord_roads",
+            "intent.tokens"
+          ],
+          "inWorld": [
+            "prop:world.west_ferry_post",
+            "prop:world.east_ferry_post",
+            "prop:world.crossing_ferry_barge"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": false,
+            "note": "nothing placed to measure"
+          }
+        }
+      ],
+      "density": {
+        "basis": "districts",
+        "lots": 50,
+        "blocks": 24,
+        "envelope": 31200,
+        "lotsPer10k": 16,
+        "floor": 3,
+        "ok": true
+      },
+      "boxes": {
+        "era": "medieval",
+        "preModern": true,
+        "count": 0,
+        "of": 27,
+        "sample": []
+      },
+      "era": {
+        "era": "medieval",
+        "forbidden": [],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 0,
+        "diagnostics": 31
+      },
+      "alarms": [
+        "icon ferry placed but unmeasured (nothing placed to measure)"
+      ]
+    },
+    {
+      "id": "probe_bronze_tundra",
+      "icons": [
+        {
+          "id": "mine",
+          "dominantRequired": true,
+          "inDocument": [
+            "world.terrain.tin_lode_ridge",
+            "world.terrain.tin_open_cut",
+            "world.terrain.camp_terrace",
+            "world.pithead_east",
+            "world.pithead_west",
+            "world.miners_bunk_shelter",
+            "intent.tokens",
+            "world.lanes",
+            "world",
+            "world.camp_hearth_square",
+            "world.smelting_terrace",
+            "world.bronze_smithy"
+          ],
+          "inWorld": [
+            "miners_bunk_shelter",
+            "world.pithead_east",
+            "world.pithead_west",
+            "world.miners_bunk_shelter",
+            "pithead_east",
+            "pithead_west",
+            "tin_ingot_store",
+            "world.tin_ingot_store",
+            "prop:world.tin_prospect_trench",
+            "marker:tin_lode_ridge.head",
+            "marker:tin_lode_ridge.mouth",
+            "marker:tin_lode_ridge.peak"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": false,
+            "by": "world.miners_bunk_shelter",
+            "height": 15,
+            "footprint": 247,
+            "medianHeight": 15,
+            "medianFootprint": 81,
+            "heightRatio": 1,
+            "footprintRatio": 3.05
+          }
+        },
+        {
+          "id": "smelting",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.smelting_terrace",
+            "world.fuel_wood_pile",
+            "intent.tokens",
+            "world.charcoal_kiln_shed",
+            "world.camp_hearth_square",
+            "world.bluff_beacon",
+            "world.bronze_smithy"
+          ],
+          "inWorld": [
+            "charcoal_kiln_shed",
+            "world.charcoal_kiln_shed"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "ship",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.terrain.frozen_inlet",
+            "world.the_beached_ship",
+            "intent.tokens"
+          ],
+          "inWorld": [],
+          "present": true,
+          "note": "asked for as a program this document has no source for (authoring-only run): document read",
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "buildings-hull",
+        "lots": 8,
+        "blocks": 0,
+        "envelope": 53550,
+        "lotsPer10k": 1.5,
+        "floor": 2,
+        "ok": false
+      },
+      "boxes": {
+        "era": "ancient",
+        "preModern": true,
+        "count": 0,
+        "of": 8,
+        "sample": []
+      },
+      "era": {
+        "era": "ancient",
+        "forbidden": [],
+        "violations": [],
+        "packEraMismatch": 1
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 4,
+        "diagnostics": 12
+      },
+      "alarms": [
+        "icon mine not dominant (h×1, a×3.05)",
+        "density 1.5 < floor 2"
+      ]
+    },
+    {
+      "id": "probe_caldera",
+      "icons": [
+        {
+          "id": "caldera_lake",
+          "dominantRequired": true,
+          "inDocument": [
+            "caldera_realm",
+            "caldera_realm.terrain.volcano_massif",
+            "caldera_realm.terrain.caldera_lake_basin",
+            "caldera_realm.steaming_vents"
+          ],
+          "inWorld": [
+            "marker:volcano_massif.caldera",
+            "marker:caldera_lake_basin.center",
+            "marker:caldera_lake_basin.peak",
+            "marker:caldera_lake_basin.foot",
+            "marker:caldera_realm.lava_tube_system.cave_mouth"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": false,
+            "note": "nothing placed to measure"
+          }
+        },
+        {
+          "id": "vents",
+          "dominantRequired": false,
+          "inDocument": [
+            "caldera_realm.steaming_vents"
+          ],
+          "inWorld": [],
+          "present": true,
+          "note": "asked for as a program this document has no source for (authoring-only run): document read",
+          "dominance": null
+        },
+        {
+          "id": "lava_tube",
+          "dominantRequired": false,
+          "inDocument": [
+            "caldera_realm.lava_tube_system"
+          ],
+          "inWorld": [
+            "marker:caldera_realm.lava_tube_system.cave_mouth"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "none",
+        "lots": 0,
+        "blocks": 0,
+        "envelope": 0,
+        "lotsPer10k": 0,
+        "floor": 0,
+        "ok": true
+      },
+      "boxes": {
+        "era": "",
+        "preModern": false,
+        "count": 0,
+        "of": 0,
+        "sample": []
+      },
+      "era": {
+        "era": "",
+        "forbidden": [],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 0,
+        "diagnostics": 2
+      },
+      "alarms": [
+        "icon caldera_lake placed but unmeasured (nothing placed to measure)"
+      ]
+    },
+    {
+      "id": "probe_temple_bell",
+      "icons": [
+        {
+          "id": "bell",
+          "dominantRequired": true,
+          "inDocument": [
+            "world",
+            "world.bonsho_belfry",
+            "intent.tokens",
+            "world.terrain.temple_spur",
+            "world.ridge_lanes"
+          ],
+          "inWorld": [],
+          "present": true,
+          "note": "asked for as a program this document has no source for (authoring-only run): document read",
+          "dominance": {
+            "dominant": false,
+            "note": "program not authored in this run"
+          }
+        },
+        {
+          "id": "paddies",
+          "dominantRequired": false,
+          "inDocument": [
+            "intent.tokens",
+            "world.terrain.valley_stream",
+            "world.west_paddies",
+            "world.east_paddies",
+            "world.ridge_lanes",
+            "world.slope_groves",
+            "world.west_terrace_wall",
+            "world.east_terrace_wall",
+            "world.village_terrace_steps",
+            "world.village_notice_board"
+          ],
+          "inWorld": [
+            "west_paddies",
+            "east_paddies",
+            "world.west_paddies.farmhouse",
+            "world.west_paddies.barn",
+            "world.west_paddies.chicken_coop",
+            "world.east_paddies.farmhouse",
+            "world.east_paddies.barn",
+            "world.east_paddies.chicken_coop",
+            "prop:world.west_paddies.cart",
+            "prop:world.west_paddies.scarecrow",
+            "prop:world.east_paddies.cart",
+            "prop:world.east_paddies.scarecrow"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "village",
+          "dominantRequired": false,
+          "inDocument": [
+            "world",
+            "world.terrain.village_bench",
+            "world.slope_groves",
+            "world.village_quarter",
+            "world.village_quarter.village_shrine",
+            "world.village_quarter.village_teahouse",
+            "world.village_terrace_steps",
+            "world.village_notice_board"
+          ],
+          "inWorld": [
+            "village_quarter",
+            "village_teahouse",
+            "village_shrine",
+            "infill_-12_-76",
+            "infill_16_-76",
+            "infill_34_-76",
+            "infill_59_-76",
+            "infill_-44_-62",
+            "infill_-12_-62",
+            "infill_-1_-62",
+            "infill_16_-59",
+            "infill_34_-59"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "districts",
+        "lots": 53,
+        "blocks": 19,
+        "envelope": 22400,
+        "lotsPer10k": 23.7,
+        "floor": 3,
+        "ok": true
+      },
+      "boxes": {
+        "era": "medieval",
+        "preModern": true,
+        "count": 0,
+        "of": 33,
+        "sample": []
+      },
+      "era": {
+        "era": "medieval",
+        "forbidden": [
+          "townhouse",
+          "terraced_row",
+          "shop_row",
+          "office",
+          "apartment_block",
+          "skyscraper"
+        ],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 1,
+        "diagnostics": 18
+      },
+      "alarms": [
+        "icon bell placed but unmeasured (program not authored in this run)"
+      ]
+    },
+    {
+      "id": "probe_sky_whale",
+      "icons": [
+        {
+          "id": "whale_skeleton",
+          "dominantRequired": true,
+          "inDocument": [
+            "world",
+            "world.desert_terrain",
+            "world.desert_terrain.spine_shelf",
+            "world.skull_temple",
+            "world.ribcage_market",
+            "world.spine_district",
+            "world.spine_vertebrae",
+            "intent.tokens",
+            "world.spine_road",
+            "world.caravan_hitching_post",
+            "world.spine_well"
+          ],
+          "inWorld": [
+            "spine_district",
+            "serai_inn",
+            "oasis_cistern",
+            "infill_-54_-29",
+            "infill_-8_9",
+            "infill_10_9",
+            "infill_-54_29",
+            "infill_-54_45",
+            "infill_-8_45",
+            "infill_10_45",
+            "infill_-8_65",
+            "infill_10_65"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": false,
+            "by": "serai_inn",
+            "height": 12,
+            "footprint": 255,
+            "medianHeight": 15,
+            "medianFootprint": 192,
+            "heightRatio": 0.8,
+            "footprintRatio": 1.33
+          }
+        },
+        {
+          "id": "market",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.ribcage_market",
+            "world.spine_road",
+            "world.caravan_hitching_post",
+            "world.market_barrows",
+            "intent.tokens"
+          ],
+          "inWorld": [
+            "world.spine_district.infill_-8_65",
+            "world.spine_district.infill_10_81",
+            "prop:world.market_barrows"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "temple",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.skull_temple",
+            "world.spine_road",
+            "world.desert_waypost_cairn",
+            "intent.tokens"
+          ],
+          "inWorld": [
+            "world.spine_district.infill_10_9",
+            "world.spine_district.infill_10_101"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "districts",
+        "lots": 36,
+        "blocks": 10,
+        "envelope": 22100,
+        "lotsPer10k": 16.3,
+        "floor": 3,
+        "ok": true
+      },
+      "boxes": {
+        "era": "medieval",
+        "preModern": true,
+        "count": 0,
+        "of": 20,
+        "sample": []
+      },
+      "era": {
+        "era": "medieval",
+        "forbidden": [
+          "townhouse",
+          "terraced_row",
+          "office",
+          "skyscraper"
+        ],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 0,
+        "diagnostics": 9
+      },
+      "alarms": [
+        "icon whale_skeleton not dominant (h×0.8, a×1.33)"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,85 @@
+{
+  "$comment": "The Stocktake Run's probe prompts (spec §6): each written on purpose to exercise behaviour no golden prompt reaches — a form pack at 0 % reach, a two-place prompt, an unusual era or climate, terrain-only, an icon that lives in a prop pack, a bizarre bespoke ask. One world each, judged by the icon metric; a probe that fails is promoted into prompts.json once its cause is fixed, passes stay one-off. Run with `run.mjs --prompts tools/golden-prompts/probes.json --label probe-N` and score with `icon-metric.mjs runs/probe-N --prompts tools/golden-prompts/probes.json`.",
+  "defaults": { "kit": "settlement", "size": 512 },
+  "prompts": [
+    {
+      "id": "probe_monastery",
+      "family": "probe",
+      "seed": 901,
+      "prompt": "A Himalayan monastery clinging to a cliff face above a glacier, prayer flags strung across the gorge, a village of yak herders on the moraine below.",
+      "watches": ["himalayan_monastery pack at 0 % reach in the before-sample", "a settlement split by a gorge — does the kit route the flags or drop them", "cold climate and the snow line"],
+      "icons": [
+        { "id": "monastery", "terms": ["monastery", "gompa", "temple", "stupa", "shrine"], "dominant": true },
+        { "id": "prayer_flags", "terms": ["prayer", "flag", "banner"] },
+        { "id": "yak_village", "terms": ["yak", "herder", "village", "hut", "pen"] }
+      ],
+      "densityFloor": 3
+    },
+    {
+      "id": "probe_two_villages",
+      "family": "probe",
+      "seed": 902,
+      "prompt": "Two rival fishing villages on opposite shores of a narrow fjord, one of stone and one of timber, joined only by a rope ferry.",
+      "watches": ["two-regions-in-one-world (the kit module exists; no golden prompt asks for two places)", "the ferry — a bespoke program or nothing", "two palettes in one document"],
+      "icons": [
+        { "id": "stone_village", "terms": ["stone", "village", "harbour", "harbor", "quay"] },
+        { "id": "timber_village", "terms": ["timber", "wood", "village", "harbour", "harbor", "quay"] },
+        { "id": "ferry", "terms": ["ferry", "rope", "crossing", "barge"], "dominant": true }
+      ],
+      "densityFloor": 3
+    },
+    {
+      "id": "probe_bronze_tundra",
+      "family": "probe",
+      "seed": 903,
+      "prompt": "A Bronze Age tin-mining camp on a frozen tundra coast in midwinter: pit heads, smelting fires, hide tents and a beached trading ship.",
+      "watches": ["an era the kit's tables barely name, in a climate no golden prompt uses", "era fidelity (T9): no later-era archetypes or materials", "the beached ship — beached_wreck is a pack member"],
+      "icons": [
+        { "id": "mine", "terms": ["mine", "pit", "shaft", "adit", "tin"], "dominant": true },
+        { "id": "smelting", "terms": ["smelt", "furnace", "kiln", "fire", "forge"] },
+        { "id": "ship", "terms": ["ship", "boat", "wreck", "hull", "beached"] }
+      ],
+      "densityFloor": 2
+    },
+    {
+      "id": "probe_caldera",
+      "family": "probe",
+      "seed": 904,
+      "kit": "terrain",
+      "prompt": "A volcanic caldera lake with black-sand shores, steaming vents along the rim and a lava tube opening on the outer slope — no settlement of any kind.",
+      "watches": ["terrain-only against the terrain kit: no golden prompt is terrain-only", "the vents and the lava tube — edits or programs", "a lake inside a rim: the basin rim must close (T105)"],
+      "icons": [
+        { "id": "caldera_lake", "terms": ["caldera", "crater", "lake", "basin"], "dominant": true },
+        { "id": "vents", "terms": ["vent", "fumarole", "steam", "geyser"] },
+        { "id": "lava_tube", "terms": ["lava", "tube", "cave", "tunnel"] }
+      ],
+      "densityFloor": 0
+    },
+    {
+      "id": "probe_temple_bell",
+      "family": "probe",
+      "seed": 905,
+      "prompt": "A feudal Japanese hill village of terraced paddies, with a great bronze temple bell in its own pavilion on the ridge above, rung at dusk.",
+      "watches": ["feudal_japanese pack at 0 % reach", "the icon lives in a prop pack (bell_pavilion) — does the model reach for the pack member or invent a program", "terraces as paddies, not lots"],
+      "icons": [
+        { "id": "bell", "terms": ["bell", "pavilion", "belfry"], "dominant": true },
+        { "id": "paddies", "terms": ["paddy", "paddies", "rice", "terrace", "field"] },
+        { "id": "village", "terms": ["village", "house", "farmhouse", "minka"] }
+      ],
+      "densityFloor": 3
+    },
+    {
+      "id": "probe_sky_whale",
+      "family": "probe",
+      "seed": 906,
+      "prompt": "A desert town built inside the ribcage of a fossilised sky-whale: the ribs form the market hall, the skull is the temple, and the spine is the main street.",
+      "watches": ["T8: bespoke is non-negotiable — a whale skeleton the town lives in", "a program the town must be laid out around (seating, facing, the street along the spine)", "desert_caravanserai pack at 0 % reach"],
+      "icons": [
+        { "id": "whale_skeleton", "terms": ["whale", "skeleton", "rib", "ribcage", "fossil", "skull", "spine"], "dominant": true },
+        { "id": "market", "terms": ["market", "bazaar", "hall", "souk"] },
+        { "id": "temple", "terms": ["temple", "shrine", "skull"] }
+      ],
+      "densityFloor": 3
+    }
+  ]
+}

@@ -1,0 +1,161 @@
+{
+  "id": "probe_monastery",
+  "family": "probe",
+  "kit": "settlement",
+  "prompt": "A Himalayan monastery clinging to a cliff face above a glacier, prayer flags strung across the gorge, a village of yak herders on the moraine below.",
+  "seed": 901,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "fresh",
+    "value": {
+      "era": "medieval",
+      "wealth": 0.4,
+      "decline": 0.1,
+      "formality": 0.3,
+      "climate": {
+        "biome": "minecraft:jagged_peaks",
+        "temperature": -0.8,
+        "humidity": -0.3,
+        "snow": "always"
+      },
+      "character": {
+        "label": "cliffside Himalayan monastery and yak herder settlement",
+        "materialTheme": "boreal_pine",
+        "formPacks": [
+          "himalayan_monastery"
+        ],
+        "archetypes": {
+          "prefer": [
+            "assembly_hall",
+            "monks_cells",
+            "scripture_library",
+            "hermit_retreat",
+            "yak_byre",
+            "kora_gatehouse",
+            "butter_tea_kitchen"
+          ],
+          "forbid": [
+            "townhouse",
+            "terraced_row",
+            "shop_row",
+            "office",
+            "apartment_block"
+          ]
+        },
+        "urbanForm": "hillside",
+        "ground": "stepped",
+        "motifs": {
+          "roofType": "flat",
+          "massing": "stepped",
+          "windowRhythm": "banded"
+        }
+      },
+      "tokens": {
+        "terrain": "a sheer cliff face above a glaciated gorge, with a wide moraine basin below the glacier",
+        "icons": "whitewashed monastery complex clinging to the vertical rock face; prayer flag lines strung across the gorge; icy glacier tongue; yak herder stone huts and stone-walled pens on the moraine",
+        "infra": "prayer_flag lines strung across the gorge; mani_stone_cairns along the pilgrim trail; dry_stone_wall enclosing yak paddocks on the moraine"
+      }
+    },
+    "failed": false
+  },
+  "intentUsage": {
+    "promptTokens": 7204,
+    "completionTokens": 1074,
+    "reasoningTokens": 623,
+    "cost": 0.00471525
+  },
+  "menu": {
+    "injected": false,
+    "reason": "flag off"
+  },
+  "attempts": 1,
+  "diagnostics": [
+    []
+  ],
+  "usage": {
+    "promptTokens": 84019,
+    "completionTokens": 11916,
+    "reasoningTokens": 7706,
+    "cost": 0.053849625
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 23,
+    "maxDepth": 2,
+    "generators": [
+      "authored:prayer_flag_span",
+      "building.grammar@0",
+      "infra.entry@0",
+      "precinct.farm@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "barn",
+      "bell_tower",
+      "cottage",
+      "hall",
+      "hermitage",
+      "hut",
+      "library",
+      "monastery",
+      "shepherds_bothy",
+      "sod_house",
+      "stupa"
+    ],
+    "archetypesInCatalog": 11,
+    "formPacks": [
+      "himalayan_monastery"
+    ],
+    "props": [
+      "horse_trough",
+      "log_pile"
+    ],
+    "species": [
+      "juniper",
+      "squat_spruce"
+    ],
+    "envelopes": [
+      "512x512",
+      "130x110",
+      "15x17x19",
+      "13x19x13",
+      "11x13x15",
+      "140x120",
+      "11x11x11",
+      "13x12x17",
+      "100x80",
+      "56x18x14"
+    ],
+    "constraints": 6,
+    "constraintKinds": [
+      "adjacent_to",
+      "at",
+      "distance",
+      "max",
+      "min"
+    ],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 1,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 5,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 22,
+    "eras": [
+      "medieval"
+    ],
+    "bytes": 8861
+  },
+  "wallMs": 81263
+}
