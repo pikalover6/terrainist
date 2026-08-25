@@ -1114,7 +1114,32 @@ async function compileValidated(
     // which is what keeps this line inert on the control path — and the guard
     // keeps it from costing a resolve there either, so `stats.ground.resolves`
     // stays the mixture's own number with the flag off.
-    if (GROUND_V1_FREEZE) groundDriver.freeze();
+    const frozen = GROUND_V1_FREEZE ? groundDriver.freeze() : undefined;
+    // Class-3 D3 (Stocktake unit 24): the resolver's own report says whether
+    // every `building.footprint` claim got its ground. It always has, on every
+    // anchor and fixture; this is the assertion the contract never made.
+    if (frozen !== undefined) {
+      let refused = 0;
+      let adjusted = 0;
+      const refusedTo = new Map<string, number>();
+      for (const row of frozen.report.claims) {
+        if (row.sourceClass !== "building.footprint") continue;
+        refused += row.refused;
+        adjusted += row.adjusted;
+        for (const [cls, n] of Object.entries(row.refusedTo)) refusedTo.set(cls, (refusedTo.get(cls) ?? 0) + n);
+      }
+      if (refused > 0 || adjusted > 0) {
+        const who = [...refusedTo.entries()].sort((a, b) => b[1] - a[1]).map(([cls, n]) => `${cls} ×${n}`).join(", ");
+        diagnostics.push(
+          note(
+            "FOOTPRINT_GROUND_LOST",
+            rootPath,
+            `${refused} building footprint column${refused === 1 ? "" : "s"} lost to a higher claim${who === "" ? "" : ` (${who})`} and ${adjusted} adjusted: the pad was declared at its foundation and the frozen ground beneath those columns is another intent's decision`,
+            "A building standing on ground another claim decided may float or sink there. Move the building off the channel, precinct or seam it overlaps, or accept the step; the resolver reports the columns, it does not repair them.",
+          ),
+        );
+      }
+    }
     structures = buildStructures(structureInput, structurePlan);
     diagnostics.push(...structures.diagnostics);
     layoutOutcome = { ...layoutOutcome, structures };

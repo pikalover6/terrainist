@@ -7,21 +7,21 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 23 (`KERB_SYMBOL_UNSCOPED` flipped; two
-  pirate cities' kerb courses now one material with their sidewalks) is
-  committed.
-- **Next unit:** unit 24 — **D3's probe**: how often does a placed
-  footprint's `foundationY` disagree with the frozen ground beneath it, on
-  the fourteen — per document, per column, won by which claim class
-  (`ResolvedGround.owner` → the intent's `sourceClass`); a report stat
-  first (`stats.ground.footprintDrift` or similar, report-only, payload
-  identity), and only if the number is not zero a note diagnostic from the
-  free `LOAM-I5xx` numbers. Then F21 (a reservation for scattered programs,
-  or a note when a parcel takes one — probe the montfort orchard first), F4
-  (`LOAM-I512` street probe), F14 (physics unit), F17 (the keep authored
-  1-of-3); §10.5 probe prompts (~40 % of the spend still unspent); the
-  remaining verdict stations, G2's named worlds, the final deck.
-- **Last commit:** 3874b07 (unit 22). Convention: this line names the
+- **In flight:** nothing — unit 24 (D3 probed: footprints and the frozen
+  ground agree everywhere; `LOAM-I501` and its test pin it) is committed.
+- **Next unit:** unit 25 — **F21, the parcel that takes the orchard**.
+  Probe first on montfort at own-stations on (dist-patched, D42): which
+  scatter/program placed the compound's trees (`life` props by program
+  and node), which lot parcels' `member` columns cover them, and whether
+  `withoutReserved`/the district's reservation mask knows the program's
+  ground at all. Then the smallest honest fix behind a switch: a parcel
+  does not grow into a column a scattered program dressed (a reservation),
+  or the compile says it did (`LOAM-W…`); attributed on the thirteen, the
+  own-stations flip re-measured on montfort after it. Then F4 (`LOAM-I512`
+  street probe), F14 (physics unit), F17 (the keep 1-of-3), census 1.21
+  (wire `stats.ground`); §10.5 probe prompts; the remaining stations,
+  G2's named worlds, the final deck.
+- **Last commit:** c7be0d6 (unit 23). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
 - **Spend:** $8.19 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
 - **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19, D25,
@@ -400,6 +400,18 @@ running state. The NOW block is rewritten at the end of every turn.
   The unit-22 entry stands as written (append-only) with this correction
   beside it; the census tool's default is noted in `AGENTS.md`'s
   byte-identity paragraph. Undo: n/a.
+- **D56 (unit 24):** D3's note lands although it measures zero on all
+  thirteen documents: it is read from the frozen resolve's own report at
+  the freeze (the resolver already knows), costs no payload, and turns the
+  contract's unasserted agreement into an assertion the author would hear
+  about. A note, not a warning, because nothing in a document can cause it
+  today. Undo: delete the code and the block in `compile.ts`.
+- **D57 (unit 24):** the probe's first column walk over-counted: a
+  placement's `footprint` is not always a pad (quays, precinct regions,
+  the citadel's 160 × 150 region), and columns no intent claimed, or that
+  another footprint or the streets won under a region, are not D3's
+  disagreement. The walk was split by owner before any number was written
+  down; the census row carries the split. Undo: n/a.
 
 ## SPEND
 
@@ -428,6 +440,7 @@ running state. The NOW block is rewritten at the end of every turn.
 | 21 | own stations retried — two bi14 runs, renders, censuses, the FULL suite twice | 0.00 | 8.19 |
 | 22 | census batch two — two bi14 runs, the FULL suite | 0.00 | 8.19 |
 | 23 | the kerb flip — censuses, renders, one bi14 run, the FULL suite | 0.00 | 8.19 |
+| 24 | D3 probed — thirteen in-process compiles, one bi14 run, the FULL suite | 0.00 | 8.19 |
 
 ## VERDICTS
 
@@ -814,3 +827,15 @@ running state. The NOW block is rewritten at the end of every turn.
   artefact; the citadel's window panes are all present in both worlds. The
   fourteen on the real build: twelve payload-identical to `u10`, pirates_r22 and pirates_vs_unicorns_k1 moved with payloads identical to the unit-22 dist-patched attribution run (`bi/u22-kerb`). Tests: FULL suite COUNTS Test Files 345 passed | 1 skipped (346), Tests 5677 passed | 31 skipped (5708).
   Files: `roads.ts`, the test, the census M2 row, `AGENTS.md`. Spend $0.
+- **unit 24 — D3 probed and pinned (2026-08-25):** `scratchpad/d3/probe.mjs`
+  compiles the thirteen with `groundEquivalence: true` and reads the
+  resolve's claim table and the frozen ground under every placement: every
+  declared `building.footprint` column is satisfied, adjusted 0, refused 0,
+  on every document (troy 9,524, the metropolis 28,904, thalassa 16,293,
+  …); the footprints whose ground differs from `foundationY` are not pads
+  (D57). Landed: `LOAM-I501 FOOTPRINT_GROUND_LOST` (registry + `compile.ts`,
+  read from `freeze()`'s report; D56) and `test/footprint-ground.test.ts`
+  (hillside-village through the same report). Census: D3 done, 1.21 opened
+  (`stats.ground` is only wired under the test-only option). The thirteen:
+  all thirteen payload-identical to unit 23. Tests: FULL suite COUNTS Test Files 346 passed | 1 skipped (347), Tests 5678 passed | 31 skipped (5709). Files: `diagnostics.ts`,
+  `compile.ts`, the test, the census. Spend $0.

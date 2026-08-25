@@ -1152,6 +1152,16 @@ export const TERRAIN_DIAGNOSTICS = {
    */
   CARVE_FLOODED_ANYWAY: "LOAM-I500",
   /**
+   * A building's footprint claim lost ground columns to a higher-ranked claim
+   * (`fluid.channel`, `precinct.ground`, …): the pad was declared at its
+   * `foundationY` and the frozen ground beneath some of it is another
+   * intent's decision. The slop census's class-3 D3 — the two authorities
+   * were never asserted to agree; now the resolver's own report says when
+   * they do not. Measured zero on every anchor and fixture (Stocktake unit
+   * 24), so this is a note that should never fire.
+   */
+  FOOTPRINT_GROUND_LOST: "LOAM-I501",
+  /**
    * `docs/GROUND-CONTRACT-v1.md` §3.2's coverage invariant is violated: a
    * boundary pair between two winners at different levels that matches none of
    * the four accounting clauses — no derived transition, no `transition: "none"`
