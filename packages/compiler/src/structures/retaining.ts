@@ -4421,9 +4421,11 @@ export function finishSeams(input: SeamFinishInput): SeamFinishResult {
   const stage: GroundStageCounts = {
     intentsByClass: sortedCounts(intentsByClass),
     intents: intents.length,
-    // One: the `finish()` above. WP-G6's five tier resolves are what this
-    // number becomes, and `ground-stage.test.ts` is where it is asserted.
-    resolves: 1,
+    // The driver's own counter (v1 §7.3): `finish()` above forced the four
+    // tier prefixes and the fifth, so on the settlement path this reads 5 —
+    // `ground-stage.test.ts` asserts it. It was hard-coded to 1 from WP-G6 until
+    // task #27 (2026-08-24) caught the note contradicting the driver.
+    resolves: input.ground.resolves,
     moved,
     byTreatment: sortedCounts(byTreatment),
     transitions: derivation.transitions.length,

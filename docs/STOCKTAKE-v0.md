@@ -126,6 +126,28 @@ to code:
   the report snapshots spans before late passes), pavedSurfaces assembly,
   the two kit files vs compiler registries.
 - Module size/cycle census (roads.ts >5k lines, types.ts as flag dump).
+- **Task #27 probes (orchestrator, 2026-08-24) — the two E1 smells, closed:**
+  - *`resolveGround` ×5 vs "1 resolve(s)"*: not a bug. GROUND-CONTRACT §1.6
+    designs five resolves (four tier prefixes + the generating fifth); the
+    driver counts 5 and `ground-stage.test.ts` pins it. The `LOAM-I497` note
+    hard-coded `resolves: 1` since WP-G6 — fixed (report bytes only, world
+    untouched). Residue for E: `finish()` forces the four prefix resolves even
+    when no pass asked for a view, so the count is a design property (~110 of
+    the ~140 ms `resolveGround` costs); making them lazy is a Kai-ratified
+    trade (invariant-by-count vs ~2% of wall), parked.
+  - *retaining.ts's refused seams*: probed with env-guarded timing wrappers on
+    the built dist, troy_r22. `buildRetainingWalls` 500 ms + `finishSeams`
+    218 ms inclusive (~13% of wall). 40 tiered stacks = 349 ms, of which 22
+    stacks (233 ms, 67%) end PARTIAL — 10 tiers found no ground, 52 seam
+    columns left uncovered (the W413 census); no stack is discarded whole, and
+    derivation itself is ~15 ms (the I497 invariant is cheap). So the spend
+    is real building whose result is partly unplaced, learned only after the
+    stack is laid. The perf angle is ≤4% of wall; the correctness angle is
+    the one that matters: those 52 uncovered columns are raw cut faces in the
+    walked world — the shoulder/verge item's customer. A pre-check ("does the
+    ground the stack steps onto belong to a street/footprint/water?") would
+    refuse before building; whether it should refuse, re-site, or dress is a
+    walk verdict.
 - Deliverable: inventory doc + kill-ladder, EACH deletion Kai-ratified,
   each landing byte-identical-or-attributed like every flip before it.
 
