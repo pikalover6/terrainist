@@ -52,21 +52,20 @@ RIGHT (F20 calibration), both kits teach the 0.02 line (Kai's verdict). Wave 2b 
 line (the citadel, ~$0.04/world), A3 dynamic context assembly, binding-
 contracts teaching. The campaign window (caps) is Kai's to design.
 
-**Perf ladder:** rung 1+2 LANDED c446041 (gate 5,572/0): single-
-compression position hash 4.6×, scatter 3.8×, compile −15/−6/−21 %; troy
-NOT representative (thalassa 9.4 s structures-bound, pirates scatter-
-bound); emit cost = prismarine's linear palette scan (couples to authoring
-richness). Rung 3 run-fill LANDED c18c9fe (gate 5,573/0): emit −20-30 %;
-cumulative troy 3.9 s / thalassa 8.5 / pirates 4.7; Kai: zero-fallback
-test guards the silent fallback. Thalassa profile: the "4.6 s
-structures" was the programs' declare half mis-billed (timings fixed);
-3.7 s = ONE authored program (leviathan_prime re-filling voxels 70×) —
-**Kai: program cost is NOT an authoring burden**, no diagnostic, no kit
-law. #27 density question: NO (retaining 30 ms on thalassa vs 497 troy).
-**LADDER CLOSED by Kai ("stop the ladder, bank the win"):** profile is
-flat (top self item 205 ms); bucketTrees keys 27 ms self, deflate 136 ms
-— E1's per-item numbers were INCLUSIVE. Unspent → WS-F: roads.js 654 ms,
-flora parts ~250 ms, retaining density inversion. perf session stood down. Menus design ratified by Kai: two
+**Perf ladder CLOSED (Kai: "stop the ladder, bank the win"):** three
+rungs landed byte-identical ×3 docs — position hash c446041, run-fill
+c18c9fe, zero-fallback guard dbb47fd: troy 5.0→3.9 s, pirates 6.8→4.7,
+thalassa 9.4→8.5 (~4.8 honest); profile now flat (top self 205 ms). E1's
+per-item numbers were INCLUSIVE (bucketTrees 27 ms self, deflate 136).
+Thalassa's "structures" was the programs' declare half mis-billed
+(timings fixed 88adae5); 3.7 s = ONE authored program — **Kai: program
+cost is NOT an authoring burden** (no diagnostic, no kit law). #27
+density: NO (retaining 30 ms thalassa vs 497 troy). Unspent → WS-F:
+roads.js 654 ms, flora parts ~250 ms. perf stood down; worktree stands.
+**kit-fix A0 + cluster 1 LANDED 85420f7:** golden pass = $0.64 / ~20 min
+(kit = latency); T118 2→0, diagnostics 4→0, tokens −26 %; the deleted
+"fraction" sentence was the scatter.program rule misfiled (taught the
+split with a fence); radiusBlocks/radiusFraction rename filed for WS-F. Menus design ratified by Kai: two
 tiers (named packs whole, era-affine round-robin), ~60 entries/2.1k
 tokens, statuses=[implemented], empty menu ⇒ no message.
 
