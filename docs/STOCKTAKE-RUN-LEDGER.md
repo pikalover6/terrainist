@@ -7,19 +7,20 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 27 (F14 probed: the physics lint's two
-  false positives fixed, baselines re-pinned, the real remainder ranked)
-  is committed.
-- **Next unit:** unit 28 — **F23, the real physics remainder**: {REST}.
-  Probe the largest class first (the metropolis's wall posts on air —
-  `andesite_wall` ×22, `polished_deepslate_wall` ×17 — with a bespoke
-  reader at the finding coordinates: what stands under them, which
-  emitter laid them), fix behind a switch (law 5) or write up. Then F17
-  (the keep authored 1-of-3 — kit-teaching), census 1.21 (wire
-  `stats.ground`), P5/P6 first steps if cheap; §10.5 probe prompts
-  (~40 % of the spend unspent); the remaining verdict stations, G2's
+- **In flight:** nothing — unit 28 (F23 attributed: the lattice link fixed
+  in the lint, the rest is authored-program geometry; P7 proposed) is
+  committed.
+- **Next unit:** unit 29 — **§10.5 probe prompts, the first pass**: the
+  spend is $8.19 of $35 and the spec's step 5 ("probe prompts interleaved
+  from step 3 on") has had none. Pre-register (law 9) in the ledger before
+  a cent: the prompt list from the spec's REACH section, arms (the current
+  kit, authoring-only where a compile is not needed — $0.64/pass), the
+  prediction and the decision rule (icon metric present/dominant per
+  prompt; any lost icon is a finding, not a score); then run one pass and
+  score it with `icon-metric.mjs`. Then F17 (the keep 1-of-3), census 1.21,
+  P5/P6/P7 first steps if cheap; the remaining verdict stations, G2's
   named worlds, the final deck and closing report.
-- **Last commit:** 142f839 (unit 26). Convention: this line names the
+- **Last commit:** 2503100 (unit 27). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
 - **Spend:** $8.19 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
 - **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19, D25,
@@ -39,9 +40,13 @@ running state. The NOW block is rewritten at the end of every turn.
   - F14 — closed (unit 27): 13,624 lint findings on the thirteen were
     97 % two instrument false positives (floor lichen; `sea_lantern` read
     as a lamp), fixed; the real remainder is F23.
-  - F23 — **the physics lint's real remainder on the thirteen**: {REST}
-    (`F14-PHYSICS-2026-08-25.md` §D). Small, concrete, one class at a
-    time.
+  - F23 — attributed (unit 28): {TOTAL} real findings on the thirteen after
+    the lattice link; all but eight belong to **authored programs** (the
+    Trojan horse, the siege debris, the leviathan, the colossi, the skull
+    rock, the dreadnought, the keep, the relay masts, the collapsed
+    highway's railing hung beside its deck); the eight are one life-pass
+    prop on air in troy_k1. The compiler cannot fix a program's own ops; it
+    can say so at compile time — P7.
   - F15 — the icon metric's before-sample alarms (horse/citadel dominance,
     the redwoods' measure, the farm town's hull density; the rail gantry).
   - F16 — the kit's core is 88 % of the kit; a smaller kit is a prose job.
@@ -460,6 +465,20 @@ running state. The NOW block is rewritten at the end of every turn.
   through, not what is reported, and changing it could move walk findings
   on every world — its own attribution, if it matters. Noted in the
   record. Undo: n/a.
+- **D64 (unit 28):** a third instrument correction, on the same evidence
+  standard as unit 27's two: the standing-chain walk now passes through
+  iron bars, chains and panes (`LATTICE_LINK`) the way it passes through a
+  fence — a relay mast of wall / bars / block / bars / wall does not float,
+  and vanilla pops none of it. The metropolis's 46 findings become 24;
+  the baselines re-pinned ({BASE}). Undo: revert the regex.
+- **D65 (unit 28):** what remains is not chased into the programs: every
+  finding but troy_k1's eight is inside an `authored:<id>` op list the
+  model wrote for that document, and rewriting a model's ops by hand is the
+  census's class 2 (a workaround the kit never taught). The honest fix is
+  P7 — the readback lint's support rules run over each authored program's
+  ops at compile time, so the author hears "17 of your railing's blocks
+  stand on air" — and, until then, the record names each program. Undo:
+  n/a.
 
 ## SPEND
 
@@ -492,6 +511,7 @@ running state. The NOW block is rewritten at the end of every turn.
 | 25 | F21 probed — two top-block maps, one bi14 run, the FULL suite | 0.00 | 8.19 |
 | 26 | F4 probed — one dist-patched compile, one bi14 run, the FULL suite | 0.00 | 8.19 |
 | 27 | F14 probed — two lint passes over the thirteen, three baseline re-pins, one bi14 run, the FULL suite | 0.00 | 8.19 |
+| 28 | F23 attributed — three lint passes, three baseline re-pins, one bi14 run, the FULL suite | 0.00 | 8.19 |
 
 ## VERDICTS
 
@@ -540,6 +560,15 @@ running state. The NOW block is rewritten at the end of every turn.
   rolled per terrace run (clustered by block, as the infill roll is) behind
   a switch, attributed on both metropolis documents. Without it a grid
   district at any `decline` is intact by construction.
+- **P7 — the support rules over authored programs, at compile time**
+  (unit 28, `F14-PHYSICS-2026-08-25.md` §F). The physics lint is a world
+  readback nobody runs in the product path; an authored program's ops are a
+  voxel list the compiler holds before emit, and the lint's standing and
+  hanging chain rules are pure functions of neighbours. Run them over each
+  program's ops in place (`LOAM-W…`, per program: "N blocks stand on air,
+  first at x,y,z") so the model that wrote the railing beside the deck is
+  told, and the kit's program section can teach "every block of a program
+  stands on the program or the ground". Report-only; payload-identical.
 - **P4 — a wet-neighbour constraint in the ground contract** (unit 14). A
   pad or platform whose ground claim would lower a column beside standing
   water below that water's surface is refused or raised to it — the rule
@@ -949,3 +978,17 @@ running state. The NOW block is rewritten at the end of every turn.
   thirteen carry 108 findings, 90 of them `unsupported.chain` — wall and fence posts whose support never reaches ground (the metropolis 46: `andesite_wall` 22, `polished_deepslate_wall` 17; troy 31: `acacia_fence` 16, `sandstone_wall` 4; the walled city 4; Hellenist `prismarine_wall` 7) — plus 5 isolated floaters, 5 lanterns, 4 ladders, 3 stairs, 1 dripstone — F23. The thirteen: all thirteen payload-identical to unit 26. Tests: FULL suite
   COUNTS Test Files 347 passed | 1 skipped (348), Tests 5680 passed | 31 skipped (5711). Files: `physics.ts`, `support.ts`, the stdlib test,
   three baselines, the record. Spend $0.
+- **unit 28 — F23 attributed: lattice links, then the programs
+  (2026-08-25):** `F14-PHYSICS` §F. The metropolis's 46: 22 `andesite_wall`
+  and 5 `birch_fence` are the ten `surveillance_relay_mast` scatter masts —
+  wall / iron bars / block / iron bars / wall — whose chain the lint ended
+  at the bars; 17 `polished_deepslate_wall` are the authored
+  `collapsed_highway_span`'s railing hung one column beside its deck. The
+  chain walk now passes lattice links (`LATTICE_LINK`, D64): metropolis 46
+  → 24, the thirteen 86. Every other cluster attributed by footprint
+  to an authored program (troy's horse and siege debris, the leviathan and
+  colossus, the keep, skull rock, the dreadnought, the unicorn colossus)
+  except troy_k1's sandstone-wall-and-carpet prop on air (8, the life
+  pass). P7 proposed (D65). Baselines: unchanged by the lattice link — troy 14, hellenist 10, pirates 8, as unit 27 pinned them. The thirteen: all thirteen payload-identical to unit 27. Tests:
+  FULL suite COUNTS Test Files 347 passed | 1 skipped (348), Tests 5680 passed | 31 skipped (5711). Files: `physics.ts`, the baselines, the
+  record. Spend $0.

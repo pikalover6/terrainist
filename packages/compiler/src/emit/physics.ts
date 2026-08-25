@@ -248,6 +248,8 @@ export const PHYSICS_RULES: readonly string[] = Object.freeze([
 
 /** The six faces a multi-face growth block may claim, and where each points. */
 const MULTIFACE_STEP = GROWTH_FACES;
+/** Thin blocks a standing chain may pass through on its way to the ground. */
+const LATTICE_LINK = /^(iron_bars|chain|[a-z_]+_pane)$/;
 
 const AIR = new Set(["air", "cave_air", "void_air"]);
 
@@ -1295,6 +1297,12 @@ export async function lintWorldPhysics(
       const name = nameAt(x, by, z);
       if (AIR.has(name)) return false;
       if (STANDABLE_PARTIAL.test(name) || SOLID_TOP.test(name)) return true;
+      // A lattice link: iron bars, a chain or a pane carry a wall or a fence
+      // the way a fence carries a fence — the relay masts on the metropolis
+      // are wall / bars / block / bars / wall, and the walk stopped at the
+      // bars and called the wall above them unsupported (Stocktake unit 28,
+      // F23: 22 of the metropolis's 46 findings, and its 5 fence posts).
+      if (LATTICE_LINK.test(name)) continue;
       if (!needsGround(name)) return false;
     }
     return false;
