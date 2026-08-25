@@ -65,7 +65,17 @@ roads.js 654 ms, flora parts ~250 ms. perf stood down; worktree stands.
 **kit-fix A0 + cluster 1 LANDED 85420f7:** golden pass = $0.64 / ~20 min
 (kit = latency); T118 2→0, diagnostics 4→0, tokens −26 %; the deleted
 "fraction" sentence was the scatter.program rule misfiled (taught the
-split with a fence); radiusBlocks/radiusFraction rename filed for WS-F. Menus design ratified by Kai: two
+split with a fence); radiusBlocks/radiusFraction rename filed for WS-F.
+Cluster 2 LANDED 2c77126 (root union; terrain §7b bespoke tier fenced).
+**NOISE FLOOR MEASURED** (3×3 at frozen kit, $0.31): archetype SET only
+35 % stable at temp 0 → one-sample vocabulary deltas < ~4 are re-rolls;
+parroting metric floor 7.7 pts; stable at n=1: node count, formPacks,
+generators, edit-tied diagnostics. score.mjs prints `within noise`.
+Cluster 1–2 archetype deltas WITHDRAWN. Menus step 4 (CLI seam, flag
+OFF) LANDED b638439; Kai bought the complete ~$1.00 ON/OFF pair at the
+FROZEN kit 58e7d2e0 (menu-on + after-root-union filled to 11); "six
+packs at zero" = two bugs (author retrieval + pre-pass classification,
+intent-prepass.ts next). Menus design ratified by Kai: two
 tiers (named packs whole, era-affine round-robin), ~60 entries/2.1k
 tokens, statuses=[implemented], empty menu ⇒ no message.
 
