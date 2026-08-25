@@ -1,0 +1,469 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "walled_hill_city",
+    "worldSeed": 311,
+    "prompt": "A walled medieval city on a hill, its castle keep above the rooftops.",
+    "spawn": {
+      "zone": "south"
+    }
+  },
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.5,
+    "decline": 0.1,
+    "formality": 0.4,
+    "character": {
+      "label": "walled hill city",
+      "materialTheme": "temperate_timber",
+      "fortification": "walled",
+      "archetypes": {
+        "prefer": [
+          "manor",
+          "watchtower",
+          "tavern",
+          "church",
+          "granary",
+          "keep",
+          "smithy"
+        ]
+      },
+      "motifs": {
+        "roofType": "gable",
+        "massing": "stepped"
+      },
+      "urbanForm": "hillside",
+      "ground": "stepped",
+      "courtyards": 0.4
+    },
+    "tokens": {
+      "terrain": "a prominent hill rising above the surrounding country",
+      "icons": "a towering stone castle keep crowning the peak above dense medieval rooftops, enclosed by circuit walls with gatehouses and towers"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:dirt_path",
+      "road.shoulder": "minecraft:gravel",
+      "plaza.cobble": "minecraft:cobblestone"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "the walled hill city of Highkeep",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "a prominent central hill rising out of river lowlands",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 68,
+          "amplitude": 22,
+          "octaves": 5,
+          "frequency": 0.0035,
+          "gain": 0.48,
+          "erosionPasses": 2,
+          "cliffThreshold": 55,
+          "soilDepth": 3,
+          "beachWidth": 4,
+          "snowLineFraction": 0.95
+        },
+        "children": [
+          {
+            "id": "city_hill",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the primary hill carrying the walled city",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 130,
+              "height": 38,
+              "rim": 14,
+              "irregularity": 0.2,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "keep_pinnacle",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the rocky upper knoll crowned by the castle keep",
+            "params": {
+              "verb": "peak",
+              "at": [
+                0.5,
+                0.48
+              ],
+              "radius": 46,
+              "height": 16,
+              "irregularity": 0.16,
+              "profile": "sharp"
+            }
+          },
+          {
+            "id": "surrounding_river",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the valley river skirting the western base of the hill",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.12,
+                  0.15
+                ],
+                [
+                  0.26,
+                  0.42
+                ],
+                [
+                  0.34,
+                  0.74
+                ],
+                [
+                  0.64,
+                  0.88
+                ],
+                "coast"
+              ],
+              "width": 14,
+              "depth": 8,
+              "meander": 0.52
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0016
+        }
+      },
+      {
+        "id": "hill_city",
+        "kind": "district",
+        "label": "the dense medieval city rising up the slopes",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            230,
+            230
+          ]
+        },
+        "params": {
+          "fabric": "hillside",
+          "density": "medium",
+          "mix": [
+            "townhouse",
+            "tavern",
+            "smithy",
+            "apothecary",
+            "bakery",
+            "general_store",
+            "guildhall",
+            "church",
+            "inn",
+            "cottage",
+            "armory"
+          ],
+          "courtyards": 0.4,
+          "ground": "stepped",
+          "walls": {
+            "style": "masonry",
+            "margin": 10,
+            "towerPitch": 36,
+            "height": 7,
+            "gates": true
+          }
+        },
+        "constraints": [
+          {
+            "at": [
+              0.5,
+              0.5
+            ]
+          }
+        ],
+        "tags": [
+          "city",
+          "urban",
+          "district"
+        ],
+        "children": [
+          {
+            "id": "castle_keep",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the mighty castle keep crowning the peak above the rooftops",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                17,
+                26,
+                17
+              ]
+            },
+            "params": {
+              "floors": 2,
+              "roof": "flat",
+              "basement": {
+                "depth": 5,
+                "style": "vault"
+              }
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "keep",
+              "castle",
+              "landmark"
+            ]
+          },
+          {
+            "id": "city_minster",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the stone minster church overlooking the lower streets",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                15,
+                18,
+                21
+              ]
+            },
+            "params": {
+              "floors": 2,
+              "roof": "gable"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "west",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "cathedral",
+              "church",
+              "civic",
+              "landmark"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "valley_fields",
+        "kind": "generator",
+        "generator": "precinct.farm@0",
+        "label": "the agrarian holdings feeding the city from the southern lowlands",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            96,
+            80
+          ]
+        },
+        "params": {
+          "parcels": 6,
+          "parcelSize": 18,
+          "crops": [
+            "wheat",
+            "carrots",
+            "pasture"
+          ],
+          "farmstead": "auto",
+          "edge": "fence"
+        },
+        "constraints": [
+          {
+            "at": [
+              0.48,
+              0.82
+            ]
+          },
+          {
+            "terrain_conform": "drape"
+          }
+        ],
+        "ports": {
+          "gate": {
+            "type": "road_stub",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "farm",
+          "rural",
+          "precinct"
+        ]
+      },
+      {
+        "id": "roads",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "the thoroughfares connecting the farmland and valley to the city gates",
+        "params": {
+          "anchors": [
+            "hill_city",
+            "valley_fields"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 16
+        }
+      },
+      {
+        "id": "hill_skirt_woods",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "ancient oak woods ringing the foot of the fortified hill",
+        "params": {
+          "area": {
+            "at": [
+              0.5,
+              0.5
+            ],
+            "radius": 210
+          },
+          "density": 0.05,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 35,
+          "elevation": [
+            4,
+            70
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct",
+            "district",
+            "wall"
+          ],
+          "undergrowth": {
+            "grass": 0.45,
+            "flowers": 0.08,
+            "deadwood": 0.04
+          },
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "great_oak",
+                  "shape": "oak_spreading"
+                }
+              ]
+            },
+            "understory": {
+              "species": [
+                {
+                  "id": "hazel",
+                  "shape": "hazel_shrub"
+                }
+              ],
+              "density": 0.08
+            },
+            "floor": "default"
+          },
+          "species": [
+            {
+              "id": "spreading_oak",
+              "weight": 3,
+              "shape": "oak_spreading"
+            },
+            {
+              "id": "round_oak",
+              "weight": 2,
+              "shape": "oak_round"
+            },
+            {
+              "id": "slim_birch",
+              "weight": 1,
+              "shape": "birch_slim"
+            }
+          ]
+        }
+      },
+      {
+        "id": "countryside_trees",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse pastoral trees scattered through the wider landscape",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 4,
+          "clumping": 0.4,
+          "maxSlope": 36,
+          "elevation": [
+            2,
+            120
+          ],
+          "edgeFalloff": 12,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct",
+            "district",
+            "wall"
+          ],
+          "undergrowth": {
+            "grass": 0.35,
+            "flowers": 0.05,
+            "deadwood": 0.02
+          },
+          "species": [
+            {
+              "id": "field_oak",
+              "weight": 2,
+              "shape": "oak_round"
+            },
+            {
+              "id": "field_birch",
+              "weight": 1,
+              "shape": "birch_slim"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

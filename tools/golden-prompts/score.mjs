@@ -123,6 +123,72 @@ function scoreboard(summary) {
   };
 }
 
+/* -------------------------------------------------------------------------- */
+/* the measured noise floor                                                   */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * How far a metric moves when NOTHING moves.
+ *
+ * Measured 2026-08-24 (runs `noise-1`, `noise-2`, `noise-3`): three prompts —
+ * troy_horse, walled_medieval_city, fjord_terrain — authored three times each
+ * against byte-identical kits (settlement 58e7d2e0, terrain f98c5e85) at
+ * temperature 0. The model is not deterministic run to run, and the vocabulary
+ * metrics move a lot: walled_medieval_city used 15 / 14 / 11 archetypes across
+ * the three, drawing on 20 distinct ids of which only 7 appeared in all three
+ * and 7 appeared in exactly one. The archetype SET is ~35% stable on a
+ * settlement prompt.
+ *
+ * So a delta smaller than the floor is a re-roll, not a result. The campaign
+ * learned this the expensive way: cluster-1 and cluster-2 reports quoted
+ * archetype deltas of -2, -3 and -7 that were entirely inside it.
+ *
+ * Values are per prompt, from the largest spread observed for that metric.
+ * Zero means the metric did not move at all across the nine runs and is read
+ * at face value.
+ */
+const NOISE_FLOOR = Object.freeze({
+  archetypesReached: 4,
+  speciesReached: 4,
+  propsReached: 1,
+  formPacksReached: 0,
+  generatorsReached: 1,
+  constraints: 3,
+  forestNodes: 1,
+  nodesTotal: 2,
+  envelopes: 1,
+  kitLiteralEnvelopes: 1,
+});
+
+/**
+ * Floors for the ratio metrics, in percentage points.
+ *
+ * Measured the same way and NOT scaled by prompt count — a ratio does not
+ * accumulate noise the way a sum does. `kitLiteralEnvelopePct` is the
+ * parroting metric and it swung 28.6 / 30.8 / 23.1 across the three identical
+ * runs, so it needs ~8 points before it is saying anything.
+ */
+const NOISE_FLOOR_PCT = Object.freeze({
+  archetypeReachPct: 1.2,
+  kitLiteralEnvelopePct: 7.7,
+});
+
+/**
+ * The floor for a metric summed over `n` prompts.
+ *
+ * Each prompt re-rolls independently, so the noise adds in quadrature rather
+ * than linearly — sqrt(n), rounded up. Conservative enough to be honest and
+ * not so conservative that a real effect is dismissed.
+ */
+function floorFor(key, n) {
+  const ratio = NOISE_FLOOR_PCT[key];
+  if (ratio !== undefined) return ratio;
+  const per = NOISE_FLOOR[key];
+  if (per === undefined) return undefined;
+  if (per === 0) return 0;
+  return Math.ceil(per * Math.sqrt(Math.max(1, n)));
+}
+
 const INTEGER_METRICS = new Set(["cost", "costPerPrompt", "archetypeReachPct", "kitLiteralEnvelopePct"]);
 const format = (key, value) =>
   key === "cost" || key === "costPerPrompt"
@@ -242,12 +308,24 @@ function printDiff(beforeAll, afterAll, gate) {
 
   const b = scoreboard(before);
   const a = scoreboard(after);
+  let anyNoisy = false;
   for (const key of Object.keys(b)) {
     const delta = a[key] - b[key];
-    const arrow =
-      delta === 0 ? "  " : LOWER_IS_BETTER.has(key) === delta < 0 ? "++" : "--";
+    const floor = floorFor(key, shared.size);
+    // A vocabulary delta inside the measured floor is a re-roll. Say so on the
+    // line itself rather than trusting the reader to remember the floor.
+    const noisy = delta !== 0 && floor !== undefined && Math.abs(delta) <= floor;
+    if (noisy) anyNoisy = true;
+    const arrow = delta === 0 ? "  " : noisy ? "  " : LOWER_IS_BETTER.has(key) === delta < 0 ? "++" : "--";
     const shown = delta === 0 ? "" : ` (${delta > 0 ? "+" : ""}${format(key, delta)}) ${arrow}`;
-    console.log(`  ${key.padEnd(30)} ${format(key, b[key]).padStart(10)} → ${format(key, a[key]).padStart(10)}${shown}`);
+    const note = noisy ? `  within noise (floor ${INTEGER_METRICS.has(key) ? `${floor}%` : floor})` : "";
+    console.log(`  ${key.padEnd(30)} ${format(key, b[key]).padStart(10)} → ${format(key, a[key]).padStart(10)}${shown}${note}`);
+  }
+  if (anyNoisy) {
+    console.log(
+      `\n  "within noise" = smaller than the run-to-run spread measured on identical kit bytes\n` +
+        `  (runs noise-1..3; see README). Those lines are re-rolls, not results.`,
+    );
   }
 
   console.log("\nper prompt:\n");

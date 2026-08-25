@@ -1,0 +1,95 @@
+{
+  "id": "fjord_terrain",
+  "family": "new/terrain-only",
+  "kit": "terrain",
+  "prompt": "A deep fjord cutting inland between pine ridges, its water open to the sea.",
+  "seed": 314,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "cache",
+    "value": {
+      "climate": {
+        "biome": "minecraft:old_growth_pine_taiga",
+        "temperature": -0.3,
+        "humidity": 0.5
+      },
+      "character": {
+        "label": "pine fjord",
+        "materialTheme": "boreal_pine",
+        "flora": {
+          "prefer": [
+            "spruce_tall",
+            "conifer",
+            "old_growth"
+          ]
+        }
+      },
+      "tokens": {
+        "terrain": "a deep fjord cutting inland between steep pine-covered ridges, opening to the open sea"
+      }
+    }
+  },
+  "intentUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "reasoningTokens": 0,
+    "cost": 0,
+    "cached": true
+  },
+  "menu": {
+    "injected": false,
+    "reason": "flag off"
+  },
+  "attempts": 1,
+  "diagnostics": [
+    []
+  ],
+  "usage": {
+    "promptTokens": 13418,
+    "completionTokens": 5275,
+    "reasoningTokens": 3265,
+    "cost": 0.012165675
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 9,
+    "maxDepth": 2,
+    "generators": [
+      "cave.carver@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [],
+    "archetypesInCatalog": 0,
+    "formPacks": [],
+    "props": [],
+    "species": [
+      "highland_spruce",
+      "larch_accent",
+      "squat_pine",
+      "tall_pine"
+    ],
+    "envelopes": [
+      "512x512"
+    ],
+    "constraints": 0,
+    "constraintKinds": [],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 0,
+    "programReferences": 0,
+    "conformsTrue": 0,
+    "labels": 7,
+    "eras": [],
+    "bytes": 3459
+  },
+  "wallMs": 29121
+}

@@ -9,7 +9,7 @@ a fixed roster of prompts, authored before and after, with the deltas scored.
 
 ```
 node tools/golden-prompts/run.mjs --dry-run                     # zero API calls
-node tools/golden-prompts/run.mjs --label baseline-pre-edit     # ~$2.6
+node tools/golden-prompts/run.mjs --label baseline-pre-edit     # ~$0.64, ~20 min
 node tools/golden-prompts/run.mjs --label after-units
 node tools/golden-prompts/score.mjs runs/baseline-pre-edit runs/after-units --gate
 ```
@@ -29,9 +29,15 @@ skips the stage entirely.
 
 ## Cost and cadence
 
-~$0.24 per prompt (WS-C's measured authoring median), so a full 11-prompt pass
-is **~$2.6**. Run it at **cluster boundaries, never per edit.** A run takes a
-few minutes at the default concurrency of 3.
+**Measured 2026-08-24: ~$0.058 per prompt, so a full 11-prompt pass is ~$0.64.**
+(WS-C's $0.2391 figure is per *world* — a median of three model runs each
+re-sending the kit. A golden run is one authoring call, so it costs a third of
+that or less.)
+
+Wall time is the real cost: an authoring call against the 277 KB settlement kit
+takes **60–360 s**, median ~2.5 min, so a full pass is **~20 minutes** at the
+default concurrency of 3. Run it detached. The kit is the latency as well as
+the bill — which is WS-D's whole thesis, visible from here.
 
 ## What is recorded
 
@@ -53,6 +59,36 @@ predicted it would move — `LOAM-T118` for the forest-radius units cluster,
 catalog reach, `forestFillsAtOrAboveCoverage` for the terrain kit's silent
 biome bug. A metric nobody has a hypothesis about is noise, and noise is what
 makes a regression harness stop being read.
+
+## The noise floor — read this before believing a delta
+
+The model is **not deterministic run to run**, even at temperature 0. Measured
+2026-08-24 (`runs/noise-1`, `noise-2`, `noise-3`): three prompts authored three
+times each against byte-identical kits.
+
+| metric | run 1 | run 2 | run 3 | spread |
+| --- | ---: | ---: | ---: | ---: |
+| `walled_medieval_city` archetypes | 15 | 14 | 11 | **4** |
+| `troy_horse` archetypes | 10 | 12 | 10 | 2 |
+| `fjord_terrain` species | 4 | 4 | 8 | 4 |
+| constraints (all three prompts) | | | | 46–67% |
+| `kitLiteralEnvelopePct` | 28.6% | 30.8% | 23.1% | **7.7 points** |
+
+The set churn is worse than the counts: `walled_medieval_city` drew on **20
+distinct archetypes across the three runs, of which only 7 appeared in all
+three and 7 appeared in exactly one.** The archetype set is roughly **35%
+stable** on a settlement prompt. So the *identity* of what a diff reports as
+gained and lost is mostly re-roll, and a single-sample claim about catalog
+reach is not a claim about anything.
+
+`score.mjs` knows these numbers and prints `within noise` beside any delta that
+does not clear them. **Stable enough to read at n=1:** node count, form packs,
+generators, document bytes, pass/attempt counts, cost, and the targeted
+diagnostic counters — those move because of the bytes you changed and stay
+moved. **To make a reach claim, run repeats**, the way `noise-1..3` did.
+
+This was learned the expensive way: the cluster-1 and cluster-2 reports quoted
+archetype deltas of −2, −3 and −7 as if they were results. They were re-rolls.
 
 ## The gate
 

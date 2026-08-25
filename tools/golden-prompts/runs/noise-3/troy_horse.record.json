@@ -1,0 +1,175 @@
+{
+  "id": "troy_horse",
+  "family": "troy",
+  "kit": "settlement",
+  "prompt": "The Trojan horse in Troy, right before the soldiers emerge.",
+  "seed": 303,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "cache",
+    "value": {
+      "era": "ancient",
+      "wealth": 0.7,
+      "decline": 0.1,
+      "formality": 0.6,
+      "event": {
+        "kind": "siege",
+        "severity": 0.9,
+        "recency": 0
+      },
+      "climate": {
+        "temperature": 0.7,
+        "humidity": -0.2,
+        "snow": "never"
+      },
+      "character": {
+        "label": "Walled Troy under the Greek stratagem",
+        "materialTheme": "sun_clay",
+        "fortification": "walled",
+        "formPacks": [
+          "classical_mediterranean"
+        ],
+        "archetypes": {
+          "prefer": [
+            "peristyle_house",
+            "megaron",
+            "stoa",
+            "peripteral_temple",
+            "palaestra",
+            "olive_press"
+          ],
+          "forbid": [
+            "townhouse",
+            "terraced_row",
+            "shop_row",
+            "office",
+            "apartment_block"
+          ]
+        },
+        "motifs": {
+          "roofType": "flat",
+          "massing": "stepped",
+          "windowRhythm": "sparse",
+          "ornamentDensity": 0.4
+        },
+        "urbanForm": "grown",
+        "courtyards": 0.6,
+        "ground": "stepped"
+      },
+      "tokens": {
+        "terrain": "a walled citadel city on a coastal rise above a sandy plain; the Aegean shore and open sea in view",
+        "icons": "the colossal wooden Trojan horse brought inside the Scaean gate; monumental stone ramparts and watchtowers; royal megaron palace overlooking the city; abandoned Greek camp and beached ship hulls on the distant shore",
+        "event_direction": "Greek soldiers concealed inside the belly of the wooden horse waiting for midnight to open the gates to the returning fleet"
+      }
+    }
+  },
+  "intentUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "reasoningTokens": 0,
+    "cost": 0,
+    "cached": true
+  },
+  "menu": {
+    "injected": false,
+    "reason": "flag off"
+  },
+  "attempts": 2,
+  "diagnostics": [
+    [
+      {
+        "code": "LOAM-T204",
+        "name": "BAD_CONSTRAINT",
+        "severity": "error",
+        "nodePath": "world.the_trojan_horse.constraints[1]"
+      }
+    ],
+    []
+  ],
+  "usage": {
+    "promptTokens": 170001,
+    "completionTokens": 13651,
+    "reasoningTokens": 9054,
+    "cost": 0.0354597375
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 20,
+    "maxDepth": 2,
+    "generators": [
+      "authored:trojan_horse",
+      "building.grammar@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "armory",
+      "church",
+      "cottage",
+      "courtyard_house",
+      "hall",
+      "keep",
+      "megaron",
+      "peristyle_house",
+      "stoa",
+      "temple"
+    ],
+    "archetypesInCatalog": 10,
+    "formPacks": [
+      "classical_mediterranean"
+    ],
+    "props": [
+      "cairn",
+      "campsite",
+      "cog",
+      "longship"
+    ],
+    "species": [
+      "aegean_pine",
+      "mediterranean_scrub",
+      "mountain_scrub",
+      "olive_tree",
+      "plain_oak",
+      "plain_shrub"
+    ],
+    "envelopes": [
+      "512x512",
+      "180x170",
+      "15x14x19",
+      "13x15x17",
+      "11x12x15",
+      "15x24x21"
+    ],
+    "constraints": 5,
+    "constraintKinds": [
+      "at",
+      "blend",
+      "distance",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform"
+    ],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 3,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 0,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 18,
+    "eras": [
+      "ancient"
+    ],
+    "bytes": 7833
+  },
+  "wallMs": 82168
+}
