@@ -1,0 +1,176 @@
+{
+  "id": "alien_farm",
+  "family": "alien_farm",
+  "kit": "settlement",
+  "prompt": "A small farm town being invaded by aliens.",
+  "seed": 302,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "cache",
+    "value": {
+      "era": "industrial",
+      "wealth": 0.35,
+      "decline": 0.4,
+      "formality": 0.2,
+      "event": {
+        "kind": "siege",
+        "severity": 0.8,
+        "recency": 0
+      },
+      "climate": {
+        "biome": "minecraft:plains",
+        "temperature": 0,
+        "humidity": 0.1
+      },
+      "character": {
+        "label": "invaded farming community",
+        "materialTheme": "temperate_timber",
+        "formPacks": [
+          "agrarian",
+          "alien_scifi"
+        ],
+        "archetypes": {
+          "prefer": [
+            "cottage",
+            "granary",
+            "windmill",
+            "tavern",
+            "field_lab",
+            "hive_mound"
+          ]
+        },
+        "urbanForm": "linear",
+        "motifs": {
+          "roofType": "gable",
+          "massing": "sprawling"
+        }
+      },
+      "tokens": {
+        "terrain": "rolling farmland with grain fields surrounding a small rural crossroads town",
+        "event_direction": "extraterrestrial invaders and bio-structures spreading from the outer crop fields into the village centre",
+        "infra": "crop_circle pressed into the wheat fields; crash_furrow ending at a downed alien craft; quarantine_fence along the outer pasture; barricade_line across the main lane",
+        "icons": "strange metallic scout craft hovering or crashed in the fields; glowing alien pylons; abandoned farm equipment and hay wagons along the lanes"
+      }
+    }
+  },
+  "intentUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "reasoningTokens": 0,
+    "cost": 0,
+    "cached": true
+  },
+  "menu": {
+    "injected": false,
+    "reason": "flag off"
+  },
+  "attempts": 2,
+  "diagnostics": [
+    [
+      {
+        "code": "LOAM-T204",
+        "name": "BAD_CONSTRAINT",
+        "severity": "error",
+        "nodePath": "world.downed_saucer.constraints[1]"
+      }
+    ],
+    []
+  ],
+  "usage": {
+    "promptTokens": 178578,
+    "completionTokens": 19947,
+    "reasoningTokens": 7920,
+    "cost": 0.07673355
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 33,
+    "maxDepth": 2,
+    "generators": [
+      "authored:alien_harvester",
+      "authored:crashed_saucer",
+      "building.grammar@0",
+      "infra.entry@0",
+      "precinct.farm@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "cottage",
+      "field_station",
+      "general_store",
+      "inn",
+      "smithy",
+      "tavern",
+      "town_hall",
+      "windmill"
+    ],
+    "archetypesInCatalog": 8,
+    "formPacks": [
+      "agrarian",
+      "alien_scifi"
+    ],
+    "props": [
+      "cart",
+      "covered_wagon",
+      "notice_board",
+      "well_head"
+    ],
+    "species": [
+      "field_birch",
+      "meadow_oak",
+      "spread_oak"
+    ],
+    "envelopes": [
+      "512x512",
+      "116x96",
+      "100x84",
+      "20x20",
+      "13x16x13",
+      "13x11x13",
+      "13x10x11",
+      "9x8x9",
+      "11x11x13",
+      "9x14x9",
+      "9x8x8",
+      "11x11x9",
+      "9x8x9"
+    ],
+    "constraints": 36,
+    "constraintKinds": [
+      "adjacent_to",
+      "at",
+      "blend",
+      "distance",
+      "facing",
+      "gap",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform",
+      "zone"
+    ],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 9,
+    "programReferences": 2,
+    "conformsTrue": 0,
+    "labels": 32,
+    "eras": [
+      "industrial"
+    ],
+    "bytes": 12660
+  },
+  "wallMs": 135569
+}

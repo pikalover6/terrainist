@@ -240,7 +240,9 @@ level, beach in the shore band, plains/forest/taiga in the lowlands (forest or
 taiga where a forest node covers the column, chosen by temperature),
 windswept_hills upland, stony_peaks on high rock, snowy_slopes above the snow
 line. To get taiga you place spruce; to get a warm coast you set the climate
-theme. There is no biome key anywhere in the document.
+theme. `terrain.climate@0` itself takes no biome id — but the language has
+exactly one biome override, `intent.climate.biome`, which pins the biome across
+the scope that declares it.
 
 ---
 

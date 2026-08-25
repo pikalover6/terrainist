@@ -319,7 +319,9 @@ level, beach in the shore band, plains/forest/taiga in the lowlands (forest or
 taiga where a forest node covers the column, chosen by temperature),
 windswept_hills upland, stony_peaks on high rock, snowy_slopes above the snow
 line. To get taiga you place spruce; to get a warm coast you set the climate
-theme. There is no biome key anywhere in the document.
+theme. `terrain.climate@0` itself takes no biome id — but the language has
+exactly one biome override, `intent.climate.biome`, which pins the biome across
+the scope that declares it.
 
 ---
 
@@ -768,7 +770,7 @@ footprint and the total height, walls *and* roof. The hard-won numbers:
 | `roof` | `gable`, `hip`, `flat` | `gable` for houses, `hip` for civic buildings, `flat` for towers |
 | `windowRhythm` | `regular`, `dense`, `sparse`, `paired`, `none` | `sparse` for a smithy or a granary, `dense` for an inn |
 | `wing` | `{"size": [w, d], "side": …, "offset": n}` | an L- or T-shaped plan — see below |
-| `basement` | `true`, `3..5`, or `{"depth": 3..5}` | a cellar; see §10's tunnels |
+| `basement` | `true`, `3..5`, `{"depth": 3..5}`, or `0`/`false` for none | a cellar; see §10's tunnels |
 | `decay` | 0..1 | ruin **this one building**: the ordinary shell is built and furnished, then decayed over. 0.35 derelict, 0.6 ruined, 0.85 archaeology. For a whole quarter write `intent.decline` on the district instead — see *A ruined city is a district with a high `decline`* |
 | `entrance` | `{"treatment": "blast_door"}` | the **blast door**: iron leaves in a hydraulic frame, a concrete surround and a yellow-and-black band across the head, with a lever each side so it opens. Meant for `bunker_complex`, `underground_silo`, `bunker`, `pillbox`. It dresses the face only — the cut and the ramp down to it are the doorstep's, which grades every door already |
 | `entrance` | `{"treatment": "airlock_vestibule"}` | the **airlock**: a copper step-through sill, a second iron door one cell inside the first, and a lit porch projecting from the wall with a warning band round it. Meant for `hydroponics_bay`, `laboratory`, `field_station`, `bunker_complex`. Wants a room at least three cells deep behind the door |
@@ -909,7 +911,7 @@ five-deep cellar dressed in its own style when your document says nothing
 about a basement; `"basement": 0` still means none, and an explicit
 `"basement": {...}` still wins. Every tag is a compound, because the bare
 words are already taken: `bunker` is the garrison's, `silo` the homestead's,
-and bare `station` belongs to nobody.
+and bare `station` is the train station's.
 
 | archetype | tags | what you get | good size |
 |---|---|---|---|
@@ -1149,9 +1151,9 @@ worth stating because each would have been a silent theft: `observatory`,
 historic stepped dome with a one-cell slit; this wave's is the modern white one);
 `alchemist` — with `apothecary`, `pharmacy` and `herbalist` — remains the **trade
 apothecary's**; `lab` and `laboratory` remain **wave 4C's laboratory's**; bare
-`villa` remains the **Mediterranean villa's** (table 6); and bare `garden` and
-bare `station` are left unclaimed for the catalog's formal gardens and its
-railway station.
+`villa` remains the **Mediterranean villa's** (table 6); bare `garden` is left
+unclaimed for the catalog's formal gardens; and bare `station` is the railway
+station's.
 
 **Wave 4B (table 10) — faith and memorial.** Twelve buildings: eleven religious
 and one memorial. Seven of them rebuild part of the shell's exterior (cathedral,
@@ -2829,7 +2831,7 @@ warning. Per-building overrides are what `params` are for.
 
 | key | value | what it drives |
 |---|---|---|
-| `era` | free word, dispatched through an alias table to one of the era classes `primitive` / `ancient` / `medieval` / `early_modern` / `industrial` / `modern` / `far_future`. Known aliases include `"victorian"`, `"pirate"`, `"fantasy"`, `"steampunk"`, `"wild_west"`, `"cyberpunk"`, `"prehistoric"`. A word the table does not know draws a warning and falls back to `medieval` — when in doubt, write the class name itself | material theme, roof form, prop and vehicle family, road materials |
+| `era` | free word, dispatched through an alias table to one of the era classes `primitive` / `ancient` / `medieval` / `renaissance` / `industrial` / `modern` / `far_future` (`early_modern` is an **alias** for `renaissance`, not a class of its own). Known aliases include `"victorian"`, `"pirate"`, `"fantasy"`, `"steampunk"`, `"wild_west"`, `"cyberpunk"`, `"prehistoric"`. A word the table does not know draws a warning and falls back to `medieval` — when in doubt, write the class name itself | material theme, roof form, prop and vehicle family, road materials |
 | `wealth` | 0..1 — 0 destitute, 0.5 ordinary, 1 rich | block and lot size, street width, facade ornament, storeys, ground treatment |
 | `decline` | 0..1 — 0 kept up, 1 abandoned | ruin coverage, road wear, vegetation reclaim, **and, at 0.35 and above, the share of a district's own buildings built as ruins** — see *A ruined city is a district with a high `decline`* under `district`; it also sends fields fallow, so a declining farm town's holdings rest their ground without you writing `fallow`. **Orthogonal to wealth: a rich ruin exists.** |
 | `formality` | 0..1 — 0 organic lanes, 1 planned and monumental | district fabric (`organic` vs `grid`), block-size variance, plaza and axis strength. Outranked by `character.urbanForm` |
@@ -3473,9 +3475,10 @@ Everything that does not hover meets the ground somehow, and `"params": {"seat":
 …}` says how. `seat` and `hover` are mutually exclusive — a thing either floats
 or it touches down.
 
-- `"seat": "conform"` — **not usually something a document writes.** It is the
-  default the compiler picks for a bespoke program whose author followed the
-  ground: the authoring gate runs the program against five synthetic landscapes
+- `"seat": "conform"` — **not usually something a document writes.** Omitting
+  `seat` is a *conditional*: the compiler seats on a `pad` unless the authoring
+  gate certified the program terrain-aware, and then it conforms. This is that
+  second case: the authoring gate runs the program against five synthetic landscapes
   (a flat, two slopes, a ridge and a shore) and stamps its verdict onto the
   frozen program record, and a program that passed is stood directly on the real
   terrain of the site it landed on. Nothing is levelled and nothing is filled
@@ -3486,7 +3489,8 @@ or it touches down.
   program actually does with the ground; a program that ignores the terrain then
   looks like a prefab dropped on a slope, and the compiler's skirt is all that
   holds it up.
-- `"seat": "pad"` — the default, and what you get by writing nothing. The
+- `"seat": "pad"` — what omitting `seat` gives you for every program the gate
+  did not certify, which is most of them. The
   compiler seats the structure on a plane the footprint agrees with and raises
   the low columns to meet it, fill-only, like a plinth under a building. The
   pad's apron feathers into the terrain at 1:2 and reaches at most 24 columns,
@@ -3676,8 +3680,10 @@ Notes that matter:
   high side and fills the low. `"flatten"` is for a plaza or a tower pad. Add
   `"maxSlope": 26..34` to refuse ground steeper than that.
 - Selectors are a sibling `id` (`"plaza"`) or a tag set (`"#tag:house"`).
-- `distance` measures between centres by default; add `"measure": "surface"`
-  for face-to-face.
+- **`distance` measures face to face by default** — surface to surface, the
+  nearest points of the two footprints. Add `"measure": "center"` for
+  centre-to-centre. The difference is half of each envelope, so on big
+  buildings the same number means two very different gaps.
 - Add `"strength": "soft"` to anything you would rather have than insist on.
   A soft constraint costs the solver score; a hard one it must satisfy or climb
   the relaxation ladder (demote → drop → place-least-bad), and every rung is
@@ -4177,8 +4183,10 @@ an `adjacent_to` and a `distance` range as two separate constraints.
 
 Do **not** give a farm `terrain_conform: "flatten"`. A holding levels its own
 yard and each of its fields separately; a flattened envelope is a table with
-crops on it. `"drape"` is the honest thing to write — it says "leave my ground
-alone", which is what the holding does anyway.
+crops on it. Leave the ground alone by writing **no `terrain_conform` at all** —
+that is what the holding does anyway. (`"drape"` says the same thing in words,
+but the solver has no drape behaviour yet: it does nothing and reports a
+warning, so it buys a diagnostic and no ground.)
 
 | param | type | default | meaning |
 | --- | --- | --- | --- |
@@ -4239,10 +4247,9 @@ one**, and it is the cheapest way to make a settlement look like it eats.
   "params": { "parcels": 6, "parcelSize": 18, "crops": ["wheat", "potatoes"] },
   "constraints": [
     { "adjacent_to": "village" },
-    { "distance": "village", "min": 8, "max": 40 },
-    { "terrain_conform": "drape" }
+    { "distance": "village", "min": 8, "max": 40 }
   ],
-  "ports": { "gate": { "type": "road_stub", "face": "any", "tags": ["primary"] } },
+  "ports": { "gate": { "type": "road_stub", "face": "south", "tags": ["primary"] } },
   "tags": ["farm", "rural"]
 }
 ```
