@@ -120,21 +120,30 @@ diagnostic codes; a zero-spend census can say). `conforms` 1/108 is set by
 the conform-certification gate, not the author — a harness question;
 envelopes are copied from whatever the kit prints (84 % kit-literal), so
 the lever is which envelopes the fences print, which B1/B2 already move.
-**Demotion census (done, zero spend, 36 battery generate logs, 30 with a
-demotion):** `terrain_conform` 100, `distance` 62, `adjacent_to` 51, `on`
-10, `connected` 3, `clearance` 1. The top one has a mechanism: the corpus
-writes `terrain_conform` 209 times (cut_fill 116 / flatten 83 / drape 10)
-because eight of the kit's fences write it — almost always without
-`maxSlope` (once, at :4358) — and the constraint is structural, not a
-cost: the solver's slope veto uses `terrain_conform.maxSlope` or
-`DEFAULT_MAX_SLOPE`, so a copied conform with the default slope limit on a
-hilly site cannot be placed anywhere and is demoted to soft (the fix hint
-already says "raise maxSlope"). `drape` is a no-op (W407) that the farm
-example teaches. So B3's one real cluster is **terrain_conform**: fence
-`maxSlope` beside every conform, teach when to omit conform entirely, and
-retire `drape` from the examples — verified 3×3 on a hilly settlement
-prompt with `E404 by type` as the metric. `distance`/`adjacent_to` are
-next if the same census after that cluster still shows them.
+**Demotion census (zero spend, 36 battery logs, 30 with a demotion):**
+`terrain_conform` 100, `distance` 62, `adjacent_to` 51, `on` 10,
+`connected` 3, `clearance` 1. **The orchestrator's first causal story
+(slope: conform copied without `maxSlope`, DEFAULT_MAX_SLOPE 35) was
+WRONG and was overturned by kit-fix before a byte moved:** a settlement on
+deliberately alpine ground with a conform on every building and twelve
+`distance` tethers compiled with `maxSlope` omitted / 55 / 30 produced
+ZERO demotions all three ways — slope alone never demotes a conform. The
+mechanism is the demotion ORDER: `DEFAULT_WEIGHT` gives `facing`/`zone`/
+`at` 2.0 and `centered_in` 3.0, everything else 1.0; `demotionOrder`
+(solve.ts:861-872) keeps hard constraints, sorts by weight ascending and
+breaks ties last-written-first; the kit writes `terrain_conform` last in
+nearly every fence. **It is the designated first casualty whenever a node
+is over-constrained for any reason — the fuse, not the fault.** Corollary
+nobody had written down: authoring ORDER decides which constraint dies
+(a write-order tiebreak, the pattern the ground contract retired — a WS-F
+design question, byte-identity-staged if it ever changes). The cluster is
+therefore a CONSULT, not an edit: candidate levers are fewer hard
+constraints per node (is the kit's "three or four is plenty" obeyed?), an
+explicit `weight` on the conform, writing it earlier, or softening the
+others — each a different teaching, none to be taught before a census of
+"what else was hard on the demoted nodes" (orchestrator, zero spend).
+Third time this campaign that probing overturned a plausible story (C17's
+misfiled rule, C3's unenforced "violation", this).
 
 ## Sequencing, caps, spend
 
