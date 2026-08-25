@@ -69,6 +69,10 @@ enforces it.
   isolated `git worktree` — and give the worktree its **own**
   `node_modules/@terrainist/*` relative symlinks (a shared `node_modules`
   resolves `@terrainist/*` to the shared dist and poisons the baseline).
+  Compare worlds with `tools/worlds/world-payload-sha.mjs` (the decompressed
+  payloads), never the raw `.mca`/`level.dat` bytes: the zlib stream is not
+  stable across Node upgrades (2026-08-25, Node 26.5 → 26.7 changed every
+  compressed byte of every world while every payload stayed identical).
 - Never compile/emit worlds from a dist that carries in-flight code you have
   not finished verifying.
 - Shared-checkout git discipline: NEVER run tree-wide git state operations

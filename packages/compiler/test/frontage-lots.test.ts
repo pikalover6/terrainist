@@ -21,7 +21,7 @@ import {
 } from "../src/layout/district.js";
 
 describe("a frontage lot grows through its own stations", () => {
-  it("lands off", () => {
+  it("stays off until the parcel can take its leftovers too (F10)", () => {
     expect(LOT_PARCEL_OWN_STATIONS).toBe(false);
   });
 
@@ -39,7 +39,7 @@ describe("a frontage lot grows through its own stations", () => {
 });
 
 describe("the whole strip, offered to a landmark", () => {
-  it("lands off", () => {
-    expect(PLANNED_SITE_WHOLE_STRIP).toBe(false);
+  it("ships on: the site is the strip's free mask", () => {
+    expect(PLANNED_SITE_WHOLE_STRIP).toBe(true);
   });
 });

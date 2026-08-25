@@ -3273,7 +3273,14 @@ export function boundingSeams(seams: readonly LevelSeam[]): readonly LevelSeam[]
  * lies in the lot's own span. The remaining drops are the genuine geometry
  * of an axis-aligned rectangle inside a diagonal band.
  *
- * Staged under the Run's law 5: landed `false`; flipped in its own commit.
+ * Staged under the Run's law 5: landed `false`. **Still `false`** (2026-08-25,
+ * unit 7): tried on, it stops the starvation (site-plan-hillside 16 → 20
+ * buildings, drops 12 → 3) but leaves the strip's leftover ground — the
+ * columns no lot's own stations reach — unowned and ungraded between the
+ * pads, and the walkability audit's orphan columns go 14 → 898 (0.4 % → 24 %
+ * of the walkable plane). The parcel has to grow inward first and *then*
+ * take the leftovers beside it (two phases) — finding F10 in the Run's
+ * ledger, not a one-line flip.
  */
 export const LOT_PARCEL_OWN_STATIONS = false;
 
@@ -3295,10 +3302,16 @@ export function inLotSpan(station: number, from: number, size: number): boolean 
  * `LOAM-E170` where it used to fit on a 30-column-wide lot. `true` offers the
  * strip's own free mask (its columns, unblocked, within `MAX_INFILL_DEPTH`),
  * and a landmark that takes such a site claims only the lots its rectangle
- * covers rather than every lot on the strip. Staged under law 5: landed
- * `false`; flipped in its own commit.
+ * covers rather than every lot on the strip — and takes its own footprint at
+ * the street edge of that site ({@link landmarkSeat}), never the whole band.
+ * Staged under law 5: landed `false`; **`true` ships** (2026-08-25, unit 7)
+ * with **no law-5 document moving**: on the walked hills every strip is
+ * diagonal, and a 19-deep diagonal band's largest axis-aligned rectangle is
+ * about 13 × 13, so the site tier still cannot hold the walled city's
+ * 13 × 17 church (`E170` stands; the cure is P1, yaw-seated buildings). It
+ * matters on an axis-aligned strip, where the free band is the whole site.
  */
-export const PLANNED_SITE_WHOLE_STRIP = false;
+export const PLANNED_SITE_WHOLE_STRIP = true;
 
 /**
  * Most rectangles a curved block is cut into. `subdivide` is cheap and
@@ -4308,6 +4321,28 @@ function overlapsRect(a: Rect, b: Rect): boolean {
   return a.x0 <= b.x1 && b.x0 <= a.x1 && a.z0 <= b.z1 && b.z0 <= a.z1;
 }
 
+/**
+ * A `w × d` footprint inside `site`, against the side the lot shows its
+ * street (`face` is the direction from the lot towards the street) and
+ * centred along that side. Pure; the caller has checked it fits.
+ */
+export function landmarkSeat(site: Rect, face: HorizontalFace, w: number, d: number): Rect {
+  const sw = site.x1 - site.x0 + 1;
+  const sd = site.z1 - site.z0 + 1;
+  const cx = site.x0 + ((sw - w) >> 1);
+  const cz = site.z0 + ((sd - d) >> 1);
+  switch (face) {
+    case "north":
+      return { x0: cx, z0: site.z0, x1: cx + w - 1, z1: site.z0 + d - 1 };
+    case "south":
+      return { x0: cx, z0: site.z1 - d + 1, x1: cx + w - 1, z1: site.z1 };
+    case "west":
+      return { x0: site.x0, z0: cz, x1: site.x0 + w - 1, z1: cz + d - 1 };
+    case "east":
+      return { x0: site.x1 - w + 1, z0: cz, x1: site.x1, z1: cz + d - 1 };
+  }
+}
+
 /** A run of adjacent lots a landmark may take. */
 interface LotRun {
   readonly lots: readonly Lot[];
@@ -4350,10 +4385,22 @@ function claimSite(
     const mine = lots.filter(
       (l) => l.block === block.block && (!whole || overlapsRect(l.rect, block.rect)),
     );
-    if ((mine.length === 0 && !whole) || mine.some((l) => claimed.has(l.id))) continue;
+    if ((mine.length === 0 && !whole) || (!whole && mine.some((l) => claimed.has(l.id)))) continue;
     const yaw = yawFacing(frontFace(landmark.ports, undefined), block.face);
     const [rw, , rd] = rotatedSize(landmark.size, yaw);
     if (rw > block.rect.x1 - block.rect.x0 + 1 || rd > block.rect.z1 - block.rect.z0 + 1) continue;
+    // A block site is the block — a cathedral on its own block is the normal
+    // case. A planned strip's site is not a block, it is a band a hundred
+    // columns long: the landmark takes its own footprint at the street edge of
+    // the site, centred along the frontage, and claims the lots under that.
+    // (Measured without this: the sidewalk laid round the whole band touched
+    // nothing — orphan walkable columns 0.4 % → 24 % on site-plan-hillside.)
+    if (whole) {
+      const seat = landmarkSeat(block.rect, block.face, rw, rd);
+      const under = mine.filter((l) => overlapsRect(l.rect, seat));
+      if (under.some((l) => claimed.has(l.id))) continue;
+      return { lots: under, rect: seat, face: block.face, street: block.street };
+    }
     return { lots: mine, rect: block.rect, face: block.face, street: block.street };
   }
   return null;

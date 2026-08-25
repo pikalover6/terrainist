@@ -93,12 +93,13 @@ strips it had already claimed (unit 5).
 
 **Re-read after the flip (unit 6):** 24 buildings (22 in the district), the
 circuit tightened round the town by the built-hull law, `summit_church`
-temporarily unseated (`E170`) — restored at the next flip
-(`PLANNED_SITE_WHOLE_STRIP`, trial: 20 buildings + the church). Still
-**FAIL** on T4/T7 by the instrument — twice the town, not yet a town; the
-drops that remain are the geometry of axis-aligned buildings on diagonal
-strips (proposal P1). **What the Run will do:** flip the two staged
-switches (unit 7), then the walk decides.
+unseated (`E170`). Unit 7 found the church cannot seat on any diagonal
+strip by the site tier (a 19-deep diagonal band holds no axis-aligned
+13 × 17 — P1), and that the parcel switch which would deepen the lots leaves
+24 % of the walkable plane orphaned (F10); the church's cure is P1 or F10's
+two-phase growth. Still **FAIL** on T4/T7 by the instrument — twice the
+town, not yet a town. **What the Run will do:** F10 in its own unit, then
+the walk decides.
 
 ---
 

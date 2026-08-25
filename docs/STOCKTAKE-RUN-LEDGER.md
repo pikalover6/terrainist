@@ -7,48 +7,46 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 6 (the frontage flip) is committed.
-- **Next unit:** unit 7 — flip the two switches landed off in unit 6:
-  `LOT_PARCEL_OWN_STATIONS` and `PLANNED_SITE_WHOLE_STRIP`
-  (`packages/compiler/src/layout/district.ts`). Trial at both true
-  (`bi/ex-trial7`): the walled city seats its church again (`E170` 1 → 0,
-  24 → 20 buildings, deeper), montfort 13 → 12 buildings but +47 % building
-  blocks and 11 → 14 dwellings, site-plan-hillside 16 → 20 (drops 12 → 3),
-  -steep 14 → 17 (drops 19 → 10). The flip commit must carry: the fourteen
-  shasums attributed (refs `bi/on6b`, `bi/ex-on6b`); the walkability audit
-  (`scratchpad/walk-audit.mjs`) before/after on montfort + walled and the
-  fixture goldens re-pinned with cause and per-unit reading (the
-  `scratchpad/probe/dump.mjs` after-values are the before-values now);
-  render pairs; FULL suite; station 7 re-read. Then: `W527` on the planned
-  path + the `SITE_STRIP_DISSOLVED` note (F6/F7, small unit); the
-  walkability audit's zero reach on the named worlds (instrument gap);
-  hellenist's density (§10.2); the `I512` street probe (F4); the icon metric
-  (§10.3).
-- **Last commit:** 58bf781 (unit 5). Convention: this line names the
+- **In flight:** nothing — unit 7 is committed.
+- **Next unit:** unit 8 — spec §10.2, third item: **hellenist's density**
+  (T7: a city is a city — troy_k1 19.7 lots per 10k envelope cells is a
+  city; 2.2 and 3.2 are not). Probe first: the fresh `hellenist_harbour`
+  before-sample (17 nodes, 11 archetypes; `docs/decks/before-sample/`) and
+  `hellenist_sea_siege_k1` vs the r5 anchor `modern_hellenist_assault` —
+  lots per 10k envelope cells, district form/density/blocks/lots/dropped
+  from the compile reports, the anchor's own diff at HEAD (RECOMPILE §:
+  4 regions, `I463`/`W521`/`W413` deltas) attributed, and the document diff
+  (what the author asked for — density, envelope, form). Separate compiler
+  from author as in unit 2. Bug → code-first under law 5; author → E1/E2
+  pre-registration. Open station 3 in the before-sample verdict. After
+  that: F10 (two-phase parcel growth) and F6/F7 (`W527` on the planned path
+  + `SITE_STRIP_DISSOLVED`) as small units; the `I512` street probe (F4);
+  then §10.3 — the icon metric, the rules-only kit, E1's three arms.
+- **Last commit:** c5eb436 (unit 6). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
 - **Spend:** $2.29 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
-- **Open decisions for Kai:** none. (Post-hoc veto open on D12 and D19.)
+- **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19.)
 - **Findings queue (law 1: bugs before anything else):**
   - F1 — `railway_town` `LOAM-T110 UNSTABLE_FLUID` at emit (compiler bug by
     the CLI's own label; document + `--allow-unstable` world recorded).
   - F2 — anchors differ at HEAD: metropolis fixed as far as ratified laws
     allow (units 3–4); troy/pirates moved better with the kerb flip;
-    hellenist untouched — its anchor diff unattributed until its station.
-  - F3 — metropolis authoring regression, lost 3-of-3 (skeleton field,
-    river, `era: modern`, unnamed decayed generators). E2/E3.
-  - F4 — `LOAM-I512` "ruined shells" vs intact boxes in the isometric —
-    street-level probe.
-  - F5 — hillside `held` is a raster artefact — **fixed** (units 5–6).
+    hellenist unattributed until its station (unit 8).
+  - F3 — metropolis authoring regression, lost 3-of-3. E2/E3.
+  - F4 — `LOAM-I512` "ruined shells" vs intact boxes — street-level probe.
+  - F5 — hillside `held` raster artefact — **fixed** (units 5–6).
   - F6 — `W527` gated `planned === undefined`; F7 — `SITE_STRIP_DISSOLVED`
     never existed. One small unit.
-  - F8 — `frontageLots` drops: ~70 % bookkeeping (a lot's BFS blob eats the
-    next lot's stations — switch landed off, unit 7), ~30 % geometry
-    (axis-aligned rectangles on diagonal strips — proposal P1).
-  - F9 — the new hillside lots' cut faces go undressed: steep fixture
-    `entranceReachableShare` 0.966 → 0.850, cut-offs +40 % per column, all
-    undressed; the parked shoulder/verge item (proposal P2). Plus the
+  - F8 — `frontageLots` drops: ~70 % starvation (switch exists, off — see
+    F10), ~30 % diagonal geometry (P1).
+  - F9 — new hillside lots' cut faces undressed (steep fixture reachability
+    0.966 → 0.850) — the parked shoulder/verge item (P2); and the
     walkability audit reads zero entrance reach on montfort and the walled
-    city both before and after — instrument gap.
+    city — instrument gap.
+  - F10 — `LOT_PARCEL_OWN_STATIONS` on leaves the strip's leftover ground
+    unowned between pads: orphan walkable columns 14 → 898 (24 %) on
+    site-plan-hillside. Needs two-phase growth (own stations first, then
+    the leftovers). Off until then; the walled city's church stays `E170`.
 ## DECISIONS
 
 (every fork taken: the reversible default chosen, why, and how to undo it)
@@ -148,6 +146,23 @@ running state. The NOW block is rewritten at the end of every turn.
   the T4 gain is an order of magnitude. Written in the tests' own
   convention and in `MONTFORT-HILLSIDE-2026-08-25.md` §H. Undo: Kai's
   veto; one constant to revert.
+- **D20 (unit 7):** Node on this machine moved 26.5 → 26.7 mid-Run and
+  changed every compressed byte of every world while every payload stayed
+  identical; byte-identity is henceforth read with
+  `tools/worlds/world-payload-sha.mjs` (decompressed payloads), recorded in
+  `AGENTS.md`. Earlier units' "identical" claims were all within one Node
+  and stand. Undo: n/a.
+- **D21 (unit 7):** `LOT_PARCEL_OWN_STATIONS` stays OFF: isolated by
+  toggling, it alone orphans 24 % of the hillside fixture's walkable plane
+  (F10). The both-on re-pin pass (51 assertions) was discarded and the
+  three golden files restored to unit 6's; the pass is kept in
+  `scratchpad/REPIN-UNIT7.md` as F10's before/after record. Undo: flip it
+  and re-pin — not recommended.
+- **D22 (unit 7):** `PLANNED_SITE_WHOLE_STRIP` ships ON with the landmark
+  seated at its own footprint on the street edge (`landmarkSeat`) — no
+  law-5 document moves (diagonal geometry, P1), so it lands on its
+  correctness, not on numbers; the walled city's church stays `E170` until
+  P1 or F10. Undo: one constant.
 
 ## SPEND
 
@@ -159,6 +174,7 @@ running state. The NOW block is rewritten at the end of every turn.
 | 4 | the flip — compiles, renders, baselines, the FULL suite | 0.00 | 2.29 |
 | 5 | montfort's cause — instrumented probe, switch landed off, the FULL suite | 0.00 | 2.29 |
 | 6 | the frontage flip — compiles, probes, renders, re-pins, the FULL suite | 0.00 | 2.29 |
+| 7 | the second flip — compiles, audits, the FULL suite | 0.00 | 2.29 |
 
 ## VERDICTS
 
@@ -288,3 +304,17 @@ running state. The NOW block is rewritten at the end of every turn.
   `strip-frontage 5`, `frontage-lots 4`. Files: `layout/district.ts`,
   `forms/hillside.ts`, five tests, `MONTFORT-HILLSIDE-2026-08-25.md` §F–§H,
   VERDICT station 7. Subagents: 2 (opus-5-medium). Spend $0.
+- **unit 7 — the second flip (2026-08-25):** `PLANNED_SITE_WHOLE_STRIP`
+  → true with `landmarkSeat()` (a strip landmark takes its own footprint at
+  the street edge); `LOT_PARCEL_OWN_STATIONS` tried and kept off — alone it
+  orphans 24 % of site-plan-hillside's walkable plane (F10, D21); the
+  church's trial seat came from deeper own-station lots via `claimRun`, not
+  the site (diagonal geometry, P1). Node 26.5 → 26.7 found to move every
+  compressed byte: `tools/worlds/world-payload-sha.mjs` added, AGENTS.md
+  amended (D20); by payload all fourteen documents identical to unit 6.
+  Walkability audited on the named worlds at both states. Record §I. Tests:
+  FULL suite COUNTS `Test Files 335 passed | 1 skipped (336)`, `Tests 5636
+  passed | 31 skipped (5667)`. Files: `layout/district.ts`,
+  `test/frontage-lots.test.ts`, `tools/worlds/world-payload-sha.mjs`,
+  `AGENTS.md`, `MONTFORT-HILLSIDE-2026-08-25.md` §I, VERDICT station 7.
+  Subagent: 1 (opus-5-medium, the both-on re-pin pass, discarded). Spend $0.

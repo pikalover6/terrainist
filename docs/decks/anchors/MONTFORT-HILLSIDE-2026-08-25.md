@@ -495,3 +495,48 @@ here.
 named worlds' own dressing counts; worse per unit on the steep fixture's
 reachability and clutter, attributed to unpaid shoulders on the new lots.
 Lands, with F9/P2 open and Kai's veto open (law 6).
+
+## I. The second flip (unit 7, 2026-08-25): one switch ships, one stays off
+
+**Node moved under the Run.** Between units 6 and 7 this machine's Node went
+26.5 → 26.7 (`~/.local/bin/node`, 04:40). Every compressed byte of every
+world changed while every decompressed payload stayed identical (troy_r22:
+1024 of 1024 chunk payloads and `level.dat` equal). Byte-identity is now
+read with `tools/worlds/world-payload-sha.mjs` (sha over the decompressed
+payloads); `AGENTS.md` says so. Every "identical / moved" below is a
+payload comparison.
+
+**`LOT_PARCEL_OWN_STATIONS` — tried on, stays off (F10).** Alone it does
+what the probe predicted — site-plan-hillside 16 → 20 buildings, drops
+12 → 3; -steep 14 → 17, 19 → 10; montfort 13 → 12 with +47 % building
+blocks and 11 → 14 dwellings — and it leaves the strip's leftover ground,
+the columns no lot's own stations reach, unowned and ungraded between the
+pads: the walkability audit's orphan columns go **14 → 898 on
+site-plan-hillside (0.4 % → 24 % of the walkable plane)**, isolated by
+toggling each switch alone (`scratchpad/walk-audit.mjs`: own-stations
+only → 898; whole-strip only → 14). The parcel has to grow inward first
+and then take the leftovers beside it — two phases, its own unit.
+
+**`PLANNED_SITE_WHOLE_STRIP` — ships, moving nothing.** With the landmark
+now taking its own footprint at the street edge of the site
+(`landmarkSeat`, pure, tested) rather than the whole band, all fourteen
+law-5 documents are payload-identical to unit 6. The reason is P1's
+geometry: every strip on the walked hills is diagonal, and a 19-deep
+diagonal band's largest axis-aligned rectangle is about 13 × 13 — the site
+tier cannot hold the walled city's 13 × 17 church on any strip, so `E170`
+stands. The trial's seated church (§F) came from `claimRun` over two
+*deeper* own-station lots, not from the site. The switch is right and
+inert here; it matters on an axis-aligned strip.
+
+**Re-pins.** A second re-pin pass was made for the both-on state (51
+assertions, 13 worse per unit — orphans 14 → 898 the worst, junction
+density on the steep fixture ×1.67 with 100 % of the counted courses being
+the new seat's own wall beside its own doorstep, solo density +19–30 %);
+with own-stations off those re-pins were discarded and the three files
+restored to unit 6's — the world is unit 6's. The pass is kept in
+`scratchpad/REPIN-UNIT7.md` as the before/after record for F10.
+
+**On the named worlds** at both switches on (the state not shipped):
+montfort junction density 0.013 → 0.062, walled 0.036 → 0.070, solo down,
+unserved faces flat — the same seat-beside-doorstep clutter; F10's fix
+must be read against these numbers too.
