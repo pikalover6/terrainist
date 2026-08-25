@@ -731,7 +731,7 @@ on a cottage, use `adjacent_to` the plaza instead.
   "generator": "building.grammar@0",
   "label": "the inn on the green's eastern edge",
   "envelope": { "shape": "box", "size": [11, 11, 9] },
-  "params": { "floors": 2, "roof": "gable", "windowRhythm": "paired" },
+  "params": { "archetype": "inn", "floors": 2, "roof": "gable", "windowRhythm": "paired" },
   "constraints": [
     { "adjacent_to": "plaza", "gap": [1, 8] },
     { "facing": "plaza" },
@@ -783,7 +783,7 @@ wing starts, counted from the envelope's min corner (default 0).
   "kind": "generator",
   "generator": "building.grammar@0",
   "envelope": { "shape": "box", "size": [13, 11, 13] },
-  "params": { "floors": 2, "roof": "gable", "wing": { "size": [5, 4], "side": "south", "offset": 0 } },
+  "params": { "archetype": "longhouse", "floors": 2, "roof": "gable", "wing": { "size": [5, 4], "side": "south", "offset": 0 } },
   "tags": ["house"]
 }
 ```
@@ -813,14 +813,23 @@ The rules, exactly as the validator states them (every failure is a
   face. Break either and the wing is dropped and you get a plain rect — so keep
   the wing well inside a 11–13 wide envelope.
 
-**Archetype comes from `tags`, not from a param.** The building grammar picks
-the massing, the interior and the furniture from the first tag it recognizes,
-and each archetype brings its own facade — window shape, rhythm, roof — so you
-do not have to spell those out. An explicit `roof`/`windowRhythm` param wins.
+**Name the archetype: `"archetype": "bakery"`, in `params`.** That is the
+canonical spelling and the one the grammar reads first. The archetype picks the
+massing, the interior and the furniture, and brings its own facade — window
+shape, rhythm, roof — so you do not have to spell those out. An explicit
+`roof`/`windowRhythm` param still wins over the archetype's own.
 
-Matching runs **in this order**, and the order is the whole trick: the greedy
-old tags (`tower`, `trade`, `store`) are checked late so that a `tower_block`
-reaches the tall grammar and a `storehouse` reaches the warehouse.
+**`tags` are the fallback, and the fallback is lossy.** A building that names no
+archetype is matched by the first tag the grammar recognizes, in the order
+below — and that match is often coarser than what you meant: `["lookout"]`
+reaches the watchtower, so a harbour light that wants the banded tower with the
+sea-lantern must say `"archetype": "lighthouse"`. Keep tags for what they are
+good at — semantics, and the selectors `#tag:house` that the road network and
+`{"distance": "#tag:house"}` read.
+
+The fallback order is below. Its trick is that the greedy old tags (`tower`,
+`trade`, `store`) are checked late, so that a `tower_block` reaches the tall
+grammar and a `storehouse` reaches the warehouse.
 
 | # | table | selected by |
 |---|---|---|
@@ -1458,10 +1467,12 @@ shaped its whole vocabulary:
   likewise stay the barracks', `tower` the watchtower's and bare `hut` the
   residential track's.
 
-So a house is `"tags": ["house"]`, the smithy is `"tags": ["craft"]`, the
-granary `"tags": ["store"]`, the chapel `"tags": ["chapel"]`. Add `"house"` to anything people live in — it is
-also the tag `{"distance": "#tag:house"}` and the road network select on.
-There is no `archetype` param; writing one is an error.
+So a house is `"archetype": "cottage"`, the smithy `"archetype": "smithy"`, the
+granary `"archetype": "granary"`, the chapel `"archetype": "chapel"` — and each
+still carries the tags that describe it. Add `"house"` to anything people live
+in: that tag is what `{"distance": "#tag:house"}` and the road network select
+on. Leave the archetype out and the tags above choose one for you, which is a
+fallback and not the way to ask.
 
 **Wave 5B (table 13) — commerce and civic.** Twelve buildings: seven
 commercial, three civic and two residential. Only the shop row rebuilds part of
@@ -1581,7 +1592,7 @@ own rules, all enforced.
   "generator": "building.grammar@0",
   "label": "the twelve-storey tower over the waterfront",
   "envelope": { "shape": "box", "size": [16, 52, 14] },
-  "params": { "floors": 12, "roof": "flat", "windowRhythm": "dense" },
+  "params": { "archetype": "skyscraper", "floors": 12, "roof": "flat", "windowRhythm": "dense" },
   "constraints": [
     { "distance": "plaza", "min": 10, "max": 60 },
     { "terrain_conform": "flatten", "reference": "median", "blend": 6 }
@@ -3681,7 +3692,7 @@ underground gallery between that building's cellar and the target's.
   "kind": "generator",
   "generator": "building.grammar@0",
   "envelope": { "shape": "box", "size": [9, 8, 9] },
-  "params": { "floors": 1, "roof": "gable", "basement": { "depth": 4 } },
+  "params": { "archetype": "smithy", "floors": 1, "roof": "gable", "basement": { "depth": 4 } },
   "constraints": [
     { "distance": "plaza", "min": 8, "max": 50 },
     { "connected": "great_hall", "via": "tunnel" },
@@ -3816,7 +3827,7 @@ cellar rather than a tunnel to nowhere.
     "generator": "building.grammar@0",
     "label": "the keep, square and crenellated",
     "envelope": { "shape": "box", "size": [13, 16, 13] },
-    "params": { "floors": 2, "basement": { "depth": 5, "style": "vault" } },
+    "params": { "archetype": "keep", "floors": 2, "basement": { "depth": 5, "style": "vault" } },
     "constraints": [
       { "adjacent_to": "bailey", "gap": [2, 8] },
       { "facing": "bailey" },
@@ -3831,7 +3842,7 @@ cellar rather than a tunnel to nowhere.
     "generator": "building.grammar@0",
     "label": "the gate through the curtain wall",
     "envelope": { "shape": "box", "size": [11, 14, 9] },
-    "params": { "floors": 2 },
+    "params": { "archetype": "gatehouse", "floors": 2 },
     "constraints": [
       { "distance": "the_keep", "min": 20, "max": 40 },
       { "facing": "bailey" },
@@ -3845,7 +3856,7 @@ cellar rather than a tunnel to nowhere.
     "kind": "generator",
     "generator": "building.grammar@0",
     "envelope": { "shape": "box", "size": [13, 11, 9] },
-    "params": { "floors": 2, "roof": "gable" },
+    "params": { "archetype": "barracks", "floors": 2, "roof": "gable" },
     "constraints": [
       { "adjacent_to": "bailey", "gap": [1, 10] },
       { "distance": "the_keep", "min": 8 },
@@ -3859,7 +3870,7 @@ cellar rather than a tunnel to nowhere.
     "kind": "generator",
     "generator": "building.grammar@0",
     "envelope": { "shape": "box", "size": [9, 8, 9] },
-    "params": { "floors": 1, "basement": { "depth": 4, "style": "crypt" } },
+    "params": { "archetype": "mausoleum", "floors": 1, "basement": { "depth": 4, "style": "crypt" } },
     "constraints": [
       { "distance": "bailey", "min": 10, "max": 40 },
       { "terrain_conform": "cut_fill", "reference": "median", "blend": 4 }
@@ -3900,7 +3911,7 @@ working face. Declare the tunnel on one side only.
     "generator": "building.grammar@0",
     "label": "the headframe over the shaft",
     "envelope": { "shape": "box", "size": [9, 12, 9] },
-    "params": { "floors": 1, "roof": "gable", "basement": { "depth": 5, "style": "mine" } },
+    "params": { "archetype": "mine_head", "floors": 1, "roof": "gable", "basement": { "depth": 5, "style": "mine" } },
     "constraints": [
       { "on": "@terrain:ridge", "band": 40 },
       { "distance": "plaza", "min": 20, "max": 90 },
@@ -3916,7 +3927,7 @@ working face. Declare the tunnel on one side only.
     "generator": "building.grammar@0",
     "label": "where the ore is weighed",
     "envelope": { "shape": "box", "size": [11, 8, 9] },
-    "params": { "floors": 1, "roof": "gable", "windowRhythm": "sparse" },
+    "params": { "archetype": "assay_office", "floors": 1, "roof": "gable", "windowRhythm": "sparse" },
     "constraints": [
       { "distance": "pithead", "min": 14, "max": 34 },
       { "terrain_conform": "cut_fill", "reference": "median", "blend": 4 }
@@ -3944,7 +3955,7 @@ tower lined up on the main road. `floors × 4 + 4` is the envelope height.
     "generator": "building.grammar@0",
     "label": "ten storeys of flats",
     "envelope": { "shape": "box", "size": [18, 44, 15] },
-    "params": { "floors": 10, "roof": "flat", "windowRhythm": "dense" },
+    "params": { "archetype": "apartment_block", "floors": 10, "roof": "flat", "windowRhythm": "dense" },
     "constraints": [
       { "along": "avenues", "offset": [2, 6], "side": "any", "faceRoad": true },
       { "distance": "plaza", "min": 12, "max": 70 },
@@ -3958,7 +3969,7 @@ tower lined up on the main road. `floors × 4 + 4` is the envelope height.
     "kind": "generator",
     "generator": "building.grammar@0",
     "envelope": { "shape": "box", "size": [13, 9, 11] },
-    "params": { "floors": 1, "roof": "flat" },
+    "params": { "archetype": "gym", "floors": 1, "roof": "flat" },
     "constraints": [
       { "distance": "tower_block", "min": 10, "max": 34 },
       { "terrain_conform": "flatten", "reference": "median", "blend": 5 }
@@ -4018,7 +4029,7 @@ and a lighthouse `on` the coastline finish it.
     "kind": "generator",
     "generator": "building.grammar@0",
     "envelope": { "shape": "box", "size": [13, 10, 11] },
-    "params": { "floors": 1, "basement": { "depth": 4 } },
+    "params": { "archetype": "warehouse", "floors": 1, "basement": { "depth": 4 } },
     "constraints": [
       { "on": "@terrain:coastline", "band": 26 },
       { "distance": "plaza", "min": 6, "max": 60 },
@@ -4033,13 +4044,13 @@ and a lighthouse `on` the coastline finish it.
     "generator": "building.grammar@0",
     "optional": true,
     "envelope": { "shape": "box", "size": [7, 19, 7] },
-    "params": { "floors": 2, "roof": "flat" },
+    "params": { "archetype": "lighthouse", "floors": 2, "roof": "flat" },
     "constraints": [
       { "on": "@terrain:coastline", "band": 12 },
       { "distance": "plaza", "min": 24 },
       { "terrain_conform": "flatten", "reference": "max", "blend": 6 }
     ],
-    "tags": ["lookout"]
+    "tags": ["landmark"]
   }
 ]
 ```
@@ -4338,7 +4349,7 @@ far shore"*.
       { "id": "cottage_shore", "kind": "generator", "generator": "building.grammar@0",
         "label": "the cottage closest to the water",
         "envelope": { "shape": "box", "size": [9, 8, 8] },
-        "params": { "floors": 1, "roof": "gable", "windowRhythm": "regular" },
+        "params": { "archetype": "cottage", "floors": 1, "roof": "gable", "windowRhythm": "regular" },
         "constraints": [ { "adjacent_to": "green", "gap": [1, 8] }, { "facing": "green" },
                          { "terrain_conform": "cut_fill", "reference": "median", "blend": 4, "maxSlope": 26 } ],
         "ports": { "door": { "type": "door", "face": "north", "tags": ["primary"] } },
@@ -4346,7 +4357,7 @@ far shore"*.
       { "id": "cottage_lane", "kind": "generator", "generator": "building.grammar@0",
         "label": "a two-storey cottage on the lane",
         "envelope": { "shape": "box", "size": [9, 11, 9] },
-        "params": { "floors": 2, "roof": "gable" },
+        "params": { "archetype": "cottage", "floors": 2, "roof": "gable" },
         "constraints": [ { "adjacent_to": "green", "gap": [1, 10] }, { "facing": "green" },
                          { "distance": "#tag:house", "min": 6 },
                          { "terrain_conform": "cut_fill", "reference": "median", "blend": 4 } ],
@@ -4355,7 +4366,7 @@ far shore"*.
       { "id": "cottage_field", "kind": "generator", "generator": "building.grammar@0",
         "label": "the last cottage, out toward the fields",
         "envelope": { "shape": "box", "size": [8, 8, 8] },
-        "params": { "floors": 1, "roof": "gable", "windowRhythm": "sparse" },
+        "params": { "archetype": "cottage", "floors": 1, "roof": "gable", "windowRhythm": "sparse" },
         "constraints": [ { "distance": "green", "min": 8, "max": 56 }, { "distance": "#tag:house", "min": 7 },
                          { "terrain_conform": "cut_fill", "reference": "median", "blend": 4 } ],
         "ports": { "door": { "type": "door", "face": "north", "tags": ["primary"] } },
@@ -4363,7 +4374,7 @@ far shore"*.
       { "id": "smithy", "kind": "generator", "generator": "building.grammar@0",
         "label": "the smithy, kept a little apart",
         "envelope": { "shape": "box", "size": [9, 8, 9] },
-        "params": { "floors": 1, "roof": "gable", "windowRhythm": "sparse" },
+        "params": { "archetype": "smithy", "floors": 1, "roof": "gable", "windowRhythm": "sparse" },
         "constraints": [ { "distance": "green", "min": 6, "max": 44 }, { "distance": "#tag:house", "min": 8 },
                          { "terrain_conform": "cut_fill", "reference": "median", "blend": 4 } ],
         "ports": { "door": { "type": "door", "face": "south", "tags": ["primary"] } },

@@ -1,0 +1,730 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "trojan_horse_troy",
+    "worldSeed": 303,
+    "prompt": "The Trojan horse in Troy, right before the soldiers emerge.",
+    "spawn": {
+      "at": [
+        0.42,
+        0.56
+      ]
+    }
+  },
+  "intent": {
+    "era": "ancient",
+    "wealth": 0.7,
+    "decline": 0.1,
+    "formality": 0.6,
+    "event": {
+      "kind": "siege",
+      "severity": 0.9,
+      "recency": 0
+    },
+    "climate": {
+      "temperature": 0.7,
+      "humidity": -0.2,
+      "snow": "never"
+    },
+    "character": {
+      "label": "Walled Troy under the Greek stratagem",
+      "materialTheme": "sun_clay",
+      "fortification": "walled",
+      "formPacks": [
+        "classical_mediterranean"
+      ],
+      "archetypes": {
+        "prefer": [
+          "peristyle_house",
+          "megaron",
+          "stoa",
+          "peripteral_temple",
+          "palaestra",
+          "olive_press"
+        ],
+        "forbid": [
+          "townhouse",
+          "terraced_row",
+          "shop_row",
+          "office",
+          "apartment_block"
+        ]
+      },
+      "motifs": {
+        "roofType": "flat",
+        "massing": "stepped",
+        "windowRhythm": "sparse",
+        "ornamentDensity": 0.4
+      },
+      "urbanForm": "grown",
+      "courtyards": 0.6,
+      "ground": "stepped",
+      "programs": [
+        {
+          "id": "trojan_horse",
+          "mode": "landmark",
+          "brief": "A colossal wooden effigy of a war horse built from weathered ship planking, oak ribs, and bronze studs. Mounted on massive wooden spoked wheels with severed tow ropes trailing on the paving, garland wreaths draped over its mane from the Trojan victory feast, and a subtly disguised trapdoor seam beneath its belly concealing Greek spearmen.",
+          "envelope": [
+            15,
+            24,
+            21
+          ]
+        },
+        {
+          "id": "greek_siege_wreck",
+          "mode": "plugin",
+          "brief": "The deserted Greek beachhead camp across the plain: burned palisade stakes, abandoned beached trireme ribs, cold ash campfires, discarded bronze shields, and empty amphorae half-buried in the coastal sand.",
+          "envelope": [
+            11,
+            7,
+            11
+          ],
+          "count": 8
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "a walled citadel city on a coastal rise above a sandy plain; the Aegean shore and open sea in view",
+      "icons": "the colossal wooden Trojan horse brought inside the Scaean gate; monumental stone ramparts and watchtowers; royal megaron palace overlooking the city; abandoned Greek camp and beached ship hulls on the distant shore",
+      "event_direction": "Greek soldiers concealed inside the belly of the wooden horse waiting for midnight to open the gates to the returning fleet"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.beach": "minecraft:sand",
+      "ground.cliff": {
+        "mix": [
+          [
+            "minecraft:smooth_sandstone",
+            3
+          ],
+          [
+            "minecraft:terracotta",
+            1
+          ],
+          [
+            "minecraft:stone",
+            2
+          ]
+        ]
+      },
+      "road.surface": "minecraft:smooth_sandstone",
+      "road.shoulder": "minecraft:packed_mud"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "The Citadel of Troy and the Trojan Horse",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "The Hisarlik plateau, the Scamander river plain, and the Aegean shore",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 72,
+          "amplitude": 28,
+          "octaves": 5,
+          "frequency": 0.0032,
+          "gain": 0.48,
+          "erosionPasses": 2,
+          "cliffThreshold": 52,
+          "soilDepth": 4,
+          "beachWidth": 8,
+          "continentalness": {
+            "frequency": 0.0011,
+            "seaFraction": 0.28
+          }
+        },
+        "children": [
+          {
+            "id": "troy_hill",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The strategic bluff of Hisarlik upon which Troy is built",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.56,
+                0.52
+              ],
+              "radius": 115,
+              "height": 14,
+              "rim": 6,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "acropolis_peak",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The elevated high acropolis crowned by Priam's palace",
+            "params": {
+              "verb": "peak",
+              "at": [
+                0.62,
+                0.48
+              ],
+              "radius": 46,
+              "height": 10,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "beach_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The sandy coastal plain where the Greek fleet was beached for ten years",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.22,
+                0.26
+              ],
+              "radius": 60,
+              "height": 4,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "scamander_river",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The Scamander river flowing past the plain toward the Aegean",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.88,
+                  0.84
+                ],
+                [
+                  0.68,
+                  0.76
+                ],
+                [
+                  0.38,
+                  0.68
+                ],
+                [
+                  0.24,
+                  0.45
+                ],
+                "coast"
+              ],
+              "width": 12,
+              "depth": 6
+            }
+          },
+          {
+            "id": "aegean_cove",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The Aegean bay where the Greek armada pretended to sail away",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.38,
+                  0.22
+                ],
+                [
+                  0.24,
+                  0.16
+                ],
+                "coast"
+              ],
+              "width": 48,
+              "depth": 14
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "label": "Arid Aegean Mediterranean climate",
+        "params": {
+          "forceTheme": "arid",
+          "temperatureFrequency": 0.0014,
+          "humidityFrequency": 0.0018,
+          "latitudeGradient": -0.15
+        }
+      },
+      {
+        "id": "troy_citadel",
+        "kind": "district",
+        "label": "The fortified city of Troy within its legendary masonry walls",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            190,
+            180
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.56,
+              0.52
+            ]
+          }
+        ],
+        "params": {
+          "fabric": "grown",
+          "density": "medium",
+          "mix": [
+            "peristyle_house",
+            "megaron",
+            "courtyard_house",
+            "stoa",
+            "olive_press",
+            "granary",
+            "armory"
+          ],
+          "courtyards": 0.6,
+          "ground": "stepped",
+          "walls": {
+            "style": "masonry",
+            "margin": 8,
+            "towerPitch": 32,
+            "height": 8,
+            "gates": true
+          },
+          "plaza": true
+        },
+        "tags": [
+          "citadel",
+          "city",
+          "walled"
+        ],
+        "children": [
+          {
+            "id": "priams_megaron",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "The Great Palace of King Priam overlooking the Scamander plain",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                17,
+                15,
+                21
+              ]
+            },
+            "params": {
+              "archetype": "megaron",
+              "floors": 2,
+              "roof": "flat"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "palace"
+            ]
+          },
+          {
+            "id": "temple_of_athena",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "The Sanctuary of Athena on the Acropolis",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                15,
+                14,
+                19
+              ]
+            },
+            "params": {
+              "archetype": "peripteral_temple",
+              "floors": 1,
+              "roof": "gable"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "west",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "temple"
+            ]
+          },
+          {
+            "id": "royal_armory",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "The Citadel Armory holding Trojan spears and shields",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                12,
+                15
+              ]
+            },
+            "params": {
+              "archetype": "armory",
+              "floors": 2,
+              "roof": "flat"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "north",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "armory"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "the_trojan_horse",
+        "kind": "generator",
+        "generator": "authored:trojan_horse",
+        "label": "The colossal wooden horse resting in the entry plaza right before the spearmen emerge",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            24,
+            21
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.44,
+              0.54
+            ]
+          },
+          {
+            "distance": "troy_citadel",
+            "min": 8,
+            "max": 24
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "params": {
+          "face": {
+            "toward": "troy_citadel"
+          },
+          "seat": "pad"
+        },
+        "tags": [
+          "landmark",
+          "icon"
+        ]
+      },
+      {
+        "id": "acropolis_revetment",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "The monumental terrace walls buttressing the citadel",
+        "params": {
+          "entry": "acropolis_terrace",
+          "route": {
+            "ring": "troy_citadel",
+            "margin": 4
+          }
+        }
+      },
+      {
+        "id": "scamander_orchard",
+        "kind": "generator",
+        "generator": "precinct.farm@0",
+        "label": "The olive and barley terraces below the eastern walls",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            84,
+            72
+          ]
+        },
+        "params": {
+          "parcels": 4,
+          "parcelSize": 16,
+          "crops": [
+            "wheat",
+            "pasture",
+            "pumpkin"
+          ],
+          "edge": "wall"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "troy_citadel"
+          },
+          {
+            "distance": "troy_citadel",
+            "min": 10,
+            "max": 38
+          },
+          {
+            "terrain_conform": "drape"
+          }
+        ],
+        "ports": {
+          "gate": {
+            "type": "road_stub",
+            "face": "any",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "farm",
+          "rural"
+        ]
+      },
+      {
+        "id": "greek_siege_ruins",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "The deserted encampment of the Achaeans on the Aegean shore",
+        "params": {
+          "program": "greek_siege_wreck",
+          "count": 8,
+          "area": {
+            "at": [
+              0.22,
+              0.26
+            ],
+            "radius": 0.16
+          },
+          "spacing": 16,
+          "maxSlope": 18,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ]
+        }
+      },
+      {
+        "id": "beached_galley",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A decaying Achaean longship hull abandoned on the sand",
+        "params": {
+          "prop": "longship",
+          "zone": "northwest",
+          "jitter": 0.25
+        }
+      },
+      {
+        "id": "deserted_camp_fires",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "An abandoned Greek siege campsite on the coast",
+        "params": {
+          "prop": "campsite",
+          "zone": "northwest",
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "celebration_cart_a",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "Trophy cart left after hauling the horse into the city",
+        "params": {
+          "prop": "cart",
+          "zone": "center",
+          "jitter": 0.15
+        }
+      },
+      {
+        "id": "monument_pedestal",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A votive plinth honoring the gods for lifting the ten-year siege",
+        "params": {
+          "prop": "statue_plinth",
+          "zone": "center",
+          "jitter": 0.1
+        }
+      },
+      {
+        "id": "trojan_lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "Paved avenues connecting the Scaean gate, the horse plaza, and the acropolis",
+        "params": {
+          "anchors": [
+            "troy_citadel",
+            "the_trojan_horse",
+            "scamander_orchard"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": false
+        }
+      },
+      {
+        "id": "olive_groves",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "Ancient olive groves and oak woodlands on the lower slopes",
+        "params": {
+          "area": {
+            "at": [
+              0.65,
+              0.68
+            ],
+            "radius": 130
+          },
+          "density": 0.08,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 28,
+          "elevation": [
+            2,
+            90
+          ],
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "undergrowth": {
+            "grass": 0.35,
+            "flowers": 0.08,
+            "deadwood": 0.02
+          },
+          "species": [
+            {
+              "id": "ancient_oak",
+              "weight": 3,
+              "shape": "oak_spreading"
+            },
+            {
+              "id": "round_oak",
+              "weight": 2,
+              "shape": "oak_round"
+            },
+            {
+              "id": "hazel_scrub",
+              "weight": 2,
+              "shape": "hazel_shrub"
+            }
+          ]
+        }
+      },
+      {
+        "id": "coastal_scrub",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "Sparse juniper scrub along the dry coastal dunes",
+        "params": {
+          "area": {
+            "at": [
+              0.24,
+              0.4
+            ],
+            "radius": 110
+          },
+          "density": 0.03,
+          "spacing": 5,
+          "clumping": 0.4,
+          "maxSlope": 24,
+          "elevation": [
+            1,
+            40
+          ],
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "undergrowth": {
+            "grass": 0.2,
+            "flowers": 0.02,
+            "deadwood": 0.08
+          },
+          "species": [
+            {
+              "id": "dune_juniper",
+              "weight": 3,
+              "shape": "juniper_scrub"
+            },
+            {
+              "id": "gnarled_oak",
+              "weight": 1,
+              "shape": "oak_round"
+            }
+          ]
+        }
+      },
+      {
+        "id": "wilderness_cover",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "Ambient sparse tree scatter across the open Troad",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 6,
+          "clumping": 0.3,
+          "maxSlope": 35,
+          "elevation": [
+            1,
+            140
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "species": [
+            {
+              "id": "plain_oak",
+              "weight": 1,
+              "shape": "oak_round"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

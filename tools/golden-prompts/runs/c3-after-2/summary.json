@@ -1,0 +1,413 @@
+{
+  "suite": "golden-prompts-v0",
+  "label": "c3-after-2",
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "intentPrepass": true,
+  "kits": {
+    "settlement": {
+      "path": "docs/kits/settlement-author.md",
+      "sha256": "14733e4137792c2c1784ec92a31a1f65e1962524bd96916bff747e7160a21d2f",
+      "bytes": 280180,
+      "envelopeLiterals": [
+        "11x11x9",
+        "11x14x9",
+        "11x8x9",
+        "120x120",
+        "13x10x11",
+        "13x11x13",
+        "13x11x9",
+        "13x16x13",
+        "13x9x11",
+        "140x120",
+        "140x24x92",
+        "15x17x21",
+        "16x52x14",
+        "180x160",
+        "18x18",
+        "18x44x15",
+        "200x180",
+        "21x76x19",
+        "21x78x19",
+        "220x200",
+        "22x22",
+        "25x22x19",
+        "288x288",
+        "30x30",
+        "440x400",
+        "512x512",
+        "5x4",
+        "7x19x7",
+        "8x8x8",
+        "96x16x72",
+        "96x80",
+        "9x11x9",
+        "9x12x9",
+        "9x8x8",
+        "9x8x9"
+      ]
+    }
+  },
+  "totals": {
+    "ok": 2,
+    "attempts": 3,
+    "oneShot": 1,
+    "promptTokens": 256644,
+    "completionTokens": 23346,
+    "cost": 0.14001525,
+    "diagnosticCodes": {
+      "LOAM-T210": 1,
+      "LOAM-T204": 1,
+      "LOAM-W407": 2,
+      "LOAM-T206": 2
+    }
+  },
+  "records": [
+    {
+      "id": "troy_horse",
+      "family": "troy",
+      "kit": "settlement",
+      "prompt": "The Trojan horse in Troy, right before the soldiers emerge.",
+      "seed": 303,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "source": "cache",
+        "value": {
+          "era": "ancient",
+          "wealth": 0.7,
+          "decline": 0.1,
+          "formality": 0.6,
+          "event": {
+            "kind": "siege",
+            "severity": 0.9,
+            "recency": 0
+          },
+          "climate": {
+            "temperature": 0.7,
+            "humidity": -0.2,
+            "snow": "never"
+          },
+          "character": {
+            "label": "Walled Troy under the Greek stratagem",
+            "materialTheme": "sun_clay",
+            "fortification": "walled",
+            "formPacks": [
+              "classical_mediterranean"
+            ],
+            "archetypes": {
+              "prefer": [
+                "peristyle_house",
+                "megaron",
+                "stoa",
+                "peripteral_temple",
+                "palaestra",
+                "olive_press"
+              ],
+              "forbid": [
+                "townhouse",
+                "terraced_row",
+                "shop_row",
+                "office",
+                "apartment_block"
+              ]
+            },
+            "motifs": {
+              "roofType": "flat",
+              "massing": "stepped",
+              "windowRhythm": "sparse",
+              "ornamentDensity": 0.4
+            },
+            "urbanForm": "grown",
+            "courtyards": 0.6,
+            "ground": "stepped"
+          },
+          "tokens": {
+            "terrain": "a walled citadel city on a coastal rise above a sandy plain; the Aegean shore and open sea in view",
+            "icons": "the colossal wooden Trojan horse brought inside the Scaean gate; monumental stone ramparts and watchtowers; royal megaron palace overlooking the city; abandoned Greek camp and beached ship hulls on the distant shore",
+            "event_direction": "Greek soldiers concealed inside the belly of the wooden horse waiting for midnight to open the gates to the returning fleet"
+          }
+        }
+      },
+      "intentUsage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "reasoningTokens": 0,
+        "cost": 0,
+        "cached": true
+      },
+      "menu": {
+        "injected": false,
+        "reason": "flag off"
+      },
+      "attempts": 2,
+      "diagnostics": [
+        [
+          {
+            "code": "LOAM-T210",
+            "name": "DISTRICT_PARAM",
+            "severity": "error",
+            "nodePath": "world.troy_citadel.params"
+          },
+          {
+            "code": "LOAM-T204",
+            "name": "BAD_CONSTRAINT",
+            "severity": "error",
+            "nodePath": "world.trojan_horse.constraints[1]"
+          },
+          {
+            "code": "LOAM-W407",
+            "name": "CONSTRAINT_NOT_IMPLEMENTED",
+            "severity": "warning",
+            "nodePath": "world.trojan_plain_farms.constraints[2]"
+          },
+          {
+            "code": "LOAM-T206",
+            "name": "PORT_FEATURE_NOT_IMPLEMENTED",
+            "severity": "warning",
+            "nodePath": "world.trojan_plain_farms.ports.gate"
+          }
+        ],
+        []
+      ],
+      "usage": {
+        "promptTokens": 173952,
+        "completionTokens": 14021,
+        "reasoningTokens": 6302,
+        "cost": 0.091521375
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 20,
+        "maxDepth": 2,
+        "generators": [
+          "authored:trojan_horse",
+          "building.grammar@0",
+          "precinct.farm@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "barracks",
+          "church",
+          "cottage",
+          "courtyard_house",
+          "granary",
+          "keep",
+          "kiln",
+          "megaron",
+          "olive_press",
+          "palaestra",
+          "peripteral_temple",
+          "peristyle_house",
+          "temple"
+        ],
+        "archetypesInCatalog": 13,
+        "formPacks": [
+          "classical_mediterranean"
+        ],
+        "props": [
+          "cairn",
+          "campsite",
+          "longship"
+        ],
+        "species": [
+          "dune_juniper",
+          "hill_shrub",
+          "olive_oak",
+          "plain_oak",
+          "scrub"
+        ],
+        "envelopes": [
+          "512x512",
+          "220x200",
+          "17x16x23",
+          "15x17x21",
+          "13x12x11",
+          "96x96"
+        ],
+        "constraints": 6,
+        "constraintKinds": [
+          "adjacent_to",
+          "at",
+          "distance",
+          "max",
+          "min",
+          "terrain_conform"
+        ],
+        "constraintsWithStrength": 0,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 3,
+        "programReferences": 1,
+        "conformsTrue": 0,
+        "labels": 19,
+        "eras": [
+          "ancient"
+        ],
+        "bytes": 7911
+      },
+      "wallMs": 75637
+    },
+    {
+      "id": "walled_medieval_city",
+      "family": "new/set-piece",
+      "kit": "settlement",
+      "prompt": "A walled medieval city on a hill, its castle keep above the rooftops.",
+      "seed": 311,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "source": "cache",
+        "value": {
+          "era": "medieval",
+          "wealth": 0.5,
+          "decline": 0.1,
+          "formality": 0.4,
+          "character": {
+            "label": "walled hill city",
+            "materialTheme": "temperate_timber",
+            "fortification": "walled",
+            "archetypes": {
+              "prefer": [
+                "manor",
+                "watchtower",
+                "tavern",
+                "church",
+                "granary"
+              ]
+            },
+            "motifs": {
+              "roofType": "gable",
+              "massing": "stepped"
+            },
+            "urbanForm": "hillside",
+            "ground": "stepped",
+            "courtyards": 0.4
+          },
+          "tokens": {
+            "terrain": "a prominent hill rising above the surrounding country",
+            "icons": "a towering stone castle keep crowning the peak above dense medieval rooftops, enclosed by circuit walls with gatehouses and towers"
+          }
+        }
+      },
+      "intentUsage": {
+        "promptTokens": 0,
+        "completionTokens": 0,
+        "reasoningTokens": 0,
+        "cost": 0,
+        "cached": true
+      },
+      "menu": {
+        "injected": false,
+        "reason": "flag off"
+      },
+      "attempts": 1,
+      "diagnostics": [
+        [
+          {
+            "code": "LOAM-W407",
+            "name": "CONSTRAINT_NOT_IMPLEMENTED",
+            "severity": "warning",
+            "nodePath": "world.valley_farm.constraints[2]"
+          },
+          {
+            "code": "LOAM-T206",
+            "name": "PORT_FEATURE_NOT_IMPLEMENTED",
+            "severity": "warning",
+            "nodePath": "world.valley_farm.ports.gate"
+          }
+        ]
+      ],
+      "usage": {
+        "promptTokens": 82692,
+        "completionTokens": 9325,
+        "reasoningTokens": 6054,
+        "cost": 0.048493875
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 16,
+        "maxDepth": 2,
+        "generators": [
+          "building.grammar@0",
+          "precinct.farm@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "apothecary",
+          "bakery",
+          "barracks",
+          "church",
+          "cottage",
+          "general_store",
+          "guildhall",
+          "inn",
+          "keep",
+          "smithy",
+          "tavern",
+          "town_hall",
+          "townhouse",
+          "tudor_row",
+          "watchtower"
+        ],
+        "archetypesInCatalog": 15,
+        "formPacks": [],
+        "props": [],
+        "species": [
+          "field_oak",
+          "slim_birch",
+          "slope_pine",
+          "spread_oak",
+          "wild_birch"
+        ],
+        "envelopes": [
+          "512x512",
+          "220x200",
+          "15x24x15",
+          "13x18x19",
+          "13x16x13",
+          "7x21x7",
+          "13x11x13",
+          "112x96"
+        ],
+        "constraints": 4,
+        "constraintKinds": [
+          "distance",
+          "max",
+          "min",
+          "terrain_conform",
+          "zone"
+        ],
+        "constraintsWithStrength": 0,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 5,
+        "programReferences": 0,
+        "conformsTrue": 0,
+        "labels": 15,
+        "eras": [
+          "medieval"
+        ],
+        "bytes": 6496
+      },
+      "wallMs": 51425
+    }
+  ]
+}
