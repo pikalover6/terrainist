@@ -90,6 +90,29 @@ moved. **To make a reach claim, run repeats**, the way `noise-1..3` did.
 This was learned the expensive way: the cluster-1 and cluster-2 reports quoted
 archetype deltas of −2, −3 and −7 as if they were results. They were re-rolls.
 
+## Collect the before-samples BEFORE the bytes move
+
+A kit edit is only measurable against documents authored at the bytes it
+replaced, and those cannot be collected afterwards. Twice this campaign was
+saved from that by luck: cluster 3's before-triplicate existed only because the
+noise runs happened to sit at the right bytes, and cluster 4's headline rested
+on `desert_wilderness` having been incidentally sampled four times. Neither was
+planned. Collect the before-samples first, at the bytes you are about to
+change, and label them so the pairing is obvious (`b1-before-*`, `b1-after-*`).
+
+Two corollaries learned the same way:
+
+- **A compile-time diagnostic cannot be measured by this suite.** Runs are
+  authoring-only, so `LOAM-E404` and every other layout diagnostic reads `0` in
+  every scoreboard whether or not the world demotes anything. To measure those,
+  compile the authored `*.doc.json` files — free, a few seconds each — and count
+  from `res.report.diagnostics`. Not `res.diagnostics`: that field does not
+  exist, and reading it returns an empty array that looks exactly like a clean
+  result. A control that cannot fail is the tell; run one.
+- **Recompile both sides in the same pass.** The compiler moves under you. If
+  the before-set was compiled at an older dist than the after-set, the
+  comparison is measuring two things at once.
+
 ## The gate
 
 `--gate` turns two numbers into an exit code: authoring must not get less
