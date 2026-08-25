@@ -503,6 +503,17 @@ export interface GroundView {
   readonly fluidTop: ReadonlyInt32Array;
   readonly fluidKind: ReadonlyUint8Array;
   readonly seaLevel: number;
+  /**
+   * **Held** columns: `1` where a committed intent in this view's prefix won
+   * the column (`ResolvedGround.owner !== -1`), so its `ground` is a higher
+   * tier's *decision*, not natural ground a lower-tier pass may cut or fill.
+   * Absent on the unstaged handed view and on the tier-0 baseline, where no
+   * prefix exists. Added for the Stocktake Run's F20
+   * (`docs/decks/anchors/F10-LOWER-SQUARE-2026-08-25.md` §G): a lane's
+   * 1-Lipschitz grader could see a pad's or a plane's height but not that it
+   * would never be granted a cutting through it, and graded straight through.
+   */
+  readonly held?: ReadonlyUint8Array;
 }
 
 /* -------------------------------------------------------------------------- */

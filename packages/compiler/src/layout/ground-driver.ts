@@ -261,12 +261,18 @@ export function planAt(plan: ColumnPlan, view: GroundView): ColumnPlan {
  * no owner test here: it is what the arrays hold.
  */
 function viewOf(resolved: ResolvedGround, baseline: GroundBaseline): GroundView {
+  // {@link GroundView.held}: the prefix's decisions, as a mask. Read by the
+  // road pass under `ROUTE_PINS_HELD_GROUND`; computed unconditionally because
+  // it is one pass over `owner` and a view is built once per tier.
+  const held = new Uint8Array(resolved.owner.length);
+  for (let k = 0; k < held.length; k++) if (resolved.owner[k] !== -1) held[k] = 1;
   return {
     region: baseline.region,
     ground: resolved.ground,
     fluidTop: resolved.fluidTop,
     fluidKind: resolved.fluidKind,
     seaLevel: baseline.seaLevel,
+    held,
   };
 }
 

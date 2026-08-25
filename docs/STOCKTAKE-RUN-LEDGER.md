@@ -7,24 +7,21 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 18 (F10 probed: the orphans are one severed
-  island, not parcel ownership; F20 opened) is committed.
-- **Next unit:** unit 19 — **F20, a routed lane across a retaining edge**
-  (`docs/decks/anchors/F10-LOWER-SQUARE-2026-08-25.md` §D). Diagnosis
-  first, in code: where the road router costs a step (does it see the
-  district's retaining edges / level seams at all?), and what the road
-  emitter does when a route's profile drops more than its stair rule allows
-  (it laid nothing on two columns, silently). Then the smallest honest fix
-  behind a switch (law 5, landed off, attributed on the fourteen): the
-  router treats a level-seam crossing as a cost it can only pay where a
-  flight fits, and/or the emitter lays a flight (the seam mechanism's
-  `tiered` stack has one) or warns (`LOAM-W…`, new code from the free
-  numbers). Re-test with `scratchpad/f10/boundary.mjs` on the hillside
-  fixture at `LOT_PARCEL_OWN_STATIONS` on (dist-patched): the 875-column
-  island must join main. Then census batch two (M1, M2 by law 5, M3, class-2
-  S5/S6, D3 note), F4, F14, F17; §10.5 probe prompts; the remaining
-  stations.
-- **Last commit:** 9528b7a (unit 17). Convention: this line names the
+- **In flight:** nothing — unit 19 (F20 in code: `GroundView.held` and
+  `ROUTE_PINS_HELD_GROUND`, landed off, proven on the fixture) is committed.
+- **Next unit:** unit 20 — **flip `ROUTE_PINS_HELD_GROUND`** (law 5's
+  second half): one constant, the fourteen re-checked (all identical with
+  it on — no baseline moves; D45), the FULL suite, the census 1.20 row and
+  the switch's docblock updated, `F10-LOWER-SQUARE` §G's table cited as
+  the flip's evidence. Then unit 21 — **re-try `LOT_PARCEL_OWN_STATIONS`
+  on the fourteen** under law 5 with the pins shipped: its 24 % orphans
+  were F20; what remains is a byte-moving flip to attribute (buildings,
+  drops, orphans, entrance reach per document; the unit-7 re-pin's method
+  in `scratchpad/REPIN-UNIT7.md`), and the walled city's church (`E170`,
+  D22) may finally seat. Then census batch two (M1, M2 by law 5, M3,
+  class-2 S5/S6, D3 note), F4, F14, F17; §10.5 probe prompts; the
+  remaining stations.
+- **Last commit:** 8d3bedb (unit 18). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
 - **Spend:** $8.19 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
 - **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19, D25,
@@ -54,11 +51,11 @@ running state. The NOW block is rewritten at the end of every turn.
     ground freezes** (`enterTier` has no caller; the declare/build split is
     a statement-order cut) — the GROUND-CONTRACT migration's undone half;
     proposal (L) with the pads' double authority (census 3.1).
-  - F20 — **a routed lane that crosses a retaining edge is laid to the edge
-    on both sides and not across it** (six blocks over two columns, no
-    flight, no diagnostic); the square and its three lanes become an island
-    (875 columns on the hillside fixture at own-stations on). Router and
-    emitter, unit 19.
+  - F20 — **a lane's cutting through held ground is refused by the
+    resolver and painted as a cliff** (the grader could not see ownership);
+    fixed behind `ROUTE_PINS_HELD_GROUND` (unit 19): pinned, the fixture's
+    island joins main (898 → 23 orphans), the fourteen identical. Flip:
+    unit 20.
 ## DECISIONS
 
 (every fork taken: the reversible default chosen, why, and how to undo it)
@@ -320,6 +317,25 @@ running state. The NOW block is rewritten at the end of every turn.
   built dist (`sed` on one exported constant, sha-restored after each run),
   never the source: the tree's bytes stayed HEAD's throughout, so no law-5
   staging was owed for a probe. Undo: n/a.
+- **D43 (unit 19):** F20's fix is ownership, not stairs: the road could
+  already read every higher tier's height through `view("C")`; what it
+  lacked was that those heights were decisions. `GroundView.held` (from
+  `owner`) is the smallest true addition, and pinning held stations in the
+  grader is the smallest honest use of it — a cutting only where the road
+  may cut. A flight at the refusal was the other road (§D's option) and
+  would have dressed the cliff rather than removed it. Undo: delete the
+  field and the switch.
+- **D44 (unit 19):** `held` is computed unconditionally in `viewOf` (one
+  pass over `owner` per prefix view), not behind the switch: it is a mask
+  of facts the resolver already holds, costs nothing measurable, and the
+  fourteen are payload-identical with it present — only its *reader* is
+  switched. Undo: gate it.
+- **D45 (unit 19):** with pins on alone all fourteen law-5 documents are
+  payload-identical, so the flip (unit 20) carries no attributed baseline —
+  D22's situation again; the evidence for the flip is the fixture's
+  measured 898 → 23 and the grader's pure test, recorded in
+  `F10-LOWER-SQUARE` §G. The pins' shoulder-column gap (§G "what stays
+  open") is noted, unmeasured, and not blocking. Undo: n/a.
 
 ## SPEND
 
@@ -343,6 +359,7 @@ running state. The NOW block is rewritten at the end of every turn.
 | 16 | the slop census, classes 1–3 — three probes, comment fixes, the FULL suite | 0.00 | 8.19 |
 | 17 | census S items, batch one — one bi14 identity run, the FULL suite | 0.00 | 8.19 |
 | 18 | F10 probe — compiles only, the FULL suite | 0.00 | 8.19 |
+| 19 | F20 in code — dist-patched measurements, two bi14 runs, the FULL suite | 0.00 | 8.19 |
 
 ## VERDICTS
 
@@ -663,3 +680,22 @@ running state. The NOW block is rewritten at the end of every turn.
   Payload-identical on all fourteen. Tests: FULL suite COUNTS Test Files 341 passed | 1 skipped (342), Tests 5664 passed | 31 skipped (5695). Files:
   the record, `layout/district.ts` (comment), the MONTFORT record, the
   census. Spend $0.
+- **unit 19 — F20 in code: the road grades against the ground it will
+  get (2026-08-25):** the mechanism read from the code and the compile
+  (`F10-LOWER-SQUARE` §G): the lane's 1-Lipschitz lower envelope trenches
+  the 109 terrace toward the far square; the stations on the quarter
+  plane's rows and the infill's apron (tier A, ranks 15 and 10) are refused
+  the cut and kept at 109, the rest granted at 103, and `surfaceRoute`
+  paints the refusal as a six-block step whose declared feet the audit
+  reads as buried. Fix: `GroundView.held` (`ground-contract.ts`, from
+  `ResolvedGround.owner` in `ground-driver.ts` `viewOf`) and
+  `ROUTE_PINS_HELD_GROUND` (`roads.ts`, landed `false`): a held station is
+  pinned — ground as held, band 0, floor at it — so the descent is graded
+  past the pins. `test/route-pins.test.ts` (4): ships off; today's grader
+  cuts 107/106/105 through the held rows; pinned 109 ×3 then 108…104; the
+  driver's `view("C").held` marks a tier-A row. Measured in the dist: own
+  stations + pins → 898 → 23 orphans, largest 3, 20 buildings; pins alone
+  → HEAD's numbers; the fourteen payload-identical off **and on** (D45).
+  Census 1.20. Tests: FULL suite COUNTS Test Files 342 passed | 1 skipped (343), Tests 5668 passed | 31 skipped (5699). Files: `ground-contract.ts`,
+  `ground-driver.ts`, `roads.ts`, the test, the record §G, the census.
+  Spend $0.

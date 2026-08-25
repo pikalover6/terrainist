@@ -113,3 +113,68 @@ names (entrance reach 0 on montfort/walled). Not F20; not chased here.
 `off.jsonl`/`on.jsonl`/`*-full.jsonl`. The dist patches were reverted and
 sha-checked after every run; `packages/compiler/src` moved only in the
 switch's docblock.
+
+## §G Unit 19 — F20 in code: the resolver refused the cutting, and the road built the refusal
+
+§B–§D read the cut from the world; unit 19 read it from the code and the
+compile, and the mechanism is one step further back than §D says. The road
+emitter did not "give up" on two columns; it did exactly what it always does.
+
+**The chain, in the code.**
+
+1. The router (`routeTo`, `ROAD_SLOPE_COST = 8`, no `maxDrop` on a lane) sends
+   the lane around the new infill to x −5. Legal, and not the bug.
+2. The grader (`gradeProfile`) is a 1-Lipschitz *lower envelope*: from the
+   far square at 70 back up the hill it draws a 1:1 line and cuts every
+   station above it. At the terrace edge that line is a trench through the
+   109 plane — the lane's own declared path reads (−5,106,85), (−5,105,86),
+   (−4,104,87), (−4,103,88).
+3. The road claims that profile at rank `road.network` (100, tier C). The
+   stations z ≤ 87 are columns tier A already won — the `quarter.plane` rows
+   at z 85 and z 87 (targets 109, x −59…89 / −11…67) and the infill's
+   `building.footprint` apron (x −4…10, z 73…84, apron 2, target 109) — ranks
+   15 and 10. The resolver keeps 109 there and grants the cutting from z 88
+   on, where nothing else holds the ground.
+4. `surfaceRoute` paints every column at the height it was left with: 109 on
+   z ≤ 87, 103 on z ≥ 88 — the built lane drops six blocks in one column.
+   The audit's `topStanding` then finds the *declared* feet (106, 105, 104)
+   under three blocks of the plane's dirt: `buried`, dropped from the
+   network, and the square is an island. (`surfaceRoute`'s own comment —
+   "the ground the resolver was told about and the ground that gets surfaced
+   are one number" — is true only where the claim was granted; census 1.20.)
+
+The road could see the heights (`driver.view("C")` already carries tier A
+and B) but not that they were *decisions*: `GroundView` had no ownership.
+
+**The fix.** `GroundView.held` (from `ResolvedGround.owner`, computed in
+`viewOf` for every prefix view; absent on the handed and baseline views) and
+`ROUTE_PINS_HELD_GROUND` in `structures/roads.ts`: on, a station on a held
+column is pinned — ground as held, band 0, floor at the held height — so the
+envelope passes through it and the descent is graded *past* the pins, a
+cutting only where the road may cut. Pure test on the grader's own numbers
+(`test/route-pins.test.ts`): today 107/106/105 through the held rows; pinned
+109/109/109 then 108…104, 1-Lipschitz. Landed `false` (law 5).
+
+**Measured on, in the dist** (both constants patched, sha-restored):
+
+| state | buildings | network | orphans | share | largest orphan |
+|---|---|---|---|---|---|
+| own-stations on, pins off (§A) | 20 | 3,799 | 898 | 23.6 % | 875 |
+| own-stations on, **pins on** | 20 | 3,804 | **23** | 0.6 % | **3** |
+| pins on alone | 16 | 3,818 | 14 | 0.4 % | 1 |
+
+The lane at x −5, z 84 → 92, top blocks: island world `109 109 109 | 103
+103 …`; pinned world `109 109 109 108 108 107 106 106 105` — a step a column.
+The 23 that remain are the same ≤ 4-column doorstep specks HEAD has (14).
+
+**On the fourteen with pins on alone: all fourteen payload-identical.** No
+law-5 document has a lane whose envelope crosses a held column, so the flip
+moves nothing on the anchor set — its evidence is this fixture and the
+grader's test, exactly D22's situation.
+
+**What stays open.** The pins are read at the centreline station, like the
+profile's ground; a held column under the lane's *shoulder* is still
+refused and painted at its own height (unmeasured; no such column on the
+fixture). `LOT_PARCEL_OWN_STATIONS` is retried on the fourteen under law 5
+once the pins ship — its 24 % was this bug, and its remaining cost is what
+that re-pin measures.

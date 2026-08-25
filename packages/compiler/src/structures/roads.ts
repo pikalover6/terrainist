@@ -135,6 +135,33 @@ export const ROAD_BASE_COST = 10;
 export const ROAD_DIAGONAL_COST = 14;
 /** Extra cost per block of vertical change. */
 export const ROAD_SLOPE_COST = 8;
+/**
+ * **A route is graded against the ground it will get.**
+ *
+ * Off — `false` is today's bytes — {@link gradeProfile} takes every station's
+ * ground from `view.ground` and cuts a 1-Lipschitz lower envelope through it
+ * toward low ground ahead, and the road then claims that cutting at rank
+ * `road.network` (100). Where the station is a column a tier-A/B intent
+ * already won — a `building.footprint` (10), a `quarter.plane` (15), a
+ * plaza's ground — the resolver refuses the cut and keeps the higher tier's
+ * height, the road surfaces those columns at the height it was left with, and
+ * the profile it *declared* stands buried under them. Measured (2026-08-25,
+ * `docs/decks/anchors/F10-LOWER-SQUARE-2026-08-25.md` §G): the hillside
+ * fixture's `summit_chapel → lower_square` lane, pushed by one more infill
+ * onto the terrace's plane rows and the pad's apron, declared 106 → 103 over
+ * z 85 → 88, was granted the cutting from z 88 on and refused it before,
+ * and the built lane drops six blocks in one column; the walkability audit
+ * reads the declared columns as buried and the whole lower square as an
+ * island (875 columns).
+ *
+ * On, a station on a {@link GroundView.held} column is **pinned**: its ground
+ * is the held height with no fill band and a floor at that same height, so the
+ * envelope passes through it exactly and the descent is graded past it — a
+ * cutting only where the road may cut. Pins are read at the centreline
+ * station, as the profile's ground is. Staged under the Run's law 5: landed
+ * `false`; flipped in its own unit with every moved baseline attributed.
+ */
+export const ROUTE_PINS_HELD_GROUND = false;
 /** Extra cost for a 90° change of heading; a 45° kink costs half of it. */
 export const ROAD_TURN_COST = 6;
 /** Longest straight a smoothing pass will pull, in cells. */
@@ -738,6 +765,11 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
     const sectionReach = carriagewaySpans(width).outer + 1;
     // W1's counter, reported as `LOAM-T239` below.
     const bites = { clamped: 0, worst: 0 };
+    // {@link ROUTE_PINS_HELD_GROUND}: a station on a held column is pinned at
+    // the held height — no band above it, a floor at it — so the grader's
+    // envelope passes through it rather than cutting under it.
+    const held = ROUTE_PINS_HELD_GROUND ? view.held : undefined;
+    const pinned = (p: { x: number; z: number }): boolean => held !== undefined && held[at(p)] === 1;
     const levels = arcLevels(
       frame,
       gradeProfile(
@@ -746,11 +778,14 @@ export function buildRoadNetwork(input: RoadNetworkInput): RoadNetworkResult {
         // before it.
         frame.stations.map((p) => view.ground[at(p)] as number),
         plan.seaLevel,
-        frame.stations.map((p) => (paved[at(p)] === 1 ? 0 : ROAD_FILL_BAND)),
+        frame.stations.map((p) => (paved[at(p)] === 1 || pinned(p) ? 0 : ROAD_FILL_BAND)),
         // A deck clears the water it spans; a shore cell keeps the rim of the
-        // water beside it. {@link routeFloorAt}.
+        // water beside it. {@link routeFloorAt}. A pinned station's floor is
+        // its own held height.
         frame.stations.map((p) =>
-          routeFloorAt(view, water, at(p), plan.seaLevel, true, sectionReach, bites),
+          pinned(p)
+            ? (view.ground[at(p)] as number)
+            : routeFloorAt(view, water, at(p), plan.seaLevel, true, sectionReach, bites),
         ),
       ),
     );
