@@ -7,34 +7,31 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 13 (E1 run and decided) is committed.
-- **Next unit:** unit 14 — **F1/T110, the compiler bug the gates keep
-  exposing**: `LOAM-T110 UNSTABLE_FLUID` refused the emit of five
-  documents across the Run (railway_town in the before-sample; the E1
-  arms' modules-1 metropolis and redwood, core-3, modules-2). Probe first:
-  compile each refused document, read the physics lint's witnesses (the
-  water columns and their y), and attribute each to the terrain verb or
-  structure that left water above its floor (a carved inlet's rim, a
-  canal's bank, a caldera's lip — the lint's own `fix` names the classes);
-  find the shared mechanism; fix code-first under law 5 (switch, fourteen
-  payload shas, FULL suite) or write it up if it is a subsystem. Then F10,
-  F4, F14, F17; then §10.5 probe prompts and the remaining verdict
-  stations (G1 needs each golden prompt read 3-of-3 at the final bytes —
-  the E1 kit repeats are three fresh rolls at the current kit bytes and
-  serve that reading once the compiler settles).
-- **Last commit:** edaf5e4 (unit 12). Convention: this line names the
+- **In flight:** nothing — unit 14 (F1/T110 attributed; two switches landed
+  off) is committed.
+- **Next unit:** unit 15 — flip `OCEAN_FILL_CONTINUES`
+  (`packages/stdlib/src/classify/index.ts`) and `POOL_NEVER_LOWERS`
+  (`packages/compiler/src/terrain/columns.ts`) to true. The trial says the
+  fourteen law-5 worlds are payload-identical either way and four of the
+  five refused documents compile clean; the flip commit carries the
+  fourteen payload shas (reference `bi/u10/PAYLOADS`), the five documents'
+  T110 counts, the switch tests flipped to "ships on", the FULL suite, and
+  the four documents re-scored by the icon metric (railway_town's
+  before-sample station can then be read on a compiled world). Then F10,
+  F4, F14, F17; §10.5 probe prompts; the remaining verdict stations.
+- **Last commit:** e7dbdd4 (unit 13). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
-- **Spend:** $8.19 of the $35.00 OpenRouter cap (Run-only; log-derived,
-  D4). E1 cost $5.90 against its $6.00 budget.
+- **Spend:** $8.19 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
 - **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19, D25,
   D32.)
 - **Findings queue (law 1: bugs before anything else):**
-  - F1 — `LOAM-T110 UNSTABLE_FLUID` at emit — **now five documents**;
-    unit 14.
+  - F1 — `LOAM-T110 UNSTABLE_FLUID`: **attributed** to three mechanisms
+    (`docs/decks/anchors/T110-2026-08-25.md`); two fixed behind switches
+    (F-A the ocean fill past a `never` column, F-B a second pool lowering
+    the first — four of five documents), one a subsystem (a terrace pad
+    graded into a lake — proposal P4). Flip is unit 15.
   - F2 — anchors at HEAD: all four attributed (units 4, 8).
-  - F3 — metropolis authoring regression, lost 3-of-3; E1 shows no arm
-    brings the skeleton field back — E2 (the machinery that asks for a
-    program) is where it went.
+  - F3 — metropolis authoring regression, lost 3-of-3; E2.
   - F4 — `LOAM-I512` "ruined shells" vs intact boxes — street-level probe.
   - F5, F6, F7, F11, F12, F13 — fixed (units 5–10).
   - F8 — `frontageLots` drops (~70 % starvation → F10, ~30 % geometry → P1).
@@ -46,10 +43,7 @@ running state. The NOW block is rewritten at the end of every turn.
   - F15 — the icon metric's before-sample alarms (horse/citadel dominance,
     the redwoods' measure, the farm town's hull density).
   - F16 — the kit's core is 88 % of the kit; a smaller kit is a prose job.
-  - F17 — **the walled city's keep is authored in only 1 of 3 kit rolls**
-    (E1 kit repeats: absent, present-dominant, absent) — T1/T4 icon noise
-    on the shipped kit at authoring; a kit-teaching item (E1 says fences,
-    not rules, are where such things land) and a G1 risk.
+  - F17 — the walled city's keep authored in 1 of 3 kit rolls; kit-teaching.
 ## DECISIONS
 
 (every fork taken: the reversible default chosen, why, and how to undo it)
@@ -258,6 +252,14 @@ running state. The NOW block is rewritten at the end of every turn.
   the README's twenty — with one transient `OpenRouter fetch failed` on
   modules-3 resumed by the harness's own record cache (three prompts
   re-authored, ~$0.20, inside the $6 budget). Undo: n/a.
+- **D34 (unit 14):** T110's three mechanisms are separated and treated by
+  size: the two input-side bugs (the ocean fill stopping at a flooded
+  `never` column; a second pool lowering the first) are staged switches,
+  each a few lines, each with its own doc comment and the fill's fix
+  pinned on a synthetic field; the consumer-side case (a pad graded into
+  a lake) is a ground-contract subsystem — no wet-neighbour constraint
+  exists anywhere — and goes to proposal P4 rather than a patch that would
+  argue with the election's water floor. Undo: delete the constants.
 
 ## SPEND
 
@@ -276,6 +278,7 @@ running state. The NOW block is rewritten at the end of every turn.
 | 11 | the icon metric — in-process compiles only | 0.00 | 2.29 |
 | 12 | the E1 arms — the kit split, harness flags, dry runs only | 0.00 | 2.29 |
 | 13 | E1: 9 authoring passes (3 arms × 3 repeats) + one resumed pass; compiles free | 5.90 | 8.19 |
+| 14 | T110 attributed — probe, two switches off, trials, the FULL suite | 0.00 | 8.19 |
 
 ## VERDICTS
 
@@ -304,6 +307,13 @@ running state. The NOW block is rewritten at the end of every turn.
   9 lots, 665 free columns, nothing built). SITE-PLAN §4.2 keeps rectangular
   axis-aligned buildings "for v0"; the grammar takes a rectangle. Seating
   at the street's yaw is a grammar-facing change of more than a day.
+- **P4 — a wet-neighbour constraint in the ground contract** (unit 14). A
+  pad or platform whose ground claim would lower a column beside standing
+  water below that water's surface is refused or raised to it — the rule
+  `waterFloor` already states for the election, applied at the ground
+  claim. Today `mostlyWater` is a majority vote, an omitted fluid means
+  dry, and a `basin water:true` lake beside a stepped quarter drains into
+  a terrace pad (396 unstable blocks on the E1 modules-2 metropolis).
 - **P3 — blocks in a 45° city cell as diamonds, not chords** (unit 8). A
   `grid` pitch rotated with its boulevard (`orientationOf`) makes every
   block an axis-aligned chord of a diamond: median block 143–198 columns
@@ -512,3 +522,18 @@ running state. The NOW block is rewritten at the end of every turn.
   (9 run directories with `icon-metric.json`), `icon-metric.mjs`,
   `docs/decks/e1/E1-VERDICT.md`. Tests: `icon-metric.test.ts 7 passed`;
   no compiler code changed. Spend $5.90.
+- **unit 14 — T110 attributed, two switches landed off (2026-08-25):** the
+  five refused documents compiled with `--allow-unstable` and traced pass
+  by pass (opus-5-medium, verbatim in `docs/decks/anchors/T110-2026-08-25.md`):
+  F-A the ocean fill's `never` repair never continuing outward (three
+  documents), F-B a second pool overwriting the first downward (the
+  railway town), #5 a terrace pad draining a lake (a subsystem, P4).
+  `OCEAN_FILL_CONTINUES` (with a test-exercisable option) and
+  `POOL_NEVER_LOWERS` landed off, pinned by
+  `fluid-stability-fixes.test.ts` (5 tests, the fix shown on a 7 × 7
+  field); fourteen of fourteen worlds payload-identical off — and on
+  (trial): four of five documents compile clean, #5 keeps 396. Tests: FULL
+  suite COUNTS `Test Files 341 passed | 1 skipped (342)`, `Tests 5664 passed
+  | 31 skipped (5695)`. Files: `stdlib/classify/index.ts`,
+  `terrain/columns.ts`, the test, the record. Subagent: 1 (opus-5-medium).
+  Spend $0.

@@ -102,11 +102,30 @@ export interface OceanMask {
  * blocked column adjacent to water is flooded regardless, to a fixed point, and
  * counted — `never` is honoured exactly as far as physics allows.
  */
+/**
+ * **The ocean fill continues past a flooded `never` column it had to flood.**
+ *
+ * Off — `false` is today's bytes — the fixed-point repair floods a blocked
+ * column that borders water and stops there: it never runs the ordinary fill
+ * outward from that column, so an *unblocked* below-sea column on its far side
+ * stays dry against the sea, with the sea's surface one block above its
+ * ground — exactly the exposed face `LOAM-T110 UNSTABLE_FLUID` refuses the
+ * emit for. Measured 2026-08-25 (`scratchpad/t110/T110-PROBE.md`): three of
+ * the Stocktake Run's five refused documents, each with a `flooded: "never"`
+ * carve at the shore. On, a repaired column joins the same queue the fill
+ * uses, and the fill drains from it under the same rules (blocked columns
+ * still refuse). A world with no `noFlood` mask is byte-identical either way.
+ * Staged under the Run's law 5: landed `false`; flipped in its own commit.
+ */
+export const OCEAN_FILL_CONTINUES = false;
+
 export function computeOceanMask(
   field: HeightField,
   seaLevel: number,
   noFlood?: Uint8Array,
+  options?: { readonly continuePastNoFlood?: boolean },
 ): OceanMask {
+  const continuePast = options?.continuePastNoFlood ?? OCEAN_FILL_CONTINUES;
   const { width, depth } = field.region;
   const v = field.values;
   const n = width * depth;
@@ -131,15 +150,18 @@ export function computeOceanMask(
     push(j * width);
     push(j * width + width - 1);
   }
-  while (head < tail) {
-    const idx = queue[head++] as number;
-    const i = idx % width;
-    const j = (idx - i) / width;
-    if (i > 0) push(idx - 1);
-    if (i < width - 1) push(idx + 1);
-    if (j > 0) push(idx - width);
-    if (j < depth - 1) push(idx + width);
-  }
+  const drain = (): void => {
+    while (head < tail) {
+      const idx = queue[head++] as number;
+      const i = idx % width;
+      const j = (idx - i) / width;
+      if (i > 0) push(idx - 1);
+      if (i < width - 1) push(idx + 1);
+      if (j > 0) push(idx - width);
+      if (j < depth - 1) push(idx + width);
+    }
+  };
+  drain();
 
   // Fixed-point repair: a blocked column that borders water must flood too.
   let overriddenNoFlood = 0;
@@ -160,6 +182,12 @@ export function computeOceanMask(
         mask[idx] = 1;
         overriddenNoFlood++;
         changed = true;
+        // See {@link OCEAN_FILL_CONTINUES}: the sea that had to cross this
+        // column keeps going, under the fill's own rules.
+        if (continuePast) {
+          queue[tail++] = idx;
+          drain();
+        }
       }
     }
   }

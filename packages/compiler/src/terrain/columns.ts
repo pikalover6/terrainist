@@ -753,6 +753,9 @@ export function settleFluidPool(
   let filled = 0;
   for (const idx of columns) {
     if (idx < 0 || idx >= inPool.length || inPool[idx] === 0) continue;
+    // See {@link POOL_NEVER_LOWERS}: a column already under a higher pool of
+    // the same fluid keeps that surface; a second pool may only raise it.
+    if (POOL_NEVER_LOWERS && fluidKind[idx] === kind && (fluidTop[idx] as number) > level) continue;
     fluidKind[idx] = kind;
     fluidTop[idx] = level;
     plan.snow[idx] = 0;
@@ -786,3 +789,18 @@ export function stoneBandState(
   const p = (DEEPSLATE_BAND_HIGH - y) / span;
   return hash3i(stoneSeed, x, y, z, 5) / 4294967296 < p ? states.deepslate : states.stone;
 }
+
+/**
+ * **A second pool never lowers the first.**
+ *
+ * Off — `false` is today's bytes — `settleFluidPool` writes every column of a
+ * pool to the pool's level unconditionally, so where two pools overlap (the
+ * railway town: a `basin` at y 54 over the demoted pond of a sealess `river` at
+ * y 51) the one settled second overwrites the first *downward*, and every
+ * neighbour still at the higher surface has an exposed face — 71 blocks of
+ * `LOAM-T110 UNSTABLE_FLUID` (`scratchpad/t110/T110-PROBE.md`, 2026-08-25).
+ * On, a column already holding the same fluid above the new level keeps its
+ * surface. Pools that do not overlap are byte-identical. Staged under the
+ * Run's law 5: landed `false`; flipped in its own commit.
+ */
+export const POOL_NEVER_LOWERS = false;
