@@ -94,6 +94,8 @@ Chronological project memory lives in `.claude/memory/cell-1.md` …
 cell 4 outgrows its budget, distill its older half into cell 3, and so on up.
 A ratified decision moves *up* the funnel when its cell compresses — it may
 shrink, never silently vanish. The user-facing log page is **rendered, never
-hand-written**: `node tools/session-log/render.mjs --out <html>`, republished
+hand-written**: `node tools/session-log/render.mjs --out <html> --transcript
+<this session's jsonl>` (pin it — parallel sessions share the project
+directory and the renderer's default picks the newest transcript), republished
 to the standing artifact at every pause that gives Kai a summary:
 https://claude.ai/code/artifact/7c312d44-f26b-4108-b98b-127a1a12cdab
