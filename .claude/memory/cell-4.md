@@ -55,34 +55,33 @@ contracts teaching. The campaign window (caps) is Kai's to design.
 **Perf ladder CLOSED** — see cell 3 (troy 5.0→3.9 s, byte-identical ×3
 docs; profile flat; program cost = non-goal; #27 = correctness only).
 
-**kit-fix A0 + cluster 1 LANDED 85420f7:** golden pass = $0.64 / ~20 min
-(kit = latency); T118 2→0, diagnostics 4→0, tokens −26 %; the deleted
-"fraction" sentence was the scatter.program rule misfiled (taught the
-split with a fence); radiusBlocks/radiusFraction rename filed for WS-F.
-Cluster 2 LANDED 2c77126 (root union; terrain §7b bespoke tier fenced).
-**NOISE FLOOR MEASURED** (3×3 at frozen kit, $0.31): archetype SET only
-35 % stable at temp 0 → one-sample vocabulary deltas < ~4 are re-rolls;
-parroting metric floor 7.7 pts; stable at n=1: node count, formPacks,
-generators, edit-tied diagnostics. score.mjs prints `within noise`.
-Cluster 1–2 archetype deltas WITHDRAWN. Menus step 4 (CLI seam, flag
-OFF) LANDED b638439; Kai bought the complete ~$1.00 ON/OFF pair at the
-FROZEN kit 58e7d2e0 (menu-on + after-root-union filled to 11); "six
-packs at zero" = two bugs (author retrieval + pre-pass classification,
-intent-prepass.ts next).
-**MENU MEASURED ($1.29, 136020e):** reach does NOT move at n=1 (62→64
-within noise; packs 7→7); floor-proof signal = pack-member uses 5→16, 15
-classical (the one fenced pack), 3 corpus-firsts; five prompts wrote the
-familiar generic id over the handed pack id → **retrieval necessary, not
-sufficient; the fenced example supplies the binding** (A3 input: teach
-preference, not more ids). params.archetype vanished under the menu
-(kit :1464 forbids it; compiler made it canonical in fabric v2); envelope
-parroting +9 pts. Flag stays OFF; Kai: re-measure after cluster 3 (the
-honest test). Cluster 3 staged: 2 false sentences + 18 examples gain
-params.archetype; 3 examples build the WRONG thing today (harbour_light→
-watchtower, the_long_house→cottage, assay_office→smithy) — reach-is-
-retrieval with names; verified 3×3 vs noise-1..3. Menus design ratified by Kai: two
-tiers (named packs whole, era-affine round-robin), ~60 entries/2.1k
-tokens, statuses=[implemented], empty menu ⇒ no message.
+**KIT LADDER (session kit-fix) + MENUS (session menus), all committed:**
+A0 golden prompts 85420f7 (11 prompts, $0.64/~20 min per pass — the kit
+is the latency); cluster 1 (units: T118 2→0; the deleted "fraction"
+sentence was the scatter.program rule misfiled — taught the split);
+cluster 2 2c77126 (root union; terrain §7b bespoke tier fenced);
+**NOISE FLOOR** ($0.31, 3×3 at fixed bytes): archetype SET only 35 %
+stable at temp 0 → one-sample vocabulary deltas < ~4 are re-rolls,
+parroting floor 7.7 pts; score.mjs prints `within noise`; cluster 1–2
+archetype deltas withdrawn. **Menu measured** ($1.29, 136020e): reach
+does NOT move (62→64 within noise, packs 7→7); floor-proof signal =
+pack-member uses 5→16, 15 classical (the one fenced pack), 3 corpus-
+firsts; five prompts wrote the familiar generic id over the handed pack
+id → **retrieval necessary, not sufficient; the fenced example supplies
+the binding** (A3 input: teach preference). Flag OFF. Under the menu
+params.archetype vanished (kit :1464 forbade it; compiler canonical
+since fabric v2). **Cluster 3 0e17fd0 = first floor-clearing claim**
+(3×3): explicit archetypes troy [0,0,0]→[2,3,3], walled [0,0,0]→[3,5,3],
+fjord control flat; 3 fences had built the WRONG thing (harbour_light→
+watchtower vs lighthouse; the_long_house→cottage vs longhouse;
+assay_office→smithy). Re-measure of the menu redesigned: ON 3×3 on
+troy+walled(+fjord) vs c3-after triplicate, ~$0.31, Kai's go pending.
+**Region scope** (consult 82216ce): two-place prompts empty world scope
+BY INSTRUCTION (one region_<place> token each, hand-off in prose nobody
+structural reads) — a prompt class the menu and A3 are blind to; Kai:
+DEFERRED to Wave 2b/A3 (B staged behind A). Harness wrinkle: resume
+skips failed records (fix scheduled). radiusBlocks/radiusFraction rename
+→ WS-F.
 
 **Parked troy queue (not cancelled):** flight object native-first
 (junction cliffs customer #1; stairs = architecture for real drops, never
