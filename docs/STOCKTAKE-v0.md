@@ -130,6 +130,19 @@ Seed findings already in hand:
   and 4 both had their "before" by luck. Remaining Phase-1 clusters: 5
   (vocabulary contradictions + the two farm-example defects) and 6
   (semantics); Kai's pick.
+- **Cluster 5 LANDED (vocabulary):** the finding with live consequences —
+  `cost.ts:309` makes **surface the default `distance` measure** and the
+  kit taught centre-to-centre, so every spacing number in every document
+  meant something else by half an envelope (18 blocks on a cathedral-hall
+  pair); audit C18's "contradiction" was the set-piece passage being right.
+  Also: `renaissance` is the era class and `early_modern` its alias;
+  `station` → train_station; `intent.climate.biome` is legal in both
+  profiles; basement accepts 0/false; one conditional `seat` default; the
+  farm example's `face: "any"` and `drape` gone — its two advisory
+  diagnostics on every copy are now zero (deterministic), and alien_farm's
+  output went [T204, W407] → [T204]. Cluster 6 (semantics) next, which
+  also touches the conform consult (C19's "every building needs a
+  terrain_conform" is part of why buildings carry a conform they lose).
 - **Wave 2b RULED (Kai, 2026-08-24): B1 now, B2 next wave** — see
   docs/STOCKTAKE-WAVE-2B-v0.md. kit-fix's queue after Phase 1: B1 (fence
   the civic set-piece + name the acropolis class, 3×3 on troy, ~$0.35) and
