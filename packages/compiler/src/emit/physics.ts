@@ -429,7 +429,8 @@ export async function lintWorldPhysics(
             }
           } else if (name === "torch" || name === "soul_torch" || name === "redstone_torch") {
             if (!solidAt(x, y - 1, z)) add("unsupported.torch", x, y, z, "no solid block below");
-          } else if (name.endsWith("lantern")) {
+          } else if (name.endsWith("lantern") && name !== "sea_lantern") {
+            // `sea_lantern` is a full cube, not a lamp (Stocktake unit 27, F14).
             const hanging = props["hanging"] === "true";
             const ok = hanging ? !airAt(x, y + 1, z) : !airAt(x, y - 1, z);
             if (!ok) {
@@ -495,8 +496,15 @@ export async function lintWorldPhysics(
             const anchored: string[] = [];
             for (const [face, ox, oy, oz] of MULTIFACE_STEP) {
               if (props[face] !== "true") continue;
-              if (face === "up" || face === "down") continue;
-              if (solidAt(x + ox, y + oy, z + oz) || carried?.[face] === "true") {
+              // `up` is judged below, against the ceiling. `down` is a face
+              // like the four sides — glow lichen and sculk veins grow on a
+              // floor, and `MultifaceBlock.canAttachTo` asks only that the
+              // block on that face be sturdy. Until the Stocktake Run's unit
+              // 27 this clause skipped `down` too, and every floor lichen
+              // `decorate.ts` lays on grass was a finding: 13,181 of the
+              // 13,624 findings on the thirteen anchors (F14).
+              if (face === "up") continue;
+              if (solidAt(x + ox, y + oy, z + oz) || (face !== "down" && carried?.[face] === "true")) {
                 anchored.push(face);
               }
             }

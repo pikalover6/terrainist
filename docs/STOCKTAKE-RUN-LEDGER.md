@@ -7,21 +7,19 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 26 (F4 probed: nothing in the k1
-  metropolis can ruin; F22 opened, P6 proposed, I512 says its denominator)
+- **In flight:** nothing — unit 27 (F14 probed: the physics lint's two
+  false positives fixed, baselines re-pinned, the real remainder ranked)
   is committed.
-- **Next unit:** unit 27 — **F14, the physics unit**: the pre-existing
-  physics findings on shipped worlds. Probe first on the thirteen worlds in
-  `bi/u26`: the physics lint's own numbers per world (`unstableFluidBlocks`,
-  `floatingTrees` in `stats`; the fluid validator's diagnostics; floating
-  slabs / unsupported blocks by a bespoke reader if the lint has none),
-  ranked; then the one cause with the most blocks behind it, fixed behind
-  a switch (law 5) or written up. Then F17 (the keep authored 1-of-3 —
-  kit-teaching, the harness gates it), census 1.21 (wire `stats.ground`),
-  P5/P6 if a cheap first step exists; §10.5 probe prompts (~40 % of the
-  spend still unspent); the remaining verdict stations, G2's named worlds,
-  the final deck and closing report.
-- **Last commit:** fe91197 (unit 25). Convention: this line names the
+- **Next unit:** unit 28 — **F23, the real physics remainder**: {REST}.
+  Probe the largest class first (the metropolis's wall posts on air —
+  `andesite_wall` ×22, `polished_deepslate_wall` ×17 — with a bespoke
+  reader at the finding coordinates: what stands under them, which
+  emitter laid them), fix behind a switch (law 5) or write up. Then F17
+  (the keep authored 1-of-3 — kit-teaching), census 1.21 (wire
+  `stats.ground`), P5/P6 first steps if cheap; §10.5 probe prompts
+  (~40 % of the spend unspent); the remaining verdict stations, G2's
+  named worlds, the final deck and closing report.
+- **Last commit:** 142f839 (unit 26). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
 - **Spend:** $8.19 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
 - **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19, D25,
@@ -38,8 +36,12 @@ running state. The NOW block is rewritten at the end of every turn.
   - F10 — closed (unit 21): the 24 % was F20; retried with the pins, the
     flag moves four documents, gains on the fixtures and the walled city's
     church, and takes montfort's orchard (F21) — kept off, Kai's veto open.
-  - F14 — pre-existing physics findings on shipped worlds; one physics
-    unit, probe first.
+  - F14 — closed (unit 27): 13,624 lint findings on the thirteen were
+    97 % two instrument false positives (floor lichen; `sea_lantern` read
+    as a lamp), fixed; the real remainder is F23.
+  - F23 — **the physics lint's real remainder on the thirteen**: {REST}
+    (`F14-PHYSICS-2026-08-25.md` §D). Small, concrete, one class at a
+    time.
   - F15 — the icon metric's before-sample alarms (horse/citadel dominance,
     the redwoods' measure, the farm town's hull density; the rail gantry).
   - F16 — the kit's core is 88 % of the kit; a smaller kit is a prose job.
@@ -444,6 +446,20 @@ running state. The NOW block is rewritten at the end of every turn.
   extending the roll without it would add sixty-six warnings and no ruins.
   The report-only I512 denominator lands now so the note stops reading as
   a ruin share. Undo: n/a.
+- **D62 (unit 27):** law 7 applied to the physics lint itself: 13,181
+  of its 13,624 findings on the thirteen anchors were floor lichen the
+  `unsupported.multiface` rule could not anchor because it skipped the
+  `down` face (vanilla's `MultifaceBlock.canAttachTo` accepts any sturdy
+  face), and ~350 more were `sea_lantern` — a full cube — read as a lamp by
+  two `endsWith("lantern")` tests. Both fixed in the instrument, not the
+  worlds; the worlds are payload-identical. The committed ground-probe
+  baselines move with the rule ({FIX}) and are re-pinned with the same tool
+  that wrote them. Undo: revert the two rules and the baselines together.
+- **D63 (unit 27):** the walking agent's own `endsWith("lantern")` skip
+  (`physics.ts` ≈ 1318) is left as it is: it decides what the agent walks
+  through, not what is reported, and changing it could move walk findings
+  on every world — its own attribution, if it matters. Noted in the
+  record. Undo: n/a.
 
 ## SPEND
 
@@ -475,6 +491,7 @@ running state. The NOW block is rewritten at the end of every turn.
 | 24 | D3 probed — thirteen in-process compiles, one bi14 run, the FULL suite | 0.00 | 8.19 |
 | 25 | F21 probed — two top-block maps, one bi14 run, the FULL suite | 0.00 | 8.19 |
 | 26 | F4 probed — one dist-patched compile, one bi14 run, the FULL suite | 0.00 | 8.19 |
+| 27 | F14 probed — two lint passes over the thirteen, three baseline re-pins, one bi14 run, the FULL suite | 0.00 | 8.19 |
 
 ## VERDICTS
 
@@ -919,3 +936,16 @@ running state. The NOW block is rewritten at the end of every turn.
   lots outside the roll (report-only). The thirteen: all thirteen payload-identical to unit 25. Tests: FULL
   suite COUNTS Test Files 346 passed | 1 skipped (347), Tests 5678 passed | 31 skipped (5709). Files: `layout/district.ts`, the record, the
   census. Spend $0.
+- **unit 27 — F14 probed: the lint's false positives, and the real
+  remainder (2026-08-25):** `docs/decks/anchors/F14-PHYSICS-2026-08-25.md`.
+  `lintWorldPhysics` over the thirteen worlds (`scratchpad/f14/`): 13,624
+  findings, 13,181 `unsupported.multiface` on `glow_lichen` laid on grass
+  with `down: true` (a legal floor attachment the rule could not anchor),
+  ~350 `unsupported.lantern`/`chain` on `sea_lantern` (a full cube read as
+  a lamp). Fixed: the multiface rule anchors on `down` (`emit/physics.ts`),
+  `sea_lantern` excluded from the lantern rule and from `support.ts`'s
+  `NEEDS_GROUND` and `supportDirection` (`stdlib`); `test/support-sea-
+  lantern.test.ts` (2). Baselines re-pinned: hellenist floaters 88 → 10, pirates 12,454 → 8, troy 14 → 14, every other section identical. After the fix, the
+  thirteen carry 108 findings, 90 of them `unsupported.chain` — wall and fence posts whose support never reaches ground (the metropolis 46: `andesite_wall` 22, `polished_deepslate_wall` 17; troy 31: `acacia_fence` 16, `sandstone_wall` 4; the walled city 4; Hellenist `prismarine_wall` 7) — plus 5 isolated floaters, 5 lanterns, 4 ladders, 3 stairs, 1 dripstone — F23. The thirteen: all thirteen payload-identical to unit 26. Tests: FULL suite
+  COUNTS Test Files 347 passed | 1 skipped (348), Tests 5680 passed | 31 skipped (5711). Files: `physics.ts`, `support.ts`, the stdlib test,
+  three baselines, the record. Spend $0.

@@ -724,11 +724,11 @@
     ]
   },
   "floaters": {
-    "total": 12454,
+    "total": 8,
     "byRule": [
       {
         "rule": "unsupported.chain",
-        "n": 7,
+        "n": 6,
         "witnesses": [
           {
             "x": -224,
@@ -765,18 +765,12 @@
             "y": 92,
             "z": 84,
             "block": "potted_azure_bluet"
-          },
-          {
-            "x": 195,
-            "y": 105,
-            "z": 217,
-            "block": "sea_lantern"
           }
         ]
       },
       {
         "rule": "unsupported.lantern",
-        "n": 3,
+        "n": 2,
         "witnesses": [
           {
             "x": -218,
@@ -789,12 +783,6 @@
             "y": 94,
             "z": -130,
             "block": "lantern[waterlogged=false,hanging=false]"
-          },
-          {
-            "x": 195,
-            "y": 105,
-            "z": 217,
-            "block": "sea_lantern"
           }
         ]
       },
@@ -805,69 +793,8 @@
       },
       {
         "rule": "unsupported.multiface",
-        "n": 12444,
-        "witnesses": [
-          {
-            "x": 37,
-            "y": 91,
-            "z": 156,
-            "block": "glow_lichen[west=false,waterlogged=false,up=false,south=false,north=false,east=false,down=true]"
-          },
-          {
-            "x": 38,
-            "y": 91,
-            "z": 156,
-            "block": "glow_lichen[west=false,waterlogged=false,up=false,south=false,north=false,east=false,down=true]"
-          },
-          {
-            "x": 38,
-            "y": 91,
-            "z": 157,
-            "block": "glow_lichen[west=false,waterlogged=false,up=false,south=false,north=false,east=false,down=true]"
-          },
-          {
-            "x": 38,
-            "y": 91,
-            "z": 158,
-            "block": "glow_lichen[west=false,waterlogged=false,up=false,south=false,north=false,east=false,down=true]"
-          },
-          {
-            "x": 39,
-            "y": 91,
-            "z": 156,
-            "block": "glow_lichen[west=false,waterlogged=false,up=false,south=false,north=false,east=false,down=true]"
-          },
-          {
-            "x": 39,
-            "y": 91,
-            "z": 158,
-            "block": "glow_lichen[west=false,waterlogged=false,up=false,south=false,north=false,east=false,down=true]"
-          },
-          {
-            "x": 39,
-            "y": 91,
-            "z": 159,
-            "block": "glow_lichen[west=false,waterlogged=false,up=false,south=false,north=false,east=false,down=true]"
-          },
-          {
-            "x": 39,
-            "y": 91,
-            "z": 160,
-            "block": "glow_lichen[west=false,waterlogged=false,up=false,south=false,north=false,east=false,down=true]"
-          },
-          {
-            "x": 40,
-            "y": 91,
-            "z": 158,
-            "block": "glow_lichen[west=false,waterlogged=false,up=false,south=false,north=false,east=false,down=true]"
-          },
-          {
-            "x": 40,
-            "y": 91,
-            "z": 159,
-            "block": "glow_lichen[west=false,waterlogged=false,up=false,south=false,north=false,east=false,down=true]"
-          }
-        ]
+        "n": 0,
+        "witnesses": []
       },
       {
         "rule": "floating.stair",

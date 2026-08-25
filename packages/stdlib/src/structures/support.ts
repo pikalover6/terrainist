@@ -35,7 +35,7 @@
  * the reason.
  */
 export const NEEDS_GROUND =
-  /(_fence|_wall|_fence_gate|_carpet|_pressure_plate|_sign|torch|campfire|lantern)$/;
+  /(_fence|_wall|_fence_gate|_carpet|_pressure_plate|_sign|torch|campfire|(?<!sea_)lantern)$/;
 
 /** True for a block that stands on the one below it. */
 export function needsGround(name: string): boolean {
@@ -116,6 +116,10 @@ export function supportDirection(
     if (face === "ceiling") return "above";
     return "behind";
   }
+  // `sea_lantern` ends in "lantern" and is a full cube that needs nothing —
+  // read as a hanging lamp it was 350 of the thirteen anchors' physics
+  // findings (Stocktake unit 27, F14).
+  if (name === "sea_lantern") return null;
   if (name.endsWith("lantern")) return props?.["hanging"] === "true" ? "above" : "below";
   if (name === "chain") return props?.["axis"] === "y" || props === undefined ? "above" : null;
   if (name.endsWith("_hanging_sign")) return "above";

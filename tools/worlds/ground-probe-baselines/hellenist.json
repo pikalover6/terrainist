@@ -728,139 +728,60 @@
     ]
   },
   "floaters": {
-    "total": 88,
+    "total": 10,
     "byRule": [
       {
         "rule": "unsupported.chain",
-        "n": 54,
+        "n": 7,
         "witnesses": [
           {
-            "x": -79,
-            "y": 54,
-            "z": -94,
-            "block": "sea_lantern"
+            "x": 32,
+            "y": 101,
+            "z": -89,
+            "block": "prismarine_wall[west=none,waterlogged=false,up=true,south=low,north=none,east=none]"
           },
           {
-            "x": -79,
-            "y": 55,
-            "z": -93,
-            "block": "sea_lantern"
+            "x": 68,
+            "y": 98,
+            "z": -88,
+            "block": "prismarine_wall[west=none,waterlogged=false,up=true,south=none,north=low,east=none]"
           },
           {
-            "x": -78,
-            "y": 57,
-            "z": -92,
-            "block": "sea_lantern"
+            "x": 70,
+            "y": 72,
+            "z": -97,
+            "block": "prismarine_wall[west=none,waterlogged=false,up=true,south=none,north=none,east=none]"
           },
           {
-            "x": -77,
-            "y": 52,
-            "z": -95,
-            "block": "sea_lantern"
+            "x": 71,
+            "y": 87,
+            "z": -74,
+            "block": "prismarine_wall[west=none,waterlogged=false,up=true,south=none,north=low,east=none]"
           },
           {
-            "x": -77,
-            "y": 53,
-            "z": -94,
-            "block": "sea_lantern"
+            "x": 72,
+            "y": 74,
+            "z": -96,
+            "block": "prismarine_wall[west=none,waterlogged=false,up=true,south=none,north=none,east=none]"
           },
           {
-            "x": -76,
-            "y": 56,
-            "z": -101,
-            "block": "sea_lantern"
+            "x": 74,
+            "y": 77,
+            "z": -96,
+            "block": "prismarine_wall[west=none,waterlogged=false,up=true,south=none,north=low,east=none]"
           },
           {
-            "x": -75,
-            "y": 52,
-            "z": -91,
-            "block": "sea_lantern"
-          },
-          {
-            "x": -75,
-            "y": 54,
-            "z": -101,
-            "block": "sea_lantern"
-          },
-          {
-            "x": -75,
-            "y": 59,
-            "z": -99,
-            "block": "sea_lantern"
-          },
-          {
-            "x": -74,
-            "y": 60,
-            "z": -99,
-            "block": "sea_lantern"
+            "x": 75,
+            "y": 83,
+            "z": -124,
+            "block": "prismarine_wall[west=none,waterlogged=false,up=true,south=low,north=none,east=none]"
           }
         ]
       },
       {
         "rule": "unsupported.lantern",
-        "n": 31,
-        "witnesses": [
-          {
-            "x": -67,
-            "y": 69,
-            "z": -217,
-            "block": "sea_lantern"
-          },
-          {
-            "x": -67,
-            "y": 71,
-            "z": -215,
-            "block": "sea_lantern"
-          },
-          {
-            "x": -67,
-            "y": 76,
-            "z": -213,
-            "block": "sea_lantern"
-          },
-          {
-            "x": -66,
-            "y": 69,
-            "z": -218,
-            "block": "sea_lantern"
-          },
-          {
-            "x": -66,
-            "y": 78,
-            "z": -212,
-            "block": "sea_lantern"
-          },
-          {
-            "x": -64,
-            "y": 68,
-            "z": -212,
-            "block": "sea_lantern"
-          },
-          {
-            "x": -64,
-            "y": 78,
-            "z": -217,
-            "block": "sea_lantern"
-          },
-          {
-            "x": -62,
-            "y": 69,
-            "z": -222,
-            "block": "sea_lantern"
-          },
-          {
-            "x": -61,
-            "y": 70,
-            "z": -222,
-            "block": "sea_lantern"
-          },
-          {
-            "x": -60,
-            "y": 72,
-            "z": -221,
-            "block": "sea_lantern"
-          }
-        ]
+        "n": 0,
+        "witnesses": []
       },
       {
         "rule": "unsupported.ladder",
