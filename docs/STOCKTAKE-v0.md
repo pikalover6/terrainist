@@ -98,7 +98,25 @@ Seed findings already in hand:
   only); a document with that fence validates clean. **Reading key for the
   menu measurement:** it runs against a kit that forbids naming the ids the
   menu offers, so a weak result implicates the kit sentence before the
-  menu; re-measure after cluster 3 (~$0.64) is the honest test.
+  menu; re-measure after cluster 3 is the honest test.
+- **Cluster 3 LANDED — the first floor-clearing claim** (3 runs before vs
+  3 after at fixed bytes): explicit archetypes per document troy
+  [0,0,0] → [2,3,3], walled_medieval_city [0,0,0] → [3,5,3], ranges
+  disjoint; fjord_terrain [0,0,0] → [0,0,0] as the negative control. Two
+  false sentences removed; 18 fences gain `params.archetype`; **three
+  fences were building the wrong thing** (harbour_light → watchtower
+  though `lighthouse` exists; the_long_house → cottage though `longhouse`
+  exists; assay_office → smithy though `assay_office` exists) — the model
+  copies examples, so the examples taught the wrong buildings. No reach
+  claim (union 20 → 21, within noise): cluster 3 adds no ids; it unblocks
+  the menu's lever. +305 input tokens per call. Incidents (not kit-
+  attributable): one provider-side JSON truncation under concurrent load;
+  one unretryable OpenRouter error killed a run's process (records
+  survived via incremental writes). Harness wrinkle to schedule: resume
+  skips failed records too; should re-author `ok: false` by default.
+- **Region-scope ruling (Kai, 2026-08-24): DEFERRED to Wave 2b / A3** —
+  recorded as A3's design input; A/B decided when dynamic assembly is
+  designed.
 
 ## WS-B — Terrain-kit audit
 
