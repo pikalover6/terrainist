@@ -1,0 +1,17 @@
+note LOAM-T112 RIVER_PONDED at world.terrain.overgrown_river: river "overgrown_river" is connected to no sea on this map and its bed holds no fluid-stable pool, so it compiled as a dry channel
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.tech_outpost: hard "terrain_conform" constraint [1] was demoted to soft so this node could be placed
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.tech_outpost: hard "distance" constraint [0] was demoted to soft so this node could be placed
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.access_corridors: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connect
+note LOAM-W522 PROGRAM_FACE_REMEASURED at world.hideout_bunker: this landmark was placed at (147, 36), not where its facing was first measured from, so the facing was taken again from the real site: 0° becomes 270°
+note LOAM-I512 DISTRICT_RUINS at world.ruined_metropolis: decline 0.92 gives a ruin share of 0.85: 2 of 2 infill lots roll into ruined shells (light 0, heavy 0, total 2)
+warning LOAM-W483 INTENT_ARCHETYPE_UNKNOWN at world: intent.character.archetypes names 1 value no registry carries: "manor" — it is ignored
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.apex_tower_ruin: "skyscraper" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.collapsed_corp_hq: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.infill_78_-33: "apartment_block" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+warning LOAM-W511 DECAY_MODE_FALLBACK at world.ruined_metropolis.infill_93_-33: "office" has no shell decay mode — it is built by its own generator rather than the shell fit-out — so the decay was not applied at all
+note LOAM-I463 SWEEP_FEATURES_PLACED at world: face finish: 8 column(s) striped in the hill's own rock, 0 paved face(s) footed, 5 crown notch(es) closed
+note LOAM-I497 GROUND_STAGE at world: ground stage: 172 intent(s) (building.footprint 152, quarter.plane 1, road.network 4, street.network 14, street.sidewalk 1), 5 resolve(s), 21 column(s) moved, 6 transition(s) (kerb 6), 0 of them unbuilt by any pass; coverage 100 boundary pair(s) — 48 in a transi
+note LOAM-T341 PROGRAM_SEATED_PAD at world.hideout_bunker: "high_tech_bunker_core" writes the same sole on every column, so it is seated on a levelled pad rather than on the real ground
+note LOAM-T341 PROGRAM_SEATED_PAD at world.collapsed_highway: "collapsed_highway_span" writes the same sole on every column, so it is seated on a levelled pad rather than on the real ground
+note LOAM-T341 PROGRAM_SEATED_PAD at world.surveillance_relays: "surveillance_relay_mast" writes the same sole on every column, so it is seated on a levelled pad rather than on the real ground
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 64662 footprint columns (plus 29241 feathered over 40 columns) to minecraft:plains, from the ambient majority (minecraft:plains, 93% of 18480 ring columns); snow policy auto resolved to "never" on a 0/64662 vote

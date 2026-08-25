@@ -1,0 +1,894 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "pirates_vs_unicorns",
+    "worldSeed": "301",
+    "prompt": "A pirate island and a unicorn island, at war.",
+    "spawn": {
+      "at": [
+        0.5,
+        0.5
+      ]
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:dirt_path",
+      "road.shoulder": "minecraft:gravel"
+    }
+  },
+  "intent": {
+    "climate": {
+      "temperature": 0.6,
+      "humidity": 0.3,
+      "snow": "never"
+    },
+    "character": {
+      "programs": [
+        {
+          "id": "unicorn_colossus",
+          "mode": "landmark",
+          "brief": "A towering white quartz and gold statue of a rearing celestial unicorn guardian standing at the cliff edge overlooking the strait, facing the enemy shore.",
+          "envelope": [
+            24,
+            38,
+            24
+          ]
+        },
+        {
+          "id": "pirate_dreadnought_bastion",
+          "mode": "landmark",
+          "brief": "A heavily fortified coastal timber-and-darkstone redoubt with iron cannon ports and a tattered skull banner, aiming directly across the strait.",
+          "envelope": [
+            32,
+            24,
+            28
+          ]
+        },
+        {
+          "id": "shore_cannon_battery",
+          "mode": "plugin",
+          "brief": "A fortified shoreline gun battery with dark iron cannons mounted behind timber sandbag emplacements pointing across the strait.",
+          "envelope": [
+            11,
+            6,
+            9
+          ],
+          "count": 6
+        },
+        {
+          "id": "arcane_ward_crystal",
+          "mode": "plugin",
+          "brief": "A glowing amethyst and quartz crystal spire tethered by golden runic chains, providing magical warding along the coast.",
+          "envelope": [
+            7,
+            12,
+            7
+          ],
+          "count": 6
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "two distinct islands separated by open water and facing each other across a strait",
+      "event_direction": "the pirate batteries and the unicorn bastion squaring off across the water",
+      "infra": "cannon_battery along the pirate shore facing the strait; watch_towers and sea defenses along the unicorn coast",
+      "region_pirate_island": "era renaissance, wealth 0.3, decline 0.5, formality 0.15; materialTheme temperate_timber; formPacks [nautical_pirate]; prefer archetypes tavern, warehouse, watchtower, lighthouse; props galleon, cart; careened hulls, shore batteries, smuggler docks, fortified cliff redoubts",
+      "region_unicorn_island": "era medieval, wealth 0.85, decline 0.05, formality 0.75; materialTheme white_quartz; formPacks [arcane_magical]; prefer archetypes church, manor, watchtower, peripteral_temple; white stone ramparts, sacred meadows, rune circles, enchanted unicorn groves, battle towers"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "The Contested Strait",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "Open ocean with two opposing fortified islands",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 56,
+          "amplitude": 26,
+          "octaves": 5,
+          "frequency": 0.0035,
+          "gain": 0.5,
+          "erosionPasses": 2,
+          "continentalness": {
+            "frequency": 0.0016,
+            "seaFraction": 0.58
+          },
+          "cliffThreshold": 55,
+          "soilDepth": 3,
+          "beachWidth": 4,
+          "snowLineFraction": 0.95
+        },
+        "children": [
+          {
+            "id": "pirate_isle",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The rugged southwestern pirate island",
+            "params": {
+              "verb": "island",
+              "at": [
+                0.26,
+                0.74
+              ],
+              "radius": 110,
+              "height": 28,
+              "profile": "sharp",
+              "irregularity": 0.2
+            }
+          },
+          {
+            "id": "unicorn_isle",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The pristine northeastern unicorn sanctuary island",
+            "params": {
+              "verb": "island",
+              "at": [
+                0.74,
+                0.26
+              ],
+              "radius": 110,
+              "height": 30,
+              "profile": "rounded",
+              "irregularity": 0.18
+            }
+          },
+          {
+            "id": "pirate_haven_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "Building shelf for the pirate settlement",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.26,
+                0.74
+              ],
+              "radius": 75,
+              "height": 7,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "unicorn_citadel_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "Building shelf for the unicorn sanctuary citadel",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.74,
+                0.26
+              ],
+              "radius": 75,
+              "height": 7,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "pirate_forward_point",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "Forward promontory for the pirate bastion",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.36,
+                0.64
+              ],
+              "radius": 45,
+              "height": 8,
+              "profile": "sharp"
+            }
+          },
+          {
+            "id": "unicorn_forward_point",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "Forward cliff for the guardian unicorn colossus",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.64,
+                0.36
+              ],
+              "radius": 45,
+              "height": 9,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "unicorn_sacred_knoll",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "Sacred flat knoll for the standing stone circle",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.82,
+                0.18
+              ],
+              "radius": 40,
+              "height": 6,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0014,
+          "humidityFrequency": 0.0016
+        }
+      },
+      {
+        "id": "pirate_woods",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "Dark pine and weathered oak woods on the pirate island",
+        "params": {
+          "area": {
+            "at": [
+              0.18,
+              0.82
+            ],
+            "radius": 45
+          },
+          "density": 0.1,
+          "spacing": 3,
+          "clumping": 0.45,
+          "maxSlope": 34,
+          "elevation": [
+            2,
+            70
+          ],
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.35,
+            "flowers": 0.02,
+            "deadwood": 0.1
+          },
+          "species": [
+            {
+              "id": "pirate_pine",
+              "weight": 2,
+              "shape": "spruce_tall"
+            },
+            {
+              "id": "gnarled_oak",
+              "weight": 1,
+              "shape": "oak_spreading"
+            }
+          ]
+        }
+      },
+      {
+        "id": "unicorn_groves",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "Enchanted glowing groves on the unicorn island",
+        "params": {
+          "area": {
+            "at": [
+              0.82,
+              0.18
+            ],
+            "radius": 50
+          },
+          "density": 0.12,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 30,
+          "elevation": [
+            2,
+            80
+          ],
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.5,
+            "flowers": 0.2,
+            "deadwood": 0
+          },
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "arcane_crystal_spire",
+                  "shape": "crystal_spire"
+                }
+              ]
+            },
+            "floor": "glow"
+          },
+          "species": [
+            {
+              "id": "blossom_tree",
+              "weight": 3,
+              "shape": "cherry_blossom"
+            },
+            {
+              "id": "silver_birch",
+              "weight": 1,
+              "shape": "birch_slim"
+            },
+            {
+              "id": "grand_oak",
+              "weight": 1,
+              "shape": "oak_spreading"
+            }
+          ]
+        }
+      },
+      {
+        "id": "wild_scatter",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "Sparse vegetation across the region",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.015,
+          "spacing": 3,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "species": [
+            {
+              "id": "coastal_tree",
+              "weight": 1,
+              "shape": "oak_round"
+            }
+          ]
+        }
+      },
+      {
+        "id": "pirate_haven",
+        "kind": "district",
+        "label": "The fortified pirate hideout and war docks",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            110,
+            100
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.26,
+              0.74
+            ]
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6,
+            "strength": "soft"
+          }
+        ],
+        "intent": {
+          "era": "pirate",
+          "wealth": 0.5,
+          "decline": 0.5,
+          "formality": 0.15,
+          "character": {
+            "label": "Pirate Haven",
+            "materialTheme": "temperate_timber",
+            "formPacks": [
+              "nautical_pirate"
+            ],
+            "archetypes": {
+              "prefer": [
+                "tavern",
+                "warehouse",
+                "watchtower",
+                "lighthouse",
+                "armory",
+                "guard_post"
+              ],
+              "forbid": [
+                "church",
+                "cathedral",
+                "crystal_shrine",
+                "manor_house"
+              ]
+            },
+            "props": {
+              "prefer": [
+                "galleon",
+                "pier",
+                "rowboat",
+                "cart",
+                "log_pile",
+                "hitching_post"
+              ]
+            },
+            "motifs": {
+              "roofType": "shed",
+              "ornamentDensity": 0.2
+            }
+          }
+        },
+        "params": {
+          "fabric": "grown",
+          "density": "medium",
+          "mix": [
+            "tavern",
+            "warehouse",
+            "armory",
+            "guard_post",
+            "tannery",
+            "cottage"
+          ],
+          "courtyards": 0.2,
+          "walls": {
+            "style": "palisade",
+            "margin": 10,
+            "towerPitch": 36,
+            "height": 6
+          }
+        },
+        "tags": [
+          "pirate_base",
+          "faction_pirate"
+        ],
+        "children": [
+          {
+            "id": "black_flag_tavern",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "The rowdy seaside pirate tavern",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                11,
+                13
+              ]
+            },
+            "params": {
+              "archetype": "tavern",
+              "floors": 2,
+              "roof": "gable"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "north",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "tavern",
+              "landmark"
+            ]
+          },
+          {
+            "id": "corsair_armory",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "Munitions and gunpowder depot",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                11,
+                12,
+                17
+              ]
+            },
+            "params": {
+              "archetype": "armory",
+              "floors": 1,
+              "roof": "gable"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "east",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "armory"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "unicorn_citadel",
+        "kind": "district",
+        "label": "The radiant citadel of the unicorns",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            110,
+            100
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.74,
+              0.26
+            ]
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6,
+            "strength": "soft"
+          }
+        ],
+        "intent": {
+          "era": "medieval",
+          "wealth": 0.85,
+          "decline": 0.05,
+          "formality": 0.75,
+          "character": {
+            "label": "Unicorn Citadel",
+            "materialTheme": "white_quartz",
+            "formPacks": [
+              "arcane_magical"
+            ],
+            "archetypes": {
+              "prefer": [
+                "church",
+                "manor_house",
+                "watchtower",
+                "crystal_shrine",
+                "beacon_spire",
+                "cloister"
+              ],
+              "forbid": [
+                "tavern",
+                "warehouse",
+                "tannery",
+                "brewery"
+              ]
+            },
+            "props": {
+              "prefer": [
+                "fountain",
+                "standing_stones",
+                "statue_plinth",
+                "bench",
+                "portal_frame"
+              ]
+            },
+            "motifs": {
+              "roofType": "dome",
+              "ornamentDensity": 0.85
+            }
+          }
+        },
+        "params": {
+          "fabric": "radial",
+          "density": "medium",
+          "mix": [
+            "church",
+            "manor_house",
+            "crystal_shrine",
+            "beacon_spire",
+            "cloister",
+            "library"
+          ],
+          "courtyards": 0.5,
+          "walls": {
+            "style": "masonry",
+            "margin": 12,
+            "towerPitch": 32,
+            "height": 8
+          }
+        },
+        "tags": [
+          "unicorn_base",
+          "faction_unicorn"
+        ],
+        "children": [
+          {
+            "id": "crystal_sanctuary",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "The grand crystal shrine of the citadel",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                11,
+                13,
+                13
+              ]
+            },
+            "params": {
+              "archetype": "crystal_shrine",
+              "floors": 1,
+              "roof": "hip"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "crystal_shrine",
+              "landmark"
+            ]
+          },
+          {
+            "id": "celestial_manor",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "High council chamber of the unicorns",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                14,
+                17
+              ]
+            },
+            "params": {
+              "archetype": "manor_house",
+              "floors": 2,
+              "roof": "hip"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "west",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "manor_house"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "guardian_unicorn",
+        "kind": "generator",
+        "generator": "authored:unicorn_colossus",
+        "label": "Colossal rearing unicorn statue overlooking the strait",
+        "constraints": [
+          {
+            "at": [
+              0.64,
+              0.36
+            ]
+          },
+          {
+            "distance": "unicorn_citadel",
+            "min": 10,
+            "max": 85,
+            "strength": "soft"
+          }
+        ],
+        "params": {
+          "seat": "pad",
+          "face": {
+            "toward": "pirate_haven"
+          }
+        },
+        "tags": [
+          "landmark",
+          "faction_unicorn"
+        ]
+      },
+      {
+        "id": "corsair_bastion",
+        "kind": "generator",
+        "generator": "authored:pirate_dreadnought_bastion",
+        "label": "Heavy pirate coastal bastion facing the unicorns",
+        "constraints": [
+          {
+            "at": [
+              0.36,
+              0.64
+            ]
+          },
+          {
+            "distance": "pirate_haven",
+            "min": 10,
+            "max": 85,
+            "strength": "soft"
+          }
+        ],
+        "params": {
+          "seat": "pad",
+          "face": {
+            "toward": "unicorn_citadel"
+          }
+        },
+        "tags": [
+          "landmark",
+          "faction_pirate"
+        ]
+      },
+      {
+        "id": "pirate_shore_guns",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "Artillery batteries aimed at the unicorn island",
+        "params": {
+          "program": "shore_cannon_battery",
+          "count": 6,
+          "area": {
+            "at": [
+              0.36,
+              0.64
+            ],
+            "radius": 0.14
+          },
+          "spacing": 18,
+          "maxSlope": 24,
+          "face": {
+            "toward": "unicorn_citadel"
+          }
+        }
+      },
+      {
+        "id": "unicorn_coastal_wards",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "Magical defense ward crystals guarding the strait",
+        "params": {
+          "program": "arcane_ward_crystal",
+          "count": 6,
+          "area": {
+            "at": [
+              0.64,
+              0.36
+            ],
+            "radius": 0.14
+          },
+          "spacing": 18,
+          "maxSlope": 24,
+          "face": {
+            "toward": "pirate_haven"
+          }
+        }
+      },
+      {
+        "id": "pirate_pier",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "Working quay on the pirate shoreline",
+        "params": {
+          "prop": "pier",
+          "zone": "southwest",
+          "length": 16,
+          "width": 3
+        }
+      },
+      {
+        "id": "pirate_war_galleon",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "Armed galleon moored at the pirate pier",
+        "params": {
+          "prop": "galleon",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "sacred_monolith",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "Ancient unicorn stone circle",
+        "params": {
+          "prop": "standing_stones",
+          "zone": "northeast"
+        }
+      },
+      {
+        "id": "lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "Roads connecting the pirate stronghold and its forward bastion",
+        "params": {
+          "anchors": [
+            "pirate_haven",
+            "corsair_bastion"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 14
+        }
+      }
+    ]
+  },
+  "programs": {
+    "unicorn_colossus": {
+      "mode": "landmark",
+      "envelope": [
+        24,
+        38,
+        24
+      ],
+      "sourceHash": "b3:000bc6ee4b8c986d9db157c3d3c176bb2fe70e8ad9f96625944ef586076f383d",
+      "outputHash": "b3:30618d95c341bf0716874a76d135b8264ddabb2ba781e11584c86fec6c980f60",
+      "conforms": false,
+      "conformHash": "b3:aaf4cf3a8d276ab542e408753dfe50db83bbe86067b434b05e79549be6f6e926",
+      "source": "export const envelope = [24, 38, 24];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n\n  // Palette resolution from theme with radiant celestial fallbacks\n  const stonePrimary = api.theme?.stone?.primary || \"minecraft:smooth_quartz\";\n  const stoneAccent = api.theme?.stone?.accent || \"minecraft:quartz_pillar\";\n  const plinthBlock = api.theme?.ground?.plinth || \"minecraft:quartz_bricks\";\n  const revetmentBlock = api.theme?.ground?.revetment || \"minecraft:diorite\";\n  const chiseledQuartz = \"minecraft:chiseled_quartz_block\";\n  const goldBlock = \"minecraft:gold_block\";\n  const seaLantern = \"minecraft:sea_lantern\";\n  const amethyst = \"minecraft:amethyst_block\";\n\n  // Voxel storage: deterministic flat grid [W, H, D]\n  const voxels = new Array(W * H * D).fill(null);\n\n  function getIdx(x, y, z) {\n    return (x * H + y) * D + z;\n  }\n\n  function setVoxel(x, y, z, block) {\n    const ix = Math.round(x);\n    const iy = Math.round(y);\n    const iz = Math.round(z);\n    if (ix >= 0 && ix < W && iy >= 0 && iy < H && iz >= 0 && iz < D) {\n      voxels[getIdx(ix, iy, iz)] = block;\n    }\n  }\n\n  function drawSphere(cx, cy, cz, r, block) {\n    const ri = Math.ceil(r);\n    const r2 = r * r;\n    for (let x = Math.floor(cx - ri); x <= Math.ceil(cx + ri); x++) {\n      for (let y = Math.floor(cy - ri); y <= Math.ceil(cy + ri); y++) {\n        for (let z = Math.floor(cz - ri); z <= Math.ceil(cz + ri); z++) {\n          const d2 = (x - cx) ** 2 + (y - cy) ** 2 + (z - cz) ** 2;\n          if (d2 <= r2) {\n            setVoxel(x, y, z, block);\n          }\n        }\n      }\n    }\n  }\n\n  function drawEllipsoid(cx, cy, cz, rx, ry, rz, block) {\n    const minX = Math.floor(cx - rx), maxX = Math.ceil(cx + rx);\n    const minY = Math.floor(cy - ry), maxY = Math.ceil(cy + ry);\n    const minZ = Math.floor(cz - rz), maxZ = Math.ceil(cz + rz);\n    for (let x = minX; x <= maxX; x++) {\n      for (let y = minY; y <= maxY; y++) {\n        for (let z = minZ; z <= maxZ; z++) {\n          const norm = ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 + ((z - cz) / rz) ** 2;\n          if (norm <= 1.0) {\n            setVoxel(x, y, z, block);\n          }\n        }\n      }\n    }\n  }\n\n  function drawCapsule(p0, p1, r0, r1, block) {\n    const dx = p1[0] - p0[0];\n    const dy = p1[1] - p0[1];\n    const dz = p1[2] - p0[2];\n    const dist = Math.hypot(dx, dy, dz);\n    const steps = Math.max(1, Math.ceil(dist * 3.0));\n    for (let i = 0; i <= steps; i++) {\n      const t = i / steps;\n      const cx = p0[0] + dx * t;\n      const cy = p0[1] + dy * t;\n      const cz = p0[2] + dz * t;\n      const r = r0 + (r1 - r0) * t;\n      drawSphere(cx, cy, cz, r, block);\n    }\n  }\n\n  const cx = 11.5;\n  const cz = 11.5;\n\n  // --- 1. PEDESTAL & ARCANE DAIS (Y: 0 to 5) ---\n  const pedestalColumns = [];\n\n  for (let y = 0; y <= 5; y++) {\n    const tierRadius = 9.2 - y * 0.65;\n    const maxManhattan = 13.0 - y * 0.8;\n\n    for (let x = 0; x < W; x++) {\n      for (let z = 0; z < D; z++) {\n        const dx = Math.abs(x - cx);\n        const dz = Math.abs(z - cz);\n        const dist2 = dx * dx + dz * dz;\n\n        if (dist2 <= tierRadius * tierRadius && (dx + dz) <= maxManhattan) {\n          if (y === 0) {\n            pedestalColumns.push([x, z]);\n          }\n\n          let block = stonePrimary;\n\n          // Pedestal ornamentation\n          if (y === 0) {\n            block = plinthBlock;\n          } else if (y === 1) {\n            if (dist2 > (tierRadius - 1.2) ** 2) {\n              block = goldBlock;\n            } else {\n              block = stonePrimary;\n            }\n          } else if (y === 2) {\n            if (Math.abs(Math.sqrt(dist2) - 6.0) < 0.8) {\n              block = seaLantern;\n            } else if (dx <= 0.6 || dz <= 0.6) {\n              block = goldBlock;\n            } else {\n              block = stoneAccent;\n            }\n          } else if (y === 3) {\n            if (dist2 > (tierRadius - 1.0) ** 2) {\n              block = chiseledQuartz;\n            } else {\n              block = stonePrimary;\n            }\n          } else if (y === 4) {\n            if ((dx <= 0.6 && dz <= 4.5) || (dz <= 0.6 && dx <= 4.5)) {\n              block = goldBlock;\n            } else if (Math.abs(Math.sqrt(dist2) - 3.8) < 0.6) {\n              block = amethyst;\n            } else {\n              block = stonePrimary;\n            }\n          } else if (y === 5) {\n            // Arcane star center\n            if (dist2 <= 1.8 * 1.8) {\n              block = seaLantern;\n            } else if (dist2 <= 3.2 * 3.2 && (dx <= 0.6 || dz <= 0.6 || Math.abs(dx - dz) <= 0.6)) {\n              block = goldBlock;\n            } else {\n              block = stonePrimary;\n            }\n          }\n\n          setVoxel(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  // Four corner guardian pylons on the plinth\n  const pylonCorners = [\n    [5.0, 5.0],\n    [18.0, 5.0],\n    [5.0, 18.0],\n    [18.0, 18.0],\n  ];\n\n  pylonCorners.forEach(([px, pz]) => {\n    drawCapsule([px, 1, pz], [px, 5, pz], 1.2, 1.0, stoneAccent);\n    setVoxel(px, 6, pz, chiseledQuartz);\n    setVoxel(px, 7, pz, seaLantern);\n    setVoxel(px, 8, pz, goldBlock);\n  });\n\n  // --- 2. HIND LEGS & ANCHORING TAIL (Y: 5 to 15) ---\n  // Left Hind Leg\n  drawCapsule([8.5, 5, 14.5], [8.5, 6, 14.5], 1.3, 1.2, goldBlock); // Hoof\n  drawCapsule([8.5, 6, 14.5], [8.5, 10, 16.5], 1.2, 1.1, stoneAccent); // Hock\n  drawCapsule([8.5, 10, 16.5], [9.5, 14.5, 13.5], 1.3, 1.8, stonePrimary); // Thigh\n\n  // Right Hind Leg\n  drawCapsule([14.5, 5, 14.5], [14.5, 6, 14.5], 1.3, 1.2, goldBlock); // Hoof\n  drawCapsule([14.5, 6, 14.5], [14.5, 10, 16.5], 1.2, 1.1, stoneAccent); // Hock\n  drawCapsule([14.5, 10, 16.5], [13.5, 14.5, 13.5], 1.3, 1.8, stonePrimary); // Thigh\n\n  // Celestial Tail (Solid structural third pillar connected to pedestal)\n  drawCapsule([cx, 14.5, 15.5], [cx, 12.0, 18.2], 1.5, 1.6, stonePrimary);\n  drawCapsule([cx, 12.0, 18.2], [cx, 8.5, 19.5], 1.6, 1.7, amethyst);\n  drawCapsule([cx, 8.5, 19.5], [cx, 5.0, 18.0], 1.7, 1.9, stonePrimary);\n  drawCapsule([cx, 5.0, 18.0], [cx, 5.0, 15.5], 1.8, 2.0, goldBlock); // Welded to dais\n\n  // Tail luminous ribbon inlays\n  drawCapsule([cx, 13.0, 18.5], [cx, 7.5, 19.6], 0.7, 0.7, seaLantern);\n\n  // --- 3. REARING TORSO & CHEST (Y: 13 to 23) ---\n  // Pelvis / Rump\n  drawEllipsoid(cx, 14.5, 13.8, 2.5, 2.2, 2.4, stonePrimary);\n\n  // Mid-Barrel rising forward\n  drawCapsule([cx, 14.5, 13.5], [cx, 18.5, 11.2], 2.4, 2.6, stonePrimary);\n\n  // Broad Celestial Chest\n  drawCapsule([cx, 18.5, 11.2], [cx, 22.5, 9.0], 2.6, 2.8, stonePrimary);\n  drawEllipsoid(cx, 22.5, 9.0, 2.9, 2.6, 2.5, stonePrimary);\n\n  // Golden pectoral emblem on chest\n  drawSphere(cx, 22.0, 7.2, 1.1, goldBlock);\n  drawSphere(cx, 22.0, 6.8, 0.6, seaLantern);\n\n  // --- 4. FORELEGS (Striking Northward into mid-air) ---\n  // Left Foreleg\n  drawCapsule([8.5, 22.0, 9.5], [7.5, 25.0, 7.5], 1.3, 1.1, stonePrimary); // Upper arm\n  drawCapsule([7.5, 25.0, 7.5], [6.5, 27.5, 5.5], 1.1, 0.9, stoneAccent);  // Forearm\n  drawCapsule([6.5, 27.5, 5.5], [6.0, 28.5, 4.2], 1.0, 1.1, goldBlock);    // Striking hoof\n\n  // Right Foreleg (Raised high in triumph)\n  drawCapsule([14.5, 22.0, 9.5], [15.5, 26.0, 8.0], 1.3, 1.1, stonePrimary); // Upper arm\n  drawCapsule([15.5, 26.0, 8.0], [16.5, 29.5, 6.5], 1.1, 0.9, stoneAccent);  // Forearm\n  drawCapsule([16.5, 29.5, 6.5], [17.0, 30.8, 5.2], 1.0, 1.1, goldBlock);    // Striking hoof\n\n  // --- 5. NECK, HEAD & CELESTIAL MANE ---\n  // Arched Neck\n  drawCapsule([cx, 22.0, 8.5], [cx, 27.0, 7.0], 2.1, 1.7, stonePrimary);\n  drawCapsule([cx, 27.0, 7.0], [cx, 30.5, 5.8], 1.7, 1.4, stonePrimary);\n\n  // Flowing Mane (Golden & Amethyst Crest billowing backward)\n  drawCapsule([cx, 23.0, 10.2], [cx, 27.5, 8.8], 1.0, 1.1, goldBlock);\n  drawCapsule([cx, 27.5, 8.8], [cx, 31.5, 7.5], 1.1, 1.0, amethyst);\n  drawCapsule([cx, 31.5, 7.5], [cx, 33.5, 6.8], 0.9, 0.7, goldBlock);\n\n  // Head & Jaw\n  drawEllipsoid(cx, 31.2, 5.0, 1.5, 1.4, 1.6, stonePrimary);\n  // Muzzle tapering down towards North\n  drawCapsule([cx, 31.0, 4.5], [cx, 29.8, 2.8], 1.2, 0.9, stonePrimary);\n  // Nostrils & Muzzle Tip\n  drawSphere(cx, 29.5, 2.2, 0.75, goldBlock);\n\n  // Pricked Ears\n  drawCapsule([10.0, 32.5, 5.8], [9.2, 34.5, 6.5], 0.6, 0.35, stonePrimary);\n  drawCapsule([13.0, 32.5, 5.8], [13.8, 34.5, 6.5], 0.6, 0.35, stonePrimary);\n\n  // Glowing Celestial Eyes\n  setVoxel(9.8, 31.5, 4.2, seaLantern);\n  setVoxel(13.2, 31.5, 4.2, seaLantern);\n\n  // --- 6. THE GOLDEN ALICORN HORN ---\n  // Spiraling magical horn aimed toward enemy waters\n  drawCapsule([cx, 32.4, 3.8], [cx, 34.2, 2.5], 0.8, 0.65, goldBlock);\n  drawCapsule([cx, 34.2, 2.5], [cx, 36.0, 1.4], 0.65, 0.5, seaLantern);\n  drawCapsule([cx, 36.0, 1.4], [cx, 37.2, 0.6], 0.5, 0.3, goldBlock);\n\n  // --- 7. CELESTIAL GUARDIAN WINGS ---\n  // Left Wing Spar & Feathers\n  drawCapsule([9.0, 22.5, 10.5], [6.0, 26.5, 12.5], 1.4, 1.2, stonePrimary);\n  drawCapsule([6.0, 26.5, 12.5], [4.0, 30.5, 15.0], 1.2, 1.0, stonePrimary);\n  drawCapsule([4.0, 30.5, 15.0], [3.0, 34.0, 17.5], 1.0, 0.7, goldBlock);\n\n  // Left Wing Secondary Feathers & Webbing\n  drawCapsule([7.5, 24.0, 11.5], [4.8, 27.5, 15.0], 1.1, 0.8, stonePrimary);\n  drawCapsule([4.8, 27.5, 15.0], [3.5, 31.0, 18.2], 0.8, 0.6, amethyst);\n  drawCapsule([6.5, 22.5, 12.0], [4.5, 25.0, 16.5], 0.9, 0.7, stonePrimary);\n  drawCapsule([4.5, 25.0, 16.5], [3.8, 28.0, 19.0], 0.7, 0.5, goldBlock);\n\n  // Left Wing Glowing Rune Inlays\n  drawCapsule([5.2, 28.5, 13.8], [3.8, 32.0, 16.2], 0.6, 0.5, seaLantern);\n\n  // Right Wing Spar & Feathers\n  drawCapsule([14.0, 22.5, 10.5], [17.0, 26.5, 12.5], 1.4, 1.2, stonePrimary);\n  drawCapsule([17.0, 26.5, 12.5], [19.0, 30.5, 15.0], 1.2, 1.0, stonePrimary);\n  drawCapsule([19.0, 30.5, 15.0], [20.0, 34.0, 17.5], 1.0, 0.7, goldBlock);\n\n  // Right Wing Secondary Feathers & Webbing\n  drawCapsule([15.5, 24.0, 11.5], [18.2, 27.5, 15.0], 1.1, 0.8, stonePrimary);\n  drawCapsule([18.2, 27.5, 15.0], [19.5, 31.0, 18.2], 0.8, 0.6, amethyst);\n  drawCapsule([16.5, 22.5, 12.0], [18.5, 25.0, 16.5], 0.9, 0.7, stonePrimary);\n  drawCapsule([18.5, 25.0, 16.5], [19.2, 28.0, 19.0], 0.7, 0.5, goldBlock);\n\n  // Right Wing Glowing Rune Inlays\n  drawCapsule([17.8, 28.5, 13.8], [19.2, 32.0, 16.2], 0.6, 0.5, seaLantern);\n\n  // --- 8. GROUND CONFORMANCE & FOUNDATION EXTENSION (Rule 6) ---\n  // Every column occupied by the base extends downward into uneven terrain/seabed\n  for (const [px, pz] of pedestalColumns) {\n    const gh = api.heightAt(px, pz);\n    if (gh < 0) {\n      // Falling ground / cliff / shore: fill down with revetment & plinth\n      const floorH = Math.max(-12, gh);\n      for (let y = -1; y >= floorH; y--) {\n        const mat = (y === -1) ? plinthBlock : revetmentBlock;\n        api.set(px, y, pz, mat);\n      }\n    } else if (gh > 0) {\n      // Rising ground: ensure solid masonry contact\n      for (let y = 0; y <= gh && y < 5; y++) {\n        if (!voxels[getIdx(px, y, pz)]) {\n          voxels[getIdx(px, y, pz)] = plinthBlock;\n        }\n      }\n    }\n  }\n\n  // --- 9. EMIT VOXELS DETERMINISTICALLY ---\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const b = voxels[getIdx(x, y, z)];\n        if (b) {\n          api.set(x, y, z, b);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"Unicorn Colossus\",\n    seatY: 0,\n    anchors: {\n      front: [12, 0, 0],\n      dais: [12, 5, 12],\n      lookout: [12, 31, 5],\n      horn_tip: [12, 37, 1],\n    },\n  };\n}"
+    },
+    "pirate_dreadnought_bastion": {
+      "mode": "landmark",
+      "envelope": [
+        32,
+        24,
+        28
+      ],
+      "sourceHash": "b3:f849d04e5807b40fe9bcbee5060fcf0175aacf561be12b198a37e15c636da425",
+      "outputHash": "b3:0ab0ec4e08e2d3518cf9174e59666f211c9bceeb96c22636907e027a46ad3528",
+      "conforms": false,
+      "conformHash": "b3:b9d7fa9ce35539a8f706d3dea7cdf27ca2348d2febe3b38d26631107ffd72b9e",
+      "source": "export const envelope = [32, 24, 28];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const grid = Array.from({ length: W }, () =>\n    Array.from({ length: H }, () => new Array(D).fill(null))\n  );\n\n  function set(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      grid[x][y][z] = block;\n    }\n  }\n\n  function get(x, y, z) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      return grid[x][y][z];\n    }\n    return null;\n  }\n\n  // --- Theme block extraction with robust fallbacks ---\n  const woodPlanks = api.theme.wood.planks;\n  const woodLog = api.theme.wood.log;\n  const woodStripped = api.theme.wood.stripped || api.theme.wood.log;\n  const woodStairs = api.theme.wood.stairs;\n  const woodSlab = api.theme.wood.slab;\n  const woodFence = api.theme.wood.fence;\n  const woodTrapdoor = api.theme.wood.trapdoor;\n\n  const stonePrimary = api.theme.stone.primary;\n  const stoneAccent = api.theme.stone.accent || api.theme.stone.primary;\n  const stoneStairs = api.theme.stone.stairs;\n  const stoneSlab = api.theme.stone.slab;\n  const stoneWall = api.theme.stone.wall;\n\n  const groundPlinth = api.theme.ground.plinth || stonePrimary;\n  const groundPavement = api.theme.ground.pavement || stoneAccent;\n  const roofStairs = api.theme.roof.stairs || woodStairs;\n  const roofSlab = api.theme.roof.slab || woodSlab;\n  const roofSolid = api.theme.roof.solid || woodPlanks;\n\n  // War / Pirate accent props\n  const cannonBarrel = \"minecraft:dispenser[facing=north]\";\n  const cannonBody = \"minecraft:polished_blackstone\";\n  const ironBlock = \"minecraft:iron_block\";\n  const chain = \"minecraft:chain\";\n  const lantern = \"minecraft:lantern\";\n  const lanternHanging = \"minecraft:lantern[hanging=true]\";\n  const campfire = \"minecraft:campfire[lit=true]\";\n  const cauldron = \"minecraft:cauldron\";\n  const blackWool = \"minecraft:black_wool\";\n  const whiteWool = \"minecraft:white_wool\";\n  const ironBars = \"minecraft:iron_bars\";\n  const skull = \"minecraft:wither_skeleton_skull\";\n\n  function stair(base, facing, half = \"bottom\") {\n    const clean = base.split(\"[\")[0];\n    return `${clean}[facing=${facing},half=${half}]`;\n  }\n\n  function slab(base, type = \"bottom\") {\n    const clean = base.split(\"[\")[0];\n    return `${clean}[type=${type}]`;\n  }\n\n  function trapdoor(base, facing = \"north\", half = \"bottom\", open = false) {\n    const clean = base.split(\"[\")[0];\n    return `${clean}[facing=${facing},half=${half},open=${open}]`;\n  }\n\n  function logBlock(base, axis = \"y\") {\n    const clean = base.split(\"[\")[0];\n    return `${clean}[axis=${axis}]`;\n  }\n\n  // --- Footprint definitions ---\n  // Seat plane is at y = 4 (allowing downhill terrain skirt down to y=0)\n  const SEAT_Y = 4;\n\n  function isBastionBase(x, z) {\n    // 4 Corner bastion towers (radius ~ 3.6)\n    const dNW = Math.hypot(x - 7, z - 7);\n    const dNE = Math.hypot(x - 24, z - 7);\n    const dSW = Math.hypot(x - 7, z - 21);\n    const dSE = Math.hypot(x - 24, z - 21);\n    if (dNW <= 3.6 || dNE <= 3.6 || dSW <= 3.6 || dSE <= 3.6) return true;\n\n    // Forward battery rampart (Z=2 to 7)\n    if (z >= 2 && z <= 7) {\n      const taper = 7 - z;\n      if (x >= 7 + Math.floor(taper * 0.4) && x <= 24 - Math.floor(taper * 0.4)) {\n        return true;\n      }\n    }\n\n    // Main dreadnought keep hull (Z=7 to 23, X=5 to 26)\n    if (z >= 7 && z <= 23 && x >= 5 && x <= 26) {\n      return true;\n    }\n\n    // Rear stern gate (Z=23 to 26, X=8 to 23)\n    if (z >= 23 && z <= 26) {\n      const taper = z - 23;\n      if (x >= 8 + Math.floor(taper * 0.6) && x <= 23 - Math.floor(taper * 0.6)) {\n        return true;\n      }\n    }\n\n    return false;\n  }\n\n  function isBastionWall(x, z) {\n    if (!isBastionBase(x, z)) return false;\n    const neighbors = [\n      [x + 1, z],\n      [x - 1, z],\n      [x, z + 1],\n      [x, z - 1],\n    ];\n    return neighbors.some(([nx, nz]) => !isBastionBase(nx, nz));\n  }\n\n  // --- 1. Foundation Skirts & Seat Plane ---\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      if (isBastionBase(x, z)) {\n        const h = Math.round(api.heightAt(x, z));\n        const groundY = Math.max(0, Math.min(H - 1, SEAT_Y + h));\n        const minY = Math.min(groundY, SEAT_Y);\n        const maxY = Math.max(groundY, SEAT_Y);\n\n        for (let y = minY; y <= maxY; y++) {\n          const block = isBastionWall(x, z)\n            ? (y < SEAT_Y ? groundPlinth : stonePrimary)\n            : groundPavement;\n          set(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  // --- 2. Lower Gun Deck & Stone Bastion (y = 4 to y = 8) ---\n  for (let y = SEAT_Y; y <= 8; y++) {\n    for (let x = 0; x < W; x++) {\n      for (let z = 0; z < D; z++) {\n        if (!isBastionBase(x, z)) continue;\n\n        if (y === SEAT_Y) {\n          set(x, y, z, isBastionWall(x, z) ? groundPlinth : woodPlanks);\n        } else if (isBastionWall(x, z)) {\n          // Masonry walls with occasional stone accents\n          const isAccent = (x * 7 + y * 13 + z * 3) % 5 === 0;\n          set(x, y, z, isAccent ? stoneAccent : stonePrimary);\n        }\n      }\n    }\n  }\n\n  // Massive timber framing pilasters at keep corners\n  const frameCorners = [\n    [5, 8], [26, 8], [5, 20], [26, 20],\n    [8, 24], [23, 24], [11, 4], [20, 4]\n  ];\n  for (const [cx, cz] of frameCorners) {\n    for (let y = SEAT_Y + 1; y <= 8; y++) {\n      set(cx, y, cz, logBlock(woodLog, \"y\"));\n    }\n  }\n\n  // Lower Gun Deck Sea Battery: 4 Heavy Iron Cannon Ports at North Face (Z=2)\n  const lowerGunX = [10, 13, 18, 21];\n  for (const gx of lowerGunX) {\n    // Punch gun embrasure\n    set(gx, 5, 2, cannonBarrel);\n    set(gx, 5, 3, cannonBody);\n    set(gx, 5, 4, logBlock(woodLog, \"z\")); // Gun carriage\n    set(gx, 6, 2, stair(stoneStairs, \"south\", \"top\")); // Arch lintel\n    set(gx, 6, 3, ironBars);\n\n    // Flanking iron reinforcements\n    set(gx - 1, 5, 2, stoneAccent);\n    set(gx + 1, 5, 2, stoneAccent);\n  }\n\n  // Rear Fortress Entrance Gate (Z=25..26, X=15..16, y=5..7)\n  for (let gx = 15; gx <= 16; gx++) {\n    for (let gy = 5; gy <= 7; gy++) {\n      set(gx, gy, 25, null);\n      set(gx, gy, 26, null);\n    }\n  }\n  set(14, 5, 25, logBlock(woodLog, \"y\"));\n  set(17, 5, 25, logBlock(woodLog, \"y\"));\n  set(14, 6, 25, logBlock(woodLog, \"y\"));\n  set(17, 6, 25, logBlock(woodLog, \"y\"));\n  set(15, 7, 25, stair(stoneStairs, \"east\", \"top\"));\n  set(16, 7, 25, stair(stoneStairs, \"west\", \"top\"));\n  set(15, 7, 26, ironBars);\n  set(16, 7, 26, ironBars);\n\n  // Lower interior structural pillars\n  const pillars = [[11, 11], [20, 11], [11, 17], [20, 17]];\n  for (const [px, pz] of pillars) {\n    for (let y = 5; y <= 8; y++) {\n      set(px, y, pz, logBlock(woodLog, \"y\"));\n    }\n    set(px, 8, pz - 1, stair(woodStairs, \"south\", \"top\"));\n    set(px, 8, pz + 1, stair(woodStairs, \"north\", \"top\"));\n  }\n\n  // Powder magazine crates & barrels in corners\n  set(8, 5, 8, logBlock(woodLog, \"y\"));\n  set(8, 5, 9, woodPlanks);\n  set(9, 5, 8, ironBlock);\n  set(23, 5, 8, logBlock(woodLog, \"y\"));\n  set(23, 5, 9, woodPlanks);\n  set(22, 5, 8, ironBlock);\n\n  // --- 3. Mid Deck & Corbel Overhang (y = 8 to y = 9) ---\n  // Machicolation corbels jutting out around outer perimeter\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      if (isBastionWall(x, z)) {\n        if (!isBastionBase(x, z - 1)) set(x, 8, z - 1, stair(stoneStairs, \"north\", \"top\"));\n        if (!isBastionBase(x, z + 1)) set(x, 8, z + 1, stair(stoneStairs, \"south\", \"top\"));\n        if (!isBastionBase(x - 1, z)) set(x - 1, 8, z, stair(stoneStairs, \"west\", \"top\"));\n        if (!isBastionBase(x + 1, z)) set(x + 1, 8, z, stair(stoneStairs, \"east\", \"top\"));\n      }\n    }\n  }\n\n  // Mid Deck Flooring at y = 9\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      if (isBastionBase(x, z)) {\n        set(x, 9, z, woodPlanks);\n      }\n    }\n  }\n\n  // --- 4. Forward Upper Gun Deck & Carronades (Z=2 to 9, y=9 to 13) ---\n  // Forward stone parapets & merlons\n  for (let x = 6; x <= 25; x++) {\n    for (let z = 2; z <= 9; z++) {\n      if (isBastionBase(x, z)) {\n        const isForwardWall =\n          !isBastionBase(x, z - 1) ||\n          !isBastionBase(x - 1, z) ||\n          !isBastionBase(x + 1, z);\n        if (isForwardWall) {\n          set(x, 10, z, stonePrimary);\n          // Crenellations\n          if ((x + z) % 2 === 0) {\n            set(x, 11, z, stoneWall);\n          } else {\n            set(x, 11, z, slab(stoneSlab, \"bottom\"));\n          }\n        }\n      }\n    }\n  }\n\n  // 3 Upper Deck Heavy Carronades facing North (-Z)\n  const upperGuns = [9, 15, 22];\n  for (const gx of upperGuns) {\n    // Clear parapet port\n    set(gx, 10, 3, cannonBarrel);\n    set(gx, 10, 4, cannonBody);\n    set(gx, 10, 5, logBlock(woodLog, \"x\"));\n    set(gx, 11, 3, null); // Open sightline\n\n    // Carriage wheel details\n    set(gx - 1, 10, 5, trapdoor(woodTrapdoor, \"east\", \"bottom\", false));\n    set(gx + 1, 10, 5, trapdoor(woodTrapdoor, \"west\", \"bottom\", false));\n\n    // Cannonball piles\n    set(gx - 1, 10, 6, skull);\n    set(gx - 1, 10, 7, skull);\n  }\n\n  // Four Corner Bastion Turrets (NW, NE, SW, SE) at y=9..12\n  const turretCenters = [\n    [7, 7], [24, 7], [7, 21], [24, 21]\n  ];\n  for (const [tx, tz] of turretCenters) {\n    for (let dx = -3; dx <= 3; dx++) {\n      for (let dz = -3; dz <= 3; dz++) {\n        const dist = Math.hypot(dx, dz);\n        const x = tx + dx;\n        const z = tz + dz;\n        if (dist > 2.2 && dist <= 3.6) {\n          set(x, 10, z, stonePrimary);\n          set(x, 11, z, stoneWall);\n          if ((dx + dz) % 2 === 0) {\n            set(x, 12, z, slab(stoneSlab, \"bottom\"));\n          }\n        }\n      }\n    }\n  }\n\n  // Flaming battle braziers on forward turrets\n  set(7, 10, 7, cauldron);\n  set(7, 11, 7, campfire);\n  set(24, 10, 7, cauldron);\n  set(24, 11, 7, campfire);\n\n  // --- 5. Dreadnought Sterncastle Citadel (Z=10 to 23, X=8 to 23, y=9 to 14) ---\n  for (let y = 10; y <= 14; y++) {\n    for (let x = 8; x <= 23; x++) {\n      for (let z = 10; z <= 23; z++) {\n        const isCitadelWall =\n          x === 8 || x === 23 || z === 10 || z === 23;\n\n        if (isCitadelWall) {\n          // Vertical corner logs & stripped timber hull walls\n          const isCorner =\n            (x === 8 && (z === 10 || z === 16 || z === 23)) ||\n            (x === 23 && (z === 10 || z === 16 || z === 23));\n\n          if (isCorner) {\n            set(x, y, z, logBlock(woodLog, \"y\"));\n          } else if (y === 12) {\n            // Horizontal timber belt band\n            set(x, y, z, logBlock(woodStripped, x === 8 || x === 23 ? \"z\" : \"x\"));\n          } else {\n            set(x, y, z, woodPlanks);\n          }\n        }\n      }\n    }\n  }\n\n  // Broadside casemate sea-windows with iron bars on East & West sides\n  for (let z = 13; z <= 20; z += 3) {\n    set(8, 11, z, ironBars);\n    set(8, 12, z, stair(woodStairs, \"west\", \"top\"));\n    set(23, 11, z, ironBars);\n    set(23, 12, z, stair(woodStairs, \"east\", \"top\"));\n  }\n\n  // Forward Commander Bridge viewports looking North over the strait (Z=10, X=13..18)\n  for (let x = 13; x <= 18; x++) {\n    if (x === 14 || x === 17) {\n      set(x, 11, 10, logBlock(woodLog, \"y\"));\n    } else {\n      set(x, 11, 10, ironBars);\n      set(x, 12, 10, stair(woodStairs, \"south\", \"top\"));\n    }\n  }\n\n  // Rear Sternwalk / Captain's Balcony (Z=24, X=11 to 20, y=9..11)\n  for (let x = 11; x <= 20; x++) {\n    set(x, 9, 24, woodPlanks);\n    set(x, 8, 24, stair(woodStairs, \"north\", \"top\")); // Cantilever corbels\n    set(x, 10, 24, woodFence); // Balcony railing\n  }\n  set(11, 10, 24, logBlock(woodLog, \"y\"));\n  set(20, 10, 24, logBlock(woodLog, \"y\"));\n  set(11, 11, 24, lanternHanging);\n  set(20, 11, 24, lanternHanging);\n\n  // Doorways into citadel from front deck & rear balcony\n  set(15, 10, 10, null);\n  set(16, 10, 10, null);\n  set(15, 11, 10, null);\n  set(16, 11, 10, null);\n  set(15, 10, 23, null);\n  set(16, 10, 23, null);\n  set(15, 11, 23, null);\n  set(16, 11, 23, null);\n\n  // --- 6. Citadel Fighting Roof & Pilot House (y=14 to 17) ---\n  // Roof floor at y=14\n  for (let x = 8; x <= 23; x++) {\n    for (let z = 10; z <= 23; z++) {\n      set(x, 14, z, woodPlanks);\n    }\n  }\n\n  // Timber roof parapet & shields at y=15\n  for (let x = 8; x <= 23; x++) {\n    for (let z = 10; z <= 23; z++) {\n      const isPerimeter = x === 8 || x === 23 || z === 10 || z === 23;\n      if (isPerimeter) {\n        set(x, 15, z, woodFence);\n        if ((x + z) % 3 === 0) {\n          set(x, 15, z, logBlock(woodLog, \"y\"));\n          set(x, 16, z, slab(woodSlab, \"bottom\"));\n        }\n      }\n    }\n  }\n\n  // Fortified Chart Cabin / Pilot House (Z=18 to 22, X=12 to 19, y=14 to 17)\n  for (let y = 14; y <= 16; y++) {\n    for (let x = 12; x <= 19; x++) {\n      for (let z = 18; z <= 22; z++) {\n        const isCabinWall = x === 12 || x === 19 || z === 18 || z === 22;\n        if (isCabinWall) {\n          set(x, y, z, woodPlanks);\n        }\n      }\n    }\n  }\n  // Cabin arched roof at y=17\n  for (let z = 18; z <= 22; z++) {\n    set(11, 16, z, stair(roofStairs, \"east\"));\n    set(12, 17, z, stair(roofStairs, \"east\"));\n    for (let x = 13; x <= 18; x++) {\n      set(x, 17, z, roofSolid);\n    }\n    set(19, 17, z, stair(roofStairs, \"west\"));\n    set(20, 16, z, stair(roofStairs, \"west\"));\n  }\n  // Cabin doorway at north face (Z=18, X=15..16)\n  set(15, 15, 18, null);\n  set(16, 15, 18, null);\n\n  // Smuggler's Heavy Cargo Crane on Port Side (X=7..8, Z=14, y=14..18)\n  set(8, 15, 14, logBlock(woodLog, \"y\"));\n  set(8, 16, 14, logBlock(woodLog, \"y\"));\n  set(8, 17, 14, logBlock(woodLog, \"y\"));\n  set(7, 17, 14, logBlock(woodLog, \"x\"));\n  set(6, 17, 14, logBlock(woodLog, \"x\"));\n  set(5, 17, 14, woodFence);\n  set(5, 16, 14, chain);\n  set(5, 15, 14, chain);\n  set(5, 14, 14, woodPlanks); // Suspended cargo crate\n\n  // --- 7. Dreadnought Grand Mast & Rigging (y=14 to 23) ---\n  // Mast trunk from roof to sky (X=15..16, Z=15..16)\n  for (let y = 14; y <= 22; y++) {\n    set(15, y, 15, logBlock(woodLog, \"y\"));\n    set(16, y, 15, logBlock(woodLog, \"y\"));\n    set(15, y, 16, logBlock(woodLog, \"y\"));\n    set(16, y, 16, logBlock(woodLog, \"y\"));\n  }\n\n  // Crow's Nest Lookout Platform at y=18..19\n  for (let x = 14; x <= 17; x++) {\n    for (let z = 14; z <= 17; z++) {\n      const isRim = x === 14 || x === 17 || z === 14 || z === 17;\n      set(x, 18, z, slab(woodSlab, \"bottom\"));\n      if (isRim) {\n        set(x, 19, z, woodFence);\n      }\n    }\n  }\n  set(14, 17, 15, lanternHanging);\n  set(17, 17, 16, lanternHanging);\n\n  // Yardarm Spar at y=21 (horizontal spar X=11 to 20, Z=15)\n  for (let x = 11; x <= 20; x++) {\n    set(x, 21, 15, logBlock(woodLog, \"x\"));\n  }\n  set(10, 21, 15, woodFence);\n  set(21, 21, 15, woodFence);\n\n  // Rigging shrouds angled down to citadel roof deck\n  set(11, 20, 15, chain);\n  set(10, 19, 15, chain);\n  set(9, 18, 15, chain);\n  set(9, 17, 15, chain);\n  set(9, 16, 15, chain);\n\n  set(20, 20, 15, chain);\n  set(21, 19, 15, chain);\n  set(22, 18, 15, chain);\n  set(22, 17, 15, chain);\n  set(22, 16, 15, chain);\n\n  // Mast peak top at y=23\n  set(15, 23, 15, woodFence);\n  set(16, 23, 15, woodFence);\n\n  // --- 8. The Tattered Skull & Crossbones Pirate Banner (Jolly Roger) ---\n  // Suspended from yardarm at Z=14, facing directly NORTH (-Z) toward the strait!\n  // Size: Width 7 (X=13..19), Height 5 (Y=15..19)\n  const bannerPixels = [\n    // Y = 19: Top crossbone tips & skull top\n    [blackWool, whiteWool, blackWool, blackWool, blackWool, whiteWool, blackWool],\n    // Y = 18: Full skull cranium\n    [blackWool, blackWool, whiteWool, whiteWool, whiteWool, blackWool, blackWool],\n    // Y = 17: Eye sockets & side crossbone ends\n    [whiteWool, blackWool, blackWool, whiteWool, blackWool, blackWool, whiteWool],\n    // Y = 16: Teeth / jaw & bottom crossbone crossings\n    [blackWool, whiteWool, whiteWool, blackWool, whiteWool, whiteWool, blackWool],\n    // Y = 15: Tattered bottom fringes with cutouts\n    [null, blackWool, null, blackWool, null, blackWool, null],\n  ];\n\n  for (let r = 0; r < bannerPixels.length; r++) {\n    const y = 19 - r;\n    const row = bannerPixels[r];\n    for (let c = 0; c < row.length; c++) {\n      const x = 13 + c;\n      const blk = row[c];\n      if (blk) {\n        set(x, y, 14, blk);\n      }\n    }\n  }\n\n  // --- 9. Write Voxel Buffer to API ---\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const blk = grid[x][y][z];\n        if (blk !== null) {\n          api.set(x, y, z, blk);\n        }\n      }\n    }\n  }\n\n  // --- 10. Return Contract Result ---\n  return {\n    name: \"pirate_dreadnought_bastion\",\n    seatY: SEAT_Y,\n    anchors: {\n      front: [16, 9, 0],   // Forward battery aiming North across the strait\n      door: [16, 4, 26],   // Rear fortress gate approach\n    },\n    interiors: [\n      {\n        min: [8, 5, 8],\n        max: [23, 7, 20],\n        kind: \"hall\",      // Lower gun deck & munitions arsenal\n      },\n      {\n        min: [10, 10, 12],\n        max: [21, 13, 21],\n        kind: \"quarters\",  // Captain's war room & redoubt\n      },\n    ],\n  };\n}"
+    },
+    "shore_cannon_battery": {
+      "mode": "plugin",
+      "envelope": [
+        13,
+        13,
+        11
+      ],
+      "sourceHash": "b3:0fc5a6df3481849057644fc38cc5098e93d52ae83b83195761bb01ad46bb7120",
+      "outputHash": "b3:716abbc67e50d3532d229c8a7e48974989f42f7afa325f1fdc5591af37bf06ce",
+      "conforms": false,
+      "conformHash": "b3:c44a44d773e15b566c3f907fe26fc888ce85c3a91bcb46ba78689ffb4e474c2a",
+      "source": "export const envelope = [13, 13, 11];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const seatY = 3;\n  const deckY = 4;\n  const variant = api.instance.index % 6;\n\n  // Resolve palette roles from the settlement theme with safe fallbacks\n  const woodPlanks = api.theme.wood?.planks || \"minecraft:spruce_planks\";\n  const woodLog = api.theme.wood?.log || \"minecraft:spruce_log\";\n  const woodStripped = api.theme.wood?.stripped || \"minecraft:stripped_spruce_log\";\n  const woodStairs = api.theme.wood?.stairs || \"minecraft:spruce_stairs\";\n  const woodSlab = api.theme.wood?.slab || \"minecraft:spruce_slab\";\n  const woodFence = api.theme.wood?.fence || \"minecraft:spruce_fence\";\n  const woodTrapdoor = api.theme.wood?.trapdoor || \"minecraft:spruce_trapdoor\";\n\n  const stonePrimary = api.theme.stone?.primary || \"minecraft:stone_bricks\";\n  const stoneAccent = api.theme.stone?.accent || \"minecraft:cobblestone\";\n  const stoneStairs = api.theme.stone?.stairs || \"minecraft:stone_brick_stairs\";\n  const stoneSlab = api.theme.stone?.slab || \"minecraft:stone_brick_slab\";\n  const stoneWall = api.theme.stone?.wall || \"minecraft:stone_brick_wall\";\n\n  const groundPavement = api.theme.ground?.pavement || \"minecraft:cobblestone\";\n  const groundRevetment = api.theme.ground?.revetment || \"minecraft:stone_bricks\";\n  const groundPlinth = api.theme.ground?.plinth || \"minecraft:smooth_stone\";\n  const groundScree = api.theme.ground?.scree || \"minecraft:gravel\";\n  const groundSlab = api.theme.ground?.slab || \"minecraft:cobblestone_slab\";\n\n  const roofSolid = api.theme.roof?.solid || \"minecraft:dark_oak_planks\";\n  const roofStairs = api.theme.roof?.stairs || \"minecraft:dark_oak_stairs\";\n  const roofSlab = api.theme.roof?.slab || \"minecraft:dark_oak_slab\";\n\n  function withState(blockStr, stateStr) {\n    if (!blockStr) return stateStr;\n    const base = blockStr.split(\"[\")[0];\n    return `${base}[${stateStr}]`;\n  }\n\n  function setBlock(x, y, z, block) {\n    if (x < 0 || x >= W || y < 0 || y >= H || z < 0 || z >= D) return;\n    api.set(x, y, z, block);\n  }\n\n  // 1. Foundation & Substructure conforming to real ground at every column\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const inPlatform = x >= 1 && x <= 11 && z >= 1 && z <= 8;\n      const inRamp = x >= 3 && x <= 9 && z >= 9 && z <= 10;\n      const inFlank = (x === 0 || x === 12) && z >= 1 && z <= 8;\n\n      if (!inPlatform && !inRamp && !inFlank) continue;\n\n      const gh = Math.round(api.heightAt(x, z));\n      const groundLocalY = Math.max(0, Math.min(H - 1, seatY + gh));\n      const targetTopY = inRamp ? (z === 9 ? deckY - 1 : deckY - 2) : deckY - 1;\n\n      // Fill from local ground up to target sub-floor level\n      const startY = Math.min(groundLocalY, targetTopY);\n      for (let y = Math.max(0, Math.min(startY, groundLocalY)); y <= targetTopY; y++) {\n        const isPerimeter = x === 0 || x === W - 1 || z === 0 || z === 1 || z === 8;\n        if (isPerimeter && (z <= 2 || x === 0 || x === W - 1)) {\n          // Timber sea pilings and stone revetments on the seaward and flank edges\n          if (y % 2 === 0) {\n            setBlock(x, y, z, withState(woodLog, \"axis=y\"));\n          } else {\n            setBlock(x, y, z, groundRevetment);\n          }\n        } else {\n          setBlock(x, y, z, (x + z + y) % 3 === 0 ? stoneAccent : stonePrimary);\n        }\n      }\n\n      // If ground rises above seat plane, integrate retaining structure\n      if (groundLocalY >= deckY) {\n        setBlock(x, deckY, z, groundPavement);\n      }\n    }\n  }\n\n  // 2. Main Battery Gun Deck (y = deckY = 4)\n  for (let x = 1; x <= 11; x++) {\n    for (let z = 2; z <= 8; z++) {\n      if (z === 2 || z === 8 || x === 1 || x === 11) {\n        // Heavy log stringer rim\n        const axis = (z === 2 || z === 8) ? \"axis=x\" : \"axis=z\";\n        setBlock(x, deckY, z, withState(woodLog, axis));\n      } else {\n        // Planks flooring with timber wear patterns\n        const deckMaterial = ((x * 3 + z * 5) % 4 === 0) ? woodStripped : woodPlanks;\n        setBlock(x, deckY, z, deckMaterial);\n      }\n    }\n  }\n\n  // Outer timber curb & flank posts\n  for (let z = 1; z <= 8; z++) {\n    setBlock(0, deckY, z, withState(woodLog, \"axis=z\"));\n    setBlock(12, deckY, z, withState(woodLog, \"axis=z\"));\n  }\n\n  // 3. Rear Entry Stairway (z = 8..10)\n  for (let x = 4; x <= 8; x++) {\n    setBlock(x, deckY, 8, withState(woodStairs, \"facing=south,half=bottom\"));\n    setBlock(x, deckY - 1, 9, withState(woodStairs, \"facing=south,half=bottom\"));\n    setBlock(x, deckY - 2, 10, withState(groundSlab, \"type=bottom\"));\n  }\n  // Stair handrails\n  setBlock(3, deckY + 1, 8, woodFence);\n  setBlock(3, deckY, 9, woodFence);\n  setBlock(9, deckY + 1, 8, woodFence);\n  setBlock(9, deckY, 9, woodFence);\n\n  // 4. Parapet & Breastwork along North Seaward Wall (z = 1..2)\n  for (let x = 1; x <= 11; x++) {\n    setBlock(x, deckY, 1, withState(woodLog, \"axis=x\"));\n    // Breastwork base (y = deckY + 1 = 5)\n    setBlock(x, deckY + 1, 1, groundRevetment);\n    // Sandbag / log coping (y = deckY + 2 = 6)\n    setBlock(x, deckY + 2, 1, withState(woodSlab, \"type=bottom\"));\n  }\n  // Flank protective walls\n  for (let z = 2; z <= 7; z++) {\n    setBlock(1, deckY + 1, z, stoneWall);\n    setBlock(11, deckY + 1, z, stoneWall);\n  }\n\n  // Helper: Open gun port embrasure in the parapet\n  function makeEmbrasure(gunX) {\n    setBlock(gunX, deckY, 1, withState(woodPlanks, \"\"));\n    setBlock(gunX, deckY + 1, 1, withState(woodSlab, \"type=bottom\"));\n    setBlock(gunX, deckY + 2, 1, \"minecraft:air\");\n    // Mantlet cheeks\n    setBlock(gunX - 1, deckY + 1, 1, withState(woodLog, \"axis=y\"));\n    setBlock(gunX + 1, deckY + 1, 1, withState(woodLog, \"axis=y\"));\n    setBlock(gunX - 1, deckY + 2, 1, withState(woodTrapdoor, \"facing=south,half=bottom,open=false\"));\n    setBlock(gunX + 1, deckY + 2, 1, withState(woodTrapdoor, \"facing=south,half=bottom,open=false\"));\n  }\n\n  // Helper: Standard Naval Cannon\n  function buildNavalCannon(cx, cz, cy) {\n    makeEmbrasure(cx);\n    // Carriage bed & wheels\n    setBlock(cx, cy, cz, woodPlanks);\n    setBlock(cx - 1, cy, cz, withState(woodTrapdoor, \"facing=east,half=bottom,open=false\"));\n    setBlock(cx + 1, cy, cz, withState(woodTrapdoor, \"facing=west,half=bottom,open=false\"));\n    // Barrel\n    setBlock(cx, cy + 1, cz + 1, withState(woodStairs, \"facing=south,half=top\"));\n    setBlock(cx, cy + 1, cz, \"minecraft:cauldron\");\n    setBlock(cx, cy + 1, cz - 1, \"minecraft:dispenser[facing=north]\");\n    setBlock(cx, cy + 1, cz - 2, \"minecraft:polished_blackstone_wall\");\n    // Recoil tackle\n    setBlock(cx, cy, cz + 1, \"minecraft:chain[axis=z]\");\n  }\n\n  // Helper: Heavy Long-Range Siege Cannon\n  function buildHeavySiegeCannon(cx, cz, cy) {\n    makeEmbrasure(cx);\n    // Reinforced carriage\n    setBlock(cx, cy, cz, woodPlanks);\n    setBlock(cx, cy, cz + 1, woodPlanks);\n    setBlock(cx - 1, cy, cz, withState(woodStairs, \"facing=north,half=bottom\"));\n    setBlock(cx + 1, cy, cz, withState(woodStairs, \"facing=north,half=bottom\"));\n    // Long cast iron barrel\n    setBlock(cx, cy + 1, cz + 1, \"minecraft:polished_blackstone\");\n    setBlock(cx, cy + 1, cz, \"minecraft:dispenser[facing=north]\");\n    setBlock(cx, cy + 1, cz - 1, \"minecraft:polished_blackstone\");\n    setBlock(cx, cy + 1, cz - 2, \"minecraft:polished_blackstone_wall\");\n    // Trunnions & elevation ironwork\n    setBlock(cx, cy + 2, cz, \"minecraft:iron_bars\");\n    setBlock(cx, cy, cz + 2, \"minecraft:chain[axis=z]\");\n  }\n\n  // Helper: Ammunition shot pile\n  function buildShotRack(sx, sz, sy) {\n    setBlock(sx, sy, sz, \"minecraft:coal_block\");\n    setBlock(sx, sy + 1, sz, \"minecraft:wither_skeleton_skull[rotation=0]\");\n    setBlock(sx + 1, sy, sz, \"minecraft:coal_block\");\n  }\n\n  // 5. Apply Variant Specific Emplacements & Shore Battery Themes\n  if (variant === 0) {\n    // VARIANT 0: Twin 32-Pounder Naval Redoubt with Hot-Shot Furnace & Signal Mast\n    buildHeavySiegeCannon(3, 3, deckY);\n    buildHeavySiegeCannon(9, 3, deckY);\n\n    // Center Hot-Shot Furnace (heats iron cannonballs red-hot)\n    setBlock(6, deckY, 4, stonePrimary);\n    setBlock(6, deckY + 1, 4, \"minecraft:blast_furnace[facing=north,lit=true]\");\n    setBlock(6, deckY + 2, 4, stoneWall);\n    setBlock(6, deckY + 3, 4, stoneWall);\n    setBlock(5, deckY + 1, 4, \"minecraft:iron_bars\");\n    setBlock(7, deckY + 1, 4, \"minecraft:iron_bars\");\n    buildShotRack(5, 5, deckY);\n\n    // Powder barrels on West flank\n    setBlock(2, deckY + 1, 5, \"minecraft:barrel[facing=up]\");\n    setBlock(2, deckY + 1, 6, \"minecraft:barrel[facing=up]\");\n    setBlock(2, deckY + 2, 5, withState(woodTrapdoor, \"facing=north,half=bottom,open=false\"));\n\n    // East Signal Mast with yardarm and pirate pennant\n    for (let y = deckY + 1; y <= deckY + 7; y++) {\n      setBlock(10, y, 5, withState(woodLog, \"axis=y\"));\n    }\n    // Cross yardarm\n    setBlock(9, deckY + 6, 5, woodFence);\n    setBlock(11, deckY + 6, 5, woodFence);\n    setBlock(9, deckY + 5, 5, \"minecraft:lantern[hanging=true]\");\n    // Black pirate flag\n    setBlock(10, deckY + 7, 4, \"minecraft:black_wool\");\n    setBlock(10, deckY + 6, 4, \"minecraft:black_wool\");\n    setBlock(10, deckY + 7, 3, \"minecraft:red_wool\");\n\n  } else if (variant === 1) {\n    // VARIANT 1: Triple Casemate Battery with Splinter-Proof Log Canopy\n    buildNavalCannon(2, 3, deckY);\n    buildNavalCannon(6, 3, deckY);\n    buildNavalCannon(10, 3, deckY);\n\n    // Swab & water tubs between guns\n    setBlock(4, deckY + 1, 4, \"minecraft:cauldron\");\n    setBlock(8, deckY + 1, 4, \"minecraft:cauldron\");\n    buildShotRack(4, 5, deckY);\n    buildShotRack(8, 5, deckY);\n\n    // Casemate timber columns\n    const casemateCols = [[1, 3], [5, 3], [7, 3], [11, 3], [1, 7], [5, 7], [7, 7], [11, 7]];\n    for (const [cx, cz] of casemateCols) {\n      for (let y = deckY + 1; y <= deckY + 3; y++) {\n        setBlock(cx, y, cz, withState(woodLog, \"axis=y\"));\n      }\n    }\n\n    // Splinter-proof roof at y = deckY + 4\n    for (let x = 1; x <= 11; x++) {\n      for (let z = 3; z <= 7; z++) {\n        setBlock(x, deckY + 4, z, roofSolid);\n        // Sandbag reinforcement on top\n        if ((x + z) % 2 === 0) {\n          setBlock(x, deckY + 5, z, withState(woodSlab, \"type=bottom\"));\n        } else {\n          setBlock(x, deckY + 5, z, groundScree);\n        }\n      }\n    }\n\n    // Lookout ladder & signal lantern on roof\n    setBlock(11, deckY + 1, 6, \"minecraft:ladder[facing=north]\");\n    setBlock(11, deckY + 2, 6, \"minecraft:ladder[facing=north]\");\n    setBlock(11, deckY + 3, 6, \"minecraft:ladder[facing=north]\");\n    setBlock(6, deckY + 6, 5, woodFence);\n    setBlock(6, deckY + 7, 5, \"minecraft:lantern[hanging=false]\");\n\n  } else if (variant === 2) {\n    // VARIANT 2: Grand Bombard Mortar, Auxiliary Naval Gun & Shell Crane\n    buildNavalCannon(2, 3, deckY);\n\n    // Central Bombard Mortar (angled upward siege mortar)\n    setBlock(6, deckY, 4, \"minecraft:polished_blackstone\");\n    setBlock(5, deckY + 1, 4, stoneWall);\n    setBlock(7, deckY + 1, 4, stoneWall);\n    setBlock(6, deckY + 1, 5, stoneWall);\n    setBlock(6, deckY + 1, 3, \"minecraft:polished_blackstone_stairs[facing=north,half=bottom]\");\n    // Mortar chamber & tube\n    setBlock(6, deckY + 1, 4, \"minecraft:cauldron\");\n    setBlock(6, deckY + 2, 4, \"minecraft:hopper[facing=north]\");\n    setBlock(6, deckY + 3, 4, \"minecraft:iron_bars\");\n\n    // Heavy mortar bomb stack\n    setBlock(4, deckY + 1, 5, \"minecraft:coal_block\");\n    setBlock(4, deckY + 2, 5, \"minecraft:wither_skeleton_skull[rotation=0]\");\n    setBlock(4, deckY + 1, 6, \"minecraft:barrel[facing=up]\");\n\n    // Shell Crane / Derrick on East Flank (x = 10, z = 4)\n    for (let y = deckY + 1; y <= deckY + 5; y++) {\n      setBlock(10, y, 4, withState(woodLog, \"axis=y\"));\n    }\n    // Crane boom reaching seaward\n    setBlock(10, deckY + 5, 3, woodFence);\n    setBlock(10, deckY + 5, 2, woodFence);\n    setBlock(10, deckY + 4, 2, \"minecraft:chain[axis=y]\");\n    setBlock(10, deckY + 3, 2, \"minecraft:iron_bars\");\n    // Winch drum\n    setBlock(10, deckY + 1, 5, \"minecraft:barrel[facing=north]\");\n    setBlock(10, deckY + 2, 5, withState(woodTrapdoor, \"facing=north,half=bottom,open=false\"));\n\n  } else if (variant === 3) {\n    // VARIANT 3: Battle Action Battery (Recoiled Gun & Repaired Breach)\n    // West Gun has just fired and recoiled back!\n    makeEmbrasure(3);\n    setBlock(3, deckY, 5, woodPlanks);\n    setBlock(3, deckY + 1, 5, \"minecraft:cauldron\");\n    setBlock(3, deckY + 1, 4, \"minecraft:dispenser[facing=north]\");\n    setBlock(3, deckY + 1, 3, \"minecraft:polished_blackstone_wall\");\n    setBlock(3, deckY + 1, 6, \"minecraft:blackstone\"); // Gunpowder scorch\n    setBlock(2, deckY + 1, 4, \"minecraft:cauldron\");   // Cooling water\n\n    // East Gun is in battery, ready\n    buildHeavySiegeCannon(9, 3, deckY);\n\n    // Center parapet breach from incoming shell (repaired with sandbags/gabions)\n    setBlock(6, deckY + 1, 1, groundScree);\n    setBlock(6, deckY + 2, 1, withState(woodStairs, \"facing=north,half=bottom\"));\n    setBlock(5, deckY + 1, 2, withState(woodPlanks, \"\"));\n    setBlock(7, deckY + 1, 2, groundScree);\n\n    // West Field Medical / Rations station\n    setBlock(1, deckY + 1, 5, \"minecraft:barrel[facing=up]\");\n    setBlock(1, deckY + 1, 6, withState(woodStairs, \"facing=east,half=bottom\"));\n\n    // East Lookout Tower on 4 log legs\n    for (let y = deckY + 1; y <= deckY + 5; y++) {\n      setBlock(9, y, 6, withState(woodLog, \"axis=y\"));\n      setBlock(11, y, 6, withState(woodLog, \"axis=y\"));\n      setBlock(9, y, 7, withState(woodLog, \"axis=y\"));\n      setBlock(11, y, 7, withState(woodLog, \"axis=y\"));\n    }\n    // Crow's nest platform & brazier\n    for (let tx = 9; tx <= 11; tx++) {\n      for (let tz = 6; tz <= 7; tz++) {\n        setBlock(tx, deckY + 6, tz, woodPlanks);\n      }\n    }\n    setBlock(10, deckY + 7, 6, \"minecraft:lantern[hanging=false]\");\n    setBlock(10, deckY + 7, 7, withState(woodLog, \"axis=y\"));\n    setBlock(10, deckY + 8, 7, \"minecraft:black_wool\");\n\n  } else if (variant === 4) {\n    // VARIANT 4: Heavy Stone Bastion with Turntable Mounts & Chart Casemate\n    buildHeavySiegeCannon(3, 3, deckY);\n    buildHeavySiegeCannon(9, 3, deckY);\n\n    // Turntable circular rings under the guns\n    for (let dx = -1; dx <= 1; dx++) {\n      for (let dz = -1; dz <= 1; dz++) {\n        if (Math.abs(dx) + Math.abs(dz) === 1) {\n          setBlock(3 + dx, deckY, 3 + dz, groundPlinth);\n          setBlock(9 + dx, deckY, 3 + dz, groundPlinth);\n        }\n      }\n    }\n\n    // Officer's Command Casemate in center rear (x = 5..7, z = 5..7)\n    for (let y = deckY + 1; y <= deckY + 3; y++) {\n      setBlock(5, y, 7, withState(woodLog, \"axis=y\"));\n      setBlock(7, y, 7, withState(woodLog, \"axis=y\"));\n      setBlock(5, y, 5, withState(woodLog, \"axis=y\"));\n      setBlock(7, y, 5, withState(woodLog, \"axis=y\"));\n    }\n    // Chart Casemate Roof\n    for (let x = 5; x <= 7; x++) {\n      for (let z = 5; z <= 7; z++) {\n        setBlock(x, deckY + 4, z, roofSolid);\n      }\n    }\n    // Interior: Map Table & Spyglass bench\n    setBlock(6, deckY + 1, 6, \"minecraft:cartography_table\");\n    setBlock(6, deckY + 2, 6, \"minecraft:lantern[hanging=false]\");\n    buildShotRack(4, 4, deckY);\n    buildShotRack(8, 4, deckY);\n\n  } else {\n    // VARIANT 5: Admiral's Stepped Redoubt with Raised Quarterdeck & Rigging\n    buildHeavySiegeCannon(6, 3, deckY); // Heavy Center Gun\n    buildNavalCannon(2, 3, deckY);        // Left Sponson Gun\n    buildNavalCannon(10, 3, deckY);       // Right Sponson Gun\n\n    // Raised Rear Quarterdeck at y = deckY + 2 (x = 3..9, z = 6..8)\n    for (let x = 3; x <= 9; x++) {\n      for (let z = 6; z <= 8; z++) {\n        setBlock(x, deckY + 1, z, withState(woodLog, \"axis=y\"));\n        setBlock(x, deckY + 2, z, woodPlanks);\n      }\n    }\n    // Quarterdeck access steps\n    setBlock(6, deckY + 1, 5, withState(woodStairs, \"facing=south,half=bottom\"));\n    setBlock(6, deckY + 2, 5, withState(woodStairs, \"facing=south,half=bottom\"));\n\n    // Dual Rigging Masts at x = 4, 8 on quarterdeck\n    for (let y = deckY + 3; y <= deckY + 6; y++) {\n      setBlock(4, y, 7, withState(woodLog, \"axis=y\"));\n      setBlock(8, y, 7, withState(woodLog, \"axis=y\"));\n    }\n    // Stay line chain & warning bell between masts\n    for (let x = 5; x <= 7; x++) {\n      setBlock(x, deckY + 6, 7, \"minecraft:chain[axis=x]\");\n    }\n    setBlock(6, deckY + 5, 7, \"minecraft:lantern[hanging=true]\");\n    setBlock(4, deckY + 7, 7, \"minecraft:red_wool\");\n    setBlock(8, deckY + 7, 7, \"minecraft:black_wool\");\n  }\n\n  return {\n    name: \"Shore Cannon Battery\",\n    seatY,\n    anchors: {\n      front: [Math.floor(W / 2), deckY, 0],\n      entry: [Math.floor(W / 2), seatY, D - 1]\n    }\n  };\n}"
+    },
+    "arcane_ward_crystal": {
+      "mode": "plugin",
+      "envelope": [
+        9,
+        16,
+        9
+      ],
+      "sourceHash": "b3:2ecace0df2aeaec8768cef7d3a67eb2d97a4904216b261cf84f591ca4c679a0e",
+      "outputHash": "b3:73542b3c66bbe90c6904cf2d545948837b06598c28f1e1350b412df0d532c7a5",
+      "conforms": false,
+      "conformHash": "b3:113e0e71f4e804dc03fcf7b740b5b0c8a07612efde2f14f79e7a27e74fc85a3c",
+      "source": "export const envelope = [9, 16, 9];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const seatY = 3;\n  const cx = 4;\n  const cz = 4;\n\n  const instIndex = api.instance?.index ?? 0;\n  const variant = instIndex % 6;\n\n  // Resolve palette from theme with safe vanilla fallbacks\n  const theme = api.theme ?? {};\n  const stPrimary = theme.stone?.primary ?? \"minecraft:smooth_quartz\";\n  const stAccent = theme.stone?.accent ?? \"minecraft:chiseled_quartz_block\";\n  const stStairs = theme.stone?.stairs ?? \"minecraft:quartz_stairs\";\n  const stSlab = theme.stone?.slab ?? \"minecraft:quartz_slab\";\n  const stWall = theme.stone?.wall ?? \"minecraft:diorite_wall\";\n  const grPlinth = theme.ground?.plinth ?? \"minecraft:quartz_bricks\";\n  const grPavement = theme.ground?.pavement ?? \"minecraft:smooth_quartz\";\n\n  // Grid for bounds & occupancy tracking\n  const occupied = new Set();\n  const coordKey = (x, y, z) => `${x},${y},${z}`;\n\n  function setBlock(x, y, z, block) {\n    if (x < 0 || x >= W || y < 0 || y >= H || z < 0 || z >= D) return;\n    api.set(x, y, z, block);\n    occupied.add(coordKey(x, y, z));\n  }\n\n  function getBlockName(blockString) {\n    return blockString.split(\"[\")[0];\n  }\n\n  function withState(blockString, state) {\n    return `${getBlockName(blockString)}[${state}]`;\n  }\n\n  // 6-connected Manhattan line drawer for physical energy/chain tethers\n  function connectLine6(x0, y0, z0, x1, y1, z1, blockFn) {\n    let curX = Math.round(x0);\n    let curY = Math.round(y0);\n    let curZ = Math.round(z0);\n    const targetX = Math.round(x1);\n    const targetY = Math.round(y1);\n    const targetZ = Math.round(z1);\n\n    setBlock(curX, curY, curZ, blockFn(curX, curY, curZ, 0, 0, 0, true));\n\n    while (curX !== targetX || curY !== targetY || curZ !== targetZ) {\n      const dx = targetX - curX;\n      const dy = targetY - curY;\n      const dz = targetZ - curZ;\n\n      const absDx = Math.abs(dx);\n      const absDy = Math.abs(dy);\n      const absDz = Math.abs(dz);\n\n      let stepX = 0;\n      let stepY = 0;\n      let stepZ = 0;\n\n      if (absDy >= absDx && absDy >= absDz && absDy > 0) {\n        stepY = Math.sign(dy);\n      } else if (absDx >= absDz && absDx > 0) {\n        stepX = Math.sign(dx);\n      } else if (absDz > 0) {\n        stepZ = Math.sign(dz);\n      } else if (absDy > 0) {\n        stepY = Math.sign(dy);\n      } else if (absDx > 0) {\n        stepX = Math.sign(dx);\n      }\n\n      curX += stepX;\n      curY += stepY;\n      curZ += stepZ;\n\n      const isEnd = curX === targetX && curY === targetY && curZ === targetZ;\n      setBlock(curX, curY, curZ, blockFn(curX, curY, curZ, stepX, stepY, stepZ, isEnd));\n    }\n  }\n\n  // --- 1. Ground Conformance & Plinth Dais ---\n  const daisRadius = 3.9;\n\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const dist = Math.hypot(x - cx, z - cz);\n      if (dist <= daisRadius) {\n        const groundH = api.heightAt(x, z);\n        const groundY = Math.max(0, Math.min(H - 1, Math.round(seatY + groundH)));\n\n        const fillBottom = 0;\n        const fillTop = Math.max(groundY, seatY);\n\n        for (let y = fillBottom; y <= fillTop; y++) {\n          let block = stPrimary;\n          if (y < seatY) {\n            block = ((x + y + z) % 3 === 0) ? grPavement : (y === 0 ? grPlinth : stPrimary);\n          } else if (y === seatY) {\n            // Floor pattern at seat level\n            if (dist > 3.2) {\n              const dx = x - cx;\n              const dz = z - cz;\n              if (Math.abs(dx) >= Math.abs(dz)) {\n                block = dx > 0 ? withState(stStairs, \"facing=west,half=bottom\") : withState(stStairs, \"facing=east,half=bottom\");\n              } else {\n                block = dz > 0 ? withState(stStairs, \"facing=north,half=bottom\") : withState(stStairs, \"facing=south,half=bottom\");\n              }\n            } else if (dist > 2.0) {\n              // Ritual rune ring\n              if (variant === 0) {\n                block = (x + z) % 2 === 0 ? \"minecraft:amethyst_block\" : stAccent;\n              } else if (variant === 1) {\n                block = (x * z) % 2 === 0 ? \"minecraft:crying_obsidian\" : \"minecraft:gold_block\";\n              } else if (variant === 2) {\n                block = (x + z) % 2 === 0 ? \"minecraft:gold_block\" : \"minecraft:smooth_quartz\";\n              } else if (variant === 3) {\n                block = (x + z) % 2 === 0 ? \"minecraft:raw_gold_block\" : \"minecraft:quartz_bricks\";\n              } else if (variant === 4) {\n                block = (x * z) % 2 === 0 ? \"minecraft:amethyst_block\" : \"minecraft:sea_lantern\";\n              } else {\n                block = (x + z) % 2 === 0 ? \"minecraft:smooth_quartz\" : \"minecraft:amethyst_block\";\n              }\n            } else {\n              block = dist <= 0.8 ? \"minecraft:sea_lantern\" : stAccent;\n            }\n          } else {\n            block = stPrimary;\n          }\n          setBlock(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  // North front approach entrance at seatY\n  setBlock(cx, seatY, 0, withState(stStairs, \"facing=north,half=bottom\"));\n  setBlock(cx - 1, seatY, 0, \"minecraft:quartz_pillar[axis=y]\");\n  setBlock(cx + 1, seatY, 0, \"minecraft:quartz_pillar[axis=y]\");\n  setBlock(cx - 1, seatY + 1, 0, \"minecraft:gold_block\");\n  setBlock(cx + 1, seatY + 1, 0, \"minecraft:gold_block\");\n\n  // --- 2. Raised Ritual Sub-Dais (y = 4) ---\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const dist = Math.hypot(x - cx, z - cz);\n      if (dist <= 2.5) {\n        if (dist > 1.8) {\n          const dx = x - cx;\n          const dz = z - cz;\n          if (Math.abs(dx) >= Math.abs(dz)) {\n            setBlock(x, seatY + 1, z, dx > 0 ? withState(stStairs, \"facing=west,half=bottom\") : withState(stStairs, \"facing=east,half=bottom\"));\n          } else {\n            setBlock(x, seatY + 1, z, dz > 0 ? withState(stStairs, \"facing=north,half=bottom\") : withState(stStairs, \"facing=south,half=bottom\"));\n          }\n        } else {\n          setBlock(x, seatY + 1, z, \"minecraft:smooth_quartz\");\n        }\n      }\n    }\n  }\n\n  // --- 3. Anchor Pylons & Golden Runic Chains ---\n  let pylonCoords = [];\n  if (variant === 0 || variant === 2 || variant === 4) {\n    pylonCoords = [[2, 2], [6, 2], [2, 6], [6, 6]];\n  } else if (variant === 1 || variant === 3) {\n    pylonCoords = [[4, 1], [1, 4], [7, 4], [4, 7]];\n  } else {\n    pylonCoords = [[2, 2], [6, 2], [2, 6], [6, 6], [4, 1], [1, 4], [7, 4], [4, 7]];\n  }\n\n  const pylonTops = [];\n  for (let i = 0; i < pylonCoords.length; i++) {\n    const [px, pz] = pylonCoords[i];\n    const pHeight = 3 + (i % 2) + (variant % 2);\n    const topY = seatY + 1 + pHeight;\n\n    for (let y = seatY + 1; y <= topY; y++) {\n      if (y === seatY + 1) {\n        setBlock(px, y, pz, stAccent);\n      } else if (y === topY - 1) {\n        setBlock(px, y, pz, \"minecraft:chiseled_quartz_block\");\n      } else if (y === topY) {\n        setBlock(px, y, pz, (variant === 1 || variant === 3) ? \"minecraft:gilded_blackstone\" : \"minecraft:gold_block\");\n      } else {\n        setBlock(px, y, pz, \"minecraft:quartz_pillar[axis=y]\");\n      }\n    }\n\n    if (topY + 1 < H) {\n      if (variant === 0 || variant === 3) {\n        setBlock(px, topY + 1, pz, \"minecraft:lightning_rod[facing=up]\");\n      } else if (variant === 4) {\n        setBlock(px, topY + 1, pz, \"minecraft:end_rod[facing=up]\");\n      } else {\n        setBlock(px, topY + 1, pz, stWall);\n      }\n    }\n    pylonTops.push([px, topY, pz]);\n  }\n\n  // --- 4. Central Crystal Spire Variations ---\n\n  function buildCoreBlock(x, y, z, block) {\n    setBlock(x, y, z, block);\n  }\n\n  if (variant === 0) {\n    // Grand Zenith Amethyst Ward\n    for (let y = 5; y <= 14; y++) {\n      if (y <= 6) {\n        for (let dx = -1; dx <= 1; dx++) {\n          for (let dz = -1; dz <= 1; dz++) {\n            buildCoreBlock(cx + dx, y, cz + dz, \"minecraft:smooth_quartz\");\n          }\n        }\n      } else if (y <= 8) {\n        for (let dx = -1; dx <= 1; dx++) {\n          for (let dz = -1; dz <= 1; dz++) {\n            const isCenter = dx === 0 && dz === 0;\n            const isCorner = Math.abs(dx) === 1 && Math.abs(dz) === 1;\n            if (isCenter) {\n              buildCoreBlock(cx, y, cz, \"minecraft:sea_lantern\");\n            } else if (isCorner) {\n              buildCoreBlock(cx + dx, y, cz + dz, \"minecraft:raw_gold_block\");\n            } else {\n              buildCoreBlock(cx + dx, y, cz + dz, \"minecraft:amethyst_block\");\n            }\n          }\n        }\n        buildCoreBlock(cx + 2, y, cz, \"minecraft:amethyst_block\");\n        buildCoreBlock(cx - 2, y, cz, \"minecraft:amethyst_block\");\n        buildCoreBlock(cx, y, cz + 2, \"minecraft:amethyst_block\");\n        buildCoreBlock(cx, y, cz - 2, \"minecraft:amethyst_block\");\n      } else if (y <= 10) {\n        for (let dx = -1; dx <= 1; dx++) {\n          for (let dz = -1; dz <= 1; dz++) {\n            if (Math.abs(dx) + Math.abs(dz) <= 1) {\n              buildCoreBlock(cx + dx, y, cz + dz, \"minecraft:amethyst_block\");\n            } else {\n              buildCoreBlock(cx + dx, y, cz + dz, \"minecraft:tinted_glass\");\n            }\n          }\n        }\n      } else if (y <= 12) {\n        buildCoreBlock(cx, y, cz, \"minecraft:budding_amethyst\");\n        buildCoreBlock(cx + 1, y, cz, \"minecraft:amethyst_block\");\n        buildCoreBlock(cx - 1, y, cz, \"minecraft:amethyst_block\");\n        buildCoreBlock(cx, y, cz + 1, \"minecraft:amethyst_block\");\n        buildCoreBlock(cx, y, cz - 1, \"minecraft:amethyst_block\");\n      } else {\n        buildCoreBlock(cx, y, cz, \"minecraft:amethyst_block\");\n      }\n    }\n    setBlock(cx, 15, cz, \"minecraft:amethyst_cluster[facing=up]\");\n\n  } else if (variant === 1) {\n    // Twin Harmonic Spires\n    for (let y = 5; y <= 7; y++) {\n      for (let dx = -1; dx <= 1; dx++) {\n        for (let dz = -1; dz <= 1; dz++) {\n          buildCoreBlock(cx + dx, y, cz + dz, (dx === 0 && dz === 0) ? \"minecraft:sea_lantern\" : \"minecraft:smooth_quartz\");\n        }\n      }\n    }\n    // Bifurcate at y = 8 into West Amethyst & East Quartz\n    for (let y = 8; y <= 14; y++) {\n      // West Spire (cx - 1, cz)\n      buildCoreBlock(cx - 1, y, cz, \"minecraft:amethyst_block\");\n      if (y <= 11) {\n        buildCoreBlock(cx - 2, y, cz, \"minecraft:budding_amethyst\");\n        buildCoreBlock(cx - 1, y, cz + 1, \"minecraft:amethyst_block\");\n        buildCoreBlock(cx - 1, y, cz - 1, \"minecraft:amethyst_block\");\n      }\n      // East Spire (cx + 1, cz)\n      if (y <= 13) {\n        buildCoreBlock(cx + 1, y, cz, \"minecraft:smooth_quartz\");\n        if (y <= 10) {\n          buildCoreBlock(cx + 2, y, cz, \"minecraft:quartz_pillar[axis=y]\");\n          buildCoreBlock(cx + 1, y, cz + 1, \"minecraft:smooth_quartz\");\n          buildCoreBlock(cx + 1, y, cz - 1, \"minecraft:smooth_quartz\");\n        }\n      }\n    }\n    // Golden resonance cross-bridge at y = 9\n    buildCoreBlock(cx, 9, cz, \"minecraft:gold_block\");\n    buildCoreBlock(cx, 8, cz, \"minecraft:crying_obsidian\");\n    setBlock(cx - 1, 15, cz, \"minecraft:amethyst_cluster[facing=up]\");\n    setBlock(cx + 1, 14, cz, \"minecraft:end_rod[facing=up]\");\n\n  } else if (variant === 2) {\n    // Solar Aegis Spire\n    for (let y = 5; y <= 14; y++) {\n      if (y <= 8) {\n        for (let dx = -1; dx <= 1; dx++) {\n          for (let dz = -1; dz <= 1; dz++) {\n            const isCenter = dx === 0 && dz === 0;\n            buildCoreBlock(cx + dx, y, cz + dz, isCenter ? \"minecraft:sea_lantern\" : \"minecraft:smooth_quartz\");\n          }\n        }\n        // Diagonal solar wings\n        buildCoreBlock(cx - 2, y, cz - 2, \"minecraft:amethyst_block\");\n        buildCoreBlock(cx + 2, y, cz - 2, \"minecraft:amethyst_block\");\n        buildCoreBlock(cx - 2, y, cz + 2, \"minecraft:amethyst_block\");\n        buildCoreBlock(cx + 2, y, cz + 2, \"minecraft:amethyst_block\");\n      } else if (y <= 11) {\n        for (let dx = -1; dx <= 1; dx++) {\n          for (let dz = -1; dz <= 1; dz++) {\n            if (Math.abs(dx) + Math.abs(dz) <= 1) {\n              buildCoreBlock(cx + dx, y, cz + dz, (dx === 0 && dz === 0) ? \"minecraft:gold_block\" : \"minecraft:smooth_quartz\");\n            }\n          }\n        }\n      } else if (y <= 13) {\n        buildCoreBlock(cx, y, cz, \"minecraft:chiseled_quartz_block\");\n      } else {\n        buildCoreBlock(cx, y, cz, \"minecraft:gold_block\");\n      }\n    }\n    setBlock(cx, 15, cz, \"minecraft:lightning_rod[facing=up]\");\n\n  } else if (variant === 3) {\n    // Bastion Storm Ward\n    for (let y = 5; y <= 14; y++) {\n      if (y <= 8) {\n        for (let dx = -1; dx <= 1; dx++) {\n          for (let dz = -1; dz <= 1; dz++) {\n            const isCenter = dx === 0 && dz === 0;\n            buildCoreBlock(cx + dx, y, cz + dz, isCenter ? \"minecraft:crying_obsidian\" : \"minecraft:quartz_bricks\");\n          }\n        }\n        // Raw gold veins\n        buildCoreBlock(cx, y, cz - 2, \"minecraft:raw_gold_block\");\n        buildCoreBlock(cx, y, cz + 2, \"minecraft:raw_gold_block\");\n      } else if (y <= 11) {\n        for (let dx = -1; dx <= 1; dx++) {\n          for (let dz = -1; dz <= 1; dz++) {\n            if (Math.abs(dx) + Math.abs(dz) <= 1) {\n              buildCoreBlock(cx + dx, y, cz + dz, \"minecraft:amethyst_block\");\n            }\n          }\n        }\n      } else {\n        buildCoreBlock(cx, y, cz, \"minecraft:crying_obsidian\");\n      }\n    }\n    setBlock(cx, 15, cz, \"minecraft:amethyst_cluster[facing=up]\");\n\n  } else if (variant === 4) {\n    // Astral Geode Needle\n    for (let y = 5; y <= 14; y++) {\n      const coreMat = (y % 2 === 0) ? \"minecraft:sea_lantern\" : \"minecraft:crying_obsidian\";\n      buildCoreBlock(cx, y, cz, coreMat);\n\n      const angle = (y - 5) * (Math.PI / 2);\n      const sx = Math.round(Math.cos(angle));\n      const sz = Math.round(Math.sin(angle));\n\n      buildCoreBlock(cx + sx, y, cz + sz, \"minecraft:amethyst_block\");\n      if (y <= 11) {\n        buildCoreBlock(cx - sx, y, cz - sz, \"minecraft:budding_amethyst\");\n      }\n      if (y <= 8) {\n        for (let dx = -1; dx <= 1; dx++) {\n          for (let dz = -1; dz <= 1; dz++) {\n            if (!occupied.has(coordKey(cx + dx, y, cz + dz))) {\n              buildCoreBlock(cx + dx, y, cz + dz, \"minecraft:smooth_quartz\");\n            }\n          }\n        }\n      }\n    }\n    setBlock(cx, 15, cz, \"minecraft:end_rod[facing=up]\");\n\n  } else {\n    // Prismatic Mandala Spire (8-fold symmetry)\n    for (let y = 5; y <= 14; y++) {\n      if (y <= 8) {\n        for (let dx = -1; dx <= 1; dx++) {\n          for (let dz = -1; dz <= 1; dz++) {\n            buildCoreBlock(cx + dx, y, cz + dz, (dx === 0 && dz === 0) ? \"minecraft:sea_lantern\" : \"minecraft:amethyst_block\");\n          }\n        }\n        buildCoreBlock(cx + 2, y, cz, \"minecraft:smooth_quartz\");\n        buildCoreBlock(cx - 2, y, cz, \"minecraft:smooth_quartz\");\n        buildCoreBlock(cx, y, cz + 2, \"minecraft:smooth_quartz\");\n        buildCoreBlock(cx, y, cz - 2, \"minecraft:smooth_quartz\");\n      } else if (y <= 11) {\n        for (let dx = -1; dx <= 1; dx++) {\n          for (let dz = -1; dz <= 1; dz++) {\n            if (Math.abs(dx) + Math.abs(dz) <= 1) {\n              buildCoreBlock(cx + dx, y, cz + dz, (dx === 0 && dz === 0) ? \"minecraft:sea_lantern\" : \"minecraft:amethyst_block\");\n            } else {\n              buildCoreBlock(cx + dx, y, cz + dz, \"minecraft:gold_block\");\n            }\n          }\n        }\n      } else {\n        buildCoreBlock(cx, y, cz, \"minecraft:gold_block\");\n      }\n    }\n    setBlock(cx, 15, cz, \"minecraft:amethyst_cluster[facing=up]\");\n  }\n\n  // --- 5. Connect Golden Tether Chains ---\n  for (let i = 0; i < pylonTops.length; i++) {\n    const [px, py, pz] = pylonTops[i];\n    let targetX = cx;\n    let targetZ = cz;\n    if (variant === 1) {\n      targetX = px < cx ? cx - 1 : (px > cx ? cx + 1 : cx);\n    }\n    const targetY = 8 + (i % 2);\n\n    connectLine6(px, py, pz, targetX, targetY, targetZ, (lx, ly, lz, sx, sy, sz, isEnd) => {\n      if (isEnd) return \"minecraft:gold_block\";\n      if (api.random() < 0.2) return \"minecraft:raw_gold_block\";\n      if (sy !== 0) return \"minecraft:chain[axis=y]\";\n      if (sx !== 0) return \"minecraft:chain[axis=x]\";\n      return \"minecraft:chain[axis=z]\";\n    });\n  }\n\n  // --- 6. Cluster & Energy Facet Detailing ---\n  const crystalBlocks = Array.from(occupied).map(k => k.split(\",\").map(Number));\n  for (const [bx, by, bz] of crystalBlocks) {\n    if (by >= 5 && by <= 13) {\n      const dirs = [\n        [1, 0, 0, \"facing=east\"],\n        [-1, 0, 0, \"facing=west\"],\n        [0, 0, 1, \"facing=south\"],\n        [0, 0, -1, \"facing=north\"],\n        [0, 1, 0, \"facing=up\"]\n      ];\n\n      for (const [dx, dy, dz, state] of dirs) {\n        const nx = bx + dx;\n        const ny = by + dy;\n        const nz = bz + dz;\n\n        if (nx >= 0 && nx < W && ny >= 0 && ny < H && nz >= 0 && nz < D) {\n          if (!occupied.has(coordKey(nx, ny, nz))) {\n            const distCenter = Math.hypot(nx - cx, nz - cz);\n            if (distCenter <= 2.8 && api.random() < 0.16) {\n              setBlock(nx, ny, nz, `minecraft:amethyst_cluster[${state}]`);\n            }\n          }\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"arcane_ward_crystal\",\n    seatY: seatY,\n    anchors: {\n      front: [cx, seatY, 0],\n      focus: [cx, 8, cz],\n      beacon: [cx, 15, cz]\n    }\n  };\n}"
+    }
+  }
+}

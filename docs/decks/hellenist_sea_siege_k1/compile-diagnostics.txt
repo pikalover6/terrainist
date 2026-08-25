@@ -1,0 +1,20 @@
+warning LOAM-T105 BASIN_RIM_NOT_CLOSED at world.terrain.harbour_basin: basin rim is not closed; water fill skipped
+warning LOAM-E170 CANNOT_FIT at world.neopolis.civic_stoa_promenade: no lot or block in "world.neopolis.cell_0" is big enough for this landmark's 19 × 25 footprint
+warning LOAM-E170 CANNOT_FIT at world.neopolis.neoclassical_tower: no lot or block in "world.neopolis.cell_1" is big enough for this landmark's 21 × 19 footprint
+warning LOAM-T209 ROAD_UNROUTABLE at world.boulevards: no road could be routed from "world.the_leviathan" to the network hub "world.waterfront_harbour": its approach column is blocked
+warning LOAM-E170 CANNOT_FIT at world.neopolis.neoclassical_tower: no lot or block in "world.neopolis.cell_1" is big enough for this landmark's 15 × 15 footprint
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.boulevards: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pa
+warning LOAM-W521 LANDMARK_COARSE_ABANDONED at world.the_leviathan: this landmark asked to stand at (-11, -164) and was placed at (-39, -140), 37 blocks away: a site inside the target was feasible but cost more, and "at"/"zone" is a soft cost the ground can outbid
+note LOAM-I512 DISTRICT_RUINS at world.neopolis.cell_0: decline 0.10 gives a ruin share of 0.00: 0 of 11 infill lots roll into ruined shells (light 0, heavy 0, total 0)
+note LOAM-I512 DISTRICT_RUINS at world.neopolis.cell_1: decline 0.10 gives a ruin share of 0.00: 0 of 1 infill lots roll into ruined shells (light 0, heavy 0, total 0)
+note LOAM-I512 DISTRICT_RUINS at world.neopolis.cell_2: decline 0.10 gives a ruin share of 0.00: 0 of 1 infill lots roll into ruined shells (light 0, heavy 0, total 0)
+note LOAM-I512 DISTRICT_RUINS at world.neopolis.cell_4: decline 0.10 gives a ruin share of 0.00: 0 of 3 infill lots roll into ruined shells (light 0, heavy 0, total 0)
+warning LOAM-W409 PRECINCT_RESEATED at world.waterfront_harbour: precinct.harbour@0 found no quay in the envelope the solver gave it at [-256, -144] and reseated itself on the best coastline in the world, at [-240, -224] — 96 columns of shoreline facing north
+warning LOAM-W517 INTENT_FORM_PACK_ERA at world: intent.era resolves to "modern", which is outside the affinity of the form pack "classical_mediterranean" (ancient) — the pack is used as written
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.waterfront_harbour: every cut face finished: 144 column(s) faced in the hill's own rock
+note LOAM-I463 SWEEP_FEATURES_PLACED at world: face finish: 299 column(s) striped in the hill's own rock, 382 paved face(s) footed, 17 crown notch(es) closed
+note LOAM-I497 GROUND_STAGE at world: ground stage: 504 intent(s) (building.footprint 46, precinct.ground 1, quarter.plane 425, street.network 21, street.sidewalk 4, verge 7), 5 resolve(s), 2206 column(s) moved, 64 transition(s) (bank 18, kerb 39, rock 7), 18 of them unbuilt by any pass; coverage 12
+note LOAM-I412 SEAM_SERVED at world: terminal seam builder (§3.3): 3 derived transition(s) built (bank 1, rock 2) over 0 column(s) of face, 5 of graded bank (2 eased under §7.2's natural blend) and 18 finished in the hill's own rock; 9 absorbed under S7, 0 refused
+note LOAM-T221 STAIR_UNCONNECTED at world: a hillside stair was refused whole: no strip in the search window both climbs the bank and reaches a road, plaza or building pad at each end
+warning LOAM-W337 PROGRAM_DROPPED at world.kraken_tentacles: "kraken_tentacle" asked for 14 instances and only 6 sites would take one
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 86063 footprint columns (plus 23391 feathered over 40 columns) to minecraft:plains, from the ambient majority (minecraft:plains, 80% of 14794 ring columns); snow policy never resolved to "never" on a 0/86063 vote

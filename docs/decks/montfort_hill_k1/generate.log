@@ -1,0 +1,128 @@
+prompt     A walled medieval city on a hill, its castle keep above the rooftops.
+seed       311
+size       512x512
+model      google/gemini-3.7-flash
+effort     high
+kit        settlement
+
+intent     {"era":"medieval","wealth":0.5,"decline":0.1,"formality":0.4,"character":{"label":"walled hill city with castle keep","materialTheme":"temperate_timber","fortification":"walled","urbanForm":"hillside","ground":"stepped","courtyards":0.4,"motifs":{"roofType":"gable","massing":"towered"},"archetypes":{"prefer":["keep","manor","watchtower","gatehouse","tavern","cottage","church"]}},"tokens":{"terrain":"a steep hill rising above the surrounding landscape, crowned by a walled city","icons":"a dominant castle keep overlooking the town roofs; fortified stone circuit walls with gatehouses and defensive towers"}}
+           1 attempt(s), 7921 tokens
+
+authored with google/gemini-3.7-flash in 1 attempt(s)
+  attempt 1   valid
+  tokens     83796 in + 7060 out = 90856  ($0.0447)
+programs   none (budget 3 landmark / 3 plugin)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/decks/walled/out/montfort_hill.loam.json
+
+
+compile feedback, round 1 of 2:
+
+The compiler reported 4 problem(s) with the compiled world:
+
+note LOAM-T112 RIVER_PONDED at world.terrain.lowland_stream: river "lowland_stream" is connected to no sea on this map; it was demoted to a chain of 4 ponds over 59 columns, with the stretches between them left dry
+  fix: nothing to change if a pond chain is what you wanted. For a flowing river, give the map a sea for it to reach — lower "baseHeight" or raise "continentalness.seaFraction" until the coast is inside the region — and end the river's "course" on that coast.
+warning LOAM-E170 CANNOT_FIT at world.hill_city.castle_keep: no lot or block in "world.hill_city" is big enough for this landmark's 15 × 15 footprint
+  fix: shrink "envelope.size", raise the district's "params.blockSize" so its blocks are bigger, or move this building out of the district and let the solver place it
+warning LOAM-E170 CANNOT_FIT at world.hill_city.high_church: no lot or block in "world.hill_city" is big enough for this landmark's 13 × 17 footprint
+  fix: shrink "envelope.size", raise the district's "params.blockSize" so its blocks are bigger, or move this building out of the district and let the solver place it
+warning LOAM-E170 CANNOT_FIT at world.hill_city.guildhall: no lot or block in "world.hill_city" is big enough for this landmark's 13 × 15 footprint
+  fix: shrink "envelope.size", raise the district's "params.blockSize" so its blocks are bigger, or move this building out of the district and let the solver place it
+
+  revision 1 authored in 1 attempt(s)
+  tokens     85928 in + 4156 out = 90084  ($0.0124)
+
+
+compile feedback, round 2 of 2:
+
+The compiler reported 3 problem(s) with the compiled world:
+
+warning LOAM-E170 CANNOT_FIT at world.hill_city.castle_keep: no lot or block in "world.hill_city" is big enough for this landmark's 11 × 11 footprint
+  fix: shrink "envelope.size", raise the district's "params.blockSize" so its blocks are bigger, or move this building out of the district and let the solver place it
+warning LOAM-E170 CANNOT_FIT at world.hill_city.high_church: no lot or block in "world.hill_city" is big enough for this landmark's 11 × 11 footprint
+  fix: shrink "envelope.size", raise the district's "params.blockSize" so its blocks are bigger, or move this building out of the district and let the solver place it
+warning LOAM-E170 CANNOT_FIT at world.hill_city.guildhall: no lot or block in "world.hill_city" is big enough for this landmark's 11 × 11 footprint
+  fix: shrink "envelope.size", raise the district's "params.blockSize" so its blocks are bigger, or move this building out of the district and let the solver place it
+
+  revision 2 authored in 1 attempt(s)
+  tokens     85745 in + 9068 out = 94813  ($0.0492)
+
+compiled "montfort_hill" — 1.21.11 (DataVersion 4671)
+  world      /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/decks/walled/out/montfort_hill
+  seed       311
+  region     512x512 at (-256, -256)
+  heights    57.6..116.9  sea 63  snow line 114.2
+  land       92.9% of columns above sea level
+  biomes     plains 66.9%, forest 24.7%, ocean 6.7%, windswept_hills 1.2%, beach 0.6%
+  trees      3809 (hill_flank_woods=3081, wilderness_cover=1084)
+  chunks     1024
+  blocks     37518841 (493316 vegetation)
+  markers    68
+  spawn      [0, 77, 143]
+  timings    validate 1ms  field 96ms  layout 895ms  climate 47ms  columns 30ms  caves 0ms  structures 457ms  programs 0ms  scatter 150ms  biomes 42ms  validators 3ms  emit 1725ms  total 3511ms
+  doc        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/decks/walled/out/montfort_hill.loam.json
+  report     /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/decks/walled/out/montfort_hill.report.json
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.city_lanes: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+note LOAM-T242 GROUND_PLANE_DRIFT at world.hill_city: 5503 of 14577 platform column(s) in "world.hill_city" within 12 block(s) of a graded carriageway stand off the street's own storey lattice, the worst by 11 block(s)
+  fix: Nothing to change in the document — a document cannot move its own storey lattice. A non-zero count is a compiler finding: the anchor did not hold on this quarter.
+
+note LOAM-I512 DISTRICT_RUINS at world.hill_city: decline 0.10 gives a ruin share of 0.00: 0 of 1 infill lots roll into ruined shells (light 0, heavy 0, total 0)
+  fix: decline is below the ruin onset of 0.35 — below it decline is wear, not ruin; raise it to ruin buildings
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.hill_city: transitions by context (§5): 725 edge column(s) — fill 0 (none), cut 725 (725 retaining)
+  fix: No action needed.
+
+note LOAM-T237 FRONTAGE_TIE_DRIFT at world.hill_city: street segment "segment:dn1_40!world.hill_city" was surfaced above its datum at 2 of 41 station(s), by up to 1 block(s); the lots seated against that datum keep the level the datum gave them
+  fix: No change needed if the run crosses or skirts water — a deck and a shore rim are the one legal cause, and a street that rose out of the water is a street doing the right thing. A large drift away from water means the datum and the surfacer have become two graders: report it.
+
+note LOAM-T237 FRONTAGE_TIE_DRIFT at world.hill_city: street segment "segment:dn1_80!world.hill_city" was surfaced above its datum at 3 of 23 station(s), by up to 1 block(s); the lots seated against that datum keep the level the datum gave them
+  fix: No change needed if the run crosses or skirts water — a deck and a shore rim are the one legal cause, and a street that rose out of the water is a street doing the right thing. A large drift away from water means the datum and the surfacer have become two graders: report it.
+
+note LOAM-T237 FRONTAGE_TIE_DRIFT at world.hill_city: street segment "segment:dn2_120!world.hill_city" was surfaced above its datum at 23 of 66 station(s), by up to 4 block(s); the lots seated against that datum keep the level the datum gave them
+  fix: No change needed if the run crosses or skirts water — a deck and a shore rim are the one legal cause, and a street that rose out of the water is a street doing the right thing. A large drift away from water means the datum and the surfacer have become two graders: report it.
+
+note LOAM-T237 FRONTAGE_TIE_DRIFT at world.hill_city: street segment "segment:dn2_160!world.hill_city" was surfaced above its datum at 36 of 66 station(s), by up to 5 block(s); the lots seated against that datum keep the level the datum gave them
+  fix: No change needed if the run crosses or skirts water — a deck and a shore rim are the one legal cause, and a street that rose out of the water is a street doing the right thing. A large drift away from water means the datum and the surfacer have become two graders: report it.
+
+note LOAM-T237 FRONTAGE_TIE_DRIFT at world.hill_city: street segment "segment:dn2_200!world.hill_city" was surfaced above its datum at 16 of 62 station(s), by up to 4 block(s); the lots seated against that datum keep the level the datum gave them
+  fix: No change needed if the run crosses or skirts water — a deck and a shore rim are the one legal cause, and a street that rose out of the water is a street doing the right thing. A large drift away from water means the datum and the surfacer have become two graders: report it.
+
+note LOAM-T237 FRONTAGE_TIE_DRIFT at world.hill_city: street segment "segment:dn2_240!world.hill_city" was surfaced above its datum at 17 of 36 station(s), by up to 4 block(s); the lots seated against that datum keep the level the datum gave them
+  fix: No change needed if the run crosses or skirts water — a deck and a shore rim are the one legal cause, and a street that rose out of the water is a street doing the right thing. A large drift away from water means the datum and the surfacer have become two graders: report it.
+
+note LOAM-T237 FRONTAGE_TIE_DRIFT at world.hill_city: street segment "segment:dn2_40!world.hill_city" was surfaced above its datum at 17 of 46 station(s), by up to 4 block(s); the lots seated against that datum keep the level the datum gave them
+  fix: No change needed if the run crosses or skirts water — a deck and a shore rim are the one legal cause, and a street that rose out of the water is a street doing the right thing. A large drift away from water means the datum and the surfacer have become two graders: report it.
+
+note LOAM-T237 FRONTAGE_TIE_DRIFT at world.hill_city: street segment "segment:dn2_80!world.hill_city" was surfaced above its datum at 23 of 64 station(s), by up to 4 block(s); the lots seated against that datum keep the level the datum gave them
+  fix: No change needed if the run crosses or skirts water — a deck and a shore rim are the one legal cause, and a street that rose out of the water is a street doing the right thing. A large drift away from water means the datum and the surfacer have become two graders: report it.
+
+note LOAM-I504 FARM_TRACK at world.lowland_farms: "world.lowland_farms" publishes a road_stub at its gate: a road.network@0 node anchored on "world.lowland_farms" runs the lane to it
+  fix: add "lowland_farms" to the "anchors" of the document's road.network@0 node, or give that node a "lanes" entry naming it
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.hill_city: every cut face finished: 1478 column(s) faced in the hill's own rock, of which 725 were declared cut edges (§5.4); 725 of those wanted masonry (§5.2 rule 9) and got rock — an uphill wall is v1
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world: face finish: 1268 column(s) striped in the hill's own rock, 335 paved face(s) footed, 45 crown notch(es) closed
+  fix: No action needed.
+
+note LOAM-I497 GROUND_STAGE at world: ground stage: 443 intent(s) (building.footprint 4, farm.parcel 7, quarter.plane 403, retaining.skirt 11, street.network 12, street.sidewalk 1, verge 5), 5 resolve(s), 2658 column(s) moved, 769 transition(s) (bank 300, kerb 131, retaining 1, rock 337), 652 of them unbuilt by any pass; coverage 2529 boundary pair(s) — 1979 in a transition, 458 suppressed by request, 92 by a face, 0 a kerb, 0 uncovered (excluded: 49779 natural, 0 wet)
+  fix: Nothing — this is the stage's own golden, and it is a note so that a count moving is visible in a diff before a block moves in a world.
+
+note LOAM-I412 SEAM_SERVED at world: terminal seam builder (§3.3): 6 derived transition(s) built (retaining 1, revetted 5) over 43 column(s) of face, 0 of graded bank (0 eased under §7.2's natural blend) and 0 finished in the hill's own rock; 637 absorbed under S7, 0 refused
+  fix: No action needed.
+
+warning LOAM-W489 INTENT_FORTIFICATION_UNKNOWN at world: intent.character.fortification asks for a wall and 1 node(s) already declare "params.walls" — the authored walls are built and no second circuit is added
+  fix: this is the intended precedence; delete "params.walls" if you want the dial to decide the wall, or leave it if the parameters are what you meant
+
+note LOAM-I415 WALL_COURSE_CROSSES_SEAM at world.hill_city: wall run "masonry" (176 course columns) crosses a platform boundary at 3 column(s) where the ground steps at least 2 block(s) — the deepest crossing is 5 block(s) and the longest unbroken stretch is 1 column(s), and along it the wall's own fill is the face rather than a wall standing on one
+  fix: no action needed — the circuit is not moved on this number. It is the measurement that decides whether a crossing is worth building as a tier stack instead, which is a later round
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 38167 footprint columns (plus 25737 feathered over 40 columns) to minecraft:plains, from the ambient majority (minecraft:plains, 56% of 15247 ring columns); snow policy auto resolved to "never" on a 0/38167 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+  authoring  3 model run(s), 2 compile-feedback round(s), 255469 in + 20284 out = 275753 tokens (14559 of the out reasoning) ($0.1062)
+
+next: terrainist install /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/decks/walled/out/montfort_hill
+exit=0

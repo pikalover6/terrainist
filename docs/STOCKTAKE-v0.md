@@ -194,7 +194,36 @@ Seed findings already in hand:
   demoted to a pond chain (LOAM-T112) that leaves eight unstable water
   blocks at y=56 (LOAM-T110) — reproduced terrain-only, so it is the
   river/pond family in the terrain verbs, and a candidate kit teaching
-  (steer a sealess world away from a river) to be measured before touched. **The pattern,
+  (steer a sealess world away from a river) to be measured before touched.
+- **THE k1 DECK SET (Kai: "generate 5 more worlds, intelligently diverse";
+  docs/decks/*_k1, all installed on the k1 channel, ~$0.95):** five golden
+  prompts on their harness seeds, chosen to exercise what the stocktake
+  changed. Every one authored in one or two attempts; every one compiled.
+  What the documents show: the model now writes explicit archetypes
+  everywhere (keep, town_hall, silo, windmill, laboratory, armory …), spends
+  the bespoke budget (2–4 programs per world where the corpus mode was 1),
+  reaches `infra.entry@0` (zero reach in fifty documents; four in the alien
+  farm, two in hellenist, one in the metropolis), writes fractional
+  scatter.program radii correctly, and puts the galleon in the WATER
+  (cluster 6). The tall grammar cluster 4 unscoped is real: the metropolis is
+  74 buildings 24–76 blocks high. Two farm holdings compiled clean on bug
+  #1's path. The two-place prompt got region tokens and no world-scope pack,
+  as the consult predicted. **Fabric density is the open question** — troy
+  seats 19.7 lots per 10k envelope cells; montfort 2.2 (the hillside form's
+  replan dissolved four of five frontage strips on a rounded dome — five
+  houses inside a full circuit wall), hellenist 3.2 (decline hollowed it);
+  Kai holds judgement until all five are walked. The T008 lead recurred
+  (unknown prop param keys, hideout_solar/turbine, one attempt lost).
+
+  | deck | districts | envelope cells | lots | buildings | lots/10k | programs | root archetypes | infra.entry | farms |
+  |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+  | troy_k1 | 1 | 36100 | 71 | 46 | 19.7 | 1 | 0 | 0 | 1 |
+  | montfort_hill | 1 | 36000 | 8 | 5 | 2.2 | 0 | 1 | 0 | 1 |
+  | alien_farm_invasion | 0 | 0 | 0 | 15 | 0.0 | 3 | 10 | 4 | 2 |
+  | hellenist_sea_siege | 4 | 85208 | 27 | 23 | 3.2 | 2 | 0 | 2 | 0 |
+  | overgrown_metropolis_hideout | 1 | 62400 | 142 | 74 | 22.8 | 3 | 4 | 1 | 0 |
+  | pirates_vs_unicorns | 2 | 22000 | 40 | 22 | 18.2 | 4 | 0 | 0 | 0 |
+ **The pattern,
   stated for the record: all four fence-teaches-an-error finds were
   invisible to prose review and obvious the moment something counted what
   the model emitted — the audits could not have found them; the suite did,

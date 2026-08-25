@@ -79,6 +79,17 @@ docs/audits/kit-remediation-2026-08-24.md; campaign spend $4.82; kit-fix
 stood down (Phase 1 + T204 + B1 + conform done). Walk: 6 stations in the
 deck's WALK-CARD.
 
+**k1 DECK SET (docs/decks/*_k1, ~$0.95):** montfort_hill (walled city;
+hillside form replan dissolved 4/5 strips → 5 houses in a full wall),
+alien_farm_invasion (2 holdings, 4 infra.entry, 3 programs, harvester
+hovering), hellenist_sea_siege (city of 4 cells, harbour precinct,
+leviathan wading, tentacles with a FRACTIONAL radius), overgrown_metropolis
+(74 buildings 24–76 tall — cluster 4's evidence; T008 lead recurred),
+pirates_vs_unicorns (two districts, 4 programs, galleon in the WATER,
+region tokens and no world-scope pack). Kai holds judgement until all
+five are walked; fabric density is the open question (lots/10k cells:
+troy 19.7, montfort 2.2, hellenist 3.2).
+
 **Parked troy queue (not cancelled):** flight object native-first
 (junction cliffs customer #1; stairs = architecture for real drops, never
 road texture); landmark-border rule (+ terrace_steps mis-siting); entry-
