@@ -83,6 +83,15 @@ DEFERRED to Wave 2b/A3 (B staged behind A). Harness wrinkle: resume
 skips failed records (fix scheduled). radiusBlocks/radiusFraction rename
 → WS-F.
 
+**WAVE 2b CONSULT drafted (docs/STOCKTAKE-WAVE-2B-v0.md, e891c43+):** B1
+citadel = fence the civic set-piece (a)+(c), 3×3 ~$0.35; B2 A3 = core kit +
+per-pack EXAMPLE modules (fences, not ids; named-pack selection; region
+scope B behind A; measure copy-mode side effect); B3 probes DONE: omitted
+strength = per-type default (§4.5, nothing to teach); demotion census:
+terrain_conform 100 / distance 62 / adjacent_to 51 — kit fences write
+conform without maxSlope (DEFAULT_MAX_SLOPE 35) → one real cluster. Kai
+decides B1 go / B2 timing / A-vs-B / campaign window.
+
 **Parked troy queue (not cancelled):** flight object native-first
 (junction cliffs customer #1; stairs = architecture for real drops, never
 road texture); landmark-border rule (+ terrace_steps mis-siting); entry-
