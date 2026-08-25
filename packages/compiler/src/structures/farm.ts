@@ -70,6 +70,7 @@ import {
   type GroundTransition,
 } from "../layout/ground-contract.js";
 import type { GroundDriver } from "../layout/ground-driver.js";
+import { resolveGround } from "../layout/ground-resolver.js";
 import type { OccupancyGrid, Placement } from "../layout/types.js";
 import { FluidKind } from "../terrain/columns.js";
 import type { ColumnPlan } from "../terrain/columns.js";
@@ -598,7 +599,26 @@ export function buildFarms(input: FarmPassInput): FarmPassResult {
   const parcelDatum: ParcelDatum = { rectsByPath: parcelRects };
 
   if (intents.length > 0) input.ground.commit(intents);
-  const resolved = intents.length === 0 ? undefined : input.ground.finish();
+  // **Not `finish()`** — v1 §1.6, learnt the hard way on 2026-08-24. This pass
+  // is a tier-D declarer and the doorstep walk, also tier D, declares *after*
+  // it; `finish()` here forced the driver's fifth resolve and sealed every tier,
+  // so the first document to pair a holding with a stepped doorstep died on the
+  // ordering guard ("doorstep.landing declared after tier E was read"). The
+  // three baseline docs have no holding, which is how a WP-2 line outlived G6.
+  //
+  // What the pass actually needs is its own entitlement: the resolve over what
+  // has been declared so far — its own claims included — with full ownership.
+  // That is exactly the value `finish()` returned at this position (the same
+  // baseline, the same accumulated set, the same options), computed privately:
+  // the driver's five resolves stay the five, no tier is sealed, and the
+  // doorstep walk may still declare. Byte-identical on a holding world.
+  const resolved =
+    intents.length === 0
+      ? undefined
+      : resolveGround(input.ground.baseline, input.ground.intents, {
+          generate: input.ground.staged,
+          ...(input.ground.built === undefined ? {} : { built: input.ground.built }),
+        });
   const settled = farms.map((row, i) => settle(row, owned[i] ?? [], resolved));
 
   // WP-3, and the ordering is the whole of §5.4's last sentence: the rows are
