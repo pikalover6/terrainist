@@ -69,7 +69,15 @@ skips failed records (fix scheduled). radiusBlocks/radiusFraction rename
 
 **Cluster 4 LANDED 8cb1578:** desert forests [1,1,1,1]→[0,0,0] across four
 kit versions (no forest-count law exists); envelope half suggestive only.
-Rule: collect before-samples BEFORE bytes move. Clusters 5–6 = Kai's pick.
+Rule: collect before-samples BEFORE bytes move. **Cluster 5 LANDED 1493b50:**
+cost.ts:309 makes SURFACE the default distance measure (kit taught centre
+→ every spacing in every doc off by half an envelope); era class is
+renaissance; farm example's two advisory diagnostics → zero. B3 slope story
+RETRACTED (kit-fix probed: zero demotions on alpine ground); conform = the
+demotion order's first casualty (weight 1.0, last-written, index tiebreak);
+census: 92/100 conform-demoted nodes also lost a second constraint —
+hard distance tethers are the over-constraint → consult for Kai. Cluster
+6 (semantics) next.
 
 **WAVE 2b CONSULT drafted (docs/STOCKTAKE-WAVE-2B-v0.md, e891c43+):** B1
 citadel = fence the civic set-piece (a)+(c), 3×3 ~$0.35; B2 A3 = core kit +
