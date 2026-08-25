@@ -7,21 +7,21 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 25 (F21 probed: nobody's orchard; the
-  brown is the lane network; P5 opened) is committed.
-- **Next unit:** unit 26 — **F4, the `LOAM-I512` street probe**: the
-  metropolis's "ruined shells" vs intact boxes at street level. Probe the
-  overgrown_metropolis_hideout_k1 world (`bi/u25`) with a bespoke reader:
-  per building, the share of wall blocks missing / replaced by the ruin
-  palette, vines on walls, trees in the street columns, the `boxes` the
-  icon metric counts; compare with the r5 anchor's numbers
-  (`docs/decks/anchors/METROPOLIS-R5-*.md`) and the census's T6 line.
-  Write the verdict station; fix in code only what the probe names as a
-  bug (law 3), behind a switch. Then F14 (physics unit: the pre-existing
-  findings on shipped worlds, probe first), F17 (the keep 1-of-3), census
-  1.21, P5 if cheap; §10.5 probe prompts (~40 % of the spend unspent); the
-  remaining verdict stations, G2's named worlds, the final deck.
-- **Last commit:** 0fa9c5e (unit 24). Convention: this line names the
+- **In flight:** nothing — unit 26 (F4 probed: nothing in the k1
+  metropolis can ruin; F22 opened, P6 proposed, I512 says its denominator)
+  is committed.
+- **Next unit:** unit 27 — **F14, the physics unit**: the pre-existing
+  physics findings on shipped worlds. Probe first on the thirteen worlds in
+  `bi/u26`: the physics lint's own numbers per world (`unstableFluidBlocks`,
+  `floatingTrees` in `stats`; the fluid validator's diagnostics; floating
+  slabs / unsupported blocks by a bespoke reader if the lint has none),
+  ranked; then the one cause with the most blocks behind it, fixed behind
+  a switch (law 5) or written up. Then F17 (the keep authored 1-of-3 —
+  kit-teaching, the harness gates it), census 1.21 (wire `stats.ground`),
+  P5/P6 if a cheap first step exists; §10.5 probe prompts (~40 % of the
+  spend still unspent); the remaining verdict stations, G2's named worlds,
+  the final deck and closing report.
+- **Last commit:** fe91197 (unit 25). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
 - **Spend:** $8.19 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
 - **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19, D25,
@@ -30,7 +30,7 @@ running state. The NOW block is rewritten at the end of every turn.
   - F1 — T110: fixed for four of five; open on #5 (P4).
   - F2 — anchors at HEAD: all four attributed (units 4, 8).
   - F3 — metropolis authoring regression, lost 3-of-3; E2.
-  - F4 — `LOAM-I512` "ruined shells" vs intact boxes — street-level probe.
+  - F4 — closed (unit 26): the k1 metropolis cannot ruin (F22).
   - F5, F6, F7, F11, F12, F13 — fixed (units 5–10).
   - F8 — `frontageLots` drops (~70 % starvation → F10, ~30 % geometry → P1).
   - F9 — new hillside lots' cut faces undressed (P2); walkability audit
@@ -62,6 +62,12 @@ running state. The NOW block is rewritten at the end of every turn.
     read as a public square), and the brown is the lane network growing
     with the dwellings it anchors (lane columns 3,535 → 6,661, coarse-dirt
     shoulders). No program yielded. The taste question is P5.
+  - F22 — **the decay roll is per infill lot and the archetypes that carry
+    a grid metropolis have no shell decay mode**: on the k1 metropolis 132
+    of 142 lots are terraces that never roll, and `terrace`, `office`,
+    `apartment_block` answer `LOAM-W511` when asked — zero buildings ruin at
+    `decline 0.92`, no ruin field, no green skin (`METROPOLIS-F4`). The T6
+    regression is structural; the fix is P6.
 ## DECISIONS
 
 (every fork taken: the reversible default chosen, why, and how to undo it)
@@ -427,6 +433,17 @@ running state. The NOW block is rewritten at the end of every turn.
   section applied where the district's street family belongs, and changing
   it moves every document with lanes through a town — a law-5 unit with
   its own attribution. Undo: n/a.
+- **D60 (unit 26):** F4 is answered from the reports and one dist-only
+  probe rather than a voxel walk of the street: the compiler's own ruin
+  accounting (yards, field, skin all zero) and `LOAM-W511` ×70 when every
+  terrace is handed a decay say what a walk would have said, with the cause
+  attached. Undo: n/a.
+- **D61 (unit 26):** the fix is a proposal (P6), not a switch: a shell
+  decay mode for `terrace` is grammar work in `stdlib` (the archetype is
+  built by its own generator and never enters the fit-out chain), and
+  extending the roll without it would add sixty-six warnings and no ruins.
+  The report-only I512 denominator lands now so the note stops reading as
+  a ruin share. Undo: n/a.
 
 ## SPEND
 
@@ -457,6 +474,7 @@ running state. The NOW block is rewritten at the end of every turn.
 | 23 | the kerb flip — censuses, renders, one bi14 run, the FULL suite | 0.00 | 8.19 |
 | 24 | D3 probed — thirteen in-process compiles, one bi14 run, the FULL suite | 0.00 | 8.19 |
 | 25 | F21 probed — two top-block maps, one bi14 run, the FULL suite | 0.00 | 8.19 |
+| 26 | F4 probed — one dist-patched compile, one bi14 run, the FULL suite | 0.00 | 8.19 |
 
 ## VERDICTS
 
@@ -496,6 +514,15 @@ running state. The NOW block is rewritten at the end of every turn.
   `resolveStreetStates` family (surface, kerb, verge) rather than the
   rural set; byte-moving on every document with lanes through a town;
   switch + attribution.
+- **P6 — a shell decay mode for `terrace`, and the roll over terrace
+  runs** (unit 26, `METROPOLIS-F4-2026-08-25.md`). The terrace archetype —
+  132 of the k1 metropolis's 142 lots — is built by its own generator and
+  answers `LOAM-W511` to any `decay`; `office` and `apartment_block` too. A
+  decay mode in the terrace generator (bays lose storeys and roofs, party
+  walls stand as the fallen-tower silhouette T6 names), then `ruinDecayOf`
+  rolled per terrace run (clustered by block, as the infill roll is) behind
+  a switch, attributed on both metropolis documents. Without it a grid
+  district at any `decline` is intact by construction.
 - **P4 — a wet-neighbour constraint in the ground contract** (unit 14). A
   pad or platform whose ground claim would lower a column beside standing
   water below that water's surface is refused or raised to it — the rule
@@ -879,3 +906,16 @@ running state. The NOW block is rewritten at the end of every turn.
   14). F21 withdrawn (D58); P5 opened (D59); the switch's docblock
   corrected (comment only). The thirteen: all thirteen payload-identical to unit 24. Tests: FULL suite COUNTS
   Test Files 346 passed | 1 skipped (347), Tests 5678 passed | 31 skipped (5709). Files: `layout/district.ts` (comment), the record §I. Spend $0.
+- **unit 26 — F4 probed: nothing in the metropolis can ruin (2026-08-25):**
+  `docs/decks/anchors/METROPOLIS-F4-2026-08-25.md`. The k1 metropolis at
+  HEAD: 142 lots, 132 terrace, 2 infill; `LOAM-I512` "2 of 2 infill lots
+  roll into ruined shells"; ruin yards, field and green skin all 0 (the
+  anchor: 24 of 28, 14, 3,564, 6,207). In code: the roll is inside
+  `tryInfill` only; `terraceRuns` takes no decline. Probe: every terrace
+  handed `decay: 0.8` in the dist → `LOAM-W511` ×70 (66 terrace, 2 office,
+  1 apartment_block, 1 skyscraper), still 0 / 0 / 0 — no archetype in the
+  district has a shell decay mode. F4 closed, F22 opened (law 1), P6
+  proposed (D61), census 1.22. Landed: the I512 message states the terrace
+  lots outside the roll (report-only). The thirteen: all thirteen payload-identical to unit 25. Tests: FULL
+  suite COUNTS Test Files 346 passed | 1 skipped (347), Tests 5678 passed | 31 skipped (5709). Files: `layout/district.ts`, the record, the
+  census. Spend $0.

@@ -2291,7 +2291,13 @@ export function layDistrict(
         "DISTRICT_RUINS",
         nodePath,
         `decline ${declineOf.toFixed(2)} gives a ruin share of ${share.toFixed(2)}: ` +
-          `${ruined} of ${rolled} infill lots roll into ruined shells (${histogram})`,
+          `${ruined} of ${rolled} infill lots roll into ruined shells (${histogram})` +
+          // The denominator the sentence used to hide (Stocktake unit 26, F22):
+          // the roll is per infill lot, and a grid district is mostly terraces,
+          // which never roll — and whose archetype has no shell decay mode.
+          (terraceLots > 0
+            ? `; ${terraceLots} terrace lot${terraceLots === 1 ? "" : "s"} in ${terraces.length} terrace${terraces.length === 1 ? "" : "s"} are outside the roll (terraces do not roll, and the terrace archetype has no shell decay mode)`
+            : ""),
         share === 0
           ? `decline is below the ruin onset of ${RUIN_ONSET} — below it decline is wear, not ruin; raise it to ruin buildings`
           : "raise or lower intent.decline on this district to move the share; landmarks you declared are exempt unless they carry params.decay",
