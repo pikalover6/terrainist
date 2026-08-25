@@ -61,6 +61,20 @@ Seed findings already in hand:
   new T104s until the kit taught the split with a fenced example. Filed
   for a later wave as a real interface fix (WS-F seam list): rename to
   `radiusBlocks` / `radiusFraction` so the two nodes cannot share a word.
+- **Cluster 2 LANDED (`2c77126`):** the settlement root union now lists
+  what validate.ts dispatches (the old rule forbade the kit's own district,
+  city, precinct, infra.entry, authored: and scatter.program features); both
+  kits' key lists gain `programs`; the terrain kit gets §7b, the bespoke
+  tier, with three fences (Kai: "teach it, it's real capability"). kit.test
+  94/94; 5-prompt delta clean. Filed for later clusters: the precinct.farm
+  example's `face: "any"` trips T206 on every copy; its `terrain_conform:
+  "drape"` does nothing (W407, audit H4). **Method problem, open:** at
+  temperature 0 with identical kit bytes, troy's archetype count moved
+  13 → 11 and 13 → 10 across runs, swapping ids — the vocabulary metrics
+  have an unmeasured noise floor, so single-sample archetype deltas (and
+  WS-D's planned shootout scoring) are unreadable until a ~$0.15 floor run
+  (one prompt × 3 at frozen bytes) lands. Kit FROZEN at 58e7d2e0 /
+  f98c5e85 for the menu measurement.
 
 ## WS-B — Terrain-kit audit
 
