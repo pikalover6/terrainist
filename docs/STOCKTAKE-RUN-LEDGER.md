@@ -7,22 +7,22 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 36 (P6 part one: a terrace can ruin, bay
-  by bay, behind `TERRACE_DECAY`, landed off) is committed.
-- **Next unit:** unit 37 — **P6 part two: the roll over terrace runs, and
-  the flip.** In `layout/district.ts`, after `terraceRuns`, roll
-  `ruinDecayOf` per terrace run (the run's first lot and its block, so the
-  cluster keys as the infill roll's) and attach `decay: intensity` to the
-  terrace job under a switch; flip both switches together (`TERRACE_DECAY`,
-  the roll) with attribution: the two metropolis documents move — measure
-  ruin yards / field / green skin and `I512` before and after, render the
-  k1 metropolis at the flip, read it against T6 (fallen towers, ruined
-  palette), and pin the k1 numbers. If the read is not-worse or better,
-  ship; else keep off and write the attribution. Then the road (D77): G2
-  fresh named worlds, G1 the eleven golden fresh, G6 kit 3×3, G4 six
-  probes at final bytes, G5/G7, the final deck, the closing report,
-  `STATUS: DONE`.
-- **Last commit:** ede7a08 (unit 35). Convention: this line names the
+- **In flight:** nothing — unit 37 (P6 part two: the roll over terrace
+  runs, and the flip — `TERRACE_DECAY_ROLL` + `TERRACE_DECAY` on, shipped by
+  read on the k1 metropolis) is committed.
+- **Next unit:** unit 38 — **census 3.4: one `roofPlan`.** The 25 private
+  copies in `stdlib/structures/archetypes-*.ts` consolidate onto one
+  exported `roofPlan` (the sink of unit 34 stays), byte-identical on the
+  thirteen (`bi14.sh` against `bi/u37on/PAYLOADS`, which is now HEAD's
+  bytes); an opus-5-low batch does the mechanical part, the FULL suite
+  gates. It goes before any final-bytes run because it is the last open
+  class-3 row (G5) that changes code. Then unit 39: the census sweep — the
+  open S rows executed (1.19 probe, 1.21 `stats.ground`), the open M/L rows
+  given a written disposition each (2.1–2.4, 3.1, 3.3), and the census's
+  classes 1–3 read against G5's letter in the spec. Then the road (D77): G2
+  the three named worlds fresh, G1 the eleven golden fresh, G6 kit 3×3, G4
+  six probes at final bytes, G7 deck and closing report, `STATUS: DONE`.
+- **Last commit:** 7db56b9 (unit 36). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
 - **Spend:** $14.96 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
 - **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19, D25,
@@ -101,14 +101,36 @@ running state. The NOW block is rewritten at the end of every turn.
     read as a public square), and the brown is the lane network growing
     with the dwellings it anchors (lane columns 3,535 → 6,661, coarse-dirt
     shoulders). No program yielded. The taste question is P5.
-  - F22 — in progress (unit 36): the terrace archetype can now ruin bay by
-    bay with the shell's operators (`TERRACE_DECAY`, landed off); the roll
-    over terrace runs and the flip are unit 37. `office` and
-    `apartment_block` still answer `W511`.
+  - F22 — **closed (unit 37)**: terraces ruin bay by bay (`TERRACE_DECAY`,
+    unit 36) and the district rolls each terrace run as the infill roll
+    does (`TERRACE_DECAY_ROLL`); flipped together, attributed on the three
+    documents that move — the k1 metropolis 59 of 66 runs ruined, 54
+    shells decayed, the ruin field 0 → 40 151 columns, read against T6 as
+    the prompt's overgrown broken city where off was a whole grey one
+    (`METROPOLIS-F4-2026-08-25.md` §F). `office` and `apartment_block`
+    still answer `W511` (4 on k1): a smaller P6 sibling, not a unit.
+
 ## DECISIONS
 
 (every fork taken: the reversible default chosen, why, and how to undo it)
 
+- **D82 (unit 37):** the two pirates documents move with the flip (one
+  terrace run each ruins: share 0.16 over 3 runs, 0.25 over 2) and that is
+  the roll's design, not a side effect — a terrace is a lot like any
+  other, and a pirate town at `decline 0.4` is allowed a ruined row. Not
+  re-read; the k1 read carries the flip. Undo: `TERRACE_DECAY_ROLL = false`.
+- **D81 (unit 37):** shipped by read, not by not-worse: off and on
+  rendered full-height side by side (`scratchpad/u37/`), on is the T6
+  city and off the "normal city" of Kai's opening brief. Renders stay in
+  the scratchpad (no PNG has been committed under `docs/decks`; the deck
+  unit decides what Kai's walk cards carry). The roll rolls the run's
+  first lot, keyed positionally like the infill's, so the infill lots'
+  outcomes do not move; five ruined runs refuse decay (`W510`, an
+  interior cell unreachable from its door) and stand whole, and the test
+  bounds the decayed count by the rolled count rather than pinning it.
+  The `pirates` ground-probe baseline moved with its one ruined run and is
+  re-pinned from HEAD's bytes (law 5's moved baseline, attributed here).
+  Undo: n/a.
 - **D0 (unit 0):** pruned 21 stale worktrees (scratchpad measurement trees
   on detached heads, the redundant perf worktree, the agent worktree). Their
   uncommitted diffs were flag toggles and probe edits superseded by landed
@@ -648,6 +670,7 @@ running state. The NOW block is rewritten at the end of every turn.
 | 34 | F29 — one in-process compile, one bi14 run, the FULL suite | 0.00 | 13.47 |
 | 35 | probe pass 4 — six new worlds generated end to end (`runs/probe-4`), the icon metric | 1.49 | 14.96 |
 | 36 | P6 part one — one bi14 run, the FULL suite | 0.00 | 14.96 |
+| 37 | P6 part two — two bi14 runs (off, dist-patched on), three renders, the FULL suite | 0.00 | 14.96 |
 
 ## VERDICTS
 
@@ -826,7 +849,8 @@ F-number; G4 is met if these six surface no new failure class.
   rural set; byte-moving on every document with lanes through a town;
   switch + attribution.
 - **P6 — a shell decay mode for `terrace`, and the roll over terrace
-  runs** (unit 26, `METROPOLIS-F4-2026-08-25.md`). The terrace archetype —
+  runs** (unit 26, `METROPOLIS-F4-2026-08-25.md`). **Delivered, units
+  36–37** (§F there); `office`/`apartment_block` remain. The terrace archetype —
   132 of the k1 metropolis's 142 lots — is built by its own generator and
   answers `LOAM-W511` to any `decay`; `office` and `apartment_block` too. A
   decay mode in the terrace generator (bays lose storeys and roofs, party
@@ -1355,5 +1379,16 @@ F-number; G4 is met if these six surface no new failure class.
   terrace once on). `stdlib/test/terrace-decay.test.ts` (3): ships off; off,
   a terrace asked for with decay is byte-identical to one without; the
   per-bay pass on an emitted 31 × 13 two-storey terrace writes air over standing courses (mode "shell", written > 0). The
-  thirteen: all thirteen payload-identical to unit 34. Tests: FULL suite COUNTS Test Files 349 passed | 1 skipped (350), Tests 5689 passed | 31 skipped (5720). Files: `terrace.ts`,
+  thirteen: all thirteen payload-identical to unit 34. Tests: FULL suite Test Files 349 passed | 1 skipped (350), Tests 5689 passed | 31 skipped (5720). Files: `terrace.ts`,
   `core.ts`, the test, the ledger. Spend $0.
+- **unit 37 — P6 part two (2026-08-25):** `TERRACE_DECAY_ROLL` in
+  `layout/district.ts` rolls each terrace run (first lot, its block) and
+  hands the job `decay`; `I512` counts the runs; landed off and identical
+  on the thirteen (`bi/u37off` ≡ `bi/u36`), flipped with `TERRACE_DECAY`
+  and attributed (`bi/u37on`: k1 metropolis 59/66 runs, 54 shells, field
+  0 → 40 151; pirates ×2 one run each); read against T6 — shipped.
+  `compiler/test/terrace-decay-roll.test.ts` compiles the real k1
+  document; the unit-36 tests re-pinned on. Tests: FULL suite 2 failed | 348 passed | 1 skipped (351) files, 1 failed | 5658 passed | 62 skipped tests — both re-run green alone: `ground-probe-harness` 'pirates' after its baseline was re-pinned (the document moved with the flip), and `devworld`, whose `beforeAll` had hit the 300 s hook timeout under a killed earlier run's four orphaned workers (31 passed).
+  Files: `district.ts`, `terrace.ts`, two tests, the `pirates` ground-probe
+  baseline, the metropolis record §F, the census (1.14, 1.22), the ledger.
+  Spend $0.

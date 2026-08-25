@@ -72,3 +72,43 @@ intact offices, and `decline 0.92` moves nothing but a note.
 
 `scratchpad/f4/` — the patched dist's report; the dist restored and
 sha-checked. `layout/district.ts` — the I512 message. This record.
+
+## §F Units 36–37 — P6 delivered: the terraces ruin, and the city is the prompt's
+
+Unit 36 gave the terrace archetype a shell decay mode — `decayTerraceBays`
+runs the decay engine's own operators (`decayShellChecked`,
+`settleDecayedFixtures`) per bay, in the bay's own frame — behind
+`TERRACE_DECAY`, landed off and byte-identical (D80). Unit 37 added the
+roll: after `terraceRuns`, each run rolls once with `ruinDecayOf`, keyed on
+its first lot and clustered by that lot's block exactly as an infill lot
+is, and a ruined run's job carries `decay` (`TERRACE_DECAY_ROLL`). Both
+switches were proven byte-identical off on the thirteen (`bi/u37off` ≡
+`bi/u36`) and flipped together.
+
+On, three of the thirteen move, and they are the three with terraces and a
+ruin share above zero:
+
+| document | share | `I512` | shells decayed | ruin yards | ruin field (columns) |
+|---|---|---|---|---|---|
+| `overgrown_metropolis_hideout_k1` | 0.85 | **59 of 66** terrace runs (132 lots) | 54 (`shell` mode); 5 refused, `W510` says so | 0 → **56** | 0 → **40 151** |
+| `pirates_r22` | 0.16 | 1 of 3 | 1 | 4 → 5 | 1 610 → 2 300 |
+| `pirates_vs_unicorns_k1` | 0.25 | 1 of 2 | 1 | 1 → 2 | 462 → 1 070 |
+
+The k1 numbers: 21 390 blocks written by the decay, 1 139 quenched, 5 280
+withdrawn, 3 272 settled, 0 refused inside the shells; the green skin
+(`I514`) then covered 28 258 ruined columns — 43 503 climbing strands,
+2 913 moss carpets, 313 street trunks — and withdrew 7 of 320 trunks to
+keep the street bands walkable (`W513`). The four `W511` (office,
+apartment block) are unchanged; no physics or walkability code appears
+that was not there off.
+
+**The read** (`scratchpad/u37/k1-{off,on}-iso-east-south.png`, full
+height, and `k1-on-zoom-…`): off is the grey city of §A — every terrace
+whole, one skyline, the two program towers the only event. On, the
+district is green-hung and broken: shells cut to stepped heights with
+floors opened, strands and moss on the walls, whole white blocks standing
+among ruined dark ones, trees in the streets, the plaza and the two towers
+still legible. Against T6 (fallen towers, ruined palette) it is the
+prompt's city where off was a normal one — the `metropolis_hideout_r5`
+regression of the run's opening brief, answered in the compiler. Better,
+not merely not-worse: **shipped**. F22 closes.

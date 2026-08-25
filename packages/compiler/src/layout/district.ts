@@ -2079,23 +2079,42 @@ export function layDistrict(
   );
   let terraceBays = 0;
   let terraceLots = 0;
-  for (const terrace of terraces) {
-    for (const lot of terrace.lots) claimed.add(lot.id);
-    terraceLots += terrace.lots.length;
-    terraceBays += terrace.bays;
-    built.push(terrace.built);
-  }
-
-  // --- the ruin roll (RUINS-PLAN-v0 WP-3, §4.2) ----------------------------
-  // `decay.ruinShare` is total and reads `today = 0`, so a district with no
-  // `decline` — and every district with a `decline` below `RUIN_ONSET` — rolls
-  // nothing and compiles byte-identically to before this row existed.
   const share = fanOut<number>(LAYOUT_ROWS.ruinShare, intent, { nodePath, today: 0 });
   const declineOf = intent.intent.decline ?? 0;
   /** Lots rolled / ruined, and the band histogram, for `LOAM-I512`. */
   let rolled = 0;
   let ruined = 0;
   const bandCounts = new Map<DecayBand, number>();
+  /** Terrace runs rolled / ruined (P6 part two, Stocktake unit 37), for `LOAM-I512`. */
+  let terraceRolled = 0;
+  let terraceRuined = 0;
+  for (const terrace of terraces) {
+    for (const lot of terrace.lots) claimed.add(lot.id);
+    terraceLots += terrace.lots.length;
+    terraceBays += terrace.bays;
+    // {@link TERRACE_DECAY_ROLL}: the run rolls as one — keyed on its first
+    // lot's min corner and clustered by that lot's block, exactly as the
+    // infill roll is — and the whole party-wall block takes the intensity,
+    // which the terrace emitter applies bay by bay (`TERRACE_DECAY`).
+    const first = terrace.lots[0];
+    const decay =
+      TERRACE_DECAY_ROLL && first !== undefined
+        ? ruinDecayOf(first, blocks[first.block] as Block | undefined, infillStream, share, declineOf)
+        : null;
+    if (TERRACE_DECAY_ROLL && first !== undefined) terraceRolled++;
+    if (decay !== null) {
+      terraceRuined++;
+      bandCounts.set(decay.band, (bandCounts.get(decay.band) ?? 0) + 1);
+      built.push({ ...terrace.built, params: { ...terrace.built.params, decay: decay.intensity } });
+    } else {
+      built.push(terrace.built);
+    }
+  }
+
+  // --- the ruin roll (RUINS-PLAN-v0 WP-3, §4.2) ----------------------------
+  // `decay.ruinShare` is total and reads `today = 0`, so a district with no
+  // `decline` — and every district with a `decline` below `RUIN_ONSET` — rolls
+  // nothing and compiles byte-identically to before this row existed.
   let infilled = 0;
   /**
    * Build one lot, or say why not.
@@ -2296,7 +2315,9 @@ export function layDistrict(
           // the roll is per infill lot, and a grid district is mostly terraces,
           // which never roll — and whose archetype has no shell decay mode.
           (terraceLots > 0
-            ? `; ${terraceLots} terrace lot${terraceLots === 1 ? "" : "s"} in ${terraces.length} terrace${terraces.length === 1 ? "" : "s"} are outside the roll (terraces do not roll, and the terrace archetype has no shell decay mode)`
+            ? TERRACE_DECAY_ROLL
+              ? `; ${terraceRuined} of ${terraceRolled} terrace run${terraceRolled === 1 ? "" : "s"} (${terraceLots} lot${terraceLots === 1 ? "" : "s"}) roll into ruined shells, bay by bay`
+              : `; ${terraceLots} terrace lot${terraceLots === 1 ? "" : "s"} in ${terraces.length} terrace${terraces.length === 1 ? "" : "s"} are outside the roll (terraces do not roll, and the terrace archetype has no shell decay mode)`
             : ""),
         share === 0
           ? `decline is below the ruin onset of ${RUIN_ONSET} — below it decline is wear, not ruin; raise it to ruin buildings`
@@ -3357,6 +3378,24 @@ export function boundingSeams(seams: readonly LevelSeam[]): readonly LevelSeam[]
  * stands open on the render pair (`scratchpad/u21/renders/`).
  */
 export const LOT_PARCEL_OWN_STATIONS = false;
+
+/**
+ * **Terrace runs roll for ruin.** Off, the ruin roll is per infill lot and a
+ * district's party-wall terraces stand whole at any `decline`: on the k1 metropolis 132 of 142 lots are terraces, and
+ * `decline 0.92` ruined two offices that had no decay mode either (the
+ * Stocktake Run's F22, `METROPOLIS-F4-2026-08-25.md`). On, each terrace run
+ * rolls once with {@link ruinDecayOf} — keyed on its first lot and clustered
+ * by that lot's block, as the infill roll is — and a ruined run's job carries
+ * `decay`, which the terrace emitter applies bay by bay
+ * (`stdlib` `TERRACE_DECAY`, P6 part one). Staged under law 5: proven
+ * byte-identical off on the thirteen; flipped with `TERRACE_DECAY` in unit 37
+ * and attributed on the three documents that move — the k1 metropolis (59 of
+ * 66 runs ruined, 54 shells decayed, 5 refused with `W510`, the ruin field
+ * 0 → 40 151 columns, the green skin over 28 258; read against T6: the
+ * overgrown, broken city the prompt asks for, where off was a whole grey one)
+ * and one run each on `pirates_r22` and `pirates_vs_unicorns_k1`.
+ */
+export const TERRACE_DECAY_ROLL = true;
 
 /** {@link LOT_PARCEL_OWN_STATIONS}'s rule as a pure function. */
 export function inLotSpan(station: number, from: number, size: number): boolean {

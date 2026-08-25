@@ -394,7 +394,7 @@ export interface TerraceRequest {
  * on emit order.
  */
 /**
- * **A terrace can ruin.** Off — `false` is today's bytes — a terrace ignores
+ * **A terrace can ruin.** Off, a terrace ignores
  * `params.decay`: the roll is per infill lot and the party-wall block is
  * built by its own emitter, so a grid district at any `decline` is intact by
  * construction (the Stocktake Run's F22: on the k1 metropolis 132 of 142
@@ -403,10 +403,12 @@ export interface TerraceRequest {
  * interior `1..w`, party walls at `0` and `w + 1`, the shared near and far
  * rows, `wallTop = floors × storey` — so a terrace ruins the way a shell
  * does, with no second grammar (RUINS-PLAN's law). Staged under law 5:
- * landed `false`; flipped with the district's roll over terrace runs (P6
- * part two), attributed on the two metropolis documents.
+ * landed `false` in unit 36; flipped on in unit 37 with the district's roll
+ * over terrace runs (`TERRACE_DECAY_ROLL`, P6 part two), attributed on the
+ * three documents that move — the k1 metropolis above all, 54 of its 66
+ * runs decaying bay by bay.
  */
-export const TERRACE_DECAY = false;
+export const TERRACE_DECAY = true;
 
 /** What {@link decayTerraceBays} needs of an emitted terrace. */
 export interface TerraceDecayInput {

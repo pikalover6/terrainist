@@ -25,16 +25,21 @@ function build(extra: Record<string, unknown>): ReturnType<typeof generateBuildi
 }
 
 describe("a terrace can ruin", () => {
-  it("ships off", () => {
-    expect(TERRACE_DECAY).toBe(false);
+  it("ships on (unit 37, with the district's TERRACE_DECAY_ROLL)", () => {
+    expect(TERRACE_DECAY).toBe(true);
   });
 
-  it("off, a terrace asked for with decay is built whole and byte-identical", () => {
+  it("on, a terrace asked for with decay is ruined and says so; asked for none, it is whole and byte-identical", () => {
     const whole = build({});
+    const none = build({ decay: 0 });
+    expect(JSON.stringify(none.ops)).toBe(JSON.stringify(whole.ops));
+    expect((none.meta as { decay?: unknown }).decay).toBeUndefined();
     const asked = build({ decay: 0.8 });
-    expect(JSON.stringify(asked.ops)).toBe(JSON.stringify(whole.ops));
+    expect(JSON.stringify(asked.ops)).not.toBe(JSON.stringify(whole.ops));
     const report = (asked.meta as { decay?: { written: number; mode: string } }).decay;
-    expect(report?.written ?? 0).toBe(0);
+    expect(report).toBeDefined();
+    expect(report?.mode).not.toBe("none");
+    expect(report?.written ?? 0).toBeGreaterThan(0);
   });
 
   it("the per-bay pass ruins an emitted terrace with the shell's operators", () => {
