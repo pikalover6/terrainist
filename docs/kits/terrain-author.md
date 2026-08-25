@@ -31,26 +31,35 @@ fractional placement and the compiler does the geometry.
 Hard rules, all enforced by the validator:
 
 - `"loam"` is exactly `"0.1"`; `"profile"` is exactly `"terrain"`.
-- Top level accepts only `loam`, `profile`, `meta`, `style`, `intent`, `root`.
+- Top level accepts only `loam`, `profile`, `meta`, `style`, `intent`,
+  `programs`, `root`. (`programs` is the map of bespoke program source — §7b;
+  present only when the document names an `authored:<id>`.)
 - `intent` is optional and says what *kind* of place this is rather than what to
   build: `era` (free word), `wealth`, `decline`, `formality` (each 0..1, and
   omitting one means "no opinion", which is not the same as `0`), `climate`
   (`{ "biome": "minecraft:<id>", "temperature": -1..1, "humidity": -1..1,
   "snow": "auto"|"never"|"always" }`) and `character` (`label`, `palettes`,
-  `flora`). On a terrain document the climate dials are the ones that bite:
+  `flora`, and `programs` when the world needs a built thing — §7b). On a
+  terrain document the climate dials are the ones that bite:
   they outrank the terrain's own climate over the scope that declares them.
-- `root.kind` is `"composite"`; every child is `"kind": "generator"`.
+- `root.kind` is `"composite"`. Every child is `"kind": "generator"`.
 - `root.children` holds **exactly one** `terrain.heightfield@0`, **exactly
-  one** `terrain.climate@0`, and any number of `scatter.forest@0` and
-  `cave.carver@0` nodes. Nothing else is allowed.
+  one** `terrain.climate@0`, any number of `scatter.forest@0` and
+  `cave.carver@0` nodes, and — when the world needs a built thing — the
+  bespoke tier of §7b: `authored:<id>` landmark nodes and `scatter.program@0`
+  fields. Nothing outside that list is a legal root child.
 - `terrain.edit@0` nodes live **only** in `heightfield.children`. They are
   never children of the root and never nest inside each other.
 - Tree depth is 3: root → generator → edit.
-- No `constraints`, no `ports`. There is no layout solver.
+- No `constraints` and no `ports` on the terrain generators: there is no layout
+  solver in this profile. An `authored:<id>` landmark is the one exception — it
+  takes `at` or `zone` to steer where it looks for ground (§7b).
 - Every node needs an `id` matching `^[a-z][a-z0-9_]{0,62}$`, unique among its
   siblings. Ids name features — use meaningful ones (`ash_cone`, not `e1`).
 - `label` and `note` are allowed on any node (free text, for humans).
-- Any key not listed in this kit is an error. Do not invent parameters.
+- Do not invent parameters. Every key this profile acts on is named in this
+  kit; a key it does not know is either dropped or an error, and neither is
+  what you meant.
 
 ### `meta`
 
@@ -489,6 +498,69 @@ Rules and honest limits:
 - Caves take no `constraints` and no `ports`, like every terrain generator.
 
 ---
+
+## 7b. The bespoke tier — one built thing on open ground
+
+A terrain document is usually all landscape. But a prompt can name a single
+built thing standing in that landscape — *a lone monolith on a moor*, *a
+wrecked ship on the shore*, *a ring of standing stones*, *an abandoned radio
+mast on the ridge* — and no terrain verb makes one. A `peak` is not a monolith.
+
+For that there is the **bespoke tier**, and it is legal here: you *request* a
+program, and you *invoke* it as a root child. You never write the program's
+code — a second model call writes it, and the compiler places what it returns
+like any other node.
+
+**Request it** in `intent.character.programs`, giving it an id, a `mode`, a
+`brief` a stranger could build from, and the `envelope` it needs in blocks:
+
+```json
+{ "intent": {
+  "character": {
+    "programs": [
+      { "id": "moor_monolith",
+        "mode": "landmark",
+        "brief": "A single leaning slab of weathered dark stone three times the height of a man, faces pitted, one edge sheared, standing alone on open moor.",
+        "envelope": [7, 22, 5] }
+    ]
+  }
+} }
+```
+
+**Invoke it** as a child of the root, naming the id after `authored:`:
+
+```json
+{ "id": "the_monolith", "kind": "generator", "generator": "authored:moor_monolith",
+  "constraints": [ { "zone": "northeast" } ] }
+```
+
+**Where it stands is `zone` or `at`, and nothing else is a placement.** `zone`
+names a cell of §2's nine-grid; `at` takes two region fractions — use `at` when
+you raised the ground for it yourself with a terrain verb and it has to be
+*that* ground. There is no layout solver in this profile, so a landmark's other
+constraints are dropped: do not write distances or facings between landmarks
+here.
+
+For something **repeated** rather than singular — a field of wrecks, a scatter
+of cairns — request it with `"mode": "plugin"` and a `count`, and invoke it
+with a `scatter.program@0` node instead:
+
+```json
+{ "id": "cairn_field", "kind": "generator", "generator": "scatter.program@0",
+  "params": { "program": "hill_cairn", "count": 14,
+              "area": { "at": [0.4, 0.55], "radius": 0.3 },
+              "spacing": 26, "maxSlope": 22 } }
+```
+
+**`area.radius` on a `scatter.program@0` is a fraction of the region radius
+(0.01–1)** — the same scale as `at`, and the opposite of `scatter.forest@0`,
+whose radius is in blocks (§6). Blocks here are out of range and place nothing.
+
+Two limits worth knowing before you ask. A program that fails its gate is
+**dropped**, and the world compiles without it — so never make the world's
+legibility depend on one; the terrain has to read as the prompt even if the
+monolith never lands. And ask only when the landscape genuinely cannot carry
+the thing: a prompt about a valley wants a valley, not a statue of one.
 
 ## 8. Current-state guidance (read this — it is not optional)
 

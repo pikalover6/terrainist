@@ -1,0 +1,341 @@
+{
+  "loam": "0.1",
+  "profile": "terrain",
+  "meta": {
+    "name": "pine_fjord",
+    "worldSeed": 314,
+    "prompt": "A deep fjord cutting inland between pine ridges, its water open to the sea.",
+    "spawn": {
+      "at": [
+        0.35,
+        0.3
+      ]
+    }
+  },
+  "intent": {
+    "climate": {
+      "biome": "minecraft:old_growth_pine_taiga",
+      "temperature": -0.3,
+      "humidity": 0.5
+    },
+    "character": {
+      "label": "pine fjord",
+      "materialTheme": "boreal_pine",
+      "flora": {
+        "prefer": [
+          "spruce_tall",
+          "conifer",
+          "old_growth"
+        ]
+      }
+    },
+    "tokens": {
+      "terrain": "a deep fjord cutting inland between steep pine-covered ridges, opening to the open sea"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.cliff": {
+        "mix": [
+          [
+            "minecraft:stone",
+            3
+          ],
+          [
+            "minecraft:andesite",
+            1
+          ]
+        ]
+      },
+      "ground.beach": {
+        "mix": [
+          [
+            "minecraft:gravel",
+            3
+          ],
+          [
+            "minecraft:stone",
+            1
+          ]
+        ]
+      }
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Deep Pine Fjord",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 72,
+          "amplitude": 58,
+          "octaves": 5,
+          "frequency": 0.003,
+          "lacunarity": 2,
+          "gain": 0.55,
+          "ridged": true,
+          "warp": {
+            "amount": 28,
+            "frequency": 0.0035
+          },
+          "erosionPasses": 2,
+          "continentalness": {
+            "frequency": 0.0012,
+            "seaFraction": 0.35
+          },
+          "cliffThreshold": 48,
+          "soilDepth": 3,
+          "beachWidth": 3,
+          "snowLineFraction": 0.85
+        },
+        "children": [
+          {
+            "id": "north_pine_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "high northern ridge flanking the fjord",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.1,
+                  0.28
+                ],
+                [
+                  0.5,
+                  0.25
+                ],
+                [
+                  0.9,
+                  0.22
+                ]
+              ],
+              "width": 70,
+              "height": 65,
+              "profile": "sharp",
+              "meander": 0.4
+            }
+          },
+          {
+            "id": "south_pine_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "high southern ridge flanking the fjord",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.1,
+                  0.72
+                ],
+                [
+                  0.5,
+                  0.75
+                ],
+                [
+                  0.9,
+                  0.78
+                ]
+              ],
+              "width": 75,
+              "height": 70,
+              "profile": "sharp",
+              "meander": 0.4
+            }
+          },
+          {
+            "id": "inland_fjord",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "deep water channel cutting inland from the western sea",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.95,
+                  0.5
+                ],
+                [
+                  0.65,
+                  0.52
+                ],
+                [
+                  0.35,
+                  0.48
+                ],
+                [
+                  0,
+                  0.5
+                ]
+              ],
+              "width": 55,
+              "depth": 85,
+              "profile": "sharp",
+              "meander": 0.45,
+              "flooded": "auto"
+            }
+          },
+          {
+            "id": "coastal_crag",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "steep coastal crag guarding the fjord entrance",
+            "params": {
+              "verb": "peak",
+              "at": [
+                0.22,
+                0.22
+              ],
+              "radius": 50,
+              "height": 45,
+              "profile": "sharp"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "boreal",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0015,
+          "latitudeGradient": -0.35,
+          "blendRadius": 8
+        }
+      },
+      {
+        "id": "ridge_forest",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "dense boreal pine and spruce forest over the ridges and slopes",
+        "params": {
+          "area": {
+            "at": [
+              0.5,
+              0.5
+            ],
+            "radius": 240
+          },
+          "density": 0.22,
+          "spacing": 3,
+          "clumping": 0.5,
+          "maxSlope": 38,
+          "elevation": [
+            2,
+            110
+          ],
+          "edgeFalloff": 20,
+          "undergrowth": {
+            "grass": 0.4,
+            "flowers": 0.02,
+            "deadwood": 0.08
+          },
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "grandfather_spruce",
+                  "shape": "spruce_ancient"
+                }
+              ]
+            },
+            "understory": {
+              "species": [
+                {
+                  "id": "juniper",
+                  "shape": "juniper_scrub"
+                }
+              ],
+              "density": 0.08
+            },
+            "floor": "default"
+          },
+          "species": [
+            {
+              "id": "tall_spruce",
+              "shape": "spruce_tall",
+              "weight": 5
+            },
+            {
+              "id": "columnar_larch",
+              "shape": "larch_columnar",
+              "weight": 2
+            },
+            {
+              "id": "squat_spruce",
+              "shape": "spruce_squat",
+              "weight": 2
+            }
+          ]
+        }
+      },
+      {
+        "id": "wilderness_scatter",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse pine scrub across high crags and outer grounds",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 42,
+          "elevation": [
+            1,
+            140
+          ],
+          "edgeFalloff": 12,
+          "species": [
+            {
+              "id": "high_scrub_spruce",
+              "shape": "spruce_squat",
+              "weight": 3
+            },
+            {
+              "id": "crag_pine",
+              "shape": "spruce_tall",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "fjord_chasm",
+        "kind": "generator",
+        "generator": "cave.carver@0",
+        "label": "narrow fracture ravines running under the mountain flanks",
+        "params": {
+          "style": "ravine",
+          "density": 0.25,
+          "radius": [
+            2,
+            5
+          ],
+          "yRange": [
+            -16,
+            52
+          ],
+          "verticality": 0.35,
+          "entrances": 2,
+          "decorate": true
+        }
+      }
+    ]
+  }
+}

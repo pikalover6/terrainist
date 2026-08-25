@@ -54,6 +54,7 @@ function parseArgs(argv) {
     effort: AUTHORING_REASONING_EFFORT,
     intent: true,
     refreshIntent: false,
+    candidateMenu: false,
     dryRun: false,
     outRoot: path.join(HERE, "runs"),
   };
@@ -72,6 +73,7 @@ function parseArgs(argv) {
       case "--effort": out.effort = next(); break;
       case "--no-intent": out.intent = false; break;
       case "--refresh-intent": out.refreshIntent = true; break;
+      case "--candidate-menu": out.candidateMenu = true; break;
       case "--dry-run": out.dryRun = true; break;
       case "--refresh": out.refresh = true; break;
       case "--out-root": out.outRoot = path.resolve(next()); break;
@@ -92,6 +94,10 @@ usage: node tools/golden-prompts/run.mjs [flags]
   --effort <level>     Override the pinned reasoning effort.
   --no-intent          Skip the intent pre-pass entirely.
   --refresh-intent     Re-classify instead of reading the intent cache.
+  --candidate-menu     Inject the per-run candidate menu (WS-A2) built from the
+                       cached intent. The LABEL decides, never the environment:
+                       a run's own record says whether a menu went in, so two
+                       labels differ by this flag and nothing else.
   --dry-run            Print the plan and the cost estimate; make no API calls.
   --refresh            Re-author prompts this run directory already has, instead
                        of resuming past them.
@@ -334,6 +340,34 @@ async function runOne(entry, options, cache) {
     record.intentUsage = usageRecord(ZERO_USAGE);
   }
 
+  // --- the candidate menu (WS-A2), off unless --candidate-menu ------------
+  // Built from the SAME intent the author call is given, so a run's menu is a
+  // function of its cached classification and nothing else. An intent that
+  // names no pack and no resolvable era yields no menu at all — which is not a
+  // failure to record quietly: it is the difference between "the menu did not
+  // help" and "there was never a menu", and only the record can tell them
+  // apart after the money is spent.
+  let candidateMenu;
+  const menu =
+    options.candidateMenu && intent !== undefined
+      ? stdlib.candidateMenuForIntent(intent)
+      : undefined;
+  if (menu !== undefined && menu.entries.length > 0) candidateMenu = menu.text;
+  record.menu = !options.candidateMenu
+    ? { injected: false, reason: "flag off" }
+    : intent === undefined
+      ? { injected: false, reason: "no intent" }
+      : menu.entries.length === 0
+        ? { injected: false, reason: "empty menu (no pack, no era)", packs: [], ids: [] }
+        : {
+            injected: true,
+            ids: menu.ids.length,
+            estimatedTokens: menu.estimatedTokens,
+            packs: menu.packs,
+            eraClass: menu.eraClass ?? null,
+            menuIds: menu.ids,
+          };
+
   // --- the authoring call -------------------------------------------------
   try {
     const result = await authorLoamDoc({
@@ -344,6 +378,7 @@ async function runOne(entry, options, cache) {
       reasoningEffort: options.effort,
       kitName,
       ...(intent === undefined ? {} : { intent }),
+      ...(candidateMenu === undefined ? {} : { candidateMenu }),
     });
     record.ok = true;
     record.attempts = result.attempts;

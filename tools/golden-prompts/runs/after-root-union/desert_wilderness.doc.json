@@ -1,0 +1,189 @@
+{
+  "loam": "0.1",
+  "profile": "terrain",
+  "meta": {
+    "name": "salt_desert",
+    "worldSeed": 313,
+    "prompt": "A vast salt desert under a hard sun, cracked flat to the horizon, with nothing living on it.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "intent": {
+    "climate": {
+      "biome": "minecraft:desert",
+      "temperature": 1,
+      "humidity": -1,
+      "snow": "never"
+    },
+    "character": {
+      "label": "salt desert"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": {
+        "mix": [
+          [
+            "minecraft:calcite",
+            6
+          ],
+          [
+            "minecraft:diorite",
+            2
+          ],
+          [
+            "minecraft:white_terracotta",
+            2
+          ],
+          [
+            "minecraft:dead_brain_coral_block",
+            1
+          ]
+        ]
+      },
+      "ground.subsurface": {
+        "mix": [
+          [
+            "minecraft:smooth_sandstone",
+            4
+          ],
+          [
+            "minecraft:sandstone",
+            2
+          ],
+          [
+            "minecraft:calcite",
+            1
+          ]
+        ]
+      },
+      "ground.stone": "minecraft:smooth_sandstone",
+      "ground.cliff": {
+        "mix": [
+          [
+            "minecraft:smooth_sandstone",
+            3
+          ],
+          [
+            "minecraft:calcite",
+            2
+          ]
+        ]
+      },
+      "ground.beach": "minecraft:calcite",
+      "ground.peak": "minecraft:calcite"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Salt Desert Expanse",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 65,
+          "amplitude": 3,
+          "octaves": 4,
+          "frequency": 0.0015,
+          "lacunarity": 2,
+          "gain": 0.35,
+          "erosionPasses": 4,
+          "soilDepth": 1,
+          "cliffThreshold": 65,
+          "snowLineFraction": 1
+        },
+        "children": [
+          {
+            "id": "central_salt_pan",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "broad flat salt basin depression",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 180,
+              "depth": 2,
+              "water": false,
+              "flooded": "never",
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "outer_salt_crust",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "subtle planar crust shelf",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.35,
+                0.65
+              ],
+              "radius": 140,
+              "height": 2,
+              "rim": 16,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "arid",
+          "temperatureFrequency": 0.001,
+          "humidityFrequency": 0.001,
+          "latitudeGradient": 0
+        }
+      },
+      {
+        "id": "barren_waste",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "lifeless salt flats with sparse petrified deadwood fragments",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.0005,
+          "spacing": 16,
+          "clumping": 0.1,
+          "maxSlope": 20,
+          "elevation": [
+            1,
+            50
+          ],
+          "undergrowth": {
+            "grass": 0,
+            "flowers": 0,
+            "deadwood": 0.015
+          },
+          "species": [
+            {
+              "id": "desiccated_ironwood",
+              "shape": "desert_ironwood",
+              "weight": 1
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

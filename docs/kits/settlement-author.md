@@ -41,14 +41,28 @@ way; the structure nodes are simply absent.
 Hard rules, all enforced by the validator:
 
 - `"loam"` is exactly `"0.1"`; `"profile"` is exactly `"settlement"`.
-- Top level accepts only `loam`, `profile`, `meta`, `style`, `intent`, `root`.
-  (`intent` is §9d — the dials that say what *kind* of place this is.)
+- Top level accepts only `loam`, `profile`, `meta`, `style`, `intent`,
+  `programs`, `root`. (`intent` is §9d — the dials that say what *kind* of
+  place this is. `programs` is §9e's map of bespoke program source, present
+  only when the document names an `authored:<id>`.)
 - `root.kind` is `"composite"`.
-- `root.children` holds **exactly one** `terrain.heightfield@0`, **exactly
-  one** `terrain.climate@0`, any number of `scatter.forest@0` nodes, and —
-  optionally — the settlement layer: **at most one** `plaza` primitive, any
-  number of `building.grammar@0` nodes, any number of `prop.place@0` nodes,
-  and **at most one** `road.network@0` node. Nothing else is allowed.
+- `root.children` is the whole authoring surface, and this is all of it:
+  - **exactly one** `terrain.heightfield@0` and **exactly one**
+    `terrain.climate@0` — required, always;
+  - any number of `scatter.forest@0` nodes (§6) — including none;
+  - **at most one** `"kind": "primitive"` plaza and **at most one**
+    `road.network@0`;
+  - any number of `building.grammar@0` and `prop.place@0` nodes (§9) and
+    `infra.entry@0` nodes (§9c);
+  - any number of `"kind": "district"` and `"kind": "city"` composites (§9) —
+    the street-fabric nodes, whose own children are `building.grammar@0`;
+  - any number of `precinct.airport@0`, `precinct.harbour@0` and
+    `precinct.farm@0` nodes (§11b) — an installation is a precinct, not a
+    scatter of props;
+  - the bespoke tier (§9e): `authored:<id>` landmark nodes and
+    `scatter.program@0` fields, which resolve against the `programs` map.
+
+  Nothing outside that list is a legal root child.
 - **`cave.carver@0` is not in this profile**, even though the terrain profile
   has it: its `protectTags` param — the one that keeps a cave out of a town's
   foundations — is unimplemented, so a cave under a settlement is a lottery on
