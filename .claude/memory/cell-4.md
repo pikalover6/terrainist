@@ -51,7 +51,11 @@ determinism/** + compiler/emit/** in its OWN WORKTREE, every rung shasum-
 identical ×3 baseline docs (troy_r22 / hellenist_r22 / pirates_r22).
 Rules: sessions never commit or `git add` (shared index — I commit on
 their reports); targeted vitest only, FULL suite scheduled by me; subagent
-cap shared across all sessions. Wave 2b after 1+2: civic set-piece budget
+cap shared across all sessions. **No teaching around bugs** (Kai, via
+kit-fix): code bugs come to ME and are fixed first (large → one opus
+subagent; small/medium myself), then the kit teaches what the code does.
+Fixed so far: biomeThemes phantom hint (de8381b); C3 forest gate = code is
+RIGHT (F20 calibration), both kits teach the 0.02 line (Kai's verdict). Wave 2b after 1+2: civic set-piece budget
 line (the citadel, ~$0.04/world), A3 dynamic context assembly, binding-
 contracts teaching. The campaign window (caps) is Kai's to design.
 
