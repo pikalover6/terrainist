@@ -242,7 +242,7 @@ function checkClimate(out: LoamDiagnostic[], value: unknown, path: string): void
         "BAD_TYPE",
         `${path}.biome`,
         `"biome" must be a biome id string, got ${describe(biome)}`,
-        'use a vanilla biome id such as "minecraft:jungle", or a "style.biomeThemes" id',
+        'use a vanilla biome id this profile paints, such as "minecraft:jungle"',
       ),
     );
   }

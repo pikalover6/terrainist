@@ -170,7 +170,7 @@ export type BlendWidth = (typeof BLEND_WIDTHS)[number];
  * is tropical" outranks the land-use clamp and the climate-derived rule alike.
  */
 export interface ClimateIntent {
-  /** A vanilla biome id, or a `style.biomeThemes` id. Outranks everything. */
+  /** A vanilla biome id (ids outside the profile's palette raise `LOAM-W472` at compile). Outranks everything. */
   readonly biome?: string;
   /** −1..1, offsets the climate field over this node's footprint. */
   readonly temperature?: number;
@@ -241,8 +241,9 @@ export interface ProgramRequest {
  * The unicorn-island-vs-pirate-island case: everything that makes a region read
  * as a different place, in one object, at one scope.
  *
- * Ratified disposition 9: `character` is **canonical**; `style.biomeThemes`
- * stays as the power-user hatch.
+ * Ratified disposition 9: `character` is **canonical**; the `style.biomeThemes`
+ * power-user hatch was never built (the validator accepts only `style.palettes`;
+ * its phantom mentions were removed from model-facing text 2026-08-24).
  */
 export interface CharacterIntent {
   /** Free text, e.g. "pirate haven". Reaches prompts, never a switch. */
