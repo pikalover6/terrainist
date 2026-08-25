@@ -7,19 +7,24 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 17 (the census's executable S items, batch
-  one: eight items, payload-identical on the fourteen) is committed.
-- **Next unit:** unit 18 — **F10, two-phase parcel growth**, the
-  `frontageLots` starvation the ledger's F8 traced (~70 %): grow parcels
-  against the strip's claimable stations first, then let lots own their
-  stations (`LOT_PARCEL_OWN_STATIONS`, off since F10 orphaned 24 % of the
-  plane). Probe first (`walk-audit.mjs` on montfort/walled: orphans, entrance
-  reach), switch landed off, attributed on the fourteen, flipped separately
-  (law 5). If the probe says the orphans are geometry not order, stop and
-  write it up as P1's evidence instead. Then census batch two (M1, M2 by law
-  5, M3, class-2 S5/S6, D3 note), F4, F14, F17; §10.5 probe prompts; the
-  remaining stations.
-- **Last commit:** f5844d2 (unit 16). Convention: this line names the
+- **In flight:** nothing — unit 18 (F10 probed: the orphans are one severed
+  island, not parcel ownership; F20 opened) is committed.
+- **Next unit:** unit 19 — **F20, a routed lane across a retaining edge**
+  (`docs/decks/anchors/F10-LOWER-SQUARE-2026-08-25.md` §D). Diagnosis
+  first, in code: where the road router costs a step (does it see the
+  district's retaining edges / level seams at all?), and what the road
+  emitter does when a route's profile drops more than its stair rule allows
+  (it laid nothing on two columns, silently). Then the smallest honest fix
+  behind a switch (law 5, landed off, attributed on the fourteen): the
+  router treats a level-seam crossing as a cost it can only pay where a
+  flight fits, and/or the emitter lays a flight (the seam mechanism's
+  `tiered` stack has one) or warns (`LOAM-W…`, new code from the free
+  numbers). Re-test with `scratchpad/f10/boundary.mjs` on the hillside
+  fixture at `LOT_PARCEL_OWN_STATIONS` on (dist-patched): the 875-column
+  island must join main. Then census batch two (M1, M2 by law 5, M3, class-2
+  S5/S6, D3 note), F4, F14, F17; §10.5 probe prompts; the remaining
+  stations.
+- **Last commit:** 9528b7a (unit 17). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
 - **Spend:** $8.19 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
 - **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19, D25,
@@ -33,7 +38,8 @@ running state. The NOW block is rewritten at the end of every turn.
   - F8 — `frontageLots` drops (~70 % starvation → F10, ~30 % geometry → P1).
   - F9 — new hillside lots' cut faces undressed (P2); walkability audit
     reads zero entrance reach on montfort/walled — instrument gap.
-  - F10 — `LOT_PARCEL_OWN_STATIONS` orphans 24 % of the plane; off.
+  - F10 — probed (unit 18): the 24 % is one island, `lower_square` and its
+    lanes, cut by F20; two-phase growth withdrawn; the flag stays off.
   - F14 — pre-existing physics findings on shipped worlds; one physics
     unit, probe first.
   - F15 — the icon metric's before-sample alarms (horse/citadel dominance,
@@ -48,6 +54,11 @@ running state. The NOW block is rewritten at the end of every turn.
     ground freezes** (`enterTier` has no caller; the declare/build split is
     a statement-order cut) — the GROUND-CONTRACT migration's undone half;
     proposal (L) with the pads' double authority (census 3.1).
+  - F20 — **a routed lane that crosses a retaining edge is laid to the edge
+    on both sides and not across it** (six blocks over two columns, no
+    flight, no diagnostic); the square and its three lanes become an island
+    (875 columns on the hillside fixture at own-stations on). Router and
+    emitter, unit 19.
 ## DECISIONS
 
 (every fork taken: the reversible default chosen, why, and how to undo it)
@@ -294,6 +305,21 @@ running state. The NOW block is rewritten at the end of every turn.
   author's remedy (raise the floor or move inland) is optional; a warning
   would nag every harbour carve that was meant to meet the sea. Undo: change
   the severity.
+- **D40 (unit 18):** F10's two-phase parcel growth is withdrawn without
+  being built: the probe shows the flag-on orphans are one island severed
+  by a re-routed lane at a retaining edge (F20), and parcel ownership is
+  nowhere in the chain. The NOW block's two anticipated outcomes (order vs
+  geometry) were both wrong; the record says so. Undo: n/a.
+- **D41 (unit 18):** the steep fixture's and the walled city's flag-off
+  fragmentation (main 20–30 % of the network, no island within four
+  columns of main) is not attributed to F20 — it is the audit's paving-only
+  graph reading natural-ground gaps as breaks, F9's instrument question —
+  and is left for the physics/instrument unit (F14/F9) rather than chased
+  here. Undo: n/a.
+- **D42 (unit 18):** every flag-on measurement was taken by patching the
+  built dist (`sed` on one exported constant, sha-restored after each run),
+  never the source: the tree's bytes stayed HEAD's throughout, so no law-5
+  staging was owed for a probe. Undo: n/a.
 
 ## SPEND
 
@@ -316,6 +342,7 @@ running state. The NOW block is rewritten at the end of every turn.
 | 15 | the fluid flip — compiles, re-score, the FULL suite | 0.00 | 8.19 |
 | 16 | the slop census, classes 1–3 — three probes, comment fixes, the FULL suite | 0.00 | 8.19 |
 | 17 | census S items, batch one — one bi14 identity run, the FULL suite | 0.00 | 8.19 |
+| 18 | F10 probe — compiles only, the FULL suite | 0.00 | 8.19 |
 
 ## VERDICTS
 
@@ -620,3 +647,19 @@ running state. The NOW block is rewritten at the end of every turn.
   batch). M2 held out (D38). Tests: FULL suite COUNTS Test Files 341 passed | 1 skipped (342), Tests 5664 passed | 31 skipped (5695); `packages/spec`
   469 passed. Files: the census, seven compiler sources, four stdlib
   sources, the spec registry, `layout/types.ts`. Spend $0.
+- **unit 18 — F10 probed: one island, not parcel ownership (2026-08-25):**
+  `docs/decks/anchors/F10-LOWER-SQUARE-2026-08-25.md`. Three bespoke
+  probes on the built dist with `LOT_PARCEL_OWN_STATIONS` flipped in the
+  dist only: the flag-on 898 orphans on `site-plan-hillside` are one
+  875-column component — `lower_square` (the document's own square, x
+  65…86, z 234…255) and its three lanes — with no 4-neighbour adjacency to
+  main and one near point, x −5, z 85 → 88, y 110 → 104: the
+  `summit_chapel→lower_square` lane, re-routed west around the flag's new
+  `infill_-5_73` (which stands on the lane's old graded descent), meets the
+  terrace's retaining edge and the road emitter lays nothing on the two
+  columns of the drop. F10 withdrawn (D40), F20 opened, the switch's
+  docblock rewritten to the probed cause, the MONTFORT record annotated,
+  census 1.19. Steep/walled fragmentation is a different shape (D41).
+  Payload-identical on all fourteen. Tests: FULL suite COUNTS Test Files 341 passed | 1 skipped (342), Tests 5664 passed | 31 skipped (5695). Files:
+  the record, `layout/district.ts` (comment), the MONTFORT record, the
+  census. Spend $0.

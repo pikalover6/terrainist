@@ -3312,12 +3312,20 @@ export function boundingSeams(seams: readonly LevelSeam[]): readonly LevelSeam[]
  *
  * Staged under the Run's law 5: landed `false`. **Still `false`** (2026-08-25,
  * unit 7): tried on, it stops the starvation (site-plan-hillside 16 → 20
- * buildings, drops 12 → 3) but leaves the strip's leftover ground — the
- * columns no lot's own stations reach — unowned and ungraded between the
- * pads, and the walkability audit's orphan columns go 14 → 898 (0.4 % → 24 %
- * of the walkable plane). The parcel has to grow inward first and *then*
- * take the leftovers beside it (two phases) — finding F10 in the Run's
- * ledger, not a one-line flip.
+ * buildings, drops 12 → 3) and the walkability audit's orphan columns go
+ * 14 → 898 (0.4 % → 24 % of the walkable plane). Unit 7 read that as the
+ * strip's leftover ground left unowned between the pads and proposed a
+ * two-phase growth; **probed in unit 18, it is not that**
+ * (`docs/decks/anchors/F10-LOWER-SQUARE-2026-08-25.md`): the 898 are one
+ * island — `lower_square` and its three lanes, 875 columns — severed at a
+ * single point. The new infill at x −4…10, z 73…84 sits where the
+ * `summit_chapel → lower_square` lane used to descend the terrace (110 → 102
+ * over twenty columns); the router takes the lane west around it to x −5,
+ * where the terrace's retaining edge is a six-block drop over two columns,
+ * and the road emitter lays nothing on those two columns. Parcel growth is
+ * innocent; the finding is F20 (a routed lane crossing a retaining edge it
+ * cannot descend). This flag stays off until F20 is served, because the
+ * extra buildings it seats are exactly what pushes lanes onto such edges.
  */
 export const LOT_PARCEL_OWN_STATIONS = false;
 

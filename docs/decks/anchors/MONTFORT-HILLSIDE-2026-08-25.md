@@ -516,6 +516,9 @@ site-plan-hillside (0.4 % → 24 % of the walkable plane)**, isolated by
 toggling each switch alone (`scratchpad/walk-audit.mjs`: own-stations
 only → 898; whole-strip only → 14). The parcel has to grow inward first
 and then take the leftovers beside it — two phases, its own unit.
+*Superseded (unit 18, `F10-LOWER-SQUARE-2026-08-25.md`): the 898 are one
+island — the square and its lanes — cut where a re-routed lane meets a
+retaining edge; parcel ownership is not the cause (F20).*
 
 **`PLANNED_SITE_WHOLE_STRIP` — ships, moving nothing.** With the landmark
 now taking its own footprint at the street edge of the site
