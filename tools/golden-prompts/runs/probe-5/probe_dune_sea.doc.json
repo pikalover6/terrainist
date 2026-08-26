@@ -1,0 +1,279 @@
+{
+  "loam": "0.1",
+  "profile": "terrain",
+  "meta": {
+    "name": "barchan_dune_sea",
+    "worldSeed": "934",
+    "prompt": "A sea of sand dunes: crescent barchans marching across a stony plain, one dry wadi cutting through them, and a white salt pan at the lowest point — no settlement of any kind.",
+    "spawn": {
+      "at": [
+        0.18,
+        0.82
+      ]
+    }
+  },
+  "intent": {
+    "climate": {
+      "biome": "minecraft:desert",
+      "temperature": 1,
+      "humidity": -1,
+      "snow": "never"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": {
+        "mix": [
+          [
+            "minecraft:sand",
+            5
+          ],
+          [
+            "minecraft:smooth_sandstone",
+            1
+          ]
+        ]
+      },
+      "ground.cliff": {
+        "mix": [
+          [
+            "minecraft:smooth_sandstone",
+            3
+          ],
+          [
+            "minecraft:stone",
+            2
+          ],
+          [
+            "minecraft:terracotta",
+            1
+          ]
+        ]
+      },
+      "ground.beach": {
+        "mix": [
+          [
+            "minecraft:calcite",
+            4
+          ],
+          [
+            "minecraft:white_concrete_powder",
+            3
+          ],
+          [
+            "minecraft:diorite",
+            1
+          ]
+        ]
+      },
+      "ground.underwater": "minecraft:calcite"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Barchan Dune Sea and Salt Basin",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 74,
+          "amplitude": 16,
+          "octaves": 5,
+          "frequency": 0.003,
+          "gain": 0.48,
+          "erosionPasses": 1,
+          "cliffThreshold": 46,
+          "soilDepth": 2,
+          "beachWidth": 14,
+          "warp": {
+            "amount": 18,
+            "frequency": 0.003
+          }
+        },
+        "children": [
+          {
+            "id": "barchan_dune_north",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "crescent barchan dune ridge in the north",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.15,
+                  0.22
+                ],
+                [
+                  0.38,
+                  0.3
+                ],
+                [
+                  0.62,
+                  0.2
+                ]
+              ],
+              "width": 64,
+              "height": 30,
+              "profile": "sharp",
+              "meander": 0.35
+            }
+          },
+          {
+            "id": "barchan_dune_mid_north",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "crescent barchan dune ridge across the upper center",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.35,
+                  0.38
+                ],
+                [
+                  0.58,
+                  0.48
+                ],
+                [
+                  0.82,
+                  0.36
+                ]
+              ],
+              "width": 72,
+              "height": 34,
+              "profile": "sharp",
+              "meander": 0.32
+            }
+          },
+          {
+            "id": "barchan_dune_mid_south",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "crescent barchan dune ridge across the lower center",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.18,
+                  0.58
+                ],
+                [
+                  0.44,
+                  0.68
+                ],
+                [
+                  0.72,
+                  0.56
+                ]
+              ],
+              "width": 68,
+              "height": 32,
+              "profile": "sharp",
+              "meander": 0.3
+            }
+          },
+          {
+            "id": "barchan_dune_south",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "crescent barchan dune ridge in the south",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.42,
+                  0.76
+                ],
+                [
+                  0.68,
+                  0.86
+                ],
+                [
+                  0.92,
+                  0.74
+                ]
+              ],
+              "width": 60,
+              "height": 26,
+              "profile": "sharp",
+              "meander": 0.28
+            }
+          },
+          {
+            "id": "dry_wadi",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "dry wadi canyon cutting through the marching dunes",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.12,
+                  0.88
+                ],
+                [
+                  0.36,
+                  0.62
+                ],
+                [
+                  0.56,
+                  0.44
+                ],
+                [
+                  0.78,
+                  0.22
+                ]
+              ],
+              "width": 36,
+              "depth": 18,
+              "profile": "sharp",
+              "meander": 0.55,
+              "flooded": "never"
+            }
+          },
+          {
+            "id": "salt_pan_basin",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "dry white salt pan depression at the lowest point",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.82,
+                0.2
+              ],
+              "radius": 68,
+              "depth": 22,
+              "water": false,
+              "profile": "rounded",
+              "irregularity": 0.22,
+              "flooded": "never"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "arid",
+          "temperatureFrequency": 0.001,
+          "humidityFrequency": 0.001,
+          "latitudeGradient": 0
+        }
+      }
+    ]
+  }
+}

@@ -1,0 +1,163 @@
+{
+  "id": "probe_turtle_village",
+  "family": "probe",
+  "kit": "settlement",
+  "prompt": "A fishing village built on the shell of a colossal sleeping sea turtle beached in a bay: houses on the ridges of its shell, ladders down its flippers to the boats, its head resting on the sand.",
+  "seed": 936,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.35,
+    "decline": 0.1,
+    "formality": 0.1,
+    "climate": {
+      "temperature": 0.6,
+      "humidity": 0.5,
+      "snow": "never"
+    },
+    "character": {
+      "label": "turtle shell fishing village",
+      "materialTheme": "temperate_timber",
+      "urbanForm": "grown",
+      "archetypes": {
+        "prefer": [
+          "cottage",
+          "tavern",
+          "warehouse",
+          "lighthouse",
+          "watchtower"
+        ],
+        "forbid": [
+          "townhouse",
+          "terraced_row",
+          "office",
+          "apartment_block"
+        ]
+      },
+      "motifs": {
+        "roofType": "gable",
+        "massing": "sprawling",
+        "windowRhythm": "sparse"
+      }
+    },
+    "tokens": {
+      "terrain": "a sheltered ocean bay with a sandy beach and open water; a colossal sleeping sea turtle beached at the tide line with its massive head resting on the sand and flippers reaching into the shallows",
+      "icons": "village cottages and shacks clinging to the scutes and ridges of the colossal turtle shell; wooden catwalks and rope ladders hung from the shell flanks and flippers down to moored fishing boats; drying nets and fish racks slung between carapace ridges",
+      "landmark": "the colossal sleeping sea turtle itself, forming the living island and foundation of the village"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 84464,
+    "completionTokens": 17561,
+    "cost": 0.0646
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 32,
+    "maxDepth": 2,
+    "generators": [
+      "authored:colossal_turtle_head",
+      "building.grammar@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "cannery",
+      "cottage",
+      "lighthouse",
+      "tavern",
+      "warehouse"
+    ],
+    "archetypesInCatalog": 5,
+    "formPacks": [],
+    "props": [
+      "buoy",
+      "fishing_sloop",
+      "fishing_trawler",
+      "log_pile",
+      "notice_board",
+      "pier",
+      "rowboat",
+      "well_head"
+    ],
+    "species": [
+      "coastal_pine",
+      "gnarled_oak",
+      "scrub_spruce"
+    ],
+    "envelopes": [
+      "512x512",
+      "24x24",
+      "13x11x13",
+      "13x10x11",
+      "9x11x9",
+      "11x11x11",
+      "8x8x8",
+      "9x8x8",
+      "11x11x15",
+      "11x20x11"
+    ],
+    "constraints": 28,
+    "constraintKinds": [
+      "adjacent_to",
+      "at",
+      "blend",
+      "distance",
+      "facing",
+      "gap",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform"
+    ],
+    "constraintsWithStrength": 13,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 8,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 29,
+    "eras": [
+      "medieval"
+    ],
+    "bytes": 80568
+  },
+  "wallMs": 606000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 1,
+    "feedbackRounds": 0,
+    "programs": [
+      "ok colossal_turtle_head [landmark] 1 attempt(s), 28632 tokens ($0.0486), 26 warning(s)",
+      "ok flipper_ladder_rig [plugin] 1 attempt(s), 34705 tokens ($0.0600), 26 warning(s)",
+      "ok fish_drying_scaffold [plugin] 1 attempt(s), 34366 tokens ($0.0594), 3 warning(s)"
+    ],
+    "programCost": 0.168,
+    "totalCost": 0.2326,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p5/out/probe_turtle_village/out/turtle_shell_village",
+    "finalDiagnostics": {
+      "LOAM-T208": 1,
+      "LOAM-W524": 1,
+      "LOAM-T228": 1,
+      "LOAM-I463": 1,
+      "LOAM-I497": 1,
+      "LOAM-W337": 2,
+      "LOAM-W470": 1
+    },
+    "crash": [],
+    "docName": "turtle_shell_village.loam.json"
+  }
+}

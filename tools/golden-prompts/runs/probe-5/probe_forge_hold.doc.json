@@ -1,0 +1,753 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "dwarven_forge_hold",
+    "worldSeed": "931",
+    "prompt": "A dwarven forge-hold cut into the flank of a volcano: a great gate in the cliff face, terraces of stone halls climbing beside it, forges glowing at the edge of a lava channel, and a stair down toward the magma.",
+    "spawn": {
+      "at": [
+        0.44,
+        0.62
+      ]
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": {
+        "mix": [
+          [
+            "minecraft:blackstone",
+            3
+          ],
+          [
+            "minecraft:basalt",
+            2
+          ],
+          [
+            "minecraft:magma_block",
+            1
+          ]
+        ]
+      },
+      "ground.subsurface": "minecraft:blackstone",
+      "ground.stone": "minecraft:deepslate",
+      "ground.cliff": "minecraft:deepslate",
+      "road.surface": "minecraft:polished_blackstone_bricks",
+      "road.shoulder": "minecraft:polished_deepslate",
+      "plaza.path": "minecraft:polished_blackstone",
+      "plaza.border": "minecraft:chiseled_polished_blackstone",
+      "plaza.cobble": "minecraft:cracked_deepslate_bricks"
+    }
+  },
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.75,
+    "decline": 0.05,
+    "formality": 0.8,
+    "climate": {
+      "biome": "minecraft:basalt_deltas",
+      "temperature": 0.9,
+      "humidity": -0.8,
+      "snow": "never"
+    },
+    "character": {
+      "label": "dwarven volcanic forge-hold",
+      "formPacks": [
+        "dwarven_volcanic"
+      ],
+      "archetypes": {
+        "prefer": [
+          "great_forge",
+          "monumental_hold_gate",
+          "pillared_deep_hall",
+          "smelter",
+          "gem_cuttery",
+          "stone_brewhouse",
+          "rune_forge"
+        ],
+        "forbid": [
+          "townhouse",
+          "terraced_row",
+          "shop_row",
+          "cottage"
+        ]
+      },
+      "urbanForm": "hillside",
+      "ground": "stepped",
+      "motifs": {
+        "massing": "stepped",
+        "roofType": "flat"
+      },
+      "programs": [
+        {
+          "id": "monumental_dwarf_gate",
+          "mode": "landmark",
+          "brief": "A colossal dwarven hold gate carved directly into the dark volcanic cliff face: twin towering stone dwarf statues holding warhammers flanking a massive reinforced archway with glowing magma runework, anvils, and braziers.",
+          "envelope": [
+            32,
+            28,
+            20
+          ]
+        },
+        {
+          "id": "magma_sluice_forge",
+          "mode": "landmark",
+          "brief": "A heavy stone and blackstone forge facility straddling the edge of the lava channel: stone sluice gates tapping liquid magma, huge anvils, iron grates, and chimneys puffing black smoke.",
+          "envelope": [
+            24,
+            20,
+            22
+          ]
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "a steep volcanic flank with an active lava channel and magma basin below",
+      "icons": "a monumental hold gate carved into the basalt cliff face; glowing forges lining the edge of the lava channel; grand stairs descending toward the magma; terraced stone halls climbing the rock slope"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "The volcanic forge-hold of Karak Magma",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "volcanic_terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "the rugged volcanic cone, basalt cliffs, and carved magma ravines",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 78,
+          "amplitude": 55,
+          "octaves": 5,
+          "frequency": 0.0035,
+          "gain": 0.55,
+          "ridged": true,
+          "warp": {
+            "amount": 28,
+            "frequency": 0.004
+          },
+          "erosionPasses": 2,
+          "cliffThreshold": 45,
+          "soilDepth": 2
+        },
+        "children": [
+          {
+            "id": "volcano_cone",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the towering volcano summit with its magma caldera",
+            "params": {
+              "verb": "volcano",
+              "at": [
+                0.5,
+                0.26
+              ],
+              "radius": 150,
+              "height": 95,
+              "caldera": true,
+              "calderaDepth": 26,
+              "lava": true,
+              "lavaFlows": 3,
+              "profile": "sharp",
+              "irregularity": 0.18
+            }
+          },
+          {
+            "id": "lava_channel",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the glowing lava channel cutting down the volcanic flank",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.5,
+                  0.32
+                ],
+                [
+                  0.53,
+                  0.48
+                ],
+                [
+                  0.58,
+                  0.65
+                ],
+                [
+                  0.62,
+                  0.86
+                ]
+              ],
+              "width": 26,
+              "depth": 22,
+              "profile": "sharp",
+              "meander": 0.35,
+              "flooded": "never"
+            }
+          },
+          {
+            "id": "hold_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the steep basalt cliff face for the dwarven gate",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.24,
+                  0.46
+                ],
+                [
+                  0.42,
+                  0.48
+                ],
+                [
+                  0.5,
+                  0.44
+                ]
+              ],
+              "width": 60,
+              "height": 36,
+              "profile": "sharp",
+              "meander": 0.25
+            }
+          },
+          {
+            "id": "hold_terrace_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the solid rock shelf carved for the dwarven terraces",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.44,
+                0.54
+              ],
+              "radius": 95,
+              "height": 14,
+              "rim": 4,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "arid",
+          "temperatureFrequency": 0.001,
+          "humidityFrequency": 0.001
+        }
+      },
+      {
+        "id": "great_hearth_plaza",
+        "kind": "primitive",
+        "label": "the grand terrace plaza overlooking the forge works",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            26,
+            26
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "the_great_gate",
+        "kind": "generator",
+        "generator": "authored:monumental_dwarf_gate",
+        "label": "the monumental hold gate carved into the cliff face",
+        "constraints": [
+          {
+            "at": [
+              0.42,
+              0.5
+            ]
+          },
+          {
+            "distance": "great_hearth_plaza",
+            "min": 10,
+            "max": 60,
+            "strength": "soft"
+          }
+        ],
+        "params": {
+          "face": {
+            "toward": "great_hearth_plaza"
+          },
+          "seat": "pad"
+        },
+        "tags": [
+          "landmark",
+          "gate"
+        ]
+      },
+      {
+        "id": "the_magma_forge",
+        "kind": "generator",
+        "generator": "authored:magma_sluice_forge",
+        "label": "the great magma sluice forge at the lava channel edge",
+        "constraints": [
+          {
+            "at": [
+              0.54,
+              0.58
+            ]
+          },
+          {
+            "beside": "lava_channel",
+            "offset": [
+              4,
+              16
+            ]
+          },
+          {
+            "distance": "great_hearth_plaza",
+            "min": 14,
+            "max": 60,
+            "strength": "soft"
+          }
+        ],
+        "params": {
+          "face": {
+            "toward": "great_hearth_plaza"
+          },
+          "seat": "pad"
+        },
+        "tags": [
+          "landmark",
+          "craft"
+        ]
+      },
+      {
+        "id": "pillared_deep_hall",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the grand throneroom and pillared deep hall",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            16,
+            17
+          ]
+        },
+        "params": {
+          "archetype": "castle",
+          "floors": 2,
+          "roof": "flat",
+          "basement": {
+            "depth": 5,
+            "style": "undercroft"
+          }
+        },
+        "constraints": [
+          {
+            "adjacent_to": "great_hearth_plaza",
+            "gap": [
+              2,
+              8
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "great_hearth_plaza"
+          },
+          {
+            "connected": "armory_vault",
+            "via": "tunnel",
+            "style": "mine",
+            "oreChamber": true
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house",
+          "hall",
+          "landmark"
+        ]
+      },
+      {
+        "id": "volcanic_blast_furnace",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "smelters and blast furnaces roaring beside the lava stream",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            13,
+            15
+          ]
+        },
+        "params": {
+          "archetype": "blast_furnace_works",
+          "floors": 1,
+          "roof": "flat",
+          "basement": {
+            "depth": 4,
+            "style": "mine"
+          }
+        },
+        "constraints": [
+          {
+            "beside": "lava_channel",
+            "offset": [
+              6,
+              20
+            ]
+          },
+          {
+            "distance": "great_hearth_plaza",
+            "min": 10,
+            "max": 45,
+            "strength": "soft"
+          },
+          {
+            "facing": "great_hearth_plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "craft",
+          "smelter"
+        ]
+      },
+      {
+        "id": "armory_vault",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the runic armory and tool vault",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            17
+          ]
+        },
+        "params": {
+          "archetype": "armory",
+          "floors": 1,
+          "roof": "flat",
+          "basement": {
+            "depth": 5,
+            "style": "vault"
+          }
+        },
+        "constraints": [
+          {
+            "adjacent_to": "great_hearth_plaza",
+            "gap": [
+              2,
+              10
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "great_hearth_plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "craft",
+          "house"
+        ]
+      },
+      {
+        "id": "stone_brewhouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the hold's stone brewhouse and cellar",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            15
+          ]
+        },
+        "params": {
+          "archetype": "brewery",
+          "floors": 1,
+          "roof": "flat",
+          "basement": {
+            "depth": 4,
+            "style": "wine_cellar"
+          }
+        },
+        "constraints": [
+          {
+            "distance": "great_hearth_plaza",
+            "min": 8,
+            "max": 38,
+            "strength": "soft"
+          },
+          {
+            "facing": "great_hearth_plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "trade",
+          "house"
+        ]
+      },
+      {
+        "id": "hold_barracks",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "barracks quarters for the dwarven guard",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "barracks",
+          "floors": 2,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "distance": "the_great_gate",
+            "min": 8,
+            "max": 45,
+            "strength": "soft"
+          },
+          {
+            "distance": "great_hearth_plaza",
+            "min": 8,
+            "max": 45,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "barracks",
+          "house"
+        ]
+      },
+      {
+        "id": "gem_cuttery",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "gem cuttery and goldsmith workshop",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            10,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "foundry",
+          "floors": 1,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "distance": "great_hearth_plaza",
+            "min": 12,
+            "max": 50,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "craft",
+          "house"
+        ]
+      },
+      {
+        "id": "upper_terrace_wall",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "massive dressed stone retaining wall supporting the upper hall terrace",
+        "params": {
+          "entry": "retaining_wall",
+          "route": {
+            "along": "hold_lanes",
+            "offset": 8,
+            "side": "left"
+          }
+        }
+      },
+      {
+        "id": "magma_descent_stair",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "grand stone steps descending the volcanic flank toward the magma flow",
+        "params": {
+          "entry": "terrace_steps",
+          "route": {
+            "across": "hold_lanes"
+          }
+        }
+      },
+      {
+        "id": "ancestor_statue",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the ancestral statue on the terrace plaza",
+        "params": {
+          "prop": "statue_plinth",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "hold_lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "basalt paved ways and stairs connecting the terraces, gate, and forges",
+        "params": {
+          "anchors": [
+            "great_hearth_plaza",
+            "the_great_gate",
+            "the_magma_forge",
+            "pillared_deep_hall",
+            "#tag:house"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 12
+        }
+      }
+    ]
+  },
+  "programs": {
+    "monumental_dwarf_gate": {
+      "mode": "landmark",
+      "envelope": [
+        32,
+        34,
+        20
+      ],
+      "sourceHash": "b3:4410eccb6429e0d3878ac182e9162697e065fceb4f6cb6dd3a978b3ab4a185ac",
+      "outputHash": "b3:0d363bd4c4171d180fc1053f182b784f27fc00eb4109f74f0e8467a30a9a081f",
+      "conforms": false,
+      "conformHash": "b3:2e65ec2ce31dd894ec1a8723a8ee4467aae0c65655917ed766eb7b4519355875",
+      "source": "export const envelope = [32, 34, 20];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const seatY = 6;\n  const sy = (dy) => seatY + dy;\n\n  // 3D grid buffer for precise bounds safety and single-pass emission\n  const grid = Array.from({ length: W }, () =>\n    Array.from({ length: H }, () => new Array(D).fill(null))\n  );\n\n  function set(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      grid[x][y][z] = block;\n    }\n  }\n\n  function fillBox(x0, y0, z0, x1, y1, z1, block) {\n    const minX = Math.min(x0, x1), maxX = Math.max(x0, x1);\n    const minY = Math.min(y0, y1), maxY = Math.max(y0, y1);\n    const minZ = Math.min(z0, z1), maxZ = Math.max(z0, z1);\n    for (let x = minX; x <= maxX; x++) {\n      for (let y = minY; y <= maxY; y++) {\n        for (let z = minZ; z <= maxZ; z++) {\n          set(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  // --- Theme Extraction & Block Palette ---\n  const stoneP = api.theme.stone?.primary || \"minecraft:deepslate_bricks\";\n  const stoneA = api.theme.stone?.accent || \"minecraft:polished_blackstone_bricks\";\n  const stoneStairs = api.theme.stone?.stairs || \"minecraft:deepslate_brick_stairs\";\n  const stoneSlab = api.theme.stone?.slab || \"minecraft:deepslate_brick_slab\";\n  const stoneWall = api.theme.stone?.wall || \"minecraft:deepslate_brick_wall\";\n\n  const plinth = api.theme.ground?.plinth || \"minecraft:polished_blackstone\";\n  const pave = api.theme.ground?.pavement || \"minecraft:deepslate_tiles\";\n  const groundStairs = api.theme.ground?.stairs || \"minecraft:deepslate_tile_stairs\";\n  const groundSlab = api.theme.ground?.slab || \"minecraft:deepslate_tile_slab\";\n\n  const woodPlanks = api.theme.wood?.planks || \"minecraft:dark_oak_planks\";\n  const woodLog = api.theme.wood?.log || \"minecraft:dark_oak_log\";\n  const woodFence = api.theme.wood?.fence || \"minecraft:dark_oak_fence\";\n\n  const roofSolid = api.theme.roof?.solid || \"minecraft:blackstone\";\n  const roofStairs = api.theme.roof?.stairs || \"minecraft:blackstone_stairs\";\n  const roofSlab = api.theme.roof?.slab || \"minecraft:blackstone_slab\";\n\n  // Specialized volcanic hold materials\n  const magma = \"minecraft:magma_block\";\n  const gilded = \"minecraft:gilded_blackstone\";\n  const cryingObsidian = \"minecraft:crying_obsidian\";\n  const ironBars = \"minecraft:iron_bars\";\n  const anvilN = \"minecraft:anvil[facing=north]\";\n  const anvilE = \"minecraft:anvil[facing=east]\";\n  const soulCampfire = \"minecraft:soul_campfire[lit=true]\";\n  const campfire = \"minecraft:campfire[lit=true]\";\n  const lanternFloor = \"minecraft:lantern[hanging=false]\";\n  const soulLanternHang = \"minecraft:soul_lantern[hanging=true]\";\n\n  function st(base, facing, half = \"bottom\") {\n    const id = base.split(\"[\")[0];\n    return `${id}[facing=${facing},half=${half}]`;\n  }\n\n  function sl(base, type = \"bottom\") {\n    const id = base.split(\"[\")[0];\n    return `${id}[type=${type}]`;\n  }\n\n  // =========================================================================\n  // 1. BACKGROUND MOUNTAIN CLIFF & ROCK STRATA (Z = 13..19, dy = 0..27)\n  // =========================================================================\n  for (let x = 0; x < W; x++) {\n    for (let z = 13; z < D; z++) {\n      for (let dy = 0; dy <= 27; dy++) {\n        let b = stoneP;\n        if (dy % 6 === 0 || dy % 6 === 1) b = stoneA;\n        else if (dy % 11 === 0) b = roofSolid;\n        else if ((x + dy + z) % 17 === 0) b = gilded;\n        set(x, sy(dy), z, b);\n      }\n    }\n  }\n\n  // Mountain flanks projecting forward at the far wings (X=0..2, X=29..31, Z=7..12)\n  for (let dy = 0; dy <= 26; dy++) {\n    for (let z = 7; z <= 12; z++) {\n      for (let x of [0, 1, 2, 29, 30, 31]) {\n        let b = (dy % 4 === 0) ? stoneA : stoneP;\n        set(x, sy(dy), z, b);\n      }\n    }\n  }\n\n  // =========================================================================\n  // 2. GRAND ENTRANCE TUNNEL & INTERIOR VAULT (X = 13..18, Z = 9..18)\n  // =========================================================================\n  for (let x = 13; x <= 18; x++) {\n    for (let z = 9; z <= 18; z++) {\n      // Floor at dy = 2\n      let floorBlock = pave;\n      if (x === 15 || x === 16) {\n        floorBlock = magma; // Central glowing magma channel down the hall\n      } else if (x === 13 || x === 18) {\n        floorBlock = plinth;\n      }\n      set(x, sy(2), z, floorBlock);\n\n      // Hollow vault interior\n      for (let dy = 3; dy <= 11; dy++) {\n        set(x, sy(dy), z, \"minecraft:air\");\n      }\n\n      // Vaulted stone ceiling\n      let ceilingDy = 12;\n      if (x === 13 || x === 18) ceilingDy = 10;\n      else if (x === 14 || x === 17) ceilingDy = 11;\n      else ceilingDy = 12;\n\n      set(x, sy(ceilingDy), z, stoneA);\n      for (let dy = ceilingDy + 1; dy <= 13; dy++) {\n        set(x, sy(dy), z, stoneP);\n      }\n    }\n  }\n\n  // Hallway Vault Ribs & Sconces (Z = 11, 14, 17)\n  for (let z of [11, 14, 17]) {\n    set(13, sy(3), z, st(stoneStairs, \"east\", \"bottom\"));\n    set(13, sy(4), z, stoneWall);\n    set(13, sy(5), z, stoneWall);\n    set(13, sy(6), z, st(stoneStairs, \"east\", \"top\"));\n    set(13, sy(7), z, soulLanternHang);\n\n    set(18, sy(3), z, st(stoneStairs, \"west\", \"bottom\"));\n    set(18, sy(4), z, stoneWall);\n    set(18, sy(5), z, stoneWall);\n    set(18, sy(6), z, st(stoneStairs, \"west\", \"top\"));\n    set(18, sy(7), z, soulLanternHang);\n\n    // Transverse ceiling rib\n    set(14, sy(11), z, st(stoneStairs, \"east\", \"top\"));\n    set(15, sy(12), z, sl(stoneSlab, \"bottom\"));\n    set(16, sy(12), z, sl(stoneSlab, \"bottom\"));\n    set(17, sy(11), z, st(stoneStairs, \"west\", \"top\"));\n  }\n\n  // =========================================================================\n  // 3. FORECOURT, GRAND STAIRS & TERRACE (Z = 0..8, dy = 0..3)\n  // =========================================================================\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z <= 8; z++) {\n      if (x >= 12 && x <= 19) {\n        // Central grand entrance staircase\n        if (z === 0 || z === 1) {\n          set(x, sy(0), z, st(groundStairs, \"north\"));\n        } else if (z === 2 || z === 3) {\n          set(x, sy(1), z, st(groundStairs, \"north\"));\n          set(x, sy(0), z, plinth);\n        } else if (z === 4 || z === 5) {\n          set(x, sy(2), z, (x === 15 || x === 16) ? magma : pave);\n          set(x, sy(1), z, plinth);\n          set(x, sy(0), z, plinth);\n        } else {\n          set(x, sy(2), z, (x === 15 || x === 16) ? magma : pave);\n          set(x, sy(1), z, plinth);\n          set(x, sy(0), z, plinth);\n        }\n      } else {\n        // Flanking terrace pavement\n        if (z <= 5) {\n          set(x, sy(0), z, pave);\n          if (z >= 3) {\n            set(x, sy(1), z, pave);\n            set(x, sy(0), z, plinth);\n          }\n        }\n      }\n    }\n  }\n\n  // =========================================================================\n  // 4. THE GRAND GATE PORTAL & ARCHES (X = 10..21, dy = 2..23, Z = 4..9)\n  // =========================================================================\n  // Outer Gate Buttress Columns (X=10..11 and X=20..21, Z=5..8, dy=2..18)\n  for (let dy = 2; dy <= 18; dy++) {\n    for (let z = 5; z <= 8; z++) {\n      for (let x of [10, 11, 20, 21]) {\n        let b = (dy % 3 === 0) ? stoneA : stoneP;\n        if (z === 5 && (x === 11 || x === 20) && dy >= 4 && dy <= 15) {\n          b = (dy % 2 === 0) ? magma : gilded; // Glowing rune column\n        }\n        set(x, sy(dy), z, b);\n      }\n    }\n  }\n\n  // Inner Gate Jambs (X=12 and X=19, Z=6..8, dy=2..13)\n  for (let dy = 2; dy <= 13; dy++) {\n    for (let z = 6; z <= 8; z++) {\n      set(12, sy(dy), z, stoneP);\n      set(19, sy(dy), z, stoneP);\n    }\n    set(12, sy(dy), 5, st(stoneStairs, \"east\"));\n    set(19, sy(dy), 5, st(stoneStairs, \"west\"));\n  }\n\n  // Clear Portal Open Air (X=13..18, dy=3..13, Z=5..8)\n  for (let x = 13; x <= 18; x++) {\n    for (let dy = 3; dy <= 13; dy++) {\n      for (let z = 5; z <= 8; z++) {\n        set(x, sy(dy), z, \"minecraft:air\");\n      }\n    }\n  }\n\n  // Massive Raised Portcullis (Z = 8, dy = 6..14)\n  for (let x = 13; x <= 18; x++) {\n    for (let dy = 6; dy <= 14; dy++) {\n      set(x, sy(dy), 8, ironBars);\n    }\n    if (x === 13 || x === 15 || x === 16 || x === 18) {\n      set(x, sy(5), 8, ironBars); // Portcullis teeth\n    }\n  }\n\n  // Iron-Banded Heavy Timber Gates (Z = 9, partially open)\n  for (let dy = 3; dy <= 10; dy++) {\n    set(13, sy(dy), 9, woodLog);\n    set(14, sy(dy), 9, (dy === 4 || dy === 7 || dy === 9) ? ironBars : woodPlanks);\n    set(17, sy(dy), 9, (dy === 4 || dy === 7 || dy === 9) ? ironBars : woodPlanks);\n    set(18, sy(dy), 9, woodLog);\n    set(15, sy(dy), 9, \"minecraft:air\");\n    set(16, sy(dy), 9, \"minecraft:air\");\n  }\n\n  // Inner Arch (Z = 6..7)\n  set(13, sy(13), 6, st(stoneStairs, \"east\", \"bottom\"));\n  set(13, sy(13), 7, st(stoneStairs, \"east\", \"bottom\"));\n  set(18, sy(13), 6, st(stoneStairs, \"west\", \"bottom\"));\n  set(18, sy(13), 7, st(stoneStairs, \"west\", \"bottom\"));\n  set(14, sy(14), 6, st(stoneStairs, \"east\", \"bottom\"));\n  set(14, sy(14), 7, st(stoneStairs, \"east\", \"bottom\"));\n  set(17, sy(14), 6, st(stoneStairs, \"west\", \"bottom\"));\n  set(17, sy(14), 7, st(stoneStairs, \"west\", \"bottom\"));\n  set(15, sy(15), 6, sl(stoneSlab, \"bottom\"));\n  set(15, sy(15), 7, sl(stoneSlab, \"bottom\"));\n  set(16, sy(15), 6, sl(stoneSlab, \"bottom\"));\n  set(16, sy(15), 7, sl(stoneSlab, \"bottom\"));\n  fillBox(12, sy(14), 6, 13, sy(16), 7, stoneP);\n  fillBox(18, sy(14), 6, 19, sy(16), 7, stoneP);\n  fillBox(14, sy(15), 6, 17, sy(16), 7, stoneP);\n\n  // Middle Glowing Magma Rune Arch (North Face Z = 5)\n  set(11, sy(15), 5, magma);\n  set(12, sy(16), 5, gilded);\n  set(13, sy(17), 5, magma);\n  set(14, sy(17), 5, gilded);\n  set(15, sy(18), 5, magma);\n  set(16, sy(18), 5, magma);\n  set(17, sy(17), 5, gilded);\n  set(18, sy(17), 5, magma);\n  set(19, sy(16), 5, gilded);\n  set(20, sy(15), 5, magma);\n\n  // Outer Heavy Corbelled Arch (Z = 4..5)\n  set(10, sy(16), 4, st(stoneStairs, \"east\", \"bottom\"));\n  set(11, sy(17), 4, st(stoneStairs, \"east\", \"bottom\"));\n  set(12, sy(18), 4, st(stoneStairs, \"east\", \"bottom\"));\n  set(13, sy(19), 4, st(stoneStairs, \"east\", \"bottom\"));\n  set(14, sy(19), 4, sl(stoneSlab, \"bottom\"));\n  set(17, sy(19), 4, sl(stoneSlab, \"bottom\"));\n  set(18, sy(19), 4, st(stoneStairs, \"west\", \"bottom\"));\n  set(19, sy(18), 4, st(stoneStairs, \"west\", \"bottom\"));\n  set(20, sy(17), 4, st(stoneStairs, \"west\", \"bottom\"));\n  set(21, sy(16), 4, st(stoneStairs, \"west\", \"bottom\"));\n\n  fillBox(10, sy(17), 5, 12, sy(21), 6, stoneP);\n  fillBox(19, sy(17), 5, 21, sy(21), 6, stoneP);\n  fillBox(13, sy(20), 4, 18, sy(22), 6, stoneP);\n\n  // Keystone Carved Dwarven Mask (X = 14..17, dy = 19..23, Z = 3..5)\n  set(14, sy(23), 4, st(stoneStairs, \"south\", \"top\"));\n  set(15, sy(23), 3, gilded);\n  set(16, sy(23), 3, gilded);\n  set(17, sy(23), 4, st(stoneStairs, \"south\", \"top\"));\n  set(15, sy(23), 4, magma);\n  set(16, sy(23), 4, magma);\n\n  set(14, sy(22), 3, stoneA);\n  set(15, sy(22), 3, cryingObsidian); // Glowing eyes\n  set(16, sy(22), 3, cryingObsidian);\n  set(17, sy(22), 3, stoneA);\n\n  set(14, sy(21), 3, st(stoneStairs, \"east\", \"bottom\"));\n  set(15, sy(21), 3, stoneP);\n  set(16, sy(21), 3, stoneP);\n  set(17, sy(21), 3, st(stoneStairs, \"west\", \"bottom\"));\n\n  set(15, sy(20), 3, st(stoneStairs, \"north\", \"top\"));\n  set(16, sy(20), 3, st(stoneStairs, \"north\", \"top\"));\n  set(15, sy(19), 4, st(stoneStairs, \"north\", \"top\"));\n  set(16, sy(19), 4, st(stoneStairs, \"north\", \"top\"));\n\n  // =========================================================================\n  // 5. TWIN COLOSSAL DWARF STATUES WITH WARHAMMERS (Left: cx=7, Right: cx=24)\n  // =========================================================================\n  function buildDwarfSentinel(cx) {\n    // Pedestal (dy = 1..3, X = cx-3..cx+3, Z = 3..8)\n    fillBox(cx - 3, sy(1), 3, cx + 3, sy(1), 8, plinth);\n    fillBox(cx - 3, sy(2), 3, cx + 3, sy(2), 8, stoneA);\n    for (let x = cx - 2; x <= cx + 2; x++) {\n      set(x, sy(2), 3, (x % 2 === 0) ? magma : gilded);\n    }\n    for (let x = cx - 3; x <= cx + 3; x++) {\n      set(x, sy(3), 3, st(stoneStairs, \"north\", \"top\"));\n      set(x, sy(3), 8, st(stoneStairs, \"south\", \"top\"));\n    }\n    for (let z = 4; z <= 7; z++) {\n      set(cx - 3, sy(3), z, st(stoneStairs, \"west\", \"top\"));\n      set(cx + 3, sy(3), z, st(stoneStairs, \"east\", \"top\"));\n      fillBox(cx - 2, sy(3), z, cx + 2, sy(3), z, pave);\n    }\n\n    // Boots (dy = 4..5)\n    fillBox(cx - 2, sy(4), 4, cx - 1, sy(4), 6, plinth);\n    set(cx - 2, sy(4), 3, st(stoneStairs, \"north\", \"bottom\"));\n    set(cx - 1, sy(4), 3, st(stoneStairs, \"north\", \"bottom\"));\n    fillBox(cx - 2, sy(5), 4, cx - 1, sy(5), 5, stoneP);\n\n    fillBox(cx + 1, sy(4), 4, cx + 2, sy(4), 6, plinth);\n    set(cx + 1, sy(4), 3, st(stoneStairs, \"north\", \"bottom\"));\n    set(cx + 2, sy(4), 3, st(stoneStairs, \"north\", \"bottom\"));\n    fillBox(cx + 1, sy(5), 4, cx + 2, sy(5), 5, stoneP);\n\n    // Greaves & Kneecaps (dy = 6..7)\n    fillBox(cx - 2, sy(6), 4, cx - 1, sy(7), 6, stoneP);\n    fillBox(cx + 1, sy(6), 4, cx + 2, sy(7), 6, stoneP);\n    set(cx - 2, sy(7), 3, gilded);\n    set(cx - 1, sy(7), 3, st(stoneStairs, \"north\", \"bottom\"));\n    set(cx + 1, sy(7), 3, st(stoneStairs, \"north\", \"bottom\"));\n    set(cx + 2, sy(7), 3, gilded);\n\n    // Armored Skirt & Mail Tunic (dy = 8..9)\n    fillBox(cx - 2, sy(8), 4, cx + 2, sy(9), 7, stoneP);\n    for (let x = cx - 2; x <= cx + 2; x++) {\n      set(x, sy(8), 3, (x === cx) ? magma : stoneA);\n      set(x, sy(9), 3, stoneA);\n    }\n\n    // Belt & Glowing Buckle (dy = 10)\n    fillBox(cx - 2, sy(10), 4, cx + 2, sy(10), 7, stoneA);\n    set(cx - 2, sy(10), 3, stoneA);\n    set(cx - 1, sy(10), 3, gilded);\n    set(cx, sy(10), 3, magma);\n    set(cx + 1, sy(10), 3, gilded);\n    set(cx + 2, sy(10), 3, stoneA);\n\n    // Heavy Torso & Back Rock Merge (dy = 11..15)\n    fillBox(cx - 2, sy(11), 4, cx + 2, sy(15), 7, stoneP);\n    fillBox(cx - 2, sy(11), 8, cx + 2, sy(15), 12, stoneP);\n\n    // Giant Pauldrons (dy = 14..16)\n    fillBox(cx - 3, sy(14), 4, cx - 3, sy(15), 6, stoneA);\n    set(cx - 3, sy(16), 4, st(stoneStairs, \"west\", \"bottom\"));\n    set(cx - 3, sy(16), 5, sl(stoneSlab, \"bottom\"));\n    set(cx - 3, sy(16), 6, st(stoneStairs, \"west\", \"bottom\"));\n\n    fillBox(cx + 3, sy(14), 4, cx + 3, sy(15), 6, stoneA);\n    set(cx + 3, sy(16), 4, st(stoneStairs, \"east\", \"bottom\"));\n    set(cx + 3, sy(16), 5, sl(stoneSlab, \"bottom\"));\n    set(cx + 3, sy(16), 6, st(stoneStairs, \"east\", \"bottom\"));\n\n    // Arms & Stone Gauntlets (dy = 12..14)\n    set(cx - 3, sy(12), 4, stoneP);\n    set(cx - 3, sy(13), 4, stoneP);\n    set(cx + 3, sy(12), 4, stoneP);\n    set(cx + 3, sy(13), 4, stoneP);\n    set(cx - 2, sy(13), 3, st(stoneStairs, \"east\", \"bottom\"));\n    set(cx - 1, sy(13), 2, stoneA);\n    set(cx + 2, sy(13), 3, st(stoneStairs, \"west\", \"bottom\"));\n    set(cx + 1, sy(13), 2, stoneA);\n    set(cx - 1, sy(12), 2, st(stoneStairs, \"north\", \"top\"));\n    set(cx + 1, sy(12), 2, st(stoneStairs, \"north\", \"top\"));\n\n    // Colossal Upright Warhammer\n    for (let dy = 4; dy <= 17; dy++) {\n      set(cx, sy(dy), 2, woodFence);\n    }\n    set(cx, sy(13), 2, gilded); // Gripping hands\n\n    // Hammer Head (dy = 18..21, Z = 1..3, X = cx-2..cx+2)\n    fillBox(cx - 1, sy(18), 1, cx + 1, sy(21), 3, roofSolid);\n    set(cx, sy(19), 2, magma);\n    set(cx, sy(20), 2, magma);\n    set(cx - 2, sy(19), 2, st(roofStairs, \"west\", \"bottom\"));\n    set(cx - 2, sy(20), 2, st(roofStairs, \"west\", \"top\"));\n    set(cx + 2, sy(19), 2, st(roofStairs, \"east\", \"bottom\"));\n    set(cx + 2, sy(20), 2, st(roofStairs, \"east\", \"top\"));\n    set(cx, sy(19), 1, magma);\n    set(cx, sy(20), 1, magma);\n    set(cx - 1, sy(19), 1, st(roofStairs, \"north\", \"bottom\"));\n    set(cx + 1, sy(19), 1, st(roofStairs, \"north\", \"bottom\"));\n    set(cx - 1, sy(20), 1, st(roofStairs, \"north\", \"top\"));\n    set(cx + 1, sy(20), 1, st(roofStairs, \"north\", \"top\"));\n    set(cx, sy(22), 2, sl(roofSlab, \"bottom\"));\n    set(cx - 1, sy(22), 2, st(roofStairs, \"east\", \"bottom\"));\n    set(cx + 1, sy(22), 2, st(roofStairs, \"west\", \"bottom\"));\n\n    // Braided Dwarven Beard with Gold Rings (dy = 11..16, Z = 3)\n    set(cx, sy(16), 3, stoneA);\n    set(cx - 1, sy(16), 3, stoneP);\n    set(cx + 1, sy(16), 3, stoneP);\n\n    set(cx, sy(15), 3, stoneA);\n    set(cx - 1, sy(15), 3, stoneP);\n    set(cx + 1, sy(15), 3, stoneP);\n\n    set(cx, sy(14), 3, gilded); // Gold beard clasp\n    set(cx - 1, sy(14), 3, stoneA);\n    set(cx + 1, sy(14), 3, stoneA);\n\n    set(cx, sy(13), 3, stoneA);\n    set(cx - 1, sy(13), 3, stoneP);\n    set(cx + 1, sy(13), 3, stoneP);\n\n    set(cx, sy(12), 3, gilded); // Lower beard clasp\n    set(cx - 1, sy(12), 3, stoneA);\n    set(cx + 1, sy(12), 3, stoneA);\n\n    set(cx, sy(11), 3, st(stoneStairs, \"north\", \"top\"));\n    set(cx - 1, sy(11), 3, st(stoneStairs, \"north\", \"top\"));\n    set(cx + 1, sy(11), 3, st(stoneStairs, \"north\", \"top\"));\n\n    // Head, Face & Deep Sockets (dy = 16..18, Z = 4..6)\n    fillBox(cx - 2, sy(16), 4, cx + 2, sy(18), 6, stoneP);\n    set(cx, sy(17), 3, stoneP); // Nose\n    set(cx - 1, sy(17), 3, cryingObsidian); // Eye\n    set(cx + 1, sy(17), 3, cryingObsidian); // Eye\n    set(cx - 1, sy(18), 3, st(stoneStairs, \"north\", \"bottom\"));\n    set(cx, sy(18), 3, gilded);\n    set(cx + 1, sy(18), 3, st(stoneStairs, \"north\", \"bottom\"));\n    set(cx - 2, sy(16), 3, st(stoneStairs, \"east\", \"bottom\"));\n    set(cx - 2, sy(17), 3, stoneA);\n    set(cx + 2, sy(16), 3, st(stoneStairs, \"west\", \"bottom\"));\n    set(cx + 2, sy(17), 3, stoneA);\n\n    // Crested Battle-Crown & Horns (dy = 19..24)\n    fillBox(cx - 2, sy(19), 4, cx + 2, sy(21), 6, stoneA);\n    set(cx - 2, sy(19), 3, stoneA);\n    set(cx - 1, sy(19), 3, gilded);\n    set(cx, sy(19), 3, magma);\n    set(cx + 1, sy(19), 3, gilded);\n    set(cx + 2, sy(19), 3, stoneA);\n\n    for (let dy = 20; dy <= 22; dy++) {\n      set(cx, sy(dy), 3, (dy === 21) ? magma : stoneA);\n      set(cx, sy(dy), 4, stoneA);\n      set(cx, sy(dy), 5, stoneA);\n    }\n    set(cx, sy(23), 4, stoneWall);\n    set(cx, sy(24), 4, stoneWall);\n    set(cx, sy(23), 5, st(stoneStairs, \"south\", \"bottom\"));\n    set(cx, sy(23), 3, st(stoneStairs, \"north\", \"bottom\"));\n\n    // Angular Horns\n    set(cx - 3, sy(20), 4, st(stoneStairs, \"east\", \"top\"));\n    set(cx - 3, sy(21), 4, stoneWall);\n    set(cx - 4, sy(22), 4, stoneWall);\n    set(cx - 4, sy(23), 4, st(stoneStairs, \"west\", \"top\"));\n\n    set(cx + 3, sy(20), 4, st(stoneStairs, \"west\", \"top\"));\n    set(cx + 3, sy(21), 4, stoneWall);\n    set(cx + 4, sy(22), 4, stoneWall);\n    set(cx + 4, sy(23), 4, st(stoneStairs, \"east\", \"top\"));\n  }\n\n  buildDwarfSentinel(7);\n  buildDwarfSentinel(24);\n\n  // =========================================================================\n  // 6. UPPER BASTIONS, MACHICOLATIONS & HOLD CREST (dy = 22..27)\n  // =========================================================================\n  for (let x = 2; x <= 29; x++) {\n    set(x, sy(22), 5, (x % 4 === 0) ? gilded : stoneA);\n    set(x, sy(22), 6, stoneP);\n\n    if (x % 2 === 0) {\n      set(x, sy(23), 4, st(stoneStairs, \"north\", \"top\"));\n    } else {\n      set(x, sy(23), 4, sl(stoneSlab, \"top\"));\n    }\n    fillBox(x, sy(23), 5, x, sy(23), 8, stoneP);\n\n    // Battlement walk\n    fillBox(x, sy(24), 4, x, sy(24), 8, pave);\n\n    // Merlons\n    if (x % 2 === 0) {\n      set(x, sy(25), 4, stoneA);\n      set(x, sy(26), 4, sl(stoneSlab, \"bottom\"));\n    } else {\n      set(x, sy(25), 4, stoneWall);\n    }\n  }\n\n  // Raised Watch Turrets with Soul Fire Pyres (Left & Right)\n  function buildTurret(x0, x1) {\n    fillBox(x0, sy(25), 4, x1, sy(26), 6, stoneA);\n    const tcx = Math.floor((x0 + x1) / 2);\n    set(tcx, sy(26), 5, anvilN);\n    set(tcx, sy(27), 5, soulCampfire);\n    for (let x = x0; x <= x1; x++) {\n      set(x, sy(27), 4, stoneWall);\n      set(x, sy(27), 6, stoneWall);\n    }\n    set(x0, sy(27), 5, stoneWall);\n    set(x1, sy(27), 5, stoneWall);\n  }\n  buildTurret(1, 3);\n  buildTurret(28, 30);\n\n  // Stepped Gatehouse Crest & Great Fire Pyre (X = 13..18, dy = 24..27)\n  fillBox(13, sy(24), 4, 18, sy(26), 7, stoneP);\n  set(13, sy(26), 4, st(stoneStairs, \"east\", \"bottom\"));\n  set(14, sy(26), 4, stoneA);\n  set(15, sy(26), 4, magma);\n  set(16, sy(26), 4, magma);\n  set(17, sy(26), 4, stoneA);\n  set(18, sy(26), 4, st(stoneStairs, \"west\", \"bottom\"));\n\n  set(14, sy(27), 4, st(stoneStairs, \"east\", \"bottom\"));\n  set(15, sy(27), 4, gilded);\n  set(16, sy(27), 4, gilded);\n  set(17, sy(27), 4, st(stoneStairs, \"west\", \"bottom\"));\n\n  set(15, sy(27), 5, anvilE);\n  set(16, sy(27), 5, anvilE);\n  set(15, sy(27), 6, campfire);\n  set(16, sy(27), 6, campfire);\n\n  // =========================================================================\n  // 7. FORECOURT BRAZIERS & ANVILS (dy = 0..4)\n  // =========================================================================\n  const brazierLocs = [\n    [2, 1],\n    [9, 0],\n    [22, 0],\n    [29, 1],\n  ];\n\n  for (let [bx, bz] of brazierLocs) {\n    set(bx, sy(0), bz, plinth);\n    set(bx, sy(1), bz, plinth);\n    set(bx, sy(2), bz, stoneWall);\n    set(bx, sy(3), bz, anvilN);\n    set(bx, sy(4), bz, soulCampfire);\n    if (bx > 0) set(bx - 1, sy(1), bz, st(stoneStairs, \"east\", \"bottom\"));\n    if (bx < W - 1) set(bx + 1, sy(1), bz, st(stoneStairs, \"west\", \"bottom\"));\n  }\n\n  set(11, sy(2), 4, anvilN);\n  set(20, sy(2), 4, anvilN);\n  set(11, sy(3), 4, lanternFloor);\n  set(20, sy(3), 4, lanternFloor);\n\n  // =========================================================================\n  // 8. TERRAIN CONFORMITY PASS (Rule 6 - Slopes, Ridges & Shoreline)\n  // =========================================================================\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      let minY = -1;\n      for (let y = 0; y < H; y++) {\n        if (grid[x][y][z] !== null && grid[x][y][z] !== \"minecraft:air\") {\n          if (minY === -1) minY = y;\n        }\n      }\n\n      const h = api.heightAt(x, z);\n      const groundY = Math.max(0, Math.min(H - 1, Math.round(seatY + h)));\n\n      if (minY !== -1) {\n        if (groundY < minY) {\n          const foundationBlock = (z >= 10) ? stoneP : plinth;\n          for (let y = groundY; y < minY; y++) {\n            set(x, y, z, foundationBlock);\n          }\n        }\n      } else {\n        if (z <= 8 && groundY < sy(2)) {\n          set(x, groundY, z, pave);\n        }\n      }\n    }\n  }\n\n  // Extend front entrance steps down to terrain if ground drops at Z=0\n  for (let x = 12; x <= 19; x++) {\n    const h0 = api.heightAt(x, 0);\n    const g0 = Math.max(0, Math.min(sy(2), Math.round(seatY + h0)));\n    for (let y = g0; y < sy(0); y++) {\n      set(x, y, 0, st(groundStairs, \"north\"));\n    }\n  }\n\n  // =========================================================================\n  // 9. EMIT BLOCKS TO API\n  // =========================================================================\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const b = grid[x][y][z];\n        if (b !== null) {\n          api.set(x, y, z, b);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"monumental_dwarf_gate\",\n    seatY: seatY,\n    anchors: {\n      front: [15, sy(1), 0],\n      door: [15, sy(2), 8],\n    },\n    interiors: [\n      {\n        min: [13, sy(3), 10],\n        max: [18, sy(10), 17],\n        kind: \"vault\",\n      },\n    ],\n  };\n}"
+    },
+    "magma_sluice_forge": {
+      "mode": "landmark",
+      "envelope": [
+        26,
+        28,
+        24
+      ],
+      "sourceHash": "b3:db1b0186ceff40130aadb8054ef135c930839380c6cc66a02417bd06018b18b7",
+      "outputHash": "b3:a01477c34fc7d58c9ac85dd3d5a71d301442f76a3627e823314164cae503cbf9",
+      "conforms": false,
+      "conformHash": "b3:902ce3f5ce0ffcdd85d6289a334dd1912198f8154891a985cd483f6755b470c3",
+      "source": "export const envelope = [26, 28, 24];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const SEAT_Y = 6;\n  const fy = (lvl) => SEAT_Y + lvl;\n\n  // Resolve palette roles with authentic dwarven volcanic materials\n  const P = {\n    stone: api.theme.stone.primary || \"minecraft:polished_blackstone_bricks\",\n    accent: api.theme.stone.accent || \"minecraft:gilded_blackstone\",\n    stairs: api.theme.stone.stairs || \"minecraft:polished_blackstone_brick_stairs\",\n    slab: api.theme.stone.slab || \"minecraft:polished_blackstone_brick_slab\",\n    wall: api.theme.stone.wall || \"minecraft:polished_blackstone_wall\",\n    pavement: api.theme.ground.pavement || \"minecraft:polished_blackstone\",\n    plinth: api.theme.ground.plinth || \"minecraft:blackstone\",\n    kerb: api.theme.ground.kerb || \"minecraft:polished_blackstone\",\n    roofSolid: api.theme.roof.solid || \"minecraft:deepslate_tiles\",\n    roofStairs: api.theme.roof.stairs || \"minecraft:deepslate_tile_stairs\",\n    roofSlab: api.theme.roof.slab || \"minecraft:deepslate_tile_slab\",\n    wallCore: api.theme.wall.core || \"minecraft:deepslate_bricks\",\n    wallMerlon: api.theme.wall.merlon || \"minecraft:polished_blackstone_bricks\",\n    wallParapet: api.theme.wall.parapet || \"minecraft:polished_blackstone_wall\",\n    woodPlanks: api.theme.wood.planks || \"minecraft:spruce_planks\",\n    woodFence: api.theme.wood.fence || \"minecraft:nether_brick_fence\",\n    magma: \"minecraft:magma_block\",\n    bars: \"minecraft:iron_bars\",\n    chain: \"minecraft:chain[axis=y]\",\n    anvilN: \"minecraft:anvil[facing=north]\",\n    anvilE: \"minecraft:chipped_anvil[facing=east]\",\n    blastFurnaceE: \"minecraft:blast_furnace[facing=east,lit=true]\",\n    blastFurnaceW: \"minecraft:blast_furnace[facing=west,lit=true]\",\n    campfire: \"minecraft:campfire[lit=true,signal_fire=true]\",\n    hay: \"minecraft:hay_block\",\n    cryingObsidian: \"minecraft:crying_obsidian\",\n    gildedBlackstone: \"minecraft:gilded_blackstone\",\n    lanternHang: \"minecraft:lantern[hanging=true]\",\n    lanternFloor: \"minecraft:lantern[hanging=false]\",\n    cauldron: \"minecraft:cauldron\"\n  };\n\n  function stair(facing, half = \"bottom\", shape = \"straight\") {\n    const base = P.stairs.split(\"[\")[0];\n    return `${base}[facing=${facing},half=${half},shape=${shape}]`;\n  }\n  function roofStair(facing, half = \"bottom\", shape = \"straight\") {\n    const base = P.roofStairs.split(\"[\")[0];\n    return `${base}[facing=${facing},half=${half},shape=${shape}]`;\n  }\n  function slab(type = \"bottom\") {\n    const base = P.slab.split(\"[\")[0];\n    return `${base}[type=${type}]`;\n  }\n  function roofSlab(type = \"bottom\") {\n    const base = P.roofSlab.split(\"[\")[0];\n    return `${base}[type=${type}]`;\n  }\n\n  function set(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      api.set(x, y, z, block);\n    }\n  }\n\n  function fill(x1, y1, z1, x2, y2, z2, block) {\n    const minX = Math.min(x1, x2), maxX = Math.max(x1, x2);\n    const minY = Math.min(y1, y2), maxY = Math.max(y1, y2);\n    const minZ = Math.min(z1, z2), maxZ = Math.max(z1, z2);\n    for (let x = minX; x <= maxX; x++) {\n      for (let y = minY; y <= maxY; y++) {\n        for (let z = minZ; z <= maxZ; z++) {\n          set(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  function isFootprint(x, z) {\n    if (x >= 3 && x <= 22 && z >= 4 && z <= 20) return true;\n    if (x >= 8 && x <= 17 && z >= 0 && z <= 3) return true;\n    if (x >= 8 && x <= 17 && z >= 21 && z <= 23) return true;\n    if ((x >= 1 && x <= 5 || x >= 20 && x <= 24) && (z >= 3 && z <= 7 || z >= 17 && z <= 21)) return true;\n    return false;\n  }\n\n  // 1. Terrain adaptation & foundation skirt\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      if (isFootprint(x, z)) {\n        const h = Math.round(api.heightAt(x, z));\n        const gy = Math.max(0, Math.min(H - 1, SEAT_Y + h));\n        if (gy < SEAT_Y) {\n          for (let y = gy; y < SEAT_Y; y++) {\n            set(x, y, z, P.plinth);\n          }\n        } else if (gy > SEAT_Y) {\n          for (let y = SEAT_Y; y <= gy; y++) {\n            set(x, y, z, P.plinth);\n          }\n        }\n      }\n    }\n  }\n\n  // 2. Main Floor & Stepped Entrance Forecourt\n  fill(3, fy(0), 4, 22, fy(0), 20, P.stone);\n  for (let x = 4; x <= 21; x++) {\n    for (let z = 5; z <= 19; z++) {\n      const isCheck = (x + z) % 2 === 0;\n      set(x, fy(0), z, isCheck ? P.pavement : P.stone);\n    }\n  }\n\n  // Entrance steps & terrace (Z = 0..3)\n  fill(8, fy(0), 2, 17, fy(0), 3, P.pavement);\n  for (let x = 9; x <= 16; x++) {\n    set(x, fy(0), 1, stair(\"south\"));\n    set(x, fy(0) - 1, 1, P.plinth);\n    set(x, fy(0) - 1, 0, stair(\"south\"));\n  }\n  // Forecourt flanking guard piers\n  fill(8, fy(0), 1, 8, fy(2), 2, P.stone);\n  fill(17, fy(0), 1, 17, fy(2), 2, P.stone);\n  set(8, fy(3), 1, P.wall);\n  set(17, fy(3), 1, P.wall);\n  set(8, fy(4), 1, P.lanternFloor);\n  set(17, fy(4), 1, P.lanternFloor);\n\n  // 3. Massive Corner Bastions (Stepped Massing)\n  const bastions = [\n    { x1: 1, z1: 3, x2: 4, z2: 6 },\n    { x1: 21, z1: 3, x2: 24, z2: 6 },\n    { x1: 1, z1: 18, x2: 4, z2: 21 },\n    { x1: 21, z1: 18, x2: 24, z2: 21 }\n  ];\n\n  for (const b of bastions) {\n    fill(b.x1, fy(0), b.z1, b.x2, fy(4), b.z2, P.wallCore);\n    // Quoins and accents\n    for (let y = fy(0); y <= fy(4); y++) {\n      set(b.x1, y, b.z1, P.accent);\n      set(b.x2, y, b.z1, P.accent);\n      set(b.x1, y, b.z2, P.accent);\n      set(b.x2, y, b.z2, P.accent);\n    }\n    // Mid tier (inset)\n    const mx1 = b.x1 < 10 ? b.x1 + 1 : b.x1;\n    const mx2 = b.x1 < 10 ? b.x2 : b.x2 - 1;\n    const mz1 = b.z1 < 10 ? b.z1 + 1 : b.z1;\n    const mz2 = b.z1 < 10 ? b.z2 : b.z2 - 1;\n\n    fill(mx1, fy(5), mz1, mx2, fy(9), mz2, P.stone);\n    // Upper tier & machicolation\n    fill(mx1, fy(10), mz1, mx2, fy(13), mz2, P.wallCore);\n    for (let x = mx1; x <= mx2; x++) {\n      for (let z = mz1; z <= mz2; z++) {\n        set(x, fy(14), z, P.stone);\n      }\n    }\n    set(mx1, fy(15), mz1, P.wallMerlon);\n    set(mx2, fy(15), mz1, P.wallMerlon);\n    set(mx1, fy(15), mz2, P.wallMerlon);\n    set(mx2, fy(15), mz2, P.wallMerlon);\n  }\n\n  // 4. Outer Walls & Great North Facade (Y = fy(0)..fy(12))\n  // North Wall\n  fill(4, fy(0), 4, 21, fy(12), 4, P.stone);\n  // Arrow slits on North facade\n  set(7, fy(3), 4, P.bars);\n  set(7, fy(4), 4, P.bars);\n  set(18, fy(3), 4, P.bars);\n  set(18, fy(4), 4, P.bars);\n  // Great Portal (X = 11..14, Z = 4)\n  fill(11, fy(1), 4, 14, fy(4), 4, \"minecraft:air\");\n  fill(11, fy(0), 4, 11, fy(5), 4, P.accent);\n  fill(14, fy(0), 4, 14, fy(5), 4, P.accent);\n  set(11, fy(5), 4, stair(\"east\", \"top\"));\n  set(14, fy(5), 4, stair(\"west\", \"top\"));\n  set(12, fy(5), 4, slab(\"top\"));\n  set(13, fy(5), 4, slab(\"top\"));\n  // Raised iron portcullis inside top arch\n  fill(12, fy(4), 4, 13, fy(4), 4, P.bars);\n\n  // South Wall (Z = 20)\n  fill(4, fy(0), 20, 21, fy(12), 20, P.stone);\n  // Culvert opening for magma aqueduct and lower service tunnel\n  fill(11, fy(1), 20, 14, fy(3), 20, \"minecraft:air\");\n  set(11, fy(3), 20, stair(\"east\", \"top\"));\n  set(14, fy(3), 20, stair(\"west\", \"top\"));\n\n  // West Wall (X = 3..4) & East Wall (X = 21..22)\n  fill(3, fy(0), 4, 4, fy(12), 20, P.stone);\n  fill(21, fy(0), 4, 22, fy(12), 20, P.stone);\n  // Side embrasures / windows\n  fill(3, fy(4), 10, 4, fy(6), 10, P.bars);\n  fill(3, fy(4), 15, 4, fy(6), 15, P.bars);\n  fill(21, fy(4), 10, 22, fy(6), 10, P.bars);\n  fill(21, fy(4), 15, 22, fy(6), 15, P.bars);\n\n  // 5. Interior Pillars and Vault Arches\n  const pillars = [\n    { x: 8, z: 8 },\n    { x: 17, z: 8 },\n    { x: 8, z: 14 },\n    { x: 17, z: 14 }\n  ];\n\n  for (const p of pillars) {\n    fill(p.x, fy(0), p.z, p.x, fy(6), p.z, P.wallCore);\n    set(p.x, fy(1), p.z, P.accent);\n    // Base plinth\n    set(p.x, fy(0), p.z - 1, stair(\"south\"));\n    set(p.x, fy(0), p.z + 1, stair(\"north\"));\n    set(p.x - 1, fy(0), p.z, stair(\"east\"));\n    set(p.x + 1, fy(0), p.z, stair(\"west\"));\n    // Capital corbels\n    set(p.x, fy(6), p.z - 1, stair(\"north\", \"top\"));\n    set(p.x, fy(6), p.z + 1, stair(\"south\", \"top\"));\n    set(p.x - 1, fy(6), p.z, stair(\"west\", \"top\"));\n    set(p.x + 1, fy(6), p.z, stair(\"east\", \"top\"));\n    // Ceiling vault arches\n    fill(p.x, fy(7), p.z - 2, p.x, fy(7), p.z + 2, P.stone);\n    fill(p.x - 2, fy(7), p.z, p.x + 2, fy(7), p.z, P.stone);\n  }\n\n  // 6. Magma Sluice Aqueduct, Sluice Gate & Forge Crucibles\n  // Sluice Aqueduct running from mountain cliff (Z=23) to central hall\n  fill(10, fy(4), 16, 15, fy(4), 23, P.stone);\n  fill(11, fy(5), 16, 14, fy(5), 23, P.magma);\n  for (let z = 16; z <= 23; z++) {\n    set(11, fy(5), z, z % 3 === 0 ? P.gildedBlackstone : P.magma);\n    set(14, fy(5), z, z % 4 === 0 ? P.cryingObsidian : P.magma);\n    // Channel kerbs\n    set(10, fy(5), z, P.stone);\n    set(10, fy(6), z, stair(\"west\"));\n    set(15, fy(5), z, P.stone);\n    set(15, fy(6), z, stair(\"east\"));\n  }\n\n  // Magma cascade stepping down into forge crucible (Z = 15 down to 10)\n  set(12, fy(4), 15, P.magma);\n  set(13, fy(4), 15, P.magma);\n  set(12, fy(3), 14, P.magma);\n  set(13, fy(3), 14, P.magma);\n  set(12, fy(2), 13, P.magma);\n  set(13, fy(2), 13, P.magma);\n  set(12, fy(1), 12, P.magma);\n  set(13, fy(1), 12, P.magma);\n  set(12, fy(1), 11, P.magma);\n  set(13, fy(1), 11, P.magma);\n\n  // Crucible curb & iron grating\n  fill(11, fy(1), 10, 14, fy(1), 13, P.stone);\n  fill(12, fy(1), 11, 13, fy(1), 12, P.magma);\n  fill(12, fy(2), 11, 13, fy(2), 12, P.bars);\n  set(11, fy(1), 11, P.accent);\n  set(14, fy(1), 11, P.accent);\n  set(11, fy(1), 12, P.accent);\n  set(14, fy(1), 12, P.accent);\n\n  // Sluice Gate Pylons & Guillotine Mechanism (Z = 16)\n  fill(9, fy(0), 16, 10, fy(15), 16, P.stone);\n  fill(15, fy(0), 16, 16, fy(15), 16, P.stone);\n  // Winch bridge over gate\n  fill(10, fy(12), 16, 15, fy(13), 16, P.accent);\n  set(12, fy(14), 16, P.wall);\n  set(13, fy(14), 16, P.wall);\n  // Sluice Gate suspended plate\n  fill(11, fy(7), 16, 14, fy(9), 16, P.plinth);\n  fill(12, fy(7), 16, 13, fy(9), 16, P.accent);\n  // Suspension Chains\n  fill(12, fy(10), 16, 12, fy(12), 16, P.chain);\n  fill(13, fy(10), 16, 13, fy(12), 16, P.chain);\n\n  // 7. Master Anvil & Side Blast Furnaces\n  // Great Master Anvil Complex (X = 12..13, Z = 8..9)\n  fill(12, fy(0), 8, 13, fy(0), 9, P.accent);\n  set(12, fy(1), 8, P.stone);\n  set(13, fy(1), 8, P.stone);\n  set(12, fy(2), 8, P.anvilN);\n  set(13, fy(2), 8, P.anvilE);\n\n  // West Blast Furnaces (X = 5, Z = 7..9)\n  fill(5, fy(0), 7, 5, fy(0), 9, P.plinth);\n  set(5, fy(1), 7, P.blastFurnaceE);\n  set(5, fy(1), 8, P.blastFurnaceE);\n  set(5, fy(1), 9, P.blastFurnaceE);\n  fill(5, fy(2), 7, 5, fy(4), 9, P.stone);\n  set(5, fy(2), 7, stair(\"east\", \"top\"));\n  set(5, fy(2), 9, stair(\"east\", \"top\"));\n\n  // East Blast Furnaces (X = 20, Z = 7..9)\n  fill(20, fy(0), 7, 20, fy(0), 9, P.plinth);\n  set(20, fy(1), 7, P.blastFurnaceW);\n  set(20, fy(1), 8, P.blastFurnaceW);\n  set(20, fy(1), 9, P.blastFurnaceW);\n  fill(20, fy(2), 7, 20, fy(4), 9, P.stone);\n  set(20, fy(2), 7, stair(\"west\", \"top\"));\n  set(20, fy(2), 9, stair(\"west\", \"top\"));\n\n  // Quench Cauldrons\n  set(8, fy(1), 11, P.cauldron);\n  set(17, fy(1), 11, P.cauldron);\n\n  // 8. Mezzanine Gallery & Access Stairs (Y = fy(7))\n  // North catwalk\n  fill(5, fy(7), 5, 20, fy(7), 5, P.woodPlanks);\n  for (let x = 6; x <= 19; x++) set(x, fy(8), 5, P.bars);\n  // South catwalk & sluice bridge\n  fill(5, fy(7), 15, 9, fy(7), 15, P.stone);\n  fill(16, fy(7), 15, 20, fy(7), 15, P.stone);\n  fill(10, fy(8), 15, 15, fy(8), 15, P.stone);\n  fill(5, fy(8), 15, 9, fy(8), 15, P.bars);\n  fill(16, fy(8), 15, 20, fy(8), 15, P.bars);\n  // Stairs to mezzanine\n  for (let i = 0; i < 6; i++) {\n    set(6, fy(1) + i, 10 + i, stair(\"south\"));\n    fill(6, fy(0), 10 + i, 6, fy(0) + i, 10 + i, P.plinth);\n    set(19, fy(1) + i, 10 + i, stair(\"south\"));\n    fill(19, fy(0), 10 + i, 19, fy(0) + i, 10 + i, P.plinth);\n  }\n\n  // 9. Roof Platform & Parapets (Y = fy(12)..fy(14))\n  fill(4, fy(12), 4, 21, fy(12), 20, P.roofSolid);\n  // Parapet walls and merlons\n  for (let x = 4; x <= 21; x++) {\n    set(x, fy(13), 4, (x % 2 === 0) ? P.wallMerlon : P.wallParapet);\n    set(x, fy(13), 20, (x % 2 === 0) ? P.wallMerlon : P.wallParapet);\n  }\n  for (let z = 4; z <= 20; z++) {\n    set(4, fy(13), z, (z % 2 === 0) ? P.wallMerlon : P.wallParapet);\n    set(21, fy(13), z, (z % 2 === 0) ? P.wallMerlon : P.wallParapet);\n  }\n  // Central Clerestory / Ventilation Monitor\n  fill(9, fy(13), 7, 16, fy(14), 13, P.stone);\n  fill(10, fy(13), 8, 15, fy(13), 12, \"minecraft:air\");\n  fill(10, fy(14), 7, 15, fy(14), 7, P.bars);\n  fill(10, fy(14), 13, 15, fy(14), 13, P.bars);\n  fill(9, fy(15), 7, 16, fy(15), 13, P.roofSlab);\n\n  // 10. The Three Smoke Chimneys with Billowing Signal Fire Smoke\n  // West Chimney (X = 5..7, Z = 7..9)\n  fill(5, fy(10), 7, 7, fy(18), 9, P.stone);\n  fill(6, fy(10), 8, 6, fy(19), 8, \"minecraft:air\");\n  set(6, fy(15), 8, P.hay);\n  set(6, fy(16), 8, P.campfire);\n  set(5, fy(19), 7, P.wall);\n  set(7, fy(19), 7, P.wall);\n  set(5, fy(19), 9, P.wall);\n  set(7, fy(19), 9, P.wall);\n  set(6, fy(19), 8, roofSlab(\"top\"));\n\n  // East Chimney (X = 18..20, Z = 7..9)\n  fill(18, fy(10), 7, 20, fy(18), 9, P.stone);\n  fill(19, fy(10), 8, 19, fy(19), 8, \"minecraft:air\");\n  set(19, fy(15), 8, P.hay);\n  set(19, fy(16), 8, P.campfire);\n  set(18, fy(19), 7, P.wall);\n  set(20, fy(19), 7, P.wall);\n  set(18, fy(19), 9, P.wall);\n  set(20, fy(19), 9, P.wall);\n  set(19, fy(19), 8, roofSlab(\"top\"));\n\n  // Central Great Sluice Smoke Stack (X = 11..14, Z = 17..19)\n  fill(11, fy(13), 17, 14, fy(20), 19, P.stone);\n  fill(12, fy(13), 18, 13, fy(21), 18, \"minecraft:air\");\n  set(12, fy(17), 18, P.hay);\n  set(13, fy(17), 18, P.hay);\n  set(12, fy(18), 18, P.campfire);\n  set(13, fy(18), 18, P.campfire);\n  // Flared cap\n  set(11, fy(21), 17, roofStair(\"north\", \"top\"));\n  set(14, fy(21), 17, roofStair(\"north\", \"top\"));\n  set(11, fy(21), 19, roofStair(\"south\", \"top\"));\n  set(14, fy(21), 19, roofStair(\"south\", \"top\"));\n\n  // Clear designated interior room volumes for compiler fit-out\n  // (Ensuring standable floors at fy(0) and fy(7) remain intact)\n  fill(6, fy(1), 6, 7, fy(5), 7, \"minecraft:air\");\n  fill(17, fy(1), 6, 18, fy(5), 7, \"minecraft:air\");\n  fill(9, fy(1), 6, 16, fy(5), 7, \"minecraft:air\");\n  fill(7, fy(1), 10, 7, fy(5), 13, \"minecraft:air\");\n  fill(18, fy(1), 10, 18, fy(5), 13, \"minecraft:air\");\n\n  return {\n    name: \"magma_sluice_forge\",\n    seatY: SEAT_Y,\n    anchors: {\n      front: [13, fy(0), 0],\n      door: [13, fy(1), 4],\n      sluice_intake: [13, fy(5), 23]\n    },\n    interiors: [\n      {\n        min: [5, fy(1), 5],\n        max: [20, fy(6), 14],\n        kind: \"hall\"\n      },\n      {\n        min: [6, fy(8), 15],\n        max: [19, fy(11), 19],\n        kind: \"vault\"\n      }\n    ]\n  };\n}"
+    }
+  }
+}

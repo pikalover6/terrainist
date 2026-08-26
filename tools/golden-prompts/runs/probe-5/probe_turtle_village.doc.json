@@ -1,0 +1,1008 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "turtle_shell_village",
+    "worldSeed": "936",
+    "prompt": "A fishing village built on the shell of a colossal sleeping sea turtle beached in a bay: houses on the ridges of its shell, ladders down its flippers to the boats, its head resting on the sand.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:dirt_path",
+      "road.shoulder": "minecraft:coarse_dirt",
+      "plaza.path": "minecraft:spruce_planks",
+      "plaza.border": "minecraft:stripped_spruce_log",
+      "ground.beach": "minecraft:sand"
+    }
+  },
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.35,
+    "decline": 0.1,
+    "formality": 0.1,
+    "climate": {
+      "temperature": 0.6,
+      "humidity": 0.5,
+      "snow": "never"
+    },
+    "character": {
+      "label": "turtle shell fishing village",
+      "materialTheme": "temperate_timber",
+      "urbanForm": "grown",
+      "archetypes": {
+        "prefer": [
+          "cottage",
+          "tavern",
+          "warehouse",
+          "lighthouse",
+          "cannery"
+        ],
+        "forbid": [
+          "townhouse",
+          "terraced_row",
+          "office",
+          "apartment_block"
+        ]
+      },
+      "motifs": {
+        "roofType": "gable",
+        "massing": "sprawling",
+        "windowRhythm": "sparse"
+      },
+      "programs": [
+        {
+          "id": "colossal_turtle_head",
+          "mode": "landmark",
+          "brief": "The colossal ancient head of a sleeping sea turtle resting peacefully on the sandy shore of the bay, eyes closed in slumber, weathered jade-green scutes and barnacle clusters along the neck.",
+          "envelope": [
+            34,
+            16,
+            36
+          ]
+        },
+        {
+          "id": "flipper_ladder_rig",
+          "mode": "plugin",
+          "brief": "A colossal sea turtle flipper extending into the bay shallows, with wooden catwalks, rope ladders, winches, and mooring cleats leading down from the shell edge to the water.",
+          "envelope": [
+            22,
+            14,
+            26
+          ],
+          "count": 4
+        },
+        {
+          "id": "fish_drying_scaffold",
+          "mode": "plugin",
+          "brief": "Driftwood fish drying racks with hanging nets, cured fish lines, salt crates, and rope ladders slung between the ridges of the carapace.",
+          "envelope": [
+            9,
+            7,
+            9
+          ],
+          "count": 10
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "a sheltered ocean bay with a sandy beach and open water; a colossal sleeping sea turtle beached at the tide line with its massive head resting on the sand and flippers reaching into the shallows",
+      "icons": "village cottages and shacks clinging to the scutes and ridges of the colossal turtle shell; wooden catwalks and rope ladders hung from the shell flanks and flippers down to moored fishing boats; drying nets and fish racks slung between carapace ridges",
+      "landmark": "the colossal sleeping sea turtle itself, forming the living island and foundation of the village"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "the sleeping colossus in the bay",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "coastal bay with a rounded shelf where the colossus rests",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 68,
+          "amplitude": 26,
+          "octaves": 5,
+          "frequency": 0.003,
+          "gain": 0.5,
+          "erosionPasses": 2,
+          "cliffThreshold": 55,
+          "soilDepth": 3,
+          "beachWidth": 8,
+          "continentalness": {
+            "frequency": 0.0012,
+            "seaFraction": 0.48
+          }
+        },
+        "children": [
+          {
+            "id": "the_bay",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the wide sheltered bay opening to the ocean",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.8,
+                  0.15
+                ],
+                [
+                  0.55,
+                  0.28
+                ],
+                [
+                  0.35,
+                  0.35
+                ],
+                "coast"
+              ],
+              "width": 140,
+              "depth": 22,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "turtle_beached_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the great dome of the beached turtle carapace",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 105,
+              "height": 16,
+              "rim": 6,
+              "profile": "rounded",
+              "irregularity": 0.15
+            }
+          },
+          {
+            "id": "turtle_shell_ridge_north",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the northern scute ridge on the carapace",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.42,
+                  0.44
+                ],
+                [
+                  0.5,
+                  0.41
+                ],
+                [
+                  0.58,
+                  0.44
+                ]
+              ],
+              "width": 28,
+              "height": 7,
+              "profile": "sharp",
+              "meander": 0.3
+            }
+          },
+          {
+            "id": "turtle_shell_ridge_south",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the southern scute ridge on the carapace",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.42,
+                  0.56
+                ],
+                [
+                  0.5,
+                  0.59
+                ],
+                [
+                  0.58,
+                  0.56
+                ]
+              ],
+              "width": 28,
+              "height": 7,
+              "profile": "sharp",
+              "meander": 0.3
+            }
+          },
+          {
+            "id": "head_beach_cove",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the sandy shore cove where the turtle head rests",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.5,
+                0.33
+              ],
+              "radius": 45,
+              "depth": 8,
+              "water": false,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0015,
+          "humidityFrequency": 0.0018
+        }
+      },
+      {
+        "id": "carapace_plaza",
+        "kind": "primitive",
+        "label": "the planked village square on the crest of the turtle shell",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            24,
+            24
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.5,
+              0.5
+            ]
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "turtle_head",
+        "kind": "generator",
+        "generator": "authored:colossal_turtle_head",
+        "label": "the colossal turtle head resting on the bay sand",
+        "constraints": [
+          {
+            "at": [
+              0.5,
+              0.33
+            ]
+          },
+          {
+            "distance": "carapace_plaza",
+            "min": 32,
+            "max": 75
+          }
+        ],
+        "params": {
+          "seat": "embed",
+          "embedDepth": 3,
+          "face": {
+            "toward": "carapace_plaza"
+          }
+        },
+        "tags": [
+          "landmark"
+        ]
+      },
+      {
+        "id": "flipper_rigs",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "ladder and catwalk rigs down the colossal flippers",
+        "params": {
+          "program": "flipper_ladder_rig",
+          "count": 4,
+          "area": {
+            "at": [
+              0.5,
+              0.5
+            ],
+            "radius": 0.22
+          },
+          "spacing": 32,
+          "seat": "conform",
+          "avoidTags": [
+            "plaza"
+          ]
+        }
+      },
+      {
+        "id": "drying_scaffolds",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "fish drying scaffolds slung across shell scutes",
+        "params": {
+          "program": "fish_drying_scaffold",
+          "count": 10,
+          "area": {
+            "at": [
+              0.5,
+              0.5
+            ],
+            "radius": 0.18
+          },
+          "spacing": 18,
+          "seat": "conform",
+          "avoidTags": [
+            "road",
+            "plaza"
+          ]
+        }
+      },
+      {
+        "id": "tavern_the_sleeping_shell",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the tavern overlooking the central scutes",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "archetype": "tavern",
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "carapace_plaza",
+            "gap": [
+              1,
+              6
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "carapace_plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "trade",
+          "tavern",
+          "house"
+        ]
+      },
+      {
+        "id": "carapace_fish_store",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the salt fish warehouse by the green",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            10,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "warehouse",
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "carapace_plaza",
+            "gap": [
+              2,
+              8
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "carapace_plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "warehouse",
+          "trade"
+        ]
+      },
+      {
+        "id": "shell_ridge_cottage_east",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "two-storey fisher dwelling on the eastern ridge",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            11,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "cottage",
+          "floors": 2,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "carapace_plaza",
+            "min": 6,
+            "max": 38,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "facing": "carapace_plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house",
+          "cottage"
+        ]
+      },
+      {
+        "id": "shell_ridge_cottage_west",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "L-shaped fisher dwelling on the western ridge",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "cottage",
+          "floors": 2,
+          "roof": "gable",
+          "wing": {
+            "size": [
+              5,
+              4
+            ],
+            "side": "south",
+            "offset": 0
+          }
+        },
+        "constraints": [
+          {
+            "distance": "carapace_plaza",
+            "min": 6,
+            "max": 38,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house",
+          "cottage"
+        ]
+      },
+      {
+        "id": "fishermans_shack_north",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a low cottage on the forward carapace slope",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            8,
+            8,
+            8
+          ]
+        },
+        "params": {
+          "archetype": "cottage",
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "distance": "carapace_plaza",
+            "min": 10,
+            "max": 48,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house",
+          "cottage"
+        ]
+      },
+      {
+        "id": "fishermans_shack_south",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a low cottage towards the rear carapace rim",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            8
+          ]
+        },
+        "params": {
+          "archetype": "cottage",
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "distance": "carapace_plaza",
+            "min": 12,
+            "max": 52,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house",
+          "cottage"
+        ]
+      },
+      {
+        "id": "carapace_smokehouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the smokehouse and brine station",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            15
+          ]
+        },
+        "params": {
+          "archetype": "cannery",
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "carapace_plaza",
+            "min": 14,
+            "max": 55,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "cannery",
+          "craft"
+        ]
+      },
+      {
+        "id": "carapace_light",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the beacon tower on the highest ridge of the shell",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            20,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "lighthouse",
+          "floors": 2,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "distance": "carapace_plaza",
+            "min": 24,
+            "max": 70,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "max",
+            "blend": 5
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "landmark",
+          "lighthouse"
+        ]
+      },
+      {
+        "id": "flipper_pier_west",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "wooden boat pier extending from the west flipper into the bay",
+        "params": {
+          "prop": "pier",
+          "zone": "west",
+          "length": 14,
+          "width": 3
+        }
+      },
+      {
+        "id": "flipper_pier_east",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "wooden boat pier extending from the east flipper into the bay",
+        "params": {
+          "prop": "pier",
+          "zone": "east",
+          "length": 14,
+          "width": 3
+        }
+      },
+      {
+        "id": "moored_skiff_1",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "fishing rowboat tied to the flipper pier",
+        "params": {
+          "prop": "rowboat",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "moored_sloop",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "fishing sloop moored at the flipper pier head",
+        "params": {
+          "prop": "fishing_sloop",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "bay_fishing_boat",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "fishing trawler anchored in the sheltered bay water",
+        "params": {
+          "prop": "fishing_trawler",
+          "zone": "northwest",
+          "on": "water"
+        }
+      },
+      {
+        "id": "bay_buoy",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "buoy",
+          "zone": "north",
+          "jitter": 0.25
+        }
+      },
+      {
+        "id": "plaza_well",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "cistern well in the center of the village",
+        "params": {
+          "prop": "well_head",
+          "zone": "center",
+          "jitter": 0.05
+        }
+      },
+      {
+        "id": "plaza_notice_board",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "notice board on the village green",
+        "params": {
+          "prop": "notice_board",
+          "zone": "center",
+          "jitter": 0.08
+        }
+      },
+      {
+        "id": "carapace_log_pile",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "log_pile",
+          "zone": "center",
+          "jitter": 0.12
+        }
+      },
+      {
+        "id": "shell_lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "lanes and walkways across the turtle carapace connecting doors to the green",
+        "params": {
+          "anchors": [
+            "carapace_plaza",
+            "#tag:house",
+            "carapace_light",
+            "turtle_head"
+          ],
+          "pattern": "organic",
+          "width": 2,
+          "lanterns": true,
+          "lanternSpacing": 12
+        }
+      },
+      {
+        "id": "coastal_ridge_forest",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "windswept pine and oak woods overlooking the bay",
+        "params": {
+          "area": {
+            "at": [
+              0.5,
+              0.85
+            ],
+            "radius": 130
+          },
+          "density": 0.12,
+          "spacing": 4,
+          "clumping": 0.45,
+          "maxSlope": 30,
+          "elevation": [
+            2,
+            70
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.4,
+            "flowers": 0.06,
+            "deadwood": 0.04
+          },
+          "species": [
+            {
+              "id": "coastal_pine",
+              "shape": "spruce_squat",
+              "weight": 3
+            },
+            {
+              "id": "gnarled_oak",
+              "shape": "oak_spreading",
+              "weight": 2
+            }
+          ]
+        }
+      },
+      {
+        "id": "sparse_wild_trees",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse windswept scrub along the distant shorelines",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 5,
+          "clumping": 0.5,
+          "maxSlope": 32,
+          "elevation": [
+            2,
+            90
+          ],
+          "edgeFalloff": 12,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "species": [
+            {
+              "id": "scrub_spruce",
+              "shape": "spruce_squat",
+              "weight": 1
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "programs": {
+    "colossal_turtle_head": {
+      "mode": "landmark",
+      "envelope": [
+        34,
+        22,
+        38
+      ],
+      "sourceHash": "b3:8939fec56c68b3c9d6d5571064c7d23d4541585308eaa842ff1c97d860f2a369",
+      "outputHash": "b3:4fa617481b098ec91af05be61c39fe023025cbc5e3fd09cf32b62f135b7dc92c",
+      "conforms": false,
+      "conformHash": "b3:69306235bc1655a2b95c887e9535dd391cffae454849fe0797d58d901e6ccd01",
+      "source": "export const envelope = [34, 22, 38];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const seatY = 6;\n  const grid = Array.from({ length: W }, () =>\n    Array.from({ length: H }, () =>\n      new Array(D).fill(null)\n    )\n  );\n\n  function setBlock(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      grid[x][y][z] = block;\n    }\n  }\n\n  function getBlock(x, y, z) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      return grid[x][y][z];\n    }\n    return null;\n  }\n\n  function withState(blockStr, stateStr) {\n    const base = blockStr.split(\"[\")[0];\n    return `${base}[${stateStr}]`;\n  }\n\n  function hash(x, y, z) {\n    let h = (x * 374761393 + y * 668265263 + z * 314159265) ^ 0x5bf03635;\n    h = Math.imul(h ^ (h >>> 13), 1274126177);\n    return ((h ^ (h >>> 16)) >>> 0) / 4294967296;\n  }\n\n  // --- Geometry Profiles for the Colossal Sea Turtle ---\n  function getProfile(z) {\n    if (z < 4 || z > 37) return null;\n\n    let rx, yBot, yTop;\n    let pX = 2.0;\n    let pY = 2.0;\n\n    if (z <= 8) {\n      // Snout and Beak\n      const t = (z - 4) / 4;\n      rx = 2.8 + t * 4.2;\n      yBot = (z <= 5) ? 6.2 : 6.0;\n      yTop = 9.2 + t * 3.8;\n      pX = 2.4;\n      pY = 1.8;\n    } else if (z <= 18) {\n      // Cranium, sleeping eyes, and cheeks\n      const t = (z - 8) / 10;\n      const cheek = Math.sin(t * Math.PI) * 1.5;\n      rx = 7.0 + t * 4.2 + cheek;\n      yBot = 6.0 + t * 0.5;\n      const dome = Math.sin(t * Math.PI * 0.8) * 1.2;\n      yTop = 13.0 + t * 3.0 + dome;\n      pX = 2.2;\n      pY = 2.0;\n    } else {\n      // Massive leathery neck extending back to carapace\n      const t = (z - 18) / 19;\n      rx = 11.2 + t * 3.3;\n      yBot = 6.5 - t * 0.5;\n      yTop = 16.2 + t * 1.8;\n      pX = 2.0;\n      pY = 2.0;\n    }\n\n    return { rx, yBot, yTop, pX, pY };\n  }\n\n  function isInsideTurtle(x, y, z) {\n    const prof = getProfile(z);\n    if (!prof) return false;\n\n    const dx = Math.abs(x - 16.5);\n    if (dx > prof.rx) return false;\n    if (y < prof.yBot || y > prof.yTop) return false;\n\n    const yMid = (prof.yTop + prof.yBot) / 2;\n    const ry = (prof.yTop - prof.yBot) / 2;\n    const dy = Math.abs(y - yMid);\n\n    const nx = dx / prof.rx;\n    const ny = dy / ry;\n\n    // Neck dorsal ridges\n    if (z >= 18 && y > yMid) {\n      const centerRidge = Math.exp(-Math.pow(dx / 1.8, 2)) * 0.6;\n      const sideRidge = Math.exp(-Math.pow((dx - 6.5) / 2.0, 2)) * 0.5;\n      const ridgeBoost = (centerRidge + sideRidge) / ry;\n      if (ny <= 1.0 + ridgeBoost && nx <= 0.98) return true;\n    }\n\n    const dist = Math.pow(nx, prof.pX) + Math.pow(ny, prof.pY);\n    return dist <= 1.0;\n  }\n\n  // --- Scute Centers for Voronoi Plate Generation ---\n  const scuteCenters = [\n    { x: 16.5, z: 6.0, type: 0 },\n    { x: 14.0, z: 9.0, type: 1 },\n    { x: 19.0, z: 9.0, type: 1 },\n    { x: 16.5, z: 11.0, type: 3 },\n    { x: 16.5, z: 14.5, type: 4 },\n    { x: 10.5, z: 13.5, type: 2 },\n    { x: 22.5, z: 13.5, type: 2 },\n    { x: 16.5, z: 18.0, type: 0 },\n    { x: 11.5, z: 18.0, type: 1 },\n    { x: 21.5, z: 18.0, type: 1 },\n    { x: 7.0,  z: 17.5, type: 5 },\n    { x: 26.0, z: 17.5, type: 5 },\n    { x: 16.5, z: 21.5, type: 3 },\n    { x: 12.0, z: 21.5, type: 0 },\n    { x: 21.0, z: 21.5, type: 0 },\n    { x: 7.5,  z: 21.5, type: 2 },\n    { x: 25.5, z: 21.5, type: 2 },\n    { x: 16.5, z: 25.5, type: 4 },\n    { x: 11.5, z: 25.5, type: 1 },\n    { x: 21.5, z: 25.5, type: 1 },\n    { x: 6.5,  z: 25.5, type: 5 },\n    { x: 26.5, z: 25.5, type: 5 },\n    { x: 16.5, z: 29.5, type: 0 },\n    { x: 11.0, z: 29.5, type: 3 },\n    { x: 22.0, z: 29.5, type: 3 },\n    { x: 5.5,  z: 29.5, type: 2 },\n    { x: 27.5, z: 29.5, type: 2 },\n    { x: 16.5, z: 33.5, type: 1 },\n    { x: 10.5, z: 33.5, type: 4 },\n    { x: 22.5, z: 33.5, type: 4 },\n    { x: 5.0,  z: 33.5, type: 0 },\n    { x: 28.0, z: 33.5, type: 0 },\n    { x: 16.5, z: 37.0, type: 3 },\n    { x: 10.0, z: 37.0, type: 2 },\n    { x: 23.0, z: 37.0, type: 2 },\n  ];\n\n  const scuteMaterials = [\n    \"minecraft:prismarine\",\n    \"minecraft:prismarine_bricks\",\n    \"minecraft:moss_block\",\n    \"minecraft:oxidized_copper\",\n    \"minecraft:oxidized_cut_copper\",\n    \"minecraft:mossy_stone_bricks\",\n  ];\n\n  // --- Barnacle Colony Centers ---\n  const barnacleColonies = [\n    { x: 8.5,  y: 7.0,  z: 9.5,  r: 2.8 },\n    { x: 24.5, y: 7.0,  z: 9.5,  r: 2.8 },\n    { x: 6.0,  y: 9.5,  z: 23.0, r: 3.5 },\n    { x: 27.0, y: 9.5,  z: 23.0, r: 3.5 },\n    { x: 8.0,  y: 13.0, z: 17.0, r: 2.4 },\n    { x: 25.0, y: 13.0, z: 17.0, r: 2.4 },\n    { x: 16.5, y: 14.5, z: 27.0, r: 2.6 },\n    { x: 5.0,  y: 8.0,  z: 33.0, r: 3.2 },\n    { x: 28.0, y: 8.0,  z: 33.0, r: 3.2 },\n  ];\n\n  // --- 1. Sculpting Solid Volume & Hollows ---\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        if (!isInsideTurtle(x, y, z)) continue;\n\n        // Interior neck shrine cavity\n        if (x >= 14 && x <= 19 && y >= 7 && y <= 11 && z >= 26 && z <= 32) {\n          continue;\n        }\n        // Rear entrance archway leading into shrine\n        if (x >= 15 && x <= 18 && y >= 7 && y <= 10 && z >= 33 && z <= 37) {\n          continue;\n        }\n        // Side shrine window\n        if (x === 13 && y >= 8 && y <= 9 && z >= 29 && z <= 30) {\n          continue;\n        }\n\n        grid[x][y][z] = \"minecraft:tuff\";\n      }\n    }\n  }\n\n  // --- 2. Surface Anatomy & Weathered Carapace Detailing ---\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        if (!grid[x][y][z]) continue;\n\n        // Determine if this is an exposed exterior/interior surface block\n        const neighbors = [\n          [x + 1, y, z], [x - 1, y, z],\n          [x, y + 1, z], [x, y - 1, z],\n          [x, y, z + 1], [x, y, z - 1],\n        ];\n        let isSurface = false;\n        for (const [nx, ny, nz] of neighbors) {\n          if (!getBlock(nx, ny, nz)) {\n            isSurface = true;\n            break;\n          }\n        }\n        if (!isSurface) continue;\n\n        const prof = getProfile(z);\n        const yMid = prof ? (prof.yTop + prof.yBot) / 2 : 11;\n        const dx = Math.abs(x - 16.5);\n\n        // A. Sleeping Eye Left\n        if (x >= 5 && x <= 8 && z >= 13 && z <= 16 && y >= 10 && y <= 13) {\n          if (y === 11 && (z === 14 || z === 15)) {\n            grid[x][y][z] = \"minecraft:dark_prismarine\";\n          } else if (y >= 12) {\n            grid[x][y][z] = \"minecraft:prismarine_bricks\";\n          } else {\n            grid[x][y][z] = \"minecraft:smooth_sandstone\";\n          }\n          continue;\n        }\n\n        // B. Sleeping Eye Right\n        if (x >= 25 && x <= 28 && z >= 13 && z <= 16 && y >= 10 && y <= 13) {\n          if (y === 11 && (z === 14 || z === 15)) {\n            grid[x][y][z] = \"minecraft:dark_prismarine\";\n          } else if (y >= 12) {\n            grid[x][y][z] = \"minecraft:prismarine_bricks\";\n          } else {\n            grid[x][y][z] = \"minecraft:smooth_sandstone\";\n          }\n          continue;\n        }\n\n        // C. Snout Tip, Hooked Beak & Nostrils\n        if (z <= 5) {\n          if (y >= 8 && (x === 15 || x === 18) && z === 4) {\n            grid[x][y][z] = \"minecraft:dark_prismarine\";\n            continue;\n          }\n          if (y <= 7) {\n            grid[x][y][z] = \"minecraft:smooth_sandstone\";\n            continue;\n          }\n          grid[x][y][z] = \"minecraft:prismarine_bricks\";\n          continue;\n        }\n\n        // D. Mouth Slit along Flanks\n        if (z >= 6 && z <= 18 && dx > (prof.rx - 1.2)) {\n          const yMouth = Math.round(7.0 + Math.pow(z - 7, 2) * 0.018);\n          if (y === yMouth) {\n            grid[x][y][z] = \"minecraft:dark_prismarine\";\n            continue;\n          }\n        }\n\n        // E. Barnacle Encrustation Check\n        let barnacleHit = false;\n        for (const col of barnacleColonies) {\n          const dSq = (x - col.x) ** 2 + (y - col.y) ** 2 + (z - col.z) ** 2;\n          if (dSq <= col.r * col.r) {\n            const h = hash(x, y, z);\n            if (h < 0.7) {\n              if (h < 0.35) grid[x][y][z] = \"minecraft:calcite\";\n              else if (h < 0.55) grid[x][y][z] = \"minecraft:dead_tube_coral_block\";\n              else grid[x][y][z] = \"minecraft:polished_diorite\";\n              barnacleHit = true;\n              break;\n            }\n          }\n        }\n        if (barnacleHit) continue;\n\n        // F. Pale Underside / Plastron & Throat\n        if (y < yMid - 1.0) {\n          const h = hash(x, y, z);\n          if (h < 0.7) {\n            grid[x][y][z] = \"minecraft:smooth_sandstone\";\n          } else if (h < 0.85) {\n            grid[x][y][z] = \"minecraft:sandstone\";\n          } else {\n            grid[x][y][z] = \"minecraft:calcite\";\n          }\n          continue;\n        }\n\n        // G. Dorsal Scute Plates (Voronoi)\n        let d1 = 999;\n        let d2 = 999;\n        let bestIdx = 0;\n\n        for (let i = 0; i < scuteCenters.length; i++) {\n          const sc = scuteCenters[i];\n          const dist = Math.sqrt((x - sc.x) ** 2 + ((z - sc.z) * 0.9) ** 2);\n          if (dist < d1) {\n            d2 = d1;\n            d1 = dist;\n            bestIdx = i;\n          } else if (dist < d2) {\n            d2 = dist;\n          }\n        }\n\n        if (d2 - d1 < 0.72) {\n          // Scute Groove / Seam\n          const h = hash(x, y, z);\n          grid[x][y][z] = (h < 0.7) ? \"minecraft:dark_prismarine\" : \"minecraft:tuff\";\n        } else {\n          // Scute Plate Interior\n          const sc = scuteCenters[bestIdx];\n          const mat = scuteMaterials[sc.type % scuteMaterials.length];\n          grid[x][y][z] = mat;\n        }\n      }\n    }\n  }\n\n  // --- 3. Barnacle Vegetation & Surface Lichen Growth ---\n  for (let x = 0; x < W; x++) {\n    for (let y = 1; y < H - 1; y++) {\n      for (let z = 0; z < D; z++) {\n        const current = getBlock(x, y, z);\n        const above = getBlock(x, y + 1, z);\n        if (!current || above) continue;\n\n        if (\n          current === \"minecraft:calcite\" ||\n          current === \"minecraft:dead_tube_coral_block\" ||\n          current === \"minecraft:polished_diorite\"\n        ) {\n          const h = hash(x, y + 1, z);\n          if (h < 0.35) {\n            setBlock(x, y + 1, z, \"minecraft:sea_pickle[pickles=2,waterlogged=false]\");\n          } else if (h < 0.55) {\n            setBlock(x, y + 1, z, \"minecraft:sea_pickle[pickles=3,waterlogged=false]\");\n          } else if (h < 0.75) {\n            setBlock(x, y + 1, z, \"minecraft:moss_carpet\");\n          }\n        } else if (y >= 15 && hash(x, y, z) < 0.12) {\n          setBlock(x, y + 1, z, \"minecraft:moss_carpet\");\n        }\n      }\n    }\n  }\n\n  // --- 4. Reverent Fishing Village Shrine & Catwalk Features ---\n  // Shrine Floor\n  for (let x = 14; x <= 19; x++) {\n    for (let z = 26; z <= 37; z++) {\n      if (x === 14 || x === 19) {\n        setBlock(x, 6, z, \"minecraft:prismarine_bricks\");\n      } else {\n        setBlock(x, 6, z, api.theme.wood.planks);\n      }\n    }\n  }\n\n  // Side Window Bars\n  setBlock(13, 8, 29, api.theme.wood.fence);\n  setBlock(13, 8, 30, api.theme.wood.fence);\n  setBlock(13, 9, 29, api.theme.wood.fence);\n  setBlock(13, 9, 30, api.theme.wood.fence);\n\n  // Rear Entrance Framing\n  setBlock(14, 7, 37, withState(api.theme.wood.log, \"axis=y\"));\n  setBlock(14, 8, 37, withState(api.theme.wood.log, \"axis=y\"));\n  setBlock(14, 9, 37, withState(api.theme.wood.log, \"axis=y\"));\n  setBlock(19, 7, 37, withState(api.theme.wood.log, \"axis=y\"));\n  setBlock(19, 8, 37, withState(api.theme.wood.log, \"axis=y\"));\n  setBlock(19, 9, 37, withState(api.theme.wood.log, \"axis=y\"));\n  setBlock(15, 10, 37, withState(api.theme.wood.stairs, \"facing=south,half=top\"));\n  setBlock(16, 10, 37, withState(api.theme.wood.slab, \"type=top\"));\n  setBlock(17, 10, 37, withState(api.theme.wood.slab, \"type=top\"));\n  setBlock(18, 10, 37, withState(api.theme.wood.stairs, \"facing=south,half=top\"));\n\n  // Dorsal Walkway & Lookout Post atop Neck Crest\n  for (let z = 24; z <= 35; z++) {\n    let topY = 0;\n    for (let y = H - 1; y >= 14; y--) {\n      if (getBlock(16, y, z)) {\n        topY = y;\n        break;\n      }\n    }\n    if (topY >= 14 && topY + 1 < H) {\n      const walkY = topY + 1;\n      setBlock(16, walkY, z, withState(api.theme.wood.slab, \"type=bottom\"));\n      if (walkY + 1 < H) {\n        setBlock(15, walkY + 1, z, api.theme.wood.fence);\n        setBlock(17, walkY + 1, z, api.theme.wood.fence);\n      }\n    }\n  }\n\n  // Lantern Prayer Post at North Crest (z=24)\n  let postY = 0;\n  for (let y = H - 1; y >= 14; y--) {\n    if (getBlock(16, y, 24)) {\n      postY = y;\n      break;\n    }\n  }\n  if (postY > 0 && postY + 3 < H) {\n    setBlock(16, postY + 1, 24, api.theme.wood.fence);\n    setBlock(16, postY + 2, 24, api.theme.wood.fence);\n    setBlock(16, postY + 3, 24, api.theme.wood.fence);\n    setBlock(16, postY + 3, 23, api.theme.wood.fence);\n    setBlock(16, postY + 2, 23, \"minecraft:lantern[hanging=true]\");\n  }\n\n  // Flank Access Ladder / Wooden Stairs on East Flank (x=28..31, z=29..36)\n  const platY = 14;\n  for (let px = 28; px <= 29; px++) {\n    for (let pz = 29; pz <= 30; pz++) {\n      setBlock(px, platY, pz, api.theme.wood.planks);\n    }\n  }\n  setBlock(27, platY + 1, 29, api.theme.wood.fence);\n  setBlock(27, platY + 1, 30, api.theme.wood.fence);\n  setBlock(28, platY + 1, 28, api.theme.wood.fence);\n  setBlock(29, platY + 1, 28, api.theme.wood.fence);\n\n  const stairSteps = [\n    { x: 29, y: 13, z: 31 },\n    { x: 29, y: 12, z: 32 },\n    { x: 29, y: 11, z: 33 },\n    { x: 29, y: 10, z: 34 },\n    { x: 29, y: 9,  z: 35 },\n    { x: 29, y: 8,  z: 36 },\n    { x: 29, y: 7,  z: 37 },\n  ];\n\n  for (const st of stairSteps) {\n    setBlock(st.x, st.y, st.z, withState(api.theme.wood.stairs, \"facing=north,half=bottom\"));\n    setBlock(st.x + 1, st.y, st.z, api.theme.wood.fence);\n    setBlock(st.x + 1, st.y + 1, st.z, api.theme.wood.fence);\n  }\n\n  // --- 5. Ground Conformance & Solid Footing ---\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      let lowestY = -1;\n      for (let y = 0; y < H; y++) {\n        if (grid[x][y][z]) {\n          lowestY = y;\n          break;\n        }\n      }\n      if (lowestY === -1) continue;\n\n      const groundY = Math.max(0, Math.min(H - 1, seatY + api.heightAt(x, z)));\n\n      if (groundY < lowestY) {\n        // Ground falls away (slope/shore/seabed): extend solid skirt down to ground\n        for (let y = lowestY - 1; y >= groundY; y--) {\n          if (x >= 28 && z >= 29) {\n            // Under wooden stair landing/pillars\n            setBlock(x, y, z, withState(api.theme.wood.log, \"axis=y\"));\n          } else if (z <= 20) {\n            // Under jaw and chin\n            setBlock(x, y, z, (hash(x, y, z) < 0.6) ? \"minecraft:smooth_sandstone\" : \"minecraft:sandstone\");\n          } else {\n            // Under throat and neck scutes\n            setBlock(x, y, z, (hash(x, y, z) < 0.5) ? \"minecraft:tuff\" : \"minecraft:mossy_cobblestone\");\n          }\n        }\n      } else if (groundY > lowestY) {\n        // Ground rises up: embed bottom courses into solid foundation\n        for (let y = lowestY; y < groundY; y++) {\n          if (!grid[x][y][z]) {\n            setBlock(x, y, z, \"minecraft:tuff\");\n          }\n        }\n      }\n    }\n  }\n\n  // --- 6. Write Final Geometry ---\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const block = grid[x][y][z];\n        if (block) {\n          api.set(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"colossal_turtle_head\",\n    seatY,\n    anchors: {\n      front: [17, 8, 0],\n      door: [16, 7, 37],\n      perch: [16, 18, 24],\n      beach_access: [29, 7, 37],\n    },\n    interiors: [\n      {\n        min: [14, 7, 26],\n        max: [19, 11, 32],\n        kind: \"shrine\",\n      },\n    ],\n  };\n}"
+    },
+    "flipper_ladder_rig": {
+      "mode": "plugin",
+      "envelope": [
+        24,
+        18,
+        28
+      ],
+      "sourceHash": "b3:855500d53cc9b838223b604e2ff860b693e09fb63518fe91dcef0254397b184f",
+      "outputHash": "b3:474e5f7117b6c1a9b98c986db4f0b335fe483e68325c514496cf4de069325233",
+      "conforms": false,
+      "conformHash": "b3:91ed384910afff252704940e8a3cd817f9ea36a3760438ada0a7605b81dab88b",
+      "source": "export const envelope = [24, 18, 28];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const seatY = 6;\n  const idx = api.instance.index % 4;\n  const rng = () => api.random();\n\n  // Helper to extract base block id if theme includes block states\n  function getBaseBlock(blockStr, fallback) {\n    if (!blockStr) return fallback;\n    const bracketIdx = blockStr.indexOf('[');\n    return bracketIdx === -1 ? blockStr : blockStr.substring(0, bracketIdx);\n  }\n\n  // World Theme Palette\n  const woodPlanks = getBaseBlock(api.theme?.wood?.planks, \"minecraft:oak_planks\");\n  const woodLogBase = getBaseBlock(api.theme?.wood?.log, \"minecraft:oak_log\");\n  const woodStrippedBase = getBaseBlock(api.theme?.wood?.stripped, \"minecraft:stripped_oak_log\");\n  const woodStairsBase = getBaseBlock(api.theme?.wood?.stairs, \"minecraft:oak_stairs\");\n  const woodSlabBase = getBaseBlock(api.theme?.wood?.slab, \"minecraft:oak_slab\");\n  const woodFenceBase = getBaseBlock(api.theme?.wood?.fence, \"minecraft:oak_fence\");\n  const woodTrapdoorBase = getBaseBlock(api.theme?.wood?.trapdoor, \"minecraft:oak_trapdoor\");\n\n  const stonePrimary = getBaseBlock(api.theme?.stone?.primary, \"minecraft:stone_bricks\");\n  const stoneAccent = getBaseBlock(api.theme?.stone?.accent, \"minecraft:mossy_stone_bricks\");\n\n  const roofStairsBase = getBaseBlock(api.theme?.roof?.stairs, woodStairsBase);\n  const roofSlabBase = getBaseBlock(api.theme?.roof?.slab, woodSlabBase);\n  const roofSolid = getBaseBlock(api.theme?.roof?.solid, woodPlanks);\n\n  // Oriented block states\n  const logY = `${woodLogBase}[axis=y]`;\n  const logX = `${woodLogBase}[axis=x]`;\n  const logZ = `${woodLogBase}[axis=z]`;\n  const fence = woodFenceBase;\n  const slabBottom = `${woodSlabBase}[type=bottom]`;\n  const slabTop = `${woodSlabBase}[type=top]`;\n  const trapdoorTop = `${woodTrapdoorBase}[facing=north,half=top,open=false]`;\n\n  // 3D Voxel Grid\n  const grid = Array.from({ length: W }, () =>\n    Array.from({ length: H }, () => new Array(D).fill(null))\n  );\n\n  function set(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      grid[x][y][z] = block;\n    }\n  }\n\n  function get(x, y, z) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      return grid[x][y][z];\n    }\n    return null;\n  }\n\n  function isSolid(x, y, z) {\n    const b = get(x, y, z);\n    if (!b) return false;\n    if (\n      b.includes(\"air\") ||\n      b.includes(\"ladder\") ||\n      b.includes(\"torch\") ||\n      b.includes(\"lantern\") ||\n      b.includes(\"chain\") ||\n      b.includes(\"tripwire\") ||\n      b.includes(\"cobweb\")\n    ) {\n      return false;\n    }\n    return true;\n  }\n\n  function placeLantern(x, y, z) {\n    if (x < 0 || x >= W || y < 0 || y >= H || z < 0 || z >= D) return;\n    const above = get(x, y + 1, z);\n    if (\n      above &&\n      (isSolid(x, y + 1, z) ||\n        above.includes(\"fence\") ||\n        above.includes(\"chain\") ||\n        above.includes(\"slab\") ||\n        above.includes(\"stairs\") ||\n        above.includes(\"log\"))\n    ) {\n      set(x, y, z, \"minecraft:lantern[hanging=true]\");\n      return;\n    }\n    const below = get(x, y - 1, z);\n    if (\n      below &&\n      (isSolid(x, y - 1, z) ||\n        below.includes(\"fence\") ||\n        below.includes(\"log\") ||\n        below.includes(\"planks\") ||\n        below.includes(\"slab\"))\n    ) {\n      set(x, y, z, \"minecraft:lantern[hanging=false]\");\n      return;\n    }\n  }\n\n  function buildPillar(x, startY, z, block = logY) {\n    const gy = Math.max(0, seatY + api.heightAt(x, z));\n    for (let y = startY; y >= gy; y--) {\n      if (isSolid(x, y, z) && y < startY - 1) break;\n      set(x, y, z, block);\n    }\n  }\n\n  // Flipper Procedural Curvature Parameters per instance\n  const midX = Math.floor(W / 2);\n  const curveDir = idx % 2 === 0 ? -1 : 1;\n  const curveMag = 2.0 + (idx === 3 ? 3.0 : idx === 2 ? 0.6 : 1.8) + rng() * 0.5;\n\n  function getCenterX(z) {\n    const t = Math.max(0, Math.min(1, (z - 2) / 24));\n    if (idx === 2) {\n      return midX + Math.sin(t * Math.PI * 2) * 1.5;\n    }\n    const arc = Math.sin((1 - t) * Math.PI * 0.75);\n    return midX + curveDir * curveMag * arc;\n  }\n\n  function getTopY(z) {\n    const t = Math.max(0, Math.min(1, (z - 2) / 24));\n    return seatY + 0.8 + 6.8 * Math.pow(t, 1.15);\n  }\n\n  function getHalfWidth(z) {\n    const t = Math.max(0, Math.min(1, (z - 2) / 24));\n    if (z >= 22) return 5.8 + (z - 22) * 0.9;\n    if (z >= 16) return 4.6 + (z - 16) * 0.2;\n    const bladeCurve = Math.sin(t * Math.PI * 1.1);\n    return 2.8 + 3.0 * bladeCurve;\n  }\n\n  function getThickness(z) {\n    const t = Math.max(0, Math.min(1, (z - 2) / 24));\n    if (z >= 20) return 4.5 + (z - 20) * 0.5;\n    return 2.2 + 2.8 * t;\n  }\n\n  // 1. Build Carapace & Flipper Solid Body\n  for (let z = 2; z < D; z++) {\n    const cx = getCenterX(z);\n    const hw = getHalfWidth(z);\n    const topY = getTopY(z);\n    const thick = getThickness(z);\n\n    for (let x = 0; x < W; x++) {\n      const dx = x - cx;\n      const u = dx / hw;\n      if (Math.abs(u) <= 1.0) {\n        const yTop = topY - u * u * (thick * 0.35);\n        let yBot = topY - thick + u * u * (thick * 0.25);\n\n        const localGround = seatY + api.heightAt(x, z);\n        const minGround = Math.max(0, localGround);\n\n        if (z >= 17) {\n          yBot = Math.min(yBot, minGround);\n        }\n\n        const yTopInt = Math.min(H - 2, Math.floor(yTop));\n        let yBotInt = Math.max(minGround, Math.floor(yBot));\n        if (yBotInt > yTopInt) yBotInt = yTopInt;\n\n        for (let y = yBotInt; y <= yTopInt; y++) {\n          const isTopLayer = y === yTopInt;\n          const isLeadingEdge =\n            (curveDir < 0 ? u < -0.75 : u > 0.75) && z < 10;\n\n          let block;\n          if (z >= 21) {\n            if (isTopLayer || y >= 13) {\n              const scuteGrid = (Math.floor(x / 3) + Math.floor(z / 3)) % 2;\n              block = scuteGrid === 0 ? \"minecraft:dark_prismarine\" : stonePrimary;\n              if ((x + z) % 5 === 0) block = stoneAccent;\n            } else {\n              block = \"minecraft:dark_prismarine\";\n            }\n          } else if (isLeadingEdge && z <= 5) {\n            block = \"minecraft:polished_blackstone\";\n          } else if (isTopLayer) {\n            const pattern = (Math.floor(x * 1.5) + Math.floor(z * 1.2)) % 3;\n            if (pattern === 0) block = \"minecraft:dark_prismarine\";\n            else if (pattern === 1) block = \"minecraft:prismarine_bricks\";\n            else block = \"minecraft:cyan_terracotta\";\n\n            if (y <= seatY + 1 && (x + z) % 3 === 0) {\n              block = \"minecraft:dead_brain_coral_block\";\n            } else if ((x * 7 + z * 13) % 11 === 0) {\n              block = \"minecraft:moss_block\";\n            }\n          } else {\n            if (y <= yBotInt + 1 && y <= seatY) {\n              block = \"minecraft:prismarine\";\n            } else {\n              block = \"minecraft:cyan_terracotta\";\n            }\n          }\n\n          set(x, y, z, block);\n        }\n\n        for (let y = minGround; y < yBotInt; y++) {\n          if (z >= 17) {\n            set(x, y, z, \"minecraft:dark_prismarine\");\n          }\n        }\n      }\n    }\n  }\n\n  // Claws at the tip of the flipper\n  const tipZ = 2;\n  const tipX = Math.round(getCenterX(tipZ));\n  const tipY = Math.floor(getTopY(tipZ));\n  for (const co of [-1, 0, 1]) {\n    const clx = tipX + co * (curveDir < 0 ? -1 : 1);\n    if (clx >= 0 && clx < W) {\n      set(clx, tipY - 1, tipZ - 1, \"minecraft:polished_blackstone\");\n      set(clx, tipY, tipZ, \"minecraft:polished_blackstone\");\n    }\n  }\n\n  // 2. Main Cascading Catwalk (from Z = 22 down to Z = 4)\n  const catwalkSide = idx % 2 === 0 ? 1 : -1;\n  const catwalkPoints = [];\n\n  for (let z = 22; z >= 4; z--) {\n    const cx = getCenterX(z);\n    const hw = getHalfWidth(z);\n    const turtleTop = getTopY(z);\n    const wx = Math.round(cx + catwalkSide * Math.min(hw - 0.4, hw * 0.55 + 0.4));\n    const targetY = Math.round(7 + (z - 4) * (7 / 18));\n    const wy = Math.max(targetY, Math.floor(turtleTop) + 1);\n    catwalkPoints.push({ z, x: wx, y: wy });\n  }\n\n  for (let i = 0; i < catwalkPoints.length; i++) {\n    const pt = catwalkPoints[i];\n    const next = i < catwalkPoints.length - 1 ? catwalkPoints[i + 1] : null;\n\n    const z = pt.z;\n    const outerX = pt.x;\n    const innerX = outerX - catwalkSide;\n    const y = pt.y;\n\n    const isStepDown = next && next.y < y;\n\n    if (isStepDown) {\n      set(outerX, y, z, `${woodStairsBase}[facing=south,half=bottom,shape=straight]`);\n      if (innerX >= 0 && innerX < W) {\n        set(innerX, y, z, `${woodStairsBase}[facing=south,half=bottom,shape=straight]`);\n      }\n    } else {\n      set(outerX, y, z, woodPlanks);\n      if (innerX >= 0 && innerX < W) {\n        set(innerX, y, z, woodPlanks);\n      }\n    }\n\n    const railX = outerX + catwalkSide;\n    if (railX >= 0 && railX < W) {\n      set(railX, y + 1, z, fence);\n    }\n\n    // Support trestles and bents every 4 blocks\n    if (z % 4 === 2 || z === 4 || z === 22) {\n      buildPillar(outerX, y - 1, z, logY);\n      if (innerX >= 0 && innerX < W) {\n        buildPillar(innerX, y - 1, z, logY);\n      }\n      if (innerX >= 0 && innerX < W && y > 1) {\n        set(outerX, y - 1, z, logX);\n        set(innerX, y - 1, z, logX);\n      }\n      if (y > 2) {\n        set(outerX, y - 2, z, fence);\n        if (innerX >= 0 && innerX < W) set(innerX, y - 2, z, fence);\n      }\n      if (railX >= 0 && railX < W && (z === 6 || z === 14 || z === 22)) {\n        set(railX, y + 1, z, fence);\n        set(railX, y + 2, z, fence);\n        placeLantern(railX, y + 3, z);\n      }\n    }\n  }\n\n  // 3. Flank Ladder Descent Station (on steep flank)\n  const ladderSide = -catwalkSide;\n  const ladderZStart = 11;\n  const ladderZEnd = 14;\n\n  for (let lz = ladderZStart; lz <= ladderZEnd; lz++) {\n    const cx = getCenterX(lz);\n    const hw = getHalfWidth(lz);\n    const topY = Math.floor(getTopY(lz));\n    const lx = Math.round(cx + ladderSide * (hw + 0.4));\n    const innerLx = Math.round(cx + ladderSide * (hw - 0.4));\n\n    if (lx >= 0 && lx < W) {\n      set(lx, topY, lz, woodPlanks);\n      if (innerLx >= 0 && innerLx < W) set(innerLx, topY, lz, woodPlanks);\n      set(lx, topY + 1, lz, fence);\n    }\n  }\n\n  const ladderMidZ = 13;\n  const ladderX = Math.round(\n    getCenterX(ladderMidZ) + ladderSide * (getHalfWidth(ladderMidZ) + 0.4)\n  );\n  const topYLadder = Math.floor(getTopY(ladderMidZ));\n  const ladderGroundY = Math.max(0, seatY + api.heightAt(ladderX, ladderMidZ));\n  const sparX = ladderX - ladderSide;\n\n  if (sparX >= 0 && sparX < W && ladderX >= 0 && ladderX < W) {\n    for (let y = topYLadder; y >= ladderGroundY; y--) {\n      if (!isSolid(sparX, y, ladderMidZ)) {\n        set(sparX, y, ladderMidZ, logY);\n      }\n      const facingStr =\n        ladderSide > 0\n          ? \"minecraft:ladder[facing=east]\"\n          : \"minecraft:ladder[facing=west]\";\n      if (y < topYLadder && y >= ladderGroundY + 1) {\n        set(ladderX, y, ladderMidZ, facingStr);\n      }\n    }\n  }\n\n  // Floating platform at bottom of ladder\n  for (let dx = -1; dx <= 1; dx++) {\n    for (let dz = -1; dz <= 1; dz++) {\n      const fx = ladderX + dx;\n      const fz = ladderMidZ + dz;\n      if (fx >= 0 && fx < W && fz >= 0 && fz < D) {\n        set(fx, seatY, fz, woodPlanks);\n        buildPillar(fx, seatY - 1, fz, logY);\n      }\n    }\n  }\n\n  // 4. Low Mooring Dock & Boat Pier at North (Z = 2..6)\n  const dockMinZ = 2;\n  const dockMaxZ = 6;\n  const dockCenter = Math.round(getCenterX(4));\n  const dockMinX = Math.max(1, dockCenter - 3);\n  const dockMaxX = Math.min(W - 2, dockCenter + 3);\n\n  for (let z = dockMinZ; z <= dockMaxZ; z++) {\n    for (let x = dockMinX; x <= dockMaxX; x++) {\n      const isEdge = x === dockMinX || x === dockMaxX || z === dockMinZ;\n      if (get(x, seatY + 1, z) === null || !isSolid(x, seatY + 1, z)) {\n        set(x, seatY + 1, z, woodPlanks);\n        if (isEdge && (x % 2 === 0 || z === dockMinZ)) {\n          buildPillar(x, seatY, z, logY);\n        } else if (!isSolid(x, seatY, z)) {\n          buildPillar(x, seatY, z, logY);\n        }\n\n        if (isEdge && (x === dockMinX || x === dockMaxX) && z % 2 === 0) {\n          set(x, seatY + 2, z, fence);\n          if (z === 2 || z === 6) {\n            set(x, seatY + 3, z, fence);\n            placeLantern(x, seatY + 4, z);\n          }\n        }\n      }\n    }\n  }\n\n  // Dock Furnishings\n  const barrelX = Math.max(1, dockCenter - 2);\n  if (barrelX >= 0 && barrelX + 1 < W) {\n    set(barrelX, seatY + 2, 4, \"minecraft:barrel[facing=up]\");\n    set(barrelX + 1, seatY + 2, 4, \"minecraft:barrel[facing=north]\");\n    set(barrelX, seatY + 2, 5, \"minecraft:chest[facing=south]\");\n  }\n\n  const netX = Math.min(W - 2, dockCenter + 2);\n  if (netX < W && netX - 2 >= 0) {\n    set(netX, seatY + 2, 3, fence);\n    set(netX, seatY + 3, 3, fence);\n    set(netX - 2, seatY + 2, 3, fence);\n    set(netX - 2, seatY + 3, 3, fence);\n    set(netX - 1, seatY + 3, 3, fence);\n    set(netX - 1, seatY + 2, 3, \"minecraft:cobweb\");\n  }\n\n  // 5. High Shell Staging Platform (Z = 22..26)\n  for (let z = 22; z <= 26; z++) {\n    for (let x = midX - 3; x <= midX + 3; x++) {\n      if (x >= 0 && x < W) {\n        const topShell = Math.floor(getTopY(z));\n        const deckY = Math.max(13, topShell);\n        if (get(x, deckY, z) === null) {\n          set(x, deckY, z, woodPlanks);\n          const isEdge = x === midX - 3 || x === midX + 3 || z === 26;\n          if (isEdge && get(x, deckY + 1, z) === null) {\n            set(x, deckY + 1, z, fence);\n            if ((x === midX - 3 || x === midX + 3) && z === 26) {\n              set(x, deckY + 2, z, fence);\n              placeLantern(x, deckY + 3, z);\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // 6. Instance Archetype Specific Builds\n  const interiors = [];\n\n  if (idx === 0) {\n    // Heavy A-Frame Cargo Derrick\n    const craneZ = 12;\n    const craneBaseX = Math.round(getCenterX(craneZ));\n    const craneY = Math.floor(getTopY(craneZ)) + 1;\n\n    for (let dy = 0; dy <= 5; dy++) {\n      const y = craneY + dy;\n      if (y < H - 1) {\n        set(craneBaseX - 1, y, craneZ, logY);\n        set(craneBaseX + 1, y, craneZ, logY);\n      }\n    }\n    const topCraneY = Math.min(H - 2, craneY + 5);\n    for (let x = craneBaseX - 2; x <= craneBaseX + 2; x++) {\n      if (x >= 0 && x < W) set(x, topCraneY, craneZ, logX);\n    }\n    for (let dz = 1; dz <= 4; dz++) {\n      const jz = craneZ - dz;\n      if (jz >= 0) {\n        set(craneBaseX, topCraneY, jz, logZ);\n        set(craneBaseX, topCraneY - 1, jz, fence);\n      }\n    }\n    set(\n      craneBaseX,\n      craneY + 1,\n      craneZ,\n      \"minecraft:grindstone[facing=north,face=floor]\"\n    );\n    const tipJibZ = craneZ - 3;\n    set(craneBaseX, topCraneY - 1, tipJibZ, \"minecraft:chain[axis=y]\");\n    set(craneBaseX, topCraneY - 2, tipJibZ, \"minecraft:chain[axis=y]\");\n    set(craneBaseX, topCraneY - 3, tipJibZ, \"minecraft:chain[axis=y]\");\n\n    const cargoY = topCraneY - 4;\n    if (cargoY > seatY) {\n      set(craneBaseX, cargoY, tipJibZ, \"minecraft:barrel[facing=up]\");\n      set(craneBaseX + 1, cargoY, tipJibZ, trapdoorTop);\n      set(craneBaseX - 1, cargoY, tipJibZ, trapdoorTop);\n    }\n  } else if (idx === 1) {\n    // Fish Drying Lines & Winch Station\n    const midZ = 10;\n    const cx = Math.round(getCenterX(midZ));\n    const cy = Math.floor(getTopY(midZ)) + 1;\n\n    for (let x = cx - 3; x <= cx + 3; x++) {\n      if (x >= 0 && x < W) {\n        if (x === cx - 3 || x === cx + 3 || x === cx) {\n          set(x, cy, midZ, fence);\n          set(x, cy + 1, midZ, fence);\n        } else {\n          set(x, cy + 1, midZ, fence);\n          set(x, cy, midZ, \"minecraft:cobweb\");\n        }\n      }\n    }\n    const wx = cx + 3;\n    if (wx < W - 1 && cy < H - 2) {\n      set(wx, cy, midZ + 1, logY);\n      set(\n        wx,\n        cy + 1,\n        midZ + 1,\n        \"minecraft:grindstone[facing=east,face=floor]\"\n      );\n      set(wx, cy + 2, midZ + 1, fence);\n      placeLantern(wx, cy + 3, midZ + 1);\n    }\n  } else if (idx === 2) {\n    // Shellmaster Tally-Clerk Shelter (with standable interior)\n    const hutCenterZ = 24;\n    const hutCenterX = midX;\n    const hutFloorY = 14;\n\n    for (let z = 22; z <= 26; z++) {\n      for (let x = hutCenterX - 2; x <= hutCenterX + 2; x++) {\n        if (x >= 0 && x < W && z < D) {\n          set(x, hutFloorY, z, woodPlanks);\n        }\n      }\n    }\n\n    for (let z = 22; z <= 26; z++) {\n      for (let x = hutCenterX - 2; x <= hutCenterX + 2; x++) {\n        const isCorner =\n          (x === hutCenterX - 2 || x === hutCenterX + 2) &&\n          (z === 22 || z === 26);\n        const isWall =\n          x === hutCenterX - 2 ||\n          x === hutCenterX + 2 ||\n          z === 22 ||\n          z === 26;\n        const isDoor = x === hutCenterX && z === 22;\n        const isWindow =\n          z === 24 && (x === hutCenterX - 2 || x === hutCenterX + 2);\n\n        if (isWall) {\n          for (let y = 15; y <= 17; y++) {\n            if (isDoor && (y === 15 || y === 16)) {\n              // Open doorway\n            } else if (isWindow && y === 16) {\n              set(x, y, z, fence);\n            } else if (isCorner) {\n              set(x, y, z, logY);\n            } else {\n              set(x, y, z, woodPlanks);\n            }\n          }\n        }\n      }\n    }\n\n    for (let z = 21; z <= 27; z++) {\n      if (z >= 0 && z < D) {\n        set(hutCenterX + 2, 17, z, `${roofStairsBase}[facing=west,half=bottom]`);\n        set(hutCenterX + 1, 18, z, `${roofStairsBase}[facing=west,half=bottom]`);\n        set(hutCenterX - 2, 17, z, `${roofStairsBase}[facing=east,half=bottom]`);\n        set(hutCenterX - 1, 18, z, `${roofStairsBase}[facing=east,half=bottom]`);\n        set(hutCenterX, 18, z, roofSolid);\n        set(hutCenterX, 19, z, `${roofSlabBase}[type=bottom]`);\n      }\n    }\n\n    set(hutCenterX, 18, 22, woodPlanks);\n    set(hutCenterX, 18, 26, woodPlanks);\n    set(hutCenterX, 17, 21, fence);\n    placeLantern(hutCenterX, 16, 21);\n\n    interiors.push({\n      min: [hutCenterX - 1, 15, 23],\n      max: [hutCenterX + 1, 17, 25],\n      kind: \"quarters\"\n    });\n  } else if (idx === 3) {\n    // Twin Shear-Legs Crane and Dual Chain Rig\n    const craneZ = 14;\n    const cx = Math.round(getCenterX(craneZ));\n    const cy = Math.floor(getTopY(craneZ)) + 1;\n\n    for (let dy = 0; dy <= 4; dy++) {\n      const y = cy + dy;\n      if (y < H - 1) {\n        set(cx - 2, y, craneZ, logY);\n        set(cx + 2, y, craneZ, logY);\n      }\n    }\n    const topY = Math.min(H - 2, cy + 4);\n    for (let x = cx - 2; x <= cx + 2; x++) {\n      if (x >= 0 && x < W) set(x, topY, craneZ, logX);\n    }\n    for (let dy = 1; dy <= 3; dy++) {\n      set(cx - 1, topY - dy, craneZ - 1, \"minecraft:chain[axis=y]\");\n      set(cx + 1, topY - dy, craneZ - 1, \"minecraft:chain[axis=y]\");\n    }\n    set(cx - 1, topY - 3, craneZ - 1, \"minecraft:barrel[facing=up]\");\n    set(cx + 1, topY - 3, craneZ - 1, \"minecraft:chest[facing=north]\");\n    set(cx, topY - 3, craneZ - 1, slabBottom);\n  }\n\n  // 7. Connectivity Flood-Fill (prune any stray disconnected voxels)\n  const visited = Array.from({ length: W }, () =>\n    Array.from({ length: H }, () => new Uint8Array(D))\n  );\n\n  const startX = midX;\n  const startY = 8;\n  const startZ = 16;\n  let seedX = startX,\n    seedY = startY,\n    seedZ = startZ;\n  let foundSeed = false;\n\n  for (let dy = 0; dy < 6 && !foundSeed; dy++) {\n    for (let dx = -2; dx <= 2 && !foundSeed; dx++) {\n      for (let dz = -2; dz <= 2 && !foundSeed; dz++) {\n        const tx = startX + dx;\n        const ty = startY + dy;\n        const tz = startZ + dz;\n        if (tx >= 0 && tx < W && ty >= 0 && ty < H && tz >= 0 && tz < D) {\n          if (grid[tx][ty][tz] !== null) {\n            seedX = tx;\n            seedY = ty;\n            seedZ = tz;\n            foundSeed = true;\n          }\n        }\n      }\n    }\n  }\n\n  if (foundSeed) {\n    const queue = [[seedX, seedY, seedZ]];\n    visited[seedX][seedY][seedZ] = 1;\n    let head = 0;\n\n    const dirs = [\n      [1, 0, 0],\n      [-1, 0, 0],\n      [0, 1, 0],\n      [0, -1, 0],\n      [0, 0, 1],\n      [0, 0, -1]\n    ];\n\n    while (head < queue.length) {\n      const [qx, qy, qz] = queue[head++];\n      for (const [dx, dy, dz] of dirs) {\n        const nx = qx + dx;\n        const ny = qy + dy;\n        const nz = qz + dz;\n        if (nx >= 0 && nx < W && ny >= 0 && ny < H && nz >= 0 && nz < D) {\n          if (!visited[nx][ny][nz] && grid[nx][ny][nz] !== null) {\n            visited[nx][ny][nz] = 1;\n            queue.push([nx, ny, nz]);\n          }\n        }\n      }\n    }\n\n    for (let x = 0; x < W; x++) {\n      for (let y = 0; y < H; y++) {\n        for (let z = 0; z < D; z++) {\n          if (grid[x][y][z] !== null && !visited[x][y][z]) {\n            grid[x][y][z] = null;\n          }\n        }\n      }\n    }\n  }\n\n  // 8. Deterministic Output Stream\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const b = grid[x][y][z];\n        if (b !== null) {\n          api.set(x, y, z, b);\n        }\n      }\n    }\n  }\n\n  const frontX = Math.round(getCenterX(0));\n  return {\n    name: \"flipper_ladder_rig\",\n    seatY: seatY,\n    anchors: {\n      front: [frontX, seatY, 0],\n      pier: [frontX, seatY + 1, 3],\n      shell_top: [midX, 14, 25]\n    },\n    interiors: interiors.length > 0 ? interiors : undefined\n  };\n}"
+    },
+    "fish_drying_scaffold": {
+      "mode": "plugin",
+      "envelope": [
+        11,
+        14,
+        11
+      ],
+      "sourceHash": "b3:e8214c5cbc29bc6156ae23b206c694cd7e6585c3da7e972548c3f4d67dc1d1ba",
+      "outputHash": "b3:c8851c6d67f0e2b1b4e09dc9fc9f477dbd55bf32bf8b16d36796f99988474c1c",
+      "conforms": false,
+      "conformHash": "b3:18ec540cefc399258b24745757a6538d950695148bb46f9391f3d33b1956fb39",
+      "source": "export const envelope = [11, 14, 11];\n\nexport default function build(api) {\n  const W = envelope[0];\n  const H = envelope[1];\n  const D = envelope[2];\n  const SEAT_Y = 4;\n\n  // 3D storage grid for deterministic construction and connectivity checking\n  const world = Array.from({ length: W }, () =>\n    Array.from({ length: H }, () =>\n      new Array(D).fill(null)\n    )\n  );\n\n  function getGroundY(x, z) {\n    const cx = Math.max(0, Math.min(W - 1, Math.round(x)));\n    const cz = Math.max(0, Math.min(D - 1, Math.round(z)));\n    const h = Math.round(api.heightAt(cx, cz));\n    const gy = SEAT_Y + h;\n    return Math.max(0, Math.min(H - 2, gy));\n  }\n\n  function set(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D && block) {\n      world[x][y][z] = block;\n    }\n  }\n\n  function get(x, y, z) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      return world[x][y][z];\n    }\n    return null;\n  }\n\n  function withState(blockStr, stateStr) {\n    if (!blockStr) return \"minecraft:oak_planks\";\n    const base = blockStr.includes(\"[\") ? blockStr.substring(0, blockStr.indexOf(\"[\")) : blockStr;\n    return `${base}[${stateStr}]`;\n  }\n\n  // --- Theme Palette Mapping ---\n  const wood = api.theme.wood || {};\n  const stone = api.theme.stone || {};\n  const ground = api.theme.ground || {};\n  const roof = api.theme.roof || {};\n\n  const logY = withState(wood.log || \"minecraft:oak_log\", \"axis=y\");\n  const logX = withState(wood.log || \"minecraft:oak_log\", \"axis=x\");\n  const logZ = withState(wood.log || \"minecraft:oak_log\", \"axis=z\");\n\n  const strippedLogY = withState(wood.stripped || \"minecraft:stripped_oak_log\", \"axis=y\");\n  const strippedLogX = withState(wood.stripped || \"minecraft:stripped_oak_log\", \"axis=x\");\n  const strippedLogZ = withState(wood.stripped || \"minecraft:stripped_oak_log\", \"axis=z\");\n\n  const planks = wood.planks || \"minecraft:oak_planks\";\n  const fence = wood.fence || \"minecraft:oak_fence\";\n  const slabBottom = withState(wood.slab || \"minecraft:oak_slab\", \"type=bottom\");\n  const slabTop = withState(wood.slab || \"minecraft:oak_slab\", \"type=top\");\n\n  const stairsN = withState(wood.stairs || \"minecraft:oak_stairs\", \"facing=north,half=bottom\");\n  const stairsS = withState(wood.stairs || \"minecraft:oak_stairs\", \"facing=south,half=bottom\");\n  const stairsE = withState(wood.stairs || \"minecraft:oak_stairs\", \"facing=east,half=bottom\");\n  const stairsW = withState(wood.stairs || \"minecraft:oak_stairs\", \"facing=west,half=bottom\");\n\n  const stairsNTop = withState(wood.stairs || \"minecraft:oak_stairs\", \"facing=north,half=top\");\n  const stairsSTop = withState(wood.stairs || \"minecraft:oak_stairs\", \"facing=south,half=top\");\n  const stairsETop = withState(wood.stairs || \"minecraft:oak_stairs\", \"facing=east,half=top\");\n  const stairsWTop = withState(wood.stairs || \"minecraft:oak_stairs\", \"facing=west,half=top\");\n\n  const trapdoorBottom = withState(wood.trapdoor || \"minecraft:oak_trapdoor\", \"facing=north,half=bottom,open=false\");\n  const trapdoorTop = withState(wood.trapdoor || \"minecraft:oak_trapdoor\", \"facing=north,half=top,open=false\");\n\n  const stonePrimary = stone.primary || \"minecraft:stone_bricks\";\n  const stoneWall = stone.wall || \"minecraft:cobblestone_wall\";\n  const plinth = ground.plinth || \"minecraft:cobblestone\";\n\n  const roofStairsN = withState(roof.stairs || wood.stairs || \"minecraft:spruce_stairs\", \"facing=north,half=bottom\");\n  const roofStairsS = withState(roof.stairs || wood.stairs || \"minecraft:spruce_stairs\", \"facing=south,half=bottom\");\n  const roofStairsE = withState(roof.stairs || wood.stairs || \"minecraft:spruce_stairs\", \"facing=east,half=bottom\");\n  const roofStairsW = withState(roof.stairs || wood.stairs || \"minecraft:spruce_stairs\", \"facing=west,half=bottom\");\n  const roofSlab = withState(roof.slab || wood.slab || \"minecraft:spruce_slab\", \"type=bottom\");\n  const roofSolid = roof.solid || wood.planks || \"minecraft:spruce_planks\";\n\n  // Specialized fish curing & maritime materials\n  const cobweb = \"minecraft:cobweb\";\n  const chain = \"minecraft:chain[axis=y]\";\n  const lanternFloor = \"minecraft:lantern[hanging=false]\";\n  const lanternCeil = \"minecraft:lantern[hanging=true]\";\n  const barrelUp = \"minecraft:barrel[facing=up]\";\n  const barrelN = \"minecraft:barrel[facing=north]\";\n  const barrelS = \"minecraft:barrel[facing=south]\";\n  const driedKelp = \"minecraft:dried_kelp_block\";\n  const saltCrate = \"minecraft:smooth_sandstone\";\n  const curedFish = \"minecraft:hay_block[axis=y]\";\n  const cauldron = \"minecraft:cauldron\";\n  const stonecutter = \"minecraft:stonecutter[facing=north]\";\n\n  const ladderN = \"minecraft:ladder[facing=north]\";\n  const ladderS = \"minecraft:ladder[facing=south]\";\n  const ladderE = \"minecraft:ladder[facing=east]\";\n  const ladderW = \"minecraft:ladder[facing=west]\";\n\n  // --- Geometry Construction Helpers ---\n  function buildPost(px, pz, topY, logBlock = logY) {\n    const gy = getGroundY(px, pz);\n    for (let y = Math.max(0, gy - 1); y <= gy; y++) {\n      set(px, y, pz, plinth);\n    }\n    for (let y = gy + 1; y <= topY; y++) {\n      set(px, y, pz, logBlock);\n    }\n    const adj = [[px + 1, pz], [px - 1, pz], [px, pz + 1], [px, pz - 1]];\n    for (const [ax, az] of adj) {\n      if (ax >= 0 && ax < W && az >= 0 && az < D) {\n        const agy = getGroundY(ax, az);\n        if (get(ax, agy, az) === null) {\n          set(ax, agy, az, stoneWall);\n        }\n      }\n    }\n  }\n\n  function fillLineX(x1, x2, y, z, block) {\n    const minX = Math.min(x1, x2), maxX = Math.max(x1, x2);\n    for (let x = minX; x <= maxX; x++) set(x, y, z, block);\n  }\n\n  function fillLineZ(x, y, z1, z2, block) {\n    const minZ = Math.min(z1, z2), maxZ = Math.max(z1, z2);\n    for (let z = minZ; z <= maxZ; z++) set(x, y, z, block);\n  }\n\n  function fillLineY(x, y1, y2, z, block) {\n    const minY = Math.min(y1, y2), maxY = Math.max(y1, y2);\n    for (let y = minY; y <= maxY; y++) set(x, y, z, block);\n  }\n\n  function fillRectXZ(x1, z1, x2, z2, y, block) {\n    const minX = Math.min(x1, x2), maxX = Math.max(x1, x2);\n    const minZ = Math.min(z1, z2), maxZ = Math.max(z1, z2);\n    for (let x = minX; x <= maxX; x++) {\n      for (let z = minZ; z <= maxZ; z++) {\n        set(x, y, z, block);\n      }\n    }\n  }\n\n  function fillBox(x1, y1, z1, x2, y2, z2, block) {\n    const minX = Math.min(x1, x2), maxX = Math.max(x1, x2);\n    const minY = Math.min(y1, y2), maxY = Math.max(y1, y2);\n    const minZ = Math.min(z1, z2), maxZ = Math.max(z1, z2);\n    for (let x = minX; x <= maxX; x++) {\n      for (let y = minY; y <= maxY; y++) {\n        for (let z = minZ; z <= maxZ; z++) {\n          set(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  function buildRamp(startX, startZ, endX, endZ, targetY, stairBlock) {\n    const steps = Math.max(Math.abs(endX - startX), Math.abs(endZ - startZ)) + 1;\n    const dx = (endX - startX) / Math.max(1, steps - 1);\n    const dz = (endZ - startZ) / Math.max(1, steps - 1);\n\n    for (let i = 0; i < steps; i++) {\n      const cx = Math.round(startX + dx * i);\n      const cz = Math.round(endZ + dz * i);\n      const gy = getGroundY(cx, cz);\n      const stepY = Math.round(gy + (targetY - gy) * (i / Math.max(1, steps - 1)));\n\n      for (let y = Math.max(0, gy); y < stepY; y++) {\n        set(cx, y, cz, plinth);\n      }\n      set(cx, stepY, cz, stairBlock || planks);\n    }\n  }\n\n  function buildDryingRackTier(x1, z1, x2, z2, beamY, dropLength = 2) {\n    if (z1 === z2) {\n      fillLineX(x1, x2, beamY, z1, strippedLogX);\n      const minX = Math.min(x1, x2), maxX = Math.max(x1, x2);\n      for (let x = minX + 1; x < maxX; x++) {\n        if ((x + z1) % 2 === 0) {\n          for (let dy = 1; dy <= dropLength; dy++) {\n            set(x, beamY - dy, z1, cobweb);\n          }\n        } else {\n          set(x, beamY - 1, z1, chain);\n          set(x, beamY - 2, z1, (x % 3 === 0) ? curedFish : driedKelp);\n        }\n      }\n    } else {\n      fillLineZ(x1, beamY, z1, z2, strippedLogZ);\n      const minZ = Math.min(z1, z2), maxZ = Math.max(z1, z2);\n      for (let z = minZ + 1; z < maxZ; z++) {\n        if ((x1 + z) % 2 === 0) {\n          for (let dy = 1; dy <= dropLength; dy++) {\n            set(x1, beamY - dy, z, cobweb);\n          }\n        } else {\n          set(x1, beamY - 1, z, chain);\n          set(x1, beamY - 2, z, (z % 3 === 0) ? curedFish : driedKelp);\n        }\n      }\n    }\n  }\n\n  function addDeckBracing(minX, maxX, minZ, maxZ, deckY) {\n    for (let x = minX; x <= maxX; x++) {\n      for (let z = minZ; z <= maxZ; z++) {\n        if ((x === minX || x === maxX || z === minZ || z === maxZ || x % 2 === 0 || z % 2 === 0) && deckY > 1) {\n          if (get(x, deckY - 1, z) === null && get(x, deckY, z) !== null) {\n            set(x, deckY - 1, z, strippedLogY);\n          }\n        }\n      }\n    }\n  }\n\n  // --- Variant Dispatcher ---\n  const variantIndex = api.instance.index !== undefined ? api.instance.index : Math.floor(api.random() * 10);\n  const variant = Math.abs(variantIndex) % 10;\n\n  if (variant === 0) {\n    // VARIANT 0: Grand Double-Tier Net Drying Station & Salting Shed\n    const deckY = 7;\n    const posts = [\n      [2, 2, 13], [5, 2, 13], [8, 2, 13],\n      [2, 5, 10], [5, 5, 10], [8, 5, 10],\n      [2, 8, 10], [5, 8, 10], [8, 8, 10]\n    ];\n    for (const [px, pz, topY] of posts) buildPost(px, pz, topY);\n\n    fillLineX(2, 8, deckY, 2, logX);\n    fillLineX(2, 8, deckY, 5, logX);\n    fillLineX(2, 8, deckY, 8, logX);\n    fillLineZ(2, deckY, 2, 8, logZ);\n    fillLineZ(5, deckY, 2, 8, logZ);\n    fillLineZ(8, deckY, 2, 8, logZ);\n    fillRectXZ(2, 2, 8, 8, deckY, planks);\n\n    // High North Drying Crossbars\n    fillLineX(2, 8, 10, 2, strippedLogX);\n    fillLineX(2, 8, 13, 2, logX);\n    buildDryingRackTier(2, 2, 8, 2, 13, 3);\n    buildDryingRackTier(2, 2, 8, 2, 10, 2);\n\n    // South Salting Gable Canopy\n    for (let z = 5; z <= 8; z++) {\n      set(1, 9, z, roofStairsE);\n      set(2, 10, z, roofSolid);\n      set(3, 11, z, roofStairsE);\n      set(4, 11, z, roofSolid);\n      set(5, 12, z, roofSolid);\n      set(6, 11, z, roofSolid);\n      set(7, 11, z, roofStairsW);\n      set(8, 10, z, roofSolid);\n      set(9, 9, z, roofStairsW);\n    }\n    set(5, 11, 6, lanternCeil);\n\n    // Deck Furniture & Clutter\n    set(3, deckY + 1, 6, barrelUp);\n    set(3, deckY + 1, 7, barrelUp);\n    set(4, deckY + 1, 7, saltCrate);\n    set(6, deckY + 1, 7, saltCrate);\n    set(7, deckY + 1, 6, stonecutter);\n    set(7, deckY + 1, 7, cauldron);\n\n    // Perimeter Railings\n    for (let x = 3; x <= 7; x++) set(x, deckY + 1, 8, fence);\n    for (let z = 3; z <= 7; z++) {\n      if (z !== 4) set(2, deckY + 1, z, fence);\n      set(8, deckY + 1, z, fence);\n    }\n\n    // Access Ramp\n    const gyW = getGroundY(1, 4);\n    buildRamp(1, 4, 2, 4, deckY, stairsE);\n    // Ladder on East\n    const gyE = getGroundY(8, 6);\n    for (let y = gyE + 1; y <= deckY; y++) set(8, y, 6, logY);\n    for (let y = gyE + 1; y <= deckY; y++) set(9, y, 6, ladderE);\n\n  } else if (variant === 1) {\n    // VARIANT 1: Steep A-Frame Trestle Tower & Billowing Net Curtains\n    const deckY = 6;\n    const posts = [[2, 3, deckY], [8, 3, deckY], [2, 7, deckY], [8, 7, deckY], [5, 5, deckY]];\n    for (const [px, pz, topY] of posts) buildPost(px, pz, topY);\n\n    fillRectXZ(2, 3, 8, 7, deckY, planks);\n    addDeckBracing(2, 8, 3, 7, deckY);\n\n    // A-frame Rafters on North & South\n    for (const z of [3, 7]) {\n      set(2, 7, z, stairsE);\n      set(3, 8, z, logY);\n      set(3, 9, z, stairsE);\n      set(4, 10, z, logY);\n      set(4, 11, z, stairsE);\n      set(5, 12, z, logY);\n      set(5, 13, z, logY);\n      set(6, 11, z, stairsW);\n      set(6, 10, z, logY);\n      set(7, 9, z, stairsW);\n      set(7, 8, z, logY);\n      set(8, 7, z, stairsW);\n    }\n    fillLineZ(5, 13, 3, 7, logZ);\n    fillLineZ(4, 11, 3, 7, strippedLogZ);\n    fillLineZ(6, 11, 3, 7, strippedLogZ);\n\n    // Suspended High Catwalk\n    fillRectXZ(4, 4, 6, 6, 10, slabBottom);\n    set(4, 11, 5, fence);\n    set(6, 11, 5, fence);\n\n    // Billowing Net Curtains & Fish Lines\n    for (let y = 7; y <= 10; y++) {\n      set(3, y, 4, cobweb);\n      set(3, y, 6, cobweb);\n      set(7, y, 4, cobweb);\n      set(7, y, 6, cobweb);\n      set(5, y, 4, (y % 2 === 0) ? chain : curedFish);\n      set(5, y, 6, (y % 2 === 0) ? driedKelp : cobweb);\n    }\n    set(5, 12, 5, lanternCeil);\n\n    // Salt Barrels & Smoker Pit on Lower Deck\n    set(3, deckY + 1, 5, barrelUp);\n    set(4, deckY + 1, 5, saltCrate);\n    set(7, deckY + 1, 5, barrelN);\n\n    // North Stair Approach\n    const gyN = getGroundY(5, 1);\n    buildRamp(5, 1, 5, 3, deckY, stairsS);\n\n  } else if (variant === 2) {\n    // VARIANT 2: Split-Level Terrace Curing Dock\n    const lowerY = 5;\n    const upperY = 8;\n\n    // Lower Terrace Posts\n    const lowPosts = [[2, 2, lowerY], [5, 2, lowerY], [2, 8, lowerY], [5, 8, lowerY]];\n    for (const [px, pz, topY] of lowPosts) buildPost(px, pz, topY);\n    fillRectXZ(2, 2, 5, 8, lowerY, planks);\n\n    // Upper Terrace Posts\n    const highPosts = [[5, 2, 13], [9, 2, 13], [5, 8, 13], [9, 8, 13], [9, 5, 13]];\n    for (const [px, pz, topY] of highPosts) buildPost(px, pz, topY);\n    fillRectXZ(5, 2, 9, 8, upperY, planks);\n\n    // Intermediate Connecting Steps\n    for (let x = 4; x <= 6; x++) {\n      set(x, 6, 4, stairsE);\n      set(x, 7, 5, stairsE);\n      set(x, 8, 6, planks);\n    }\n\n    // High Drying Line & Awning on Upper Deck\n    fillLineZ(9, 13, 2, 8, logZ);\n    buildDryingRackTier(9, 2, 9, 8, 13, 3);\n    for (let z = 2; z <= 8; z++) {\n      set(6, 11, z, roofStairsE);\n      set(7, 12, z, roofSolid);\n      set(8, 12, z, roofSlab);\n      set(9, 11, z, roofStairsW);\n    }\n    set(7, 11, 5, lanternCeil);\n\n    // Lower Deck Gutting Station\n    set(3, lowerY + 1, 3, cauldron);\n    set(3, lowerY + 1, 4, stonecutter);\n    set(3, lowerY + 1, 6, barrelUp);\n    set(3, lowerY + 1, 7, barrelUp);\n    set(4, lowerY + 1, 7, saltCrate);\n\n    // Lower Deck Entryway Ramp\n    const gyW = getGroundY(1, 5);\n    buildRamp(1, 5, 2, 5, lowerY, stairsE);\n\n  } else if (variant === 3) {\n    // VARIANT 3: Cantilever Derrick & Net Drying Wharf\n    const deckY = 7;\n    const posts = [\n      [2, 8, 12], [5, 8, 13], [8, 8, 12],\n      [2, 4, deckY], [5, 4, deckY], [8, 4, deckY]\n    ];\n    for (const [px, pz, topY] of posts) buildPost(px, pz, topY);\n\n    fillRectXZ(2, 2, 8, 8, deckY, planks);\n    addDeckBracing(2, 8, 2, 8, deckY);\n\n    // Cantilever Derrick Crane Arm projecting North\n    set(5, 11, 7, logZ);\n    set(5, 12, 6, logZ);\n    set(5, 12, 5, logZ);\n    set(5, 13, 4, logZ);\n    set(5, 13, 3, logZ);\n    set(5, 12, 2, logZ);\n\n    // Giant Suspended Net Cargo\n    for (let y = 8; y <= 11; y++) {\n      set(5, y, 2, cobweb);\n      set(4, y, 2, (y % 2 === 0) ? chain : cobweb);\n      set(6, y, 2, (y % 2 === 0) ? driedKelp : cobweb);\n    }\n    set(5, 11, 2, lanternCeil);\n\n    // West Lean-to Shelter\n    for (let z = 5; z <= 8; z++) {\n      set(1, 8, z, roofStairsE);\n      set(2, 9, z, roofSolid);\n      set(3, 10, z, roofStairsE);\n      set(4, 10, z, roofSolid);\n    }\n    set(2, deckY + 1, 6, saltCrate);\n    set(2, deckY + 1, 7, saltCrate);\n    set(3, deckY + 1, 7, barrelUp);\n    set(7, deckY + 1, 6, barrelN);\n    set(7, deckY + 1, 7, barrelN);\n\n    // South Ladder\n    const gyS = getGroundY(5, 9);\n    for (let y = gyS + 1; y <= deckY; y++) {\n      set(5, y, 8, logY);\n      set(5, y, 9, ladderS);\n    }\n\n  } else if (variant === 4) {\n    // VARIANT 4: Twin-Gable Net & Kelp Racks with Central Gangway\n    const deckY = 6;\n    const posts = [\n      [2, 2, 12], [4, 2, 12], [6, 2, 12], [8, 2, 12],\n      [2, 8, 12], [4, 8, 12], [6, 8, 12], [8, 8, 12]\n    ];\n    for (const [px, pz, topY] of posts) buildPost(px, pz, topY);\n\n    // West & East Decking with Gangway\n    fillRectXZ(2, 2, 4, 8, deckY, planks);\n    fillRectXZ(6, 2, 8, 8, deckY, planks);\n    fillRectXZ(4, 4, 6, 6, deckY, planks);\n\n    // West A-Frame Ridge\n    fillLineZ(3, 12, 2, 8, logZ);\n    buildDryingRackTier(3, 2, 3, 8, 12, 3);\n\n    // East A-Frame Ridge\n    fillLineZ(7, 12, 2, 8, logZ);\n    buildDryingRackTier(7, 2, 7, 8, 12, 3);\n\n    // Central Crossing Fish Poles\n    fillLineX(3, 7, 10, 3, strippedLogX);\n    fillLineX(3, 7, 10, 7, strippedLogX);\n    for (let x = 4; x <= 6; x++) {\n      set(x, 9, 3, (x % 2 === 0) ? chain : curedFish);\n      set(x, 9, 7, (x % 2 === 0) ? driedKelp : cobweb);\n    }\n    set(5, 10, 5, lanternCeil);\n\n    // Clutter\n    set(2, deckY + 1, 5, barrelUp);\n    set(8, deckY + 1, 5, barrelUp);\n    set(3, deckY + 1, 5, saltCrate);\n    set(7, deckY + 1, 5, saltCrate);\n\n    // South Entry Steps\n    const gyS = getGroundY(5, 8);\n    buildRamp(5, 8, 5, 6, deckY, stairsN);\n\n  } else if (variant === 5) {\n    // VARIANT 5: Shingled Curing Shack with Outdoor Wing Racks\n    const deckY = 7;\n    const posts = [\n      [3, 3, 11], [7, 3, 11], [3, 7, 11], [7, 7, 11],\n      [1, 5, 11], [9, 5, 11]\n    ];\n    for (const [px, pz, topY] of posts) buildPost(px, pz, topY);\n\n    fillRectXZ(1, 3, 9, 7, deckY, planks);\n    addDeckBracing(1, 9, 3, 7, deckY);\n\n    // Central Cabin Walls & Gable Roof\n    for (let z = 3; z <= 7; z++) {\n      set(2, 9, z, roofStairsE);\n      set(3, 10, z, roofSolid);\n      set(4, 11, z, roofStairsE);\n      set(5, 12, z, roofSolid);\n      set(6, 11, z, roofStairsW);\n      set(7, 10, z, roofSolid);\n      set(8, 9, z, roofStairsW);\n    }\n    // Cabin Side Enclosures\n    for (let y = deckY + 1; y <= 9; y++) {\n      set(3, y, 4, planks);\n      set(3, y, 6, planks);\n      set(7, y, 4, planks);\n      set(7, y, 6, planks);\n      set(4, y, 7, planks);\n      set(6, y, 7, planks);\n    }\n\n    // Wing Drying Racks\n    buildDryingRackTier(1, 3, 1, 7, 11, 3);\n    buildDryingRackTier(9, 3, 9, 7, 11, 3);\n\n    // Cabin Interior\n    set(5, deckY + 1, 6, cauldron);\n    set(4, deckY + 1, 6, saltCrate);\n    set(6, deckY + 1, 6, barrelUp);\n    set(5, 11, 5, lanternCeil);\n\n    // North Entry Ramp\n    const gyN = getGroundY(5, 1);\n    buildRamp(5, 1, 5, 3, deckY, stairsS);\n\n  } else if (variant === 6) {\n    // VARIANT 6: Windward Multi-Tier Tower & Smoker Loft\n    const deckY = 6;\n    const towerPosts = [[2, 2, 13], [5, 2, 13], [2, 5, 13], [5, 5, 13]];\n    for (const [px, pz, topY] of towerPosts) buildPost(px, pz, topY);\n\n    const yardPosts = [[8, 2, deckY], [8, 5, deckY], [8, 8, deckY], [5, 8, deckY], [2, 8, deckY]];\n    for (const [px, pz, topY] of yardPosts) buildPost(px, pz, topY);\n\n    fillRectXZ(2, 2, 8, 8, deckY, planks);\n\n    // Tower Masonry Base\n    for (let x = 2; x <= 5; x++) {\n      for (let z = 2; z <= 5; z++) {\n        const gy = getGroundY(x, z);\n        for (let y = gy; y < deckY; y++) {\n          set(x, y, z, (x === 2 || x === 5 || z === 2 || z === 5) ? stonePrimary : plinth);\n        }\n      }\n    }\n\n    // Tower Upper Levels\n    fillRectXZ(2, 2, 5, 5, 9, slabTop);\n    fillRectXZ(2, 2, 5, 5, 13, roofSlab);\n    fillLineX(2, 5, 11, 2, strippedLogX);\n    fillLineX(2, 5, 11, 5, strippedLogX);\n    fillLineZ(2, 11, 2, 5, strippedLogZ);\n    fillLineZ(5, 11, 2, 5, strippedLogZ);\n\n    // Net curtains hanging on tower\n    for (let y = 10; y <= 12; y++) {\n      set(3, y, 2, cobweb);\n      set(4, y, 2, cobweb);\n      set(2, y, 3, cobweb);\n      set(2, y, 4, cobweb);\n    }\n    set(3, 12, 3, lanternCeil);\n\n    // Yard Drying Poles & Salt Bins\n    fillLineZ(8, 10, 2, 8, strippedLogZ);\n    buildDryingRackTier(8, 2, 8, 8, 10, 2);\n    set(7, deckY + 1, 6, barrelUp);\n    set(7, deckY + 1, 7, saltCrate);\n    set(6, deckY + 1, 7, barrelUp);\n\n    // Ladder Up Tower Post\n    const gyTower = getGroundY(2, 3);\n    for (let y = gyTower + 1; y <= 9; y++) {\n      set(1, y, 3, ladderW);\n    }\n\n  } else if (variant === 7) {\n    // VARIANT 7: Sprawling Triple-Trestle Drying Yard\n    const deckY = 6;\n    const posts = [\n      [2, 2, 9], [5, 2, 9], [8, 2, 9],\n      [2, 5, 11], [5, 5, 11], [8, 5, 11],\n      [2, 8, 13], [5, 8, 13], [8, 8, 13]\n    ];\n    for (const [px, pz, topY] of posts) buildPost(px, pz, topY);\n\n    // Boardwalks\n    fillRectXZ(4, 2, 6, 8, deckY, planks);\n    fillLineX(2, 8, deckY, 5, planks);\n\n    // Trestle 1 (North, Low)\n    fillLineX(2, 8, 9, 2, strippedLogX);\n    buildDryingRackTier(2, 2, 8, 2, 9, 2);\n\n    // Trestle 2 (Mid, Medium)\n    fillLineX(2, 8, 11, 5, strippedLogX);\n    buildDryingRackTier(2, 5, 8, 5, 11, 3);\n\n    // Trestle 3 (South, High with Storage Lean-To)\n    fillLineX(2, 8, 13, 8, logX);\n    buildDryingRackTier(2, 8, 8, 8, 13, 3);\n    for (let x = 2; x <= 8; x++) {\n      set(x, 10, 8, roofStairsS);\n      set(x, 9, 9, roofSolid);\n    }\n\n    // Salt Barrels under Trestle 3\n    set(3, deckY + 1, 7, barrelUp);\n    set(4, deckY + 1, 7, saltCrate);\n    set(6, deckY + 1, 7, barrelN);\n    set(7, deckY + 1, 7, saltCrate);\n    set(5, 10, 5, lanternCeil);\n\n    // North Stair Approach\n    const gyN = getGroundY(5, 1);\n    buildRamp(5, 1, 5, 2, deckY, stairsS);\n\n  } else if (variant === 8) {\n    // VARIANT 8: Carapace Ridge Overhang Rack & Guy-Line Anchors\n    const deckY = 7;\n    const posts = [\n      [2, 2, 13], [5, 2, 13], [8, 2, 13],\n      [2, 6, deckY], [5, 6, deckY], [8, 6, deckY]\n    ];\n    for (const [px, pz, topY] of posts) buildPost(px, pz, topY);\n\n    fillRectXZ(2, 2, 8, 7, deckY, planks);\n    addDeckBracing(2, 8, 2, 7, deckY);\n\n    // Diagonal Heavy Knee Braces on Deck Overhang\n    for (let x of [2, 5, 8]) {\n      set(x, deckY - 1, 1, stairsSTop);\n      set(x, deckY - 1, 7, stairsNTop);\n    }\n\n    // High Curved Drying Arch across North\n    fillLineX(2, 8, 13, 2, logX);\n    fillLineX(2, 8, 11, 2, strippedLogX);\n    for (let x = 3; x <= 7; x++) {\n      set(x, 12, 2, cobweb);\n      set(x, 10, 2, (x % 2 === 0) ? cobweb : chain);\n      set(x, 9, 2, (x % 2 === 0) ? driedKelp : curedFish);\n    }\n    set(5, 12, 2, lanternCeil);\n\n    // Guy-Line Anchors to Stone Plinths\n    const gySW = getGroundY(1, 8);\n    set(1, gySW, 8, stonePrimary);\n    set(1, gySW + 1, 8, stoneWall);\n    set(2, deckY, 7, fence);\n\n    const gySE = getGroundY(9, 8);\n    set(9, gySE, 8, stonePrimary);\n    set(9, gySE + 1, 8, stoneWall);\n    set(8, deckY, 7, fence);\n\n    // Salting Station on Deck\n    set(3, deckY + 1, 5, barrelUp);\n    set(4, deckY + 1, 5, saltCrate);\n    set(6, deckY + 1, 5, cauldron);\n    set(7, deckY + 1, 5, barrelUp);\n\n    // South Stair Descent\n    const gyS = getGroundY(5, 8);\n    buildRamp(5, 8, 5, 6, deckY, stairsN);\n\n  } else {\n    // VARIANT 9: Fisher's Smokehouse & High Air-Drying Loft\n    const deckY = 7;\n    const posts = [\n      [2, 2, 12], [5, 2, 12], [2, 6, 12], [5, 6, 12],\n      [8, 2, 12], [8, 6, 12], [8, 8, deckY], [5, 8, deckY], [2, 8, deckY]\n    ];\n    for (const [px, pz, topY] of posts) buildPost(px, pz, topY);\n\n    fillRectXZ(2, 2, 8, 8, deckY, planks);\n\n    // Stone Smokehouse Foundation (West)\n    for (let x = 2; x <= 5; x++) {\n      for (let z = 2; z <= 6; z++) {\n        const gy = getGroundY(x, z);\n        for (let y = gy; y <= deckY; y++) {\n          if (x === 2 || x === 5 || z === 2 || z === 6) {\n            set(x, y, z, stonePrimary);\n          } else {\n            set(x, y, z, plinth);\n          }\n        }\n      }\n    }\n\n    // Smokehouse Upper Loft & Chimney\n    for (let z = 2; z <= 6; z++) {\n      set(1, 10, z, roofStairsE);\n      set(2, 11, z, roofSolid);\n      set(3, 12, z, roofStairsE);\n      set(4, 12, z, roofSolid);\n      set(5, 11, z, roofStairsW);\n      set(6, 10, z, roofStairsW);\n    }\n    set(3, 13, 4, stoneWall); // Chimney cap\n\n    // East Outdoor Drying Poles\n    fillLineZ(8, 12, 2, 6, logZ);\n    buildDryingRackTier(8, 2, 8, 6, 12, 3);\n    set(7, deckY + 1, 4, barrelUp);\n    set(7, deckY + 1, 5, saltCrate);\n    set(7, deckY + 1, 7, barrelN);\n\n    // Entry Steps on North\n    const gyN = getGroundY(7, 1);\n    buildRamp(7, 1, 7, 2, deckY, stairsS);\n  }\n\n  // --- Foundation & Connectivity Enforcement ---\n  function getNeighbors(x, y, z) {\n    const n = [];\n    if (x > 0) n.push([x - 1, y, z]);\n    if (x < W - 1) n.push([x + 1, y, z]);\n    if (y > 0) n.push([x, y - 1, z]);\n    if (y < H - 1) n.push([x, y + 1, z]);\n    if (z > 0) n.push([x, y, z - 1]);\n    if (z < D - 1) n.push([x, y, z + 1]);\n    return n;\n  }\n\n  function ensureSingleConnectedSolid() {\n    const visited = Array.from({ length: W }, () =>\n      Array.from({ length: H }, () =>\n        new Array(D).fill(false)\n      )\n    );\n\n    const components = [];\n\n    for (let x = 0; x < W; x++) {\n      for (let y = 0; y < H; y++) {\n        for (let z = 0; z < D; z++) {\n          if (world[x][y][z] !== null && !visited[x][y][z]) {\n            const comp = [];\n            const queue = [[x, y, z]];\n            visited[x][y][z] = true;\n\n            while (queue.length > 0) {\n              const [cx, cy, cz] = queue.shift();\n              comp.push([cx, cy, cz]);\n\n              for (const [nx, ny, nz] of getNeighbors(cx, cy, cz)) {\n                if (world[nx][ny][nz] !== null && !visited[nx][ny][nz]) {\n                  visited[nx][ny][nz] = true;\n                  queue.push([nx, ny, nz]);\n                }\n              }\n            }\n            components.push(comp);\n          }\n        }\n      }\n    }\n\n    if (components.length === 0) return;\n\n    components.sort((a, b) => b.length - a.length);\n    const mainComp = components[0];\n\n    // Bridge or prune stray secondary components\n    for (let i = 1; i < components.length; i++) {\n      const comp = components[i];\n      let minDist = 999;\n      let bestStart = null;\n      let bestTarget = null;\n\n      for (const [cx, cy, cz] of comp) {\n        for (const [mx, my, mz] of mainComp) {\n          const d = Math.abs(cx - mx) + Math.abs(cy - my) + Math.abs(cz - mz);\n          if (d < minDist) {\n            minDist = d;\n            bestStart = [cx, cy, cz];\n            bestTarget = [mx, my, mz];\n          }\n        }\n      }\n\n      if (minDist <= 3 && bestStart && bestTarget) {\n        let [cx, cy, cz] = bestStart;\n        const [tx, ty, tz] = bestTarget;\n        while (cx !== tx || cy !== ty || cz !== tz) {\n          if (cx < tx) cx++;\n          else if (cx > tx) cx--;\n          else if (cz < tz) cz++;\n          else if (cz > tz) cz--;\n          else if (cy < ty) cy++;\n          else if (cy > ty) cy--;\n\n          if (world[cx][cy][cz] === null) {\n            world[cx][cy][cz] = fence;\n          }\n        }\n        for (const pt of comp) mainComp.push(pt);\n      } else {\n        for (const [cx, cy, cz] of comp) {\n          world[cx][cy][cz] = null;\n        }\n      }\n    }\n\n    // Count solid voxels and pad structure if necessary\n    let totalVoxels = 0;\n    for (let x = 0; x < W; x++) {\n      for (let y = 0; y < H; y++) {\n        for (let z = 0; z < D; z++) {\n          if (world[x][y][z] !== null) totalVoxels++;\n        }\n      }\n    }\n\n    if (totalVoxels < 520) {\n      // Reinforce ground footings and under-deck beams to hit quota safely\n      for (let x = 2; x <= 8; x++) {\n        for (let z = 2; z <= 8; z++) {\n          const gy = getGroundY(x, z);\n          if (world[x][gy][z] === null) {\n            const hasAdj = getNeighbors(x, gy, z).some(([nx, ny, nz]) => world[nx][ny][nz] !== null);\n            if (hasAdj) {\n              world[x][gy][z] = plinth;\n              totalVoxels++;\n            }\n          }\n          if (totalVoxels >= 550) break;\n        }\n        if (totalVoxels >= 550) break;\n      }\n    }\n  }\n\n  ensureSingleConnectedSolid();\n\n  // --- Output Emission ---\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const block = world[x][y][z];\n        if (block !== null) {\n          api.set(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"Fish Drying Scaffold\",\n    seatY: SEAT_Y,\n    anchors: {\n      front: [5, SEAT_Y, 0],\n      deck: [5, 7, 5]\n    }\n  };\n}"
+    }
+  }
+}

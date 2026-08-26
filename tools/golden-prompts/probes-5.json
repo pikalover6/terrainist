@@ -1,0 +1,85 @@
+{
+  "$comment": "Probe pass 5 (Stocktake Run unit 42): six new prompts, one per spec §6 target, none of passes 1–4. G4 counts these six. `generate-all.mjs <out> 3 \"\" tools/golden-prompts/probes-5.json`, then `record-generate-run.mjs <out> runs/probe-5 probe-5 tools/golden-prompts/probes-5.json` and `icon-metric.mjs runs/probe-5 --prompts tools/golden-prompts/probes-5.json`.",
+  "defaults": { "kit": "settlement", "size": 512 },
+  "prompts": [
+    {
+      "id": "probe_forge_hold",
+      "family": "probe",
+      "seed": 931,
+      "prompt": "A dwarven forge-hold cut into the flank of a volcano: a great gate in the cliff face, terraces of stone halls climbing beside it, forges glowing at the edge of a lava channel, and a stair down toward the magma.",
+      "watches": ["dwarven_volcanic pack at 0 % reach", "a hold in a cliff — the cliff seat, carves into rock", "lava that must not flow (T110) beside built ground"],
+      "icons": [
+        { "id": "great_gate", "terms": ["gate", "portal", "door", "entrance", "hold"], "dominant": true },
+        { "id": "forges", "terms": ["forge", "furnace", "smithy", "anvil", "foundry"] },
+        { "id": "volcano", "terms": ["volcano", "lava", "magma", "crater", "basalt"] }
+      ],
+      "densityFloor": 3
+    },
+    {
+      "id": "probe_bridge_quarters",
+      "family": "probe",
+      "seed": 932,
+      "prompt": "Two quarters of one city on opposite banks of a wide river — the old walled quarter on the east bank, the new gridded quarter on the west — joined by a single great stone bridge with houses built along its length.",
+      "watches": ["two places joined by one program that must meet both banks (F26's note; a river that holds water)", "two urban forms in one document (walled/organic vs grid)", "an inhabited bridge — a program with buildings on it"],
+      "icons": [
+        { "id": "bridge", "terms": ["bridge", "span", "arch", "pier"], "dominant": true },
+        { "id": "old_quarter", "terms": ["old", "wall", "gate", "timber", "organic"] },
+        { "id": "new_quarter", "terms": ["new", "grid", "avenue", "boulevard", "square"] }
+      ],
+      "densityFloor": 6
+    },
+    {
+      "id": "probe_viking_winter",
+      "family": "probe",
+      "seed": 933,
+      "prompt": "A Viking-age trading town on a frozen fjord in midwinter: longhouses under deep snow, longships hauled up onto the ice, and a great mead hall with a carved gable standing above the rest.",
+      "watches": ["nordic_viking pack at 0 % reach", "an unusual climate: snow everywhere, a fjord frozen over — ice as ground", "the longship prop on ice (support rules on ice)"],
+      "icons": [
+        { "id": "great_hall", "terms": ["hall", "mead", "gable", "longhouse", "chieftain"], "dominant": true },
+        { "id": "longships", "terms": ["longship", "ship", "hull", "keel", "boat"] },
+        { "id": "winter", "terms": ["snow", "ice", "frozen", "fjord", "winter"] }
+      ],
+      "densityFloor": 3
+    },
+    {
+      "id": "probe_dune_sea",
+      "family": "probe",
+      "seed": 934,
+      "kit": "terrain",
+      "prompt": "A sea of sand dunes: crescent barchans marching across a stony plain, one dry wadi cutting through them, and a white salt pan at the lowest point — no settlement of any kind.",
+      "watches": ["terrain-only, the terrain kit, a fourth time", "dune forms as raises with a wind direction", "a dry channel and a salt pan (a basin with no water)"],
+      "icons": [
+        { "id": "dunes", "terms": ["dune", "barchan", "sand", "erg", "crescent"], "dominant": true },
+        { "id": "wadi", "terms": ["wadi", "channel", "dry", "riverbed", "gully"] },
+        { "id": "salt_pan", "terms": ["salt", "pan", "flat", "playa", "basin"] }
+      ],
+      "densityFloor": 0
+    },
+    {
+      "id": "probe_airship_field",
+      "family": "probe",
+      "seed": 935,
+      "prompt": "An interwar aerodrome village on a grassy plain: a great silver airship moored to its mooring mast above the hangars, biplanes lined up on the field, a small terminal building and a row of crew cottages along the lane.",
+      "watches": ["the icon lives in a prop pack (airship, zeppelin_mast, hangar, biplane) — reached for as props, and measured", "an airship's dominance is span and height above everything — a read-it", "a 1920s era: T9 on the packs"],
+      "icons": [
+        { "id": "airship", "terms": ["airship", "zeppelin", "dirigible", "blimp", "mast"], "dominant": true },
+        { "id": "hangars", "terms": ["hangar", "runway", "biplane", "field", "aerodrome"] },
+        { "id": "village", "terms": ["cottage", "terminal", "house", "lane", "village"] }
+      ],
+      "densityFloor": 3
+    },
+    {
+      "id": "probe_turtle_village",
+      "family": "probe",
+      "seed": 936,
+      "prompt": "A fishing village built on the shell of a colossal sleeping sea turtle beached in a bay: houses on the ridges of its shell, ladders down its flippers to the boats, its head resting on the sand.",
+      "watches": ["T8: a bespoke the village lives on (the sky whale's cousin) — a program that is also ground", "buildings seated on a program's surface", "the beach and the bay: the turtle must meet the water's edge"],
+      "icons": [
+        { "id": "turtle", "terms": ["turtle", "shell", "colossal", "beached", "carapace"], "dominant": true },
+        { "id": "village", "terms": ["house", "hut", "ladder", "fishing", "village"] },
+        { "id": "bay", "terms": ["bay", "beach", "boat", "sand", "shore"] }
+      ],
+      "densityFloor": 3
+    }
+  ]
+}

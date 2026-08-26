@@ -1,0 +1,186 @@
+{
+  "id": "probe_viking_winter",
+  "family": "probe",
+  "kit": "settlement",
+  "prompt": "A Viking-age trading town on a frozen fjord in midwinter: longhouses under deep snow, longships hauled up onto the ice, and a great mead hall with a carved gable standing above the rest.",
+  "seed": 933,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "era": "viking",
+    "wealth": 0.5,
+    "decline": 0,
+    "formality": 0.2,
+    "climate": {
+      "biome": "minecraft:snowy_taiga",
+      "temperature": -0.8,
+      "humidity": 0.2,
+      "snow": "always"
+    },
+    "character": {
+      "label": "viking fjord trading town in winter",
+      "materialTheme": "boreal_pine",
+      "formPacks": [
+        "nordic_viking"
+      ],
+      "archetypes": {
+        "prefer": [
+          "mead_hall",
+          "longhouse",
+          "turf_house",
+          "longship_shed",
+          "heathen_hof",
+          "smokehouse"
+        ],
+        "forbid": [
+          "townhouse",
+          "terraced_row",
+          "shop_row",
+          "office",
+          "apartment_block"
+        ]
+      },
+      "props": {
+        "prefer": [
+          "rune_stone",
+          "boat_burial",
+          "fish_drying_rack",
+          "fire_pit"
+        ]
+      },
+      "motifs": {
+        "roofType": "gable"
+      },
+      "urbanForm": "grown"
+    },
+    "tokens": {
+      "terrain": "a steep-sided fjord with frozen water and sea ice; settlement along the shore below snowy slopes",
+      "icons": "great mead hall with a carved gable on the high ground; longhouses under heavy snow; longships hauled out and beached on the ice and shoreline"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 272261,
+    "completionTokens": 33922,
+    "cost": 0.1657
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 30,
+    "maxDepth": 2,
+    "generators": [
+      "authored:great_mead_hall",
+      "building.grammar@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "butchery",
+      "cottage",
+      "hall",
+      "inn",
+      "longhouse",
+      "smithy",
+      "sod_house",
+      "warehouse"
+    ],
+    "archetypesInCatalog": 8,
+    "formPacks": [
+      "nordic_viking"
+    ],
+    "props": [
+      "cairn",
+      "log_pile",
+      "longship",
+      "market_barrow",
+      "pier",
+      "rowboat",
+      "well_head"
+    ],
+    "species": [
+      "columnar_larch",
+      "highland_pine",
+      "highland_spruce",
+      "squat_spruce",
+      "tall_spruce"
+    ],
+    "envelopes": [
+      "512x512",
+      "26x26",
+      "19x25x29",
+      "11x13x21",
+      "11x12x19",
+      "11x12x17",
+      "9x13x9",
+      "9x13x9",
+      "9x9x9",
+      "11x11x13",
+      "13x10x11"
+    ],
+    "constraints": 30,
+    "constraintKinds": [
+      "adjacent_to",
+      "at",
+      "blend",
+      "distance",
+      "facing",
+      "gap",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform"
+    ],
+    "constraintsWithStrength": 15,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 8,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 28,
+    "eras": [
+      "viking"
+    ],
+    "bytes": 25897
+  },
+  "wallMs": 298000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 3,
+    "feedbackRounds": 2,
+    "programs": [
+      "ok great_mead_hall [landmark] 1 attempt(s), 22602 tokens ($0.0373), 4 warning(s)"
+    ],
+    "programCost": 0.0373,
+    "totalCost": 0.203,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p5/out/probe_viking_winter/out/frost_fjord_town",
+    "finalDiagnostics": {
+      "LOAM-W330": 1,
+      "LOAM-I502": 1,
+      "LOAM-T208": 1,
+      "LOAM-E404": 1,
+      "LOAM-E406": 1,
+      "LOAM-W520": 1,
+      "LOAM-W483": 1,
+      "LOAM-W485": 1,
+      "LOAM-T228": 4,
+      "LOAM-I463": 1,
+      "LOAM-I497": 1,
+      "LOAM-I412": 1,
+      "LOAM-T341": 1,
+      "LOAM-W470": 1,
+      "LOAM-T107": 1
+    },
+    "crash": [],
+    "docName": "frost_fjord_town.loam.json"
+  }
+}

@@ -1,0 +1,147 @@
+{
+  "id": "probe_airship_field",
+  "family": "probe",
+  "kit": "settlement",
+  "prompt": "An interwar aerodrome village on a grassy plain: a great silver airship moored to its mooring mast above the hangars, biplanes lined up on the field, a small terminal building and a row of crew cottages along the lane.",
+  "seed": 935,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "era": "modern",
+    "wealth": 0.55,
+    "decline": 0,
+    "formality": 0.45,
+    "climate": {
+      "biome": "minecraft:plains",
+      "temperature": 0.4,
+      "humidity": 0.3,
+      "snow": "never"
+    },
+    "character": {
+      "label": "interwar aerodrome village",
+      "materialTheme": "temperate_timber",
+      "urbanForm": "linear",
+      "archetypes": {
+        "prefer": [
+          "cottage",
+          "warehouse",
+          "watchtower"
+        ]
+      }
+    },
+    "tokens": {
+      "terrain": "a flat, open grassy plain with an expansive grass landing field",
+      "icons": "a giant silver rigid airship moored to a tall steel mooring mast; corrugated iron hangars beside the airfield; a row of biplanes parked along the flight line; a small art deco terminal building with an observation roof; a row of neat crew cottages along a tree-lined lane",
+      "infra": "airfield perimeter lane connecting the crew cottages to the terminal, hangars, and mooring field"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 286356,
+    "completionTokens": 43465,
+    "cost": 0.1889
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 21,
+    "maxDepth": 2,
+    "generators": [
+      "authored:moored_airship_and_mast",
+      "building.grammar@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "airport_terminal",
+      "control_tower",
+      "cottage",
+      "watchtower"
+    ],
+    "archetypesInCatalog": 4,
+    "formPacks": [],
+    "props": [
+      "bench",
+      "cart",
+      "flagpole",
+      "hangar"
+    ],
+    "species": [
+      "meadow_oak",
+      "plain_oak",
+      "screen_birch"
+    ],
+    "envelopes": [
+      "512x512",
+      "28x28",
+      "15x13x21",
+      "11x18x11",
+      "11x11x9",
+      "9x8x9",
+      "11x11x9",
+      "9x8x9",
+      "35x46x75"
+    ],
+    "constraints": 23,
+    "constraintKinds": [
+      "adjacent_to",
+      "along",
+      "blend",
+      "distance",
+      "faceRoad",
+      "facing",
+      "gap",
+      "max",
+      "min",
+      "offset",
+      "reference",
+      "side",
+      "terrain_conform",
+      "zone"
+    ],
+    "constraintsWithStrength": 7,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 6,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 19,
+    "eras": [
+      "modern"
+    ],
+    "bytes": 43929
+  },
+  "wallMs": 524000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 3,
+    "feedbackRounds": 1,
+    "programs": [
+      "ok moored_airship_and_mast [landmark] 1 attempt(s), 22306 tokens ($0.0368), 27 warning(s)",
+      "ok vintage_biplane [plugin] 1 attempt(s), 34817 tokens ($0.0603), 10 warning(s)"
+    ],
+    "programCost": 0.0989,
+    "totalCost": 0.2878,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p5/out/probe_airship_field/out/aerodrome_village",
+    "finalDiagnostics": {
+      "LOAM-W330": 1,
+      "LOAM-T208": 1,
+      "LOAM-W524": 1,
+      "LOAM-I497": 1,
+      "LOAM-T341": 2,
+      "LOAM-W470": 1
+    },
+    "crash": [],
+    "docName": "aerodrome_village.loam.json"
+  }
+}

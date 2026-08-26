@@ -1,0 +1,683 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "aerodrome_village",
+    "worldSeed": "935",
+    "prompt": "An interwar aerodrome village on a grassy plain: a great silver airship moored to its mooring mast above the hangars, biplanes lined up on the field, a small terminal building and a row of crew cottages along the lane.",
+    "spawn": {
+      "zone": "south"
+    }
+  },
+  "intent": {
+    "era": "modern",
+    "wealth": 0.55,
+    "decline": 0,
+    "formality": 0.45,
+    "climate": {
+      "biome": "minecraft:plains",
+      "temperature": 0.4,
+      "humidity": 0.3,
+      "snow": "never"
+    },
+    "character": {
+      "label": "interwar aerodrome village",
+      "materialTheme": "temperate_timber",
+      "urbanForm": "linear",
+      "archetypes": {
+        "prefer": [
+          "cottage",
+          "airport_terminal",
+          "control_tower"
+        ]
+      },
+      "props": {
+        "prefer": [
+          "hangar",
+          "flagpole",
+          "bench",
+          "cart"
+        ]
+      }
+    },
+    "tokens": {
+      "terrain": "a flat, open grassy plain with an expansive grass landing field",
+      "icons": "a giant silver rigid airship moored to a tall steel mooring mast; corrugated iron hangars beside the airfield; a row of biplanes parked along the flight line; a small art deco terminal building with an observation roof; a row of neat crew cottages along a tree-lined lane",
+      "infra": "airfield perimeter lane connecting the crew cottages to the terminal, hangars, and mooring field"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:dirt_path",
+      "road.shoulder": "minecraft:gravel",
+      "plaza.path": "minecraft:smooth_stone"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "expansive grassy plain with a wide flat shelf for the aerodrome",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 68,
+          "amplitude": 10,
+          "octaves": 4,
+          "frequency": 0.003,
+          "erosionPasses": 2,
+          "cliffThreshold": 60,
+          "soilDepth": 4,
+          "beachWidth": 2,
+          "snowLineFraction": 0.98
+        },
+        "children": [
+          {
+            "id": "airfield_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "broad flat terrace for the landing ground and village",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.46
+              ],
+              "radius": 160,
+              "height": 4,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0012
+        }
+      },
+      {
+        "id": "apron",
+        "kind": "primitive",
+        "label": "the tarmac apron and station forecourt",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            28,
+            28
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "terminal_building",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "small art deco aerodrome terminal building",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            13,
+            21
+          ]
+        },
+        "params": {
+          "archetype": "airport_terminal",
+          "floors": 1,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "apron",
+            "gap": [
+              1,
+              16
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "apron"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "terminal",
+          "public"
+        ]
+      },
+      {
+        "id": "control_tower",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "air traffic control and observation tower",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            18,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "control_tower",
+          "floors": 2,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "apron",
+            "gap": [
+              4,
+              12
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "apron"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "tower"
+        ]
+      },
+      {
+        "id": "cottage_alpha",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "first aerodrome crew cottage along the lane",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "cottage",
+          "floors": 2,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "along": "lanes",
+            "offset": [
+              2,
+              6
+            ],
+            "side": "left",
+            "faceRoad": true
+          },
+          {
+            "distance": "apron",
+            "min": 24,
+            "max": 70,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 3
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "cottage_bravo",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "second aerodrome crew cottage",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "cottage",
+          "floors": 2,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "along": "lanes",
+            "offset": [
+              2,
+              6
+            ],
+            "side": "left",
+            "faceRoad": true
+          },
+          {
+            "distance": "cottage_alpha",
+            "min": 6,
+            "max": 18,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 3
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "cottage_charlie",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "third aerodrome crew cottage",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "cottage",
+          "floors": 2,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "along": "lanes",
+            "offset": [
+              2,
+              6
+            ],
+            "side": "left",
+            "faceRoad": true
+          },
+          {
+            "distance": "cottage_bravo",
+            "min": 6,
+            "max": 18,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 3
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "cottage_delta",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "fourth aerodrome crew cottage",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "cottage",
+          "floors": 2,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "along": "lanes",
+            "offset": [
+              2,
+              6
+            ],
+            "side": "left",
+            "faceRoad": true
+          },
+          {
+            "distance": "cottage_charlie",
+            "min": 6,
+            "max": 18,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 3
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "moored_airship_and_mast",
+        "kind": "generator",
+        "generator": "authored:moored_airship_and_mast",
+        "label": "great silver rigid airship moored to its mooring mast above the hangars",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            35,
+            46,
+            75
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "distance": "apron",
+            "min": 20,
+            "max": 80,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "tags": [
+          "landmark"
+        ]
+      },
+      {
+        "id": "hangar_east",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "eastern flight hangar",
+        "params": {
+          "prop": "hangar",
+          "zone": "center",
+          "jitter": 0.1
+        }
+      },
+      {
+        "id": "hangar_west",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "western maintenance hangar",
+        "params": {
+          "prop": "hangar",
+          "zone": "center",
+          "jitter": 0.12
+        }
+      },
+      {
+        "id": "biplane_flightline",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "vintage biplanes lined up on the airfield",
+        "params": {
+          "program": "vintage_biplane",
+          "count": 4,
+          "area": {
+            "zone": "northwest"
+          },
+          "spacing": 18,
+          "maxSlope": 15,
+          "avoidTags": [
+            "road",
+            "structure",
+            "plaza"
+          ],
+          "face": {
+            "toward": "apron"
+          }
+        }
+      },
+      {
+        "id": "field_windsock",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "airfield windsock and signal mast",
+        "params": {
+          "prop": "flagpole",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "apron_bench",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "benches outside the terminal",
+        "params": {
+          "prop": "bench",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "fuel_cart",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "ground service trolley on the apron",
+        "params": {
+          "prop": "cart",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "the lane connecting the crew cottages, terminal, and hangars",
+        "params": {
+          "anchors": [
+            "apron",
+            "terminal_building",
+            "#tag:house"
+          ],
+          "pattern": "ribbon",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 16
+        }
+      },
+      {
+        "id": "shelterbelt_woods",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "windbreak tree line along the perimeter of the plain",
+        "params": {
+          "area": {
+            "zone": "southwest"
+          },
+          "density": 0.16,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 25,
+          "elevation": [
+            1,
+            50
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.5,
+            "flowers": 0.08,
+            "deadwood": 0.02
+          },
+          "species": [
+            {
+              "id": "plain_oak",
+              "weight": 3,
+              "shape": "oak_round"
+            },
+            {
+              "id": "screen_birch",
+              "weight": 2,
+              "shape": "birch_slim"
+            }
+          ]
+        }
+      },
+      {
+        "id": "open_plain_scatter",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse occasional trees across the grassy plain",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.01,
+          "spacing": 6,
+          "clumping": 0.3,
+          "maxSlope": 28,
+          "elevation": [
+            1,
+            60
+          ],
+          "edgeFalloff": 10,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.45,
+            "flowers": 0.1,
+            "deadwood": 0.01
+          },
+          "species": [
+            {
+              "id": "meadow_oak",
+              "weight": 1,
+              "shape": "oak_round"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "programs": {
+    "moored_airship_and_mast": {
+      "mode": "landmark",
+      "envelope": [
+        35,
+        46,
+        75
+      ],
+      "sourceHash": "b3:6ff4bb5645a44a199da08ef858e728b18118940a03d52829f34d9e2fee8f36a1",
+      "outputHash": "b3:8f5d530ecbfbd72ba9a7f89a4131fbed81a75819943ee8c243c6c71b3e7d2519",
+      "conforms": false,
+      "conformHash": "b3:27ffd4689e524a3a26cf5af04b370529e0d3367b8aa825b21093fd2a4bbd0e17",
+      "source": "export const envelope = [35, 46, 75];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const SEAT_Y = 4;\n\n  // Palette extraction from world theme\n  const stonePri = api.theme?.stone?.primary || \"minecraft:stone_bricks\";\n  const stoneAcc = api.theme?.stone?.accent || \"minecraft:chiseled_stone_bricks\";\n  const stoneWall = api.theme?.stone?.wall || \"minecraft:stone_brick_wall\";\n  const stoneSlab = api.theme?.stone?.slab || \"minecraft:stone_brick_slab\";\n  const groundPlinth = api.theme?.ground?.plinth || \"minecraft:smooth_stone\";\n  const groundPave = api.theme?.ground?.pavement || \"minecraft:cobblestone\";\n  const woodPlanks = api.theme?.wood?.planks || \"minecraft:spruce_planks\";\n  const woodFence = api.theme?.wood?.fence || \"minecraft:spruce_fence\";\n  const woodTrapdoor = api.theme?.wood?.trapdoor || \"minecraft:spruce_trapdoor\";\n\n  // Silver rigid airship & steel duralumin blocks\n  const hullSkin = \"minecraft:light_gray_concrete\";\n  const hullRib = \"minecraft:polished_andesite\";\n  const hullStripe = \"minecraft:red_concrete\";\n  const ironLattice = \"minecraft:iron_bars\";\n  const ironBlock = \"minecraft:iron_block\";\n  const glassBlock = \"minecraft:tinted_glass\";\n  const lightBeacon = \"minecraft:sea_lantern\";\n  const chainY = \"minecraft:chain[axis=y]\";\n  const chainZ = \"minecraft:chain[axis=z]\";\n\n  // Safe placement helper\n  function set(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      api.set(x, y, z, block);\n    }\n  }\n\n  // Foundation helper respecting terrain height\n  function fillFoundation(x, z, topLocalY, block) {\n    const gh = api.heightAt(x, z);\n    const bottomY = Math.max(0, SEAT_Y + gh);\n    const topY = Math.max(bottomY, topLocalY);\n    for (let y = topY; y >= bottomY; y--) {\n      set(x, y, z, block);\n    }\n    // Solid sub-base down to envelope floor if ground drops\n    for (let y = bottomY - 1; y >= 0; y--) {\n      set(x, y, z, groundPlinth);\n    }\n  }\n\n  // ==========================================\n  // 1. MOORING MAST & WINCH BASE\n  // ==========================================\n  const mastX = 17;\n  const mastZ = 12;\n\n  // Ground apron & approach pathway\n  for (let x = 11; x <= 23; x++) {\n    for (let z = 6; z <= 18; z++) {\n      fillFoundation(x, z, SEAT_Y, groundPave);\n    }\n  }\n  for (let x = 16; x <= 18; x++) {\n    for (let z = 0; z <= 5; z++) {\n      fillFoundation(x, z, SEAT_Y, groundPave);\n    }\n  }\n\n  // 4 Main Concrete Footings\n  const pierCoords = [\n    [12, 7], [22, 7],\n    [12, 17], [22, 17]\n  ];\n  for (const [px, pz] of pierCoords) {\n    for (let dx = -1; dx <= 1; dx++) {\n      for (let dz = -1; dz <= 1; dz++) {\n        fillFoundation(px + dx, pz + dz, SEAT_Y + 2, groundPlinth);\n      }\n    }\n    set(px, SEAT_Y + 3, pz, stoneAcc);\n  }\n\n  // Winch & Control House at Mast Base (Y: SEAT_Y to SEAT_Y + 5)\n  for (let x = 15; x <= 19; x++) {\n    for (let z = 10; z <= 14; z++) {\n      fillFoundation(x, z, SEAT_Y, groundPlinth);\n      for (let y = SEAT_Y + 1; y <= SEAT_Y + 5; y++) {\n        const isWall = (x === 15 || x === 19 || z === 10 || z === 14);\n        if (isWall) {\n          if (z === 10 && x === 17 && (y === SEAT_Y + 1 || y === SEAT_Y + 2)) {\n            // Doorway left open for interior compiler fitout\n            continue;\n          }\n          if ((x === 15 || x === 19) && z === 12 && y === SEAT_Y + 2) {\n            set(x, y, z, glassBlock);\n          } else {\n            set(x, y, z, stonePri);\n          }\n        } else if (y === SEAT_Y + 5) {\n          set(x, y, z, stonePri);\n        }\n      }\n    }\n  }\n\n  // Tapered Steel Lattice Mast Legs (Y: 6 to 28)\n  for (let y = 6; y <= 28; y++) {\n    const u = (y - 6) / 22.0;\n    const off = 5.0 - u * 3.2; // 5.0 at base -> 1.8 at top\n\n    const corners = [\n      [Math.round(mastX - off), Math.round(mastZ - off)],\n      [Math.round(mastX + off), Math.round(mastZ - off)],\n      [Math.round(mastX - off), Math.round(mastZ + off)],\n      [Math.round(mastX + off), Math.round(mastZ + off)],\n    ];\n\n    for (const [cx, cz] of corners) {\n      set(cx, y, cz, y % 3 === 0 ? ironBlock : hullRib);\n    }\n\n    // Horizontal tie frames every 4 blocks\n    if (y % 4 === 0) {\n      const minX = Math.round(mastX - off);\n      const maxX = Math.round(mastX + off);\n      const minZ = Math.round(mastZ - off);\n      const maxZ = Math.round(mastZ + off);\n      for (let x = minX; x <= maxX; x++) {\n        set(x, y, minZ, ironLattice);\n        set(x, y, maxZ, ironLattice);\n      }\n      for (let z = minZ; z <= maxZ; z++) {\n        set(minX, y, z, ironLattice);\n        set(maxX, y, z, ironLattice);\n      }\n    }\n\n    // Central elevator / ladder tube\n    set(mastX, y, mastZ, ironLattice);\n    set(mastX, y, mastZ - 1, \"minecraft:ladder[facing=south]\");\n  }\n\n  // Lower & Middle Service Platforms\n  for (const platY of [14, 22]) {\n    const r = platY === 14 ? 3 : 2;\n    for (let dx = -r; dx <= r; dx++) {\n      for (let dz = -r; dz <= r; dz++) {\n        const px = mastX + dx;\n        const pz = mastZ + dz;\n        set(px, platY, pz, hullRib);\n        if (Math.abs(dx) === r || Math.abs(dz) === r) {\n          set(px, platY + 1, pz, ironLattice);\n        }\n      }\n    }\n  }\n\n  // Mast Head & Mooring Deck (Y: 29 to 34)\n  for (let dx = -3; dx <= 3; dx++) {\n    for (let dz = -3; dz <= 3; dz++) {\n      if (Math.abs(dx) + Math.abs(dz) <= 5) {\n        set(mastX + dx, 29, mastZ + dz, ironBlock);\n        if (Math.abs(dx) + Math.abs(dz) === 5 || Math.abs(dx) === 3 || Math.abs(dz) === 3) {\n          set(mastX + dx, 30, mastZ + dz, ironLattice);\n        }\n      }\n    }\n  }\n\n  // Mooring Control Cupola (Y: 30 to 33)\n  for (let x = 15; x <= 19; x++) {\n    for (let z = 10; z <= 14; z++) {\n      for (let y = 30; y <= 33; y++) {\n        const isPerim = (x === 15 || x === 19 || z === 10 || z === 14);\n        if (isPerim) {\n          set(x, y, z, y === 31 || y === 32 ? glassBlock : ironBlock);\n        } else if (y === 33) {\n          set(x, y, z, hullRib);\n        }\n      }\n    }\n  }\n\n  // Mast Top Beacon & Aerial\n  for (let y = 34; y <= 36; y++) {\n    set(mastX, y, mastZ, stoneWall);\n  }\n  set(mastX, 37, mastZ, lightBeacon);\n\n  // Mooring Arm / Gangway Spindle (Connecting Mast to Airship Nose at Z = 16)\n  for (let z = 13; z <= 16; z++) {\n    for (let x = 16; x <= 18; x++) {\n      set(x, 31, z, ironBlock); // gangway floor\n      set(x, 32, z, x === 17 ? \"minecraft:air\" : ironLattice); // sides\n      set(x, 33, z, ironBlock); // roof\n    }\n    set(mastX, 32, z, ironBlock); // heavy central spindle core\n  }\n\n  // Mooring Guyline Anchors on Ground\n  const guyAnchors = [\n    [17, 2], [6, 12], [28, 12]\n  ];\n  for (const [gx, gz] of guyAnchors) {\n    for (let dx = -1; dx <= 1; dx++) {\n      for (let dz = -1; dz <= 1; dz++) {\n        fillFoundation(gx + dx, gz + dz, SEAT_Y + 1, stonePri);\n      }\n    }\n    set(gx, SEAT_Y + 2, gz, stoneAcc);\n    // Guyline chains angling up to mast\n    for (let step = 1; step <= 8; step++) {\n      const cy = Math.round(SEAT_Y + 2 + (22 - (SEAT_Y + 2)) * (step / 8.0));\n      const cx = Math.round(gx + (mastX - gx) * (step / 8.0));\n      const cz = Math.round(gz + (mastZ - gz) * (step / 8.0));\n      set(cx, cy, cz, chainY);\n    }\n  }\n\n  // ==========================================\n  // 2. RIGID AIRSHIP HULL\n  // ==========================================\n  const shipY0 = 32;\n  const shipZStart = 16;\n  const shipZEnd = 68;\n  const shipLen = shipZEnd - shipZStart;\n\n  // Streamlined teardrop radius profile function\n  function getHullRadius(z) {\n    if (z <= shipZStart || z >= shipZEnd) return 1.0;\n    const t = (z - shipZStart) / shipLen;\n    // Asymmetric aerodynamic profile: max diameter around 42% of length\n    const r = 8.3 * (2.02 * Math.pow(t, 0.42) * Math.pow(1.0 - t, 0.52));\n    return Math.max(1.0, r);\n  }\n\n  for (let z = shipZStart; z <= shipZEnd; z++) {\n    const R = getHullRadius(z);\n    const isRib = (z % 5 === 0);\n    const isBulkhead = (z % 10 === 0 && z > 20 && z < 64);\n    const minX = Math.floor(mastX - R - 1);\n    const maxX = Math.ceil(mastX + R + 1);\n    const minY = Math.floor(shipY0 - R - 1);\n    const maxY = Math.ceil(shipY0 + R + 1);\n\n    for (let x = minX; x <= maxX; x++) {\n      for (let y = minY; y <= maxY; y++) {\n        const dx = x - mastX;\n        const dy = y - shipY0;\n        const dist = Math.sqrt(dx * dx + dy * dy);\n\n        if (dist <= R) {\n          const isOuterSkin = (dist >= R - 1.15);\n\n          if (isOuterSkin) {\n            // Hull skin detailing\n            if (Math.abs(dy) <= 0.6) {\n              // Equatorial livery stripe\n              set(x, y, z, hullStripe);\n            } else if (isRib || Math.abs(dx) <= 0.6 || Math.abs(dy) <= 0.6 || Math.abs(Math.abs(dx) - Math.abs(dy)) <= 0.5) {\n              // Longitudinal stringers & transverse frame ribs\n              set(x, y, z, hullRib);\n            } else {\n              set(x, y, z, hullSkin);\n            }\n          } else if (isBulkhead) {\n            // Internal wire bracing / bulkheads with central passage\n            if (dist > 1.8) {\n              set(x, y, z, ironLattice);\n            }\n          }\n\n          // Interior Keel Catwalk along belly\n          const keelY = Math.floor(shipY0 - R + 1.2);\n          if (y === keelY && Math.abs(dx) <= 1 && z >= 18 && z <= 64) {\n            set(x, y, z, woodPlanks);\n          }\n          if (y === keelY + 1 && Math.abs(dx) === 1 && z >= 18 && z <= 64) {\n            set(x, y, z, woodFence);\n          }\n        }\n      }\n    }\n  }\n\n  // Mooring Nose Cone Cap (Z = 16)\n  for (let dx = -1; dx <= 1; dx++) {\n    for (let dy = -1; dy <= 1; dy++) {\n      set(mastX + dx, shipY0 + dy, shipZStart, ironBlock);\n    }\n  }\n\n  // Tail Cone Tip (Z = 68 to 70)\n  set(mastX, shipY0, 69, hullRib);\n  set(mastX, shipY0, 70, lightBeacon); // White stern navigation light\n\n  // ==========================================\n  // 3. CRUCIFORM EMPENNAGE (TAIL FINS)\n  // ==========================================\n  for (let z = 52; z <= 68; z++) {\n    const u = (z - 52) / 16.0;\n    const finHeight = u * 5.8;\n    const R = getHullRadius(z);\n    const isRudder = (z >= 63);\n\n    // Top Vertical Fin\n    const topFinMinY = Math.floor(shipY0 + R - 0.8);\n    const topFinMaxY = Math.floor(shipY0 + R + finHeight);\n    for (let y = topFinMinY; y <= topFinMaxY; y++) {\n      set(mastX, y, z, isRudder ? hullStripe : hullSkin);\n      // Leading/trailing edge reinforcement\n      if (y === topFinMaxY || z === 52 || z === 68) {\n        set(mastX, y, z, hullRib);\n      }\n    }\n\n    // Bottom Vertical Fin\n    const btmFinMinY = Math.floor(shipY0 - R - finHeight);\n    const btmFinMaxY = Math.ceil(shipY0 - R + 0.8);\n    for (let y = btmFinMinY; y <= btmFinMaxY; y++) {\n      set(mastX, y, z, isRudder ? hullStripe : hullSkin);\n      if (y === btmFinMinY || z === 52 || z === 68) {\n        set(mastX, y, z, hullRib);\n      }\n    }\n\n    // Port Horizontal Fin (West / -X)\n    const portFinMinX = Math.floor(mastX - R - finHeight);\n    const portFinMaxX = Math.ceil(mastX - R + 0.8);\n    for (let x = portFinMinX; x <= portFinMaxX; x++) {\n      set(x, shipY0, z, isRudder ? hullStripe : hullSkin);\n      if (x === portFinMinX || z === 52 || z === 68) {\n        set(x, shipY0, z, hullRib);\n      }\n    }\n\n    // Starboard Horizontal Fin (East / +X)\n    const stbdFinMinX = Math.floor(mastX + R - 0.8);\n    const stbdFinMaxX = Math.ceil(mastX + R + finHeight);\n    for (let x = stbdFinMinX; x <= stbdFinMaxX; x++) {\n      set(x, shipY0, z, isRudder ? hullStripe : hullSkin);\n      if (x === stbdFinMaxX || z === 52 || z === 68) {\n        set(x, shipY0, z, hullRib);\n      }\n    }\n  }\n\n  // Navigation lights on fin tips\n  set(mastX, 42, 68, lightBeacon); // Top fin white beacon\n  set(6, shipY0, 68, \"minecraft:red_concrete\"); // Port red light\n  set(28, shipY0, 68, \"minecraft:emerald_block\"); // Starboard green light\n\n  // ==========================================\n  // 4. CONTROL GONDOLA (UNDERSLUNG BRIDGE)\n  // ==========================================\n  // Forward bottom at Z = 24 to 33, Y = 20 to 24\n  for (let z = 24; z <= 33; z++) {\n    for (let x = 15; x <= 19; x++) {\n      // Floor at Y = 20\n      set(x, 20, z, hullRib);\n\n      for (let y = 21; y <= 24; y++) {\n        const isNose = (z === 24);\n        const isTail = (z === 33);\n        const isWall = (x === 15 || x === 19 || isNose || isTail);\n\n        if (y === 24) {\n          // Roof attaches firmly into hull belly\n          set(x, y, z, ironBlock);\n        } else if (isWall) {\n          if (isNose || (y === 22 && (x === 15 || x === 19) && z <= 30)) {\n            // Panoramic bridge windows\n            set(x, y, z, glassBlock);\n          } else {\n            set(x, y, z, hullRib);\n          }\n        }\n      }\n    }\n  }\n\n  // Access ladder connecting Gondola to Keel Walkway\n  for (let y = 21; y <= 26; y++) {\n    set(mastX, y, 32, \"minecraft:ladder[facing=south]\");\n  }\n\n  // ==========================================\n  // 5. ENGINE POWER CARS (NACELLES)\n  // ==========================================\n  const nacelles = [\n    { x: 10, y: 25, z: 41, side: \"port\" },\n    { x: 24, y: 25, z: 41, side: \"stbd\" },\n    { x: 11, y: 24, z: 52, side: \"port\" },\n    { x: 23, y: 24, z: 52, side: \"stbd\" }\n  ];\n\n  for (const nac of nacelles) {\n    // 3x3x5 streamlined streamlined car body\n    for (let z = nac.z - 2; z <= nac.z + 2; z++) {\n      for (let dx = -1; dx <= 1; dx++) {\n        for (let dy = -1; dy <= 1; dy++) {\n          const nx = nac.x + dx;\n          const ny = nac.y + dy;\n          if (z === nac.z - 2) {\n            // Radiator / intake front\n            set(nx, ny, z, ironLattice);\n          } else if (z === nac.z + 2) {\n            // Tail cone\n            set(nx, ny, z, dx === 0 && dy === 0 ? ironBlock : hullRib);\n          } else {\n            set(nx, ny, z, (dx === 0 && dy === 0) ? ironBlock : hullRib);\n          }\n        }\n      }\n    }\n\n    // Pusher Propeller at aft of nacelle (z = nac.z + 3)\n    const propZ = nac.z + 3;\n    set(nac.x, nac.y, propZ, ironBlock);\n    set(nac.x, nac.y + 1, propZ, woodTrapdoor);\n    set(nac.x, nac.y - 1, propZ, woodTrapdoor);\n    set(nac.x + 1, nac.y, propZ, woodTrapdoor);\n    set(nac.x - 1, nac.y, propZ, woodTrapdoor);\n\n    // Structural Struts anchoring nacelle to airship hull\n    const dir = nac.side === \"port\" ? 1 : -1;\n    for (let step = 1; step <= 3; step++) {\n      set(nac.x + dir * step, nac.y + step, nac.z, ironLattice);\n      set(nac.x + dir * step, nac.y + step, nac.z - 1, ironLattice);\n    }\n  }\n\n  // ==========================================\n  // 6. RESULT DECLARATION\n  // ==========================================\n  return {\n    name: \"Moored Rigid Airship and Mooring Mast\",\n    seatY: SEAT_Y,\n    anchors: {\n      front: [17, SEAT_Y, 0],\n      door: [17, SEAT_Y, 10],\n      mast_top: [17, 30, 12],\n      gondola: [17, 21, 24]\n    },\n    interiors: [\n      {\n        min: [16, SEAT_Y + 1, 11],\n        max: [18, SEAT_Y + 4, 13],\n        kind: \"quarters\"\n      },\n      {\n        min: [16, 21, 25],\n        max: [18, 23, 31],\n        kind: \"bridge\"\n      },\n      {\n        min: [16, 25, 34],\n        max: [18, 27, 44],\n        kind: \"hall\"\n      }\n    ]\n  };\n}"
+    },
+    "vintage_biplane": {
+      "mode": "plugin",
+      "envelope": [
+        15,
+        12,
+        15
+      ],
+      "sourceHash": "b3:14e0f7963c002e3829e55eee6115261eb093de1275e3629c950ba9e531b630e0",
+      "outputHash": "b3:33d4934afbf9a38db22c9fb2ff8f3b47db871be11a93b9d6fc09893221e0169c",
+      "conforms": false,
+      "conformHash": "b3:b30363b9c3262293156df0c4392e6f3554bba7b6fd3b5d34dff7fbfdfaac7b7a",
+      "source": "export const envelope = [15, 12, 15];\n\nexport default function build(api) {\n  const blocks = new Map();\n\n  function set(x, y, z, block) {\n    if (x >= 0 && x < 15 && y >= 0 && y < 12 && z >= 0 && z < 15) {\n      blocks.set(`${x},${y},${z}`, { x, y, z, block });\n    }\n  }\n\n  // Theme fallbacks for world-aligned carpentry and stone\n  const themeWood = api.theme?.wood?.planks || \"minecraft:oak_planks\";\n  const themeFence = api.theme?.wood?.fence || \"minecraft:oak_fence\";\n  const themeStairs = api.theme?.wood?.stairs || \"minecraft:oak_stairs\";\n  const themeSlab = api.theme?.wood?.slab || \"minecraft:oak_slab\";\n  const themePlinth = api.theme?.ground?.plinth || \"minecraft:stone_bricks\";\n\n  // 5 Distinct Interwar Aviation Liveries (Plugin Variation)\n  const variantIndex = (api.instance.index + Math.floor(api.random() * 5)) % 5;\n\n  const liveries = [\n    // Variant 0: RAF Tiger Moth Flight Trainer (Trainer Yellow & Polished Aluminum)\n    {\n      name: \"raf_trainer\",\n      body: \"minecraft:yellow_terracotta\",\n      trim: \"minecraft:yellow_concrete\",\n      wingCore: \"minecraft:yellow_terracotta\",\n      wingLeading: \"minecraft:birch_stairs\",\n      wingTrailing: \"minecraft:birch_slab\",\n      wingTip: \"minecraft:birch_stairs\",\n      cowl: \"minecraft:iron_block\",\n      cowlAccent: \"minecraft:polished_andesite\",\n      strut: \"minecraft:birch_fence\",\n      propWood: \"minecraft:dark_oak_planks\",\n      propSlab: \"minecraft:dark_oak_slab\",\n      insigniaA: \"minecraft:blue_concrete\",\n      insigniaB: \"minecraft:red_concrete\",\n      engineType: \"inline\",\n      propStyle: \"vertical\",\n      accessory: \"ladder\"\n    },\n    // Variant 1: Civilian Aerobatics & Air-Racer (Crimson Red & Cream Birch)\n    {\n      name: \"barnstormer\",\n      body: \"minecraft:red_terracotta\",\n      trim: \"minecraft:red_concrete\",\n      wingCore: \"minecraft:red_terracotta\",\n      wingLeading: \"minecraft:oak_stairs\",\n      wingTrailing: \"minecraft:birch_slab\",\n      wingTip: \"minecraft:oak_stairs\",\n      cowl: \"minecraft:polished_andesite\",\n      cowlAccent: \"minecraft:smooth_stone\",\n      strut: \"minecraft:oak_fence\",\n      propWood: \"minecraft:spruce_planks\",\n      propSlab: \"minecraft:spruce_slab\",\n      insigniaA: \"minecraft:birch_planks\",\n      insigniaB: \"minecraft:yellow_concrete\",\n      engineType: \"radial\",\n      propStyle: \"four_blade\",\n      accessory: \"fuel_cart\"\n    },\n    // Variant 2: Royal Navy Fleet Scout (Deep Sea Blue & Silver Sandstone)\n    {\n      name: \"navy_scout\",\n      body: \"minecraft:blue_terracotta\",\n      trim: \"minecraft:light_gray_concrete\",\n      wingCore: \"minecraft:smooth_sandstone\",\n      wingLeading: \"minecraft:smooth_sandstone_stairs\",\n      wingTrailing: \"minecraft:smooth_sandstone_slab\",\n      wingTip: \"minecraft:smooth_sandstone_stairs\",\n      cowl: \"minecraft:iron_block\",\n      cowlAccent: \"minecraft:smooth_stone\",\n      strut: \"minecraft:spruce_fence\",\n      propWood: \"minecraft:iron_block\",\n      propSlab: \"minecraft:smooth_stone_slab\",\n      insigniaA: \"minecraft:white_concrete\",\n      insigniaB: \"minecraft:blue_concrete\",\n      engineType: \"radial\",\n      propStyle: \"horizontal\",\n      accessory: \"tie_downs\"\n    },\n    // Variant 3: British Racing Green Courier & Air Mail Plane\n    {\n      name: \"postal_courier\",\n      body: \"minecraft:green_terracotta\",\n      trim: \"minecraft:yellow_terracotta\",\n      wingCore: \"minecraft:spruce_planks\",\n      wingLeading: \"minecraft:spruce_stairs\",\n      wingTrailing: \"minecraft:spruce_slab\",\n      wingTip: \"minecraft:spruce_stairs\",\n      cowl: \"minecraft:polished_deepslate\",\n      cowlAccent: \"minecraft:iron_block\",\n      strut: \"minecraft:dark_oak_fence\",\n      propWood: \"minecraft:dark_oak_planks\",\n      propSlab: \"minecraft:dark_oak_slab\",\n      insigniaA: \"minecraft:yellow_concrete\",\n      insigniaB: \"minecraft:black_concrete\",\n      engineType: \"inline_twin\",\n      propStyle: \"diagonal\",\n      accessory: \"cargo_dolly\"\n    },\n    // Variant 4: Doped Linen Pioneer Reconnaissance Biplane\n    {\n      name: \"canvas_pioneer\",\n      body: \"minecraft:smooth_sandstone\",\n      trim: \"minecraft:stripped_birch_wood\",\n      wingCore: \"minecraft:birch_planks\",\n      wingLeading: \"minecraft:birch_stairs\",\n      wingTrailing: \"minecraft:birch_slab\",\n      wingTip: \"minecraft:birch_stairs\",\n      cowl: \"minecraft:smooth_stone\",\n      cowlAccent: \"minecraft:polished_andesite\",\n      strut: \"minecraft:spruce_fence\",\n      propWood: \"minecraft:oak_planks\",\n      propSlab: \"minecraft:oak_slab\",\n      insigniaA: \"minecraft:red_concrete\",\n      insigniaB: \"minecraft:blue_concrete\",\n      engineType: \"radial_spoked\",\n      propStyle: \"vertical\",\n      accessory: \"starter_trolley\"\n    }\n  ];\n\n  const livery = liveries[variantIndex];\n  const seatY = 2; // Node-local Y meeting flat ground\n\n  // -------------------------------------------------------------\n  // 1. FUSELAGE STRUCTURE (Z = 1 to 13, centered at X = 7)\n  // -------------------------------------------------------------\n\n  // Cowl & Engine Nose (Z = 1..2)\n  for (let x = 6; x <= 8; x++) {\n    for (let y = 4; y <= 6; y++) {\n      for (let z = 1; z <= 2; z++) {\n        const isCore = (x === 7 && y === 5);\n        set(x, y, z, isCore ? livery.cowlAccent : livery.cowl);\n      }\n    }\n  }\n\n  // Engine detailing (Radial rocker covers or inline exhaust stubs)\n  if (livery.engineType === \"radial\" || livery.engineType === \"radial_spoked\") {\n    set(7, 5, 1, \"minecraft:polished_basalt[axis=z]\");\n    set(6, 5, 1, \"minecraft:iron_bars\");\n    set(8, 5, 1, \"minecraft:iron_bars\");\n    set(7, 6, 1, \"minecraft:iron_bars\");\n    set(7, 4, 1, \"minecraft:iron_bars\");\n  } else {\n    // Inline engine side exhaust stacks\n    set(5, 5, 2, \"minecraft:hopper\");\n    set(9, 5, 2, \"minecraft:hopper\");\n    set(5, 5, 3, \"minecraft:hopper\");\n    set(9, 5, 3, \"minecraft:hopper\");\n  }\n\n  // Front deck & Firewall (Z = 3)\n  for (let x = 6; x <= 8; x++) {\n    set(x, 4, 3, livery.body);\n    set(x, 5, 3, livery.body);\n    set(x, 6, 3, livery.trim);\n  }\n  set(7, 6, 3, \"minecraft:smooth_stone_slab[type=bottom]\");\n\n  // Cockpit & Center Fuselage (Z = 4 to 7)\n  for (let z = 4; z <= 7; z++) {\n    // Floor & belly (solid wing spar bridge)\n    for (let x = 6; x <= 8; x++) {\n      set(x, 4, z, livery.body);\n    }\n    // Fuselage walls\n    set(6, 5, z, livery.body);\n    set(8, 5, z, livery.body);\n\n    // Deck & Coaming\n    set(6, 6, z, livery.trim);\n    set(8, 6, z, livery.trim);\n  }\n\n  // Cockpit Interior\n  set(7, 5, 4, \"minecraft:polished_blackstone\"); // Instrument panel\n  set(7, 6, 4, \"minecraft:glass_pane\"); // Windscreen\n  set(7, 5, 5, \"minecraft:dark_oak_stairs[facing=south,half=bottom]\"); // Front seat\n  set(7, 5, 6, \"minecraft:dark_oak_stairs[facing=south,half=bottom]\"); // Pilot seat\n  set(7, 6, 7, \"minecraft:dark_oak_stairs[facing=south,half=bottom]\"); // Padded headrest\n  set(7, 5, 7, livery.body);\n\n  // Rear Fuselage (Tail Boom: Z = 8 to 11)\n  for (let z = 8; z <= 10; z++) {\n    for (let x = 6; x <= 8; x++) {\n      set(x, 4, z, livery.body);\n      set(x, 5, z, livery.body);\n    }\n    set(7, 6, z, livery.trim); // Turtledeck ridge\n  }\n\n  // Tapering to Tail Cone (Z = 11 to 13)\n  for (let z = 11; z <= 13; z++) {\n    set(7, 4, z, livery.body);\n    set(7, 5, z, livery.body);\n  }\n\n  // -------------------------------------------------------------\n  // 2. LOWER WING (Y = 4, Z = 4 to 6, Span X = 1 to 13)\n  // -------------------------------------------------------------\n  for (let x = 1; x <= 13; x++) {\n    // Wing core\n    set(x, 4, 5, livery.wingCore);\n\n    // Leading edge\n    set(x, 4, 4, `${livery.wingLeading}[facing=north,half=bottom]`);\n\n    // Trailing edge\n    set(x, 4, 6, `${livery.wingTrailing}[type=bottom]`);\n  }\n  // Wingtips rounded edges\n  set(1, 4, 5, `${livery.wingTip}[facing=west,half=bottom]`);\n  set(13, 4, 5, `${livery.wingTip}[facing=east,half=bottom]`);\n  set(1, 4, 4, `${livery.wingTip}[facing=north,half=bottom]`);\n  set(13, 4, 4, `${livery.wingTip}[facing=north,half=bottom]`);\n\n  // Pilot step plate on left wing root\n  set(5, 4, 6, \"minecraft:polished_andesite_slab[type=bottom]\");\n\n  // -------------------------------------------------------------\n  // 3. UPPER WING (Y = 7, Z = 3 to 5, Span X = 0 to 14, Staggered Forward)\n  // -------------------------------------------------------------\n  for (let x = 0; x <= 14; x++) {\n    // Main wing chord\n    set(x, 7, 4, livery.wingCore);\n\n    // Aerodynamic leading edge\n    set(x, 7, 3, `${livery.wingLeading}[facing=north,half=bottom]`);\n\n    // Trailing edge\n    set(x, 7, 5, `${livery.wingTrailing}[type=bottom]`);\n  }\n\n  // Rounded upper wingtips\n  set(0, 7, 4, `${livery.wingTip}[facing=west,half=bottom]`);\n  set(14, 7, 4, `${livery.wingTip}[facing=east,half=bottom]`);\n  set(0, 7, 3, `${livery.wingTip}[facing=north,half=bottom]`);\n  set(14, 7, 3, `${livery.wingTip}[facing=north,half=bottom]`);\n\n  // Navigation lights on upper wingtips\n  set(0, 7, 3, \"minecraft:red_stained_glass\"); // Port (Red)\n  set(14, 7, 3, \"minecraft:emerald_block\"); // Starboard (Green)\n\n  // Upper Wing Insignia / Cockades\n  set(2, 7, 4, livery.insigniaA);\n  set(3, 7, 4, livery.insigniaB);\n  set(11, 7, 4, livery.insigniaB);\n  set(12, 7, 4, livery.insigniaA);\n\n  // Center Upper Wing Fuel Gravity Tank & Cutout\n  set(7, 7, 4, livery.cowlAccent);\n  set(7, 8, 4, \"minecraft:polished_andesite_slab[type=bottom]\"); // Fuel filler cap\n  // Cockpit visibility cutout at (7, 7, 5) remains open air\n\n  // -------------------------------------------------------------\n  // 4. STRUTS & RIGGING\n  // -------------------------------------------------------------\n  // Center Cabane Struts (Connecting fuselage shoulders to upper wing)\n  set(6, 6, 4, livery.strut);\n  set(8, 6, 4, livery.strut);\n\n  // Interplane Struts (Left wing: X = 3, Right wing: X = 11)\n  for (let y = 5; y <= 6; y++) {\n    // Left forward & aft struts\n    set(3, y, 4, livery.strut);\n    set(3, y, 5, livery.strut);\n    // Right forward & aft struts\n    set(11, y, 4, livery.strut);\n    set(11, y, 5, livery.strut);\n  }\n\n  // Diagonal Flying Wires / Bracing\n  set(4, 5, 4, \"minecraft:iron_bars\");\n  set(10, 5, 4, \"minecraft:iron_bars\");\n  set(2, 6, 4, \"minecraft:iron_bars\");\n  set(12, 6, 4, \"minecraft:iron_bars\");\n\n  // -------------------------------------------------------------\n  // 5. TAIL ASSEMBLY (Empennage)\n  // -------------------------------------------------------------\n  // Horizontal Stabilizer & Elevators (Y = 5, Z = 11 to 13, X = 4 to 10)\n  for (let x = 4; x <= 10; x++) {\n    set(x, 5, 11, `${livery.wingLeading}[facing=north,half=bottom]`);\n    set(x, 5, 12, livery.wingCore);\n    set(x, 5, 13, `${livery.wingTrailing}[type=bottom]`);\n  }\n\n  // Vertical Fin & Rudder (X = 7, Z = 10 to 13, Y = 6 to 10)\n  set(7, 6, 10, `${livery.wingLeading}[facing=north,half=bottom]`); // Dorsal fin fillet\n  set(7, 6, 11, livery.trim);\n  set(7, 7, 11, `${livery.wingLeading}[facing=north,half=bottom]`);\n\n  for (let y = 6; y <= 9; y++) {\n    set(7, y, 12, livery.trim); // Rudder post\n    set(7, y, 13, livery.insigniaA); // Rudder fabric\n  }\n  set(7, 9, 12, `${livery.wingLeading}[facing=north,half=bottom]`);\n  set(7, 10, 13, livery.insigniaB); // Rudder tip\n\n  // Antenna Mast & Aerial Wire\n  set(7, 9, 4, \"minecraft:iron_bars\"); // Upper wing mast\n  set(7, 9, 5, \"minecraft:chain[axis=z]\");\n  set(7, 9, 7, \"minecraft:chain[axis=z]\");\n  set(7, 9, 9, \"minecraft:chain[axis=z]\");\n  set(7, 10, 11, \"minecraft:chain[axis=z]\");\n  set(7, 10, 12, \"minecraft:iron_bars\"); // Connects to tail fin\n\n  // -------------------------------------------------------------\n  // 6. PROPELLER & NOSE SPINNER (Z = 0, Centered at [7, 5, 0])\n  // -------------------------------------------------------------\n  set(7, 5, 0, livery.cowlAccent); // Spinner hub dome\n\n  if (livery.propStyle === \"vertical\" || livery.propStyle === \"radial_spoked\") {\n    set(7, 4, 0, livery.propWood);\n    set(7, 3, 0, `${livery.propSlab}[type=bottom]`);\n    set(7, 6, 0, livery.propWood);\n    set(7, 7, 0, `${livery.propSlab}[type=bottom]`);\n  } else if (livery.propStyle === \"horizontal\") {\n    set(6, 5, 0, livery.propWood);\n    set(5, 5, 0, `${livery.propSlab}[type=bottom]`);\n    set(8, 5, 0, livery.propWood);\n    set(9, 5, 0, `${livery.propSlab}[type=bottom]`);\n  } else if (livery.propStyle === \"four_blade\") {\n    set(7, 4, 0, livery.propWood);\n    set(7, 3, 0, `${livery.propSlab}[type=bottom]`);\n    set(7, 6, 0, livery.propWood);\n    set(7, 7, 0, `${livery.propSlab}[type=bottom]`);\n    set(6, 5, 0, livery.propWood);\n    set(5, 5, 0, `${livery.propSlab}[type=bottom]`);\n    set(8, 5, 0, livery.propWood);\n    set(9, 5, 0, `${livery.propSlab}[type=bottom]`);\n  } else {\n    // Diagonal 45-degree prop\n    set(6, 4, 0, livery.propWood);\n    set(5, 3, 0, `${livery.propSlab}[type=bottom]`);\n    set(8, 6, 0, livery.propWood);\n    set(9, 7, 0, `${livery.propSlab}[type=bottom]`);\n  }\n\n  // -------------------------------------------------------------\n  // 7. LANDING GEAR & CHOCKS (Seat plane Y = 2)\n  // -------------------------------------------------------------\n  // Main Axle Beam (Y = 3, Z = 4, X = 6 to 8)\n  for (let x = 6; x <= 8; x++) {\n    set(x, 3, 4, \"minecraft:polished_andesite\");\n  }\n\n  // Left Main Wheel (X = 5, Z = 4..5, Y = 2..3)\n  set(5, 2, 4, \"minecraft:black_concrete\");\n  set(5, 2, 5, \"minecraft:black_concrete\");\n  set(5, 3, 4, \"minecraft:black_concrete\");\n  set(5, 3, 5, \"minecraft:black_concrete\");\n  set(4, 3, 4, \"minecraft:polished_andesite_slab[type=bottom]\"); // Hub cap\n\n  // Right Main Wheel (X = 9, Z = 4..5, Y = 2..3)\n  set(9, 2, 4, \"minecraft:black_concrete\");\n  set(9, 2, 5, \"minecraft:black_concrete\");\n  set(9, 3, 4, \"minecraft:black_concrete\");\n  set(9, 3, 5, \"minecraft:black_concrete\");\n  set(10, 3, 4, \"minecraft:polished_andesite_slab[type=bottom]\"); // Hub cap\n\n  // V-Struts (Connecting fuselage belly at Y = 4 to wheels/axle at Y = 3)\n  set(5, 4, 4, \"minecraft:iron_bars\");\n  set(5, 4, 5, \"minecraft:iron_bars\");\n  set(9, 4, 4, \"minecraft:iron_bars\");\n  set(9, 4, 5, \"minecraft:iron_bars\");\n  set(6, 3, 3, \"minecraft:iron_bars\");\n  set(8, 3, 3, \"minecraft:iron_bars\");\n\n  // Wheel Chocks (Y = 2)\n  set(5, 2, 3, \"minecraft:oak_stairs[facing=south,half=bottom]\");\n  set(5, 2, 6, \"minecraft:oak_stairs[facing=north,half=bottom]\");\n  set(9, 2, 3, \"minecraft:oak_stairs[facing=south,half=bottom]\");\n  set(9, 2, 6, \"minecraft:oak_stairs[facing=north,half=bottom]\");\n\n  // Tail Skid / Tail Wheel (Y = 2 to 3, Z = 12..13)\n  set(7, 3, 12, \"minecraft:spruce_fence\");\n  set(7, 2, 13, \"minecraft:dark_oak_stairs[facing=south,half=bottom]\");\n\n  // -------------------------------------------------------------\n  // 8. FLIGHT LINE ACCESSORIES (Connected solid diorama gear)\n  // -------------------------------------------------------------\n  if (livery.accessory === \"ladder\") {\n    // Mechanic's wooden boarding ladder at left wing root\n    set(4, 2, 6, themeStairs ? `${themeStairs}[facing=north,half=bottom]` : \"minecraft:oak_stairs[facing=north,half=bottom]\");\n    set(4, 3, 6, themeWood);\n    set(4, 4, 6, themeSlab ? `${themeSlab}[type=bottom]` : \"minecraft:oak_slab[type=bottom]\");\n    set(4, 2, 5, \"minecraft:red_terracotta\"); // Metal toolbox\n    set(7, 2, 2, \"minecraft:polished_andesite_slab[type=bottom]\"); // Engine drip tray\n  } else if (livery.accessory === \"fuel_cart\") {\n    // Mobile fuel drum cart on right side\n    set(10, 2, 6, \"minecraft:iron_block\");\n    set(10, 3, 6, \"minecraft:blast_furnace[facing=north]\");\n    set(10, 2, 7, \"minecraft:iron_block\");\n    set(10, 3, 7, \"minecraft:hopper\");\n    set(9, 4, 6, \"minecraft:chain[axis=y]\"); // Fueling hose up to wing tank\n    set(8, 5, 5, \"minecraft:chain[axis=z]\");\n    set(7, 6, 4, \"minecraft:chain[axis=y]\");\n  } else if (livery.accessory === \"tie_downs\") {\n    // Wingtip ground tie-downs with iron anchor stakes\n    set(1, 3, 4, \"minecraft:chain[axis=y]\");\n    set(1, 2, 4, \"minecraft:iron_bars\");\n    set(13, 3, 4, \"minecraft:chain[axis=y]\");\n    set(13, 2, 4, \"minecraft:iron_bars\");\n    set(4, 2, 5, \"minecraft:brown_wool\"); // Pilot flight bag\n  } else if (livery.accessory === \"cargo_dolly\") {\n    // Air-mail cargo crates beside lower wing\n    set(10, 2, 5, themeWood);\n    set(10, 3, 5, \"minecraft:barrel[facing=up]\");\n    set(10, 2, 6, themeWood);\n    set(10, 2, 4, \"minecraft:spruce_slab[type=bottom]\");\n  } else {\n    // Ground starter battery trolley at the nose\n    set(7, 2, 1, \"minecraft:iron_block\");\n    set(7, 2, 0, \"minecraft:lightning_rod[facing=up]\");\n    set(4, 2, 4, \"minecraft:cauldron\"); // Oil barrel\n    set(4, 3, 4, \"minecraft:hopper\");\n  }\n\n  // -------------------------------------------------------------\n  // 9. GROUND CONFORMITY (Rule 6: Follow real terrain)\n  // -------------------------------------------------------------\n  const groundColumns = [\n    // Left wheel & chocks\n    [5, 3], [5, 4], [5, 5], [5, 6],\n    // Right wheel & chocks\n    [9, 3], [9, 4], [9, 5], [9, 6],\n    // Tail skid\n    [7, 12], [7, 13],\n    // Left service accessories\n    [4, 4], [4, 5], [4, 6], [1, 4],\n    // Right service accessories\n    [10, 4], [10, 5], [10, 6], [10, 7], [13, 4],\n    // Nose accessories\n    [7, 0], [7, 1], [7, 2]\n  ];\n\n  for (const [gx, gz] of groundColumns) {\n    const terrainH = Math.round(api.heightAt(gx, gz));\n    const targetGroundY = seatY + terrainH;\n\n    // Ground falls away (downhill / slope / shore) -> extend legs/skirt down\n    if (targetGroundY < seatY) {\n      const bottomY = Math.max(0, targetGroundY);\n      for (let y = seatY - 1; y >= bottomY; y--) {\n        let soleBlock = themePlinth;\n        if (gx === 5 || gx === 9) {\n          soleBlock = \"minecraft:black_concrete\"; // Tire extension\n        } else if (gx === 1 || gx === 13) {\n          soleBlock = \"minecraft:iron_bars\"; // Tie down stake\n        } else if (gz >= 12) {\n          soleBlock = themeWood; // Wooden skid base\n        }\n        set(gx, y, gz, soleBlock);\n      }\n    }\n    // Ground rises above seat plane -> extend foot up to terrain\n    else if (targetGroundY > seatY) {\n      const topY = Math.min(11, targetGroundY);\n      for (let y = seatY; y <= topY; y++) {\n        if (!blocks.has(`${gx},${y},${gz}`)) {\n          set(gx, y, gz, themePlinth);\n        }\n      }\n    }\n  }\n\n  // -------------------------------------------------------------\n  // 10. EMIT VOXELS TO API\n  // -------------------------------------------------------------\n  for (const voxel of blocks.values()) {\n    api.set(voxel.x, voxel.y, voxel.z, voxel.block);\n  }\n\n  return {\n    name: \"vintage_biplane\",\n    seatY: 2,\n    anchors: {\n      front: [7, 5, 0],       // Nose propeller tip facing North\n      cockpit: [7, 5, 6],     // Pilot cockpit seat\n      fuel_port: [7, 8, 4]    // Gravity fuel tank on upper wing\n    }\n  };\n}"
+    }
+  }
+}

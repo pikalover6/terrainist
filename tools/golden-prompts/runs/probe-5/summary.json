@@ -1,0 +1,958 @@
+{
+  "label": "probe-5",
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "intentPrepass": true,
+  "source": "terrainist generate (full pipeline: intent, authoring, programs, compile-feedback rounds, emit)",
+  "kits": {
+    "settlement": {
+      "path": "docs/kits/settlement-author.md",
+      "sha256": "2480a249dcf93d4d9937abd773a825b22ef2c2ae3150354d208c3cf09ebcb328",
+      "bytes": 286371,
+      "envelopeLiterals": [
+        "11x11x9",
+        "11x14x9",
+        "11x8x9",
+        "120x120",
+        "13x10x11",
+        "13x11x13",
+        "13x11x9",
+        "13x16x13",
+        "13x9x11",
+        "140x120",
+        "140x24x92",
+        "15x17x21",
+        "16x52x14",
+        "180x160",
+        "18x18",
+        "18x44x15",
+        "200x180",
+        "21x76x19",
+        "21x78x19",
+        "220x200",
+        "22x22",
+        "25x22x19",
+        "288x288",
+        "30x30",
+        "440x400",
+        "512x512",
+        "5x4",
+        "7x19x7",
+        "8x8x8",
+        "96x16x72",
+        "96x80",
+        "9x11x9",
+        "9x12x9",
+        "9x8x8",
+        "9x8x9"
+      ]
+    },
+    "terrain": {
+      "path": "docs/kits/terrain-author.md",
+      "sha256": "0adfac8d77042820afec8495258497e5cd44aa2a4391a585ac942518717f331b",
+      "bytes": 41193,
+      "envelopeLiterals": [
+        "384x384",
+        "512x512"
+      ]
+    }
+  },
+  "totals": {
+    "ok": 6,
+    "attempts": 7,
+    "oneShot": 5,
+    "promptTokens": 1329590,
+    "completionTokens": 221914,
+    "cost": 0.9147,
+    "generateCost": 1.3939
+  },
+  "records": [
+    {
+      "id": "probe_forge_hold",
+      "family": "probe",
+      "kit": "settlement",
+      "prompt": "A dwarven forge-hold cut into the flank of a volcano: a great gate in the cliff face, terraces of stone halls climbing beside it, forges glowing at the edge of a lava channel, and a stair down toward the magma.",
+      "seed": 931,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "era": "medieval",
+        "wealth": 0.75,
+        "decline": 0.05,
+        "formality": 0.8,
+        "climate": {
+          "temperature": 0.9,
+          "humidity": -0.8,
+          "snow": "never"
+        },
+        "character": {
+          "label": "dwarven volcanic forge-hold",
+          "formPacks": [
+            "dwarven_volcanic"
+          ],
+          "archetypes": {
+            "prefer": [
+              "great_forge",
+              "monumental_hold_gate",
+              "pillared_deep_hall",
+              "smelter",
+              "gem_cuttery",
+              "stone_brewhouse",
+              "rune_forge"
+            ],
+            "forbid": [
+              "townhouse",
+              "terraced_row",
+              "shop_row",
+              "cottage"
+            ]
+          },
+          "urbanForm": "hillside",
+          "ground": "stepped",
+          "motifs": {
+            "massing": "stepped",
+            "roofType": "flat"
+          }
+        },
+        "tokens": {
+          "terrain": "a steep volcanic flank with an active lava channel and magma basin below",
+          "icons": "a monumental hold gate carved into the basalt cliff face; glowing forges lining the edge of the lava channel; grand stairs descending toward the magma; terraced stone halls climbing the rock slope"
+        }
+      },
+      "attempts": 1,
+      "diagnostics": [],
+      "usage": {
+        "promptTokens": 295794,
+        "completionTokens": 63031,
+        "cost": 0.2291
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 20,
+        "maxDepth": 2,
+        "generators": [
+          "authored:magma_sluice_forge",
+          "authored:monumental_dwarf_gate",
+          "building.grammar@0",
+          "infra.entry@0",
+          "prop.place@0",
+          "road.network@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "armory",
+          "barracks",
+          "blast_furnace_works",
+          "brewery",
+          "castle",
+          "cottage",
+          "foundry",
+          "gatehouse",
+          "hall",
+          "inn",
+          "smithy"
+        ],
+        "archetypesInCatalog": 11,
+        "formPacks": [
+          "dwarven_volcanic"
+        ],
+        "props": [
+          "statue_plinth"
+        ],
+        "species": [],
+        "envelopes": [
+          "512x512",
+          "26x26",
+          "15x16x17",
+          "13x13x15",
+          "13x12x17",
+          "13x11x15",
+          "13x11x9",
+          "11x10x11"
+        ],
+        "constraints": 26,
+        "constraintKinds": [
+          "adjacent_to",
+          "at",
+          "beside",
+          "blend",
+          "connected",
+          "distance",
+          "facing",
+          "gap",
+          "max",
+          "min",
+          "offset",
+          "oreChamber",
+          "reference",
+          "style",
+          "terrain_conform",
+          "via",
+          "zone"
+        ],
+        "constraintsWithStrength": 9,
+        "hardConstraints": 0,
+        "forests": 0,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 6,
+        "programReferences": 2,
+        "conformsTrue": 0,
+        "labels": 19,
+        "eras": [
+          "medieval"
+        ],
+        "bytes": 49614
+      },
+      "wallMs": 638000,
+      "generate": {
+        "exit": "0",
+        "modelRuns": 3,
+        "feedbackRounds": 2,
+        "programs": [
+          "ok monumental_dwarf_gate [landmark] 1 attempt(s), 37138 tokens ($0.0646), 26 warning(s)",
+          "ok magma_sluice_forge [landmark] 1 attempt(s), 27916 tokens ($0.0473), 3 warning(s)"
+        ],
+        "programCost": 0.1119,
+        "totalCost": 0.341,
+        "compiled": true,
+        "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p5/out/probe_forge_hold/out/dwarven_forge_hold",
+        "finalDiagnostics": {
+          "LOAM-T208": 1,
+          "LOAM-W520": 1,
+          "LOAM-W483": 1,
+          "LOAM-W524": 1,
+          "LOAM-I497": 1,
+          "LOAM-T233": 2,
+          "LOAM-T341": 2,
+          "LOAM-W470": 1
+        },
+        "crash": [],
+        "docName": "dwarven_forge_hold.loam.json"
+      }
+    },
+    {
+      "id": "probe_bridge_quarters",
+      "family": "probe",
+      "kit": "settlement",
+      "prompt": "Two quarters of one city on opposite banks of a wide river — the old walled quarter on the east bank, the new gridded quarter on the west — joined by a single great stone bridge with houses built along its length.",
+      "seed": 932,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "era": "medieval",
+        "climate": {
+          "temperature": 0.2,
+          "humidity": 0.3
+        },
+        "tokens": {
+          "terrain": "a wide river flowing north-south dividing the land into an east bank and a west bank",
+          "region_east_bank_old_quarter": "era medieval, wealth 0.5, decline 0.2, formality 0.25, urbanForm grown, courtyards 0.6, fortification walled, materialTheme temperate_timber; archetypes prefer [townhouse, tavern, church, warehouse, watchtower]; crowded medieval walled town with winding alleys and courtyards",
+          "region_west_bank_new_quarter": "era renaissance, wealth 0.7, decline 0.05, formality 0.85, urbanForm grid, courtyards 0.2, materialTheme temperate_timber; archetypes prefer [townhouse, manor, market_cross, civic_hall]; planned regular grid expansion with straight streets and broad blocks",
+          "icons": "a great multi-arch stone bridge spanning the wide river between east and west quarters, lined on both sides with multi-storey timber-framed inhabited bridge-houses and shops overhanging the water"
+        }
+      },
+      "attempts": 2,
+      "diagnostics": [],
+      "usage": {
+        "promptTokens": 377229,
+        "completionTokens": 58176,
+        "cost": 0.2505
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 24,
+        "maxDepth": 2,
+        "generators": [
+          "authored:inhabited_stone_bridge",
+          "building.grammar@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "apothecary",
+          "bakery",
+          "bank",
+          "brewery",
+          "church",
+          "cooperage",
+          "cottage",
+          "general_store",
+          "guildhall",
+          "inn",
+          "manor_house",
+          "market_stall",
+          "shop_row",
+          "smithy",
+          "tavern",
+          "town_hall",
+          "townhouse",
+          "warehouse"
+        ],
+        "archetypesInCatalog": 18,
+        "formPacks": [],
+        "props": [
+          "buoy",
+          "cart",
+          "covered_wagon",
+          "pier",
+          "rowboat"
+        ],
+        "species": [
+          "country_birch",
+          "country_oak",
+          "round_oak",
+          "spreading_oak",
+          "willow"
+        ],
+        "envelopes": [
+          "512x512",
+          "144x144",
+          "15x17x21",
+          "13x14x17",
+          "144x144",
+          "13x16x13",
+          "13x13x13"
+        ],
+        "constraints": 7,
+        "constraintKinds": [
+          "at",
+          "blend",
+          "distance",
+          "max",
+          "min",
+          "reference",
+          "terrain_conform",
+          "zone"
+        ],
+        "constraintsWithStrength": 2,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 4,
+        "programReferences": 1,
+        "conformsTrue": 0,
+        "labels": 21,
+        "eras": [
+          "medieval",
+          "medieval",
+          "renaissance"
+        ],
+        "bytes": 41496
+      },
+      "wallMs": 490000,
+      "generate": {
+        "exit": "0",
+        "modelRuns": 3,
+        "feedbackRounds": 2,
+        "programs": [
+          "ok inhabited_stone_bridge [landmark] 1 attempt(s), 36427 tokens ($0.0631), 27 warning(s)"
+        ],
+        "programCost": 0.0631,
+        "totalCost": 0.3136,
+        "compiled": true,
+        "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p5/out/probe_bridge_quarters/out/river_bridge_city",
+        "finalDiagnostics": {
+          "LOAM-I502": 1,
+          "LOAM-T208": 1,
+          "LOAM-W520": 1,
+          "LOAM-T242": 2,
+          "LOAM-I512": 2,
+          "LOAM-T224": 2,
+          "LOAM-I412": 2,
+          "LOAM-I463": 5,
+          "LOAM-T228": 3,
+          "LOAM-I497": 1,
+          "LOAM-W413": 1,
+          "LOAM-W470": 1,
+          "LOAM-T107": 1
+        },
+        "crash": [],
+        "docName": "river_bridge_city.loam.json"
+      }
+    },
+    {
+      "id": "probe_viking_winter",
+      "family": "probe",
+      "kit": "settlement",
+      "prompt": "A Viking-age trading town on a frozen fjord in midwinter: longhouses under deep snow, longships hauled up onto the ice, and a great mead hall with a carved gable standing above the rest.",
+      "seed": 933,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "era": "viking",
+        "wealth": 0.5,
+        "decline": 0,
+        "formality": 0.2,
+        "climate": {
+          "biome": "minecraft:snowy_taiga",
+          "temperature": -0.8,
+          "humidity": 0.2,
+          "snow": "always"
+        },
+        "character": {
+          "label": "viking fjord trading town in winter",
+          "materialTheme": "boreal_pine",
+          "formPacks": [
+            "nordic_viking"
+          ],
+          "archetypes": {
+            "prefer": [
+              "mead_hall",
+              "longhouse",
+              "turf_house",
+              "longship_shed",
+              "heathen_hof",
+              "smokehouse"
+            ],
+            "forbid": [
+              "townhouse",
+              "terraced_row",
+              "shop_row",
+              "office",
+              "apartment_block"
+            ]
+          },
+          "props": {
+            "prefer": [
+              "rune_stone",
+              "boat_burial",
+              "fish_drying_rack",
+              "fire_pit"
+            ]
+          },
+          "motifs": {
+            "roofType": "gable"
+          },
+          "urbanForm": "grown"
+        },
+        "tokens": {
+          "terrain": "a steep-sided fjord with frozen water and sea ice; settlement along the shore below snowy slopes",
+          "icons": "great mead hall with a carved gable on the high ground; longhouses under heavy snow; longships hauled out and beached on the ice and shoreline"
+        }
+      },
+      "attempts": 1,
+      "diagnostics": [],
+      "usage": {
+        "promptTokens": 272261,
+        "completionTokens": 33922,
+        "cost": 0.1657
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 30,
+        "maxDepth": 2,
+        "generators": [
+          "authored:great_mead_hall",
+          "building.grammar@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "butchery",
+          "cottage",
+          "hall",
+          "inn",
+          "longhouse",
+          "smithy",
+          "sod_house",
+          "warehouse"
+        ],
+        "archetypesInCatalog": 8,
+        "formPacks": [
+          "nordic_viking"
+        ],
+        "props": [
+          "cairn",
+          "log_pile",
+          "longship",
+          "market_barrow",
+          "pier",
+          "rowboat",
+          "well_head"
+        ],
+        "species": [
+          "columnar_larch",
+          "highland_pine",
+          "highland_spruce",
+          "squat_spruce",
+          "tall_spruce"
+        ],
+        "envelopes": [
+          "512x512",
+          "26x26",
+          "19x25x29",
+          "11x13x21",
+          "11x12x19",
+          "11x12x17",
+          "9x13x9",
+          "9x13x9",
+          "9x9x9",
+          "11x11x13",
+          "13x10x11"
+        ],
+        "constraints": 30,
+        "constraintKinds": [
+          "adjacent_to",
+          "at",
+          "blend",
+          "distance",
+          "facing",
+          "gap",
+          "max",
+          "min",
+          "reference",
+          "terrain_conform"
+        ],
+        "constraintsWithStrength": 15,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 8,
+        "programReferences": 1,
+        "conformsTrue": 0,
+        "labels": 28,
+        "eras": [
+          "viking"
+        ],
+        "bytes": 25897
+      },
+      "wallMs": 298000,
+      "generate": {
+        "exit": "0",
+        "modelRuns": 3,
+        "feedbackRounds": 2,
+        "programs": [
+          "ok great_mead_hall [landmark] 1 attempt(s), 22602 tokens ($0.0373), 4 warning(s)"
+        ],
+        "programCost": 0.0373,
+        "totalCost": 0.203,
+        "compiled": true,
+        "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p5/out/probe_viking_winter/out/frost_fjord_town",
+        "finalDiagnostics": {
+          "LOAM-W330": 1,
+          "LOAM-I502": 1,
+          "LOAM-T208": 1,
+          "LOAM-E404": 1,
+          "LOAM-E406": 1,
+          "LOAM-W520": 1,
+          "LOAM-W483": 1,
+          "LOAM-W485": 1,
+          "LOAM-T228": 4,
+          "LOAM-I463": 1,
+          "LOAM-I497": 1,
+          "LOAM-I412": 1,
+          "LOAM-T341": 1,
+          "LOAM-W470": 1,
+          "LOAM-T107": 1
+        },
+        "crash": [],
+        "docName": "frost_fjord_town.loam.json"
+      }
+    },
+    {
+      "id": "probe_dune_sea",
+      "family": "probe",
+      "kit": "terrain",
+      "prompt": "A sea of sand dunes: crescent barchans marching across a stony plain, one dry wadi cutting through them, and a white salt pan at the lowest point — no settlement of any kind.",
+      "seed": 934,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "climate": {
+          "biome": "minecraft:desert",
+          "temperature": 1,
+          "humidity": -1,
+          "snow": "never"
+        },
+        "tokens": {
+          "terrain": "a sea of crescent barchan sand dunes marching across a stony plain, one dry wadi cutting through them, and a white salt pan at the lowest point; no settlement of any kind"
+        }
+      },
+      "attempts": 1,
+      "diagnostics": [],
+      "usage": {
+        "promptTokens": 13486,
+        "completionTokens": 5759,
+        "cost": 0.0159
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 9,
+        "maxDepth": 2,
+        "generators": [
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [],
+        "archetypesInCatalog": 0,
+        "formPacks": [],
+        "props": [],
+        "species": [],
+        "envelopes": [
+          "512x512"
+        ],
+        "constraints": 0,
+        "constraintKinds": [],
+        "constraintsWithStrength": 0,
+        "hardConstraints": 0,
+        "forests": 0,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 0,
+        "programReferences": 0,
+        "conformsTrue": 0,
+        "labels": 7,
+        "eras": [],
+        "bytes": 2971
+      },
+      "wallMs": 43000,
+      "generate": {
+        "exit": "0",
+        "modelRuns": 1,
+        "feedbackRounds": 0,
+        "programs": [],
+        "programCost": 0,
+        "totalCost": 0.0159,
+        "compiled": true,
+        "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p5/out/probe_dune_sea/out/barchan_dune_sea",
+        "finalDiagnostics": {
+          "LOAM-I525": 1
+        },
+        "crash": [],
+        "docName": "barchan_dune_sea.loam.json"
+      }
+    },
+    {
+      "id": "probe_airship_field",
+      "family": "probe",
+      "kit": "settlement",
+      "prompt": "An interwar aerodrome village on a grassy plain: a great silver airship moored to its mooring mast above the hangars, biplanes lined up on the field, a small terminal building and a row of crew cottages along the lane.",
+      "seed": 935,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "era": "modern",
+        "wealth": 0.55,
+        "decline": 0,
+        "formality": 0.45,
+        "climate": {
+          "biome": "minecraft:plains",
+          "temperature": 0.4,
+          "humidity": 0.3,
+          "snow": "never"
+        },
+        "character": {
+          "label": "interwar aerodrome village",
+          "materialTheme": "temperate_timber",
+          "urbanForm": "linear",
+          "archetypes": {
+            "prefer": [
+              "cottage",
+              "warehouse",
+              "watchtower"
+            ]
+          }
+        },
+        "tokens": {
+          "terrain": "a flat, open grassy plain with an expansive grass landing field",
+          "icons": "a giant silver rigid airship moored to a tall steel mooring mast; corrugated iron hangars beside the airfield; a row of biplanes parked along the flight line; a small art deco terminal building with an observation roof; a row of neat crew cottages along a tree-lined lane",
+          "infra": "airfield perimeter lane connecting the crew cottages to the terminal, hangars, and mooring field"
+        }
+      },
+      "attempts": 1,
+      "diagnostics": [],
+      "usage": {
+        "promptTokens": 286356,
+        "completionTokens": 43465,
+        "cost": 0.1889
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 21,
+        "maxDepth": 2,
+        "generators": [
+          "authored:moored_airship_and_mast",
+          "building.grammar@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "scatter.program@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "airport_terminal",
+          "control_tower",
+          "cottage",
+          "watchtower"
+        ],
+        "archetypesInCatalog": 4,
+        "formPacks": [],
+        "props": [
+          "bench",
+          "cart",
+          "flagpole",
+          "hangar"
+        ],
+        "species": [
+          "meadow_oak",
+          "plain_oak",
+          "screen_birch"
+        ],
+        "envelopes": [
+          "512x512",
+          "28x28",
+          "15x13x21",
+          "11x18x11",
+          "11x11x9",
+          "9x8x9",
+          "11x11x9",
+          "9x8x9",
+          "35x46x75"
+        ],
+        "constraints": 23,
+        "constraintKinds": [
+          "adjacent_to",
+          "along",
+          "blend",
+          "distance",
+          "faceRoad",
+          "facing",
+          "gap",
+          "max",
+          "min",
+          "offset",
+          "reference",
+          "side",
+          "terrain_conform",
+          "zone"
+        ],
+        "constraintsWithStrength": 7,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 6,
+        "programReferences": 1,
+        "conformsTrue": 0,
+        "labels": 19,
+        "eras": [
+          "modern"
+        ],
+        "bytes": 43929
+      },
+      "wallMs": 524000,
+      "generate": {
+        "exit": "0",
+        "modelRuns": 3,
+        "feedbackRounds": 1,
+        "programs": [
+          "ok moored_airship_and_mast [landmark] 1 attempt(s), 22306 tokens ($0.0368), 27 warning(s)",
+          "ok vintage_biplane [plugin] 1 attempt(s), 34817 tokens ($0.0603), 10 warning(s)"
+        ],
+        "programCost": 0.0989,
+        "totalCost": 0.2878,
+        "compiled": true,
+        "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p5/out/probe_airship_field/out/aerodrome_village",
+        "finalDiagnostics": {
+          "LOAM-W330": 1,
+          "LOAM-T208": 1,
+          "LOAM-W524": 1,
+          "LOAM-I497": 1,
+          "LOAM-T341": 2,
+          "LOAM-W470": 1
+        },
+        "crash": [],
+        "docName": "aerodrome_village.loam.json"
+      }
+    },
+    {
+      "id": "probe_turtle_village",
+      "family": "probe",
+      "kit": "settlement",
+      "prompt": "A fishing village built on the shell of a colossal sleeping sea turtle beached in a bay: houses on the ridges of its shell, ladders down its flippers to the boats, its head resting on the sand.",
+      "seed": 936,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "era": "medieval",
+        "wealth": 0.35,
+        "decline": 0.1,
+        "formality": 0.1,
+        "climate": {
+          "temperature": 0.6,
+          "humidity": 0.5,
+          "snow": "never"
+        },
+        "character": {
+          "label": "turtle shell fishing village",
+          "materialTheme": "temperate_timber",
+          "urbanForm": "grown",
+          "archetypes": {
+            "prefer": [
+              "cottage",
+              "tavern",
+              "warehouse",
+              "lighthouse",
+              "watchtower"
+            ],
+            "forbid": [
+              "townhouse",
+              "terraced_row",
+              "office",
+              "apartment_block"
+            ]
+          },
+          "motifs": {
+            "roofType": "gable",
+            "massing": "sprawling",
+            "windowRhythm": "sparse"
+          }
+        },
+        "tokens": {
+          "terrain": "a sheltered ocean bay with a sandy beach and open water; a colossal sleeping sea turtle beached at the tide line with its massive head resting on the sand and flippers reaching into the shallows",
+          "icons": "village cottages and shacks clinging to the scutes and ridges of the colossal turtle shell; wooden catwalks and rope ladders hung from the shell flanks and flippers down to moored fishing boats; drying nets and fish racks slung between carapace ridges",
+          "landmark": "the colossal sleeping sea turtle itself, forming the living island and foundation of the village"
+        }
+      },
+      "attempts": 1,
+      "diagnostics": [],
+      "usage": {
+        "promptTokens": 84464,
+        "completionTokens": 17561,
+        "cost": 0.0646
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 32,
+        "maxDepth": 2,
+        "generators": [
+          "authored:colossal_turtle_head",
+          "building.grammar@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "scatter.program@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "cannery",
+          "cottage",
+          "lighthouse",
+          "tavern",
+          "warehouse"
+        ],
+        "archetypesInCatalog": 5,
+        "formPacks": [],
+        "props": [
+          "buoy",
+          "fishing_sloop",
+          "fishing_trawler",
+          "log_pile",
+          "notice_board",
+          "pier",
+          "rowboat",
+          "well_head"
+        ],
+        "species": [
+          "coastal_pine",
+          "gnarled_oak",
+          "scrub_spruce"
+        ],
+        "envelopes": [
+          "512x512",
+          "24x24",
+          "13x11x13",
+          "13x10x11",
+          "9x11x9",
+          "11x11x11",
+          "8x8x8",
+          "9x8x8",
+          "11x11x15",
+          "11x20x11"
+        ],
+        "constraints": 28,
+        "constraintKinds": [
+          "adjacent_to",
+          "at",
+          "blend",
+          "distance",
+          "facing",
+          "gap",
+          "max",
+          "min",
+          "reference",
+          "terrain_conform"
+        ],
+        "constraintsWithStrength": 13,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 8,
+        "programReferences": 1,
+        "conformsTrue": 0,
+        "labels": 29,
+        "eras": [
+          "medieval"
+        ],
+        "bytes": 80568
+      },
+      "wallMs": 606000,
+      "generate": {
+        "exit": "0",
+        "modelRuns": 1,
+        "feedbackRounds": 0,
+        "programs": [
+          "ok colossal_turtle_head [landmark] 1 attempt(s), 28632 tokens ($0.0486), 26 warning(s)",
+          "ok flipper_ladder_rig [plugin] 1 attempt(s), 34705 tokens ($0.0600), 26 warning(s)",
+          "ok fish_drying_scaffold [plugin] 1 attempt(s), 34366 tokens ($0.0594), 3 warning(s)"
+        ],
+        "programCost": 0.168,
+        "totalCost": 0.2326,
+        "compiled": true,
+        "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p5/out/probe_turtle_village/out/turtle_shell_village",
+        "finalDiagnostics": {
+          "LOAM-T208": 1,
+          "LOAM-W524": 1,
+          "LOAM-T228": 1,
+          "LOAM-I463": 1,
+          "LOAM-I497": 1,
+          "LOAM-W337": 2,
+          "LOAM-W470": 1
+        },
+        "crash": [],
+        "docName": "turtle_shell_village.loam.json"
+      }
+    }
+  ]
+}

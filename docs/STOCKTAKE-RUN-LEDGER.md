@@ -7,27 +7,32 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 41 (F31: `W527` fed back with a form-aware
-  hint, the kit's `hillside`/`urbanForm` rows corrected under a green golden
-  gate, montfort re-generated — T4 PASS) is committed. G2 holds three of
-  three.
-- **Next unit:** unit 42 — **G1: the eleven golden fresh at final bytes.**
-  `generate-all.mjs` on `prompts.json` (the golden 11, end to end, ≈$2.6 —
-  the program stage is what the authoring-only runs never paid for), records
-  in `runs/g1`, the icon metric (3-of-3 on every prompt), full-height renders
-  read against T1–T9 per prompt, a verdict record per world
-  (`docs/decks/g1/VERDICT.md` with a row per prompt and the read that backs
-  it), worlds installed for the walk. Pre-register the prediction and the
-  decision rule (a FAIL gets an F-number; a compiler cause is a fix unit and
-  a re-run of that prompt; a model cause is the read's). Spend check: cap
-  $35.00, spent $16.40. Then G6 3×3 and WS-A–D, G4 six probes at final bytes,
-  G7 deck and closing report, `STATUS: DONE`.
-- **Last commit:** f7af267 (unit 40). Convention: this line names the
+- **In flight:** nothing — unit 42 (probe pass 5: four of six pass by read;
+  the turtle on F30's cause; the viking fjord on a new one, F32) is
+  committed.
+- **Next unit:** unit 43 — **F32: frozen water.** In the columns emit, a
+  switch `ICE_ON_FROZEN_WATER` (off): where a water column's surface is at
+  or above the column's snow line (or `climate.snow` is `"always"`), the top
+  water block is written as `ice` and a note `LOAM-I5xx FROZEN_WATER` counts
+  the columns; support rules treat ice as ground for props. Law 5: proven
+  byte-identical off and on for the thirteen (none has a freezing climate —
+  assert it in the attribution), flipped in the same unit, attributed on
+  the viking document (`p5/out/probe_viking_winter`, recompiled: the fjord
+  freezes; render and read). A test on a small freezing fixture. FULL
+  suite. Then unit 44: probe pass 6, six new prompts (G4), ≈ $1.4; then
+  G6 3×3 and WS-A–F against `STOCKTAKE-v0.md` (≈ $1.8); then G1 the
+  eleven golden fresh (≈ $2.6, last, at the final bytes); G7 deck and
+  closing report; `STATUS: DONE`. Spend so far $17.79 of $35.00.
+- **Last commit:** 8298c67 (unit 41). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
-- **Spend:** $16.40 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
+- **Spend:** $17.79 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
 - **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19, D25,
   D32.)
 - **Findings queue (law 1: bugs before anything else):**
+  - F32 — **no frozen water**: a freezing climate has snow and no ice, so a
+    "frozen fjord" is water, a town on it cannot seat (`E406`, 76 of 97
+    footprints below sea level) and the solver pushes it up the mountain
+    (`PROBE-PASS-5` §B). A climate feature gap; unit 43.
   - F31 — **closed (unit 41)**: the hillside form cannot fill a walled city
     (k2: 10 % coverage, `W527`; the lot flag no help) and nothing said so.
     Now the kit's `hillside` and `urbanForm` rows say it (golden gate green,
@@ -54,9 +59,11 @@ running state. The NOW block is rewritten at the end of every turn.
     column): the two-villages fjord, 14 % of its floor wet, up to 31 blocks
     dry. Fixed (unit 30): `LOAM-I502 CARVE_MOSTLY_DRY`, measured along the
     floor samples, below half wet.
-  - F30 — **no seat over water**: a building or market whose pad falls on
-    water has no piles to the bed; the flood-delta author raised two
-    plateaus and built land (`PROBE-PASS-4`). A feature, P8; not a unit.
+  - F30 — **no seat but ground**: a building whose pad falls on water has
+    no piles to the bed (the flood delta, `PROBE-PASS-4`), and one that
+    should stand on a program's surface has no seat there either (the
+    turtle, `PROBE-PASS-5` §C) — both authors made the thing ground. A
+    feature, P8 (widened, unit 42); not a unit.
   - F29 — fixed (unit 34): the lighthouse's `roofPlan` was null — a flat
     roof leaves one course above the eave where the rebuild needs two — and
     every archetype file's private `roofPlan` skipped in silence; the
@@ -121,6 +128,19 @@ running state. The NOW block is rewritten at the end of every turn.
 
 (every fork taken: the reversible default chosen, why, and how to undo it)
 
+- **D88 (unit 42):** F32 is a feature gap and still a fix unit, where F30
+  was a proposal: ice on a water surface is a one-rule change at the
+  columns emit with a clean off-state (no anchor freezes), and the
+  pre-registered rule says a new cause gets its fix and six more probes.
+  F30's widening (a seat on a program) stays a proposal because a seat class
+  is a grammar change, not a rule. The bridge's dry river is not a cause:
+  the note the Run built (`I502`) fired into both rounds and the model did
+  not deepen the carve — the feedback loop's limit, logged for D3's
+  write-up. Undo: n/a.
+- **D87 (unit 42):** the road is reordered G4 → G6 → G1: the eleven golden
+  are the costliest gate (≈ $2.6) and the spec wants them at the final
+  bytes, so they run after every gate that can still move a byte. Undo:
+  n/a (an order).
 - **D86 (unit 41):** both levers were pulled in one unit, the kit and the
   feedback loop, and the kit did the work — the model chose `grown` before
   any compile, so `W527` never fired and its new fix hint was never read.
@@ -725,6 +745,7 @@ running state. The NOW block is rewritten at the end of every turn.
 | 39 | census sweep — one bi14 run, one CLI compile, the FULL suite | 0.00 | 14.96 |
 | 40 | G2 — three worlds generated end to end (`runs/g2`; authoring $0.45, programs $0.19), one $0 probe compile, three installs | 0.65 | 15.61 |
 | 41 | F31 — the golden gate `after-f31` ($0.59) and montfort re-generated (`runs/g2-montfort-f31`, $0.20); one bi14 run, the FULL suite | 0.79 | 16.40 |
+| 42 | probe pass 5 — six new worlds generated end to end (`runs/probe-5`), the icon metric | 1.39 | 17.79 |
 
 ## VERDICTS
 
@@ -945,6 +966,41 @@ re-run ($0.20): `grown` fabric, 67 lots / 6 dropped, 37 buildings, the keep
 a 4 542-block program, `W527` absent, **T4 PASS** by read. Both predictions
 held; the coverage clause by the instrument's silence. World bytes
 identical on the thirteen (`bi/u41` ≡ `bi/u39`).
+
+**Pass 5 — pre-registered (unit 42, 2026-08-25), before any spend.** Six
+new prompts (`tools/golden-prompts/probes-5.json`), none of passes 1–4, one
+per §6 target: `probe_forge_hold` (dwarven_volcanic at 0 %; a hold cut into
+a cliff beside lava), `probe_bridge_quarters` (two quarters of one city on
+two banks, one inhabited bridge), `probe_viking_winter` (nordic_viking at
+0 %; midwinter, a fjord frozen over), `probe_dune_sea` (terrain-only, the
+terrain kit), `probe_airship_field` (an icon that lives in a prop pack —
+`airship`, `zeppelin_mast`, `hangar`, `biplane`), `probe_turtle_village`
+(bespoke: a village on a colossal beached turtle). Through the program stage
+(`generate-all.mjs`, ≈ $1.70 the pass; cap $3.00), `runs/probe-5`, the icon
+metric, full-height renders; the verdict is the read's. **Prediction:** 6 of
+6 generate; icons present 6 of 6; by read ≥ 4 pass; the airship and the
+bridge fail the AND-rule and read as their prompts (a prop-carried icon may
+come back "unmeasured", as the redwoods do); the turtle is the likely fail
+(a program at the water's edge that the village must seat on — F30's cause
+if it is that, and a new one if the seat-on-a-program is the gap); the
+forge-hold's cliff cut is the other risk. **Decision rule** as passes 3–4: a
+failure whose cause is an open F-number or proposal is not a new class; a
+new cause gets an F-number and the next six run after its fix; G4 is met if
+these six surface no new failure class. Road order (D87): G4 → G6 → G1, so
+the eleven golden run last, at the bytes every other gate settled.
+
+| probe | targeted | exercised | failed | cause | promoted? |
+|---|---|---|---|---|---|
+| `probe_airship_field` | an icon in a prop pack | the airship + mast as one program (5 439), four biplanes, hangars | — | pass by read; dominant by rule | no — pass |
+| `probe_forge_hold` | dwarven_volcanic at 0 % | the pack, a gate program (11 281), a forge program, a basalt basin | the hold form (a basin, not a cliff cut) | the model's plan; the gate reads | no — pass |
+| `probe_dune_sea` | terrain-only | barchans as raises, a dry channel, a pan | — | pass by read | no — pass |
+| `probe_bridge_quarters` | two places, one bridge | two forms in one document, an inhabited-bridge program (15 970) | the river 15 % wet (`I502`, fed twice) | the loop's limit, not a cause | no — pass on the icon |
+| `probe_viking_winter` | nordic_viking at 0 %; a frozen fjord | the pack, a mead-hall program; `E406` (no footprint could stand) | the fjord is water; the town on the summit | **F32 — no frozen water** (new) | after F32 |
+| `probe_turtle_village` | bespoke on a program | terrain ridges as the shell, a head program, two programs with no site (`W337`) | no turtle to point to | F30 (no seat but ground), widened | no — F30's |
+
+**Pass 5 — result (unit 42, $1.39):** 6 of 6 generated (5 one-shot); icons
+18 of 18; by read 4 of 6 pass; one new cause (F32). G4 not met; pass 6
+runs after F32.
 
 ## PROPOSALS
 
@@ -1573,3 +1629,12 @@ identical on the thirteen (`bi/u41` ≡ `bi/u39`).
   FULL suite Test Files 350 passed | 1 skipped (351), Tests 5692 passed | 31 skipped (5723). Files: `district.ts`, `feedback.ts` + test, the kit
   (3 files), `runs/after-f31`, `runs/g2-montfort-f31`, two decks, the
   ledger. Spend $0.79.
+- **unit 42 — probe pass 5 (2026-08-25):** six new prompts
+  (`tools/golden-prompts/probes-5.json`), pre-registered, through
+  `terrainist generate` (records `runs/probe-5`, $1.39), the icon metric,
+  full-height renders read (`docs/decks/probes/PROBE-PASS-5-2026-08-25.md`).
+  Four of six pass (airship, forge-hold, dunes, the bridge on its icon);
+  the turtle fails on F30's cause (widened); the viking fjord on a new one,
+  **F32 — no frozen water**. D87 reorders the road G4 → G6 → G1. No
+  compiler code changed. Files: the roster, `runs/probe-5`, the record,
+  the ledger. Spend $1.39.

@@ -1,0 +1,76 @@
+{
+  "id": "probe_dune_sea",
+  "family": "probe",
+  "kit": "terrain",
+  "prompt": "A sea of sand dunes: crescent barchans marching across a stony plain, one dry wadi cutting through them, and a white salt pan at the lowest point — no settlement of any kind.",
+  "seed": 934,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "climate": {
+      "biome": "minecraft:desert",
+      "temperature": 1,
+      "humidity": -1,
+      "snow": "never"
+    },
+    "tokens": {
+      "terrain": "a sea of crescent barchan sand dunes marching across a stony plain, one dry wadi cutting through them, and a white salt pan at the lowest point; no settlement of any kind"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 13486,
+    "completionTokens": 5759,
+    "cost": 0.0159
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 9,
+    "maxDepth": 2,
+    "generators": [
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [],
+    "archetypesInCatalog": 0,
+    "formPacks": [],
+    "props": [],
+    "species": [],
+    "envelopes": [
+      "512x512"
+    ],
+    "constraints": 0,
+    "constraintKinds": [],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 0,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 0,
+    "programReferences": 0,
+    "conformsTrue": 0,
+    "labels": 7,
+    "eras": [],
+    "bytes": 2971
+  },
+  "wallMs": 43000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 1,
+    "feedbackRounds": 0,
+    "programs": [],
+    "programCost": 0,
+    "totalCost": 0.0159,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p5/out/probe_dune_sea/out/barchan_dune_sea",
+    "finalDiagnostics": {
+      "LOAM-I525": 1
+    },
+    "crash": [],
+    "docName": "barchan_dune_sea.loam.json"
+  }
+}

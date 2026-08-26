@@ -1,0 +1,147 @@
+{
+  "id": "probe_bridge_quarters",
+  "family": "probe",
+  "kit": "settlement",
+  "prompt": "Two quarters of one city on opposite banks of a wide river — the old walled quarter on the east bank, the new gridded quarter on the west — joined by a single great stone bridge with houses built along its length.",
+  "seed": 932,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "era": "medieval",
+    "climate": {
+      "temperature": 0.2,
+      "humidity": 0.3
+    },
+    "tokens": {
+      "terrain": "a wide river flowing north-south dividing the land into an east bank and a west bank",
+      "region_east_bank_old_quarter": "era medieval, wealth 0.5, decline 0.2, formality 0.25, urbanForm grown, courtyards 0.6, fortification walled, materialTheme temperate_timber; archetypes prefer [townhouse, tavern, church, warehouse, watchtower]; crowded medieval walled town with winding alleys and courtyards",
+      "region_west_bank_new_quarter": "era renaissance, wealth 0.7, decline 0.05, formality 0.85, urbanForm grid, courtyards 0.2, materialTheme temperate_timber; archetypes prefer [townhouse, manor, market_cross, civic_hall]; planned regular grid expansion with straight streets and broad blocks",
+      "icons": "a great multi-arch stone bridge spanning the wide river between east and west quarters, lined on both sides with multi-storey timber-framed inhabited bridge-houses and shops overhanging the water"
+    }
+  },
+  "attempts": 2,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 377229,
+    "completionTokens": 58176,
+    "cost": 0.2505
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 24,
+    "maxDepth": 2,
+    "generators": [
+      "authored:inhabited_stone_bridge",
+      "building.grammar@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "apothecary",
+      "bakery",
+      "bank",
+      "brewery",
+      "church",
+      "cooperage",
+      "cottage",
+      "general_store",
+      "guildhall",
+      "inn",
+      "manor_house",
+      "market_stall",
+      "shop_row",
+      "smithy",
+      "tavern",
+      "town_hall",
+      "townhouse",
+      "warehouse"
+    ],
+    "archetypesInCatalog": 18,
+    "formPacks": [],
+    "props": [
+      "buoy",
+      "cart",
+      "covered_wagon",
+      "pier",
+      "rowboat"
+    ],
+    "species": [
+      "country_birch",
+      "country_oak",
+      "round_oak",
+      "spreading_oak",
+      "willow"
+    ],
+    "envelopes": [
+      "512x512",
+      "144x144",
+      "15x17x21",
+      "13x14x17",
+      "144x144",
+      "13x16x13",
+      "13x13x13"
+    ],
+    "constraints": 7,
+    "constraintKinds": [
+      "at",
+      "blend",
+      "distance",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform",
+      "zone"
+    ],
+    "constraintsWithStrength": 2,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 4,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 21,
+    "eras": [
+      "medieval",
+      "medieval",
+      "renaissance"
+    ],
+    "bytes": 41496
+  },
+  "wallMs": 490000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 3,
+    "feedbackRounds": 2,
+    "programs": [
+      "ok inhabited_stone_bridge [landmark] 1 attempt(s), 36427 tokens ($0.0631), 27 warning(s)"
+    ],
+    "programCost": 0.0631,
+    "totalCost": 0.3136,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p5/out/probe_bridge_quarters/out/river_bridge_city",
+    "finalDiagnostics": {
+      "LOAM-I502": 1,
+      "LOAM-T208": 1,
+      "LOAM-W520": 1,
+      "LOAM-T242": 2,
+      "LOAM-I512": 2,
+      "LOAM-T224": 2,
+      "LOAM-I412": 2,
+      "LOAM-I463": 5,
+      "LOAM-T228": 3,
+      "LOAM-I497": 1,
+      "LOAM-W413": 1,
+      "LOAM-W470": 1,
+      "LOAM-T107": 1
+    },
+    "crash": [],
+    "docName": "river_bridge_city.loam.json"
+  }
+}

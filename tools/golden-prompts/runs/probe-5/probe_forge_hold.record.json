@@ -1,0 +1,168 @@
+{
+  "id": "probe_forge_hold",
+  "family": "probe",
+  "kit": "settlement",
+  "prompt": "A dwarven forge-hold cut into the flank of a volcano: a great gate in the cliff face, terraces of stone halls climbing beside it, forges glowing at the edge of a lava channel, and a stair down toward the magma.",
+  "seed": 931,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.75,
+    "decline": 0.05,
+    "formality": 0.8,
+    "climate": {
+      "temperature": 0.9,
+      "humidity": -0.8,
+      "snow": "never"
+    },
+    "character": {
+      "label": "dwarven volcanic forge-hold",
+      "formPacks": [
+        "dwarven_volcanic"
+      ],
+      "archetypes": {
+        "prefer": [
+          "great_forge",
+          "monumental_hold_gate",
+          "pillared_deep_hall",
+          "smelter",
+          "gem_cuttery",
+          "stone_brewhouse",
+          "rune_forge"
+        ],
+        "forbid": [
+          "townhouse",
+          "terraced_row",
+          "shop_row",
+          "cottage"
+        ]
+      },
+      "urbanForm": "hillside",
+      "ground": "stepped",
+      "motifs": {
+        "massing": "stepped",
+        "roofType": "flat"
+      }
+    },
+    "tokens": {
+      "terrain": "a steep volcanic flank with an active lava channel and magma basin below",
+      "icons": "a monumental hold gate carved into the basalt cliff face; glowing forges lining the edge of the lava channel; grand stairs descending toward the magma; terraced stone halls climbing the rock slope"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 295794,
+    "completionTokens": 63031,
+    "cost": 0.2291
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 20,
+    "maxDepth": 2,
+    "generators": [
+      "authored:magma_sluice_forge",
+      "authored:monumental_dwarf_gate",
+      "building.grammar@0",
+      "infra.entry@0",
+      "prop.place@0",
+      "road.network@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "armory",
+      "barracks",
+      "blast_furnace_works",
+      "brewery",
+      "castle",
+      "cottage",
+      "foundry",
+      "gatehouse",
+      "hall",
+      "inn",
+      "smithy"
+    ],
+    "archetypesInCatalog": 11,
+    "formPacks": [
+      "dwarven_volcanic"
+    ],
+    "props": [
+      "statue_plinth"
+    ],
+    "species": [],
+    "envelopes": [
+      "512x512",
+      "26x26",
+      "15x16x17",
+      "13x13x15",
+      "13x12x17",
+      "13x11x15",
+      "13x11x9",
+      "11x10x11"
+    ],
+    "constraints": 26,
+    "constraintKinds": [
+      "adjacent_to",
+      "at",
+      "beside",
+      "blend",
+      "connected",
+      "distance",
+      "facing",
+      "gap",
+      "max",
+      "min",
+      "offset",
+      "oreChamber",
+      "reference",
+      "style",
+      "terrain_conform",
+      "via",
+      "zone"
+    ],
+    "constraintsWithStrength": 9,
+    "hardConstraints": 0,
+    "forests": 0,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 6,
+    "programReferences": 2,
+    "conformsTrue": 0,
+    "labels": 19,
+    "eras": [
+      "medieval"
+    ],
+    "bytes": 49614
+  },
+  "wallMs": 638000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 3,
+    "feedbackRounds": 2,
+    "programs": [
+      "ok monumental_dwarf_gate [landmark] 1 attempt(s), 37138 tokens ($0.0646), 26 warning(s)",
+      "ok magma_sluice_forge [landmark] 1 attempt(s), 27916 tokens ($0.0473), 3 warning(s)"
+    ],
+    "programCost": 0.1119,
+    "totalCost": 0.341,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p5/out/probe_forge_hold/out/dwarven_forge_hold",
+    "finalDiagnostics": {
+      "LOAM-T208": 1,
+      "LOAM-W520": 1,
+      "LOAM-W483": 1,
+      "LOAM-W524": 1,
+      "LOAM-I497": 1,
+      "LOAM-T233": 2,
+      "LOAM-T341": 2,
+      "LOAM-W470": 1
+    },
+    "crash": [],
+    "docName": "dwarven_forge_hold.loam.json"
+  }
+}

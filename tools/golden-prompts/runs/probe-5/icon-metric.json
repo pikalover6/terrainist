@@ -1,0 +1,772 @@
+{
+  "run": "probe-5",
+  "scoredAt": "2026-08-26",
+  "thresholds": {
+    "dominantHeight": 1.5,
+    "dominantFootprint": 2
+  },
+  "scores": [
+    {
+      "id": "probe_forge_hold",
+      "icons": [
+        {
+          "id": "great_gate",
+          "dominantRequired": true,
+          "inDocument": [
+            "world.volcanic_terrain.hold_ridge",
+            "world.the_great_gate",
+            "world.hold_lanes",
+            "program:monumental_dwarf_gate",
+            "intent.tokens",
+            "world",
+            "world.volcanic_terrain.hold_terrace_shelf",
+            "world.stone_brewhouse",
+            "world.hold_barracks"
+          ],
+          "inWorld": [
+            "the_great_gate",
+            "program:world.the_great_gate",
+            "marker:world.the_great_gate",
+            "marker:world.the_magma_forge",
+            "hold_barracks",
+            "world.hold_barracks",
+            "marker:hold_ridge.head",
+            "marker:hold_ridge.mouth",
+            "marker:hold_ridge.peak",
+            "marker:hold_terrace_shelf.center",
+            "marker:hold_terrace_shelf.peak",
+            "marker:hold_terrace_shelf.foot"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": true,
+            "by": "the_great_gate",
+            "height": 34,
+            "footprint": 640,
+            "medianHeight": 10,
+            "medianFootprint": 195,
+            "heightRatio": 3.4,
+            "footprintRatio": 3.28,
+            "base": 117,
+            "medianBase": 117,
+            "elevation": 0,
+            "spanRatio": 2.13
+          }
+        },
+        {
+          "id": "forges",
+          "dominantRequired": false,
+          "inDocument": [
+            "world",
+            "world.great_hearth_plaza",
+            "world.the_magma_forge",
+            "world.hold_lanes",
+            "program:magma_sluice_forge",
+            "intent.tokens",
+            "world.volcanic_blast_furnace",
+            "world.gem_cuttery"
+          ],
+          "inWorld": [
+            "the_magma_forge",
+            "program:world.the_magma_forge",
+            "marker:world.the_magma_forge",
+            "volcanic_blast_furnace",
+            "world.volcanic_blast_furnace",
+            "world.gem_cuttery"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "volcano",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.volcanic_terrain.volcano_cone",
+            "world.volcanic_terrain.lava_channel",
+            "world.the_magma_forge",
+            "world.volcanic_blast_furnace",
+            "intent.tokens",
+            "world",
+            "world.volcanic_terrain",
+            "world.magma_descent_stair",
+            "program:magma_sluice_forge",
+            "world.volcanic_terrain.hold_ridge",
+            "world.hold_lanes"
+          ],
+          "inWorld": [
+            "marker:volcano_cone.center",
+            "marker:volcano_cone.peak",
+            "marker:volcano_cone.foot",
+            "marker:volcano_cone.caldera",
+            "marker:lava_channel.head",
+            "marker:lava_channel.mouth",
+            "the_magma_forge",
+            "program:world.the_magma_forge",
+            "marker:world.the_magma_forge"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "buildings-hull",
+        "lots": 6,
+        "blocks": 0,
+        "envelope": 11130,
+        "lotsPer10k": 5.4,
+        "floor": 3,
+        "ok": true
+      },
+      "boxes": {
+        "era": "medieval",
+        "preModern": true,
+        "count": 0,
+        "of": 6,
+        "sample": []
+      },
+      "era": {
+        "era": "medieval",
+        "forbidden": [
+          "townhouse",
+          "terraced_row",
+          "shop_row",
+          "cottage"
+        ],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 0,
+        "diagnostics": 10
+      },
+      "alarms": []
+    },
+    {
+      "id": "probe_bridge_quarters",
+      "icons": [
+        {
+          "id": "bridge",
+          "dominantRequired": true,
+          "inDocument": [
+            "world.the_great_bridge",
+            "world.city_roads",
+            "program:inhabited_stone_bridge",
+            "intent.tokens",
+            "world.west_quay_pier",
+            "world.west_riverboat",
+            "world.east_quay_pier",
+            "world.east_riverboat"
+          ],
+          "inWorld": [
+            "the_great_bridge",
+            "program:world.the_great_bridge",
+            "marker:world.the_great_bridge",
+            "prop:world.west_quay_pier",
+            "prop:world.east_quay_pier"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": true,
+            "by": "the_great_bridge",
+            "height": 28,
+            "footprint": 2240,
+            "medianHeight": 15,
+            "medianFootprint": 169,
+            "heightRatio": 1.87,
+            "footprintRatio": 13.25,
+            "base": 67,
+            "medianBase": 78,
+            "elevation": -11,
+            "spanRatio": 8
+          }
+        },
+        {
+          "id": "old_quarter",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.terrain.east_bank_shelf",
+            "world.old_quarter",
+            "world.old_quarter.old_parish_church",
+            "world.old_quarter.old_guildhall",
+            "intent.tokens"
+          ],
+          "inWorld": [
+            "old_quarter",
+            "old_parish_church",
+            "old_guildhall",
+            "terrace_163_-62",
+            "terrace_96_-33",
+            "terrace_96_-21",
+            "infill_164_-3",
+            "infill_164_6",
+            "infill_176_6",
+            "infill_164_22",
+            "infill_134_43",
+            "infill_137_-63"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "new_quarter",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.terrain.west_bank_shelf",
+            "world.new_quarter",
+            "world.new_quarter.civic_town_hall",
+            "world.new_quarter.merchant_bank",
+            "intent.tokens"
+          ],
+          "inWorld": [
+            "new_quarter",
+            "civic_town_hall",
+            "merchant_bank",
+            "infill_-218_-43",
+            "infill_-112_-43",
+            "infill_-176_-37",
+            "infill_-202_-25",
+            "infill_-157_-23",
+            "infill_-176_-19",
+            "infill_-123_-19",
+            "infill_-218_0",
+            "infill_-202_0"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "districts",
+        "lots": 64,
+        "blocks": 34,
+        "envelope": 41472,
+        "lotsPer10k": 15.4,
+        "floor": 6,
+        "ok": true
+      },
+      "boxes": {
+        "era": "medieval",
+        "preModern": true,
+        "count": 0,
+        "of": 32,
+        "sample": []
+      },
+      "era": {
+        "era": "medieval",
+        "forbidden": [],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 0,
+        "diagnostics": 23
+      },
+      "alarms": []
+    },
+    {
+      "id": "probe_viking_winter",
+      "icons": [
+        {
+          "id": "great_hall",
+          "dominantRequired": true,
+          "inDocument": [
+            "world.terrain.high_promontory",
+            "world.great_hall",
+            "world.lanes",
+            "program:great_mead_hall",
+            "intent.tokens",
+            "world.longhouse_chieftain",
+            "world.longhouse_traders",
+            "world.longhouse_shipwright"
+          ],
+          "inWorld": [
+            "great_hall",
+            "program:world.great_hall",
+            "marker:world.great_hall",
+            "longhouse_chieftain",
+            "longhouse_traders",
+            "longhouse_shipwright",
+            "world.longhouse_chieftain",
+            "world.longhouse_traders",
+            "world.longhouse_shipwright"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": true,
+            "by": "great_hall",
+            "height": 25,
+            "footprint": 551,
+            "medianHeight": 15,
+            "medianFootprint": 143,
+            "heightRatio": 1.67,
+            "footprintRatio": 3.85,
+            "base": 89,
+            "medianBase": 106,
+            "elevation": -17,
+            "spanRatio": 2.23
+          }
+        },
+        {
+          "id": "longships",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.ship_on_ice_one",
+            "world.ship_on_ice_two",
+            "world.hauling_ship",
+            "intent.tokens",
+            "world.longhouse_shipwright",
+            "world.beached_rowboat"
+          ],
+          "inWorld": [
+            "prop:world.ship_on_ice_one",
+            "prop:world.ship_on_ice_two",
+            "prop:world.hauling_ship",
+            "longhouse_shipwright",
+            "world.longhouse_shipwright",
+            "prop:world.beached_rowboat"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "winter",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.market_wharf",
+            "world.turf_house_north",
+            "world.lanes",
+            "world.spruce_forest",
+            "intent.tokens",
+            "world.ship_on_ice_one",
+            "world.ship_on_ice_two",
+            "world.terrain",
+            "world.terrain.fjord_inlet",
+            "world.pier_dock",
+            "world.terrain.fjord_ridge_west",
+            "world.terrain.fjord_ridge_east"
+          ],
+          "inWorld": [
+            "prop:world.ship_on_ice_one",
+            "prop:world.ship_on_ice_two",
+            "marker:fjord_ridge_west.head",
+            "marker:fjord_ridge_west.mouth",
+            "marker:fjord_ridge_west.peak",
+            "marker:fjord_ridge_east.head",
+            "marker:fjord_ridge_east.mouth",
+            "marker:fjord_ridge_east.peak",
+            "marker:fjord_inlet.head",
+            "marker:fjord_inlet.mouth"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "buildings-hull",
+        "lots": 8,
+        "blocks": 0,
+        "envelope": 15660,
+        "lotsPer10k": 5.1,
+        "floor": 3,
+        "ok": true
+      },
+      "boxes": {
+        "era": "viking",
+        "preModern": true,
+        "count": 0,
+        "of": 8,
+        "sample": []
+      },
+      "era": {
+        "era": "viking",
+        "forbidden": [
+          "townhouse",
+          "terraced_row",
+          "shop_row",
+          "office",
+          "apartment_block"
+        ],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 2,
+        "diagnostics": 18
+      },
+      "alarms": []
+    },
+    {
+      "id": "probe_dune_sea",
+      "icons": [
+        {
+          "id": "dunes",
+          "dominantRequired": true,
+          "inDocument": [
+            "world",
+            "world.terrain.barchan_dune_north",
+            "world.terrain.barchan_dune_mid_north",
+            "world.terrain.barchan_dune_mid_south",
+            "world.terrain.barchan_dune_south",
+            "world.terrain.dry_wadi"
+          ],
+          "inWorld": [
+            "marker:barchan_dune_north.head",
+            "marker:barchan_dune_north.mouth",
+            "marker:barchan_dune_north.peak",
+            "marker:barchan_dune_mid_north.head",
+            "marker:barchan_dune_mid_north.mouth",
+            "marker:barchan_dune_mid_north.peak",
+            "marker:barchan_dune_mid_south.head",
+            "marker:barchan_dune_mid_south.mouth",
+            "marker:barchan_dune_mid_south.peak",
+            "marker:barchan_dune_south.head",
+            "marker:barchan_dune_south.mouth",
+            "marker:barchan_dune_south.peak"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": false,
+            "note": "nothing placed to measure"
+          }
+        },
+        {
+          "id": "wadi",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.terrain.dry_wadi",
+            "world.terrain.salt_pan_basin"
+          ],
+          "inWorld": [
+            "marker:dry_wadi.head",
+            "marker:dry_wadi.mouth"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "salt_pan",
+          "dominantRequired": false,
+          "inDocument": [
+            "world",
+            "world.terrain.salt_pan_basin"
+          ],
+          "inWorld": [
+            "marker:salt_pan_basin.center",
+            "marker:salt_pan_basin.peak",
+            "marker:salt_pan_basin.foot",
+            "marker:largest_flat"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "none",
+        "lots": 0,
+        "blocks": 0,
+        "envelope": 0,
+        "lotsPer10k": 0,
+        "floor": 0,
+        "ok": true
+      },
+      "boxes": {
+        "era": "",
+        "preModern": false,
+        "count": 0,
+        "of": 0,
+        "sample": []
+      },
+      "era": {
+        "era": "",
+        "forbidden": [],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 0,
+        "diagnostics": 1
+      },
+      "alarms": [
+        "icon dunes placed but unmeasured (nothing placed to measure)"
+      ]
+    },
+    {
+      "id": "probe_airship_field",
+      "icons": [
+        {
+          "id": "airship",
+          "dominantRequired": true,
+          "inDocument": [
+            "world.moored_airship_and_mast",
+            "program:moored_airship_and_mast",
+            "intent.tokens",
+            "world.field_windsock"
+          ],
+          "inWorld": [
+            "moored_airship_and_mast",
+            "program:world.moored_airship_and_mast",
+            "marker:world.moored_airship_and_mast"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": true,
+            "by": "moored_airship_and_mast",
+            "height": 46,
+            "footprint": 2625,
+            "medianHeight": 12,
+            "medianFootprint": 99,
+            "heightRatio": 3.83,
+            "footprintRatio": 26.52,
+            "base": 71,
+            "medianBase": 71,
+            "elevation": 0,
+            "spanRatio": 6.82
+          }
+        },
+        {
+          "id": "hangars",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.moored_airship_and_mast",
+            "world.hangar_east",
+            "world.hangar_west",
+            "world.lanes",
+            "intent.tokens",
+            "world.biplane_flightline",
+            "program:vintage_biplane",
+            "world.terrain.airfield_shelf",
+            "world.field_windsock",
+            "world.terrain",
+            "world.terminal_building",
+            "world.cottage_alpha"
+          ],
+          "inWorld": [
+            "prop:world.hangar_east",
+            "prop:world.hangar_west",
+            "program:world.biplane_flightline",
+            "marker:world.biplane_flightline",
+            "prop:world.field_windsock",
+            "marker:airfield_shelf.center",
+            "marker:airfield_shelf.peak",
+            "marker:airfield_shelf.foot"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "village",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.cottage_alpha",
+            "world.cottage_bravo",
+            "world.cottage_charlie",
+            "world.cottage_delta",
+            "world.lanes",
+            "intent.tokens",
+            "world.terminal_building",
+            "world.apron_bench",
+            "world.biplane_flightline",
+            "program:vintage_biplane",
+            "world.terrain.airfield_shelf"
+          ],
+          "inWorld": [
+            "cottage_alpha",
+            "cottage_bravo",
+            "cottage_charlie",
+            "cottage_delta",
+            "world.cottage_alpha",
+            "world.cottage_bravo",
+            "world.cottage_charlie",
+            "world.cottage_delta",
+            "terminal_building",
+            "world.terminal_building",
+            "program:world.biplane_flightline",
+            "marker:world.biplane_flightline"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "buildings-hull",
+        "lots": 6,
+        "blocks": 0,
+        "envelope": 8833,
+        "lotsPer10k": 6.8,
+        "floor": 3,
+        "ok": true
+      },
+      "boxes": {
+        "era": "modern",
+        "preModern": false,
+        "count": 0,
+        "of": 6,
+        "sample": []
+      },
+      "era": {
+        "era": "modern",
+        "forbidden": [],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 0,
+        "diagnostics": 7
+      },
+      "alarms": []
+    },
+    {
+      "id": "probe_turtle_village",
+      "icons": [
+        {
+          "id": "turtle",
+          "dominantRequired": true,
+          "inDocument": [
+            "world.terrain.turtle_beached_shelf",
+            "world.terrain.turtle_shell_ridge_north",
+            "world.terrain.turtle_shell_ridge_south",
+            "world.terrain.head_beach_cove",
+            "world.carapace_plaza",
+            "world.turtle_head",
+            "world.shell_lanes",
+            "program:colossal_turtle_head",
+            "intent.tokens",
+            "world.drying_scaffolds",
+            "world.tavern_the_sleeping_shell",
+            "world.shell_ridge_cottage_east"
+          ],
+          "inWorld": [
+            "turtle_head",
+            "program:world.turtle_head",
+            "marker:turtle_beached_shelf.center",
+            "marker:turtle_beached_shelf.peak",
+            "marker:turtle_beached_shelf.foot",
+            "marker:turtle_shell_ridge_north.head",
+            "marker:turtle_shell_ridge_north.mouth",
+            "marker:turtle_shell_ridge_north.peak",
+            "marker:turtle_shell_ridge_south.head",
+            "marker:turtle_shell_ridge_south.mouth",
+            "marker:turtle_shell_ridge_south.peak",
+            "marker:world.turtle_head"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": true,
+            "by": "turtle_head",
+            "height": 22,
+            "footprint": 1292,
+            "medianHeight": 12,
+            "medianFootprint": 121,
+            "heightRatio": 1.83,
+            "footprintRatio": 10.68,
+            "base": 66,
+            "medianBase": 81,
+            "elevation": -15,
+            "spanRatio": 3.45
+          }
+        },
+        {
+          "id": "village",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.tavern_the_sleeping_shell",
+            "world.carapace_fish_store",
+            "world.shell_ridge_cottage_east",
+            "world.shell_ridge_cottage_west",
+            "world.fishermans_shack_north",
+            "world.fishermans_shack_south",
+            "world.carapace_smokehouse",
+            "world.carapace_light",
+            "world.flipper_rigs",
+            "program:flipper_ladder_rig",
+            "intent.tokens",
+            "world.moored_skiff_1"
+          ],
+          "inWorld": [
+            "carapace_smokehouse",
+            "world.carapace_fish_store",
+            "world.carapace_smokehouse",
+            "world.carapace_light",
+            "program:world.flipper_rigs",
+            "prop:world.moored_sloop",
+            "prop:world.bay_fishing_boat"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "bay",
+          "dominantRequired": false,
+          "inDocument": [
+            "world",
+            "world.terrain",
+            "world.terrain.the_bay",
+            "world.turtle_head",
+            "world.flipper_pier_west",
+            "world.flipper_pier_east",
+            "world.bay_fishing_boat",
+            "world.bay_buoy",
+            "world.coastal_ridge_forest",
+            "intent.tokens",
+            "world.terrain.turtle_beached_shelf",
+            "world.terrain.head_beach_cove"
+          ],
+          "inWorld": [
+            "prop:world.bay_fishing_boat",
+            "prop:world.bay_buoy",
+            "marker:the_bay.head",
+            "marker:the_bay.mouth",
+            "marker:turtle_beached_shelf.center",
+            "marker:turtle_beached_shelf.peak",
+            "marker:turtle_beached_shelf.foot",
+            "marker:head_beach_cove.center",
+            "marker:head_beach_cove.peak",
+            "marker:head_beach_cove.foot",
+            "marker:world.turtle_head",
+            "prop:world.moored_skiff_1"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "buildings-hull",
+        "lots": 8,
+        "blocks": 0,
+        "envelope": 13345,
+        "lotsPer10k": 6,
+        "floor": 3,
+        "ok": true
+      },
+      "boxes": {
+        "era": "medieval",
+        "preModern": true,
+        "count": 0,
+        "of": 8,
+        "sample": []
+      },
+      "era": {
+        "era": "medieval",
+        "forbidden": [
+          "townhouse",
+          "terraced_row",
+          "office",
+          "apartment_block"
+        ],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 0,
+        "diagnostics": 8
+      },
+      "alarms": []
+    }
+  ]
+}

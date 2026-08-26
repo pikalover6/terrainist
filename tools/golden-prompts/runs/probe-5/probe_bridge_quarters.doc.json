@@ -1,0 +1,715 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "river_bridge_city",
+    "worldSeed": "932",
+    "prompt": "Two quarters of one city on opposite banks of a wide river — the old walled quarter on the east bank, the new gridded quarter on the west — joined by a single great stone bridge with houses built along its length.",
+    "spawn": {
+      "at": [
+        0.5,
+        0.5
+      ]
+    }
+  },
+  "intent": {
+    "era": "medieval",
+    "climate": {
+      "temperature": 0.2,
+      "humidity": 0.3
+    },
+    "wealth": 0.6,
+    "decline": 0.1,
+    "formality": 0.5,
+    "character": {
+      "label": "twin quarters river city",
+      "materialTheme": "temperate_timber",
+      "programs": [
+        {
+          "id": "inhabited_stone_bridge",
+          "mode": "landmark",
+          "brief": "A monumental multi-arched medieval stone bridge spanning east-west across the wide river, joining the east and west city quarters. Sturdy stone piers with pointed cutwaters support massive stone arches carrying a central cobbled roadway lined continuously on both north and south sides with two-to-three storey timber-framed overhanging shops and houses with gables, dormers, and chimney stacks overhanging the water, and stone gate arches at each portal.",
+          "envelope": [
+            112,
+            28,
+            20
+          ]
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "a wide river flowing north-south dividing the land into an east bank and a west bank",
+      "region_east_bank_old_quarter": "era medieval, wealth 0.5, decline 0.2, formality 0.25, urbanForm grown, courtyards 0.6, fortification walled, materialTheme temperate_timber; archetypes prefer [townhouse, tavern, church, warehouse, watchtower]; crowded medieval walled town with winding alleys and courtyards",
+      "region_west_bank_new_quarter": "era renaissance, wealth 0.7, decline 0.05, formality 0.85, urbanForm grid, courtyards 0.2, materialTheme temperate_timber; archetypes prefer [townhouse, manor, market_cross, civic_hall]; planned regular grid expansion with straight streets and broad blocks",
+      "icons": "a great multi-arch stone bridge spanning the wide river between east and west quarters, lined on both sides with multi-storey timber-framed inhabited bridge-houses and shops overhanging the water"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:cobblestone",
+      "road.shoulder": "minecraft:gravel",
+      "plaza.path": "minecraft:stone_bricks",
+      "plaza.cobble": "minecraft:cobblestone",
+      "plaza.border": "minecraft:stone_brick_slab"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "the river city of two quarters",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "river valley and riverbanks",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 68,
+          "amplitude": 20,
+          "octaves": 5,
+          "frequency": 0.0035,
+          "gain": 0.48,
+          "erosionPasses": 2,
+          "continentalness": {
+            "frequency": 0.0008,
+            "seaFraction": 0.22
+          },
+          "cliffThreshold": 55,
+          "soilDepth": 4,
+          "beachWidth": 4,
+          "snowLineFraction": 0.95
+        },
+        "children": [
+          {
+            "id": "the_wide_river",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the wide river carving between east and west banks",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.5,
+                  0
+                ],
+                [
+                  0.5,
+                  0.32
+                ],
+                [
+                  0.5,
+                  0.68
+                ],
+                "coast"
+              ],
+              "width": 50,
+              "depth": 14,
+              "profile": "rounded",
+              "meander": 0.35,
+              "flooded": "auto"
+            }
+          },
+          {
+            "id": "west_bank_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "level ground shelf for the west bank new quarter",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.22,
+                0.5
+              ],
+              "radius": 92,
+              "height": 6,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "east_bank_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "level ground shelf for the east bank old quarter",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.78,
+                0.5
+              ],
+              "radius": 92,
+              "height": 6,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "north_valley_hills",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "gentle framing hills in the north",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.1,
+                  0.14
+                ],
+                [
+                  0.36,
+                  0.08
+                ],
+                [
+                  0.68,
+                  0.1
+                ],
+                [
+                  0.92,
+                  0.16
+                ]
+              ],
+              "width": 64,
+              "height": 24,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0016
+        }
+      },
+      {
+        "id": "the_great_bridge",
+        "kind": "generator",
+        "generator": "authored:inhabited_stone_bridge",
+        "label": "the great stone bridge with inhabited houses spanning the river",
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "old_quarter",
+            "min": 4,
+            "max": 40,
+            "strength": "soft"
+          },
+          {
+            "distance": "new_quarter",
+            "min": 4,
+            "max": 40,
+            "strength": "soft"
+          }
+        ],
+        "params": {
+          "seat": "wade"
+        },
+        "tags": [
+          "landmark",
+          "bridge"
+        ]
+      },
+      {
+        "id": "old_quarter",
+        "kind": "district",
+        "label": "the old walled quarter on the east bank",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            144,
+            144
+          ]
+        },
+        "intent": {
+          "era": "medieval",
+          "wealth": 0.5,
+          "decline": 0.2,
+          "formality": 0.25,
+          "character": {
+            "label": "East Bank Old Walled Quarter",
+            "materialTheme": "temperate_timber",
+            "archetypes": {
+              "prefer": [
+                "townhouse",
+                "tavern",
+                "church",
+                "warehouse",
+                "watchtower"
+              ],
+              "forbid": [
+                "office",
+                "skyscraper",
+                "parking_garage"
+              ]
+            },
+            "motifs": {
+              "roofType": "gable",
+              "windowRhythm": "dense",
+              "ornamentDensity": 0.4
+            }
+          }
+        },
+        "params": {
+          "fabric": "grown",
+          "density": "medium",
+          "mix": [
+            "townhouse",
+            "tavern",
+            "inn",
+            "bakery",
+            "smithy",
+            "warehouse",
+            "cooperage",
+            "brewery"
+          ],
+          "blockSize": 34,
+          "plaza": true,
+          "courtyards": 0.6,
+          "walls": {
+            "style": "masonry",
+            "margin": 8,
+            "towerPitch": 36,
+            "height": 7,
+            "gates": true
+          }
+        },
+        "constraints": [
+          {
+            "at": [
+              0.78,
+              0.5
+            ]
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 8
+          }
+        ],
+        "tags": [
+          "district",
+          "old_town",
+          "walled"
+        ],
+        "children": [
+          {
+            "id": "old_parish_church",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the historic parish church in the old quarter",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                15,
+                17,
+                21
+              ]
+            },
+            "params": {
+              "archetype": "church",
+              "floors": 2,
+              "roof": "gable"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "west",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "church"
+            ]
+          },
+          {
+            "id": "old_guildhall",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the merchants guildhall on the old market street",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                14,
+                17
+              ]
+            },
+            "params": {
+              "archetype": "guildhall",
+              "floors": 2,
+              "roof": "gable"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "civic"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "new_quarter",
+        "kind": "district",
+        "label": "the new planned gridded quarter on the west bank",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            144,
+            144
+          ]
+        },
+        "intent": {
+          "era": "renaissance",
+          "wealth": 0.7,
+          "decline": 0.05,
+          "formality": 0.85,
+          "character": {
+            "label": "West Bank New Quarter",
+            "materialTheme": "temperate_timber",
+            "archetypes": {
+              "prefer": [
+                "townhouse",
+                "manor_house",
+                "town_hall",
+                "bank",
+                "courthouse"
+              ],
+              "forbid": [
+                "witch_hut",
+                "igloo",
+                "skyscraper"
+              ]
+            },
+            "motifs": {
+              "roofType": "gable",
+              "windowRhythm": "regular",
+              "ornamentDensity": 0.6
+            }
+          }
+        },
+        "params": {
+          "fabric": "grid",
+          "density": "medium",
+          "mix": [
+            "townhouse",
+            "manor_house",
+            "shop_row",
+            "market_stall",
+            "general_store",
+            "apothecary",
+            "bank"
+          ],
+          "blockSize": 36,
+          "plaza": true,
+          "courtyards": 0.2
+        },
+        "constraints": [
+          {
+            "at": [
+              0.22,
+              0.5
+            ]
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 8
+          }
+        ],
+        "tags": [
+          "district",
+          "new_town",
+          "grid"
+        ],
+        "children": [
+          {
+            "id": "civic_town_hall",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the grand civic town hall of the new quarter",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                16,
+                13
+              ]
+            },
+            "params": {
+              "archetype": "town_hall",
+              "floors": 2,
+              "roof": "hip"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "east",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "civic"
+            ]
+          },
+          {
+            "id": "merchant_bank",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the exchange bank on the new grand square",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                13,
+                13
+              ]
+            },
+            "params": {
+              "archetype": "bank",
+              "floors": 2,
+              "roof": "hip"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "trade"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "city_roads",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "paved thoroughfares linking quarters and bridge approach",
+        "params": {
+          "anchors": [
+            "new_quarter",
+            "old_quarter",
+            "the_great_bridge"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 14
+        }
+      },
+      {
+        "id": "west_quay_pier",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "wooden trading pier on the west riverbank",
+        "params": {
+          "prop": "pier",
+          "zone": "west",
+          "length": 10,
+          "width": 3
+        }
+      },
+      {
+        "id": "west_riverboat",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "river boat moored at west pier",
+        "params": {
+          "prop": "rowboat",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "east_quay_pier",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "stone pier on the east riverbank",
+        "params": {
+          "prop": "pier",
+          "zone": "east",
+          "length": 10,
+          "width": 3
+        }
+      },
+      {
+        "id": "east_riverboat",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "rowboat moored at east pier",
+        "params": {
+          "prop": "rowboat",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "river_buoy",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "navigation buoy in the central river channel",
+        "params": {
+          "prop": "buoy",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "market_wagon_west",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "covered_wagon",
+          "zone": "west"
+        }
+      },
+      {
+        "id": "market_cart_east",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "cart",
+          "zone": "east"
+        }
+      },
+      {
+        "id": "riverbank_woods",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "oak and willow woods on the upper slopes and river edges",
+        "params": {
+          "area": {
+            "at": [
+              0.5,
+              0.16
+            ],
+            "radius": 130
+          },
+          "density": 0.16,
+          "spacing": 3,
+          "clumping": 0.45,
+          "maxSlope": 30,
+          "elevation": [
+            2,
+            80
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "undergrowth": {
+            "grass": 0.4,
+            "flowers": 0.06,
+            "deadwood": 0.03
+          },
+          "species": [
+            {
+              "id": "spreading_oak",
+              "weight": 3,
+              "shape": "oak_spreading"
+            },
+            {
+              "id": "round_oak",
+              "weight": 2,
+              "shape": "oak_round"
+            },
+            {
+              "id": "willow",
+              "weight": 2,
+              "shape": "willow_weeping"
+            }
+          ]
+        }
+      },
+      {
+        "id": "countryside_trees",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse countryside trees across the ambient landscape",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 32,
+          "elevation": [
+            2,
+            100
+          ],
+          "edgeFalloff": 12,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "undergrowth": {
+            "grass": 0.35,
+            "flowers": 0.04,
+            "deadwood": 0.02
+          },
+          "species": [
+            {
+              "id": "country_oak",
+              "weight": 2,
+              "shape": "oak_round"
+            },
+            {
+              "id": "country_birch",
+              "weight": 1,
+              "shape": "birch_slim"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "programs": {
+    "inhabited_stone_bridge": {
+      "mode": "landmark",
+      "envelope": [
+        112,
+        28,
+        20
+      ],
+      "sourceHash": "b3:7c2ad93b568e1afcc8b9557990c82be0cad694b889efc0aa213665e2d3ae0fea",
+      "outputHash": "b3:fcfb5e910b8120b87b1636c319a3b1f8888d0440527b0e3a0476fc77b97d9a4c",
+      "conforms": false,
+      "conformHash": "b3:e9cdea4bb60fb1caefe896ce8ef87a615e21c4fa464a41574060939f286d152f",
+      "source": "export const envelope = [112, 28, 20];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const seatY = 6;\n\n  // -------------------------------------------------------------------------\n  // Palette resolution with robust fallbacks\n  // -------------------------------------------------------------------------\n  const stonePrimary = api.theme.stone.primary || \"minecraft:stone_bricks\";\n  const stoneAccent = api.theme.stone.accent || \"minecraft:cracked_stone_bricks\";\n  const stoneStairs = api.theme.stone.stairs || \"minecraft:stone_brick_stairs\";\n  const stoneSlab = api.theme.stone.slab || \"minecraft:stone_brick_slab\";\n  const stoneWall = api.theme.stone.wall || \"minecraft:stone_brick_wall\";\n\n  const woodPlanks = api.theme.wood.planks || \"minecraft:spruce_planks\";\n  const woodLog = api.theme.wood.log || \"minecraft:spruce_log\";\n  const woodStripped = api.theme.wood.stripped || \"minecraft:stripped_spruce_log\";\n  const woodStairs = api.theme.wood.stairs || \"minecraft:spruce_stairs\";\n  const woodSlab = api.theme.wood.slab || \"minecraft:spruce_slab\";\n  const woodFence = api.theme.wood.fence || \"minecraft:spruce_fence\";\n  const woodTrapdoor = api.theme.wood.trapdoor || \"minecraft:spruce_trapdoor\";\n\n  const groundPavement = api.theme.ground.pavement || \"minecraft:cobblestone\";\n  const groundKerb = api.theme.ground.kerb || \"minecraft:stone_bricks\";\n  const groundPlinth = api.theme.ground.plinth || \"minecraft:deepslate_bricks\";\n\n  const roofStairs = api.theme.roof.stairs || \"minecraft:dark_oak_stairs\";\n  const roofSlab = api.theme.roof.slab || \"minecraft:dark_oak_slab\";\n  const roofSolid = api.theme.roof.solid || \"minecraft:dark_oak_planks\";\n\n  const glassPane = \"minecraft:glass_pane\";\n  const ironBars = \"minecraft:iron_bars\";\n\n  // -------------------------------------------------------------------------\n  // Helpers\n  // -------------------------------------------------------------------------\n  function set(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      api.set(x, y, z, block);\n    }\n  }\n\n  function st(base, facing, half = \"bottom\") {\n    return `${base}[facing=${facing},half=${half}]`;\n  }\n\n  function log(base, axis = \"y\") {\n    return `${base}[axis=${axis}]`;\n  }\n\n  function slab(base, type = \"bottom\") {\n    return `${base}[type=${type}]`;\n  }\n\n  function fill(x1, y1, z1, x2, y2, z2, block) {\n    const minX = Math.max(0, Math.min(x1, x2));\n    const maxX = Math.min(W - 1, Math.max(x1, x2));\n    const minY = Math.max(0, Math.min(y1, y2));\n    const maxY = Math.min(H - 1, Math.max(y1, y2));\n    const minZ = Math.max(0, Math.min(z1, z2));\n    const maxZ = Math.min(D - 1, Math.max(z1, z2));\n\n    for (let x = minX; x <= maxX; x++) {\n      for (let y = minY; y <= maxY; y++) {\n        for (let z = minZ; z <= maxZ; z++) {\n          set(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  function randomStone() {\n    const r = api.random();\n    if (r < 0.65) return stonePrimary;\n    if (r < 0.88) return stoneAccent;\n    return groundPlinth;\n  }\n\n  function randomRoadPaver() {\n    const r = api.random();\n    if (r < 0.55) return groundPavement;\n    if (r < 0.85) return stonePrimary;\n    return stoneAccent;\n  }\n\n  function getGroundY(x, z) {\n    const h = api.heightAt(x, z);\n    return Math.max(0, Math.min(H - 1, seatY + h));\n  }\n\n  // -------------------------------------------------------------------------\n  // Substructure: Piers, Abutments, and Pointed Cutwaters\n  // -------------------------------------------------------------------------\n  const pierIntervals = [\n    { x1: 0, x2: 13, center: 6, isAbutment: true },\n    { x1: 25, x2: 31, center: 28, isAbutment: false },\n    { x1: 44, x2: 50, center: 47, isAbutment: false },\n    { x1: 63, x2: 69, center: 66, isAbutment: false },\n    { x1: 82, x2: 88, center: 85, isAbutment: false },\n    { x1: 99, x2: 111, center: 105, isAbutment: true }\n  ];\n\n  for (const pier of pierIntervals) {\n    const { x1, x2, center, isAbutment } = pier;\n\n    // Main pier block (Z = 4..15)\n    for (let x = x1; x <= x2; x++) {\n      for (let z = 4; z <= 15; z++) {\n        const gY = getGroundY(x, z);\n        const topY = 7;\n        for (let y = gY; y <= topY; y++) {\n          set(x, y, z, y <= gY + 1 ? groundPlinth : randomStone());\n        }\n      }\n    }\n\n    // Cutwaters (Triangular pointed piers) on North & South for river piers\n    if (!isAbutment) {\n      // North Cutwater (Z = 0..3) pointing upstream/North\n      const northOffsets = [\n        { z: 3, dx: 2 },\n        { z: 2, dx: 2 },\n        { z: 1, dx: 1 },\n        { z: 0, dx: 0 }\n      ];\n      for (const row of northOffsets) {\n        for (let x = center - row.dx; x <= center + row.dx; x++) {\n          const gY = getGroundY(x, row.z);\n          for (let y = gY; y <= 7; y++) {\n            set(x, y, row.z, y <= gY + 1 ? groundPlinth : randomStone());\n          }\n          // Paved refuge floor at Y = 8\n          set(x, 8, row.z, groundPavement);\n        }\n      }\n\n      // Parapet balustrades for North pedestrian refuge\n      for (const row of northOffsets) {\n        if (row.dx === 0) {\n          set(center, 9, row.z, stoneWall);\n        } else {\n          set(center - row.dx, 9, row.z, stoneWall);\n          set(center + row.dx, 9, row.z, stoneWall);\n        }\n      }\n\n      // South Cutwater (Z = 16..19) pointing downstream/South\n      const southOffsets = [\n        { z: 16, dx: 2 },\n        { z: 17, dx: 2 },\n        { z: 18, dx: 1 },\n        { z: 19, dx: 0 }\n      ];\n      for (const row of southOffsets) {\n        for (let x = center - row.dx; x <= center + row.dx; x++) {\n          const gY = getGroundY(x, row.z);\n          for (let y = gY; y <= 7; y++) {\n            set(x, y, row.z, y <= gY + 1 ? groundPlinth : randomStone());\n          }\n          // Paved refuge floor at Y = 8\n          set(x, 8, row.z, groundPavement);\n        }\n      }\n\n      // Parapet balustrades for South pedestrian refuge\n      for (const row of southOffsets) {\n        if (row.dx === 0) {\n          set(center, 9, row.z, stoneWall);\n        } else {\n          set(center - row.dx, 9, row.z, stoneWall);\n          set(center + row.dx, 9, row.z, stoneWall);\n        }\n      }\n    }\n  }\n\n  // -------------------------------------------------------------------------\n  // Massive Stone Arches & Spandrels\n  // -------------------------------------------------------------------------\n  const archSpans = [\n    { xStart: 14, xEnd: 24 },\n    { xStart: 32, xEnd: 43 },\n    { xStart: 51, xEnd: 62 },\n    { xStart: 70, xEnd: 81 },\n    { xStart: 89, xEnd: 98 }\n  ];\n\n  for (const span of archSpans) {\n    const { xStart, xEnd } = span;\n    const midX = (xStart + xEnd) / 2;\n    const radius = (xEnd - xStart + 1) / 2;\n    const ySpring = 3.2;\n    const yCrown = 7.0;\n\n    for (let x = xStart; x <= xEnd; x++) {\n      const u = (x - midX) / radius;\n      const curve = yCrown - (yCrown - ySpring) * (u * u);\n      const archY = Math.floor(curve);\n\n      for (let z = 4; z <= 15; z++) {\n        // Arch ring block\n        if (archY >= 0 && archY <= 7) {\n          if (x < midX) {\n            set(x, archY, z, st(stoneStairs, \"east\", \"top\"));\n          } else if (x > midX) {\n            set(x, archY, z, st(stoneStairs, \"west\", \"top\"));\n          } else {\n            set(x, archY, z, slab(stoneSlab, \"top\"));\n          }\n        }\n\n        // Solid masonry spandrel fill above arch ring up to deck level\n        for (let y = archY + 1; y <= 7; y++) {\n          set(x, y, z, randomStone());\n        }\n      }\n    }\n  }\n\n  // -------------------------------------------------------------------------\n  // Bridge Roadway & Sidewalk Deck (Y = 7..8)\n  // -------------------------------------------------------------------------\n  // Continuous stone deck base at Y = 7\n  for (let x = 0; x < W; x++) {\n    for (let z = 4; z <= 15; z++) {\n      set(x, 7, z, randomStone());\n    }\n  }\n\n  // Roadway paving and curbs at Y = 8\n  for (let x = 0; x < W; x++) {\n    // Curbs / gutters\n    set(x, 8, 6, groundKerb);\n    set(x, 8, 13, groundKerb);\n\n    // Cobbled street\n    for (let z = 7; z <= 12; z++) {\n      set(x, 8, z, randomRoadPaver());\n    }\n\n    // Under-house base flooring at Y = 8\n    for (let z = 0; z <= 5; z++) {\n      set(x, 8, z, woodPlanks);\n    }\n    for (let z = 14; z < D; z++) {\n      set(x, 8, z, woodPlanks);\n    }\n  }\n\n  // Abutment retaining / approach fill for banks\n  for (let x = 0; x <= 13; x++) {\n    for (let z = 0; z < D; z++) {\n      const gY = getGroundY(x, z);\n      for (let y = gY; y <= 7; y++) {\n        set(x, y, z, y <= gY + 1 ? groundPlinth : randomStone());\n      }\n    }\n  }\n  for (let x = 99; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const gY = getGroundY(x, z);\n      for (let y = gY; y <= 7; y++) {\n        set(x, y, z, y <= gY + 1 ? groundPlinth : randomStone());\n      }\n    }\n  }\n\n  // -------------------------------------------------------------------------\n  // Timber Under-Struts / Corbels Supporting Houses Over Water\n  // -------------------------------------------------------------------------\n  for (let x = 14; x <= 98; x += 3) {\n    // North side overhang supports (Z = 0..3)\n    set(x, 7, 1, log(woodLog, \"z\"));\n    set(x, 7, 2, log(woodLog, \"z\"));\n    set(x, 7, 3, log(woodLog, \"z\"));\n    set(x, 6, 2, st(woodStairs, \"south\", \"top\"));\n    set(x, 5, 3, st(woodStairs, \"south\", \"top\"));\n    set(x, 6, 1, woodFence);\n\n    // South side overhang supports (Z = 16..19)\n    set(x, 7, 16, log(woodLog, \"z\"));\n    set(x, 7, 17, log(woodLog, \"z\"));\n    set(x, 7, 18, log(woodLog, \"z\"));\n    set(x, 6, 17, st(woodStairs, \"north\", \"top\"));\n    set(x, 5, 16, st(woodStairs, \"north\", \"top\"));\n    set(x, 6, 18, woodFence);\n  }\n\n  // -------------------------------------------------------------------------\n  // West Portal Gatehouse (X = 0..13)\n  // -------------------------------------------------------------------------\n  function buildWestGatehouse() {\n    // Flanking solid towers and upper gatehall\n    for (let x = 0; x <= 13; x++) {\n      for (let z = 4; z <= 15; z++) {\n        for (let y = 8; y <= 18; y++) {\n          const isOuterWall =\n            x === 0 || x === 13 || z === 4 || z === 15;\n          const isRoadArch =\n            z >= 7 && z <= 12 && y <= 13;\n\n          if (isOuterWall) {\n            set(x, y, z, randomStone());\n          } else if (!isRoadArch) {\n            if (y === 14) {\n              set(x, y, z, stonePrimary); // Floor of upper guard hall\n            } else if (y >= 15 && y <= 17) {\n              // Interior of upper guard hall remains empty\n            } else if (y === 18) {\n              set(x, y, z, stonePrimary); // Roof of gatehouse\n            } else if (y < 14) {\n              // Side tower thick walls\n              if (z <= 6 || z >= 13) {\n                set(x, y, z, randomStone());\n              }\n            }\n          }\n        }\n      }\n    }\n\n    // Portal arch ceiling decoration (vaulting)\n    for (let x = 0; x <= 13; x++) {\n      set(x, 13, 7, st(stoneStairs, \"south\", \"top\"));\n      set(x, 13, 12, st(stoneStairs, \"north\", \"top\"));\n      set(x, 14, 8, st(stoneStairs, \"south\", \"top\"));\n      set(x, 14, 11, st(stoneStairs, \"north\", \"top\"));\n      set(x, 14, 9, slab(stoneSlab, \"top\"));\n      set(x, 14, 10, slab(stoneSlab, \"top\"));\n    }\n\n    // Portcullis grating at X = 3\n    for (let z = 8; z <= 11; z++) {\n      for (let y = 10; y <= 13; y++) {\n        set(3, y, z, ironBars);\n      }\n    }\n\n    // Machicolations and Parapets at Y = 19\n    for (let x = 0; x <= 13; x++) {\n      // Machicolation corbels\n      set(x, 18, 3, st(stoneStairs, \"north\", \"top\"));\n      set(x, 18, 16, st(stoneStairs, \"south\", \"top\"));\n\n      // Crenellations\n      const merlon = x % 2 === 0;\n      set(x, 19, 3, merlon ? stonePrimary : stoneWall);\n      set(x, 19, 16, merlon ? stonePrimary : stoneWall);\n    }\n    for (let z = 3; z <= 16; z++) {\n      const merlon = z % 2 === 0;\n      set(0, 19, z, merlon ? stonePrimary : stoneWall);\n      set(13, 19, z, merlon ? stonePrimary : stoneWall);\n    }\n\n    // Corner Turrets rising to Y = 22\n    const turrets = [\n      { x: 0, z: 4 },\n      { x: 0, z: 15 },\n      { x: 13, z: 4 },\n      { x: 13, z: 15 }\n    ];\n    for (const t of turrets) {\n      for (let y = 19; y <= 22; y++) {\n        set(t.x, y, t.z, stonePrimary);\n      }\n      set(t.x, 23, t.z, slab(stoneSlab, \"bottom\"));\n    }\n  }\n  buildWestGatehouse();\n\n  // -------------------------------------------------------------------------\n  // East Portal Gatehouse & Watchtower (X = 98..111)\n  // -------------------------------------------------------------------------\n  function buildEastGatehouse() {\n    for (let x = 98; x <= 111; x++) {\n      for (let z = 4; z <= 15; z++) {\n        for (let y = 8; y <= 18; y++) {\n          const isOuterWall =\n            x === 98 || x === 111 || z === 4 || z === 15;\n          const isRoadArch =\n            z >= 7 && z <= 12 && y <= 13;\n\n          if (isOuterWall) {\n            set(x, y, z, randomStone());\n          } else if (!isRoadArch) {\n            if (y === 14) {\n              set(x, y, z, stonePrimary);\n            } else if (y === 18) {\n              set(x, y, z, stonePrimary);\n            } else if (y < 14) {\n              if (z <= 6 || z >= 13) {\n                set(x, y, z, randomStone());\n              }\n            }\n          }\n        }\n      }\n    }\n\n    // Portal vaulting\n    for (let x = 98; x <= 111; x++) {\n      set(x, 13, 7, st(stoneStairs, \"south\", \"top\"));\n      set(x, 13, 12, st(stoneStairs, \"north\", \"top\"));\n      set(x, 14, 8, st(stoneStairs, \"south\", \"top\"));\n      set(x, 14, 11, st(stoneStairs, \"north\", \"top\"));\n      set(x, 14, 9, slab(stoneSlab, \"top\"));\n      set(x, 14, 10, slab(stoneSlab, \"top\"));\n    }\n\n    // Portcullis at X = 108\n    for (let z = 8; z <= 11; z++) {\n      for (let y = 10; y <= 13; y++) {\n        set(108, y, z, ironBars);\n      }\n    }\n\n    // Machicolations and parapets at Y = 19\n    for (let x = 98; x <= 111; x++) {\n      set(x, 18, 3, st(stoneStairs, \"north\", \"top\"));\n      set(x, 18, 16, st(stoneStairs, \"south\", \"top\"));\n      const merlon = x % 2 === 0;\n      set(x, 19, 3, merlon ? stonePrimary : stoneWall);\n      set(x, 19, 16, merlon ? stonePrimary : stoneWall);\n    }\n    for (let z = 3; z <= 16; z++) {\n      const merlon = z % 2 === 0;\n      set(98, 19, z, merlon ? stonePrimary : stoneWall);\n      set(111, 19, z, merlon ? stonePrimary : stoneWall);\n    }\n\n    // High North-East Barbican Watchtower (X = 104..110, Z = 3..7) rising to Y = 25\n    for (let x = 104; x <= 110; x++) {\n      for (let z = 3; z <= 7; z++) {\n        const isTowerWall =\n          x === 104 || x === 110 || z === 3 || z === 7;\n        for (let y = 19; y <= 24; y++) {\n          if (isTowerWall) {\n            set(x, y, z, randomStone());\n          }\n        }\n        set(x, 24, z, stonePrimary); // Tower high roof floor\n      }\n    }\n    // Conical / Hip roof over watchtower\n    for (let x = 103; x <= 111; x++) {\n      set(x, 25, 2, st(roofStairs, \"south\"));\n      set(x, 25, 8, st(roofStairs, \"north\"));\n    }\n    for (let z = 2; z <= 8; z++) {\n      set(103, 25, z, st(roofStairs, \"east\"));\n      set(111, 25, z, st(roofStairs, \"west\"));\n    }\n    for (let x = 105; x <= 109; x++) {\n      for (let z = 4; z <= 6; z++) {\n        set(x, 26, z, roofSolid);\n      }\n    }\n  }\n  buildEastGatehouse();\n\n  // -------------------------------------------------------------------------\n  // Building Helpers for Timber-Framed Bridge Houses\n  // -------------------------------------------------------------------------\n  function buildNorthSouthGableRoof(x1, x2, z1, z2, yBase) {\n    const midX = (x1 + x2) / 2;\n    for (let x = x1; x <= x2; x++) {\n      const dist = Math.abs(x - midX);\n      const yStep = Math.floor((x2 - x1) / 2 - dist);\n      const curY = yBase + yStep;\n\n      for (let z = z1; z <= z2; z++) {\n        if (x < midX - 0.5) {\n          set(x, curY, z, st(roofStairs, \"east\"));\n        } else if (x > midX + 0.5) {\n          set(x, curY, z, st(roofStairs, \"west\"));\n        } else {\n          set(x, curY, z, roofSolid);\n          set(x, curY + 1, z, slab(roofSlab, \"bottom\"));\n        }\n      }\n\n      // Fill gable end walls\n      for (let y = yBase; y < curY; y++) {\n        set(x, y, z1, woodPlanks);\n        set(x, y, z2, woodPlanks);\n      }\n    }\n  }\n\n  function buildEastWestRoof(x1, x2, z1, z2, yBase) {\n    const midZ = (z1 + z2) / 2;\n    for (let z = z1; z <= z2; z++) {\n      const dist = Math.abs(z - midZ);\n      const yStep = Math.floor((z2 - z1) / 2 - dist);\n      const curY = yBase + yStep;\n\n      for (let x = x1; x <= x2; x++) {\n        if (z < midZ - 0.5) {\n          set(x, curY, z, st(roofStairs, \"south\"));\n        } else if (z > midZ + 0.5) {\n          set(x, curY, z, st(roofStairs, \"north\"));\n        } else {\n          set(x, curY, z, roofSolid);\n          set(x, curY + 1, z, slab(roofSlab, \"bottom\"));\n        }\n      }\n\n      for (let y = yBase; y < curY; y++) {\n        set(x1, y, z, woodPlanks);\n        set(x2, y, z, woodPlanks);\n      }\n    }\n  }\n\n  function buildChimney(x, z, yBottom, yTop) {\n    for (let y = yBottom; y <= yTop; y++) {\n      set(x, y, z, randomStone());\n    }\n    set(x, yTop + 1, z, stoneWall);\n  }\n\n  // -------------------------------------------------------------------------\n  // North Row Houses (Z = 0..5, X = 14..97)\n  // -------------------------------------------------------------------------\n  const northLots = [\n    { x1: 14, x2: 22, type: \"gable\", peakY: 22 },\n    { x1: 23, x2: 32, type: \"refuge_lot\", peakY: 21 },\n    { x1: 33, x2: 42, type: \"skybridge_lot\", peakY: 22 },\n    { x1: 43, x2: 51, type: \"gable\", peakY: 23 },\n    { x1: 52, x2: 58, type: \"observation_plaza\", peakY: 9 },\n    { x1: 59, x2: 68, type: \"gable\", peakY: 23 },\n    { x1: 69, x2: 78, type: \"skybridge_lot\", peakY: 22 },\n    { x1: 79, x2: 88, type: \"refuge_lot\", peakY: 21 },\n    { x1: 89, x2: 97, type: \"gable\", peakY: 22 }\n  ];\n\n  for (const lot of northLots) {\n    const { x1, x2, type } = lot;\n\n    if (type === \"observation_plaza\") {\n      // Mid-Bridge Open Observation Terrace\n      for (let x = x1; x <= x2; x++) {\n        for (let z = 0; z <= 5; z++) {\n          set(x, 8, z, groundPavement);\n          if (z === 0 || x === x1 || x === x2) {\n            set(x, 9, z, stoneWall);\n          }\n        }\n      }\n      // Stone benches and central beacon\n      set(x1 + 3, 9, 2, slab(stoneSlab, \"top\"));\n      set(x1 + 3, 9, 3, slab(stoneSlab, \"top\"));\n      set(x1 + 3, 10, 0, woodFence);\n      set(x1 + 3, 11, 0, woodTrapdoor);\n      continue;\n    }\n\n    // Standard Timber House\n    const zGroundMin = 1;\n    const zGroundMax = 5;\n    const zJettyMin = 0; // Overhangs 1 block over water\n    const zJettyMax = 5;\n\n    // Ground floor structure (Y = 8..11)\n    for (let x = x1; x <= x2; x++) {\n      for (let z = zGroundMin; z <= zGroundMax; z++) {\n        const isCorner =\n          (x === x1 || x === x2) && (z === zGroundMin || z === zGroundMax);\n        const isWall =\n          x === x1 || x === x2 || z === zGroundMin || z === zGroundMax;\n\n        if (isCorner) {\n          for (let y = 8; y <= 11; y++) set(x, y, z, log(woodLog, \"y\"));\n        } else if (isWall) {\n          for (let y = 8; y <= 11; y++) {\n            // Street front (Z = 5): Shop door & display window\n            if (z === zGroundMax) {\n              const midX = Math.floor((x1 + x2) / 2);\n              if (x === midX) {\n                // Open shop doorway\n                if (y === 11) set(x, y, z, woodPlanks);\n              } else if (x === midX - 1 || x === midX + 1) {\n                if (y === 8) set(x, y, z, woodPlanks);\n                else if (y === 9) set(x, y, z, woodPlanks); // Counter\n                else if (y === 10) set(x, y, z, glassPane);\n                else set(x, y, z, woodPlanks);\n              } else {\n                set(x, y, z, woodPlanks);\n              }\n            } else if (z === zGroundMin) {\n              // Water-facing back wall\n              if (y === 10 && (x === x1 + 2 || x === x2 - 2)) {\n                set(x, y, z, glassPane);\n              } else {\n                set(x, y, z, woodPlanks);\n              }\n            } else {\n              set(x, y, z, woodPlanks);\n            }\n          }\n        }\n      }\n    }\n\n    // Street awning at Y = 11 along shopfront\n    for (let x = x1; x <= x2; x++) {\n      set(x, 11, 6, st(woodStairs, \"north\"));\n    }\n\n    // 1st Floor (Y = 12..15): Jetty overhang\n    for (let x = x1; x <= x2; x++) {\n      for (let z = zJettyMin; z <= zJettyMax; z++) {\n        // Floor at Y = 12\n        set(x, 12, z, woodPlanks);\n\n        const isCorner =\n          (x === x1 || x === x2) && (z === zJettyMin || z === zJettyMax);\n        const isWall =\n          x === x1 || x === x2 || z === zJettyMin || z === zJettyMax;\n\n        if (isCorner) {\n          for (let y = 13; y <= 15; y++) set(x, y, z, log(woodLog, \"y\"));\n        } else if (isWall) {\n          for (let y = 13; y <= 15; y++) {\n            if (y === 14 && (x % 3 === 0 || x === Math.floor((x1 + x2) / 2))) {\n              set(x, y, z, glassPane);\n            } else {\n              set(x, y, z, woodPlanks);\n            }\n          }\n        }\n      }\n    }\n\n    // Overhang jetty support brackets at Y = 12, Z = 0\n    for (let x = x1; x <= x2; x += 2) {\n      set(x, 11, 0, st(woodStairs, \"south\", \"top\"));\n    }\n\n    // 2nd Floor / Ceiling at Y = 16\n    for (let x = x1; x <= x2; x++) {\n      for (let z = zJettyMin; z <= zJettyMax; z++) {\n        set(x, 16, z, woodPlanks);\n      }\n    }\n\n    // Roof construction\n    if (type === \"gable\") {\n      buildNorthSouthGableRoof(x1, x2, zJettyMin, zJettyMax, 17);\n    } else {\n      buildEastWestRoof(x1, x2, zJettyMin, zJettyMax, 17);\n    }\n  }\n\n  // -------------------------------------------------------------------------\n  // South Row Houses (Z = 14..19, X = 14..97)\n  // -------------------------------------------------------------------------\n  const southLots = [\n    { x1: 14, x2: 23, type: \"gable\", peakY: 22 },\n    { x1: 24, x2: 32, type: \"refuge_lot\", peakY: 21 },\n    { x1: 33, x2: 42, type: \"skybridge_lot\", peakY: 22 },\n    { x1: 43, x2: 51, type: \"gable\", peakY: 23 },\n    { x1: 52, x2: 58, type: \"bridge_chapel\", peakY: 21 },\n    { x1: 59, x2: 68, type: \"gable\", peakY: 23 },\n    { x1: 69, x2: 78, type: \"skybridge_lot\", peakY: 22 },\n    { x1: 79, x2: 87, type: \"refuge_lot\", peakY: 21 },\n    { x1: 88, x2: 97, type: \"gable\", peakY: 23 }\n  ];\n\n  for (const lot of southLots) {\n    const { x1, x2, type } = lot;\n\n    if (type === \"bridge_chapel\") {\n      // St. Nicholas Bridge Chapel (X = 52..58, Z = 14..19)\n      for (let x = x1; x <= x2; x++) {\n        for (let z = 14; z <= 19; z++) {\n          for (let y = 8; y <= 16; y++) {\n            const isWall = x === x1 || x === x2 || z === 14 || z === 19;\n            if (isWall) {\n              if (z === 14 && x === x1 + 3 && y <= 11) {\n                // Chapel doorway\n                if (y === 11) set(x, y, z, st(stoneStairs, \"north\", \"top\"));\n              } else if (z === 19 && (x === x1 + 2 || x === x1 + 4) && y >= 11 && y <= 13) {\n                set(x, y, z, glassPane); // Altar stained glass\n              } else {\n                set(x, y, z, randomStone());\n              }\n            }\n          }\n          set(x, 16, z, stonePrimary); // Vaulted ceiling\n        }\n      }\n      // Chapel high gable roof\n      buildNorthSouthGableRoof(x1, x2, 14, 19, 17);\n      // Small stone bellcote turret with cross at peak\n      set(x1 + 3, 21, 14, stoneWall);\n      set(x1 + 3, 22, 14, stoneWall);\n      set(x1 + 3, 23, 14, woodFence);\n      continue;\n    }\n\n    const zGroundMin = 14;\n    const zGroundMax = 18;\n    const zJettyMin = 14;\n    const zJettyMax = 19; // Overhangs 1 block over water\n\n    // Ground floor (Y = 8..11)\n    for (let x = x1; x <= x2; x++) {\n      for (let z = zGroundMin; z <= zGroundMax; z++) {\n        const isCorner =\n          (x === x1 || x === x2) && (z === zGroundMin || z === zGroundMax);\n        const isWall =\n          x === x1 || x === x2 || z === zGroundMin || z === zGroundMax;\n\n        if (isCorner) {\n          for (let y = 8; y <= 11; y++) set(x, y, z, log(woodLog, \"y\"));\n        } else if (isWall) {\n          for (let y = 8; y <= 11; y++) {\n            // Street front (Z = 14): Shop door & display\n            if (z === zGroundMin) {\n              const midX = Math.floor((x1 + x2) / 2);\n              if (x === midX) {\n                if (y === 11) set(x, y, z, woodPlanks);\n              } else if (x === midX - 1 || x === midX + 1) {\n                if (y === 8) set(x, y, z, woodPlanks);\n                else if (y === 9) set(x, y, z, woodPlanks);\n                else if (y === 10) set(x, y, z, glassPane);\n                else set(x, y, z, woodPlanks);\n              } else {\n                set(x, y, z, woodPlanks);\n              }\n            } else if (z === zGroundMax) {\n              if (y === 10 && (x === x1 + 2 || x === x2 - 2)) {\n                set(x, y, z, glassPane);\n              } else {\n                set(x, y, z, woodPlanks);\n              }\n            } else {\n              set(x, y, z, woodPlanks);\n            }\n          }\n        }\n      }\n    }\n\n    // Street awning at Y = 11 along shopfront\n    for (let x = x1; x <= x2; x++) {\n      set(x, 11, 13, st(woodStairs, \"south\"));\n    }\n\n    // 1st Floor (Y = 12..15): Jetty overhang\n    for (let x = x1; x <= x2; x++) {\n      for (let z = zJettyMin; z <= zJettyMax; z++) {\n        set(x, 12, z, woodPlanks);\n\n        const isCorner =\n          (x === x1 || x === x2) && (z === zJettyMin || z === zJettyMax);\n        const isWall =\n          x === x1 || x === x2 || z === zJettyMin || z === zJettyMax;\n\n        if (isCorner) {\n          for (let y = 13; y <= 15; y++) set(x, y, z, log(woodLog, \"y\"));\n        } else if (isWall) {\n          for (let y = 13; y <= 15; y++) {\n            if (y === 14 && (x % 3 === 0 || x === Math.floor((x1 + x2) / 2))) {\n              set(x, y, z, glassPane);\n            } else {\n              set(x, y, z, woodPlanks);\n            }\n          }\n        }\n      }\n    }\n\n    // Overhang jetty support brackets at Y = 12, Z = 19\n    for (let x = x1; x <= x2; x += 2) {\n      set(x, 11, 19, st(woodStairs, \"north\", \"top\"));\n    }\n\n    // 2nd Floor / Ceiling at Y = 16\n    for (let x = x1; x <= x2; x++) {\n      for (let z = zJettyMin; z <= zJettyMax; z++) {\n        set(x, 16, z, woodPlanks);\n      }\n    }\n\n    // Roof\n    if (type === \"gable\") {\n      buildNorthSouthGableRoof(x1, x2, zJettyMin, zJettyMax, 17);\n    } else {\n      buildEastWestRoof(x1, x2, zJettyMin, zJettyMax, 17);\n    }\n  }\n\n  // -------------------------------------------------------------------------\n  // Overhead Timber Skybridges across the Central Roadway\n  // -------------------------------------------------------------------------\n  const skybridgeSpans = [\n    { x1: 40, x2: 42 },\n    { x1: 72, x2: 74 }\n  ];\n\n  for (const sb of skybridgeSpans) {\n    const { x1, x2 } = sb;\n\n    // Arch corbels under skybridge\n    for (let x = x1; x <= x2; x++) {\n      set(x, 11, 6, st(woodStairs, \"south\", \"top\"));\n      set(x, 11, 13, st(woodStairs, \"north\", \"top\"));\n    }\n\n    // Walkable floor at Y = 12\n    for (let x = x1; x <= x2; x++) {\n      for (let z = 6; z <= 13; z++) {\n        set(x, 12, z, woodPlanks);\n      }\n    }\n\n    // Skybridge walls with viewing windows at Y = 13..15\n    for (let z = 6; z <= 13; z++) {\n      for (let y = 13; y <= 15; y++) {\n        if (y === 14 && z >= 8 && z <= 11) {\n          set(x1, y, z, glassPane);\n          set(x2, y, z, glassPane);\n        } else {\n          set(x1, y, z, woodPlanks);\n          set(x2, y, z, woodPlanks);\n        }\n      }\n    }\n\n    // Roof over skybridge at Y = 16..17\n    for (let z = 5; z <= 14; z++) {\n      set(x1 - 1, 16, z, st(roofStairs, \"east\"));\n      set(x1, 17, z, st(roofStairs, \"east\"));\n      set(x1 + 1, 17, z, roofSolid);\n      set(x2, 17, z, st(roofStairs, \"west\"));\n      set(x2 + 1, 16, z, st(roofStairs, \"west\"));\n    }\n  }\n\n  // -------------------------------------------------------------------------\n  // Authentic Stone Chimney Stacks Rising Above Roofs\n  // -------------------------------------------------------------------------\n  const chimneys = [\n    { x: 19, z: 1, yBot: 12, yTop: 24 },\n    { x: 36, z: 1, yBot: 12, yTop: 24 },\n    { x: 64, z: 1, yBot: 12, yTop: 25 },\n    { x: 84, z: 1, yBot: 12, yTop: 24 },\n    { x: 19, z: 18, yBot: 12, yTop: 24 },\n    { x: 48, z: 18, yBot: 12, yTop: 25 },\n    { x: 64, z: 18, yBot: 12, yTop: 25 },\n    { x: 92, z: 18, yBot: 12, yTop: 24 }\n  ];\n\n  for (const c of chimneys) {\n    buildChimney(c.x, c.z, c.yBot, c.yTop);\n  }\n\n  // -------------------------------------------------------------------------\n  // Return Structure Manifest, Anchors, and Interior Volumes\n  // -------------------------------------------------------------------------\n  const interiors = [\n    // West Gatehouse Guard Hall\n    { min: [3, 9, 7], max: [10, 13, 12], kind: \"hall\" },\n    // East Gatehouse Barbican Hall\n    { min: [101, 9, 7], max: [108, 13, 12], kind: \"hall\" },\n\n    // North Inhabited Shops & Quarters\n    { min: [15, 9, 1], max: [21, 11, 4], kind: \"hall\" },\n    { min: [15, 13, 1], max: [21, 15, 4], kind: \"quarters\" },\n    { min: [34, 9, 1], max: [41, 11, 4], kind: \"hall\" },\n    { min: [34, 13, 1], max: [41, 15, 4], kind: \"quarters\" },\n    { min: [44, 9, 1], max: [50, 11, 4], kind: \"hall\" },\n    { min: [60, 9, 1], max: [67, 11, 4], kind: \"hall\" },\n    { min: [80, 9, 1], max: [87, 11, 4], kind: \"hall\" },\n\n    // South Inhabited Shops, Chapel & Quarters\n    { min: [15, 9, 15], max: [22, 11, 18], kind: \"hall\" },\n    { min: [15, 13, 15], max: [22, 15, 18], kind: \"quarters\" },\n    { min: [53, 9, 15], max: [57, 13, 18], kind: \"vault\" }, // St. Nicholas Chapel\n    { min: [60, 9, 15], max: [67, 11, 18], kind: \"hall\" },\n    { min: [89, 9, 15], max: [96, 11, 18], kind: \"hall\" },\n\n    // Overhead Covered Skybridges\n    { min: [40, 13, 7], max: [42, 15, 12], kind: \"bridge\" },\n    { min: [72, 13, 7], max: [74, 15, 12], kind: \"bridge\" }\n  ];\n\n  return {\n    name: \"inhabited_stone_bridge\",\n    seatY: seatY,\n    anchors: {\n      front: [56, 8, 0],\n      west_portal: [0, 8, 9],\n      east_portal: [111, 8, 9],\n      chapel: [55, 8, 14]\n    },\n    interiors\n  };\n}"
+    }
+  }
+}
