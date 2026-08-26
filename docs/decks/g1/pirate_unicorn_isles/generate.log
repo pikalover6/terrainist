@@ -1,0 +1,173 @@
+prompt     A pirate island and a unicorn island, at war.
+seed       301
+size       512x512
+model      google/gemini-3.7-flash
+effort     high
+kit        settlement
+
+intent     {"climate":{"temperature":0.6,"humidity":0.4,"snow":"never"},"event":{"kind":"siege","severity":0.8,"recency":0},"tokens":{"terrain":"two islands separated by open water, facing each other across a contested strait","event_direction":"pirate warships and shoreline artillery facing across the water toward the fortified unicorn redoubts","infra":"cannon_battery along the pirate island shore facing the strait; watchtower_beacons and palisade along the unicorn island bluffs","region_pirate_isle":"era renaissance, wealth 0.35, decline 0.4, formality 0.2; materialTheme temperate_timber; formPacks [nautical_pirate]; prefer archetypes tavern, warehouse, watchtower, lighthouse; props galleon, cart; fortified cove harbour, careened hulls, shore batteries","region_unicorn_isle":"era medieval, wealth 0.85, decline 0.05, formality 0.75; materialTheme white_quartz; formPacks [arcane_magical]; prefer archetypes church, manor, watchtower; sacred crystal glades, white stone sanctuary terraces, unicorn meadows"}}
+           1 attempt(s), 8299 tokens
+
+authored with google/gemini-3.7-flash in 2 attempt(s)
+  attempt 1   1 problem(s): LOAM-T101 BAD_ENUM@world.unicorn_sanctuary.intent.character.motifs.windowRhythm
+  attempt 2   valid
+  tokens     178945 in + 20329 out = 199274  ($0.1052)
+programs   3 of 3 kept (budget 3 landmark / 3 plugin)
+  ok     unicorn_colossus [landmark]  1 attempt(s), 26430 tokens  ($0.0445), 2 warning(s)
+  ok     dread_corsair_flagship [landmark]  1 attempt(s), 23512 tokens  ($0.0391), 27 warning(s)
+  ok     coastal_defense_turret [plugin]  1 attempt(s), 26996 tokens  ($0.0456), 10 warning(s)
+  tokens     10049 in + 66889 out = 76938  (47116 of the out reasoning)  ($0.1292)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g1/out/pirate_unicorn_isles/out/pirates_vs_unicorns.loam.json
+
+
+compile feedback, round 1 of 2:
+
+The compiler reported 10 problem(s) with the compiled world:
+
+warning LOAM-T105 BASIN_RIM_NOT_CLOSED at world.terrain.unicorn_sacred_spring: basin interior does not sit below its rim; water fill skipped
+  fix: close the basin rim (increase "radius" or reduce "depth") to raise the waterline, or drop "water": true
+note LOAM-T113 CARVE_DRY at world.terrain.unicorn_sacred_spring: basin "unicorn_sacred_spring" asked to flood ("flooded": "auto") but compiled dry: not one of its columns reaches the sea. Its lowest point sits 28 blocks east of the nearest coastline, so the carve is a dry channel in the middle of the land.
+  fix: end the carve at the water instead of guessing where it is: make the last "course" waypoint the string "coast" (e.g. "course": [[0.54, 0.40], [0.5, 0.28], "coast"]) and the compiler will aim it at the sea this seed actually produced. Use it as the *first* waypoint for an inlet drawn inland. If the channel is meant to be a dry gorge, say so with "flooded": "never" and this note goes away.
+warning LOAM-E406 UNSATISFIABLE at world.unicorn_sanctuary: none of the 97 candidate footprints could stand on the ground — 27 sat below sea level, 70 were too steep. No constraint on this node was violated; it was placed at the least-violating position
+  fix: this is the ground, not your constraints: shrink the node's envelope size, move it with a "zone"/"at" constraint, or raise "terrain_conform"."maxSlope"
+warning LOAM-E404 CONSTRAINT_DEMOTED at world.the_unicorn_colossus: hard "distance" constraint [1] was demoted to soft so this node could be placed
+  fix: widen what it asks for first — a bigger "gap"/"max", a wider "band", a higher "maxSlope"; the solver report lists its final cost. Only write "strength": "soft" if the relationship was a preference all along. If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.
+warning LOAM-E170 CANNOT_FIT at world.pirate_haven.pirate_keep: no lot or block in "world.pirate_haven" is big enough for this landmark's 15 × 15 footprint
+  fix: shrink "envelope.size", raise the district's "params.blockSize" so its blocks are bigger, or move this building out of the district and let the solver place it
+warning LOAM-W527 WALLED_QUARTER_SPARSE at world.pirate_haven: "world.pirate_haven" is walled and built 599 of its 1483 block column(s) — 40 %, under the 50 % a walled quarter needs before the circuit reads as a town wall rather than as a fence round open ground
+  fix: Raise "density", lower "params.blockSize" so the fabric draws more streets and shallower blocks, or shrink "envelope.size" so the wall encloses the fabric that was actually built.
+warning LOAM-W527 WALLED_QUARTER_SPARSE at world.unicorn_sanctuary: "world.unicorn_sanctuary" is walled and built 1871 of its 4185 block column(s) — 45 %, under the 50 % a walled quarter needs before the circuit reads as a town wall rather than as a fence round open ground
+  fix: Raise "density", lower "params.blockSize" so the fabric draws more streets and shallower blocks, or shrink "envelope.size" so the wall encloses the fabric that was actually built.
+warning LOAM-E170 CANNOT_FIT at world.unicorn_monolith: no site within 48 blocks fits the monolith
+  fix: flatten the ground near its target, or move the node with a coarse zone/at param
+warning LOAM-E170 CANNOT_FIT at world.pirate_outpost_camp: no site within 48 blocks fits the campsite
+  fix: flatten the ground near its target, or move the node with a coarse zone/at param
+warning LOAM-T119 SCATTER_EMPTY at world.pirate_cove_forest: forest node "pirate_cove_forest" placed 0 trees: all 88 of its eligible columns fall inside the settlement clearing, which suppresses tree density to zero.
+  fix: move "area" off the town — use a "zone" token away from the settlement, or an "at"/"radius" centred outside it.
+
+Layout solver report:
+
+  world.corsair_flagship: placed after landmark_coarse_ring (97 candidates considered)
+    unsatisfied at constraint [0] (declared soft, now soft, weight 2, cost 0.08)
+  world.unicorn_sanctuary: placed after unsatisfiable (97 candidates considered)
+  world.the_unicorn_colossus: placed after constraint_demoted, landmark_coarse_ring (97 candidates considered)
+    unsatisfied at constraint [0] (declared soft, now soft, weight 2, cost 0.30)
+    unsatisfied distance constraint [1] (declared hard, now soft, weight 1, cost 0.04)
+
+  revision 1 authored in 3 attempt(s)
+  tokens     406841 in + 81482 out = 488323  ($0.2252)
+
+
+compile feedback, round 2 of 2:
+
+The compiler reported 1 problem(s) with the compiled world:
+
+warning LOAM-E170 CANNOT_FIT at world.pirate_outpost_camp: no site within 48 blocks fits the campsite
+  fix: flatten the ground near its target, or move the node with a coarse zone/at param
+
+Layout solver report:
+
+  world.corsair_flagship: placed after landmark_coarse_seat (97 candidates considered)
+  world.the_unicorn_colossus: placed after landmark_coarse_ring (97 candidates considered)
+    unsatisfied at constraint [0] (declared soft, now soft, weight 2, cost 0.59)
+    unsatisfied distance constraint [1] (declared soft, now soft, weight 1, cost 0.02)
+
+  revision 2 authored in 1 attempt(s)
+  tokens     109007 in + 28059 out = 137066  ($0.0935)
+
+compiled "pirates_vs_unicorns" — 1.21.11 (DataVersion 4671)
+  world      /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g1/out/pirate_unicorn_isles/out/pirates_vs_unicorns
+  seed       301
+  region     512x512 at (-256, -256)
+  heights    42.2..106.1  sea 63  snow line 104.0
+  land       19.3% of columns above sea level
+  biomes     ocean 79.3%, windswept_hills 13.6%, plains 4.0%, deep_ocean 1.5%, beach 1.3%, forest 0.2%, river 0.1%
+  trees      82 (pirate_cove_forest=8, unicorn_sacred_woods=39, wilderness_fill=66)
+  chunks     1024
+  blocks     34625489 (7612 vegetation)
+  markers    102
+  spawn      [16, 66, 16]
+  timings    validate 4ms  field 140ms  layout 192ms  climate 42ms  columns 26ms  caves 0ms  structures 404ms  programs 278ms  scatter 277ms  biomes 31ms  validators 6ms  emit 913ms  total 2374ms
+  programs   world.corsair_flagship=dread_corsair_flagship×1 (4045 blocks), world.coastal_artillery_emplacements=coastal_defense_turret×1 (225 blocks), world.the_unicorn_colossus=unicorn_colossus×1 (4213 blocks)
+  doc        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g1/out/pirate_unicorn_isles/out/pirates_vs_unicorns.loam.json
+  report     /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g1/out/pirate_unicorn_isles/out/pirates_vs_unicorns.report.json
+
+warning LOAM-W520 LANDMARK_COARSE_SEATED at world.the_unicorn_colossus: every site at this landmark's coarse target was refused by the building slope veto (steepest 83° across the footprint); it was seated there anyway, at (36, 45), and its ground is padded — a landmark is not a building
+  fix: nothing to change if the landmark is meant to crown that ground. If it should stand on the flat instead, move the "at"/"zone" target off the slope, or add { "terrain_conform": "flatten", "maxSlope": <degrees> } to say how much slope it will accept
+
+note LOAM-T242 GROUND_PLANE_DRIFT at world.pirate_haven: 329 of 2125 platform column(s) in "world.pirate_haven" within 12 block(s) of a graded carriageway stand off the street's own storey lattice, the worst by -7 block(s)
+  fix: Nothing to change in the document — a document cannot move its own storey lattice. A non-zero count is a compiler finding: the anchor did not hold on this quarter.
+
+note LOAM-I512 DISTRICT_RUINS at world.pirate_haven: decline 0.40 gives a ruin share of 0.16: 0 of 4 infill lots roll into ruined shells (light 0, heavy 0, total 0)
+  fix: raise or lower intent.decline on this district to move the share; landmarks you declared are exempt unless they carry params.decay
+
+warning LOAM-T224 COURTYARD_NONE at world.pirate_haven: no block in "world.pirate_haven" can hold a courtyard: 6 of 6 are too thin for two opposite rows of lots
+  fix: raise "params.blockSize" so a block is at least 41 columns across, or raise "density" to "high" so the perimeter builds a continuous street wall
+
+note LOAM-I526 PLATFORM_SUBMERGED at world.unicorn_sanctuary: platform "block.5524.0" in "world.unicorn_sanctuary" is mostly water and is not graded: its columns keep the pristine terrain and the water on it
+  fix: nothing to change if the quarter meets the water there; if the water was not meant to be inside the quarter, move or shrink the district's envelope off it
+
+note LOAM-T242 GROUND_PLANE_DRIFT at world.unicorn_sanctuary: 1242 of 3657 platform column(s) in "world.unicorn_sanctuary" within 13 block(s) of a graded carriageway stand off the street's own storey lattice, the worst by -5 block(s)
+  fix: Nothing to change in the document — a document cannot move its own storey lattice. A non-zero count is a compiler finding: the anchor did not hold on this quarter.
+
+note LOAM-I512 DISTRICT_RUINS at world.unicorn_sanctuary: decline 0.05 gives a ruin share of 0.00: 0 of 8 infill lots roll into ruined shells (light 0, heavy 0, total 0)
+  fix: decline is below the ruin onset of 0.35 — below it decline is wear, not ruin; raise it to ruin buildings
+
+warning LOAM-T224 COURTYARD_NONE at world.unicorn_sanctuary: no block in "world.unicorn_sanctuary" can hold a courtyard: 4 of 5 have a core narrower than 9 columns
+  fix: raise "params.blockSize" so a block is at least 41 columns across, or raise "density" to "high" so the perimeter builds a continuous street wall
+
+warning LOAM-W409 PRECINCT_RESEATED at world.pirate_cove_port: precinct.harbour@0 found no quay in the envelope the solver gave it at [-240, -202] and reseated itself on the best coastline in the world, at [-224, -96] — 72 columns of shoreline facing west
+  fix: nothing to fix if the port is where you want it; to hold it to a particular part of town, mark its "zone" constraint "strength": "hard" and it will fail in place instead of moving
+
+note LOAM-I412 SEAM_SERVED at world.pirate_haven: seams served (S1): 0 wall(s), 0 tier stack(s) over 0 face(s) and 0 column(s), 5 bank(s), 8 kerb seam(s), and 1 seam(s) a building already stood on
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.pirate_haven: multi-level ground: 0 retaining wall(s) over 0 column(s) (0 parapeted), 8 kerb seam(s), 5 bank(s), and 1 seam(s) a building already stood on; 17 seam column(s) got no wall (17 builtSeam); 284 column(s) graded as bank
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.pirate_haven: transitions by context (§5): 279 edge column(s) — fill 279 (60 bank, 17 built, 202 kerb), cut 0 (none)
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.pirate_haven: every cut face finished: 390 column(s) faced in the hill's own rock
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world: face finish: 411 column(s) striped in the hill's own rock, 217 paved face(s) footed, 11 crown notch(es) closed
+  fix: No action needed.
+
+note LOAM-I497 GROUND_STAGE at world: ground stage: 530 intent(s) (building.footprint 30, precinct.ground 1, prop.pad 4, quarter.plane 465, retaining.skirt 7, street.network 13, street.sidewalk 2, verge 8), 5 resolve(s), 2376 column(s) moved, 432 transition(s) (bank 146, built 1, kerb 276, retaining 3, rock 5, tiered 1), 158 of them unbuilt by any pass; coverage 1277 boundary pair(s) — 1003 in a transition, 189 suppressed by request, 85 by a face, 0 a kerb, 0 uncovered (excluded: 44736 natural, 188 wet)
+  fix: Nothing — this is the stage's own golden, and it is a note so that a count moving is visible in a diff before a block moves in a world.
+
+note LOAM-I412 SEAM_SERVED at world: terminal seam builder (§3.3): 4 derived transition(s) built (bank 1, revetted 2, tiered 1) over 66 column(s) of face, 11 of graded bank (1 eased under §7.2's natural blend) and 0 finished in the hill's own rock; 145 absorbed under S7, 4 refused
+  fix: No action needed.
+
+warning LOAM-W413 SEAM_UNSERVED at world.pirate_haven: 4 derived transition(s) in "world.pirate_haven" were chosen and could not be placed: a derived retaining seam at -165,-100 drops 2 block(s) over 9 column(s) and was served by a revetted stack of 1 tier(s), but 1 tier(s) found no ground to stand on and 0 column(s) were left uncovered — a street, a footprint or water owns the ground the course needed; a derived bank at -154,-99 falls 3 block(s) over 12 column(s), but only 0 column(s) of open ground stand beyond it where a 1:2 bank wants 6, and the revetted stack S5 re-dresses it as found no ground to stand on either; a derived retaining seam at -78,-38 drops 5 block(s) over 7 column(s) and was served by a revetted stack of 1 tier(s), but 1 tier(s) found no ground to stand on and 0 column(s) were left uncovered — a street, a footprint or water owns the ground the course needed; and 1 more
+  fix: Nothing in the document names the columns directly: widen the block so the construction has room, or lower the quarter's density so the two levels are closer together.
+
+note LOAM-I524 WALL_FOOTING_DEEP at world.unicorn_sanctuary: wall run "masonry" (404 course columns, 702 built) sank its footing 0.3 courses on average and 10 at the deepest (cap 18) — the deep stretch stands as a sheer pier of wall material, not as a wall on the ground
+  fix: no change needed if the pier reads as a rampart on a walk — otherwise move the circuit clear of the dip with a larger "walls.margin", or shrink the envelope so the course keeps to the settlement's own bench
+
+note LOAM-I415 WALL_COURSE_CROSSES_SEAM at world.unicorn_sanctuary: wall run "masonry" (404 course columns) crosses a platform boundary at 2 column(s) where the ground steps at least 2 block(s) — the deepest crossing is 8 block(s) and the longest unbroken stretch is 1 column(s), and along it the wall's own fill is the face rather than a wall standing on one
+  fix: no action needed — the circuit is not moved on this number. It is the measurement that decides whether a crossing is worth building as a tier stack instead, which is a later round
+
+note LOAM-T234 INFRA_RUN_REFUSED at world.pirate_shore_battery: "cannon_battery" built 25 of 46 route columns — 21 were refused by collision or unbuildable ground
+  fix: no change needed if the gaps read as a worn line on a walk — otherwise move the route clear of what it is crossing with a larger margin or offset
+
+note LOAM-T341 PROGRAM_SEATED_PAD at world.coastal_artillery_emplacements: "coastal_defense_turret" writes the same sole on every column, so it is seated on a levelled pad rather than on the real ground
+  fix: no change needed here — the fix is in the program: read api.heightAt at every column it touches and answer it, and the next authoring run will seat it on the ground itself
+
+warning LOAM-W337 PROGRAM_DROPPED at world.coastal_artillery_emplacements: "coastal_defense_turret" asked for 4 instances and only 1 site would take one
+  fix: the area cannot hold that many at this spacing: widen "area", lower "spacing" below 19, relax "maxSlope"/"avoidTags", or ask for fewer
+
+note LOAM-T341 PROGRAM_SEATED_PAD at world.the_unicorn_colossus: "unicorn_colossus" writes the same sole on every column, so it is seated on a levelled pad rather than on the real ground
+  fix: no change needed here — the fix is in the program: read api.heightAt at every column it touches and answer it, and the next authoring run will seat it on the ground itself
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 16888 footprint columns (plus 15839 feathered over 40 columns) to minecraft:windswept_hills, from the ambient majority (minecraft:windswept_hills, 68% of 10209 ring columns); snow policy never resolved to "never" on a 0/16888 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+
+warning LOAM-T107 SPAWN_UNRESOLVED at world.meta.spawn: the requested spawn at (0, 0) is under water or too close to sea level; moved to (16, 16)
+  fix: move "meta.spawn" onto land — pick a zone or "at" fraction over terrain at least two blocks above sea level
+  authoring  3 model run(s), 2 compile-feedback round(s), 694793 in + 129870 out = 824663 tokens (32886 of the out reasoning) ($0.4239)
+
+note: 2 compile-feedback round(s) used; the findings above remain
+next: terrainist install /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g1/out/pirate_unicorn_isles/out/pirates_vs_unicorns

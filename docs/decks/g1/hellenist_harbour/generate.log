@@ -1,0 +1,105 @@
+prompt     A modern Hellenist city being invaded by sea monsters.
+seed       305
+size       512x512
+model      google/gemini-3.7-flash
+effort     high
+kit        settlement
+
+intent     {"era":"modern","wealth":0.8,"decline":0.2,"formality":0.85,"event":{"kind":"siege","severity":0.8,"recency":0},"climate":{"temperature":0.7,"humidity":0.3,"snow":"never"},"character":{"label":"modern Hellenist coastal metropolis","materialTheme":"modern_city","formPacks":["classical_mediterranean"],"archetypes":{"prefer":["stoa","peripteral_temple","propylaea","bouleuterion","odeon","palaestra"]},"urbanForm":"grid","motifs":{"massing":"stepped","windowRhythm":"regular","ornamentDensity":0.7}},"tokens":{"terrain":"a modern coastal city with a wide waterfront promenade and open sea","event_direction":"giant sea monsters emerge from the open water attacking the coastal promenade and harbour front","infra":"barricade_line along the waterfront boulevard; emergency_cordon sealing off the damaged quays","icons":"monumental colonnaded modern buildings; wide marble-lined avenues meeting the sea; breaching tentacles and leviathans crushing piers"}}
+           1 attempt(s), 8536 tokens
+
+authored with google/gemini-3.7-flash in 2 attempt(s)
+  attempt 1   1 problem(s): LOAM-T213 CITY_PARAM@world.metropolis.params.characters
+  attempt 2   valid
+  tokens     176866 in + 15692 out = 192558  ($0.0957)
+programs   3 of 3 kept (budget 3 landmark / 3 plugin)
+  ok     colossal_leviathan [landmark]  1 attempt(s), 28412 tokens  ($0.0483), 14 warning(s)
+  ok     guardian_colossus_apollo [landmark]  1 attempt(s), 39923 tokens  ($0.0698), 10 warning(s)
+  ok     breaching_tentacle [plugin]  2 attempt(s), 57349 tokens  ($0.0757), 2 warning(s)
+  tokens     27901 in + 97783 out = 125684  (65560 of the out reasoning)  ($0.1938)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g1/out/hellenist_harbour/out/hellenist_city_invasion.loam.json
+
+
+compile feedback, round 1 of 2:
+
+
+Layout solver report:
+
+  world.colossus_statue: placed after landmark_coarse_ring (97 candidates considered)
+    unsatisfied at constraint [0] (declared soft, now soft, weight 2, cost 0.33)
+
+  revision 1 authored in 1 attempt(s)
+  tokens     113741 in + 34202 out = 147943  ($0.1068)
+
+
+compile feedback, round 2 of 2:
+
+
+Layout solver report:
+
+  world.colossus_statue: placed after landmark_coarse_ring (97 candidates considered)
+    unsatisfied at constraint [0] (declared soft, now soft, weight 2, cost 0.18)
+
+  revision 2 authored in 1 attempt(s)
+  tokens     113806 in + 33550 out = 147356  ($0.1056)
+
+compiled "hellenist_city_invasion" — 1.21.11 (DataVersion 4671)
+  world      /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g1/out/hellenist_harbour/out/hellenist_city_invasion
+  seed       305
+  region     512x512 at (-256, -256)
+  heights    39.3..110.5  sea 63  snow line 108.2
+  land       64.0% of columns above sea level
+  biomes     plains 54.1%, ocean 34.0%, windswept_hills 4.2%, forest 4.1%, deep_ocean 2.1%, beach 1.6%
+  trees      631 (mediterranean_woods=321, ambient_cover=374)
+  chunks     1024
+  blocks     35493391 (66263 vegetation)
+  markers    88
+  spawn      [0, 74, 76]
+  timings    validate 5ms  field 222ms  layout 781ms  climate 42ms  columns 23ms  caves 0ms  structures 881ms  programs 864ms  scatter 129ms  biomes 43ms  validators 5ms  emit 1085ms  total 4119ms
+  programs   world.the_leviathan=colossal_leviathan×1 (12072 blocks), world.colossus_statue=guardian_colossus_apollo×1 (1952 blocks), world.breaching_tentacles=breaching_tentacle×1 (432 blocks)
+  doc        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g1/out/hellenist_harbour/out/hellenist_city_invasion.loam.json
+  report     /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g1/out/hellenist_harbour/out/hellenist_city_invasion.report.json
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.main_boulevards: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+warning LOAM-W521 LANDMARK_COARSE_ABANDONED at world.colossus_statue: this landmark asked to stand at (-123, -41) and was placed at (-171, -65), 54 blocks away: a site inside the target was feasible but cost more, and "at"/"zone" is a soft cost the ground can outbid
+  fix: nothing to change if anywhere sensible will do. If the landmark belongs at that spot — its own island, its own faction's shore — tighten the target with a "radius"/"tolerance", or bind it to something local ("distance" to a node there, "on": "@terrain:coastline"), so the ground cannot outbid the intent
+
+note LOAM-I512 DISTRICT_RUINS at world.metropolis.cell_1: decline 0.15 gives a ruin share of 0.00: 0 of 21 infill lots roll into ruined shells (light 0, heavy 0, total 0); 0 of 1 terrace run (2 lots) roll into ruined shells, bay by bay
+  fix: decline is below the ruin onset of 0.35 — below it decline is wear, not ruin; raise it to ruin buildings
+
+note LOAM-I512 DISTRICT_RUINS at world.metropolis.cell_4: decline 0.15 gives a ruin share of 0.00: 0 of 24 infill lots roll into ruined shells (light 0, heavy 0, total 0); 0 of 15 terrace runs (38 lots) roll into ruined shells, bay by bay
+  fix: decline is below the ruin onset of 0.35 — below it decline is wear, not ruin; raise it to ruin buildings
+
+warning LOAM-W409 PRECINCT_RESEATED at world.harbour_precinct: precinct.harbour@0 found no quay in the envelope the solver gave it at [183, -117] and reseated itself on the best coastline in the world, at [-240, 144] — 96 columns of shoreline facing east
+  fix: nothing to fix if the port is where you want it; to hold it to a particular part of town, mark its "zone" constraint "strength": "hard" and it will fail in place instead of moving
+
+warning LOAM-W517 INTENT_FORM_PACK_ERA at world: intent.era resolves to "modern", which is outside the affinity of the form pack "classical_mediterranean" (ancient) — the pack is used as written
+  fix: affinity is advice, never a gate: an ancient form vocabulary in a modern city is a legal and deliberate combination. Change the era or the pack only if the pairing was not what you meant
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.harbour_precinct: every cut face finished: 150 column(s) faced in the hill's own rock
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world: face finish: 412 column(s) striped in the hill's own rock, 217 paved face(s) footed, 24 crown notch(es) closed
+  fix: No action needed.
+
+note LOAM-I497 GROUND_STAGE at world: ground stage: 422 intent(s) (building.footprint 132, precinct.ground 1, quarter.plane 265, road.network 1, street.network 20, street.sidewalk 2, verge 1), 5 resolve(s), 2715 column(s) moved, 321 transition(s) (bank 22, kerb 298, rock 1), 26 of them unbuilt by any pass; coverage 1702 boundary pair(s) — 665 in a transition, 1037 suppressed by request, 0 by a face, 0 a kerb, 0 uncovered (excluded: 52688 natural, 202 wet)
+  fix: Nothing — this is the stage's own golden, and it is a note so that a count moving is visible in a diff before a block moves in a world.
+
+note LOAM-T234 INFRA_RUN_REFUSED at world.harbour_quarantine: "quarantine_fence" built 764 of 1471 route columns — 707 were refused by collision or unbuildable ground
+  fix: no change needed if the gaps read as a worn line on a walk — otherwise move the route clear of what it is crossing with a larger margin or offset
+
+note LOAM-T341 PROGRAM_SEATED_PAD at world.colossus_statue: "guardian_colossus_apollo" writes the same sole on every column, so it is seated on a levelled pad rather than on the real ground
+  fix: no change needed here — the fix is in the program: read api.heightAt at every column it touches and answer it, and the next authoring run will seat it on the ground itself
+
+warning LOAM-W337 PROGRAM_DROPPED at world.breaching_tentacles: "breaching_tentacle" asked for 12 instances and only 1 site would take one
+  fix: the area cannot hold that many at this spacing: widen "area", lower "spacing" below 19, relax "maxSlope"/"avoidTags", or ask for fewer
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 68127 footprint columns (plus 28266 feathered over 40 columns) to minecraft:plains, from the ambient majority (minecraft:plains, 93% of 18508 ring columns); snow policy never resolved to "never" on a 0/68127 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+  authoring  3 model run(s), 2 compile-feedback round(s), 404413 in + 83444 out = 487857 tokens (17147 of the out reasoning) ($0.3081)
+
+note: 2 compile-feedback round(s) used; the findings above remain
+next: terrainist install /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g1/out/hellenist_harbour/out/hellenist_city_invasion

@@ -1,0 +1,9 @@
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+note LOAM-I463 SWEEP_FEATURES_PLACED: face finish: 129 column(s) striped in the hill's own rock, 26 paved face(s) footed, 1 crown notch(es) closed
+note LOAM-I497 GROUND_STAGE: ground stage: 31 intent(s) (building.footprint 20, plaza.ground 1, plaza.well 2, road.network 8), 5 resolve(s), 244 column(s) moved, 4 transition(s) (kerb 4), 0 of them unbuilt by any pass; coverage 291 boundary pair(s) — 63 in a transition, 228 suppressed by request, 0 by a face, 0 a kerb, 0 uncovered (excluded: 68206 natural, 0 wet)
+note LOAM-T341 PROGRAM_SEATED_PAD: "steam_log_derrick" writes the same sole on every column, so it is seated on a levelled pad rather than on the real ground
+warning LOAM-W337 PROGRAM_DROPPED: 3 candidate sites for "felled_redwood_log" were refused: the ground under them falls away like a cliff, and no pad would seat a structure across that
+warning LOAM-W337 PROGRAM_DROPPED: "felled_redwood_log" asked for 6 instances and only 2 sites would take one
+note LOAM-T342 PROGRAM_CONFORM_RESIDUAL: "colossal_elder_redwood" conformed to the ground it was given: of 520 occupied columns, 0 (0%) needed a skirt under them and 44 (8%) are buried in the hill
+note LOAM-W470 BIOME_CLAMPED: land use clamped 4230 footprint columns (plus 22711 feathered over 40 columns) to minecraft:old_growth_pine_taiga, named by climate intent; snow policy never resolved to "never" on a 0/4230 vote
+warning LOAM-T107 SPAWN_UNRESOLVED: the requested spawn at (0, 170) is under water or too close to sea level; moved to (4, 166)

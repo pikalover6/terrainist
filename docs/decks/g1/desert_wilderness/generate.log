@@ -1,0 +1,52 @@
+prompt     A vast salt desert under a hard sun, cracked flat to the horizon, with nothing living on it.
+seed       313
+size       512x512
+model      google/gemini-3.7-flash
+effort     high
+kit        terrain
+
+intent     {"climate":{"biome":"minecraft:desert","temperature":1,"humidity":-1,"snow":"never"},"character":{"label":"barren salt desert","materialTheme":"sun_clay"},"tokens":{"terrain":"a vast, cracked-earth salt desert stretching flat to the horizon under a hard sun, completely barren of settlements and living vegetation"}}
+           1 attempt(s), 7742 tokens
+
+authored with google/gemini-3.7-flash in 1 attempt(s)
+  attempt 1   valid
+  tokens     13466 in + 3510 out = 16976  ($0.0116)
+programs   2 of 2 kept (budget 3 landmark / 3 plugin)
+  ok     ancient_leviathan_skeleton [landmark]  1 attempt(s), 24450 tokens  ($0.0411), 1 warning(s)
+  ok     salt_crystal_spire [plugin]  1 attempt(s), 30760 tokens  ($0.0529), 2 warning(s)
+  tokens     6789 in + 49316 out = 56105  (36455 of the out reasoning)  ($0.0950)
+
+wiring     2 program(s) authored but never invoked: ancient_leviathan_skeleton [landmark], salt_crystal_spire [plugin]
+
+  wired in 1 attempt(s); 28370 in + 16503 out = 44873 tokens  ($0.0416)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g1/out/desert_wilderness/out/vast_salt_desert.loam.json
+
+compiled "vast_salt_desert" — 1.21.11 (DataVersion 4671)
+  world      /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g1/out/desert_wilderness/out/vast_salt_desert
+  seed       313
+  region     512x512 at (-256, -256)
+  heights    62.0..69.1  sea 63  snow line 69.1
+  land       99.6% of columns above sea level
+  biomes     plains 100.0%
+  trees      0 ()
+  chunks     1024
+  blocks     34548003 (0 vegetation)
+  markers    70
+  spawn      [-32, 66, -32]
+  timings    validate 3ms  field 161ms  layout 0ms  climate 45ms  columns 121ms  caves 0ms  structures 0ms  programs 759ms  scatter 2ms  biomes 7ms  validators 1ms  emit 719ms  total 1887ms
+  programs   world.leviathan_skeleton=ancient_leviathan_skeleton×1 (4547 blocks), world.salt_spires=salt_crystal_spire×16 (7124 blocks)
+  doc        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g1/out/desert_wilderness/out/vast_salt_desert.loam.json
+  report     /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g1/out/desert_wilderness/out/vast_salt_desert.report.json
+
+note LOAM-T341 PROGRAM_SEATED_PAD at world.leviathan_skeleton: "ancient_leviathan_skeleton" writes the same sole on every column, so it is seated on a levelled pad rather than on the real ground
+  fix: no change needed here — the fix is in the program: read api.heightAt at every column it touches and answer it, and the next authoring run will seat it on the ground itself
+
+note LOAM-T342 PROGRAM_CONFORM_RESIDUAL at world.salt_spires: "salt_crystal_spire" conformed to the ground it was given: of 1117 occupied columns, 0 (0%) needed a skirt under them and 66 (6%) are buried in the hill
+  fix: no change needed — a skirted column is a leg the compiler footed, and a buried one is ground standing above the seat plane, which only the program's own answer or a carve can help
+
+warning LOAM-T107 SPAWN_UNRESOLVED at world.meta.spawn: the requested spawn at (0, 0) is under water or too close to sea level; moved to (-32, -32)
+  fix: move "meta.spawn" onto land — pick a zone or "at" fraction over terrain at least two blocks above sea level
+  authoring  2 model run(s), 0 compile-feedback round(s), 41836 in + 20013 out = 61849 tokens (4524 of the out reasoning) ($0.0532)
+
+next: terrainist install /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g1/out/desert_wilderness/out/vast_salt_desert

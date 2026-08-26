@@ -1,0 +1,8 @@
+warning LOAM-W330 PROGRAM_ENVELOPE_OVERRIDDEN: this node declares an envelope; program "colossal_glowcap_spire" declares [35, 54, 35] and the program wins
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+note LOAM-W522 PROGRAM_FACE_REMEASURED: this landmark was placed at (-25, -126), not where its facing was first measured from, so the facing was taken again from the real site: 270° becomes 180°
+note LOAM-I497 GROUND_STAGE: ground stage: 32 intent(s) (building.footprint 20, plaza.ground 1, plaza.well 2, road.network 9), 5 resolve(s), 47 column(s) moved, 14 transition(s) (kerb 14), 0 of them unbuilt by any pass; coverage 296 boundary pair(s) — 164 in a transition, 132 suppressed by request, 0 by a face, 0 a kerb, 0 uncovered (excluded: 93991 natural, 0 wet)
+note LOAM-T341 PROGRAM_SEATED_PAD: "colossal_glowcap_spire" writes the same sole on every column, so it is seated on a levelled pad rather than on the real ground
+warning LOAM-W337 PROGRAM_DROPPED: "fungal_canopy_dwellings" asked for 6 instances and only 5 sites would take one
+note LOAM-W470 BIOME_CLAMPED: land use clamped 3269 footprint columns (plus 13483 feathered over 40 columns) to minecraft:plains, from the ambient majority (minecraft:plains, 88% of 8651 ring columns); snow policy never resolved to "never" on a 0/3269 vote
+warning LOAM-T107 SPAWN_UNRESOLVED: the requested spawn at (0, 0) is under water or too close to sea level; moved to (-28, -28)

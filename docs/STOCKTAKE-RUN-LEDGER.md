@@ -1,25 +1,24 @@
 # THE STOCKTAKE RUN — ledger
 
-STATUS: RUNNING
+STATUS: DONE
 
 Spec: `docs/STOCKTAKE-RUN-SPEC.md` (immutable). This file is the Run's only
 running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 46 (G1: the eleven golden generated fresh at
-  the final bytes — eleven of eleven pass by read (troy's citadel and the railway as read-its), icons 28 of 28, one metric alarm; two worlds needed network retries) is committed.
-- **Next unit:** unit 47 — **G7 and the close.** Install the eleven G1
-  worlds to the Prism instance (`--saves`, never `--replace`) with a walk
-  card each (`docs/decks/g1/<id>/WALK-CARD.md`, stations from the
-  placements); write the closing report into the ledger (a `## CLOSING
-  REPORT` section: the gates G1–G7 with their verdicts and records, the
-  findings ledger F1–F32 in one table, the proposals P1–P11 ranked with P8
-  first, the kill-ladder for Kai, the debts — WS-B, T5's plinth, the
-  citadel's scale — and the spend); confirm every instrument, probe and
-  VERDICT.md is in the tree; set the top of this ledger to `STATUS: DONE`
-  in the same commit. Spend so far $24.72 of $35.00.
-- **Last commit:** b6e8626 (unit 45). Convention: this line names the
+- **In flight:** nothing — unit 47 (G7 and the close) is committed and the
+  Run is **DONE**: every gate G1–G7 holds by its record, with G6 open on one
+  named line (WS-B, a documentation debt) and every FAIL of the campaign
+  attributed to a cause in the tree.
+- **Next unit:** none. What follows the Run is Kai's: the walk of the
+  eleven G1 worlds and the three G2/k3 worlds installed in the Prism
+  instance (walk cards in `docs/decks/g1/*/` and `docs/decks/*_k2|k3/`;
+  T10 — his verdicts override every read here), the post-hoc vetoes on
+  D12, D19, D25, D32, D77, D84, D87, D90, D91, and the kill-ladder's rungs
+  (`G6-WORKSTREAMS-2026-08-25.md` WS-F), each his to ratify. The first
+  thing to build after the Run is P8. See the CLOSING REPORT below.
+- **Last commit:** 135b303 (unit 46). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
 - **Spend:** $24.72 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
 - **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19, D25,
@@ -121,6 +120,114 @@ running state. The NOW block is rewritten at the end of every turn.
     the prompt's overgrown broken city where off was a whole grey one
     (`METROPOLIS-F4-2026-08-25.md` §F). `office` and `apartment_block`
     still answer `W511` (4 on k1): a smaller P6 sibling, not a unit.
+
+## CLOSING REPORT
+
+The Stocktake Run, 2026-08-25, units 0–47, one session. The spec
+(`docs/STOCKTAKE-RUN-SPEC.md`) is unchanged; this ledger is the state; the
+records under `docs/decks/` are the evidence. Spend **$24.72 of $35.00**
+(log-derived, the SPEND table). Kai's walk verdicts override every verdict
+below (T10).
+
+### The gates
+
+| gate | verdict | record |
+|---|---|---|
+| G1 golden bar | **met** — eleven of eleven fresh at the final bytes pass their T-lines by read; icons 28 of 28; two read-its (troy's citadel by rule only, F17; the railway at prop scale, F27) | `docs/decks/G1-GOLDEN-2026-08-25.md` |
+| G2 the three named worlds | **met** — the metropolis T6 (P6), the Hellenist city T7, montfort T4 after F31 (k2 FAIL → k3 PASS) | `docs/decks/*_k2/VERDICT.md`, `montfort_hill_k3/VERDICT.md` |
+| G3 anchors | **met** — the four anchors recompiled at head match or are attributed (units 4, 8; every flip since, byte-identical on the thirteen or attributed) | `docs/decks/anchors/*`, the bi lines per unit |
+| G4 probe prompts | **met** — pass 6 surfaced no new failure class; every FAIL traces to F30/P8 or P11 | `docs/decks/probes/PROBE-PASS-6-2026-08-25.md` (D90) |
+| G5 slop census | **met** — classes 1–7 dispositioned; classes 1–3 executed (done / staged / proposal) | `docs/STOCKTAKE-SLOP-CENSUS.md` (D84) |
+| G6 workstreams | **met on five of six lines; WS-B open** (no terrain-kit audit performed; its findings are the five terrain probes') | `docs/decks/G6-WORKSTREAMS-2026-08-25.md` (D91) |
+| G7 instruments | **met** — the icon metric, the deciding probes (`tools/stocktake-probes/`), every VERDICT.md, the final deck installed with walk cards, this report | this section |
+
+### What changed in the compiler (all under law 5, every flip attributed)
+
+`ROUTE_PINS_HELD_GROUND` (F20), `KERB_SYMBOL_UNSCOPED` (census 3.3),
+`HIGHRISE_DOOR_HEAD_SOLID`, `STREET_FACE_ALONG_SIDE`, `PARK_BUDGET_BY_AREA`,
+`STRIP_FRONTAGE_BY_CLAIM`, `PLANNED_SITE_WHOLE_STRIP`, `OCEAN_FILL_CONTINUES`,
+`POOL_NEVER_LOWERS` (F1), `TERRACE_DECAY` + `TERRACE_DECAY_ROLL` (P6 — the
+metropolis ruins), `ICE_ON_FROZEN_WATER` (F32); `LOT_PARCEL_OWN_STATIONS`
+staged off (F10/F21, Kai's veto). Diagnostics the author now hears: `I500`,
+`I501`, `I502`, `I514`, `I527`, `W524`, `W527` (fed back with a form hint);
+`stats.ground` on every compile; one `roofPlan`/`wallPlan`/`RebuildPlan`
+for 34 archetype files; the `BlockSpan` and `FitOutContext.skipped`
+records. The kit: the centrepiece paragraph (F27) and the `hillside`
+teaching (F31), each under a green golden gate.
+
+### The findings ledger
+
+| F | disposition |
+|---|---|
+| F1 | T110 fixed for four of five; the fifth is P4 |
+| F2 | the anchors at HEAD attributed (units 4, 8) |
+| F3 | the metropolis authoring regression — E2's read; answered in the compiler by P6 (units 36–37) |
+| F4 | closed — the k1 metropolis could not ruin → F22 |
+| F5, F6, F7, F11, F12, F13 | fixed (units 5–10) |
+| F8 | `frontageLots` drops: ~70 % starvation (F10, staged off), ~30 % geometry (P1) |
+| F9 | the hillside cut faces (P2); the walkability instrument gap |
+| F10 | closed — the 24 % was F20; the flag retried and kept off (F21) |
+| F14 | closed — 97 % instrument false positives fixed; the remainder is F23 |
+| F15 | closed with F28 |
+| F16 | the kit's core is 88 % of it — a prose job, not done (debt) |
+| F17 | the keep in 1 of 3 rolls — kit-teaching; the G1 citadel is its remainder (debt) |
+| F18 | → P10 |
+| F19 | → P9 |
+| F20 | fixed and shipped (`ROUTE_PINS_HELD_GROUND`) |
+| F21 | withdrawn — the orchard was street trees; the taste question is P5 |
+| F22 | closed — terraces ruin (P6) |
+| F23 | attributed — authored programs' own ops → P7 |
+| F24 | a method gap: probe verdicts need the program stage (passes 2b–6 ran it; the golden harness's authoring runs remain a floor) |
+| F25 | never assigned (the numbering skipped it) |
+| F26 | fixed — `I502 CARVE_MOSTLY_DRY` |
+| F27 | kit-taught (the centrepiece dominates); its remainder is the icon written at prop scale (G1's railway) |
+| F28 | closed — the dominance rule stays, `read it` added; the verdict is the read's |
+| F29 | fixed — `W524 FITOUT_ROOF_SKIPPED`, 25 `roofPlan` copies then consolidated |
+| F30 | → P8 (widened three times: water, a program's top, ice, a slope) |
+| F31 | closed — the hillside form named village-scale; `W527` fed back; montfort passes |
+| F32 | closed — `ICE_ON_FROZEN_WATER` |
+
+### The proposals, ranked
+
+1. **P8 — a seat that is not flat ground** (water, ice, a slope, a
+   program's top): four probe failures across three passes; the grammar's
+   sharpest edge. Build first.
+2. **P9 — the ground contract's undone half** (`enterTier`, the pads'
+   double authority, the driver write-through).
+3. **P6's sibling** — decay modes for `office`, `apartment_block`,
+   `skyscraper` (`W511` ×10–16 on every metropolis).
+4. **P10 — the kit's tables generated** from the registries (F18, WS-A's
+   other half).
+5. **P11 — ice landforms** (a `glacier` verb).
+6. **P7 — the support rules over authored programs at compile time.**
+7. **P5 — lanes inside a district take the district's street family.**
+8. **P4 — the wet-neighbour constraint** (T110's fifth case).
+9. **P1–P3** — frontage yaw on planned strips, shoulders/verges on planned
+   lots, diamonds in a 45° cell.
+
+### The kill-ladder (WS-F; each rung Kai's to ratify)
+
+`G6-WORKSTREAMS-2026-08-25.md` WS-F: rung 1 executed (census 7.3); rung 2 the
+Run's twelve shipped-true switches, one byte-identical commit each; rung 3
+the two at `false` (`LOT_PARCEL_OWN_STATIONS`, `STAIR_DRESS`) — flipped or
+deleted, Kai's call; rung 4 census 4.5's probes-then-deletes.
+
+### The debts, named
+
+WS-B (no terrain-kit audit); F16 (the kit's size); F17 (the citadel's
+scale — kit-teaching the centrepiece paragraph did not reach); T5's
+flattened plinth under hill towns (montfort k3, the read's weak line); F24
+(the golden harness's authoring-only floor); the dominance rule for linear
+icons (F28: the verdict is the read's, and a stranger's read is the
+instrument the Run could not automate).
+
+### For Kai
+
+Fourteen worlds are installed in the Prism instance for the walk — the
+eleven of G1 (`docs/decks/g1/*/WALK-CARD.md`) and montfort k2/k3, the
+metropolis k2, the Hellenist k2 (`docs/decks/*_k2|k3/WALK-CARD.md`). Nine
+decisions carry an open post-hoc veto (D12, D19, D25, D32, D77, D84, D87,
+D90, D91). Nothing in the saves folder was deleted or replaced.
 
 ## DECISIONS
 
@@ -778,6 +885,7 @@ running state. The NOW block is rewritten at the end of every turn.
 | 44 | probe pass 6 — six new worlds generated end to end (`runs/probe-6`), the icon metric | 2.13 | 19.92 |
 | 45 | G6 — the kit 3×3 (`runs/final-1/2/3`, authoring-only), the icon metric | 1.62 | 21.54 |
 | 46 | G1 — the eleven golden end to end (`runs/g1`), four network retries, the icon metric | 3.18 | 24.72 |
+| 47 | G7 and the close — eleven installs, walk cards, the probes committed, the closing report | 0.00 | 24.72 |
 
 ## VERDICTS
 
@@ -803,6 +911,10 @@ running state. The NOW block is rewritten at the end of every turn.
   PASS, WS-E PASS, WS-F PASS (ladder written, rung 1 executed).
 - **G1 (unit 46):** `docs/decks/G1-GOLDEN-2026-08-25.md` — eleven of eleven pass by read (troy's citadel and the railway as read-its), icons 28 of 28, one metric alarm; two worlds needed network retries. Kai's
   walk: pending on all (installed in unit 47).
+- **G7 (unit 47):** the instruments, probes and verdicts are in the tree
+  (`tools/stocktake-probes/README.md` lists the deciding probes); the final
+  deck is installed with walk cards (`docs/decks/g1/`); the closing report
+  is above. **STATUS: DONE.**
 
 ## REACH
 
@@ -1780,3 +1892,10 @@ not the compiler's.
   eleven of eleven pass by read (troy's citadel and the railway as read-its), icons 28 of 28, one metric alarm; two worlds needed network retries. `agents/openrouter.ts` now names the network cause behind
   "fetch failed" (agents tests 166 pass). Tests: FULL suite Test Files 351 passed | 1 skipped (352), Tests 5695 passed | 31 skipped (5726). Files:
   `runs/g1`, the record, `openrouter.ts`, the ledger. Spend $3.18.
+- **unit 47 — G7 and the close (2026-08-25):** the eleven G1 worlds
+  installed to the Prism instance (`--saves`; two `-2` suffixes beside
+  their G2 siblings), `docs/decks/g1/<id>/` with the document, log,
+  diagnostics and a walk card each; the deciding probes committed under
+  `tools/stocktake-probes/` with a README; the CLOSING REPORT written into
+  this ledger; `STATUS: DONE`. No compiler code changed. Files: the decks,
+  the probes, the ledger. Spend $0.

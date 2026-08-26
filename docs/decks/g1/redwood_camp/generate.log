@@ -1,0 +1,78 @@
+prompt     An ancient forest of colossal redwoods with a small logging camp at its edge.
+seed       306
+size       512x512
+model      google/gemini-3.7-flash
+effort     high
+kit        settlement
+
+intent     {"era":"industrial","wealth":0.35,"decline":0.1,"formality":0.15,"climate":{"biome":"minecraft:old_growth_pine_taiga","temperature":0.2,"humidity":0.6,"snow":"never"},"character":{"label":"redwood logging camp","materialTheme":"boreal_pine","formPacks":["wilds_camps"],"archetypes":{"prefer":["sawmill","log_cabin","bunkhouse","watchtower","shed"]},"props":{"prefer":["cart","woodpile","crane"]},"flora":{"prefer":["old_growth","emergent","ancient"]},"urbanForm":"grown"},"tokens":{"terrain":"a massive primeval forest of colossal giant redwood trees meeting a cleared logging camp along the tree line","infra":"sawpits, log skids, timber flumes, stacked timber yards, and cut-over ground at the forest edge"}}
+           1 attempt(s), 8019 tokens
+
+authored with google/gemini-3.7-flash in 1 attempt(s)
+  attempt 1   valid
+  tokens     84380 in + 11923 out = 96303  ($0.0540)
+programs   3 of 3 kept (budget 3 landmark / 3 plugin)
+  ok     colossal_elder_redwood [landmark]  1 attempt(s), 23868 tokens  ($0.0398), 1 warning(s)
+  ok     steam_log_derrick [landmark]  1 attempt(s), 27015 tokens  ($0.0457), 10 warning(s)
+  ok     felled_redwood_log [plugin]  1 attempt(s), 24399 tokens  ($0.0408), 5 warning(s)
+  tokens     9905 in + 65377 out = 75282  (49243 of the out reasoning)  ($0.1263)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g1/out/redwood_camp/out/redwood_logging_camp.loam.json
+
+
+compile feedback, round 1 of 2:
+
+The compiler reported 1 problem(s) with the compiled world:
+
+note LOAM-T112 RIVER_PONDED at world.terrain.logging_river: river "logging_river" is connected to no sea on this map and its bed holds no fluid-stable pool, so it compiled as a dry channel
+  fix: nothing to change if a pond chain is what you wanted. For a flowing river, give the map a sea for it to reach — lower "baseHeight" or raise "continentalness.seaFraction" until the coast is inside the region — and end the river's "course" on that coast.
+
+  revision 1 authored in 1 attempt(s)
+  tokens     105269 in + 23668 out = 128937  ($0.0839)
+
+compiled "redwood_logging_camp" — 1.21.11 (DataVersion 4671)
+  world      /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g1/out/redwood_camp/out/redwood_logging_camp
+  seed       306
+  region     512x512 at (-256, -256)
+  heights    56.2..96.9  sea 63  snow line 95.2
+  land       93.8% of columns above sea level
+  biomes     plains 42.6%, taiga 37.9%, old_growth_pine_taiga 10.3%, cold_ocean 4.9%, windswept_hills 3.8%, snowy_beach 0.5%
+  trees      5949 (ancient_redwood_forest=5356, ambient_wilderness_cover=749)
+  chunks     1024
+  blocks     36746695 (515335 vegetation)
+  markers    85
+  spawn      [4, 70, 166]
+  timings    validate 4ms  field 255ms  layout 111ms  climate 40ms  columns 22ms  caves 0ms  structures 572ms  programs 949ms  scatter 356ms  biomes 19ms  validators 3ms  emit 1720ms  total 4070ms
+  programs   world.elder_redwood=colossal_elder_redwood×1 (4677 blocks), world.log_derrick=steam_log_derrick×1 (594 blocks), world.felled_timber_scatter=felled_redwood_log×2 (995 blocks)
+  doc        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g1/out/redwood_camp/out/redwood_logging_camp.loam.json
+  report     /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g1/out/redwood_camp/out/redwood_logging_camp.report.json
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.camp_lanes: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world: face finish: 129 column(s) striped in the hill's own rock, 26 paved face(s) footed, 1 crown notch(es) closed
+  fix: No action needed.
+
+note LOAM-I497 GROUND_STAGE at world: ground stage: 31 intent(s) (building.footprint 20, plaza.ground 1, plaza.well 2, road.network 8), 5 resolve(s), 244 column(s) moved, 4 transition(s) (kerb 4), 0 of them unbuilt by any pass; coverage 291 boundary pair(s) — 63 in a transition, 228 suppressed by request, 0 by a face, 0 a kerb, 0 uncovered (excluded: 68206 natural, 0 wet)
+  fix: Nothing — this is the stage's own golden, and it is a note so that a count moving is visible in a diff before a block moves in a world.
+
+note LOAM-T341 PROGRAM_SEATED_PAD at world.log_derrick: "steam_log_derrick" writes the same sole on every column, so it is seated on a levelled pad rather than on the real ground
+  fix: no change needed here — the fix is in the program: read api.heightAt at every column it touches and answer it, and the next authoring run will seat it on the ground itself
+
+warning LOAM-W337 PROGRAM_DROPPED at world.felled_timber_scatter: 3 candidate sites for "felled_redwood_log" were refused: the ground under them falls away like a cliff, and no pad would seat a structure across that
+  fix: widen the scatter's area, or accept fewer instances — rough ground is padded, but a cliff is not ground a landmark stands on
+
+warning LOAM-W337 PROGRAM_DROPPED at world.felled_timber_scatter: "felled_redwood_log" asked for 6 instances and only 2 sites would take one
+  fix: the area cannot hold that many at this spacing: widen "area", lower "spacing" below 17, relax "maxSlope"/"avoidTags", or ask for fewer
+
+note LOAM-T342 PROGRAM_CONFORM_RESIDUAL at world.elder_redwood: "colossal_elder_redwood" conformed to the ground it was given: of 520 occupied columns, 0 (0%) needed a skirt under them and 44 (8%) are buried in the hill
+  fix: no change needed — a skirted column is a leg the compiler footed, and a buried one is ground standing above the seat plane, which only the program's own answer or a carve can help
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 4230 footprint columns (plus 22711 feathered over 40 columns) to minecraft:old_growth_pine_taiga, named by climate intent; snow policy never resolved to "never" on a 0/4230 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+
+warning LOAM-T107 SPAWN_UNRESOLVED at world.meta.spawn: the requested spawn at (0, 170) is under water or too close to sea level; moved to (4, 166)
+  fix: move "meta.spawn" onto land — pick a zone or "at" fraction over terrain at least two blocks above sea level
+  authoring  2 model run(s), 1 compile-feedback round(s), 189649 in + 35591 out = 225240 tokens (9731 of the out reasoning) ($0.1379)
+
+next: terrainist install /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g1/out/redwood_camp/out/redwood_logging_camp

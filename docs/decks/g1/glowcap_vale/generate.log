@@ -1,0 +1,74 @@
+prompt     A glowing mushroom vale where a strange village has grown between the caps.
+seed       307
+size       512x512
+model      google/gemini-3.7-flash
+effort     high
+kit        settlement
+
+intent     {"era":"medieval","wealth":0.4,"decline":0.1,"formality":0.1,"climate":{"temperature":0.2,"humidity":0.8,"snow":"never"},"character":{"label":"glowing mushroom village","materialTheme":"temperate_timber","formPacks":["swamp_witch"],"urbanForm":"grown","archetypes":{"prefer":["cottage","tavern","watchtower"]},"props":{"prefer":["lantern","well_head","standing_stones"]},"flora":{"prefer":["fungal","glow","glowcap","mushroom_giant_red","mushroom_shelf_brown"]}},"tokens":{"terrain":"a deep enclosed vale filled with towering giant glowing mushrooms","icons":"village dwellings nestled beneath and built between giant mushroom caps; elevated wooden footbridges and ladders strung between fungal stalks; glowing spores and bioluminescent lanterns lighting winding lanes"}}
+           1 attempt(s), 7913 tokens
+
+authored with google/gemini-3.7-flash in 1 attempt(s)
+  attempt 1   valid
+  tokens     84359 in + 10052 out = 94411  ($0.0505)
+programs   2 of 2 kept (budget 3 landmark / 3 plugin)
+  ok     colossal_glowcap_spire [landmark]  1 attempt(s), 28142 tokens  ($0.0478), 26 warning(s)
+  ok     fungal_canopy_dwellings [plugin]  1 attempt(s), 32219 tokens  ($0.0555), 26 warning(s)
+  tokens     6563 in + 53798 out = 60361  (41115 of the out reasoning)  ($0.1033)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g1/out/glowcap_vale/out/glowcap_vale.loam.json
+
+
+compile feedback, round 1 of 2:
+
+The compiler reported 1 problem(s) with the compiled world:
+
+note LOAM-T113 CARVE_DRY at world.terrain.vale_hollow: basin "vale_hollow" asked to flood ("flooded": "auto") but compiled dry: this map has no ocean anywhere — no column below sea level reaches the map edge, so there is no water to flow in.
+  fix: end the carve at the water instead of guessing where it is: make the last "course" waypoint the string "coast" (e.g. "course": [[0.54, 0.40], [0.5, 0.28], "coast"]) and the compiler will aim it at the sea this seed actually produced. Use it as the *first* waypoint for an inlet drawn inland. If the channel is meant to be a dry gorge, say so with "flooded": "never" and this note goes away.
+
+  revision 1 authored in 1 attempt(s)
+  tokens     101088 in + 17097 out = 118185  ($0.0700)
+
+compiled "glowcap_vale" — 1.21.11 (DataVersion 4671)
+  world      /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g1/out/glowcap_vale/out/glowcap_vale
+  seed       307
+  region     512x512 at (-256, -256)
+  heights    57.5..125.6  sea 63  snow line 122.5
+  land       97.1% of columns above sea level
+  biomes     plains 69.9%, forest 20.1%, windswept_hills 9.3%, stony_peaks 0.7%
+  trees      3757 (glowcap_forest=2622, ridge_pines=1280)
+  chunks     1024
+  blocks     37681713 (349117 vegetation)
+  markers    89
+  spawn      [-28, 66, -28]
+  timings    validate 4ms  field 185ms  layout 87ms  climate 41ms  columns 22ms  caves 0ms  structures 331ms  programs 635ms  scatter 267ms  biomes 18ms  validators 2ms  emit 1733ms  total 3343ms
+  programs   world.great_glowcap_spire=colossal_glowcap_spire×1 (10102 blocks), world.canopy_dwellings=fungal_canopy_dwellings×5 (3009 blocks)
+  doc        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g1/out/glowcap_vale/out/glowcap_vale.loam.json
+  report     /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g1/out/glowcap_vale/out/glowcap_vale.report.json
+
+warning LOAM-W330 PROGRAM_ENVELOPE_OVERRIDDEN at world.great_glowcap_spire: this node declares an envelope; program "colossal_glowcap_spire" declares [35, 54, 35] and the program wins
+  fix: drop the node's "envelope" — the program is what knows how much room it needs
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.vale_lanes: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+note LOAM-W522 PROGRAM_FACE_REMEASURED at world.great_glowcap_spire: this landmark was placed at (-25, -126), not where its facing was first measured from, so the facing was taken again from the real site: 270° becomes 180°
+  fix: nothing to change — the front points where the document asked it to. To pin the site as well, tighten the coarse target with a "radius"/"tolerance" or a hard "zone"
+
+note LOAM-I497 GROUND_STAGE at world: ground stage: 32 intent(s) (building.footprint 20, plaza.ground 1, plaza.well 2, road.network 9), 5 resolve(s), 47 column(s) moved, 14 transition(s) (kerb 14), 0 of them unbuilt by any pass; coverage 296 boundary pair(s) — 164 in a transition, 132 suppressed by request, 0 by a face, 0 a kerb, 0 uncovered (excluded: 93991 natural, 0 wet)
+  fix: Nothing — this is the stage's own golden, and it is a note so that a count moving is visible in a diff before a block moves in a world.
+
+note LOAM-T341 PROGRAM_SEATED_PAD at world.great_glowcap_spire: "colossal_glowcap_spire" writes the same sole on every column, so it is seated on a levelled pad rather than on the real ground
+  fix: no change needed here — the fix is in the program: read api.heightAt at every column it touches and answer it, and the next authoring run will seat it on the ground itself
+
+warning LOAM-W337 PROGRAM_DROPPED at world.canopy_dwellings: "fungal_canopy_dwellings" asked for 6 instances and only 5 sites would take one
+  fix: the area cannot hold that many at this spacing: widen "area", lower "spacing" below 25, relax "maxSlope"/"avoidTags", or ask for fewer
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 3269 footprint columns (plus 13483 feathered over 40 columns) to minecraft:plains, from the ambient majority (minecraft:plains, 88% of 8651 ring columns); snow policy never resolved to "never" on a 0/3269 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+
+warning LOAM-T107 SPAWN_UNRESOLVED at world.meta.spawn: the requested spawn at (0, 0) is under water or too close to sea level; moved to (-28, -28)
+  fix: move "meta.spawn" onto land — pick a zone or "at" fraction over terrain at least two blocks above sea level
+  authoring  2 model run(s), 1 compile-feedback round(s), 185447 in + 27149 out = 212596 tokens (5180 of the out reasoning) ($0.1204)
+
+next: terrainist install /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g1/out/glowcap_vale/out/glowcap_vale

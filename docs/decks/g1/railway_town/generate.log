@@ -1,0 +1,136 @@
+prompt     A soot-blackened industrial town where the railway meets the canal.
+seed       312
+size       512x512
+model      google/gemini-3.7-flash
+effort     high
+kit        settlement
+
+intent     {"era":"industrial","wealth":0.35,"decline":0.25,"formality":0.5,"character":{"label":"soot-blackened canal and rail industrial hub","materialTheme":"temperate_timber","urbanForm":"canal","archetypes":{"prefer":["warehouse","factory","tenement","dock","tavern","workshop"]},"props":{"prefer":["crane","cart","chimney","lamp_post","bollard"]},"motifs":{"roofType":"shed","massing":"blocky","windowRhythm":"regular","ornamentDensity":0.1}},"tokens":{"terrain":"a flat industrial corridor cut by a shipping canal meeting rail sidings and a marshaling yard","infra":"railway_line running parallel to the water basin; towpath along the canal edge; iron_bridge crossing the canal","icons":"brick factory chimneys venting black smoke; soot-stained brick warehouses; coal barges moored in the canal; rail loading gantries and sidings"}}
+           1 attempt(s), 8499 tokens
+
+authored with google/gemini-3.7-flash in 1 attempt(s)
+  attempt 1   valid
+  tokens     84368 in + 10840 out = 95208  ($0.0520)
+programs   2 of 2 kept (budget 3 landmark / 3 plugin)
+  ok     transshipment_gantry [landmark]  1 attempt(s), 32429 tokens  ($0.0558), 17 warning(s)
+  ok     factory_smokestack [plugin]  1 attempt(s), 21047 tokens  ($0.0345), 3 warning(s)
+  tokens     6619 in + 46857 out = 53476  (35597 of the out reasoning)  ($0.0903)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g1/retry3/railway_town/out/soot_junction.loam.json
+
+
+compile feedback, round 1 of 2:
+
+The compiler reported 3 problem(s) with the compiled world:
+
+note LOAM-T112 RIVER_PONDED at world.terrain.shipping_canal: river "shipping_canal" is connected to no sea on this map; it was demoted to a chain of 6 ponds over 112 columns, with the stretches between them left dry
+  fix: nothing to change if a pond chain is what you wanted. For a flowing river, give the map a sea for it to reach — lower "baseHeight" or raise "continentalness.seaFraction" until the coast is inside the region — and end the river's "course" on that coast.
+warning LOAM-E170 CANNOT_FIT at world.coal_barge_1: no site within 48 blocks fits the barge
+  fix: this world has no water this prop can sit on within reach — widen the lake or lower "seaLevel"-relative land, or drop the explicit "at" pin so the placer may seek the waterline itself
+warning LOAM-E170 CANNOT_FIT at world.coal_barge_2: no site within 48 blocks fits the barge
+  fix: this world has no water this prop can sit on within reach — widen the lake or lower "seaLevel"-relative land, or drop the explicit "at" pin so the placer may seek the waterline itself
+
+  revision 1 authored in 1 attempt(s)
+  tokens     100131 in + 18331 out = 118462  ($0.0719)
+
+
+compile feedback, round 2 of 2:
+
+The compiler reported 3 problem(s) with the compiled world:
+
+note LOAM-T112 RIVER_PONDED at world.terrain.shipping_canal: river "shipping_canal" is connected to no sea on this map; it was demoted to a chain of 3 ponds over 23 columns, with the stretches between them left dry
+  fix: nothing to change if a pond chain is what you wanted. For a flowing river, give the map a sea for it to reach — lower "baseHeight" or raise "continentalness.seaFraction" until the coast is inside the region — and end the river's "course" on that coast.
+warning LOAM-E170 CANNOT_FIT at world.coal_barge_1: no site within 48 blocks fits the barge
+  fix: this world has no water this prop can sit on within reach — widen the lake or lower "seaLevel"-relative land, or drop the explicit "at" pin so the placer may seek the waterline itself
+warning LOAM-E170 CANNOT_FIT at world.coal_barge_2: no site within 48 blocks fits the barge
+  fix: this world has no water this prop can sit on within reach — widen the lake or lower "seaLevel"-relative land, or drop the explicit "at" pin so the placer may seek the waterline itself
+
+  revision 2 authored in 1 attempt(s)
+  tokens     100188 in + 19613 out = 119801  ($0.0743)
+
+compiled "soot_junction" — 1.21.11 (DataVersion 4671)
+  world      /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g1/retry3/railway_town/out/soot_junction
+  seed       312
+  region     512x512 at (-256, -256)
+  heights    35.0..70.9  sea 63  snow line 69.3
+  land       67.3% of columns above sea level
+  biomes     plains 66.9%, ocean 32.0%, beach 0.7%, deep_ocean 0.5%
+  trees      762 (valley_scrub=819)
+  chunks     1024
+  blocks     34308093 (54165 vegetation)
+  markers    79
+  spawn      [24, 66, -24]
+  timings    validate 3ms  field 464ms  layout 543ms  climate 64ms  columns 80ms  caves 0ms  structures 2403ms  programs 110ms  scatter 257ms  biomes 71ms  validators 8ms  emit 2258ms  total 6317ms
+  programs   world.gantry_crane=transshipment_gantry×1 (1416 blocks), world.factory_chimneys=factory_smokestack×0 (0 blocks)
+  doc        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g1/retry3/railway_town/out/soot_junction.loam.json
+  report     /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g1/retry3/railway_town/out/soot_junction.report.json
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.town_streets: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+warning LOAM-W521 LANDMARK_COARSE_ABANDONED at world.gantry_crane: this landmark asked to stand at (-16, -31) and was placed at (12, -63), 43 blocks away: a site inside the target was feasible but cost more, and "at"/"zone" is a soft cost the ground can outbid
+  fix: nothing to change if anywhere sensible will do. If the landmark belongs at that spot — its own island, its own faction's shore — tighten the target with a "radius"/"tolerance", or bind it to something local ("distance" to a node there, "on": "@terrain:coastline"), so the ground cannot outbid the intent
+
+note LOAM-I526 PLATFORM_SUBMERGED at world.industrial_district: platform "block.1991.0" in "world.industrial_district" is mostly water and is not graded: its columns keep the pristine terrain and the water on it
+  fix: nothing to change if the quarter meets the water there; if the water was not meant to be inside the quarter, move or shrink the district's envelope off it
+
+note LOAM-T242 GROUND_PLANE_DRIFT at world.industrial_district: 3725 of 12301 platform column(s) in "world.industrial_district" within 12 block(s) of a graded carriageway stand off the street's own storey lattice, the worst by -3 block(s)
+  fix: Nothing to change in the document — a document cannot move its own storey lattice. A non-zero count is a compiler finding: the anchor did not hold on this quarter.
+
+note LOAM-I512 DISTRICT_RUINS at world.industrial_district: decline 0.25 gives a ruin share of 0.00: 0 of 9 infill lots roll into ruined shells (light 0, heavy 0, total 0); 0 of 32 terrace runs (64 lots) roll into ruined shells, bay by bay
+  fix: decline is below the ruin onset of 0.35 — below it decline is wear, not ruin; raise it to ruin buildings
+
+warning LOAM-T224 COURTYARD_NONE at world.industrial_district: no block in "world.industrial_district" can hold a courtyard: 18 of 22 have a core narrower than 9 columns
+  fix: raise "params.blockSize" so a block is at least 43 columns across, or raise "density" to "high" so the perimeter builds a continuous street wall
+
+note LOAM-I412 SEAM_SERVED at world.industrial_district: seams served (S1): 2 wall(s), 0 tier stack(s) over 0 face(s) and 0 column(s), 0 bank(s), 14 kerb seam(s), and 0 seam(s) a building already stood on
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.industrial_district: multi-level ground: 2 retaining wall(s) over 56 column(s) (0 parapeted), 14 kerb seam(s), 0 bank(s), and 0 seam(s) a building already stood on; 2 seam column(s) got no wall (2 building); 0 column(s) graded as bank
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.industrial_district: transitions by context (§5): 412 edge column(s) — fill 412 (360 kerb, 52 retaining), cut 0 (none)
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.industrial_district: built faces by finished drop (§13.8): 52 face column(s) along the seams a wall was built on — 52 at 2
+  fix: No action needed.
+
+note LOAM-T239 ROAD_BERM_CLAMPED at segment:ns2!world.industrial_district: the water floor asked street segment "segment:ns2!world.industrial_district" to stand above its own natural ground at 1 of 150 station(s), by up to 3 block(s); clamped to 2 so the rim's lift could not propagate along the profile
+  fix: No change needed — the street keeps the rim it is beside and drops back to the ground it crosses. A run that wants this at most of its stations is a span rather than a street.
+
+warning LOAM-T228 PROP_RESEATED at world.coal_barge_2: no water within 48 blocks of the barge's coarse target, so it sought the waterline and seated at [1, 21]
+  fix: nothing to fix if the prop is where you want it; to hold it to one part of the world, give the node an explicit "at": {"x", "z"} on the water and it will fail in place instead of moving
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.industrial_district: every cut face finished: 322 column(s) faced in the hill's own rock
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world: face finish: 33 column(s) striped in the hill's own rock, 627 paved face(s) footed, 1 crown notch(es) closed
+  fix: No action needed.
+
+note LOAM-I497 GROUND_STAGE at world: ground stage: 1153 intent(s) (building.footprint 100, fluid.channel 3, prop.pad 1, quarter.plane 947, retaining.seam 72, retaining.skirt 2, road.network 8, street.network 19, street.sidewalk 1), 5 resolve(s), 2398 column(s) moved, 392 transition(s) (bank 98, built 12, kerb 282), 88 of them unbuilt by any pass; coverage 1614 boundary pair(s) — 1249 in a transition, 365 suppressed by request, 0 by a face, 0 a kerb, 0 uncovered (excluded: 30908 natural, 546 wet)
+  fix: Nothing — this is the stage's own golden, and it is a note so that a count moving is visible in a diff before a block moves in a world.
+
+note LOAM-I412 SEAM_SERVED at world: terminal seam builder (§3.3): 2 derived transition(s) built (revetted 2) over 21 column(s) of face, 0 of graded bank (0 eased under §7.2's natural blend) and 0 finished in the hill's own rock; 82 absorbed under S7, 4 refused
+  fix: No action needed.
+
+warning LOAM-W413 SEAM_UNSERVED at world.industrial_district: 4 derived transition(s) in "world.industrial_district" were chosen and could not be placed: a derived bank at 2,48 falls 2 block(s) over 8 column(s), but only 0 column(s) of open ground stand beyond it where a 1:2 bank wants 4, and the revetted stack S5 re-dresses it as found no ground to stand on either; a derived bank at -17,58 falls 3 block(s) over 172 column(s), but only 0 column(s) of open ground stand beyond it where a 1:2 bank wants 6, and the revetted stack S5 re-dresses it as found no ground to stand on either; a derived bank at -17,60 falls 3 block(s) over 172 column(s), but only 0 column(s) of open ground stand beyond it where a 1:2 bank wants 6, and the revetted stack S5 re-dresses it as found no ground to stand on either; and 1 more
+  fix: Nothing in the document names the columns directly: widen the block so the construction has room, or lower the quarter's density so the two levels are closer together.
+
+warning LOAM-T232 INFRA_ROUTE_EMPTY at world.canal_lock_gate: the narrowest crossing at "industrial_district" is 3 column(s) of water, and "canal_lock" refuses anything narrower than 6
+  fix: point the route at a place the water is wider, or use a smaller waterwork — a weir crosses what a dam will not
+
+note LOAM-T341 PROGRAM_SEATED_PAD at world.gantry_crane: "transshipment_gantry" writes the same sole on every column, so it is seated on a levelled pad rather than on the real ground
+  fix: no change needed here — the fix is in the program: read api.heightAt at every column it touches and answer it, and the next authoring run will seat it on the ground itself
+
+warning LOAM-W337 PROGRAM_DROPPED at world.factory_chimneys: no site would take "factory_smokestack"; it is absent from the world
+  fix: loosen the placement — a larger area, a smaller spacing, or a gentler maxSlope — or shrink the program's declared envelope; and if the program is seated on water or a shore, put its area where there is water in reach, because no land site will take it
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 28801 footprint columns (plus 27284 feathered over 40 columns) to minecraft:plains, from the ambient majority (minecraft:plains, 97% of 17965 ring columns); snow policy auto resolved to "never" on a 0/28801 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+
+warning LOAM-T107 SPAWN_UNRESOLVED at world.meta.spawn: the requested spawn at (0, 0) is under water or too close to sea level; moved to (24, -24)
+  fix: move "meta.spawn" onto land — pick a zone or "at" fraction over terrain at least two blocks above sea level
+  authoring  3 model run(s), 2 compile-feedback round(s), 284687 in + 48784 out = 333471 tokens (12326 of the out reasoning) ($0.1982)
+
+note: 2 compile-feedback round(s) used; the findings above remain
+next: terrainist install /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g1/retry3/railway_town/out/soot_junction

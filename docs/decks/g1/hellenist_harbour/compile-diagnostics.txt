@@ -1,0 +1,13 @@
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+warning LOAM-W521 LANDMARK_COARSE_ABANDONED: this landmark asked to stand at (-123, -41) and was placed at (-171, -65), 54 blocks away: a site inside the target was feasible but cost more, and "at"/"zone" is a soft cost the ground can outbid
+note LOAM-I512 DISTRICT_RUINS: decline 0.15 gives a ruin share of 0.00: 0 of 21 infill lots roll into ruined shells (light 0, heavy 0, total 0); 0 of 1 terrace run (2 lots) roll into ruined shells, bay by bay
+note LOAM-I512 DISTRICT_RUINS: decline 0.15 gives a ruin share of 0.00: 0 of 24 infill lots roll into ruined shells (light 0, heavy 0, total 0); 0 of 15 terrace runs (38 lots) roll into ruined shells, bay by bay
+warning LOAM-W409 PRECINCT_RESEATED: precinct.harbour@0 found no quay in the envelope the solver gave it at [183, -117] and reseated itself on the best coastline in the world, at [-240, 144] — 96 columns of shoreline facing east
+warning LOAM-W517 INTENT_FORM_PACK_ERA: intent.era resolves to "modern", which is outside the affinity of the form pack "classical_mediterranean" (ancient) — the pack is used as written
+note LOAM-I463 SWEEP_FEATURES_PLACED: every cut face finished: 150 column(s) faced in the hill's own rock
+note LOAM-I463 SWEEP_FEATURES_PLACED: face finish: 412 column(s) striped in the hill's own rock, 217 paved face(s) footed, 24 crown notch(es) closed
+note LOAM-I497 GROUND_STAGE: ground stage: 422 intent(s) (building.footprint 132, precinct.ground 1, quarter.plane 265, road.network 1, street.network 20, street.sidewalk 2, verge 1), 5 resolve(s), 2715 column(s) moved, 321 transition(s) (bank 22, kerb 298, rock 1), 26 of them unbuilt by any pass; coverage 1702 boundary pair(s) — 665 in a transition, 1037 suppressed by request, 0 by a face, 0 a kerb, 0 uncovered (excluded: 52688 natural, 202 wet)
+note LOAM-T234 INFRA_RUN_REFUSED: "quarantine_fence" built 764 of 1471 route columns — 707 were refused by collision or unbuildable ground
+note LOAM-T341 PROGRAM_SEATED_PAD: "guardian_colossus_apollo" writes the same sole on every column, so it is seated on a levelled pad rather than on the real ground
+warning LOAM-W337 PROGRAM_DROPPED: "breaching_tentacle" asked for 12 instances and only 1 site would take one
+note LOAM-W470 BIOME_CLAMPED: land use clamped 68127 footprint columns (plus 28266 feathered over 40 columns) to minecraft:plains, from the ambient majority (minecraft:plains, 93% of 18508 ring columns); snow policy never resolved to "never" on a 0/68127 vote
