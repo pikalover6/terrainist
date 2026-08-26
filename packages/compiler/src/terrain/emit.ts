@@ -26,8 +26,7 @@ import {
   DEEPSLATE_BAND_HIGH,
   DEEPSLATE_BAND_LOW,
   FluidKind,
-  stoneBandState,
-} from "./columns.js";
+  stoneBandState, isFrozenColumn } from "./columns.js";
 import type { StructureClip } from "./clip.js";
 import type { DecorBlock } from "./decorate.js";
 import { emitFloraBlocks, treeBlocks, treeStates, type FloraStateCodec, type TreePlacement } from "./vegetation.js";
@@ -322,7 +321,13 @@ function fillChunk(chunk: EmitChunk, plan: ColumnPlan, cx: number, cz: number): 
         const fluidState = kind === FluidKind.LAVA ? states.lava : states.water;
         const surfaceY = fluidTop[idx] as number;
         if (surfaceY > top) {
-          chunk.fillColumn(lx, lz, top + 1, surfaceY, fluidState);
+          if (states.ice !== undefined && isFrozenColumn(plan, idx)) {
+            // F32: a frozen surface — water to one below the top, ice on top.
+            if (surfaceY - 1 > top) chunk.fillColumn(lx, lz, top + 1, surfaceY - 1, fluidState);
+            chunk.setStateId(lx, surfaceY, lz, states.ice);
+          } else {
+            chunk.fillColumn(lx, lz, top + 1, surfaceY, fluidState);
+          }
           count += surfaceY - top;
         }
       } else if (snow[idx] === 1 && top + 1 <= 319) {

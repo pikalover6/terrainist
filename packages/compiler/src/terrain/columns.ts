@@ -73,6 +73,12 @@ export interface ColumnPlan {
   readonly soil: Uint8Array;
   /** 1 when a snow layer sits on the surface. */
   readonly snow: Uint8Array;
+  /**
+   * F32 (Stocktake unit 43): the freeze rule for this plan — `always` when the
+   * author's climate says snow always. Read per column at emit by
+   * {@link isFrozenColumn}; absent on plans built by hand.
+   */
+  readonly freeze?: { readonly always: boolean };
   /** Resolved biome id per column. */
   readonly biome: Uint16Array;
   /** 1 inside a volcano footprint. */
@@ -113,6 +119,8 @@ export interface ColumnPlan {
     readonly water: number;
     readonly lava: number;
     readonly snowLayer: number;
+    /** `liquid.ice` — the frozen water surface (F32). Absent on plans built by hand. */
+    readonly ice?: number;
     /** `minecraft:cave_air` — what a carved cave interval is filled with. */
     readonly caveAir: number;
   };
@@ -142,6 +150,11 @@ export interface ColumnPlanInput {
   readonly volcanoes?: readonly VolcanoInfo[];
   /** Root node seed; the materials detail streams hang off it. */
   readonly seed?: Seed256;
+  /**
+   * `intent.climate.snow`, resolved: `"always"` freezes every water surface
+   * ({@link ICE_ON_FROZEN_WATER}); anything else leaves water as water.
+   */
+  readonly snowPolicy?: string;
 }
 
 /** The materials pass's detail streams, derived once per compile. */
@@ -160,6 +173,39 @@ interface MaterialSeeds {
  * resolved *at the column*, so a `mix` palette (a black-sand beach, say)
  * varies block to block without any sequential RNG.
  */
+/**
+ * **Frozen water.** Off, a water surface is water in every climate — the
+ * compiler has snow (`snowLine`, per column) and no ice, so a "frozen fjord"
+ * cannot be asked for (the Stocktake Run's F32, `PROBE-PASS-5` §B: the viking
+ * town's footprints fell below sea level and the solver pushed it up the
+ * mountain). On, a plan whose author wrote `intent.climate.snow: "always"`
+ * emits every water column's top block as `liquid.ice`; lava and the water
+ * beneath the ice are untouched. The snow line is deliberately not a trigger:
+ * it sits two blocks under every world's peak by construction, so it would
+ * freeze nothing and could only misfire. Staged under law 5: identical off
+ * and on for the thirteen (none says snow always); flipped in unit 43 and
+ * attributed on the viking document — its fjord freezes.
+ */
+export const ICE_ON_FROZEN_WATER = true;
+
+/** True when column `idx`'s water surface is ice under {@link ICE_ON_FROZEN_WATER}. */
+export function isFrozenColumn(plan: ColumnPlan, idx: number): boolean {
+  return (
+    ICE_ON_FROZEN_WATER &&
+    plan.freeze !== undefined &&
+    plan.freeze.always &&
+    plan.fluidKind[idx] === FluidKind.WATER &&
+    (plan.fluidTop[idx] as number) > (plan.ground[idx] as number)
+  );
+}
+
+/** How many columns {@link isFrozenColumn} holds for — the `LOAM-I527` count. */
+export function countFrozenColumns(plan: ColumnPlan): number {
+  let n = 0;
+  for (let idx = 0; idx < plan.fluidKind.length; idx++) if (isFrozenColumn(plan, idx)) n++;
+  return n;
+}
+
 export function buildColumnPlan(input: ColumnPlanInput): ColumnPlan {
   const { field, classification, palette, seaLevel, soilDepth } = input;
   const oceanMask = classification.oceanMask;
@@ -187,6 +233,7 @@ export function buildColumnPlan(input: ColumnPlanInput): ColumnPlan {
     water: palette.state("liquid.water"),
     lava: palette.state("liquid.lava"),
     snowLayer: palette.state("foliage.snow_layer"),
+    ice: palette.state("liquid.ice"),
     caveAir: palette.state("cave.air"),
   };
 
@@ -266,6 +313,7 @@ export function buildColumnPlan(input: ColumnPlanInput): ColumnPlan {
     subsurface,
     soil,
     snow,
+    freeze: { always: input.snowPolicy === "always" },
     biome,
     volcanic,
     volcanicUpper,

@@ -7,32 +7,32 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 42 (probe pass 5: four of six pass by read;
-  the turtle on F30's cause; the viking fjord on a new one, F32) is
+- **In flight:** nothing — unit 43 (F32: frozen water behind
+  `ICE_ON_FROZEN_WATER`, flipped and attributed on the viking document) is
   committed.
-- **Next unit:** unit 43 — **F32: frozen water.** In the columns emit, a
-  switch `ICE_ON_FROZEN_WATER` (off): where a water column's surface is at
-  or above the column's snow line (or `climate.snow` is `"always"`), the top
-  water block is written as `ice` and a note `LOAM-I5xx FROZEN_WATER` counts
-  the columns; support rules treat ice as ground for props. Law 5: proven
-  byte-identical off and on for the thirteen (none has a freezing climate —
-  assert it in the attribution), flipped in the same unit, attributed on
-  the viking document (`p5/out/probe_viking_winter`, recompiled: the fjord
-  freezes; render and read). A test on a small freezing fixture. FULL
-  suite. Then unit 44: probe pass 6, six new prompts (G4), ≈ $1.4; then
-  G6 3×3 and WS-A–F against `STOCKTAKE-v0.md` (≈ $1.8); then G1 the
-  eleven golden fresh (≈ $2.6, last, at the final bytes); G7 deck and
-  closing report; `STATUS: DONE`. Spend so far $17.79 of $35.00.
-- **Last commit:** 8298c67 (unit 41). Convention: this line names the
+- **Next unit:** unit 44 — **probe pass 6 (G4).** Six new prompts, one per
+  §6 target, none of passes 1–5 (`tools/golden-prompts/probes-6.json`),
+  pre-registered, through the program stage (≈ $1.4; cap $3.00),
+  `runs/probe-6`, the icon metric, full-height renders read, the record
+  `PROBE-PASS-6-2026-08-25.md`. Decision rule as passes 3–5: a new cause
+  gets an F-number and six more; a known cause or a model choice does not.
+  Targets to reach for: the packs still at 0 % (nile_egypt, east_asian,
+  mesoamerican_jungle, swamp_witch, atlantean), a freezing climate now that
+  water freezes, a two-place prompt with the water authored between. Then
+  G6 3×3 and WS-A–F against `STOCKTAKE-v0.md` (≈ $1.8), G1 the eleven
+  golden fresh (≈ $2.6, last), G7 deck and closing report, `STATUS: DONE`.
+  Spend so far $17.79 of $35.00.
+- **Last commit:** 044ddcd (unit 42). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
 - **Spend:** $17.79 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
 - **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19, D25,
   D32.)
 - **Findings queue (law 1: bugs before anything else):**
-  - F32 — **no frozen water**: a freezing climate has snow and no ice, so a
-    "frozen fjord" is water, a town on it cannot seat (`E406`, 76 of 97
-    footprints below sea level) and the solver pushes it up the mountain
-    (`PROBE-PASS-5` §B). A climate feature gap; unit 43.
+  - F32 — **closed (unit 43)**: `ICE_ON_FROZEN_WATER` — `intent.climate.snow:
+    "always"` freezes every water surface (`liquid.ice`, `LOAM-I527` with
+    the count); identical off and on for the thirteen, attributed on the
+    viking document (45 239 columns frozen, lint clean;
+    `PROBE-PASS-5` §E). The town's seat on water stays F30's.
   - F31 — **closed (unit 41)**: the hillside form cannot fill a walled city
     (k2: 10 % coverage, `W527`; the lot flag no help) and nothing said so.
     Now the kit's `hillside` and `urbanForm` rows say it (golden gate green,
@@ -128,6 +128,16 @@ running state. The NOW block is rewritten at the end of every turn.
 
 (every fork taken: the reversible default chosen, why, and how to undo it)
 
+- **D89 (unit 43):** the freeze rule is the author's word alone —
+  `intent.climate.snow: "always"` — and not the snow line, because the snow
+  line sits two blocks under every world's peak by construction (75–232 on
+  the thirteen, sea 63; the viking world 75.8) and would have frozen
+  nothing; a rule that fires only on a misfire is a trap. Water beneath the
+  ice stays water (the fluid lint stays clean; a pier's piles still reach a
+  bed). The viking document joins the tree as a test fixture
+  (`frozen-fjord.loam.json`, 37 KB) because it is the failure itself, and a
+  hand-built freezing fixture would be one more thing to trust. Undo:
+  `ICE_ON_FROZEN_WATER = false`.
 - **D88 (unit 42):** F32 is a feature gap and still a fix unit, where F30
   was a proposal: ice on a water surface is a one-rule change at the
   columns emit with a clean off-state (no anchor freezes), and the
@@ -746,6 +756,7 @@ running state. The NOW block is rewritten at the end of every turn.
 | 40 | G2 — three worlds generated end to end (`runs/g2`; authoring $0.45, programs $0.19), one $0 probe compile, three installs | 0.65 | 15.61 |
 | 41 | F31 — the golden gate `after-f31` ($0.59) and montfort re-generated (`runs/g2-montfort-f31`, $0.20); one bi14 run, the FULL suite | 0.79 | 16.40 |
 | 42 | probe pass 5 — six new worlds generated end to end (`runs/probe-5`), the icon metric | 1.39 | 17.79 |
+| 43 | F32 — two bi14 runs, one CLI compile, the FULL suite | 0.00 | 17.79 |
 
 ## VERDICTS
 
@@ -1638,3 +1649,13 @@ runs after F32.
   **F32 — no frozen water**. D87 reorders the road G4 → G6 → G1. No
   compiler code changed. Files: the roster, `runs/probe-5`, the record,
   the ledger. Spend $1.39.
+- **unit 43 — F32, frozen water (2026-08-25):** `ICE_ON_FROZEN_WATER` in
+  `terrain/columns.ts` (`isFrozenColumn`, `countFrozenColumns`, the plan's
+  `freeze` rule from `intent.climate.snow`), `liquid.ice` in the palette,
+  the ice block at the water surface in `terrain/emit.ts`, `LOAM-I527
+  FROZEN_WATER` from `compile.ts`; landed off and identical on the thirteen
+  (`bi/u43off` ≡ `bi/u41`), flipped and identical on (`bi/u43on`),
+  attributed on the viking fixture (45 239 columns). `frozen-water.test.ts`
+  (3). Tests: FULL suite Test Files 351 passed | 1 skipped (352), Tests 5695 passed | 31 skipped (5726). Files: `columns.ts`, `emit.ts`,
+  `compile.ts`, `palette.ts`, the spec, the fixture, the test, the pass-5
+  record §E, the ledger. Spend $0.

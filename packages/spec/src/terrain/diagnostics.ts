@@ -704,6 +704,12 @@ export const TERRAIN_DIAGNOSTICS = {
    */
   PLATFORM_SUBMERGED: "LOAM-I526",
   /**
+   * F32 (the Stocktake Run, unit 43): the author's `intent.climate.snow` is
+   * `"always"`, so every water surface is ice — the count of frozen columns.
+   * Water beneath the ice and lava are untouched.
+   */
+  FROZEN_WATER: "LOAM-I527",
+  /**
    * Phase 4.2 — a seam was too tall for a retaining wall (`drop` past
    * `RETAIN_MAX`), so the two platforms were graded into each other as a bank.
    *

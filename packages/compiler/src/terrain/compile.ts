@@ -62,8 +62,7 @@ import {
   validateTerrainDocument,
   note,
   warning,
-  hasErrors,
-} from "@terrainist/spec";
+  hasErrors } from "@terrainist/spec";
 import {
   buildPrograms,
   declarePrograms,
@@ -159,7 +158,7 @@ import {
   resolveCaveParams,
   type CaveNodeInput,
 } from "./caves.js";
-import { buildColumnPlan, type ColumnPlan, type VolcanoInfo } from "./columns.js";
+import { buildColumnPlan, type ColumnPlan, type VolcanoInfo, countFrozenColumns } from "./columns.js";
 import { decorate, type DecorBlock } from "./decorate.js";
 import { emitTerrain, type TerrainEmitSummary } from "./emit.js";
 import { cliffPaletteNote, resolvePalette } from "./palette.js";
@@ -880,8 +879,29 @@ async function compileValidated(
     footprints: terrain.edits.footprints,
     volcanoes,
     seed: rootSeed,
+    // F32: the author's snow policy, for the frozen-water rule.
+    ...((): { snowPolicy?: string } => {
+      const snow = fanOut<ClimateIntent | undefined>(TERRAIN_ROWS.landUse, intents.root, {
+        nodePath: rootPath,
+        today: undefined,
+      })?.snow;
+      return snow === undefined ? {} : { snowPolicy: snow };
+    })(),
   };
   const plan = buildColumnPlan(columnPlanInput);
+  {
+    const frozen = countFrozenColumns(plan);
+    if (frozen > 0) {
+      diagnostics.push(
+        note(
+          "FROZEN_WATER",
+          rootPath,
+          `"intent.climate.snow" is "always", so the water is frozen: ${frozen} column${frozen === 1 ? "" : "s"} of water carry ice at the surface (the water beneath stays water; lava is untouched)`,
+          'Nothing to change for a frozen world. For open water in a snowy one, set "intent.climate.snow" to "auto" or leave it unset — snow still falls above the snow line.',
+        ),
+      );
+    }
+  }
   const columnsMs = now() - t2;
 
   // The ground contract's baseline (§8.1, step 1) — the three frozen arrays as

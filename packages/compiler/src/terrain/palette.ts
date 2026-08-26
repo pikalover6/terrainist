@@ -78,6 +78,7 @@ export const DEFAULT_PALETTE: Readonly<Record<string, PaletteValue>> = Object.fr
   "flower.azure_bluet": "minecraft:azure_bluet",
   "liquid.water": "minecraft:water",
   "liquid.lava": "minecraft:lava",
+  "liquid.ice": "minecraft:ice",
   "foliage.snow_layer": "minecraft:snow",
   "wood.spruce_log": "minecraft:spruce_log",
   "wood.spruce_leaves": "minecraft:spruce_leaves",
