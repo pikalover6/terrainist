@@ -1,0 +1,162 @@
+{
+  "id": "probe_chess_village",
+  "family": "probe",
+  "kit": "settlement",
+  "prompt": "A village of stone-carvers laid out on a colossal chessboard of black and white marble squares, with giant chess pieces as its monuments: a king-piece tower at the centre and two knight-pieces guarding the road in.",
+  "seed": 946,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.7,
+    "decline": 0.1,
+    "formality": 0.85,
+    "character": {
+      "label": "stone-carver chessboard village",
+      "materialTheme": "white_quartz",
+      "urbanForm": "grid",
+      "motifs": {
+        "massing": "blocky",
+        "ornamentDensity": 0.7
+      },
+      "archetypes": {
+        "prefer": [
+          "watchtower",
+          "cottage",
+          "tavern",
+          "hall"
+        ]
+      },
+      "props": {
+        "prefer": [
+          "standing_stones",
+          "fountain",
+          "cart"
+        ]
+      }
+    },
+    "tokens": {
+      "terrain": "a flat basin paved as a colossal checkered chessboard of alternating black and white marble tiles",
+      "icons": "a monumental king-piece tower rising at the board center; two colossal rearing knight-piece statues flanking the approach road; stone-carver workshops, sculptors' scaffolds, and dressing yards set upon the squares"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 189026,
+    "completionTokens": 32229,
+    "cost": 0.1313
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 29,
+    "maxDepth": 2,
+    "generators": [
+      "authored:king_piece_tower",
+      "authored:knight_piece_statue",
+      "building.grammar@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "cottage",
+      "foundry",
+      "granary",
+      "guildhall",
+      "inn",
+      "museum",
+      "smithy",
+      "tavern",
+      "townhouse",
+      "warehouse",
+      "watchtower"
+    ],
+    "archetypesInCatalog": 11,
+    "formPacks": [],
+    "props": [
+      "cart",
+      "fountain",
+      "monolith"
+    ],
+    "species": [
+      "pale_birch",
+      "pruned_oak",
+      "wild_birch",
+      "wild_oak"
+    ],
+    "envelopes": [
+      "512x512",
+      "32x32",
+      "21x52x21",
+      "15x26x17",
+      "15x26x17",
+      "13x14x17",
+      "13x11x13",
+      "13x13x15",
+      "11x10x11",
+      "13x12x15",
+      "13x10x13",
+      "9x14x15",
+      "9x8x9",
+      "9x8x9",
+      "9x11x9"
+    ],
+    "constraints": 37,
+    "constraintKinds": [
+      "adjacent_to",
+      "at",
+      "blend",
+      "distance",
+      "facing",
+      "gap",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform",
+      "zone"
+    ],
+    "constraintsWithStrength": 16,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 10,
+    "programReferences": 3,
+    "conformsTrue": 0,
+    "labels": 28,
+    "eras": [
+      "medieval"
+    ],
+    "bytes": 52568
+  },
+  "wallMs": 523000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 2,
+    "feedbackRounds": 1,
+    "programs": [
+      "ok king_piece_tower [landmark] 1 attempt(s), 29901 tokens ($0.0511), 1 warning(s)",
+      "ok knight_piece_statue [landmark] 1 attempt(s), 34506 tokens ($0.0598), 1 warning(s)"
+    ],
+    "programCost": 0.1109,
+    "totalCost": 0.2422,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p6/out/probe_chess_village/out/chess_carvers",
+    "finalDiagnostics": {
+      "LOAM-W330": 3,
+      "LOAM-T208": 1,
+      "LOAM-I463": 1,
+      "LOAM-I497": 1,
+      "LOAM-T341": 3,
+      "LOAM-W470": 1
+    },
+    "crash": [],
+    "docName": "chess_carvers.loam.json"
+  }
+}

@@ -1,0 +1,1004 @@
+{
+  "label": "probe-6",
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "intentPrepass": true,
+  "source": "terrainist generate (full pipeline: intent, authoring, programs, compile-feedback rounds, emit)",
+  "kits": {
+    "settlement": {
+      "path": "docs/kits/settlement-author.md",
+      "sha256": "2480a249dcf93d4d9937abd773a825b22ef2c2ae3150354d208c3cf09ebcb328",
+      "bytes": 286371,
+      "envelopeLiterals": [
+        "11x11x9",
+        "11x14x9",
+        "11x8x9",
+        "120x120",
+        "13x10x11",
+        "13x11x13",
+        "13x11x9",
+        "13x16x13",
+        "13x9x11",
+        "140x120",
+        "140x24x92",
+        "15x17x21",
+        "16x52x14",
+        "180x160",
+        "18x18",
+        "18x44x15",
+        "200x180",
+        "21x76x19",
+        "21x78x19",
+        "220x200",
+        "22x22",
+        "25x22x19",
+        "288x288",
+        "30x30",
+        "440x400",
+        "512x512",
+        "5x4",
+        "7x19x7",
+        "8x8x8",
+        "96x16x72",
+        "96x80",
+        "9x11x9",
+        "9x12x9",
+        "9x8x8",
+        "9x8x9"
+      ]
+    },
+    "terrain": {
+      "path": "docs/kits/terrain-author.md",
+      "sha256": "0adfac8d77042820afec8495258497e5cd44aa2a4391a585ac942518717f331b",
+      "bytes": 41193,
+      "envelopeLiterals": [
+        "384x384",
+        "512x512"
+      ]
+    }
+  },
+  "totals": {
+    "ok": 6,
+    "attempts": 7,
+    "oneShot": 5,
+    "promptTokens": 1782752,
+    "completionTokens": 375777,
+    "cost": 1.3732,
+    "generateCost": 2.1291
+  },
+  "records": [
+    {
+      "id": "probe_nile_temple",
+      "family": "probe",
+      "kit": "settlement",
+      "prompt": "A New Kingdom Egyptian river town: mud-brick houses and workshops along the bank, a pylon temple with an avenue of sphinxes running down to the water, and reed boats drawn up on the Nile's mud.",
+      "seed": 941,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "era": "ancient",
+        "wealth": 0.5,
+        "formality": 0.4,
+        "climate": {
+          "biome": "minecraft:desert",
+          "temperature": 0.9,
+          "humidity": -0.7,
+          "snow": "never"
+        },
+        "character": {
+          "label": "New Kingdom Egyptian river town",
+          "materialTheme": "sun_clay",
+          "formPacks": [
+            "nile_egypt"
+          ],
+          "archetypes": {
+            "prefer": [
+              "hypostyle_hall",
+              "mortuary_temple",
+              "mudbrick_granary",
+              "nilometer",
+              "canopic_shrine",
+              "courtyard_house"
+            ],
+            "forbid": [
+              "townhouse",
+              "terraced_row",
+              "shop_row",
+              "office",
+              "apartment_block"
+            ]
+          },
+          "urbanForm": "linear",
+          "courtyards": 0.6,
+          "motifs": {
+            "roofType": "flat",
+            "massing": "blocky"
+          }
+        },
+        "tokens": {
+          "terrain": "a broad Nile riverbank with muddy shallows and reed beds beside the desert floodplain",
+          "infra": "sphinx_avenue leading from the monumental pylon temple down to the Nile water's edge",
+          "icons": "pylon temple with sphinx processional avenue; mud-brick workshops and courtyard houses along the bank; reed boats beached on the river mud; grain silos and nilometer by the water"
+        }
+      },
+      "attempts": 2,
+      "diagnostics": [],
+      "usage": {
+        "promptTokens": 370304,
+        "completionTokens": 53344,
+        "cost": 0.2389
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 23,
+        "maxDepth": 2,
+        "generators": [
+          "authored:pylon_temple",
+          "building.grammar@0",
+          "infra.entry@0",
+          "precinct.farm@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "brewery",
+          "canopic_shrine",
+          "church",
+          "cottage",
+          "courtyard_house",
+          "glassworks",
+          "granary",
+          "kiln",
+          "mudbrick_granary",
+          "nilometer",
+          "smithy",
+          "temple",
+          "warehouse"
+        ],
+        "archetypesInCatalog": 13,
+        "formPacks": [
+          "nile_egypt"
+        ],
+        "props": [
+          "barge",
+          "market_barrow",
+          "pier",
+          "rowboat",
+          "statue_plinth"
+        ],
+        "species": [
+          "date_palm",
+          "juniper_bush",
+          "oasis_hardwood"
+        ],
+        "envelopes": [
+          "512x512",
+          "28x22",
+          "41x26x48",
+          "120x130",
+          "13x11x15",
+          "11x10x13",
+          "96x84"
+        ],
+        "constraints": 10,
+        "constraintKinds": [
+          "at",
+          "blend",
+          "distance",
+          "max",
+          "min",
+          "reference",
+          "terrain_conform"
+        ],
+        "constraintsWithStrength": 3,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 2,
+        "programReferences": 1,
+        "conformsTrue": 0,
+        "labels": 22,
+        "eras": [
+          "ancient"
+        ],
+        "bytes": 29168
+      },
+      "wallMs": 406000,
+      "generate": {
+        "exit": "0",
+        "modelRuns": 3,
+        "feedbackRounds": 2,
+        "programs": [
+          "ok pylon_temple [landmark] 1 attempt(s), 25090 tokens ($0.0420), 5 warning(s)"
+        ],
+        "programCost": 0.042,
+        "totalCost": 0.2809,
+        "compiled": true,
+        "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p6/out/probe_nile_temple/out/nile_river_town",
+        "finalDiagnostics": {
+          "LOAM-W330": 1,
+          "LOAM-T208": 1,
+          "LOAM-E406": 1,
+          "LOAM-T224": 1,
+          "LOAM-I504": 1,
+          "LOAM-I463": 1,
+          "LOAM-I497": 1,
+          "LOAM-T233": 1,
+          "LOAM-T341": 1,
+          "LOAM-W472": 1,
+          "LOAM-W470": 1
+        },
+        "crash": [],
+        "docName": "nile_river_town.loam.json"
+      }
+    },
+    {
+      "id": "probe_ore_tramway",
+      "family": "probe",
+      "kit": "settlement",
+      "prompt": "A silver mining camp high on a mountainside and the smelter town in the valley floor below it, joined by an aerial ore tramway — a line of timber pylons carrying buckets down the slope.",
+      "seed": 942,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "era": "industrial",
+        "climate": {
+          "biome": "minecraft:taiga",
+          "temperature": -0.2,
+          "humidity": 0.2
+        },
+        "tokens": {
+          "terrain": "a steep mountain peak and slope overlooking a valley floor below",
+          "infra": "aerial_ore_tramway of timber pylons and suspended ore buckets spanning from the high mountain adits down to the valley smelter works",
+          "region_mining_camp": "era industrial, wealth 0.3, decline 0.2, formality 0.1, ground stepped, urbanForm hillside; materialTheme boreal_pine; formPacks [wilds_camps, frontier_west]; prefer archetypes headframe, assay_office, bunkhouse, smithy, powder_house; spoil heaps, mine adits, timber shoring",
+          "region_smelter_town": "era industrial, wealth 0.55, decline 0.1, formality 0.4, ground pad, urbanForm linear; materialTheme temperate_timber; prefer archetypes smelter, foundry, warehouse, tavern, company_office; brick smokestacks, slag piles, ore unloading bins"
+        }
+      },
+      "attempts": 1,
+      "diagnostics": [],
+      "usage": {
+        "promptTokens": 617933,
+        "completionTokens": 117373,
+        "cost": 0.4518
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 27,
+        "maxDepth": 2,
+        "generators": [
+          "authored:ore_tramway_terminal",
+          "authored:valley_discharge_terminal",
+          "building.grammar@0",
+          "infra.entry@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "scatter.program@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "blast_furnace_works",
+          "cottage",
+          "dormitory",
+          "factory_hall",
+          "foundry",
+          "general_store",
+          "hut",
+          "log_cabin",
+          "machine_shop",
+          "mine_head",
+          "smithy",
+          "tavern",
+          "townhouse",
+          "train_station",
+          "warehouse"
+        ],
+        "archetypesInCatalog": 15,
+        "formPacks": [
+          "frontier_west",
+          "wilds_camps"
+        ],
+        "props": [
+          "cairn",
+          "covered_wagon",
+          "freight_car",
+          "log_pile"
+        ],
+        "species": [
+          "alpine_squat",
+          "hazel_brush",
+          "high_larch",
+          "mountain_spruce",
+          "scrub_spruce",
+          "valley_birch",
+          "valley_pine",
+          "wild_spruce"
+        ],
+        "envelopes": [
+          "512x512",
+          "130x110",
+          "11x15x11",
+          "13x12x17",
+          "190x150",
+          "15x15x17",
+          "15x13x19"
+        ],
+        "constraints": 6,
+        "constraintKinds": [
+          "at",
+          "distance",
+          "max",
+          "min"
+        ],
+        "constraintsWithStrength": 0,
+        "hardConstraints": 0,
+        "forests": 3,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 4,
+        "programReferences": 2,
+        "conformsTrue": 0,
+        "labels": 26,
+        "eras": [
+          "industrial"
+        ],
+        "bytes": 59913
+      },
+      "wallMs": 1051000,
+      "generate": {
+        "exit": "0",
+        "modelRuns": 3,
+        "feedbackRounds": 2,
+        "programs": [
+          "ok ore_tramway_terminal [landmark] 1 attempt(s), 32827 tokens ($0.0565), 24 warning(s)",
+          "ok valley_discharge_terminal [landmark] 1 attempt(s), 21941 tokens ($0.0361), 12 warning(s",
+          "ok ore_tramway_pylon [plugin] 2 attempt(s), 49842 tokens ($0.0678), 2 warning(s)"
+        ],
+        "programCost": 0.1604,
+        "totalCost": 0.6122,
+        "compiled": true,
+        "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p6/out/probe_ore_tramway/out/argent_valley",
+        "finalDiagnostics": {
+          "LOAM-T208": 1,
+          "LOAM-W520": 1,
+          "LOAM-W521": 1,
+          "LOAM-T242": 1,
+          "LOAM-I512": 2,
+          "LOAM-I500": 1,
+          "LOAM-W483": 1,
+          "LOAM-W413": 6,
+          "LOAM-I412": 2,
+          "LOAM-I463": 5,
+          "LOAM-E170": 1,
+          "LOAM-I497": 1,
+          "LOAM-T341": 3,
+          "LOAM-W337": 1,
+          "LOAM-W470": 1,
+          "LOAM-W471": 1,
+          "LOAM-T107": 1
+        },
+        "crash": [],
+        "docName": "argent_valley.loam.json"
+      }
+    },
+    {
+      "id": "probe_frozen_lake_town",
+      "family": "probe",
+      "kit": "settlement",
+      "prompt": "An ice-fishing town on a frozen lake in the taiga: huts out on the ice around their fishing holes, sleds and skis by the doors, and a timber church with a bell tower on the shore.",
+      "seed": 943,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "era": "medieval",
+        "wealth": 0.35,
+        "decline": 0.1,
+        "formality": 0.2,
+        "climate": {
+          "biome": "minecraft:snowy_taiga",
+          "temperature": -0.8,
+          "humidity": 0.1,
+          "snow": "always"
+        },
+        "character": {
+          "label": "taiga ice fishing settlement",
+          "materialTheme": "boreal_pine",
+          "archetypes": {
+            "prefer": [
+              "cottage",
+              "church",
+              "warehouse",
+              "watchtower"
+            ]
+          },
+          "flora": {
+            "prefer": [
+              "spruce_tall",
+              "spruce_ancient",
+              "conifer"
+            ]
+          },
+          "motifs": {
+            "roofType": "gable",
+            "massing": "sprawling"
+          },
+          "urbanForm": "linear"
+        },
+        "tokens": {
+          "terrain": "a large frozen lake bordered by snowy taiga spruce forest, with the village lining the shore and extending onto the ice",
+          "icons": "a prominent timber stave church with a bell tower standing on the frozen shore; clusters of wooden ice-fishing shanties and huts positioned directly on the lake ice around cut fishing holes; sleds, skis, fire braziers, and drying racks beside the cabin doors"
+        }
+      },
+      "attempts": 1,
+      "diagnostics": [],
+      "usage": {
+        "promptTokens": 193529,
+        "completionTokens": 38442,
+        "cost": 0.1447
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 32,
+        "maxDepth": 2,
+        "generators": [
+          "authored:lake_ice_carving_station",
+          "building.grammar@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "scatter.program@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "alpine_chalet",
+          "bell_tower",
+          "cannery",
+          "church",
+          "cottage",
+          "log_cabin",
+          "smithy",
+          "tavern",
+          "warehouse"
+        ],
+        "archetypesInCatalog": 9,
+        "formPacks": [
+          "nordic_viking"
+        ],
+        "props": [
+          "campsite",
+          "cart",
+          "covered_wagon",
+          "hitching_post",
+          "log_pile",
+          "notice_board",
+          "pier",
+          "rowboat"
+        ],
+        "species": [
+          "dark_pine",
+          "low_spruce",
+          "scrub_spruce",
+          "village_spruce",
+          "wild_spruce"
+        ],
+        "envelopes": [
+          "512x512",
+          "22x22",
+          "15x17x21",
+          "9x18x9",
+          "13x11x13",
+          "11x11x17",
+          "11x10x13",
+          "11x12x13",
+          "11x12x11",
+          "13x11x11"
+        ],
+        "constraints": 28,
+        "constraintKinds": [
+          "adjacent_to",
+          "at",
+          "blend",
+          "distance",
+          "facing",
+          "gap",
+          "max",
+          "min",
+          "reference",
+          "terrain_conform",
+          "zone"
+        ],
+        "constraintsWithStrength": 13,
+        "hardConstraints": 0,
+        "forests": 3,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 8,
+        "programReferences": 1,
+        "conformsTrue": 0,
+        "labels": 31,
+        "eras": [
+          "medieval"
+        ],
+        "bytes": 61916
+      },
+      "wallMs": 597000,
+      "generate": {
+        "exit": "0",
+        "modelRuns": 2,
+        "feedbackRounds": 1,
+        "programs": [
+          "ok lake_ice_carving_station [landmark] 1 attempt(s), 27966 tokens ($0.0474), 27 warning(s)",
+          "ok ice_fishing_shanty [plugin] 1 attempt(s), 27740 tokens ($0.0470), 2 warning(s)",
+          "ok shore_fish_drying_racks [plugin] 1 attempt(s), 23607 tokens ($0.0392), 27 warning(s)"
+        ],
+        "programCost": 0.1336,
+        "totalCost": 0.2783,
+        "compiled": true,
+        "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p6/out/probe_frozen_lake_town/out/frostmere_haven",
+        "finalDiagnostics": {
+          "LOAM-T208": 1,
+          "LOAM-I527": 1,
+          "LOAM-I463": 1,
+          "LOAM-I497": 1,
+          "LOAM-T341": 3,
+          "LOAM-W337": 1,
+          "LOAM-W470": 1
+        },
+        "crash": [],
+        "docName": "frostmere_haven.loam.json"
+      }
+    },
+    {
+      "id": "probe_glacier_valley",
+      "family": "probe",
+      "kit": "terrain",
+      "prompt": "A glacier filling a U-shaped mountain valley: the ice tongue ending in a milky lake at its snout, lateral moraines along both walls, and a braided river running out across the gravel below — no settlement of any kind.",
+      "seed": 944,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "climate": {
+          "biome": "minecraft:snowy_slopes",
+          "temperature": -0.9,
+          "humidity": 0.2,
+          "snow": "always"
+        },
+        "tokens": {
+          "terrain": "a U-shaped mountain valley filled by a glacier ice tongue ending at a milky proglacial lake at its snout; lateral moraines along both valley walls; a braided river running out across a gravel outwash plain below",
+          "settlement": "none; pure glacial wilderness"
+        }
+      },
+      "attempts": 1,
+      "diagnostics": [],
+      "usage": {
+        "promptTokens": 109029,
+        "completionTokens": 68012,
+        "cost": 0.1684
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 18,
+        "maxDepth": 2,
+        "generators": [
+          "authored:glacial_ice_cave_terminus",
+          "cave.carver@0",
+          "scatter.forest@0",
+          "scatter.program@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [],
+        "archetypesInCatalog": 0,
+        "formPacks": [],
+        "props": [],
+        "species": [
+          "alpine_larch",
+          "highland_juniper",
+          "juniper",
+          "krummholz_spruce",
+          "stunted_spruce"
+        ],
+        "envelopes": [
+          "512x512"
+        ],
+        "constraints": 1,
+        "constraintKinds": [
+          "at"
+        ],
+        "constraintsWithStrength": 0,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 0,
+        "programReferences": 1,
+        "conformsTrue": 0,
+        "labels": 13,
+        "eras": [],
+        "bytes": 46083
+      },
+      "wallMs": 715000,
+      "generate": {
+        "exit": "0",
+        "modelRuns": 4,
+        "feedbackRounds": 2,
+        "programs": [
+          "ok glacial_ice_cave_terminus [landmark] 1 attempt(s), 20773 tokens ($0.0341), 1 warning(s)",
+          "ok calved_iceberg [plugin] 1 attempt(s), 22796 tokens ($0.0379), 1 warning(s)",
+          "ok glacial_erratic_boulder [plugin] 1 attempt(s), 23085 tokens ($0.0384), 1 warning(s)"
+        ],
+        "programCost": 0.1117,
+        "totalCost": 0.2801,
+        "compiled": true,
+        "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p6/out/probe_glacier_valley/out/glacier_valley",
+        "finalDiagnostics": {
+          "LOAM-T105": 1,
+          "LOAM-I500": 1,
+          "LOAM-I527": 1,
+          "LOAM-T341": 3,
+          "LOAM-W337": 4
+        },
+        "crash": [],
+        "docName": "glacier_valley.loam.json"
+      }
+    },
+    {
+      "id": "probe_seaside_resort",
+      "family": "probe",
+      "kit": "settlement",
+      "prompt": "A Victorian seaside resort on a fair day: a long promenade with a bandstand, a paddle steamer moored at the end of the pleasure pier, and hot-air balloons rising over the beach.",
+      "seed": 945,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "era": "industrial",
+        "wealth": 0.7,
+        "decline": 0,
+        "formality": 0.6,
+        "climate": {
+          "temperature": 0.3,
+          "humidity": 0.5,
+          "snow": "never"
+        },
+        "character": {
+          "label": "Victorian seaside resort",
+          "materialTheme": "temperate_timber",
+          "urbanForm": "linear",
+          "archetypes": {
+            "prefer": [
+              "hotel",
+              "gazebo",
+              "lighthouse",
+              "tavern",
+              "warehouse"
+            ]
+          },
+          "props": {
+            "prefer": [
+              "fountain",
+              "gazebo",
+              "market_barrow"
+            ]
+          },
+          "motifs": {
+            "roofType": "mansard",
+            "ornamentDensity": 0.7
+          }
+        },
+        "tokens": {
+          "terrain": "a sandy coastline and beach facing open sea beside a Victorian seaside resort town",
+          "icons": "a grand seafront promenade with a central bandstand; a pleasure pier stretching into the sea with a paddle steamer moored at its end; hot-air balloons rising over the sandy beach",
+          "infra": "boardwalk promenade along the beachfront; pleasure_pier jutting out into open water"
+        }
+      },
+      "attempts": 1,
+      "diagnostics": [],
+      "usage": {
+        "promptTokens": 302931,
+        "completionTokens": 66377,
+        "cost": 0.2381
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 34,
+        "maxDepth": 2,
+        "generators": [
+          "authored:paddle_steamer",
+          "authored:victorian_bandstand",
+          "building.grammar@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "scatter.program@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "bakery",
+          "boarding_house",
+          "cottage",
+          "dance_hall",
+          "hotel",
+          "lighthouse",
+          "tea_house",
+          "theater"
+        ],
+        "archetypesInCatalog": 8,
+        "formPacks": [],
+        "props": [
+          "bench",
+          "carousel",
+          "fairground_stall",
+          "ferris_wheel",
+          "fountain",
+          "gazebo",
+          "helter_skelter",
+          "lamp_post",
+          "market_barrow",
+          "midway_arch",
+          "pier",
+          "shooting_gallery",
+          "swing_boats"
+        ],
+        "species": [
+          "downland_oak",
+          "garden_birch",
+          "resort_oak",
+          "shrub_hazel"
+        ],
+        "envelopes": [
+          "512x512",
+          "48x22",
+          "19x22x43",
+          "15x17x15",
+          "17x28x15",
+          "15x15x19",
+          "15x13x17",
+          "13x11x13",
+          "13x13x17",
+          "11x12x13",
+          "11x20x11"
+        ],
+        "constraints": 27,
+        "constraintKinds": [
+          "adjacent_to",
+          "band",
+          "blend",
+          "distance",
+          "facing",
+          "gap",
+          "max",
+          "min",
+          "on",
+          "reference",
+          "terrain_conform",
+          "zone"
+        ],
+        "constraintsWithStrength": 11,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 7,
+        "programReferences": 2,
+        "conformsTrue": 0,
+        "labels": 29,
+        "eras": [
+          "industrial"
+        ],
+        "bytes": 65552
+      },
+      "wallMs": 862000,
+      "generate": {
+        "exit": "0",
+        "modelRuns": 3,
+        "feedbackRounds": 1,
+        "programs": [
+          "ok paddle_steamer [landmark] 1 attempt(s), 35300 tokens ($0.0612), 13 warning(s)",
+          "ok victorian_bandstand [landmark] 3 attempt(s), 76739 tokens ($0.0878), 21 warning(s)",
+          "ok hot_air_balloon [plugin] 1 attempt(s), 27625 tokens ($0.0468), 26 warning(s)"
+        ],
+        "programCost": 0.1973,
+        "totalCost": 0.4354,
+        "compiled": true,
+        "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p6/out/probe_seaside_resort/out/victorian_seaside_resort",
+        "finalDiagnostics": {
+          "LOAM-W330": 2,
+          "LOAM-T208": 1,
+          "LOAM-W523": 1,
+          "LOAM-W522": 1,
+          "LOAM-W524": 1,
+          "LOAM-I497": 1,
+          "LOAM-T341": 2,
+          "LOAM-W337": 1,
+          "LOAM-W470": 1
+        },
+        "crash": [],
+        "docName": "victorian_seaside_resort.loam.json"
+      }
+    },
+    {
+      "id": "probe_chess_village",
+      "family": "probe",
+      "kit": "settlement",
+      "prompt": "A village of stone-carvers laid out on a colossal chessboard of black and white marble squares, with giant chess pieces as its monuments: a king-piece tower at the centre and two knight-pieces guarding the road in.",
+      "seed": 946,
+      "size": 512,
+      "model": "google/gemini-3.7-flash",
+      "effort": "high",
+      "ok": true,
+      "intent": {
+        "era": "medieval",
+        "wealth": 0.7,
+        "decline": 0.1,
+        "formality": 0.85,
+        "character": {
+          "label": "stone-carver chessboard village",
+          "materialTheme": "white_quartz",
+          "urbanForm": "grid",
+          "motifs": {
+            "massing": "blocky",
+            "ornamentDensity": 0.7
+          },
+          "archetypes": {
+            "prefer": [
+              "watchtower",
+              "cottage",
+              "tavern",
+              "hall"
+            ]
+          },
+          "props": {
+            "prefer": [
+              "standing_stones",
+              "fountain",
+              "cart"
+            ]
+          }
+        },
+        "tokens": {
+          "terrain": "a flat basin paved as a colossal checkered chessboard of alternating black and white marble tiles",
+          "icons": "a monumental king-piece tower rising at the board center; two colossal rearing knight-piece statues flanking the approach road; stone-carver workshops, sculptors' scaffolds, and dressing yards set upon the squares"
+        }
+      },
+      "attempts": 1,
+      "diagnostics": [],
+      "usage": {
+        "promptTokens": 189026,
+        "completionTokens": 32229,
+        "cost": 0.1313
+      },
+      "resolvedModel": "google/gemini-3.7-flash",
+      "census": {
+        "nodes": 29,
+        "maxDepth": 2,
+        "generators": [
+          "authored:king_piece_tower",
+          "authored:knight_piece_statue",
+          "building.grammar@0",
+          "prop.place@0",
+          "road.network@0",
+          "scatter.forest@0",
+          "terrain.climate@0",
+          "terrain.edit@0",
+          "terrain.heightfield@0"
+        ],
+        "archetypes": [
+          "cottage",
+          "foundry",
+          "granary",
+          "guildhall",
+          "inn",
+          "museum",
+          "smithy",
+          "tavern",
+          "townhouse",
+          "warehouse",
+          "watchtower"
+        ],
+        "archetypesInCatalog": 11,
+        "formPacks": [],
+        "props": [
+          "cart",
+          "fountain",
+          "monolith"
+        ],
+        "species": [
+          "pale_birch",
+          "pruned_oak",
+          "wild_birch",
+          "wild_oak"
+        ],
+        "envelopes": [
+          "512x512",
+          "32x32",
+          "21x52x21",
+          "15x26x17",
+          "15x26x17",
+          "13x14x17",
+          "13x11x13",
+          "13x13x15",
+          "11x10x11",
+          "13x12x15",
+          "13x10x13",
+          "9x14x15",
+          "9x8x9",
+          "9x8x9",
+          "9x11x9"
+        ],
+        "constraints": 37,
+        "constraintKinds": [
+          "adjacent_to",
+          "at",
+          "blend",
+          "distance",
+          "facing",
+          "gap",
+          "max",
+          "min",
+          "reference",
+          "terrain_conform",
+          "zone"
+        ],
+        "constraintsWithStrength": 16,
+        "hardConstraints": 0,
+        "forests": 2,
+        "forestFillsAtOrAboveCoverage": 0,
+        "forestRadiiBelowTwo": 0,
+        "explicitArchetypeParams": 10,
+        "programReferences": 3,
+        "conformsTrue": 0,
+        "labels": 28,
+        "eras": [
+          "medieval"
+        ],
+        "bytes": 52568
+      },
+      "wallMs": 523000,
+      "generate": {
+        "exit": "0",
+        "modelRuns": 2,
+        "feedbackRounds": 1,
+        "programs": [
+          "ok king_piece_tower [landmark] 1 attempt(s), 29901 tokens ($0.0511), 1 warning(s)",
+          "ok knight_piece_statue [landmark] 1 attempt(s), 34506 tokens ($0.0598), 1 warning(s)"
+        ],
+        "programCost": 0.1109,
+        "totalCost": 0.2422,
+        "compiled": true,
+        "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p6/out/probe_chess_village/out/chess_carvers",
+        "finalDiagnostics": {
+          "LOAM-W330": 3,
+          "LOAM-T208": 1,
+          "LOAM-I463": 1,
+          "LOAM-I497": 1,
+          "LOAM-T341": 3,
+          "LOAM-W470": 1
+        },
+        "crash": [],
+        "docName": "chess_carvers.loam.json"
+      }
+    }
+  ]
+}

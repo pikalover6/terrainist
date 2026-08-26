@@ -1,0 +1,97 @@
+{
+  "id": "probe_glacier_valley",
+  "family": "probe",
+  "kit": "terrain",
+  "prompt": "A glacier filling a U-shaped mountain valley: the ice tongue ending in a milky lake at its snout, lateral moraines along both walls, and a braided river running out across the gravel below — no settlement of any kind.",
+  "seed": 944,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "climate": {
+      "biome": "minecraft:snowy_slopes",
+      "temperature": -0.9,
+      "humidity": 0.2,
+      "snow": "always"
+    },
+    "tokens": {
+      "terrain": "a U-shaped mountain valley filled by a glacier ice tongue ending at a milky proglacial lake at its snout; lateral moraines along both valley walls; a braided river running out across a gravel outwash plain below",
+      "settlement": "none; pure glacial wilderness"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 109029,
+    "completionTokens": 68012,
+    "cost": 0.1684
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 18,
+    "maxDepth": 2,
+    "generators": [
+      "authored:glacial_ice_cave_terminus",
+      "cave.carver@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [],
+    "archetypesInCatalog": 0,
+    "formPacks": [],
+    "props": [],
+    "species": [
+      "alpine_larch",
+      "highland_juniper",
+      "juniper",
+      "krummholz_spruce",
+      "stunted_spruce"
+    ],
+    "envelopes": [
+      "512x512"
+    ],
+    "constraints": 1,
+    "constraintKinds": [
+      "at"
+    ],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 0,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 13,
+    "eras": [],
+    "bytes": 46083
+  },
+  "wallMs": 715000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 4,
+    "feedbackRounds": 2,
+    "programs": [
+      "ok glacial_ice_cave_terminus [landmark] 1 attempt(s), 20773 tokens ($0.0341), 1 warning(s)",
+      "ok calved_iceberg [plugin] 1 attempt(s), 22796 tokens ($0.0379), 1 warning(s)",
+      "ok glacial_erratic_boulder [plugin] 1 attempt(s), 23085 tokens ($0.0384), 1 warning(s)"
+    ],
+    "programCost": 0.1117,
+    "totalCost": 0.2801,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p6/out/probe_glacier_valley/out/glacier_valley",
+    "finalDiagnostics": {
+      "LOAM-T105": 1,
+      "LOAM-I500": 1,
+      "LOAM-I527": 1,
+      "LOAM-T341": 3,
+      "LOAM-W337": 4
+    },
+    "crash": [],
+    "docName": "glacier_valley.loam.json"
+  }
+}

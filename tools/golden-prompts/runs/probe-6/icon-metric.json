@@ -1,0 +1,784 @@
+{
+  "run": "probe-6",
+  "scoredAt": "2026-08-26",
+  "thresholds": {
+    "dominantHeight": 1.5,
+    "dominantFootprint": 2
+  },
+  "scores": [
+    {
+      "id": "probe_nile_temple",
+      "icons": [
+        {
+          "id": "pylon_temple",
+          "dominantRequired": true,
+          "inDocument": [
+            "world.terrain.temple_shelf",
+            "world.pylon_temple_complex",
+            "world.river_town_district.temple_granary",
+            "world.temple_sphinx_avenue",
+            "world.temple_votive_monolith",
+            "world.lanes",
+            "program:pylon_temple",
+            "intent.tokens"
+          ],
+          "inWorld": [
+            "pylon_temple_complex",
+            "temple_granary",
+            "world.river_town_district.temple_granary",
+            "prop:world.temple_votive_monolith",
+            "program:world.pylon_temple_complex",
+            "marker:temple_shelf.center",
+            "marker:temple_shelf.peak",
+            "marker:temple_shelf.foot",
+            "marker:world.pylon_temple_complex"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": true,
+            "by": "pylon_temple_complex",
+            "height": 26,
+            "footprint": 1968,
+            "medianHeight": 13,
+            "medianFootprint": 136,
+            "heightRatio": 2,
+            "footprintRatio": 14.47,
+            "base": 71,
+            "medianBase": 65,
+            "elevation": 6,
+            "spanRatio": 3.43
+          }
+        },
+        {
+          "id": "town",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.river_town_district.temple_granary",
+            "intent.tokens",
+            "world.river_town_district.pottery_workshop",
+            "world.quai_market_stall"
+          ],
+          "inWorld": [
+            "world.river_town_district.temple_granary",
+            "world.river_town_district.infill_-51_-144",
+            "world.river_town_district.infill_-24_-144",
+            "world.river_town_district.infill_-79_-142",
+            "world.river_town_district.infill_-51_-109",
+            "world.river_town_district.infill_11_-100",
+            "world.river_town_district.infill_-51_-87",
+            "world.nile_floodplain_fields.farmhouse",
+            "world.river_town_district.infill_-51_-45",
+            "world.river_town_district.infill_-24_-45",
+            "pottery_workshop",
+            "world.river_town_district.pottery_workshop"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "river",
+          "dominantRequired": false,
+          "inDocument": [
+            "world",
+            "world.terrain",
+            "world.terrain.the_nile",
+            "world.river_quai",
+            "world.river_town_district",
+            "world.quayside_pier",
+            "world.nile_cargo_barge",
+            "world.quai_market_stall",
+            "intent.tokens",
+            "world.date_palm_groves",
+            "world.pylon_temple_complex",
+            "world.nile_floodplain_fields"
+          ],
+          "inWorld": [
+            "river_quai",
+            "river_town_district",
+            "temple_granary",
+            "pottery_workshop",
+            "infill_-43_-154",
+            "infill_-24_-154",
+            "infill_-68_-144",
+            "infill_-51_-144",
+            "infill_-24_-144",
+            "infill_-7_-144",
+            "infill_-79_-142",
+            "infill_-68_-129"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "districts",
+        "lots": 34,
+        "blocks": 14,
+        "envelope": 15600,
+        "lotsPer10k": 21.8,
+        "floor": 3,
+        "ok": true
+      },
+      "boxes": {
+        "era": "ancient",
+        "preModern": true,
+        "count": 0,
+        "of": 29,
+        "sample": []
+      },
+      "era": {
+        "era": "ancient",
+        "forbidden": [
+          "townhouse",
+          "terraced_row",
+          "shop_row",
+          "office",
+          "apartment_block"
+        ],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 1,
+        "diagnostics": 11
+      },
+      "alarms": []
+    },
+    {
+      "id": "probe_ore_tramway",
+      "icons": [
+        {
+          "id": "tramway",
+          "dominantRequired": true,
+          "inDocument": [
+            "world.upper_tram_terminal",
+            "world.lower_tram_terminal",
+            "world.tramway_pylons",
+            "program:ore_tramway_terminal",
+            "program:ore_tramway_pylon"
+          ],
+          "inWorld": [
+            "upper_tram_terminal",
+            "program:world.upper_tram_terminal",
+            "program:world.tramway_pylons",
+            "lower_tram_terminal",
+            "program:world.lower_tram_terminal",
+            "marker:world.upper_tram_terminal",
+            "marker:world.lower_tram_terminal"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": false,
+            "by": "upper_tram_terminal",
+            "height": 20,
+            "footprint": 484,
+            "medianHeight": 15,
+            "medianFootprint": 154,
+            "heightRatio": 1.33,
+            "footprintRatio": 3.14,
+            "base": 184,
+            "medianBase": 78,
+            "elevation": 106,
+            "spanRatio": 1.38,
+            "readRequired": true
+          }
+        },
+        {
+          "id": "mine",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.silver_mining_camp.main_adit_headframe",
+            "world.silver_mining_camp.miners_bunkhouse",
+            "world.terrain.mining_camp_shelf",
+            "world.upper_tram_terminal",
+            "world.silver_mining_camp",
+            "world.camp_telegraph_wire",
+            "world.camp_spoil_cairn",
+            "world.camp_supply_wagon"
+          ],
+          "inWorld": [
+            "miners_bunkhouse",
+            "world.silver_mining_camp.miners_bunkhouse",
+            "world.silver_mining_camp.main_adit_headframe",
+            "marker:world.upper_tram_terminal",
+            "main_adit_headframe",
+            "silver_mining_camp",
+            "terrace_30_-135",
+            "terrace_31_-99",
+            "terrace_30_-78",
+            "terrace_30_-66",
+            "terrace_-8_-63",
+            "infill_-53_-135"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "smelter",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.terrain.smelter_valley_floor",
+            "world.terrain.smelter_town_shelf",
+            "world.smelter_town",
+            "world.smelter_town.central_smelter_works",
+            "world.lower_tram_terminal",
+            "world.smelter_ore_wagon",
+            "world.smelter_cordwood_pile",
+            "world.mountain_switchback_road"
+          ],
+          "inWorld": [
+            "smelter_town",
+            "ore_rail_station",
+            "central_smelter_works",
+            "infill_-244_46",
+            "infill_-201_46",
+            "infill_-158_46",
+            "infill_-145_57",
+            "infill_-246_70",
+            "infill_-102_75",
+            "infill_-84_75",
+            "infill_-256_82",
+            "infill_-256_101"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "districts",
+        "lots": 69,
+        "blocks": 26,
+        "envelope": 42800,
+        "lotsPer10k": 16.1,
+        "floor": 3,
+        "ok": true
+      },
+      "boxes": {
+        "era": "industrial",
+        "preModern": false,
+        "count": 0,
+        "of": 38,
+        "sample": []
+      },
+      "era": {
+        "era": "industrial",
+        "forbidden": [
+          "skyscraper",
+          "opera_house",
+          "pagoda",
+          "igloo",
+          "pyramid"
+        ],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 1,
+        "diagnostics": 30
+      },
+      "alarms": [
+        "icon tramway not dominant by the rule (h×1.33, a×3.14) — read it:  base +106 over the buildings"
+      ]
+    },
+    {
+      "id": "probe_frozen_lake_town",
+      "icons": [
+        {
+          "id": "church",
+          "dominantRequired": true,
+          "inDocument": [
+            "world.church_timber",
+            "world.tower_bell",
+            "world.hitching_post_church",
+            "world.lanes",
+            "intent.tokens"
+          ],
+          "inWorld": [
+            "church_timber",
+            "world.church_timber",
+            "prop:world.hitching_post_church",
+            "tower_bell",
+            "world.tower_bell"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": false,
+            "by": "church_timber",
+            "height": 17,
+            "footprint": 315,
+            "medianHeight": 15,
+            "medianFootprint": 143,
+            "heightRatio": 1.13,
+            "footprintRatio": 2.2,
+            "base": 71,
+            "medianBase": 71,
+            "elevation": 0,
+            "spanRatio": 1.62
+          }
+        },
+        {
+          "id": "ice_huts",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.chalet_east",
+            "world.ice_shanties",
+            "intent.tokens",
+            "world.ice_tavern",
+            "world.fish_warehouse",
+            "world.ice_harvest_station",
+            "world.stone_pier",
+            "world.pier_rowboat",
+            "world.notice_board_main",
+            "program:lake_ice_carving_station",
+            "program:ice_fishing_shanty",
+            "world.fire_camp"
+          ],
+          "inWorld": [
+            "marker:world.ice_harvest_station",
+            "ice_tavern",
+            "ice_harvest_station",
+            "world.ice_tavern",
+            "prop:world.notice_board_main",
+            "program:world.ice_harvest_station",
+            "program:world.ice_shanties",
+            "marker:world.ice_shanties"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "lake",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.terrain",
+            "world.terrain.the_frozen_lake",
+            "world.terrain.shore_shelf",
+            "world.ice_harvest_station",
+            "world.ice_shanties",
+            "world.pier_rowboat",
+            "world.lanes",
+            "program:lake_ice_carving_station",
+            "intent.tokens",
+            "world",
+            "world.stone_pier",
+            "world.ice_tavern"
+          ],
+          "inWorld": [
+            "ice_harvest_station",
+            "program:world.ice_harvest_station",
+            "marker:the_frozen_lake.center",
+            "marker:the_frozen_lake.peak",
+            "marker:the_frozen_lake.foot",
+            "ice_tavern",
+            "world.ice_tavern",
+            "prop:world.notice_board_main",
+            "program:world.ice_shanties",
+            "marker:world.ice_harvest_station",
+            "marker:world.ice_shanties",
+            "cabin_shore"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "buildings-hull",
+        "lots": 8,
+        "blocks": 0,
+        "envelope": 11550,
+        "lotsPer10k": 6.9,
+        "floor": 3,
+        "ok": true
+      },
+      "boxes": {
+        "era": "medieval",
+        "preModern": true,
+        "count": 0,
+        "of": 8,
+        "sample": []
+      },
+      "era": {
+        "era": "medieval",
+        "forbidden": [],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 0,
+        "diagnostics": 9
+      },
+      "alarms": [
+        "icon church not dominant (h×1.13, a×2.2)"
+      ]
+    },
+    {
+      "id": "probe_glacier_valley",
+      "icons": [
+        {
+          "id": "glacier",
+          "dominantRequired": true,
+          "inDocument": [
+            "world.terrain.proglacial_lake",
+            "world.ice_cave_terminus",
+            "world.iceberg_scatter",
+            "program:glacial_ice_cave_terminus",
+            "program:calved_iceberg"
+          ],
+          "inWorld": [
+            "program:world.ice_cave_terminus",
+            "program:world.iceberg_scatter",
+            "marker:world.ice_cave_terminus"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": true,
+            "by": "world.ice_cave_terminus",
+            "blocks": 10696,
+            "footprint": 768,
+            "hovering": false,
+            "medianBlocks": 0,
+            "medianFootprint": 0,
+            "volumeRatio": null,
+            "footprintRatio": null
+          }
+        },
+        {
+          "id": "moraines",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.terrain.west_lateral_moraine",
+            "world.terrain.east_lateral_moraine",
+            "world.terrain.terminal_moraine",
+            "world.terrain.braided_channel_west"
+          ],
+          "inWorld": [
+            "marker:west_lateral_moraine.head",
+            "marker:west_lateral_moraine.mouth",
+            "marker:west_lateral_moraine.peak",
+            "marker:east_lateral_moraine.head",
+            "marker:east_lateral_moraine.mouth",
+            "marker:east_lateral_moraine.peak",
+            "marker:terminal_moraine.head",
+            "marker:terminal_moraine.mouth",
+            "marker:terminal_moraine.peak"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "outwash",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.terrain.braided_channel_west",
+            "world.terrain.braided_channel_east",
+            "world.terrain.terminal_moraine",
+            "world.terrain.proglacial_lake",
+            "world",
+            "world.outwash_scrub"
+          ],
+          "inWorld": [
+            "marker:braided_channel_west.head",
+            "marker:braided_channel_west.mouth",
+            "marker:braided_channel_east.head",
+            "marker:braided_channel_east.mouth",
+            "marker:proglacial_lake.center",
+            "marker:proglacial_lake.peak",
+            "marker:proglacial_lake.foot",
+            "forest:outwash_scrub"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "none",
+        "lots": 0,
+        "blocks": 0,
+        "envelope": 0,
+        "lotsPer10k": 0,
+        "floor": 0,
+        "ok": true
+      },
+      "boxes": {
+        "era": "",
+        "preModern": false,
+        "count": 0,
+        "of": 0,
+        "sample": []
+      },
+      "era": {
+        "era": "",
+        "forbidden": [],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 0,
+        "diagnostics": 10
+      },
+      "alarms": []
+    },
+    {
+      "id": "probe_seaside_resort",
+      "icons": [
+        {
+          "id": "paddle_steamer",
+          "dominantRequired": true,
+          "inDocument": [
+            "world.steamer_excursion",
+            "program:paddle_steamer",
+            "intent.tokens",
+            "world.pleasure_pier"
+          ],
+          "inWorld": [
+            "steamer_excursion",
+            "program:world.steamer_excursion",
+            "marker:world.steamer_excursion",
+            "prop:world.pleasure_pier"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": false,
+            "by": "steamer_excursion",
+            "height": 22,
+            "footprint": 817,
+            "medianHeight": 15,
+            "medianFootprint": 221,
+            "heightRatio": 1.47,
+            "footprintRatio": 3.7,
+            "base": 64,
+            "medianBase": 74,
+            "elevation": -10,
+            "spanRatio": 2.53
+          }
+        },
+        {
+          "id": "bandstand",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.bandstand",
+            "program:victorian_bandstand",
+            "intent.tokens",
+            "world.viewpoint_gazebo",
+            "world.terrain.resort_shelf",
+            "world.promenade",
+            "world.hot_air_balloons",
+            "world.dance_hall",
+            "world.promenade_fountain",
+            "world.promenade_bench_east",
+            "world.promenade_bench_west",
+            "world.pavilion_theater"
+          ],
+          "inWorld": [
+            "bandstand",
+            "program:world.bandstand",
+            "marker:world.bandstand",
+            "prop:world.viewpoint_gazebo",
+            "promenade",
+            "prop:world.promenade_fountain",
+            "prop:world.promenade_bench_east",
+            "prop:world.promenade_bench_west",
+            "pavilion_theater",
+            "world.pavilion_theater"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "balloons",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.hot_air_balloons",
+            "program:hot_air_balloon",
+            "intent.tokens",
+            "world.confectionery_and_bakehouse",
+            "world.midway_entrance",
+            "world.fair_carousel",
+            "world.fair_helter_skelter",
+            "world.fair_ferris_wheel",
+            "world.fair_swing_boats",
+            "world.fair_shooting_gallery",
+            "world.fair_prize_stall",
+            "world.resort_lanes"
+          ],
+          "inWorld": [
+            "program:world.hot_air_balloons",
+            "marker:world.hot_air_balloons",
+            "prop:world.fair_carousel",
+            "prop:world.fair_helter_skelter",
+            "prop:world.fair_ferris_wheel",
+            "prop:world.fair_swing_boats",
+            "prop:world.fair_shooting_gallery",
+            "prop:world.fair_prize_stall"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "buildings-hull",
+        "lots": 7,
+        "blocks": 0,
+        "envelope": 19635,
+        "lotsPer10k": 3.6,
+        "floor": 3,
+        "ok": true
+      },
+      "boxes": {
+        "era": "industrial",
+        "preModern": false,
+        "count": 0,
+        "of": 7,
+        "sample": []
+      },
+      "era": {
+        "era": "industrial",
+        "forbidden": [],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 0,
+        "diagnostics": 11
+      },
+      "alarms": [
+        "icon paddle_steamer not dominant (h×1.47, a×3.7)"
+      ]
+    },
+    {
+      "id": "probe_chess_village",
+      "icons": [
+        {
+          "id": "king_tower",
+          "dominantRequired": true,
+          "inDocument": [
+            "world.king_tower",
+            "program:king_piece_tower",
+            "intent.tokens",
+            "world",
+            "world.terrain.chessboard_table",
+            "world.grand_board_square",
+            "world.sculptor_gallery",
+            "world.stone_foundry",
+            "world.board_flank_groves",
+            "world.knight_statue_west",
+            "world.knight_statue_east",
+            "program:knight_piece_statue"
+          ],
+          "inWorld": [
+            "king_tower",
+            "program:world.king_tower",
+            "marker:world.king_tower",
+            "marker:chessboard_table.center",
+            "marker:chessboard_table.peak",
+            "marker:chessboard_table.foot",
+            "knight_statue_west",
+            "knight_statue_east",
+            "program:world.knight_statue_west",
+            "program:world.knight_statue_east"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": true,
+            "by": "king_tower",
+            "height": 64,
+            "footprint": 529,
+            "medianHeight": 8,
+            "medianFootprint": 169,
+            "heightRatio": 8,
+            "footprintRatio": 3.13,
+            "base": 74,
+            "medianBase": 74,
+            "elevation": 0,
+            "spanRatio": 1.77
+          }
+        },
+        {
+          "id": "knights",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.knight_statue_west",
+            "world.knight_statue_east",
+            "program:knight_piece_statue",
+            "intent.tokens",
+            "world.king_tower",
+            "world.sculptor_gallery",
+            "program:king_piece_tower"
+          ],
+          "inWorld": [
+            "knight_statue_west",
+            "knight_statue_east",
+            "program:world.knight_statue_west",
+            "program:world.knight_statue_east",
+            "marker:world.knight_statue_west",
+            "marker:world.knight_statue_east",
+            "king_tower",
+            "program:world.king_tower"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "board",
+          "dominantRequired": false,
+          "inDocument": [
+            "world",
+            "world.terrain.chessboard_table",
+            "world.grand_board_square",
+            "world.board_flank_groves",
+            "intent.tokens",
+            "world.terrain",
+            "world.terrain.quarry_hollow_north",
+            "world.slab_warehouse",
+            "world.stone_cart_2",
+            "world.king_tower",
+            "world.carver_fountain",
+            "world.lanes"
+          ],
+          "inWorld": [
+            "marker:chessboard_table.center",
+            "marker:chessboard_table.peak",
+            "marker:chessboard_table.foot",
+            "grand_board_square",
+            "forest:board_flank_groves"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "buildings-hull",
+        "lots": 10,
+        "blocks": 0,
+        "envelope": 16008,
+        "lotsPer10k": 6.2,
+        "floor": 3,
+        "ok": true
+      },
+      "boxes": {
+        "era": "medieval",
+        "preModern": true,
+        "count": 0,
+        "of": 10,
+        "sample": []
+      },
+      "era": {
+        "era": "medieval",
+        "forbidden": [],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 0,
+        "diagnostics": 10
+      },
+      "alarms": []
+    }
+  ]
+}

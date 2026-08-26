@@ -1,0 +1,153 @@
+{
+  "id": "probe_ore_tramway",
+  "family": "probe",
+  "kit": "settlement",
+  "prompt": "A silver mining camp high on a mountainside and the smelter town in the valley floor below it, joined by an aerial ore tramway — a line of timber pylons carrying buckets down the slope.",
+  "seed": 942,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "era": "industrial",
+    "climate": {
+      "biome": "minecraft:taiga",
+      "temperature": -0.2,
+      "humidity": 0.2
+    },
+    "tokens": {
+      "terrain": "a steep mountain peak and slope overlooking a valley floor below",
+      "infra": "aerial_ore_tramway of timber pylons and suspended ore buckets spanning from the high mountain adits down to the valley smelter works",
+      "region_mining_camp": "era industrial, wealth 0.3, decline 0.2, formality 0.1, ground stepped, urbanForm hillside; materialTheme boreal_pine; formPacks [wilds_camps, frontier_west]; prefer archetypes headframe, assay_office, bunkhouse, smithy, powder_house; spoil heaps, mine adits, timber shoring",
+      "region_smelter_town": "era industrial, wealth 0.55, decline 0.1, formality 0.4, ground pad, urbanForm linear; materialTheme temperate_timber; prefer archetypes smelter, foundry, warehouse, tavern, company_office; brick smokestacks, slag piles, ore unloading bins"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 617933,
+    "completionTokens": 117373,
+    "cost": 0.4518
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 27,
+    "maxDepth": 2,
+    "generators": [
+      "authored:ore_tramway_terminal",
+      "authored:valley_discharge_terminal",
+      "building.grammar@0",
+      "infra.entry@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "blast_furnace_works",
+      "cottage",
+      "dormitory",
+      "factory_hall",
+      "foundry",
+      "general_store",
+      "hut",
+      "log_cabin",
+      "machine_shop",
+      "mine_head",
+      "smithy",
+      "tavern",
+      "townhouse",
+      "train_station",
+      "warehouse"
+    ],
+    "archetypesInCatalog": 15,
+    "formPacks": [
+      "frontier_west",
+      "wilds_camps"
+    ],
+    "props": [
+      "cairn",
+      "covered_wagon",
+      "freight_car",
+      "log_pile"
+    ],
+    "species": [
+      "alpine_squat",
+      "hazel_brush",
+      "high_larch",
+      "mountain_spruce",
+      "scrub_spruce",
+      "valley_birch",
+      "valley_pine",
+      "wild_spruce"
+    ],
+    "envelopes": [
+      "512x512",
+      "130x110",
+      "11x15x11",
+      "13x12x17",
+      "190x150",
+      "15x15x17",
+      "15x13x19"
+    ],
+    "constraints": 6,
+    "constraintKinds": [
+      "at",
+      "distance",
+      "max",
+      "min"
+    ],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 3,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 4,
+    "programReferences": 2,
+    "conformsTrue": 0,
+    "labels": 26,
+    "eras": [
+      "industrial"
+    ],
+    "bytes": 59913
+  },
+  "wallMs": 1051000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 3,
+    "feedbackRounds": 2,
+    "programs": [
+      "ok ore_tramway_terminal [landmark] 1 attempt(s), 32827 tokens ($0.0565), 24 warning(s)",
+      "ok valley_discharge_terminal [landmark] 1 attempt(s), 21941 tokens ($0.0361), 12 warning(s",
+      "ok ore_tramway_pylon [plugin] 2 attempt(s), 49842 tokens ($0.0678), 2 warning(s)"
+    ],
+    "programCost": 0.1604,
+    "totalCost": 0.6122,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p6/out/probe_ore_tramway/out/argent_valley",
+    "finalDiagnostics": {
+      "LOAM-T208": 1,
+      "LOAM-W520": 1,
+      "LOAM-W521": 1,
+      "LOAM-T242": 1,
+      "LOAM-I512": 2,
+      "LOAM-I500": 1,
+      "LOAM-W483": 1,
+      "LOAM-W413": 6,
+      "LOAM-I412": 2,
+      "LOAM-I463": 5,
+      "LOAM-E170": 1,
+      "LOAM-I497": 1,
+      "LOAM-T341": 3,
+      "LOAM-W337": 1,
+      "LOAM-W470": 1,
+      "LOAM-W471": 1,
+      "LOAM-T107": 1
+    },
+    "crash": [],
+    "docName": "argent_valley.loam.json"
+  }
+}

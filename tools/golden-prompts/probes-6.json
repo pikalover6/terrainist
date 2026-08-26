@@ -1,0 +1,85 @@
+{
+  "$comment": "Probe pass 6 (Stocktake Run unit 44): six new prompts, one per spec §6 target, none of passes 1–5. G4 counts these six. `generate-all.mjs <out> 3 \"\" tools/golden-prompts/probes-6.json`, then `record-generate-run.mjs <out> runs/probe-6 probe-6 tools/golden-prompts/probes-6.json` and `icon-metric.mjs runs/probe-6 --prompts tools/golden-prompts/probes-6.json`.",
+  "defaults": { "kit": "settlement", "size": 512 },
+  "prompts": [
+    {
+      "id": "probe_nile_temple",
+      "family": "probe",
+      "seed": 941,
+      "prompt": "A New Kingdom Egyptian river town: mud-brick houses and workshops along the bank, a pylon temple with an avenue of sphinxes running down to the water, and reed boats drawn up on the Nile's mud.",
+      "watches": ["nile_egypt pack at 0 % reach", "the temple as the centerpiece — dominance by mass on flat ground", "a river town whose river must hold water (F26's note)"],
+      "icons": [
+        { "id": "pylon_temple", "terms": ["temple", "pylon", "sphinx", "avenue", "sanctuary"], "dominant": true },
+        { "id": "town", "terms": ["house", "mudbrick", "mud_brick", "workshop", "market", "granary"] },
+        { "id": "river", "terms": ["river", "nile", "boat", "reed", "quay", "bank"] }
+      ],
+      "densityFloor": 3
+    },
+    {
+      "id": "probe_ore_tramway",
+      "family": "probe",
+      "seed": 942,
+      "prompt": "A silver mining camp high on a mountainside and the smelter town in the valley floor below it, joined by an aerial ore tramway — a line of timber pylons carrying buckets down the slope.",
+      "watches": ["two places at two heights, joined by one program that must meet both", "a camp on a steep seat (the hillside/cliff seat)", "the tramway's dominance is span and drop — a read-it"],
+      "icons": [
+        { "id": "tramway", "terms": ["tramway", "cable", "ropeway", "tram", "pylon", "bucket"], "dominant": true },
+        { "id": "mine", "terms": ["mine", "adit", "camp", "shaft", "headframe"] },
+        { "id": "smelter", "terms": ["smelter", "foundry", "furnace", "chimney", "town"] }
+      ],
+      "densityFloor": 3
+    },
+    {
+      "id": "probe_frozen_lake_town",
+      "family": "probe",
+      "seed": 943,
+      "prompt": "An ice-fishing town on a frozen lake in the taiga: huts out on the ice around their fishing holes, sleds and skis by the doors, and a timber church with a bell tower on the shore.",
+      "watches": ["a freezing climate now that water freezes (F32: snow always → ice)", "huts on the ice — a seat on a frozen surface (F30's family; what the model does with it)", "a snowy taiga palette, T9 on a modern-ish era"],
+      "icons": [
+        { "id": "church", "terms": ["church", "bell", "tower", "chapel", "steeple"], "dominant": true },
+        { "id": "ice_huts", "terms": ["hut", "ice", "fishing", "shelter", "shack"] },
+        { "id": "lake", "terms": ["lake", "frozen", "ice", "shore"] }
+      ],
+      "densityFloor": 3
+    },
+    {
+      "id": "probe_glacier_valley",
+      "family": "probe",
+      "seed": 944,
+      "kit": "terrain",
+      "prompt": "A glacier filling a U-shaped mountain valley: the ice tongue ending in a milky lake at its snout, lateral moraines along both walls, and a braided river running out across the gravel below — no settlement of any kind.",
+      "watches": ["terrain-only, the terrain kit, a fifth time", "ice as a landform (a glacier is not frozen water — what the model reaches for)", "a braided river on gravel: water that must hold"],
+      "icons": [
+        { "id": "glacier", "terms": ["glacier", "ice", "tongue", "snout", "icefield"], "dominant": true },
+        { "id": "moraines", "terms": ["moraine", "ridge", "gravel", "till"] },
+        { "id": "outwash", "terms": ["river", "braided", "lake", "outwash", "meltwater"] }
+      ],
+      "densityFloor": 0
+    },
+    {
+      "id": "probe_seaside_resort",
+      "family": "probe",
+      "seed": 945,
+      "prompt": "A Victorian seaside resort on a fair day: a long promenade with a bandstand, a paddle steamer moored at the end of the pleasure pier, and hot-air balloons rising over the beach.",
+      "watches": ["icons that live in a prop pack (paddle_steamer, gazebo, hot_air_balloon, pier) — reached for as props, and measured", "a prop-carried centerpiece's dominance (a read-it, or 'unmeasured')", "a promenade as a linear precinct on the shore"],
+      "icons": [
+        { "id": "paddle_steamer", "terms": ["steamer", "paddle", "ship", "pier", "steamboat"], "dominant": true },
+        { "id": "bandstand", "terms": ["bandstand", "gazebo", "promenade", "pavilion"] },
+        { "id": "balloons", "terms": ["balloon", "fair", "beach", "hot_air"] }
+      ],
+      "densityFloor": 3
+    },
+    {
+      "id": "probe_chess_village",
+      "family": "probe",
+      "seed": 946,
+      "prompt": "A village of stone-carvers laid out on a colossal chessboard of black and white marble squares, with giant chess pieces as its monuments: a king-piece tower at the centre and two knight-pieces guarding the road in.",
+      "watches": ["T8: a bespoke ground (the board) and bespoke monuments (the pieces) in one prompt", "the king as the centerpiece — dominant by height", "buildings seated on a bespoke paving — does the board survive the streets?"],
+      "icons": [
+        { "id": "king_tower", "terms": ["king", "chess", "piece", "tower", "monument"], "dominant": true },
+        { "id": "knights", "terms": ["knight", "gate", "piece", "guardian", "horse"] },
+        { "id": "board", "terms": ["chessboard", "marble", "board", "square", "checker"] }
+      ],
+      "densityFloor": 3
+    }
+  ]
+}

@@ -1,0 +1,172 @@
+{
+  "id": "probe_nile_temple",
+  "family": "probe",
+  "kit": "settlement",
+  "prompt": "A New Kingdom Egyptian river town: mud-brick houses and workshops along the bank, a pylon temple with an avenue of sphinxes running down to the water, and reed boats drawn up on the Nile's mud.",
+  "seed": 941,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "era": "ancient",
+    "wealth": 0.5,
+    "formality": 0.4,
+    "climate": {
+      "biome": "minecraft:desert",
+      "temperature": 0.9,
+      "humidity": -0.7,
+      "snow": "never"
+    },
+    "character": {
+      "label": "New Kingdom Egyptian river town",
+      "materialTheme": "sun_clay",
+      "formPacks": [
+        "nile_egypt"
+      ],
+      "archetypes": {
+        "prefer": [
+          "hypostyle_hall",
+          "mortuary_temple",
+          "mudbrick_granary",
+          "nilometer",
+          "canopic_shrine",
+          "courtyard_house"
+        ],
+        "forbid": [
+          "townhouse",
+          "terraced_row",
+          "shop_row",
+          "office",
+          "apartment_block"
+        ]
+      },
+      "urbanForm": "linear",
+      "courtyards": 0.6,
+      "motifs": {
+        "roofType": "flat",
+        "massing": "blocky"
+      }
+    },
+    "tokens": {
+      "terrain": "a broad Nile riverbank with muddy shallows and reed beds beside the desert floodplain",
+      "infra": "sphinx_avenue leading from the monumental pylon temple down to the Nile water's edge",
+      "icons": "pylon temple with sphinx processional avenue; mud-brick workshops and courtyard houses along the bank; reed boats beached on the river mud; grain silos and nilometer by the water"
+    }
+  },
+  "attempts": 2,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 370304,
+    "completionTokens": 53344,
+    "cost": 0.2389
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 23,
+    "maxDepth": 2,
+    "generators": [
+      "authored:pylon_temple",
+      "building.grammar@0",
+      "infra.entry@0",
+      "precinct.farm@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "brewery",
+      "canopic_shrine",
+      "church",
+      "cottage",
+      "courtyard_house",
+      "glassworks",
+      "granary",
+      "kiln",
+      "mudbrick_granary",
+      "nilometer",
+      "smithy",
+      "temple",
+      "warehouse"
+    ],
+    "archetypesInCatalog": 13,
+    "formPacks": [
+      "nile_egypt"
+    ],
+    "props": [
+      "barge",
+      "market_barrow",
+      "pier",
+      "rowboat",
+      "statue_plinth"
+    ],
+    "species": [
+      "date_palm",
+      "juniper_bush",
+      "oasis_hardwood"
+    ],
+    "envelopes": [
+      "512x512",
+      "28x22",
+      "41x26x48",
+      "120x130",
+      "13x11x15",
+      "11x10x13",
+      "96x84"
+    ],
+    "constraints": 10,
+    "constraintKinds": [
+      "at",
+      "blend",
+      "distance",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform"
+    ],
+    "constraintsWithStrength": 3,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 2,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 22,
+    "eras": [
+      "ancient"
+    ],
+    "bytes": 29168
+  },
+  "wallMs": 406000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 3,
+    "feedbackRounds": 2,
+    "programs": [
+      "ok pylon_temple [landmark] 1 attempt(s), 25090 tokens ($0.0420), 5 warning(s)"
+    ],
+    "programCost": 0.042,
+    "totalCost": 0.2809,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p6/out/probe_nile_temple/out/nile_river_town",
+    "finalDiagnostics": {
+      "LOAM-W330": 1,
+      "LOAM-T208": 1,
+      "LOAM-E406": 1,
+      "LOAM-T224": 1,
+      "LOAM-I504": 1,
+      "LOAM-I463": 1,
+      "LOAM-I497": 1,
+      "LOAM-T233": 1,
+      "LOAM-T341": 1,
+      "LOAM-W472": 1,
+      "LOAM-W470": 1
+    },
+    "crash": [],
+    "docName": "nile_river_town.loam.json"
+  }
+}

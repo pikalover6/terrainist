@@ -7,24 +7,28 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 43 (F32: frozen water behind
-  `ICE_ON_FROZEN_WATER`, flipped and attributed on the viking document) is
-  committed.
-- **Next unit:** unit 44 — **probe pass 6 (G4).** Six new prompts, one per
-  §6 target, none of passes 1–5 (`tools/golden-prompts/probes-6.json`),
-  pre-registered, through the program stage (≈ $1.4; cap $3.00),
-  `runs/probe-6`, the icon metric, full-height renders read, the record
-  `PROBE-PASS-6-2026-08-25.md`. Decision rule as passes 3–5: a new cause
-  gets an F-number and six more; a known cause or a model choice does not.
-  Targets to reach for: the packs still at 0 % (nile_egypt, east_asian,
-  mesoamerican_jungle, swamp_witch, atlantean), a freezing climate now that
-  water freezes, a two-place prompt with the water authored between. Then
-  G6 3×3 and WS-A–F against `STOCKTAKE-v0.md` (≈ $1.8), G1 the eleven
-  golden fresh (≈ $2.6, last), G7 deck and closing report, `STATUS: DONE`.
-  Spend so far $17.79 of $35.00.
-- **Last commit:** 044ddcd (unit 42). Convention: this line names the
+- **In flight:** nothing — unit 44 (probe pass 6: no new failure class;
+  G4 met by its letter, with P8 named as the substance) is committed.
+- **Next unit:** unit 45 — **G6: the workstreams, audited against
+  `STOCKTAKE-v0.md`.** WS-A: A2 exports landed (the registry-vs-kit drift
+  ratchet and P10's generator are its state — read the v0 record and say
+  what landed); A3 or the winning kit arm shipped (E1: neither arm, the kit
+  stays, D32); the kit measured 3×3 at the final bytes — three
+  authoring-only runs of the golden 11 (`run.mjs --label final-1/2/3`,
+  ≈ $1.8), the icon metric on each, the noise band against `noise-1..3`.
+  WS-B: the terrain-kit audit's findings — where they were folded. WS-C:
+  closed (v0 says so; cite). WS-D: D1 measured — cost per world before
+  (`before-sample`) and after (`g2`, `g2-montfort-f31`, `probe-6`) from the
+  records; D3 written up (`feedback.ts`, the loop's limit seen in passes 5
+  and 6). WS-E: closed by Kai (v0). WS-F: the census is the inventory and
+  4.4's deletion ladder is written for the closing report, each rung Kai's
+  to ratify. One record, `docs/decks/G6-WORKSTREAMS-2026-08-25.md`, a row
+  per WS with the evidence and PASS/OPEN. Then G1 the eleven golden fresh
+  (≈ $2.6, last, at the final bytes), G7 deck and closing report, `STATUS:
+  DONE`. Spend so far $19.92 of $35.00.
+- **Last commit:** affdad0 (unit 43). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
-- **Spend:** $17.79 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
+- **Spend:** $19.92 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
 - **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19, D25,
   D32.)
 - **Findings queue (law 1: bugs before anything else):**
@@ -62,8 +66,9 @@ running state. The NOW block is rewritten at the end of every turn.
   - F30 — **no seat but ground**: a building whose pad falls on water has
     no piles to the bed (the flood delta, `PROBE-PASS-4`), and one that
     should stand on a program's surface has no seat there either (the
-    turtle, `PROBE-PASS-5` §C) — both authors made the thing ground. A
-    feature, P8 (widened, unit 42); not a unit.
+    turtle, `PROBE-PASS-5` §C) — both authors made the thing ground; pass 6
+    adds ice, a slope and a mooring (`PROBE-PASS-6` §B). A feature, P8
+    (widened, units 42 and 44) — four probe failures now; not a unit.
   - F29 — fixed (unit 34): the lighthouse's `roofPlan` was null — a flat
     roof leaves one course above the eave where the rebuild needs two — and
     every archetype file's private `roofPlan` skipped in silence; the
@@ -128,6 +133,15 @@ running state. The NOW block is rewritten at the end of every turn.
 
 (every fork taken: the reversible default chosen, why, and how to undo it)
 
+- **D90 (unit 44):** G4 is read by its pre-registered rule — a failure
+  whose cause is an open F-number or proposal is not a new class — and
+  pass 6 surfaced none: three failures and a half go to F30/P8 (a seat on
+  ice, a slope, water) and the glacier to F32's land half (P11). The gate
+  is met by its letter, and the record says what that is worth: the probes
+  stopped finding compiler bugs in pass 4 and now find the grammar's
+  edges, which are features; P8 is the first thing to build after the Run.
+  The pass cost $2.13 against a ≈ $1.4 estimate (the tramway's three
+  programs and two rounds); logged, under its $3.00 cap. Undo: n/a.
 - **D89 (unit 43):** the freeze rule is the author's word alone —
   `intent.climate.snow: "always"` — and not the snow line, because the snow
   line sits two blocks under every world's peak by construction (75–232 on
@@ -757,6 +771,7 @@ running state. The NOW block is rewritten at the end of every turn.
 | 41 | F31 — the golden gate `after-f31` ($0.59) and montfort re-generated (`runs/g2-montfort-f31`, $0.20); one bi14 run, the FULL suite | 0.79 | 16.40 |
 | 42 | probe pass 5 — six new worlds generated end to end (`runs/probe-5`), the icon metric | 1.39 | 17.79 |
 | 43 | F32 — two bi14 runs, one CLI compile, the FULL suite | 0.00 | 17.79 |
+| 44 | probe pass 6 — six new worlds generated end to end (`runs/probe-6`), the icon metric | 2.13 | 19.92 |
 
 ## VERDICTS
 
@@ -1013,6 +1028,39 @@ the eleven golden run last, at the bytes every other gate settled.
 18 of 18; by read 4 of 6 pass; one new cause (F32). G4 not met; pass 6
 runs after F32.
 
+**Pass 6 — pre-registered (unit 44, 2026-08-25), before any spend.** Six
+new prompts (`tools/golden-prompts/probes-6.json`), none of passes 1–5, one
+per §6 target: `probe_nile_temple` (nile_egypt at 0 %; a pylon temple on a
+river bank), `probe_ore_tramway` (two places at two heights, an aerial
+tramway between), `probe_frozen_lake_town` (a freezing climate now that
+water freezes — huts on the ice), `probe_glacier_valley` (terrain-only, the
+terrain kit), `probe_seaside_resort` (icons in a prop pack: paddle steamer,
+bandstand, balloons), `probe_chess_village` (bespoke ground and monuments).
+Through the program stage (`generate-all.mjs`, ≈ $1.4 the pass; cap $3.00),
+`runs/probe-6`, the icon metric, full-height renders; the verdict is the
+read's. **Prediction:** 6 of 6 generate; icons present 6 of 6; by read ≥ 4
+pass; the tramway and the steamer are read-its (span; a prop-carried
+centrepiece may come back "unmeasured"); the ice huts are the likely fail
+(a seat on the ice is F30's family — the lake will freeze, the huts will
+stand on the shore); the chessboard's paving is the other risk (a bespoke
+ground under streets). **Decision rule** as passes 3–5: a failure whose
+cause is an open F-number or proposal is not a new class; a new cause gets
+an F-number and six more; G4 is met if these six surface no new failure
+class.
+
+| probe | targeted | exercised | failed | cause | promoted? |
+|---|---|---|---|---|---|
+| `probe_nile_temple` | nile_egypt at 0 % | the pack, a 13 179-block temple program, a river town | — | pass by read | no — pass |
+| `probe_chess_village` | bespoke ground + monuments | a king tower, two knights, a checkered plaza, a marble palette | the board as a plaza | pass by read | no — pass |
+| `probe_frozen_lake_town` | a freezing climate | `I527` (the lake froze), shanty programs ×4 | huts on the shore, not the ice | F30 (a seat on ice) | no — F30's |
+| `probe_ore_tramway` | two places, a spanning program | two terminals, a town and a camp at two heights | the pylon line absent (`W337`) | F30 (a seat on a slope) | no — F30's |
+| `probe_glacier_valley` | terrain-only | frozen lakes, an ice-cave program, erratics | no glacier tongue, moraines, river | the ice gap's land half → **P11** | no — proposal |
+| `probe_seaside_resort` | icons in a prop pack | steamer, bandstand, balloon programs | the steamer beached, not moored | F30 (a seat on water) + `W523` | no — F30's |
+
+**Pass 6 — result (unit 44, $2.13):** 6 of 6 generated (5 one-shot); icons
+18 of 18; by read 2 pass, 1 half, 3 fail — under the prediction; **no new
+failure class** (D90). **G4 met.**
+
 ## PROPOSALS
 
 (features skipped as too large — written up, not built)
@@ -1086,6 +1134,12 @@ runs after F32.
   ratchet retired when the module exists. M; a kit change, so the golden
   gate. Whether the model reaches further when it can see every name is
   the question G6's 3×3 asks before and after.
+- **P11 — ice landforms** (unit 44; `PROBE-PASS-6` §C). F32 made water
+  freeze; a glacier is ice as land and no terrain verb makes one. A
+  `glacier` verb: a raise of packed ice filling a valley from a named head
+  to a snout, a meltwater lake at the snout (the basin verb), lateral
+  moraines as gravel ridges along both walls, crevasse texture by noise;
+  kit-taught in the terrain kit after the verb. M; law 5.
 - **P4 — a wet-neighbour constraint in the ground contract** (unit 14). A
   pad or platform whose ground claim would lower a column beside standing
   water below that water's surface is refused or raised to it — the rule
@@ -1659,3 +1713,12 @@ runs after F32.
   (3). Tests: FULL suite Test Files 351 passed | 1 skipped (352), Tests 5695 passed | 31 skipped (5726). Files: `columns.ts`, `emit.ts`,
   `compile.ts`, `palette.ts`, the spec, the fixture, the test, the pass-5
   record §E, the ledger. Spend $0.
+- **unit 44 — probe pass 6 (2026-08-25):** six new prompts
+  (`tools/golden-prompts/probes-6.json`), pre-registered, through
+  `terrainist generate` (records `runs/probe-6`, $2.13), the icon metric,
+  full-height renders read (`docs/decks/probes/PROBE-PASS-6-2026-08-25.md`).
+  Two pass (the Nile temple, the chess village), one half (the lake froze;
+  its huts on the shore), three fail on F30's cause (ice, a slope, a
+  mooring) and the glacier on F32's land half (P11). No new failure class:
+  **G4 met** (D90). No compiler code changed. Files: the roster,
+  `runs/probe-6`, the record, the ledger. Spend $2.13.

@@ -1,0 +1,1030 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "chess_carvers",
+    "worldSeed": "946",
+    "prompt": "A village of stone-carvers laid out on a colossal chessboard of black and white marble squares, with giant chess pieces as its monuments: a king-piece tower at the centre and two knight-pieces guarding the road in.",
+    "spawn": {
+      "zone": "south"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": {
+        "mix": [
+          [
+            "minecraft:smooth_quartz",
+            2
+          ],
+          [
+            "minecraft:polished_blackstone",
+            2
+          ],
+          [
+            "minecraft:calcite",
+            1
+          ],
+          [
+            "minecraft:polished_deepslate",
+            1
+          ]
+        ]
+      },
+      "plaza.path": "minecraft:smooth_quartz",
+      "plaza.cobble": "minecraft:polished_blackstone",
+      "plaza.border": "minecraft:chiseled_quartz_block",
+      "road.surface": "minecraft:polished_blackstone_bricks",
+      "road.shoulder": "minecraft:smooth_quartz"
+    }
+  },
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.7,
+    "decline": 0.1,
+    "formality": 0.85,
+    "character": {
+      "label": "stone-carver chessboard village",
+      "materialTheme": "white_quartz",
+      "urbanForm": "grid",
+      "motifs": {
+        "roofType": "flat",
+        "massing": "blocky",
+        "ornamentDensity": 0.7
+      },
+      "archetypes": {
+        "prefer": [
+          "guildhall",
+          "smithy",
+          "foundry",
+          "warehouse",
+          "museum",
+          "tavern",
+          "cottage",
+          "townhouse"
+        ]
+      },
+      "props": {
+        "prefer": [
+          "monolith",
+          "fountain",
+          "cart",
+          "statue_plinth",
+          "cairn"
+        ]
+      },
+      "programs": [
+        {
+          "id": "king_piece_tower",
+          "mode": "landmark",
+          "brief": "A colossal king chess piece monument carved from polished white quartz and polished blackstone with an enterable interior chamber and cross finial.",
+          "envelope": [
+            21,
+            52,
+            21
+          ]
+        },
+        {
+          "id": "knight_piece_statue",
+          "mode": "landmark",
+          "brief": "A monumental rearing horse-head knight chess piece carved from polished contrasting black and white stone blocks on a heavy stepped plinth.",
+          "envelope": [
+            15,
+            26,
+            17
+          ]
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "a flat basin paved as a colossal checkered chessboard of alternating black and white marble tiles",
+      "icons": "a monumental king-piece tower rising at the board center; two colossal rearing knight-piece statues flanking the approach road; stone-carver workshops, sculptors' scaffolds, and dressing yards set upon the squares"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "The Chessboard of Carvers",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "the great stepped plateau for the marble board",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 68,
+          "amplitude": 16,
+          "octaves": 4,
+          "frequency": 0.003,
+          "gain": 0.45,
+          "erosionPasses": 2,
+          "cliffThreshold": 60,
+          "soilDepth": 3,
+          "beachWidth": 2,
+          "snowLineFraction": 0.95
+        },
+        "children": [
+          {
+            "id": "chessboard_table",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the geometric flat table for the chessboard",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 150,
+              "height": 6,
+              "profile": "sharp",
+              "irregularity": 0.05
+            }
+          },
+          {
+            "id": "quarry_hollow_north",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the deep marble extraction pit",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.22,
+                0.25
+              ],
+              "radius": 45,
+              "depth": 10,
+              "water": false,
+              "profile": "sharp"
+            }
+          },
+          {
+            "id": "approach_vale",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the grand approach avenue from the south",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.5,
+                  0.95
+                ],
+                [
+                  0.5,
+                  0.75
+                ],
+                [
+                  0.5,
+                  0.6
+                ]
+              ],
+              "width": 26,
+              "depth": 4,
+              "profile": "rounded",
+              "flooded": "never"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0012
+        }
+      },
+      {
+        "id": "grand_board_square",
+        "kind": "primitive",
+        "label": "the center rank and file of the chessboard",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            32,
+            32
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "king_tower",
+        "kind": "generator",
+        "generator": "authored:king_piece_tower",
+        "label": "the colossal king piece tower at the board center",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            21,
+            52,
+            21
+          ]
+        },
+        "constraints": [
+          {
+            "adjacent_to": "grand_board_square",
+            "gap": [
+              2,
+              8
+            ]
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "tags": [
+          "landmark",
+          "tower"
+        ]
+      },
+      {
+        "id": "knight_statue_west",
+        "kind": "generator",
+        "generator": "authored:knight_piece_statue",
+        "label": "the western knight piece guarding the south road",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            26,
+            17
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.4,
+              0.72
+            ]
+          },
+          {
+            "distance": "grand_board_square",
+            "min": 40,
+            "max": 90,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "params": {
+          "face": {
+            "toward": "grand_board_square"
+          }
+        },
+        "tags": [
+          "landmark"
+        ]
+      },
+      {
+        "id": "knight_statue_east",
+        "kind": "generator",
+        "generator": "authored:knight_piece_statue",
+        "label": "the eastern knight piece guarding the south road",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            26,
+            17
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.6,
+              0.72
+            ]
+          },
+          {
+            "distance": "grand_board_square",
+            "min": 40,
+            "max": 90,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "params": {
+          "face": {
+            "toward": "grand_board_square"
+          }
+        },
+        "tags": [
+          "landmark"
+        ]
+      },
+      {
+        "id": "carver_guildhall",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the Master Carvers guildhall",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            14,
+            17
+          ]
+        },
+        "params": {
+          "archetype": "guildhall",
+          "floors": 1,
+          "roof": "flat",
+          "windowRhythm": "paired"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "grand_board_square",
+            "gap": [
+              1,
+              8
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "grand_board_square"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "civic",
+          "craft"
+        ]
+      },
+      {
+        "id": "carvers_tavern",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the Gambiteer Alehouse on the green rank",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "archetype": "tavern",
+          "floors": 2,
+          "roof": "flat",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "grand_board_square",
+            "gap": [
+              1,
+              8
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "grand_board_square"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "trade",
+          "house"
+        ]
+      },
+      {
+        "id": "sculptor_gallery",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the hall of miniature chess piece masterworks",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            13,
+            15
+          ]
+        },
+        "params": {
+          "archetype": "museum",
+          "floors": 1,
+          "roof": "flat",
+          "windowRhythm": "paired"
+        },
+        "constraints": [
+          {
+            "distance": "grand_board_square",
+            "min": 10,
+            "max": 50,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "civic"
+        ]
+      },
+      {
+        "id": "mason_workshop",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the chisel and chisel-grinding smithy",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            10,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "smithy",
+          "floors": 1,
+          "roof": "flat",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "distance": "grand_board_square",
+            "min": 8,
+            "max": 40,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "craft"
+        ]
+      },
+      {
+        "id": "stone_foundry",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the casting foundry for lead and bronze chess weights",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            15
+          ]
+        },
+        "params": {
+          "archetype": "foundry",
+          "floors": 1,
+          "roof": "flat",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "distance": "grand_board_square",
+            "min": 12,
+            "max": 48,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "craft"
+        ]
+      },
+      {
+        "id": "slab_warehouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the dressed marble tile storehouse",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            10,
+            13
+          ]
+        },
+        "params": {
+          "archetype": "warehouse",
+          "floors": 1,
+          "roof": "flat",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "distance": "grand_board_square",
+            "min": 14,
+            "max": 60,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "store"
+        ]
+      },
+      {
+        "id": "cottage_master_carver",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the Grandmaster Carver two-storey townhouse",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            14,
+            15
+          ]
+        },
+        "params": {
+          "archetype": "townhouse",
+          "floors": 2,
+          "roof": "flat",
+          "windowRhythm": "paired"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "grand_board_square",
+            "gap": [
+              1,
+              8
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "grand_board_square"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "cottage_apprentice_1",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a stonecutter cottage on the d-file",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "cottage",
+          "floors": 1,
+          "roof": "flat",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "distance": "grand_board_square",
+            "min": 12,
+            "max": 50,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "cottage_apprentice_2",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a stonecutter cottage on the e-file",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "cottage",
+          "floors": 1,
+          "roof": "flat",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "distance": "grand_board_square",
+            "min": 14,
+            "max": 55,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "cottage_apprentice_3",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a two-storey carver dormitory on the perimeter",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            11,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "cottage",
+          "floors": 2,
+          "roof": "flat",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "distance": "grand_board_square",
+            "min": 16,
+            "max": 60,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "carver_fountain",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the carved quartz basin on the central square",
+        "params": {
+          "prop": "fountain",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "stone_cart_1",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a cart hauling raw blackstone blocks",
+        "params": {
+          "prop": "cart",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "stone_cart_2",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a cart hauling polished white marble tiles",
+        "params": {
+          "prop": "cart",
+          "zone": "south"
+        }
+      },
+      {
+        "id": "pawn_monolith_1",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a rough-hewn pawn standing stone in the north rank",
+        "params": {
+          "prop": "monolith",
+          "zone": "north"
+        }
+      },
+      {
+        "id": "pawn_monolith_2",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a rough-hewn pawn standing stone in the east rank",
+        "params": {
+          "prop": "monolith",
+          "zone": "east"
+        }
+      },
+      {
+        "id": "pawn_monolith_3",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a rough-hewn pawn standing stone in the west rank",
+        "params": {
+          "prop": "monolith",
+          "zone": "west"
+        }
+      },
+      {
+        "id": "lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "the grid avenues connecting squares and workshops",
+        "params": {
+          "anchors": [
+            "grand_board_square",
+            "king_tower",
+            "knight_statue_west",
+            "knight_statue_east",
+            "carver_guildhall",
+            "#tag:house",
+            "#tag:craft"
+          ],
+          "pattern": "grid",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 12
+        }
+      },
+      {
+        "id": "board_flank_groves",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "manicured cypress-like birch groves framing the chessboard",
+        "params": {
+          "area": {
+            "at": [
+              0.5,
+              0.5
+            ],
+            "radius": 220
+          },
+          "density": 0.05,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 28,
+          "elevation": [
+            2,
+            90
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "landmark"
+          ],
+          "undergrowth": {
+            "grass": 0.3,
+            "flowers": 0.08,
+            "deadwood": 0.01
+          },
+          "species": [
+            {
+              "id": "pale_birch",
+              "weight": 3,
+              "shape": "birch_slim"
+            },
+            {
+              "id": "pruned_oak",
+              "weight": 1,
+              "shape": "oak_round"
+            }
+          ]
+        }
+      },
+      {
+        "id": "wild_landscape_scatter",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse background trees beyond the carved plateau",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 5,
+          "clumping": 0.3,
+          "maxSlope": 35,
+          "elevation": [
+            2,
+            110
+          ],
+          "edgeFalloff": 10,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "landmark"
+          ],
+          "species": [
+            {
+              "id": "wild_oak",
+              "weight": 2,
+              "shape": "oak_round"
+            },
+            {
+              "id": "wild_birch",
+              "weight": 1,
+              "shape": "birch_slim"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "programs": {
+    "king_piece_tower": {
+      "mode": "landmark",
+      "envelope": [
+        23,
+        64,
+        23
+      ],
+      "sourceHash": "b3:3940e259f48f2b059ada5b9228db05b4184c67b2661f434d57e1d4b1a43a6bdf",
+      "outputHash": "b3:658f743a8f889bfb7c35d51665a7658ea90e4f3122c372b0a59e60dae950f95f",
+      "conforms": false,
+      "conformHash": "b3:9b5ce6a78272d8dcc51aca38ddab244fffaaaef9a82c125fb48371eef6147b35",
+      "source": "export const envelope = [23, 64, 23];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const cx = 11;\n  const cz = 11;\n  const seatY = 6;\n\n  // --- PALETTE DEFINITIONS ---\n  const W_SMOOTH = \"minecraft:smooth_quartz\";\n  const W_BRICK = api.theme.stone.accent || \"minecraft:quartz_bricks\";\n  const W_PILLAR = \"minecraft:quartz_pillar\";\n  const W_CHISELED = \"minecraft:chiseled_quartz_block\";\n  const W_STAIRS = api.theme.stone.stairs || \"minecraft:quartz_stairs\";\n  const W_SLAB = api.theme.stone.slab || \"minecraft:quartz_slab\";\n\n  const B_POLISHED = api.theme.ground.plinth || \"minecraft:polished_blackstone\";\n  const B_BRICK = \"minecraft:polished_blackstone_bricks\";\n  const B_CHISELED = \"minecraft:chiseled_polished_blackstone\";\n  const B_GILDED = \"minecraft:gilded_blackstone\";\n  const B_STAIRS = \"minecraft:polished_blackstone_stairs\";\n  const B_SLAB = \"minecraft:polished_blackstone_slab\";\n  const B_WALL = api.theme.stone.wall || \"minecraft:polished_blackstone_wall\";\n\n  const GOLD = \"minecraft:gold_block\";\n  const LANTERN = \"minecraft:sea_lantern\";\n  const TINTED = \"minecraft:tinted_glass\";\n  const IRON_BARS = \"minecraft:iron_bars\";\n\n  // Voxel storage grid for deterministic flushing\n  const grid = new Map();\n\n  function getIdx(x, y, z) {\n    return (x << 16) | (y << 8) | z;\n  }\n\n  function setBlock(x, y, z, block) {\n    if (x < 0 || x >= W || y < 0 || y >= H || z < 0 || z >= D) return;\n    grid.set(getIdx(x, y, z), block);\n  }\n\n  function getBlock(x, y, z) {\n    return grid.get(getIdx(x, y, z)) || null;\n  }\n\n  function removeBlock(x, y, z) {\n    grid.delete(getIdx(x, y, z));\n  }\n\n  // Helper for directional stairs facing outward or inward\n  function getOutwardStair(type, dx, dz, upsideDown = false) {\n    let facing = \"north\";\n    if (Math.abs(dx) >= Math.abs(dz)) {\n      facing = dx > 0 ? \"west\" : \"east\";\n    } else {\n      facing = dz > 0 ? \"north\" : \"south\";\n    }\n    const half = upsideDown ? \",half=top\" : \",half=bottom\";\n    const base = type === \"white\" ? W_STAIRS : B_STAIRS;\n    return `${base}[facing=${facing}${half}]`;\n  }\n\n  function getInwardStair(type, dx, dz, upsideDown = false) {\n    let facing = \"south\";\n    if (Math.abs(dx) >= Math.abs(dz)) {\n      facing = dx > 0 ? \"east\" : \"west\";\n    } else {\n      facing = dz > 0 ? \"south\" : \"north\";\n    }\n    const half = upsideDown ? \",half=top\" : \",half=bottom\";\n    const base = type === \"white\" ? W_STAIRS : B_STAIRS;\n    return `${base}[facing=${facing}${half}]`;\n  }\n\n  // Mathematical profile of the Staunton King Chess Piece\n  function getRadius(ry) {\n    if (ry <= 0) return 9.6;\n    if (ry === 1) return 9.0;\n    if (ry === 2) return 8.4;\n    if (ry === 3) return 7.7;\n    if (ry === 4) return 7.1;\n    // Lower body frustum (5 to 18)\n    if (ry >= 5 && ry <= 18) {\n      const t = (ry - 5) / 13;\n      return 6.9 - 2.4 * Math.sin(t * Math.PI * 0.5) + 0.1 * Math.sin(t * Math.PI);\n    }\n    // Mid waist ring / astragal (19 to 23)\n    if (ry >= 19 && ry <= 23) {\n      const t = (ry - 19) / 4;\n      return 4.6 + 1.5 * Math.sin(t * Math.PI);\n    }\n    // Upper shaft / colonnade (24 to 34)\n    if (ry >= 24 && ry <= 34) {\n      const t = (ry - 24) / 10;\n      return 4.4 - 0.2 * Math.sin(t * Math.PI) + 1.3 * (t * t);\n    }\n    // Necking & Collar (35 to 36)\n    if (ry === 35) return 4.8;\n    if (ry === 36) return 6.0;\n    // Crown Chalice (37 to 41)\n    if (ry >= 37 && ry <= 41) {\n      const t = (ry - 37) / 4;\n      return 5.2 + 2.2 * t;\n    }\n    // Crown Battlements (42 to 44)\n    if (ry >= 42 && ry <= 44) {\n      return 7.4;\n    }\n    return 0;\n  }\n\n  function getInnerRadius(ry) {\n    if (ry >= 1 && ry <= 18) {\n      const outR = getRadius(ry);\n      return Math.max(0, outR - 1.45);\n    }\n    if (ry === 19) return 1.5; // Central mezzanine hatch\n    if (ry >= 24 && ry <= 34) {\n      const outR = getRadius(ry);\n      return Math.max(0, outR - 1.35);\n    }\n    if (ry >= 37 && ry <= 41) {\n      const outR = getRadius(ry);\n      return Math.max(0, outR - 1.2);\n    }\n    return 0;\n  }\n\n  // --- 1. FOUNDATION, BASE PEDESTAL & CHECKERED APRON ---\n  const maxFootprintR = 11.2;\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const dx = x - cx;\n      const dz = z - cz;\n      const dist = Math.sqrt(dx * dx + dz * dz);\n      if (dist > maxFootprintR) continue;\n\n      const gh = api.heightAt(x, z);\n      const groundY = Math.max(0, Math.min(seatY + 6, seatY + gh));\n      const checker = ((Math.floor(x / 2) + Math.floor(z / 2)) % 2 === 0);\n\n      // Apron around base (dist between 9.6 and 11.2)\n      if (dist > 9.6) {\n        for (let y = groundY; y >= Math.max(0, groundY - 1); y--) {\n          const b = checker ? W_SMOOTH : B_POLISHED;\n          setBlock(x, y, z, b);\n        }\n        continue;\n      }\n\n      // Base footprint: build foundation skirt down to terrain\n      for (let y = seatY - 1; y >= groundY; y--) {\n        const fBlock = ((Math.floor(x / 2) + Math.floor(z / 2) + y) % 2 === 0) ? B_BRICK : W_BRICK;\n        setBlock(x, y, z, fBlock);\n      }\n      if (groundY > seatY) {\n        for (let y = seatY; y <= groundY; y++) {\n          const fBlock = ((Math.floor(x / 2) + Math.floor(z / 2) + y) % 2 === 0) ? B_BRICK : W_BRICK;\n          setBlock(x, y, z, fBlock);\n        }\n      }\n    }\n  }\n\n  // Plinth Steps (ry = 0 to 4)\n  for (let ry = 0; ry <= 4; ry++) {\n    const y = seatY + ry;\n    const r = getRadius(ry);\n    for (let x = 0; x < W; x++) {\n      for (let z = 0; z < D; z++) {\n        const dx = x - cx;\n        const dz = z - cz;\n        const dist = Math.sqrt(dx * dx + dz * dz);\n        if (dist > r) continue;\n\n        const isEdge = dist > r - 0.9;\n        const checker = ((Math.floor(x / 2) + Math.floor(z / 2)) % 2 === 0);\n\n        if (ry === 0) {\n          if (isEdge) {\n            setBlock(x, y, z, getOutwardStair(checker ? \"white\" : \"black\", dx, dz));\n          } else {\n            setBlock(x, y, z, checker ? W_SMOOTH : B_POLISHED);\n          }\n        } else if (ry === 1) {\n          if (isEdge) {\n            setBlock(x, y, z, checker ? B_BRICK : W_BRICK);\n          } else {\n            setBlock(x, y, z, checker ? W_SMOOTH : B_POLISHED);\n          }\n        } else if (ry === 2) {\n          if (isEdge) {\n            setBlock(x, y, z, checker ? W_CHISELED : B_CHISELED);\n          } else {\n            setBlock(x, y, z, checker ? W_SMOOTH : B_POLISHED);\n          }\n        } else if (ry === 3) {\n          if (isEdge) {\n            setBlock(x, y, z, getOutwardStair(checker ? \"white\" : \"black\", dx, dz, true));\n          } else {\n            setBlock(x, y, z, checker ? W_SMOOTH : B_POLISHED);\n          }\n        } else if (ry === 4) {\n          setBlock(x, y, z, checker ? W_BRICK : B_BRICK);\n        }\n      }\n    }\n  }\n\n  // 4 Corner Pawn Sentry Pedestals\n  const cornerOffsets = [\n    [-6.5, -6.5], [6.5, -6.5], [-6.5, 6.5], [6.5, 6.5]\n  ];\n  for (const [ox, oz] of cornerOffsets) {\n    const px = Math.round(cx + ox);\n    const pz = Math.round(cz + oz);\n    for (let dx = -1; dx <= 0; dx++) {\n      for (let dz = -1; dz <= 0; dz++) {\n        const bx = px + dx;\n        const bz = pz + dz;\n        setBlock(bx, seatY + 1, bz, B_BRICK);\n        setBlock(bx, seatY + 2, bz, W_PILLAR);\n        setBlock(bx, seatY + 3, bz, B_GILDED);\n      }\n    }\n    setBlock(px, seatY + 4, pz, LANTERN);\n    setBlock(px - 1, seatY + 4, pz, B_WALL);\n    setBlock(px, seatY + 4, pz - 1, B_WALL);\n    setBlock(px - 1, seatY + 4, pz - 1, B_WALL);\n  }\n\n  // --- 2. MAIN TOWER BODY & COLONNADE (ry = 5 to 36) ---\n  for (let ry = 5; ry <= 36; ry++) {\n    const y = seatY + ry;\n    const r = getRadius(ry);\n    const inR = getInnerRadius(ry);\n\n    for (let x = 0; x < W; x++) {\n      for (let z = 0; z < D; z++) {\n        const dx = x - cx;\n        const dz = z - cz;\n        const dist = Math.sqrt(dx * dx + dz * dz);\n        if (dist > r) continue;\n\n        // Interior hollow\n        if (dist < inR) {\n          removeBlock(x, y, z);\n          continue;\n        }\n\n        const angle = Math.atan2(dz, dx);\n        const normAngle = (angle + 2 * Math.PI) % (2 * Math.PI);\n        const sector = Math.floor(normAngle / (Math.PI / 4));\n        const sectorFrac = (normAngle % (Math.PI / 4)) / (Math.PI / 4);\n        const isRib = Math.abs(sectorFrac - 0.5) < 0.22;\n        const ribType = sector % 2 === 0 ? \"white\" : \"black\";\n\n        // Lower body (ry = 5 to 18)\n        if (ry >= 5 && ry <= 18) {\n          if (isRib) {\n            if (ribType === \"white\") {\n              setBlock(x, y, z, (ry === 5 || ry === 18) ? W_CHISELED : W_PILLAR);\n            } else {\n              setBlock(x, y, z, (ry === 5 || ry === 18) ? B_GILDED : B_BRICK);\n            }\n          } else {\n            // Recessed wall panel\n            const wallBlock = ribType === \"white\" ? B_POLISHED : W_SMOOTH;\n            // Window slits on cardinal & ordinal midpoints\n            if (dist > r - 0.9 && (ry === 8 || ry === 9 || ry === 14 || ry === 15)) {\n              setBlock(x, y, z, TINTED);\n            } else {\n              setBlock(x, y, z, wallBlock);\n            }\n          }\n        }\n        // Mid waist ring (ry = 19 to 23)\n        else if (ry >= 19 && ry <= 23) {\n          if (ry === 19) {\n            // Mid floor\n            if (dist < 1.6) {\n              removeBlock(x, y, z);\n            } else {\n              const checker = ((Math.floor(x / 2) + Math.floor(z / 2)) % 2 === 0);\n              setBlock(x, y, z, checker ? W_SMOOTH : B_POLISHED);\n            }\n          } else if (ry === 20 || ry === 21) {\n            if (dist > r - 0.8) {\n              setBlock(x, y, z, isRib ? (ribType === \"white\" ? GOLD : LANTERN) : (ribType === \"white\" ? B_GILDED : W_CHISELED));\n            } else {\n              setBlock(x, y, z, ribType === \"white\" ? W_BRICK : B_BRICK);\n            }\n          } else {\n            setBlock(x, y, z, ribType === \"white\" ? W_SMOOTH : B_POLISHED);\n          }\n        }\n        // Upper Colonnade & Shaft (ry = 24 to 34)\n        else if (ry >= 24 && ry <= 34) {\n          if (ry === 24) {\n            // High chamber floor\n            const checker = ((Math.floor(x / 2) + Math.floor(z / 2)) % 2 === 0);\n            setBlock(x, y, z, checker ? W_SMOOTH : B_POLISHED);\n          } else {\n            // Colonnade pillars vs open windows\n            if (isRib) {\n              if (ribType === \"white\") {\n                setBlock(x, y, z, ry === 34 ? W_CHISELED : W_PILLAR);\n              } else {\n                setBlock(x, y, z, ry === 34 ? B_GILDED : B_BRICK);\n              }\n            } else {\n              // Open arches between columns\n              if (ry >= 26 && ry <= 31) {\n                removeBlock(x, y, z);\n              } else if (ry === 32) {\n                setBlock(x, y, z, getOutwardStair(ribType === \"white\" ? \"black\" : \"white\", dx, dz, true));\n              } else {\n                setBlock(x, y, z, ribType === \"white\" ? B_POLISHED : W_SMOOTH);\n              }\n            }\n          }\n        }\n        // Necking & Collar (ry = 35 to 36)\n        else if (ry === 35) {\n          setBlock(x, y, z, ribType === \"white\" ? B_BRICK : W_BRICK);\n        } else if (ry === 36) {\n          if (dist > r - 0.9) {\n            setBlock(x, y, z, getOutwardStair(ribType === \"white\" ? \"white\" : \"black\", dx, dz, true));\n          } else {\n            setBlock(x, y, z, ribType === \"white\" ? W_CHISELED : B_GILDED);\n          }\n        }\n      }\n    }\n  }\n\n  // --- 3. THE KING'S CROWN / CORONET & PROMENADE (ry = 37 to 44) ---\n  for (let ry = 37; ry <= 44; ry++) {\n    const y = seatY + ry;\n    const r = getRadius(ry);\n    const inR = getInnerRadius(ry);\n\n    for (let x = 0; x < W; x++) {\n      for (let z = 0; z < D; z++) {\n        const dx = x - cx;\n        const dz = z - cz;\n        const dist = Math.sqrt(dx * dx + dz * dz);\n        if (dist > r) continue;\n\n        const angle = Math.atan2(dz, dx);\n        const normAngle = (angle + 2 * Math.PI) % (2 * Math.PI);\n        const sector = Math.floor(normAngle / (Math.PI / 4));\n        const sectorFrac = (normAngle % (Math.PI / 4)) / (Math.PI / 4);\n        const isPeak = Math.abs(sectorFrac - 0.5) < 0.2;\n        const checker = (sector % 2 === 0);\n\n        if (ry <= 41) {\n          // Chalice bowl shell\n          if (dist >= inR) {\n            setBlock(x, y, z, checker ? W_SMOOTH : B_POLISHED);\n          } else if (ry === 41) {\n            // Crown promenade deck\n            setBlock(x, y, z, checker ? W_BRICK : B_BRICK);\n          } else {\n            removeBlock(x, y, z);\n          }\n        } else {\n          // ry = 42 to 44: 8 Crown Peaks vs Parapet\n          if (dist > r - 1.2) {\n            if (isPeak) {\n              if (ry === 42) {\n                setBlock(x, y, z, checker ? W_CHISELED : B_GILDED);\n              } else if (ry === 43) {\n                setBlock(x, y, z, checker ? GOLD : LANTERN);\n              } else if (ry === 44) {\n                setBlock(x, y, z, checker ? B_WALL : GOLD);\n              }\n            } else {\n              if (ry === 42) {\n                setBlock(x, y, z, checker ? W_SLAB : B_SLAB);\n              } else {\n                removeBlock(x, y, z);\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // --- 4. THE GLOBUS / DOME (ry = 42 to 46) ---\n  for (let dy = 0; dy <= 4; dy++) {\n    const ry = 42 + dy;\n    const y = seatY + ry;\n    const domeR = Math.sqrt(Math.max(0, 16 - (dy * dy) * 1.0));\n\n    for (let x = 0; x < W; x++) {\n      for (let z = 0; z < D; z++) {\n        const dx = x - cx;\n        const dz = z - cz;\n        const dist = Math.sqrt(dx * dx + dz * dz);\n        if (dist > domeR) continue;\n\n        const isMeridian = (Math.abs(dx) <= 0.6 || Math.abs(dz) <= 0.6);\n        if (dy === 4) {\n          setBlock(x, y, z, GOLD);\n        } else if (isMeridian) {\n          setBlock(x, y, z, B_GILDED);\n        } else {\n          setBlock(x, y, z, W_SMOOTH);\n        }\n      }\n    }\n  }\n\n  // --- 5. THE ROYAL CROSS FINIAL (ry = 46 to 53) ---\n  // ry = 46: Cross Plinth\n  for (let dx = -1; dx <= 1; dx++) {\n    for (let dz = -1; dz <= 1; dz++) {\n      setBlock(cx + dx, seatY + 46, cz + dz, (dx === 0 || dz === 0) ? GOLD : B_GILDED);\n    }\n  }\n\n  // ry = 47, 48: Lower Cross Stem\n  for (let y = seatY + 47; y <= seatY + 48; y++) {\n    setBlock(cx, y, cz, B_GILDED);\n    setBlock(cx + 1, y, cz, `${W_STAIRS}[facing=east,half=bottom]`);\n    setBlock(cx - 1, y, cz, `${W_STAIRS}[facing=west,half=bottom]`);\n    setBlock(cx, y, cz + 1, `${W_STAIRS}[facing=south,half=bottom]`);\n    setBlock(cx, y, cz - 1, `${W_STAIRS}[facing=north,half=bottom]`);\n  }\n\n  // ry = 49, 50: Cross Arms & Heart\n  const crossY1 = seatY + 49;\n  const crossY2 = seatY + 50;\n\n  // Glowing heart\n  setBlock(cx, crossY1, cz, LANTERN);\n  setBlock(cx, crossY2, cz, B_GILDED);\n  setBlock(cx, crossY1, cz - 1, B_GILDED);\n  setBlock(cx, crossY1, cz + 1, B_GILDED);\n\n  // Horizontal arms along X axis\n  for (let armX = cx - 3; armX <= cx + 3; armX++) {\n    if (armX === cx) continue;\n    const distFromCenter = Math.abs(armX - cx);\n\n    if (distFromCenter === 1) {\n      setBlock(armX, crossY1, cz, B_GILDED);\n      setBlock(armX, crossY2, cz, B_SLAB);\n    } else if (distFromCenter === 2) {\n      setBlock(armX, crossY1, cz, B_POLISHED);\n      setBlock(armX, crossY2, cz, W_SLAB);\n    } else if (distFromCenter === 3) {\n      // Floriated arm terminals\n      setBlock(armX, crossY1, cz, GOLD);\n      const stairFacing = armX > cx ? \"west\" : \"east\";\n      setBlock(armX, crossY2, cz, `${W_STAIRS}[facing=${stairFacing},half=bottom]`);\n      setBlock(armX, crossY1 - 1, cz, `${W_STAIRS}[facing=${stairFacing},half=top]`);\n    }\n  }\n\n  // ry = 51 to 53: Upper Cross Spire & Terminal\n  setBlock(cx, seatY + 51, cz, B_POLISHED);\n  setBlock(cx + 1, seatY + 51, cz, `${W_STAIRS}[facing=west,half=top]`);\n  setBlock(cx - 1, seatY + 51, cz, `${W_STAIRS}[facing=east,half=top]`);\n\n  setBlock(cx, seatY + 52, cz, GOLD);\n  setBlock(cx + 1, seatY + 52, cz, `${W_STAIRS}[facing=east,half=bottom]`);\n  setBlock(cx - 1, seatY + 52, cz, `${W_STAIRS}[facing=west,half=bottom]`);\n  setBlock(cx, seatY + 52, cz + 1, `${W_STAIRS}[facing=south,half=bottom]`);\n  setBlock(cx, seatY + 52, cz - 1, `${W_STAIRS}[facing=north,half=bottom]`);\n\n  setBlock(cx, seatY + 53, cz, B_WALL);\n\n  // --- 6. PORTALS & STAIRWAYS ---\n  // North Entrance Gate (Local North -Z)\n  for (let z = cz - 8; z <= cz - 4; z++) {\n    for (let x = cx - 1; x <= cx + 1; x++) {\n      for (let y = seatY + 1; y <= seatY + 5; y++) {\n        removeBlock(x, y, z);\n      }\n    }\n  }\n  // North Portal Grand Frame\n  for (let y = seatY + 1; y <= seatY + 5; y++) {\n    setBlock(cx - 2, y, cz - 6, (y === seatY + 5) ? B_GILDED : W_PILLAR);\n    setBlock(cx + 2, y, cz - 6, (y === seatY + 5) ? B_GILDED : W_PILLAR);\n  }\n  setBlock(cx - 1, seatY + 6, cz - 6, `${B_STAIRS}[facing=east,half=bottom]`);\n  setBlock(cx + 1, seatY + 6, cz - 6, `${B_STAIRS}[facing=west,half=bottom]`);\n  setBlock(cx, seatY + 6, cz - 6, B_GILDED);\n  setBlock(cx, seatY + 7, cz - 6, LANTERN);\n\n  // Grand Steps in front of North Gate adapting to terrain\n  for (let step = 1; step <= 3; step++) {\n    const curZ = cz - 6 - step;\n    const targetY = seatY + 1 - step;\n    for (let x = cx - 2; x <= cx + 2; x++) {\n      const curGH = api.heightAt(x, curZ);\n      const curGround = Math.max(0, seatY + curGH);\n      const stairY = Math.max(curGround, targetY);\n\n      setBlock(x, stairY, curZ, `${W_STAIRS}[facing=south,half=bottom]`);\n      for (let fy = stairY - 1; fy >= curGround; fy--) {\n        setBlock(x, fy, curZ, B_BRICK);\n      }\n    }\n  }\n\n  // South Balcony Window (Local South +Z)\n  for (let z = cz + 4; z <= cz + 7; z++) {\n    for (let x = cx - 1; x <= cx + 1; x++) {\n      for (let y = seatY + 2; y <= seatY + 5; y++) {\n        removeBlock(x, y, z);\n      }\n    }\n  }\n  setBlock(cx - 1, seatY + 2, cz + 6, B_WALL);\n  setBlock(cx, seatY + 2, cz + 6, B_WALL);\n  setBlock(cx + 1, seatY + 2, cz + 6, B_WALL);\n\n  // Interior Spiral Stairway hugging inner wall in Hall\n  for (let step = 0; step < 18; step++) {\n    const stairY = seatY + 1 + step;\n    const angle = step * (Math.PI / 4.0);\n    const sx = Math.round(cx + 3.0 * Math.cos(angle));\n    const sz = Math.round(cz + 3.0 * Math.sin(angle));\n    setBlock(sx, stairY, sz, `${W_STAIRS}[facing=north,half=bottom]`);\n    if (stairY > seatY + 1) {\n      setBlock(sx, stairY - 1, sz, B_BRICK);\n    }\n  }\n\n  // --- 7. FLUSH TO OUTPUT STREAM ---\n  for (let y = 0; y < H; y++) {\n    for (let z = 0; z < D; z++) {\n      for (let x = 0; x < W; x++) {\n        const b = getBlock(x, y, z);\n        if (b !== null) {\n          api.set(x, y, z, b);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"King's Spire Monument\",\n    seatY: seatY,\n    anchors: {\n      front: [cx, seatY + 1, 0],\n      door: [cx, seatY + 1, cz - 7],\n      crown: [cx, seatY + 41, cz],\n      cross: [cx, seatY + 53, cz]\n    },\n    interiors: [\n      {\n        min: [cx - 3, seatY + 1, cz - 3],\n        max: [cx + 3, seatY + 18, cz + 3],\n        kind: \"hall\"\n      },\n      {\n        min: [cx - 2, seatY + 24, cz - 2],\n        max: [cx + 2, seatY + 33, cz + 2],\n        kind: \"vault\"\n      }\n    ]\n  };\n}"
+    },
+    "knight_piece_statue": {
+      "mode": "landmark",
+      "envelope": [
+        15,
+        30,
+        17
+      ],
+      "sourceHash": "b3:d30cb485e1521d6f1e42f57766ab426975bd802c428e1cc29d6c5a296dbaf2e3",
+      "outputHash": "b3:7c0b86c37ead7231d8809ab8e6ed623c11541fb792aff7091f91cd9282c4c7f5",
+      "conforms": false,
+      "conformHash": "b3:243e04ddada5d924f33c2738afe273c68d3b8480a28e1255867d33df70c03985",
+      "source": "export const envelope = [15, 30, 17];\n\nexport default function build(api) {\n  const { size } = api;\n  const seatY = 4;\n\n  // Extract theme materials with fallbacks to classical black & white marble\n  const W_PRIMARY = api.theme?.stone?.primary || \"minecraft:smooth_quartz\";\n  const W_ACCENT = api.theme?.stone?.accent || \"minecraft:quartz_bricks\";\n  const W_STAIRS = api.theme?.stone?.stairs || \"minecraft:quartz_stairs\";\n  const W_SLAB = api.theme?.stone?.slab || \"minecraft:quartz_slab\";\n  const W_PILLAR = \"minecraft:quartz_pillar\";\n  const W_CALCITE = \"minecraft:calcite\";\n\n  const B_PRIMARY = \"minecraft:polished_blackstone\";\n  const B_ACCENT = \"minecraft:polished_blackstone_bricks\";\n  const B_STAIRS = \"minecraft:polished_blackstone_stairs\";\n  const B_SLAB = \"minecraft:polished_blackstone_slab\";\n  const B_WALL = \"minecraft:polished_blackstone_wall\";\n  const B_GILDED = \"minecraft:gilded_blackstone\";\n\n  const PLINTH_BASE = api.theme?.ground?.plinth || \"minecraft:polished_blackstone\";\n  const PLINTH_REVETMENT = api.theme?.ground?.revetment || \"minecraft:polished_blackstone_bricks\";\n\n  function makeStair(baseStair, facing, half = \"bottom\", shape = \"straight\") {\n    const clean = baseStair.split(\"[\")[0];\n    return `${clean}[facing=${facing},half=${half},shape=${shape}]`;\n  }\n\n  function makeSlab(baseSlab, type = \"bottom\") {\n    const clean = baseSlab.split(\"[\")[0];\n    return `${clean}[type=${type}]`;\n  }\n\n  // 3D placement buffer: [Y][X][Z]\n  const grid = Array.from({ length: size[1] }, () =>\n    Array.from({ length: size[0] }, () => Array(size[2]).fill(null))\n  );\n\n  function put(x, y, z, block, overwrite = true) {\n    if (x >= 0 && x < size[0] && y >= 0 && y < size[1] && z >= 0 && z < size[2]) {\n      if (overwrite || grid[y][x][z] === null) {\n        grid[y][x][z] = block;\n      }\n    }\n  }\n\n  // --- 1. Plinth Base (ry = 0): Monumental Chessboard Pattern ---\n  for (let x = 1; x <= 13; x++) {\n    for (let z = 2; z <= 14; z++) {\n      const dx = Math.abs(x - 7);\n      const dz = Math.abs(z - 8);\n      if (dx <= 6 && dz <= 6 && dx + dz <= 9) {\n        const isStairNorthSouth = (dz === 6 && dx <= 3);\n        const isStairEastWest = (dx === 6 && dz <= 3);\n        const isBorder = (dx === 6 || dz === 6 || dx + dz === 9);\n\n        if (isStairNorthSouth) {\n          put(x, seatY + 0, z, makeStair(B_STAIRS, z < 8 ? \"north\" : \"south\"));\n        } else if (isStairEastWest) {\n          put(x, seatY + 0, z, makeStair(B_STAIRS, x < 7 ? \"west\" : \"east\"));\n        } else if (isBorder) {\n          put(x, seatY + 0, z, B_PRIMARY);\n        } else {\n          put(x, seatY + 0, z, (x + z) % 2 === 0 ? W_PRIMARY : B_PRIMARY);\n        }\n      }\n    }\n  }\n\n  // --- 2. Plinth Step 1 (ry = 1) ---\n  for (let x = 2; x <= 12; x++) {\n    for (let z = 3; z <= 13; z++) {\n      const dx = Math.abs(x - 7);\n      const dz = Math.abs(z - 8);\n      if (dx <= 5 && dz <= 5 && dx + dz <= 7) {\n        const isStairNS = (dz === 5 && dx <= 2);\n        const isStairEW = (dx === 5 && dz <= 2);\n        const isBorder = (dx === 5 || dz === 5 || dx + dz === 7);\n\n        if (isStairNS) {\n          put(x, seatY + 1, z, makeStair(B_STAIRS, z < 8 ? \"north\" : \"south\"));\n        } else if (isStairEW) {\n          put(x, seatY + 1, z, makeStair(B_STAIRS, x < 7 ? \"west\" : \"east\"));\n        } else if (isBorder) {\n          put(x, seatY + 1, z, B_PRIMARY);\n        } else {\n          put(x, seatY + 1, z, (x + z) % 2 === 0 ? W_ACCENT : B_ACCENT);\n        }\n      }\n    }\n  }\n\n  // --- 3. Pedestal Dado / Inset Shaft (ry = 2) ---\n  for (let x = 3; x <= 11; x++) {\n    for (let z = 4; z <= 12; z++) {\n      const dx = Math.abs(x - 7);\n      const dz = Math.abs(z - 8);\n      if (dx <= 4 && dz <= 4 && dx + dz <= 6) {\n        const isCorner = (dx === 4 && dz >= 2) || (dz === 4 && dx >= 2) || (dx + dz === 6);\n        if (isCorner) {\n          put(x, seatY + 2, z, B_ACCENT);\n        } else if ((z === 4 || z === 12) && dx <= 1) {\n          put(x, seatY + 2, z, dx === 0 ? W_CALCITE : `${W_PILLAR}[axis=y]`);\n        } else if ((x === 3 || x === 11) && dz <= 1) {\n          put(x, seatY + 2, z, dz === 0 ? W_CALCITE : `${W_PILLAR}[axis=y]`);\n        } else {\n          put(x, seatY + 2, z, W_PRIMARY);\n        }\n      }\n    }\n  }\n\n  // --- 4. Pedestal Cornice (ry = 3): Flaring Inverted Capital ---\n  for (let x = 2; x <= 12; x++) {\n    for (let z = 3; z <= 13; z++) {\n      const dx = Math.abs(x - 7);\n      const dz = Math.abs(z - 8);\n      if (dx <= 5 && dz <= 5 && dx + dz <= 7) {\n        const isStairNS = (dz === 5 && dx <= 2);\n        const isStairEW = (dx === 5 && dz <= 2);\n        if (isStairNS) {\n          put(x, seatY + 3, z, makeStair(B_STAIRS, z < 8 ? \"south\" : \"north\", \"top\"));\n        } else if (isStairEW) {\n          put(x, seatY + 3, z, makeStair(B_STAIRS, x < 7 ? \"east\" : \"west\", \"top\"));\n        } else if (dx === 4 || dz === 4 || dx + dz === 7) {\n          put(x, seatY + 3, z, B_PRIMARY);\n        } else {\n          put(x, seatY + 3, z, B_ACCENT);\n        }\n      }\n    }\n  }\n\n  // --- 5. Plinth Top Turntable Disc (ry = 4) ---\n  for (let x = 3; x <= 11; x++) {\n    for (let z = 4; z <= 12; z++) {\n      const dx = Math.abs(x - 7);\n      const dz = Math.abs(z - 8);\n      const distSq = dx * dx + dz * dz;\n      if (distSq <= 19) {\n        if (distSq >= 13) {\n          put(x, seatY + 4, z, makeSlab(B_SLAB, \"bottom\"));\n        } else if (dx === 0 && dz === 0) {\n          put(x, seatY + 4, z, B_GILDED);\n        } else {\n          put(x, seatY + 4, z, (x + z) % 2 === 0 ? W_PRIMARY : B_PRIMARY);\n        }\n      }\n    }\n  }\n\n  // --- 6. Chess Piece Base Torus (ry = 5) ---\n  for (let x = 4; x <= 10; x++) {\n    for (let z = 5; z <= 11; z++) {\n      const dx = Math.abs(x - 7);\n      const dz = Math.abs(z - 8);\n      const distSq = dx * dx + dz * dz;\n      if (distSq <= 13) {\n        if (dz >= 3 && dx <= 1) {\n          put(x, seatY + 5, z, makeStair(W_STAIRS, z < 8 ? \"north\" : \"south\"));\n        } else if (dx >= 3 && dz <= 1) {\n          put(x, seatY + 5, z, makeStair(W_STAIRS, x < 7 ? \"west\" : \"east\"));\n        } else {\n          put(x, seatY + 5, z, W_PRIMARY);\n        }\n      }\n    }\n  }\n\n  // --- 7. Narrowed Collar Ring (ry = 6) ---\n  for (let x = 4; x <= 10; x++) {\n    for (let z = 5; z <= 11; z++) {\n      const dx = Math.abs(x - 7);\n      const dz = Math.abs(z - 8);\n      const distSq = dx * dx + dz * dz;\n      if (distSq <= 8) {\n        put(x, seatY + 6, z, distSq >= 5 ? B_PRIMARY : W_PRIMARY);\n      }\n    }\n  }\n\n  // --- 8. Torso & Chest Root (ry = 7) ---\n  for (let x = 5; x <= 9; x++) {\n    for (let z = 5; z <= 11; z++) {\n      const dx = Math.abs(x - 7);\n      if (z === 5 && dx <= 1) {\n        put(x, seatY + 7, z, makeStair(W_STAIRS, \"north\"));\n      } else if (z === 11 && dx <= 1) {\n        put(x, seatY + 7, z, B_PRIMARY);\n      } else {\n        put(x, seatY + 7, z, W_PRIMARY);\n      }\n    }\n  }\n\n  // --- 9. Chest & Dorsal Spine Base (ry = 8) ---\n  for (let x = 4; x <= 10; x++) {\n    for (let z = 4; z <= 12; z++) {\n      const dx = Math.abs(x - 7);\n      const inBody = (z <= 5 && dx <= 2) || (z >= 6 && z <= 10 && dx <= 3) || (z >= 11 && dx <= 1);\n      if (inBody) {\n        if (z === 4 && dx <= 1) {\n          put(x, seatY + 8, z, makeStair(W_STAIRS, \"north\"));\n        } else if (z === 12 && dx <= 1) {\n          put(x, seatY + 8, z, B_PRIMARY);\n        } else {\n          put(x, seatY + 8, z, W_PRIMARY);\n        }\n      }\n    }\n  }\n  put(7, seatY + 8, 13, makeStair(B_STAIRS, \"south\"));\n\n  // --- 10. Powerful Bulging Breast & Mane Lock 1 (ry = 9) ---\n  for (let x = 4; x <= 10; x++) {\n    for (let z = 3; z <= 12; z++) {\n      const dx = Math.abs(x - 7);\n      const inBody = (z === 3 && dx <= 1) || (z >= 4 && z <= 5 && dx <= 2) ||\n                     (z >= 6 && z <= 9 && dx <= 3) || (z >= 10 && z <= 11 && dx <= 2) ||\n                     (z === 12 && dx <= 1);\n      if (inBody) {\n        if (z === 3 && dx <= 1) {\n          put(x, seatY + 9, z, makeStair(W_STAIRS, \"north\"));\n        } else if (dx === 3 && z >= 6 && z <= 8) {\n          put(x, seatY + 9, z, makeStair(W_STAIRS, x === 4 ? \"west\" : \"east\"));\n        } else if (z === 12 && dx <= 1) {\n          put(x, seatY + 9, z, B_PRIMARY);\n        } else {\n          put(x, seatY + 9, z, W_PRIMARY);\n        }\n      }\n    }\n  }\n  put(7, seatY + 9, 13, B_ACCENT);\n\n  // --- 11. Mid Rearing Chest & Mane Lock 2 (ry = 10) ---\n  for (let x = 4; x <= 10; x++) {\n    for (let z = 3; z <= 12; z++) {\n      const dx = Math.abs(x - 7);\n      const inBody = (z === 3 && dx <= 2) || (z >= 4 && z <= 9 && dx <= 3) ||\n                     (z >= 10 && z <= 11 && dx <= 2) || (z === 12 && dx <= 1);\n      if (inBody) {\n        if (z === 3 && dx <= 1) {\n          put(x, seatY + 10, z, makeStair(W_STAIRS, \"north\"));\n        } else if (dx === 3 && z >= 5 && z <= 7) {\n          put(x, seatY + 10, z, makeStair(W_STAIRS, x === 4 ? \"west\" : \"east\"));\n        } else if (z === 12 && dx <= 1) {\n          put(x, seatY + 10, z, B_PRIMARY);\n        } else {\n          put(x, seatY + 10, z, W_PRIMARY);\n        }\n      }\n    }\n  }\n  put(7, seatY + 10, 13, makeStair(B_STAIRS, \"south\"));\n\n  // --- 12. Foremost Chest Peak with Medallion (ry = 11) ---\n  for (let x = 4; x <= 10; x++) {\n    for (let z = 2; z <= 12; z++) {\n      const dx = Math.abs(x - 7);\n      const inBody = (z === 2 && dx <= 1) || (z === 3 && dx <= 2) ||\n                     (z >= 4 && z <= 8 && dx <= 3) || (z >= 9 && z <= 10 && dx <= 2) ||\n                     (z >= 11 && z <= 12 && dx <= 1);\n      if (inBody) {\n        if (z === 2) {\n          put(x, seatY + 11, z, dx === 0 ? B_GILDED : makeStair(W_STAIRS, \"north\"));\n        } else if (z >= 11 && dx <= 1) {\n          put(x, seatY + 11, z, B_PRIMARY);\n        } else {\n          put(x, seatY + 11, z, W_PRIMARY);\n        }\n      }\n    }\n  }\n  put(7, seatY + 11, 13, makeSlab(B_SLAB, \"bottom\"));\n\n  // --- 13. Upper Chest & Neck Incline (ry = 12) ---\n  for (let x = 4; x <= 10; x++) {\n    for (let z = 3; z <= 11; z++) {\n      const dx = Math.abs(x - 7);\n      const inBody = (z === 3 && dx <= 2) || (z >= 4 && z <= 8 && dx <= 3) ||\n                     (z >= 9 && z <= 10 && dx <= 2) || (z === 11 && dx <= 1);\n      if (inBody) {\n        if (z === 3 && dx <= 1) {\n          put(x, seatY + 12, z, makeStair(W_STAIRS, \"north\"));\n        } else if (z === 11 && dx <= 1) {\n          put(x, seatY + 12, z, B_PRIMARY);\n        } else {\n          put(x, seatY + 12, z, W_PRIMARY);\n        }\n      }\n    }\n  }\n  put(7, seatY + 12, 12, B_PRIMARY);\n\n  // --- 14. Throat Arch & Jaw Underside (ry = 13) ---\n  for (let x = 5; x <= 9; x++) {\n    for (let z = 2; z <= 10; z++) {\n      const dx = Math.abs(x - 7);\n      const inBody = (z === 2 && dx <= 1) || (z >= 3 && z <= 7 && dx <= 2) ||\n                     (z >= 8 && z <= 9 && dx <= 2) || (z === 10 && dx <= 1);\n      if (inBody) {\n        if (z === 2 && dx <= 1) {\n          put(x, seatY + 13, z, makeStair(W_STAIRS, \"north\", \"top\"));\n        } else if (z === 10 && dx <= 1) {\n          put(x, seatY + 13, z, B_PRIMARY);\n        } else {\n          put(x, seatY + 13, z, W_PRIMARY);\n        }\n      }\n    }\n  }\n  put(7, seatY + 13, 11, B_PRIMARY);\n  put(7, seatY + 13, 12, makeStair(B_STAIRS, \"south\"));\n\n  // --- 15. Chin, Lower Jaw & Sculpted Ganache (ry = 14) ---\n  for (let x = 4; x <= 10; x++) {\n    for (let z = 1; z <= 10; z++) {\n      const dx = Math.abs(x - 7);\n      const inBody = (z === 1 && dx <= 1) || (z >= 2 && z <= 3 && dx <= 2) ||\n                     (z >= 4 && z <= 7 && dx <= 3) || (z >= 8 && z <= 9 && dx <= 2) ||\n                     (z === 10 && dx <= 1);\n      if (inBody) {\n        if (z === 1 && dx <= 1) {\n          put(x, seatY + 14, z, makeStair(W_STAIRS, \"north\"));\n        } else if (dx === 3 && z >= 4 && z <= 6) {\n          put(x, seatY + 14, z, makeStair(W_STAIRS, x === 4 ? \"west\" : \"east\", \"top\"));\n        } else if (z === 10 && dx <= 1) {\n          put(x, seatY + 14, z, B_PRIMARY);\n        } else {\n          put(x, seatY + 14, z, W_PRIMARY);\n        }\n      }\n    }\n  }\n  put(7, seatY + 14, 11, B_PRIMARY);\n\n  // --- 16. Muzzle, Bridle Straps & Medallions (ry = 15) ---\n  for (let x = 4; x <= 10; x++) {\n    for (let z = 1; z <= 10; z++) {\n      const dx = Math.abs(x - 7);\n      const inBody = (z === 1 && dx <= 1) || (z === 2 && dx <= 2) ||\n                     (z >= 3 && z <= 7 && dx <= 3) || (z === 8 && dx <= 2) ||\n                     (z >= 9 && z <= 10 && dx <= 1);\n      if (inBody) {\n        if (z === 2 && dx === 2) {\n          put(x, seatY + 15, z, B_PRIMARY); // Bridle strap\n        } else if (dx === 3 && z === 5) {\n          put(x, seatY + 15, z, B_GILDED);  // Cheek rosette medallion\n        } else if (dx === 3 && (z === 4 || z === 6)) {\n          put(x, seatY + 15, z, makeStair(W_STAIRS, x === 4 ? \"west\" : \"east\"));\n        } else if (z >= 9 && dx <= 1) {\n          put(x, seatY + 15, z, B_PRIMARY);\n        } else {\n          put(x, seatY + 15, z, W_PRIMARY);\n        }\n      }\n    }\n  }\n  put(7, seatY + 15, 11, makeStair(B_STAIRS, \"south\"));\n\n  // --- 17. Nostrils & Nose Bridge (ry = 16) ---\n  for (let x = 4; x <= 10; x++) {\n    for (let z = 1; z <= 9; z++) {\n      const dx = Math.abs(x - 7);\n      const inBody = (z === 1 && dx <= 2) || (z >= 2 && z <= 3 && dx <= 2) ||\n                     (z >= 4 && z <= 7 && dx <= 3) || (z === 8 && dx <= 2) ||\n                     (z === 9 && dx <= 1);\n      if (inBody) {\n        if (z === 1) {\n          if (dx === 0) put(x, seatY + 16, z, W_PRIMARY);\n          else if (dx === 1) put(x, seatY + 16, z, B_PRIMARY); // Flared nostril socket\n          else put(x, seatY + 16, z, makeStair(W_STAIRS, x === 5 ? \"west\" : \"east\"));\n        } else if (z >= 2 && z <= 3 && dx === 2) {\n          put(x, seatY + 16, z, B_PRIMARY); // Bridle side strap\n        } else if (dx === 3 && (z === 5 || z === 6)) {\n          put(x, seatY + 16, z, makeStair(W_STAIRS, x === 4 ? \"west\" : \"east\"));\n        } else if (z === 9 && dx <= 1) {\n          put(x, seatY + 16, z, B_PRIMARY);\n        } else {\n          put(x, seatY + 16, z, W_PRIMARY);\n        }\n      }\n    }\n  }\n  put(7, seatY + 16, 10, B_PRIMARY);\n\n  // --- 18. Eyes & Eyebrow Arches (ry = 17) ---\n  for (let x = 4; x <= 10; x++) {\n    for (let z = 2; z <= 9; z++) {\n      const dx = Math.abs(x - 7);\n      const inBody = (z === 2 && dx <= 1) || (z >= 3 && z <= 4 && dx <= 2) ||\n                     (z === 5 && dx <= 3) || (z >= 6 && z <= 7 && dx <= 3) ||\n                     (z === 8 && dx <= 2) || (z === 9 && dx <= 1);\n      if (inBody) {\n        if (z === 2 && dx <= 1) {\n          put(x, seatY + 17, z, makeStair(W_STAIRS, \"north\"));\n        } else if (z === 5 && dx === 2) {\n          put(x, seatY + 17, z, B_GILDED); // Luminous carved eyes!\n        } else if (z === 5 && dx === 3) {\n          put(x, seatY + 17, z, makeStair(W_STAIRS, x === 4 ? \"west\" : \"east\", \"top\")); // Eyebrow arch\n        } else if (z >= 3 && z <= 4 && dx === 2) {\n          put(x, seatY + 17, z, B_PRIMARY); // Bridle band\n        } else if (z === 5 && dx === 0) {\n          put(x, seatY + 17, z, W_CALCITE); // Forehead star\n        } else if (z === 9 && dx <= 1) {\n          put(x, seatY + 17, z, B_PRIMARY);\n        } else {\n          put(x, seatY + 17, z, W_PRIMARY);\n        }\n      }\n    }\n  }\n  put(7, seatY + 17, 10, makeStair(B_STAIRS, \"south\"));\n\n  // --- 19. Sloping Forehead & Brow (ry = 18) ---\n  for (let x = 5; x <= 9; x++) {\n    for (let z = 3; z <= 9; z++) {\n      const dx = Math.abs(x - 7);\n      const inBody = (z === 3 && dx <= 1) || (z >= 4 && z <= 7 && dx <= 2) ||\n                     (z === 8 && dx <= 1) || (z === 9 && dx === 0);\n      if (inBody) {\n        if (z === 3 && dx <= 1) {\n          put(x, seatY + 18, z, makeStair(W_STAIRS, \"north\"));\n        } else if ((z === 4 || z === 5) && dx === 0) {\n          put(x, seatY + 18, z, W_CALCITE);\n        } else if ((z === 6 || z === 7) && dx === 2) {\n          put(x, seatY + 18, z, B_PRIMARY);\n        } else if (z >= 8) {\n          put(x, seatY + 18, z, B_PRIMARY);\n        } else {\n          put(x, seatY + 18, z, W_PRIMARY);\n        }\n      }\n    }\n  }\n\n  // --- 20. Skull Top & Poll (ry = 19) ---\n  for (let x = 5; x <= 9; x++) {\n    for (let z = 4; z <= 9; z++) {\n      const dx = Math.abs(x - 7);\n      const inBody = (z === 4 && dx === 0) || (z >= 5 && z <= 7 && dx <= 2) ||\n                     (z === 8 && dx <= 1) || (z === 9 && dx === 0);\n      if (inBody) {\n        if (z === 4 && dx === 0) {\n          put(x, seatY + 19, z, makeStair(W_STAIRS, \"north\"));\n        } else if (z === 9 && dx === 0) {\n          put(x, seatY + 19, z, makeStair(B_STAIRS, \"south\"));\n        } else if (z === 8) {\n          put(x, seatY + 19, z, B_PRIMARY);\n        } else {\n          put(x, seatY + 19, z, W_PRIMARY);\n        }\n      }\n    }\n  }\n\n  // --- 21. Forelock Tuft & Ear Roots (ry = 20) ---\n  put(7, seatY + 20, 5, makeStair(W_STAIRS, \"north\")); // Forelock lock\n  put(6, seatY + 20, 6, W_PRIMARY);\n  put(7, seatY + 20, 6, W_PRIMARY);\n  put(8, seatY + 20, 6, W_PRIMARY);\n  // Left Ear root\n  put(5, seatY + 20, 6, makeStair(W_STAIRS, \"north\"));\n  put(5, seatY + 20, 7, W_PRIMARY);\n  // Right Ear root\n  put(9, seatY + 20, 6, makeStair(W_STAIRS, \"north\"));\n  put(9, seatY + 20, 7, W_PRIMARY);\n  // Mane top\n  put(7, seatY + 20, 8, B_PRIMARY);\n\n  // --- 22. Lower Ears & Forelock Crest (ry = 21) ---\n  put(7, seatY + 21, 5, makeSlab(W_SLAB, \"bottom\"));\n  put(7, seatY + 21, 6, makeSlab(W_SLAB, \"bottom\"));\n  // Left ear\n  put(5, seatY + 21, 6, makeStair(W_STAIRS, \"north\"));\n  put(5, seatY + 21, 7, W_PRIMARY);\n  // Right ear\n  put(9, seatY + 21, 6, makeStair(W_STAIRS, \"north\"));\n  put(9, seatY + 21, 7, W_PRIMARY);\n  // Mane apex spike\n  put(7, seatY + 21, 8, makeStair(B_STAIRS, \"south\"));\n\n  // --- 23. Upright Alert Ears (ry = 22) ---\n  put(5, seatY + 22, 6, makeStair(W_STAIRS, \"south\"));\n  put(5, seatY + 22, 7, W_PRIMARY);\n  put(9, seatY + 22, 6, makeStair(W_STAIRS, \"south\"));\n  put(9, seatY + 22, 7, W_PRIMARY);\n\n  // --- 24. Upper Ear Points (ry = 23) ---\n  put(5, seatY + 23, 7, makeStair(W_STAIRS, \"north\"));\n  put(9, seatY + 23, 7, makeStair(W_STAIRS, \"north\"));\n\n  // --- 25. Ear Finials (ry = 24) ---\n  put(5, seatY + 24, 7, B_WALL);\n  put(9, seatY + 24, 7, B_WALL);\n\n  // --- Terrain Ground Conformance (Rule 6) ---\n  // For every occupied column on the ground plane, ensure foundation reaches real ground.\n  for (let x = 0; x < size[0]; x++) {\n    for (let z = 0; z < size[2]; z++) {\n      if (grid[seatY][x][z] !== null) {\n        const gh = Math.round(api.heightAt(x, z));\n        const groundY = Math.max(0, seatY + gh);\n        if (groundY < seatY) {\n          for (let y = groundY; y < seatY; y++) {\n            const isWhite = (x + z) % 2 === 0;\n            put(x, y, z, isWhite ? PLINTH_BASE : PLINTH_REVETMENT);\n          }\n        }\n      }\n    }\n  }\n\n  // --- Write buffered voxels to the world ---\n  for (let y = 0; y < size[1]; y++) {\n    for (let x = 0; x < size[0]; x++) {\n      for (let z = 0; z < size[2]; z++) {\n        if (grid[y][x][z] !== null) {\n          api.set(x, y, z, grid[y][x][z]);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"knight_piece_statue\",\n    seatY: seatY,\n    anchors: {\n      front: [7, seatY, 0],\n      base: [7, seatY, 8],\n    },\n  };\n}"
+    }
+  }
+}

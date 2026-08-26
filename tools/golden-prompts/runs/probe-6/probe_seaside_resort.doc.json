@@ -1,0 +1,946 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "victorian_seaside_resort",
+    "worldSeed": "945",
+    "prompt": "A Victorian seaside resort on a fair day: a long promenade with a bandstand, a paddle steamer moored at the end of the pleasure pier, and hot-air balloons rising over the beach.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.beach": "minecraft:sand",
+      "road.surface": "minecraft:smooth_stone",
+      "road.shoulder": "minecraft:stone_bricks",
+      "plaza.path": "minecraft:cut_sandstone",
+      "plaza.border": "minecraft:stone_brick_slab"
+    }
+  },
+  "intent": {
+    "era": "industrial",
+    "wealth": 0.75,
+    "decline": 0,
+    "formality": 0.65,
+    "climate": {
+      "temperature": 0.3,
+      "humidity": 0.5,
+      "snow": "never"
+    },
+    "character": {
+      "label": "Victorian seaside resort",
+      "materialTheme": "temperate_timber",
+      "urbanForm": "linear",
+      "archetypes": {
+        "prefer": [
+          "hotel",
+          "theater",
+          "dance_hall",
+          "tea_house",
+          "boarding_house",
+          "townhouse",
+          "bakery",
+          "lighthouse"
+        ]
+      },
+      "props": {
+        "prefer": [
+          "bandstand",
+          "hot_air_balloon",
+          "paddle_steamer",
+          "pier",
+          "carousel",
+          "helter_skelter",
+          "ferris_wheel",
+          "fountain",
+          "gazebo",
+          "market_barrow"
+        ]
+      },
+      "motifs": {
+        "roofType": "mansard",
+        "ornamentDensity": 0.7
+      }
+    },
+    "tokens": {
+      "terrain": "a sandy coastline and wide beach facing open sea beside a Victorian seaside resort town",
+      "icons": "a grand seafront promenade with a central bandstand; a pleasure pier stretching into the sea with a paddle steamer moored at its end; hot-air balloons rising over the sandy beach; a bustling seaside fairground",
+      "infra": "grand seafront esplanade and pleasure pier"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Grand Victorian Bay and Seaside Resort",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "coastal shelf and sandy shoreline sloping to northern waters",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 67,
+          "amplitude": 22,
+          "octaves": 5,
+          "frequency": 0.0035,
+          "gain": 0.48,
+          "erosionPasses": 2,
+          "cliffThreshold": 60,
+          "soilDepth": 4,
+          "beachWidth": 18,
+          "snowLineFraction": 0.95
+        },
+        "children": [
+          {
+            "id": "northern_sea_bay",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "open water bay in the north for deep moorings",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.05,
+                  0.24
+                ],
+                [
+                  0.5,
+                  0.28
+                ],
+                [
+                  0.95,
+                  0.24
+                ],
+                "coast"
+              ],
+              "width": 140,
+              "depth": 28,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "resort_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "level coastal shelf holding the grand promenade and hotels",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.52
+              ],
+              "radius": 130,
+              "height": 7,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "inland_downs",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "rolling hills behind the seaside town",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.15,
+                  0.86
+                ],
+                [
+                  0.5,
+                  0.82
+                ],
+                [
+                  0.85,
+                  0.86
+                ]
+              ],
+              "width": 90,
+              "height": 24,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0015
+        }
+      },
+      {
+        "id": "promenade",
+        "kind": "primitive",
+        "label": "the grand seaside promenade overlooking the beach",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            48,
+            22
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "pleasure_pier",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the long Victorian pleasure pier stretching into the ocean",
+        "params": {
+          "prop": "pier",
+          "zone": "north",
+          "length": 32,
+          "width": 4,
+          "yaw": 0
+        }
+      },
+      {
+        "id": "steamer_excursion",
+        "kind": "generator",
+        "generator": "authored:paddle_steamer",
+        "label": "the grand paddle steamer moored at the head of the pier",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            19,
+            22,
+            43
+          ]
+        },
+        "params": {
+          "seat": "wade"
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "distance": "pleasure_pier",
+            "min": 2,
+            "max": 30
+          }
+        ],
+        "tags": [
+          "landmark",
+          "ship"
+        ]
+      },
+      {
+        "id": "bandstand",
+        "kind": "generator",
+        "generator": "authored:victorian_bandstand",
+        "label": "ornate Victorian bandstand on the promenade gardens",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            17,
+            15
+          ]
+        },
+        "params": {
+          "face": {
+            "toward": "promenade"
+          }
+        },
+        "constraints": [
+          {
+            "adjacent_to": "promenade",
+            "gap": [
+              1,
+              8
+            ],
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "civic",
+          "landmark"
+        ]
+      },
+      {
+        "id": "hot_air_balloons",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "hot-air balloons rising over the beach and promenade",
+        "params": {
+          "program": "hot_air_balloon",
+          "count": 4,
+          "area": {
+            "zone": "north"
+          },
+          "spacing": 35,
+          "maxSlope": 20,
+          "avoidTags": [
+            "structure",
+            "road"
+          ]
+        }
+      },
+      {
+        "id": "grand_hotel",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the imposing Victorian seafront grand hotel",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            17,
+            28,
+            15
+          ]
+        },
+        "params": {
+          "archetype": "hotel",
+          "floors": 6,
+          "roof": "flat",
+          "windowRhythm": "dense"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "promenade",
+            "gap": [
+              2,
+              10
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "promenade"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "hotel",
+          "house",
+          "landmark"
+        ]
+      },
+      {
+        "id": "pavilion_theater",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the seaside theater for holiday matinées and concerts",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            15,
+            19
+          ]
+        },
+        "params": {
+          "archetype": "theater",
+          "floors": 2,
+          "roof": "hip"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "promenade",
+            "gap": [
+              2,
+              12
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "promenade"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "theater",
+          "civic"
+        ]
+      },
+      {
+        "id": "dance_hall",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the promenade ballroom and dance hall",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            13,
+            17
+          ]
+        },
+        "params": {
+          "archetype": "dance_hall",
+          "floors": 2,
+          "roof": "hip"
+        },
+        "constraints": [
+          {
+            "distance": "promenade",
+            "min": 6,
+            "max": 38,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "dance_hall",
+          "civic"
+        ]
+      },
+      {
+        "id": "tea_house",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "seaside tea rooms with verandah views",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "archetype": "tea_house",
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "promenade",
+            "min": 4,
+            "max": 30,
+            "strength": "soft"
+          },
+          {
+            "facing": "promenade"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "tea_house",
+          "trade"
+        ]
+      },
+      {
+        "id": "boarding_house_terrace",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "tall seaside lodgings and boarding houses for holidaymakers",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            13,
+            17
+          ]
+        },
+        "params": {
+          "archetype": "boarding_house",
+          "floors": 2,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "grand_hotel",
+            "min": 8,
+            "max": 36,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "boarding_house",
+          "house"
+        ]
+      },
+      {
+        "id": "confectionery_and_bakehouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "seaside sweetshop and bakery serving fair visitors",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            13
+          ]
+        },
+        "params": {
+          "archetype": "bakery",
+          "floors": 2,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "promenade",
+            "min": 8,
+            "max": 42,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "bakery",
+          "trade",
+          "house"
+        ]
+      },
+      {
+        "id": "coastal_light",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the harbour lighthouse at the coastal point",
+        "optional": true,
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            20,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "lighthouse",
+          "floors": 2,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "on": "@terrain:coastline",
+            "band": 18
+          },
+          {
+            "distance": "promenade",
+            "min": 35,
+            "max": 100,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "max",
+            "blend": 6
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "lighthouse",
+          "landmark"
+        ]
+      },
+      {
+        "id": "midway_entrance",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "grand archway into the pleasure fair midway",
+        "params": {
+          "prop": "midway_arch",
+          "zone": "west",
+          "jitter": 0.08
+        }
+      },
+      {
+        "id": "fair_carousel",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the fair carousel with music and galloping steeds",
+        "params": {
+          "prop": "carousel",
+          "zone": "west",
+          "jitter": 0.12
+        }
+      },
+      {
+        "id": "fair_helter_skelter",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "tall striped helter skelter lighthouse slide",
+        "params": {
+          "prop": "helter_skelter",
+          "zone": "west",
+          "jitter": 0.14
+        }
+      },
+      {
+        "id": "fair_ferris_wheel",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the great seaside ferris wheel giving panorama over the waves",
+        "params": {
+          "prop": "ferris_wheel",
+          "zone": "west",
+          "jitter": 0.16
+        }
+      },
+      {
+        "id": "fair_swing_boats",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "traditional swing boats along the fairground lane",
+        "params": {
+          "prop": "swing_boats",
+          "zone": "west",
+          "jitter": 0.18
+        }
+      },
+      {
+        "id": "fair_shooting_gallery",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "prize shooting gallery booth",
+        "params": {
+          "prop": "shooting_gallery",
+          "zone": "west",
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "fair_prize_stall",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "striped awning game stall",
+        "params": {
+          "prop": "fairground_stall",
+          "zone": "west",
+          "jitter": 0.22
+        }
+      },
+      {
+        "id": "promenade_fountain",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "tiered fountain in the centre of the promenade gardens",
+        "params": {
+          "prop": "fountain",
+          "zone": "center",
+          "jitter": 0.08
+        }
+      },
+      {
+        "id": "viewpoint_gazebo",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "seaside shelter gazebo looking out to sea",
+        "params": {
+          "prop": "gazebo",
+          "zone": "east",
+          "jitter": 0.14
+        }
+      },
+      {
+        "id": "promenade_bench_east",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "bench",
+          "zone": "center",
+          "jitter": 0.1
+        }
+      },
+      {
+        "id": "promenade_bench_west",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "bench",
+          "zone": "west",
+          "jitter": 0.1
+        }
+      },
+      {
+        "id": "esplanade_lamps",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "lamp_post",
+          "zone": "center",
+          "jitter": 0.12
+        }
+      },
+      {
+        "id": "ice_cream_barrow",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "market_barrow",
+          "zone": "center",
+          "jitter": 0.16
+        }
+      },
+      {
+        "id": "resort_lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "paved esplanade avenues and fairground lanes",
+        "params": {
+          "anchors": [
+            "promenade",
+            "grand_hotel",
+            "#tag:civic",
+            "#tag:house",
+            "pleasure_pier"
+          ],
+          "pattern": "grid",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 12
+        }
+      },
+      {
+        "id": "coastal_pines_and_gardens",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "ornamental trees and sheltered groves along the esplanade and downs",
+        "params": {
+          "area": {
+            "at": [
+              0.5,
+              0.78
+            ],
+            "radius": 120
+          },
+          "density": 0.08,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 28,
+          "elevation": [
+            2,
+            70
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.45,
+            "flowers": 0.12,
+            "deadwood": 0.02
+          },
+          "species": [
+            {
+              "id": "resort_oak",
+              "weight": 2,
+              "shape": "oak_spreading"
+            },
+            {
+              "id": "garden_birch",
+              "weight": 2,
+              "shape": "birch_slim"
+            },
+            {
+              "id": "shrub_hazel",
+              "weight": 1,
+              "shape": "hazel_shrub"
+            }
+          ]
+        }
+      },
+      {
+        "id": "background_vegetation",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse green cover across the open downland",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 5,
+          "clumping": 0.4,
+          "maxSlope": 35,
+          "elevation": [
+            2,
+            90
+          ],
+          "edgeFalloff": 12,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "species": [
+            {
+              "id": "downland_oak",
+              "weight": 1,
+              "shape": "oak_round"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "programs": {
+    "paddle_steamer": {
+      "mode": "landmark",
+      "envelope": [
+        19,
+        22,
+        43
+      ],
+      "sourceHash": "b3:1a92bf8ada378e0d1226e8beaa4c10fce698cff7a9b0786ac16298ba1cfad918",
+      "outputHash": "b3:06f3fde8fed2e2b55dc059cd37a19559755c837ec8f5b3b5501a037f95fc054f",
+      "conforms": false,
+      "conformHash": "b3:13da2c7e003b4e921deaa0c625fe2f44514c532123d70b1661b18af0c4779aa4",
+      "source": "export const envelope = [19, 22, 43];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const occupied = new Set();\n  const baseColumns = new Map();\n\n  function keyOf(x, y, z) {\n    return `${x},${y},${z}`;\n  }\n\n  function setBlock(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      api.set(x, y, z, block);\n      occupied.add(keyOf(x, y, z));\n    }\n  }\n\n  function registerFooting(x, z, targetY) {\n    const key = `${x},${z}`;\n    if (!baseColumns.has(key) || baseColumns.get(key) > targetY) {\n      baseColumns.set(key, targetY);\n    }\n  }\n\n  // --- Theme block helpers ---\n  function getBase(blockStr) {\n    return (blockStr || \"minecraft:oak_planks\").split(\"[\")[0];\n  }\n\n  function makeStairs(baseStairs, facing, half = \"bottom\", shape = \"straight\") {\n    const base = getBase(baseStairs);\n    return `${base}[facing=${facing},half=${half},shape=${shape}]`;\n  }\n\n  function makeSlab(baseSlab, type = \"bottom\") {\n    const base = getBase(baseSlab);\n    return `${base}[type=${type}]`;\n  }\n\n  function makeLog(baseLog, axis = \"y\") {\n    const base = getBase(baseLog);\n    return `${base}[axis=${axis}]`;\n  }\n\n  function makeTrapdoor(baseTrapdoor, facing = \"north\", half = \"bottom\", open = false) {\n    const base = getBase(baseTrapdoor);\n    return `${base}[facing=${facing},half=${half},open=${open}]`;\n  }\n\n  function makeDoor(baseDoor, facing = \"north\", half = \"lower\", hinge = \"left\", open = false) {\n    const base = getBase(baseDoor);\n    return `${base}[facing=${facing},half=${half},hinge=${hinge},open=${open}]`;\n  }\n\n  const cx = 8; // Ship centerline in X\n\n  // --- Hull half-width formula ---\n  function getHullHalfWidth(z, y) {\n    if (z < 4 || z > 38) return -1;\n    let maxW;\n    if (z <= 12) {\n      const t = (z - 4) / 8;\n      maxW = 0.5 + 3.7 * Math.sin(t * Math.PI * 0.5);\n    } else if (z <= 29) {\n      maxW = 4.2;\n    } else {\n      const t = (z - 29) / 9;\n      maxW = 4.2 - 3.2 * (t * t);\n    }\n\n    if (y <= 1) return 0.5;\n    if (y === 2) return Math.max(0.5, maxW - 1.2);\n    if (y === 3) return Math.max(0.8, maxW - 0.7);\n    if (y === 4) return Math.max(1.0, maxW - 0.2);\n    return maxW;\n  }\n\n  // ==========================================\n  // 1. KEEL, LOWER HULL, AND MAIN DECK\n  // ==========================================\n\n  // Keel timber along bottom\n  for (let z = 4; z <= 38; z++) {\n    for (let y = 1; y <= 2; y++) {\n      setBlock(cx, y, z, makeLog(api.theme.wood.log, \"z\"));\n      registerFooting(cx, z, 1);\n    }\n  }\n\n  // Lower hull planking (y = 2 to 4)\n  for (let z = 4; z <= 38; z++) {\n    for (let y = 2; y <= 4; y++) {\n      const hw = getHullHalfWidth(z, y);\n      if (hw < 0) continue;\n      const minX = Math.round(cx - hw);\n      const maxX = Math.round(cx + hw);\n\n      for (let x = minX; x <= maxX; x++) {\n        const isOuter = (x === minX || x === maxX || y === 2);\n        if (isOuter) {\n          setBlock(x, y, z, api.theme.wood.stripped);\n        } else {\n          setBlock(x, y, z, api.theme.wood.planks);\n        }\n        registerFooting(x, z, y);\n      }\n    }\n  }\n\n  // Gold / brass sheer-strake line at y = 4 along hull edges\n  for (let z = 4; z <= 38; z++) {\n    const hw = getHullHalfWidth(z, 4);\n    if (hw >= 1.0) {\n      const minX = Math.round(cx - hw);\n      const maxX = Math.round(cx + hw);\n      setBlock(minX, 4, z, \"minecraft:cut_copper\");\n      setBlock(maxX, 4, z, \"minecraft:cut_copper\");\n    }\n  }\n\n  // Main Deck Flooring (y = 5)\n  for (let z = 4; z <= 38; z++) {\n    const hw = getHullHalfWidth(z, 5);\n    if (hw < 0) continue;\n    const minX = Math.round(cx - hw);\n    const maxX = Math.round(cx + hw);\n\n    for (let x = minX; x <= maxX; x++) {\n      const isEdge = (x === minX || x === maxX);\n      if (isEdge) {\n        setBlock(x, 5, z, makeLog(api.theme.wood.log, \"z\"));\n      } else {\n        setBlock(x, 5, z, api.theme.wood.planks);\n      }\n      registerFooting(x, z, 5);\n    }\n  }\n\n  // Main Deck Bulwarks / Railings (y = 6)\n  for (let z = 4; z <= 38; z++) {\n    const hw = getHullHalfWidth(z, 5);\n    if (hw < 0) continue;\n    const minX = Math.round(cx - hw);\n    const maxX = Math.round(cx + hw);\n\n    // Open forecastle deck (z=5..12) and aft fantail deck (z=34..38)\n    const isForeDeck = (z >= 5 && z <= 12);\n    const isAftDeck = (z >= 34 && z <= 38);\n    const isMidDeckPassage = (z >= 13 && z <= 33);\n\n    if (isForeDeck || isAftDeck) {\n      setBlock(minX, 6, z, api.theme.wood.fence);\n      setBlock(maxX, 6, z, api.theme.wood.fence);\n    } else if (isMidDeckPassage) {\n      // Outer rub rail along side decks\n      if (z < 18 || z > 26) {\n        setBlock(minX, 6, z, api.theme.wood.fence);\n        // Starboard boarding gap at z=16\n        if (z !== 16) {\n          setBlock(maxX, 6, z, api.theme.wood.fence);\n        }\n      }\n    }\n  }\n\n  // Sharp Stempost & Bowsprit\n  setBlock(cx, 5, 4, makeLog(api.theme.wood.log, \"y\"));\n  setBlock(cx, 6, 4, makeLog(api.theme.wood.log, \"y\"));\n  setBlock(cx, 7, 4, \"minecraft:cut_copper\"); // Carved figurehead scrollwork\n\n  // Bowsprit spar reaching forward to z=1\n  setBlock(cx, 6, 5, api.theme.wood.stripped);\n  setBlock(cx, 6, 4, api.theme.wood.stripped);\n  setBlock(cx, 7, 3, api.theme.wood.stripped);\n  setBlock(cx, 7, 2, api.theme.wood.stripped);\n  setBlock(cx, 8, 1, api.theme.wood.stripped);\n  setBlock(cx, 8, 0, makeTrapdoor(api.theme.wood.trapdoor, \"north\", \"bottom\", false));\n\n  // Bowsprit rigging stay down to stem cutwater\n  setBlock(cx, 7, 1, \"minecraft:chain\");\n  setBlock(cx, 6, 2, \"minecraft:chain\");\n  setBlock(cx, 5, 3, \"minecraft:chain\");\n\n  // Hawseholes & Anchor chains on bow\n  setBlock(cx - 2, 6, 6, \"minecraft:chain\");\n  setBlock(cx - 2, 5, 6, \"minecraft:chain\");\n  setBlock(cx - 2, 4, 6, \"minecraft:chain\");\n  setBlock(cx + 2, 6, 6, \"minecraft:chain\");\n  setBlock(cx + 2, 5, 6, \"minecraft:chain\");\n  setBlock(cx + 2, 4, 6, \"minecraft:chain\");\n\n  // Foredeck Capstan / Windlass & Mooring Bitts\n  setBlock(cx, 6, 7, \"minecraft:grindstone[facing=north]\");\n  setBlock(cx - 2, 6, 8, makeLog(api.theme.wood.log, \"y\"));\n  setBlock(cx - 2, 7, 8, makeTrapdoor(api.theme.wood.trapdoor, \"north\", \"top\", false));\n  setBlock(cx + 2, 6, 8, makeLog(api.theme.wood.log, \"y\"));\n  setBlock(cx + 2, 7, 8, makeTrapdoor(api.theme.wood.trapdoor, \"north\", \"top\", false));\n\n  // Stern Rudder & Rudder Post\n  for (let y = 1; y <= 4; y++) {\n    setBlock(cx, y, 38, makeLog(api.theme.wood.log, \"y\"));\n    setBlock(cx, y, 39, api.theme.wood.planks);\n    registerFooting(cx, 38, 1);\n    registerFooting(cx, 39, 1);\n  }\n\n  // ==========================================\n  // 2. PADDLE WHEEL HOUSINGS & WHEELS\n  // ==========================================\n\n  function buildPaddleBox(minBoxX, maxBoxX, outerX) {\n    // Housing base and lower rim\n    for (let z = 18; z <= 26; z++) {\n      for (let x = minBoxX; x <= maxBoxX; x++) {\n        setBlock(x, 4, z, api.theme.wood.planks);\n        setBlock(x, 5, z, api.theme.wood.planks);\n        registerFooting(x, z, 4);\n      }\n    }\n\n    // Outer face decorative arched casing\n    for (let z = 18; z <= 26; z++) {\n      // Solid outer corners\n      if (z === 18 || z === 26) {\n        setBlock(outerX, 6, z, api.theme.wood.planks);\n        setBlock(outerX, 7, z, api.theme.wood.planks);\n      } else if (z === 19 || z === 25) {\n        setBlock(outerX, 6, z, api.theme.wood.planks);\n        setBlock(outerX, 7, z, api.theme.wood.stairs);\n      } else if (z === 20 || z === 24) {\n        setBlock(outerX, 6, z, \"minecraft:iron_bars\");\n        setBlock(outerX, 7, z, api.theme.wood.planks);\n      } else {\n        // Center opening z=21..23 showing wheel hub & spokes\n        setBlock(outerX, 6, z, \"minecraft:iron_bars\");\n        setBlock(outerX, 7, z, \"minecraft:iron_bars\");\n      }\n    }\n\n    // Center decorative sunburst medallion on outer paddle box\n    setBlock(outerX, 7, 22, \"minecraft:cut_copper\");\n\n    // Curved drum casing top (y = 6 to 9)\n    for (let x = minBoxX; x <= maxBoxX; x++) {\n      setBlock(x, 6, 18, makeStairs(api.theme.wood.stairs, \"north\", \"bottom\"));\n      setBlock(x, 6, 26, makeStairs(api.theme.wood.stairs, \"south\", \"bottom\"));\n      setBlock(x, 7, 19, makeStairs(api.theme.wood.stairs, \"north\", \"bottom\"));\n      setBlock(x, 7, 25, makeStairs(api.theme.wood.stairs, \"south\", \"bottom\"));\n      setBlock(x, 8, 20, makeStairs(api.theme.wood.stairs, \"north\", \"bottom\"));\n      setBlock(x, 8, 24, makeStairs(api.theme.wood.stairs, \"south\", \"bottom\"));\n      setBlock(x, 9, 21, makeSlab(api.theme.wood.slab, \"bottom\"));\n      setBlock(x, 9, 22, makeSlab(api.theme.wood.slab, \"bottom\"));\n      setBlock(x, 9, 23, makeSlab(api.theme.wood.slab, \"bottom\"));\n    }\n\n    // Interior Paddle Wheel (blades & axle)\n    const wheelX1 = minBoxX + 1;\n    const wheelX2 = maxBoxX - 1;\n    for (let wx = wheelX1; wx <= wheelX2; wx++) {\n      // Axle hub\n      setBlock(wx, 5, 22, makeLog(api.theme.wood.log, \"x\"));\n      // Radial paddle blades\n      setBlock(wx, 3, 22, api.theme.wood.planks); // Bottom paddle in water\n      setBlock(wx, 4, 20, api.theme.wood.planks);\n      setBlock(wx, 4, 24, api.theme.wood.planks);\n      setBlock(wx, 5, 19, api.theme.wood.planks); // Fore paddle\n      setBlock(wx, 5, 25, api.theme.wood.planks); // Aft paddle\n      setBlock(wx, 6, 20, api.theme.wood.planks);\n      setBlock(wx, 6, 24, api.theme.wood.planks);\n      setBlock(wx, 7, 22, api.theme.wood.planks); // Top paddle\n      // Wheel spokes\n      setBlock(wx, 4, 22, \"minecraft:iron_bars\");\n      setBlock(wx, 6, 22, \"minecraft:iron_bars\");\n      setBlock(wx, 5, 21, \"minecraft:iron_bars\");\n      setBlock(wx, 5, 23, \"minecraft:iron_bars\");\n    }\n  }\n\n  // Port paddle box (x = 1 to 4)\n  buildPaddleBox(1, 4, 1);\n  // Starboard paddle box (x = 12 to 15)\n  buildPaddleBox(12, 15, 15);\n\n  // ==========================================\n  // 3. CABINS & SUPERSTRUCTURE (MAIN DECK)\n  // ==========================================\n\n  // Forward Cabin (Lounge / Quarters): z = 13 to 18, x = 5 to 11\n  for (let z = 13; z <= 18; z++) {\n    for (let x = 5; x <= 11; x++) {\n      const isCorner = (x === 5 || x === 11) && (z === 13 || z === 18);\n      const isWallX = (x === 5 || x === 11);\n      const isWallZ = (z === 13 || z === 18);\n\n      if (isWallX || isWallZ) {\n        if (isCorner) {\n          setBlock(x, 6, z, makeLog(api.theme.wood.log, \"y\"));\n          setBlock(x, 7, z, makeLog(api.theme.wood.log, \"y\"));\n        } else if (z === 13 && x === cx) {\n          // Forward entrance door\n          setBlock(x, 6, z, makeDoor(api.theme.wood.door, \"north\", \"lower\"));\n          setBlock(x, 7, z, makeDoor(api.theme.wood.door, \"north\", \"upper\"));\n        } else if (x === 11 && z === 16) {\n          // Starboard entrance door from boarding gangway\n          setBlock(x, 6, z, makeDoor(api.theme.wood.door, \"east\", \"lower\"));\n          setBlock(x, 7, z, makeDoor(api.theme.wood.door, \"east\", \"upper\"));\n        } else if (z === 18 && x === cx) {\n          // Passageway aft door\n          setBlock(x, 6, z, makeDoor(api.theme.wood.door, \"south\", \"lower\"));\n          setBlock(x, 7, z, makeDoor(api.theme.wood.door, \"south\", \"upper\"));\n        } else {\n          // Walls with Victorian passenger windows\n          setBlock(x, 6, z, api.theme.wood.planks);\n          if (z === 13 || z === 18 || (z % 2 === 0)) {\n            setBlock(x, 7, z, \"minecraft:glass_pane\");\n          } else {\n            setBlock(x, 7, z, api.theme.wood.planks);\n          }\n        }\n      }\n    }\n  }\n\n  // Midships Engine Room Casing: z = 19 to 23, x = 6 to 10\n  for (let z = 19; z <= 23; z++) {\n    for (let x = 6; x <= 10; x++) {\n      if (x === 6 || x === 10 || z === 19 || z === 23) {\n        setBlock(x, 6, z, api.theme.wood.planks);\n        setBlock(x, 7, z, api.theme.wood.planks);\n      }\n    }\n  }\n\n  // Companionway stairs from main deck up to upper promenade deck\n  setBlock(5, 6, 19, makeStairs(api.theme.wood.stairs, \"south\", \"bottom\"));\n  setBlock(5, 7, 20, makeStairs(api.theme.wood.stairs, \"south\", \"bottom\"));\n  setBlock(11, 6, 19, makeStairs(api.theme.wood.stairs, \"south\", \"bottom\"));\n  setBlock(11, 7, 20, makeStairs(api.theme.wood.stairs, \"south\", \"bottom\"));\n\n  // Aft Grand Passenger Saloon: z = 24 to 34, x = 5 to 11\n  for (let z = 24; z <= 34; z++) {\n    const hw = (z <= 30) ? 3.0 : (z <= 32 ? 2.5 : 2.0);\n    const minX = Math.round(cx - hw);\n    const maxX = Math.round(cx + hw);\n\n    for (let x = minX; x <= maxX; x++) {\n      const isWall = (x === minX || x === maxX || z === 24 || z === 34);\n      if (isWall) {\n        if (z === 24 && x === cx) {\n          // Entrance into grand saloon\n          setBlock(x, 6, z, makeDoor(api.theme.wood.door, \"north\", \"lower\"));\n          setBlock(x, 7, z, makeDoor(api.theme.wood.door, \"north\", \"upper\"));\n        } else if (z === 34 && x === cx) {\n          // Aft door out to fantail\n          setBlock(x, 6, z, makeDoor(api.theme.wood.door, \"south\", \"lower\"));\n          setBlock(x, 7, z, makeDoor(api.theme.wood.door, \"south\", \"upper\"));\n        } else {\n          setBlock(x, 6, z, api.theme.wood.planks);\n          // Alternating grand picture windows\n          if ((x + z) % 2 === 0) {\n            setBlock(x, 7, z, \"minecraft:glass_pane\");\n          } else {\n            setBlock(x, 7, z, api.theme.wood.planks);\n          }\n        }\n      }\n    }\n  }\n\n  // ==========================================\n  // 4. HURRICANE / UPPER PROMENADE DECK (y = 8)\n  // ==========================================\n\n  for (let z = 12; z <= 36; z++) {\n    let hw;\n    if (z <= 12) hw = 3.0;\n    else if (z <= 28) hw = 3.5;\n    else if (z <= 32) hw = 3.0;\n    else hw = 2.0;\n\n    const minX = Math.round(cx - hw);\n    const maxX = Math.round(cx + hw);\n\n    for (let x = minX; x <= maxX; x++) {\n      setBlock(x, 8, z, api.theme.wood.planks);\n      registerFooting(x, z, 8);\n\n      // Deck Railing at y = 9\n      const isEdge = (x === minX || x === maxX || z === 12 || z === 36);\n      if (isEdge) {\n        setBlock(x, 9, z, api.theme.wood.fence);\n      }\n    }\n  }\n\n  // Promenade deck passenger benches & skylights\n  setBlock(cx - 2, 9, 26, makeStairs(api.theme.wood.stairs, \"east\", \"bottom\"));\n  setBlock(cx + 2, 9, 26, makeStairs(api.theme.wood.stairs, \"west\", \"bottom\"));\n  setBlock(cx - 2, 9, 31, makeStairs(api.theme.wood.stairs, \"east\", \"bottom\"));\n  setBlock(cx + 2, 9, 31, makeStairs(api.theme.wood.stairs, \"west\", \"bottom\"));\n\n  // Saloon Glass Skylight atop upper deck\n  for (let z = 27; z <= 29; z++) {\n    setBlock(cx, 8, z, \"minecraft:glass\");\n    setBlock(cx, 9, z, makeTrapdoor(api.theme.wood.trapdoor, \"north\", \"bottom\", false));\n  }\n\n  // Port & Starboard Lifeboats on iron davits\n  function buildLifeboat(bx, z1, z2) {\n    setBlock(bx, 9, z1, \"minecraft:iron_bars\");\n    setBlock(bx, 10, z1, \"minecraft:iron_bars\");\n    setBlock(bx, 9, z2, \"minecraft:iron_bars\");\n    setBlock(bx, 10, z2, \"minecraft:iron_bars\");\n\n    for (let z = z1; z <= z2; z++) {\n      if (z === z1) {\n        setBlock(bx, 9, z, makeStairs(api.theme.wood.stairs, \"north\", \"bottom\"));\n      } else if (z === z2) {\n        setBlock(bx, 9, z, makeStairs(api.theme.wood.stairs, \"south\", \"bottom\"));\n      } else {\n        setBlock(bx, 9, z, makeSlab(api.theme.wood.slab, \"bottom\"));\n      }\n    }\n  }\n  buildLifeboat(cx - 4, 28, 31);\n  buildLifeboat(cx + 4, 28, 31);\n\n  // ==========================================\n  // 5. PILOT HOUSE (WHEELHOUSE)\n  // ==========================================\n\n  // Pilot house floor at y = 9, walls at y = 10..11, roof at y = 12\n  for (let z = 13; z <= 17; z++) {\n    for (let x = cx - 2; x <= cx + 2; x++) {\n      // Floor\n      setBlock(x, 9, z, api.theme.wood.planks);\n\n      const isWall = (x === cx - 2 || x === cx + 2 || z === 13 || z === 17);\n      if (isWall) {\n        if (z === 17 && x === cx) {\n          // Aft door into wheelhouse\n          setBlock(x, 10, z, makeDoor(api.theme.wood.door, \"south\", \"lower\"));\n          setBlock(x, 11, z, makeDoor(api.theme.wood.door, \"south\", \"upper\"));\n        } else {\n          // Lower wainscoting\n          setBlock(x, 10, z, api.theme.wood.planks);\n          // Panoramic observation glass\n          setBlock(x, 11, z, \"minecraft:glass_pane\");\n        }\n      }\n    }\n  }\n\n  // Pilot house curved overhanging roof at y = 12\n  for (let z = 12; z <= 18; z++) {\n    for (let x = cx - 3; x <= cx + 3; x++) {\n      const isEdgeX = (x === cx - 3 || x === cx + 3);\n      const isEdgeZ = (z === 12 || z === 18);\n\n      if (isEdgeZ && isEdgeX) {\n        setBlock(x, 12, z, makeSlab(api.theme.wood.slab, \"top\"));\n      } else if (z === 12) {\n        setBlock(x, 12, z, makeStairs(api.theme.wood.stairs, \"north\", \"bottom\"));\n      } else if (z === 18) {\n        setBlock(x, 12, z, makeStairs(api.theme.wood.stairs, \"south\", \"bottom\"));\n      } else if (x === cx - 3) {\n        setBlock(x, 12, z, makeStairs(api.theme.wood.stairs, \"west\", \"bottom\"));\n      } else if (x === cx + 3) {\n        setBlock(x, 12, z, makeStairs(api.theme.wood.stairs, \"east\", \"bottom\"));\n      } else {\n        setBlock(x, 12, z, makeSlab(api.theme.wood.slab, \"top\"));\n      }\n    }\n  }\n\n  // Wheelhouse Roof Instruments (Searchlight, Bell, Binnacle)\n  setBlock(cx, 13, 13, \"minecraft:sea_lantern\");\n  setBlock(cx, 14, 13, makeSlab(api.theme.wood.slab, \"bottom\"));\n  setBlock(cx, 13, 14, \"minecraft:bell\");\n  setBlock(cx, 13, 16, api.theme.wood.fence);\n\n  // ==========================================\n  // 6. WALKING BEAM STEAM ENGINE\n  // ==========================================\n\n  // Engine triangular A-frame support structure (y = 9 to 11)\n  for (let y = 9; y <= 11; y++) {\n    setBlock(cx - 1, y, 22, makeLog(api.theme.wood.log, \"y\"));\n    setBlock(cx + 1, y, 22, makeLog(api.theme.wood.log, \"y\"));\n    setBlock(cx - 1, y, 23, makeLog(api.theme.wood.log, \"y\"));\n    setBlock(cx + 1, y, 23, makeLog(api.theme.wood.log, \"y\"));\n  }\n\n  // Central rocking pivot bearing\n  setBlock(cx - 1, 12, 22, \"minecraft:smooth_stone_slab[type=bottom]\");\n  setBlock(cx, 12, 22, \"minecraft:polished_blackstone\");\n  setBlock(cx + 1, 12, 22, \"minecraft:smooth_stone_slab[type=bottom]\");\n  setBlock(cx, 12, 23, \"minecraft:polished_blackstone\");\n\n  // Iconic Diamond Walking Beam (tilted lever arm)\n  // Forward upward tip at (cx, 14, 20)\n  setBlock(cx, 14, 20, \"minecraft:smooth_stone_slab[type=bottom]\");\n  setBlock(cx, 13, 21, \"minecraft:iron_bars\");\n  setBlock(cx, 14, 22, \"minecraft:smooth_stone_slab[type=top]\"); // Diamond top crest\n  setBlock(cx, 13, 22, \"minecraft:iron_bars\");\n  setBlock(cx, 11, 23, \"minecraft:iron_bars\");\n  setBlock(cx, 10, 23, \"minecraft:smooth_stone_slab[type=bottom]\"); // Diamond bottom keel\n  setBlock(cx, 11, 24, \"minecraft:iron_bars\");\n  // Aft downward tip at (cx, 10, 25)\n  setBlock(cx, 10, 25, \"minecraft:smooth_stone_slab[type=bottom]\");\n\n  // Forward Piston Connecting Rod dropping to cylinder\n  setBlock(cx, 13, 20, \"minecraft:chain\");\n  setBlock(cx, 12, 20, \"minecraft:chain\");\n  setBlock(cx, 11, 20, \"minecraft:chain\");\n  setBlock(cx, 10, 20, \"minecraft:chain\");\n  setBlock(cx, 9, 20, \"minecraft:polished_basalt[axis=y]\"); // Steam Cylinder\n  setBlock(cx, 8, 20, \"minecraft:polished_basalt[axis=y]\");\n\n  // Aft Pitman Rod dropping to paddle wheel crank\n  setBlock(cx, 9, 25, \"minecraft:iron_bars\");\n  setBlock(cx, 8, 25, \"minecraft:iron_bars\");\n  setBlock(cx, 7, 25, \"minecraft:iron_bars\");\n\n  // ==========================================\n  // 7. TALL SMOKESTACK (FUNNEL)\n  // ==========================================\n\n  // Funnel base collar at y = 8\n  setBlock(cx, 8, 18, \"minecraft:polished_blackstone\");\n  setBlock(cx, 8, 19, \"minecraft:polished_blackstone\");\n\n  // Raked Smokestack column from y = 9 to 16\n  for (let y = 9; y <= 16; y++) {\n    if (y === 14) {\n      // Victorian brass band\n      setBlock(cx, y, 18, \"minecraft:cut_copper\");\n      setBlock(cx, y, 19, \"minecraft:cut_copper\");\n    } else if (y === 16) {\n      // Flared flanged cowl top\n      setBlock(cx, y, 18, makeStairs(\"minecraft:polished_blackstone_stairs\", \"north\", \"bottom\"));\n      setBlock(cx, y, 19, makeStairs(\"minecraft:polished_blackstone_stairs\", \"south\", \"bottom\"));\n    } else {\n      setBlock(cx, y, 18, \"minecraft:polished_blackstone\");\n      setBlock(cx, y, 19, \"minecraft:polished_blackstone\");\n    }\n  }\n\n  // Steam & Smoke Particles at top of stack\n  setBlock(cx, 16, 18, \"minecraft:campfire[lit=true,signal_fire=true]\");\n  setBlock(cx, 17, 18, \"minecraft:iron_trapdoor[half=top]\");\n  setBlock(cx, 17, 19, \"minecraft:white_stained_glass\");\n  setBlock(cx, 18, 19, \"minecraft:white_stained_glass\");\n\n  // Funnel Guy Wires (Chains) anchored to deck\n  setBlock(cx - 1, 14, 18, \"minecraft:chain\");\n  setBlock(cx - 2, 13, 17, \"minecraft:chain\");\n  setBlock(cx - 3, 11, 16, \"minecraft:chain\");\n  setBlock(cx - 3, 9, 16, \"minecraft:chain\");\n\n  setBlock(cx + 1, 14, 18, \"minecraft:chain\");\n  setBlock(cx + 2, 13, 17, \"minecraft:chain\");\n  setBlock(cx + 3, 11, 16, \"minecraft:chain\");\n  setBlock(cx + 3, 9, 16, \"minecraft:chain\");\n\n  // ==========================================\n  // 8. MASTS, SPARS, RIGGING & PENNANTS\n  // ==========================================\n\n  // Foremast (z = 9): base at deck y = 5 up to y = 19\n  for (let y = 5; y <= 12; y++) {\n    setBlock(cx, y, 9, makeLog(api.theme.wood.log, \"y\"));\n  }\n  for (let y = 13; y <= 19; y++) {\n    setBlock(cx, y, 9, api.theme.wood.fence);\n  }\n\n  // Foremast Cross Yardarm at y = 15\n  for (let x = cx - 2; x <= cx + 2; x++) {\n    setBlock(x, 15, 9, api.theme.wood.fence);\n  }\n\n  // Foremast Shrouds & Forestay\n  setBlock(cx - 2, 14, 9, \"minecraft:chain\");\n  setBlock(cx - 3, 11, 9, \"minecraft:chain\");\n  setBlock(cx - 3, 7, 9, \"minecraft:chain\");\n\n  setBlock(cx + 2, 14, 9, \"minecraft:chain\");\n  setBlock(cx + 3, 11, 9, \"minecraft:chain\");\n  setBlock(cx + 3, 7, 9, \"minecraft:chain\");\n\n  // Forestay to bowsprit tip\n  setBlock(cx, 16, 7, \"minecraft:chain\");\n  setBlock(cx, 13, 5, \"minecraft:chain\");\n  setBlock(cx, 10, 3, \"minecraft:chain\");\n\n  // Victorian Resort Pennant atop foremast\n  setBlock(cx, 19, 10, \"minecraft:red_wool\");\n  setBlock(cx, 19, 11, \"minecraft:white_wool\");\n\n  // Mainmast (z = 33): base at deck y = 8 up to y = 18\n  for (let y = 8; y <= 11; y++) {\n    setBlock(cx, y, 33, makeLog(api.theme.wood.log, \"y\"));\n  }\n  for (let y = 12; y <= 18; y++) {\n    setBlock(cx, y, 33, api.theme.wood.fence);\n  }\n\n  // Gaff spar angled back toward stern\n  setBlock(cx, 14, 34, api.theme.wood.fence);\n  setBlock(cx, 15, 35, api.theme.wood.fence);\n  setBlock(cx, 16, 36, api.theme.wood.fence);\n\n  // Ensign flag at gaff peak\n  setBlock(cx, 15, 36, \"minecraft:red_wool\");\n  setBlock(cx, 14, 36, \"minecraft:white_wool\");\n\n  // ==========================================\n  // 9. PLEASURE PIER & MOORING CONNECTIONS\n  // ==========================================\n\n  // Starboard Pier Deck (x = 16 to 18, z = 12 to 36, y = 5)\n  for (let z = 12; z <= 36; z++) {\n    for (let x = 16; x <= 18; x++) {\n      if (x === 16 || x === 18) {\n        setBlock(x, 5, z, makeLog(api.theme.wood.log, \"z\"));\n      } else {\n        setBlock(x, 5, z, api.theme.wood.planks);\n      }\n      registerFooting(x, z, 5);\n\n      // East safety fence along pier\n      if (x === 18) {\n        setBlock(x, 6, z, api.theme.wood.fence);\n      }\n    }\n  }\n\n  // Pier Pilings & Mooring Bollards at regular bays\n  const pilingZ = [12, 16, 20, 24, 28, 32, 36];\n  for (const pz of pilingZ) {\n    for (const px of [16, 18]) {\n      // Piling bollard head above pier\n      setBlock(px, 6, pz, makeLog(api.theme.wood.log, \"y\"));\n      setBlock(px, 7, pz, makeTrapdoor(api.theme.wood.trapdoor, \"north\", \"top\", false));\n    }\n  }\n\n  // Gas Lanterns on Pier Posts\n  setBlock(18, 7, 16, api.theme.wood.fence);\n  setBlock(18, 8, 16, \"minecraft:lantern[hanging=false]\");\n  setBlock(18, 7, 32, api.theme.wood.fence);\n  setBlock(18, 8, 32, \"minecraft:lantern[hanging=false]\");\n\n  // Boarding Gangway: spans x = 12 (ship) to x = 16 (pier) at z = 16\n  for (let x = 12; x <= 16; x++) {\n    setBlock(x, 5, 16, api.theme.wood.planks);\n    registerFooting(x, 16, 5);\n    // Rope handrails\n    if (x > 12 && x < 16) {\n      setBlock(x, 6, 15, api.theme.wood.fence);\n      setBlock(x, 6, 17, api.theme.wood.fence);\n    }\n  }\n\n  // Mooring Lines (Chains / Ropes securing ship to pier)\n  // Forward spring line\n  setBlock(12, 6, 10, makeLog(api.theme.wood.log, \"y\"));\n  setBlock(13, 6, 11, \"minecraft:chain\");\n  setBlock(14, 6, 12, \"minecraft:chain\");\n  setBlock(15, 6, 13, \"minecraft:chain\");\n  setBlock(16, 6, 14, makeLog(api.theme.wood.log, \"y\"));\n\n  // Midships breast line\n  setBlock(12, 6, 27, makeLog(api.theme.wood.log, \"y\"));\n  setBlock(13, 6, 26, \"minecraft:chain\");\n  setBlock(14, 6, 26, \"minecraft:chain\");\n  setBlock(15, 6, 26, \"minecraft:chain\");\n\n  // Aft mooring line\n  setBlock(11, 6, 35, makeLog(api.theme.wood.log, \"y\"));\n  setBlock(12, 6, 35, \"minecraft:chain\");\n  setBlock(13, 6, 35, \"minecraft:chain\");\n  setBlock(14, 6, 36, \"minecraft:chain\");\n  setBlock(15, 6, 36, \"minecraft:chain\");\n\n  // ==========================================\n  // 10. GROUND CONFORMITY & FOOTINGS\n  // ==========================================\n\n  // Follow terrain height at every occupied footprint column\n  for (const [colKey, targetY] of baseColumns.entries()) {\n    const [sx, sz] = colKey.split(\",\").map(Number);\n    const groundY = Math.round(api.heightAt(sx, sz));\n\n    // Fill downwards to ground or up to rising ground\n    const startY = Math.max(0, Math.min(targetY, groundY));\n    const endY = Math.max(targetY, Math.min(H - 1, groundY));\n\n    for (let y = startY; y <= endY; y++) {\n      if (!occupied.has(keyOf(sx, y, sz))) {\n        setBlock(sx, y, sz, makeLog(api.theme.wood.log, \"y\"));\n      }\n    }\n  }\n\n  // ==========================================\n  // 11. RETURN STRUCTURE METADATA\n  // ==========================================\n\n  return {\n    name: \"Paddle Steamer\",\n    seatY: 0,\n    anchors: {\n      front: [cx, 8, 0],\n      door: [17, 5, 12],\n      pier: [17, 5, 36]\n    },\n    interiors: [\n      {\n        min: [5, 6, 25],\n        max: [11, 8, 33],\n        kind: \"hall\"\n      },\n      {\n        min: [5, 6, 14],\n        max: [11, 8, 18],\n        kind: \"quarters\"\n      },\n      {\n        min: [6, 10, 14],\n        max: [10, 12, 17],\n        kind: \"bridge\"\n      }\n    ]\n  };\n}"
+    },
+    "victorian_bandstand": {
+      "mode": "landmark",
+      "envelope": [
+        15,
+        17,
+        15
+      ],
+      "sourceHash": "b3:d45eceb674af57e3755a938b62aecae605b560a0ca5214e659a2de7bee118d94",
+      "outputHash": "b3:234bae1c753c7f309deaab0a8b35b2d4b36f636c610fbdef3d5b48b4c2c7b369",
+      "conforms": false,
+      "conformHash": "b3:b5edf39b051233414b84e4da235a9ac4ce869bac27bf67c22e7d13ce9a339ede",
+      "source": "export const envelope = [15, 17, 15];\n\nexport default function build(api) {\n  const { size, theme } = api;\n  const cx = 7;\n  const cz = 7;\n  const seatY = 3;\n\n  // Palette from theme with safe vanilla fallbacks\n  const stonePrimary = theme?.stone?.primary || \"minecraft:smooth_stone\";\n  const stonePlinth = theme?.ground?.plinth || theme?.stone?.primary || \"minecraft:smooth_stone\";\n  const stoneKerb = theme?.ground?.kerb || theme?.stone?.accent || \"minecraft:polished_andesite\";\n  const stoneSlab = theme?.ground?.slab || theme?.stone?.slab || \"minecraft:smooth_stone_slab[type=bottom]\";\n  const stoneFoundation = theme?.ground?.revetment || theme?.stone?.primary || \"minecraft:cobblestone\";\n\n  const woodPlanks = theme?.wood?.planks || \"minecraft:spruce_planks\";\n  const woodStripped = theme?.wood?.stripped || \"minecraft:stripped_spruce_log[axis=y]\";\n  const woodSlabTop = theme?.wood?.slab ? `${theme.wood.slab.split(\"[\")[0]}[type=top]` : \"minecraft:spruce_slab[type=top]\";\n\n  const roofSolid = theme?.roof?.solid || \"minecraft:oxidized_copper\";\n  const roofSlabBottom = theme?.roof?.slab ? `${theme.roof.slab.split(\"[\")[0]}[type=bottom]` : \"minecraft:oxidized_cut_copper_slab[type=bottom]\";\n\n  // Victorian cast-iron, copper, and brass appointments\n  const castIronPillarBase = \"minecraft:polished_blackstone\";\n  const castIronWall = \"minecraft:nether_brick_wall\";\n  const castIronFence = \"minecraft:nether_brick_fence\";\n  const ironBars = \"minecraft:iron_bars\";\n  const weatheredCutCopper = \"minecraft:weathered_cut_copper\";\n  const oxidizedCutCopper = \"minecraft:oxidized_cut_copper\";\n\n  function setBlock(x, y, z, block) {\n    if (x >= 0 && x < size[0] && y >= 0 && y < size[1] && z >= 0 && z < size[2]) {\n      api.set(x, y, z, block);\n    }\n  }\n\n  function isInsideOctagon(x, z) {\n    const dx = Math.abs(x - cx);\n    const dz = Math.abs(z - cz);\n    return Math.max(dx, dz) <= 5 && (dx + dz) <= 7;\n  }\n\n  function isOctagonBoundary(x, z) {\n    if (!isInsideOctagon(x, z)) return false;\n    const neighbors = [[1, 0], [-1, 0], [0, 1], [0, -1]];\n    for (const [nx, nz] of neighbors) {\n      if (!isInsideOctagon(x + nx, z + nz)) return true;\n    }\n    return false;\n  }\n\n  function getStairsFacing(dx, dz) {\n    if (dz < 0 && Math.abs(dz) >= Math.abs(dx)) return \"north\";\n    if (dz > 0 && Math.abs(dz) >= Math.abs(dx)) return \"south\";\n    if (dx < 0 && Math.abs(dx) >= Math.abs(dz)) return \"west\";\n    return \"east\";\n  }\n\n  // 1. FOOTPRINT & GROUND CONFORMITY SKIRT\n  // Build foundation down to terrain height for every occupied column\n  for (let x = 0; x < size[0]; x++) {\n    for (let z = 0; z < size[2]; z++) {\n      let isFootprint = isInsideOctagon(x, z);\n\n      // Include entrance steps & pedestals\n      if (z === 1 && x >= 5 && x <= 9) isFootprint = true;\n      if (z === 0 && x >= 5 && x <= 9) isFootprint = true;\n\n      if (!isFootprint) continue;\n\n      const groundRel = api.heightAt(x, z);\n      const groundY = Math.max(0, Math.min(seatY, seatY + groundRel));\n\n      // Build foundation from ground up to seat plane\n      for (let y = groundY; y <= seatY; y++) {\n        const mat = y === groundY && groundY < seatY ? stoneFoundation : stonePlinth;\n        setBlock(x, y, z, mat);\n      }\n    }\n  }\n\n  // 2. PODIUM DECK (Y = 4)\n  // Victorian decorative concentric wood deck with polished stone kerb\n  for (let x = 0; x < size[0]; x++) {\n    for (let z = 0; z < size[2]; z++) {\n      if (!isInsideOctagon(x, z)) continue;\n\n      const dx = x - cx;\n      const dz = z - cz;\n      const dist = Math.sqrt(dx * dx + dz * dz);\n      const onBoundary = isOctagonBoundary(x, z);\n\n      if (onBoundary) {\n        setBlock(x, 4, z, stoneKerb);\n      } else if (dist < 1.0) {\n        // Conductor's central podium base\n        setBlock(x, 4, z, \"minecraft:polished_blackstone_slab[type=top]\");\n      } else if (dist < 2.5) {\n        setBlock(x, 4, woodPlanks, z);\n      } else if (dist < 4.2) {\n        // Alternating dark oak & spruce concert parquet\n        const parquet = (x + z) % 2 === 0 ? \"minecraft:dark_oak_planks\" : woodPlanks;\n        setBlock(x, 4, z, parquet);\n      } else {\n        setBlock(x, 4, z, woodStripped);\n      }\n    }\n  }\n\n  // 3. NORTH ENTRANCE STAIRCASE & FLANKING PEDESTALS\n  // Step course 1 (z = 1)\n  setBlock(6, 3, 1, \"minecraft:stone_brick_stairs[facing=south,half=bottom,shape=straight]\");\n  setBlock(7, 3, 1, \"minecraft:stone_brick_stairs[facing=south,half=bottom,shape=straight]\");\n  setBlock(8, 3, 1, \"minecraft:stone_brick_stairs[facing=south,half=bottom,shape=straight]\");\n\n  // Step course 2 (z = 0)\n  setBlock(6, 2, 0, \"minecraft:stone_brick_stairs[facing=south,half=bottom,shape=straight]\");\n  setBlock(7, 2, 0, \"minecraft:stone_brick_stairs[facing=south,half=bottom,shape=straight]\");\n  setBlock(8, 2, 0, \"minecraft:stone_brick_stairs[facing=south,half=bottom,shape=straight]\");\n\n  // Flanking stone pedestal posts with glowing seaside lanterns\n  setBlock(5, 3, 1, stoneKerb);\n  setBlock(5, 4, 1, stoneSlab);\n  setBlock(5, 5, 1, \"minecraft:lantern[hanging=false]\");\n\n  setBlock(9, 3, 1, stoneKerb);\n  setBlock(9, 4, 1, stoneSlab);\n  setBlock(9, 5, 1, \"minecraft:lantern[hanging=false]\");\n\n  setBlock(5, 2, 0, stoneKerb);\n  setBlock(9, 2, 0, stoneKerb);\n\n  // 4. CAST-IRON PILLARS, BALUSTRADE, & SPANDREL BRACKETS\n  const pillars = [\n    [5, 2], [9, 2],\n    [12, 5], [12, 9],\n    [9, 12], [5, 12],\n    [2, 9], [2, 5]\n  ];\n\n  // Erect the 8 cast-iron pillars\n  for (const [px, pz] of pillars) {\n    setBlock(px, 4, pz, castIronPillarBase);\n    for (let y = 5; y <= 8; y++) {\n      setBlock(px, y, pz, castIronWall);\n    }\n  }\n\n  // Iron balustrade railings at Y = 5 & Filigree brackets at Y = 8\n  for (let x = 0; x < size[0]; x++) {\n    for (let z = 0; z < size[2]; z++) {\n      if (!isOctagonBoundary(x, z)) continue;\n\n      const isPillar = pillars.some(([px, pz]) => px === x && pz === z);\n      if (isPillar) continue;\n\n      // Leave North entrance open\n      const isNorthEntrance = z === 2 && x >= 6 && x <= 8;\n      if (!isNorthEntrance) {\n        setBlock(x, 5, z, ironBars);\n      }\n\n      // Spandrel arch brackets at Y = 8\n      const isCardinalCenter = (z === 2 && x === 7) || (x === 12 && z === 7) ||\n                              (z === 12 && x === 7) || (x === 2 && z === 7);\n\n      if (isCardinalCenter) {\n        setBlock(x, 8, z, ironBars);\n        setBlock(x, 7, z, \"minecraft:lantern[hanging=true]\");\n      } else {\n        setBlock(x, 8, z, castIronFence);\n      }\n    }\n  }\n\n  // 5. CEILING, ARCHITRAVE, & CENTRAL CHANDELIER (Y = 9)\n  for (let x = 0; x < size[0]; x++) {\n    for (let z = 0; z < size[2]; z++) {\n      if (!isInsideOctagon(x, z)) continue;\n\n      const onBoundary = isOctagonBoundary(x, z);\n      const dx = x - cx;\n      const dz = z - cz;\n\n      if (onBoundary) {\n        setBlock(x, 9, z, weatheredCutCopper);\n      } else if (Math.abs(dx) === Math.abs(dz) || dx === 0 || dz === 0) {\n        // Radial timber coffering ribs\n        setBlock(x, 9, z, woodPlanks);\n      } else {\n        setBlock(x, 9, z, woodSlabTop);\n      }\n    }\n  }\n\n  // Victorian gas chandelier fixture\n  setBlock(cx, 9, cz, \"minecraft:gold_block\");\n  setBlock(cx, 8, cz, \"minecraft:chain[axis=y]\");\n  setBlock(cx, 7, cz, \"minecraft:ochre_froglight\");\n  setBlock(cx, 6, cz, \"minecraft:lantern[hanging=true]\");\n\n  // 6. TIERED COPPER PAVILION ROOF (Y = 9 to Y = 16)\n  // Tier 1: Flared Eave Overhang at Y = 9\n  for (let x = 0; x < size[0]; x++) {\n    for (let z = 0; z < size[2]; z++) {\n      const dx = Math.abs(x - cx);\n      const dz = Math.abs(z - cz);\n      const inEaves = Math.max(dx, dz) <= 6 && (dx + dz) <= 8;\n      if (inEaves && !isInsideOctagon(x, z)) {\n        setBlock(x, 9, z, roofSlabBottom);\n      }\n    }\n  }\n\n  // Tier 1: Lower Swept Roof Slope at Y = 10\n  for (let x = 0; x < size[0]; x++) {\n    for (let z = 0; z < size[2]; z++) {\n      if (!isInsideOctagon(x, z)) continue;\n\n      const dx = x - cx;\n      const dz = z - cz;\n      const onBoundary = isOctagonBoundary(x, z);\n\n      if (onBoundary) {\n        const facing = getStairsFacing(dx, dz);\n        setBlock(x, 10, z, `minecraft:oxidized_cut_copper_stairs[facing=${facing},half=bottom,shape=straight]`);\n      } else {\n        setBlock(x, 10, z, roofSolid);\n      }\n    }\n  }\n\n  // Tier 2: Mid Swept Mansard Slope at Y = 11\n  for (let x = 0; x < size[0]; x++) {\n    for (let z = 0; z < size[2]; z++) {\n      const dx = x - cx;\n      const dz = z - cz;\n      const adx = Math.abs(dx);\n      const adz = Math.abs(dz);\n      const inMidOctagon = Math.max(adx, adz) <= 4 && (adx + adz) <= 5;\n\n      if (!inMidOctagon) continue;\n\n      const onMidBoundary = Math.max(adx, adz) === 4 || (adx + adz) === 5;\n      if (onMidBoundary) {\n        const facing = getStairsFacing(dx, dz);\n        setBlock(x, 11, z, `minecraft:oxidized_cut_copper_stairs[facing=${facing},half=bottom,shape=straight]`);\n      } else {\n        setBlock(x, 11, z, roofSolid);\n      }\n    }\n  }\n\n  // Tier 3: Clerestory Ventilation Turret at Y = 12\n  for (let x = cx - 2; x <= cx + 2; x++) {\n    for (let z = cz - 2; z <= cz + 2; z++) {\n      const dx = Math.abs(x - cx);\n      const dz = Math.abs(z - cz);\n      if (dx + dz > 3) continue;\n\n      const isCorner = dx === 1 && dz === 1;\n      const isLouver = (dx === 2 && dz === 0) || (dx === 0 && dz === 2);\n\n      if (isCorner) {\n        setBlock(x, 12, z, oxidizedCutCopper);\n      } else if (isLouver) {\n        setBlock(x, 12, z, ironBars);\n      } else {\n        setBlock(x, 12, z, roofSolid);\n      }\n    }\n  }\n\n  // Tier 4: Cupola Ogee Dome Cap at Y = 13\n  setBlock(cx, 13, cz, roofSolid);\n  setBlock(cx, 13, cz - 1, \"minecraft:weathered_cut_copper_stairs[facing=north,half=bottom,shape=straight]\");\n  setBlock(cx, 13, cz + 1, \"minecraft:weathered_cut_copper_stairs[facing=south,half=bottom,shape=straight]\");\n  setBlock(cx - 1, 13, cz, \"minecraft:weathered_cut_copper_stairs[facing=west,half=bottom,shape=straight]\");\n  setBlock(cx + 1, 13, cz, \"minecraft:weathered_cut_copper_stairs[facing=east,half=bottom,shape=straight]\");\n  setBlock(cx - 1, 13, cz - 1, roofSlabBottom);\n  setBlock(cx + 1, 13, cz - 1, roofSlabBottom);\n  setBlock(cx - 1, 13, cz + 1, roofSlabBottom);\n  setBlock(cx + 1, 13, cz + 1, roofSlabBottom);\n\n  // Tier 5: Spire & Directional Weathervane (Y = 14 to 16)\n  setBlock(cx, 14, cz, \"minecraft:cut_copper_slab[type=bottom]\");\n  setBlock(cx, 15, cz, \"minecraft:lightning_rod[facing=up]\");\n  setBlock(cx, 15, cz - 1, ironBars); // North indicator\n  setBlock(cx, 15, cz + 1, ironBars); // South indicator\n  setBlock(cx - 1, 15, cz, ironBars); // West indicator\n  setBlock(cx + 1, 15, cz, ironBars); // East indicator\n  setBlock(cx, 16, cz, \"minecraft:lightning_rod[facing=up]\"); // Vane finial\n\n  // 7. ORCHESTRAL APPOINTMENTS (Brass stands, Conductor Rostrum, Musicians' Chairs)\n  // Conductor's music stand with open score\n  setBlock(cx, 5, cz - 1, \"minecraft:lectern[facing=south,has_book=true]\");\n\n  // Brass music stands (lightning rods)\n  setBlock(5, 5, 6, \"minecraft:lightning_rod[facing=up]\");\n  setBlock(9, 5, 6, \"minecraft:lightning_rod[facing=up]\");\n  setBlock(5, 5, 8, \"minecraft:lightning_rod[facing=up]\");\n  setBlock(9, 5, 8, \"minecraft:lightning_rod[facing=up]\");\n\n  // Musicians' dark oak chairs facing the conductor\n  setBlock(4, 5, 6, \"minecraft:dark_oak_stairs[facing=east,half=bottom,shape=straight]\");\n  setBlock(4, 5, 8, \"minecraft:dark_oak_stairs[facing=east,half=bottom,shape=straight]\");\n  setBlock(10, 5, 6, \"minecraft:dark_oak_stairs[facing=west,half=bottom,shape=straight]\");\n  setBlock(10, 5, 8, \"minecraft:dark_oak_stairs[facing=west,half=bottom,shape=straight]\");\n  setBlock(6, 5, 9, \"minecraft:dark_oak_stairs[facing=north,half=bottom,shape=straight]\");\n  setBlock(8, 5, 9, \"minecraft:dark_oak_stairs[facing=north,half=bottom,shape=straight]\");\n\n  // Promenade concert grand bass drum\n  setBlock(cx, 5, cz + 2, \"minecraft:note_block\");\n\n  return {\n    name: \"Victorian Bandstand\",\n    seatY: seatY,\n    anchors: {\n      front: [cx, seatY, 0],\n      door: [cx, seatY + 1, 2]\n    }\n  };\n}"
+    },
+    "hot_air_balloon": {
+      "mode": "plugin",
+      "envelope": [
+        15,
+        30,
+        15
+      ],
+      "sourceHash": "b3:a4e94d51a14d2c4c3bf43040c905fee446af96e825d1730aca80cb19d2d69ac2",
+      "outputHash": "b3:9300e946ea072829b1e478a8e4e5faa72a9f1c2fed058ec58bf16fd91f3a561c",
+      "conforms": false,
+      "conformHash": "b3:6ee632fcc1d894af2181a4f86173304cfacdf030a91b003d01f4b04eed8238a7",
+      "source": "export const envelope = [15, 30, 15];\n\nexport default function build(api) {\n  const size = api.size;\n  const seatY = 4;\n\n  // Safe block placement\n  function setSafe(x, y, z, block) {\n    if (x >= 0 && x < size[0] && y >= 0 && y < size[1] && z >= 0 && z < size[2]) {\n      api.set(x, y, z, block);\n    }\n  }\n\n  // Terrain ground height node-local Y\n  function groundY(x, z) {\n    const localH = api.heightAt(Math.max(0, Math.min(size[0] - 1, x)), Math.max(0, Math.min(size[2] - 1, z)));\n    return seatY + localH;\n  }\n\n  // 6-Connected column down to ground\n  function fillColumnToGround(x, z, topY, block) {\n    const g = groundY(x, z);\n    const minY = Math.max(0, Math.min(topY, g));\n    const maxY = Math.min(size[1] - 1, Math.max(topY, g));\n    for (let y = minY; y <= maxY; y++) {\n      setSafe(x, y, z, block);\n    }\n  }\n\n  // 6-Connected line rasterizer (strictly face-adjacent steps)\n  function draw6ConnectedLine(x0, y0, z0, x1, y1, z1, block) {\n    let cx = Math.round(x0);\n    let cy = Math.round(y0);\n    let cz = Math.round(z0);\n    const tx = Math.round(x1);\n    const ty = Math.round(y1);\n    const tz = Math.round(z1);\n\n    setSafe(cx, cy, cz, block);\n    while (cx !== tx || cy !== ty || cz !== tz) {\n      const dx = tx - cx;\n      const dy = ty - cy;\n      const dz = tz - cz;\n      const ax = Math.abs(dx);\n      const ay = Math.abs(dy);\n      const az = Math.abs(dz);\n\n      if (ax >= ay && ax >= az) {\n        cx += Math.sign(dx);\n      } else if (ay >= ax && ay >= az) {\n        cy += Math.sign(dy);\n      } else {\n        cz += Math.sign(dz);\n      }\n      setSafe(cx, cy, cz, block);\n    }\n  }\n\n  // Safe theme material getters\n  const woodPlanks = (api.theme.wood && api.theme.wood.planks) || \"minecraft:oak_planks\";\n  const woodLog = (api.theme.wood && api.theme.wood.log) || \"minecraft:oak_log\";\n  const woodStripped = (api.theme.wood && api.theme.wood.stripped) || \"minecraft:stripped_oak_log\";\n  const woodFence = (api.theme.wood && api.theme.wood.fence) || \"minecraft:oak_fence\";\n  const woodSlab = (api.theme.wood && api.theme.wood.slab) || \"minecraft:oak_slab\";\n  const woodStairs = (api.theme.wood && api.theme.wood.stairs) || \"minecraft:oak_stairs\";\n  const stonePlinth = (api.theme.ground && api.theme.ground.plinth) || \"minecraft:stone_bricks\";\n  const stonePavement = (api.theme.ground && api.theme.ground.pavement) || \"minecraft:cobblestone\";\n\n  // Variation presets for the 4 plugin instances\n  const styleIdx = api.instance.index % 4;\n\n  const styles = [\n    {\n      name: \"The Royal Victoria\",\n      primary: \"minecraft:red_wool\",\n      secondary: \"minecraft:yellow_wool\",\n      accent: \"minecraft:white_wool\",\n      trim: \"minecraft:gold_block\",\n      sandbag: \"minecraft:yellow_terracotta\",\n      basketElev: 2,\n      envH: 14,\n      pattern: 0 // Vertical gore stripes with gold equator\n    },\n    {\n      name: \"The Zephyr of the Solent\",\n      primary: \"minecraft:blue_wool\",\n      secondary: \"minecraft:white_wool\",\n      accent: \"minecraft:cyan_wool\",\n      trim: \"minecraft:lapis_block\",\n      sandbag: \"minecraft:yellow_terracotta\",\n      basketElev: 4,\n      envH: 13,\n      pattern: 1 // Nautical spiral twist\n    },\n    {\n      name: \"The Sovereign Empress\",\n      primary: \"minecraft:green_wool\",\n      secondary: \"minecraft:orange_wool\",\n      accent: \"minecraft:yellow_wool\",\n      trim: \"minecraft:copper_block\",\n      sandbag: \"minecraft:yellow_terracotta\",\n      basketElev: 3,\n      envH: 14,\n      pattern: 2 // Harlequin diamond\n    },\n    {\n      name: \"The Celestial Queen\",\n      primary: \"minecraft:purple_wool\",\n      secondary: \"minecraft:magenta_wool\",\n      accent: \"minecraft:pink_wool\",\n      trim: \"minecraft:white_wool\",\n      sandbag: \"minecraft:yellow_terracotta\",\n      basketElev: 3,\n      envH: 14,\n      pattern: 3 // Victorian horizontal tiers and scallops\n    }\n  ];\n\n  const current = styles[styleIdx];\n  const cx = 7;\n  const cz = 7;\n\n  const basketY = seatY + current.basketElev;\n  const burnerY = basketY + 3;\n  const envBaseY = basketY + 4;\n  const envH = current.envH;\n  const envTopY = envBaseY + envH - 1;\n  const maxRadius = 5.25;\n\n  // Teardrop profile formula for the balloon envelope\n  function getRadiusAtNormY(t) {\n    if (t < 0 || t > 1) return 0;\n    const baseR = 1.6;\n    if (t < 0.6) {\n      const u = t / 0.6;\n      const factor = Math.sin(u * Math.PI * 0.5);\n      return baseR + (maxRadius - baseR) * factor;\n    } else {\n      const u = (t - 0.6) / 0.4;\n      const factor = Math.sqrt(Math.max(0, 1 - u * u));\n      return maxRadius * factor;\n    }\n  }\n\n  // 1. BUILD BALLOON ENVELOPE (Teardrop Gasbag)\n  for (let y = envBaseY; y <= envTopY; y++) {\n    const t = (y - envBaseY) / (envH - 1);\n    const r = getRadiusAtNormY(t);\n    const rCeil = Math.ceil(r);\n\n    for (let dx = -rCeil; dx <= rCeil; dx++) {\n      for (let dz = -rCeil; dz <= rCeil; dz++) {\n        const dist = Math.sqrt(dx * dx + dz * dz);\n        if (dist <= r + 0.38) {\n          const vx = cx + dx;\n          const vz = cz + dz;\n          const isShell = dist >= r - 1.15;\n\n          if (isShell) {\n            const theta = Math.atan2(dz, dx);\n            let angleNorm = (theta + Math.PI) / (2 * Math.PI);\n            if (angleNorm < 0) angleNorm += 1.0;\n            if (angleNorm >= 1.0) angleNorm -= 1.0;\n\n            let block = current.primary;\n\n            if (current.pattern === 0) {\n              // 12 Vertical Gores with pinstripe seams\n              const gore = (angleNorm * 12) % 12;\n              const goreSub = gore % 1.0;\n              const goreIdx = Math.floor(gore);\n              block = (goreIdx % 2 === 0) ? current.primary : current.secondary;\n              if (goreSub < 0.14 || goreSub > 0.86) block = current.accent;\n              if (t >= 0.52 && t <= 0.60) block = current.trim;\n            } else if (current.pattern === 1) {\n              // Spiral twist\n              let twist = (angleNorm + t * 1.5) % 1.0;\n              if (twist < 0) twist += 1.0;\n              const goreIdx = Math.floor(twist * 8);\n              block = (goreIdx % 2 === 0) ? current.primary : current.secondary;\n              const sub = (twist * 8) % 1.0;\n              if (sub < 0.22) block = current.accent;\n            } else if (current.pattern === 2) {\n              // Harlequin diamonds\n              const u = Math.floor(angleNorm * 12);\n              const v = Math.floor(t * 8);\n              block = ((u + v) % 2 === 0) ? current.primary : current.secondary;\n              if (t >= 0.55 && t <= 0.62) block = current.trim;\n            } else {\n              // Horizontal bands with decorative equator\n              const band = Math.floor(t * 7);\n              if (band % 3 === 0) block = current.primary;\n              else if (band % 3 === 1) block = current.secondary;\n              else block = current.accent;\n              if (band === 3 || band === 4) {\n                const wave = Math.sin(angleNorm * 8 * Math.PI);\n                if (wave > 0) block = current.trim;\n              }\n            }\n            setSafe(vx, y, vz, block);\n          } else {\n            // Solid interior core ensures 6-connectivity & density\n            setSafe(vx, y, vz, current.primary);\n          }\n        }\n      }\n    }\n  }\n\n  // Top Apex Valve & Victorian Spire / Pennant Flag\n  setSafe(cx, envTopY + 1, cz, current.trim);\n  setSafe(cx, envTopY + 2, cz, woodFence);\n  setSafe(cx, envTopY + 3, cz, current.primary);\n  setSafe(cx, envTopY + 3, cz - 1, current.primary);\n  setSafe(cx, envTopY + 3, cz - 2, current.secondary);\n\n  // Throat collar at the bottom of the envelope\n  for (let dx = -1; dx <= 1; dx++) {\n    for (let dz = -1; dz <= 1; dz++) {\n      if (Math.abs(dx) === 1 || Math.abs(dz) === 1) {\n        setSafe(cx + dx, envBaseY, cz + dz, current.trim);\n      }\n    }\n  }\n\n  // 2. BURNER & HEAT CHIMNEY\n  // Central heat column directly into the envelope (ensures unbroken 6-connectivity)\n  for (let y = burnerY; y <= envBaseY; y++) {\n    setSafe(cx, y, cz, \"minecraft:glowstone\");\n  }\n  setSafe(cx, burnerY - 1, cz, \"minecraft:iron_bars\");\n  setSafe(cx + 1, burnerY, cz, \"minecraft:iron_bars\");\n  setSafe(cx - 1, burnerY, cz, \"minecraft:iron_bars\");\n  setSafe(cx, burnerY, cz + 1, \"minecraft:iron_bars\");\n  setSafe(cx, burnerY, cz - 1, \"minecraft:iron_bars\");\n\n  // Rigging lines from basket corners to throat collar\n  draw6ConnectedLine(cx - 2, basketY + 2, cz - 2, cx - 1, envBaseY, cz - 1, woodFence);\n  draw6ConnectedLine(cx + 2, basketY + 2, cz - 2, cx + 1, envBaseY, cz - 1, woodFence);\n  draw6ConnectedLine(cx - 2, basketY + 2, cz + 2, cx - 1, envBaseY, cz + 1, woodFence);\n  draw6ConnectedLine(cx + 2, basketY + 2, cz + 2, cx + 1, envBaseY, cz + 1, woodFence);\n\n  // 3. PASSENGER BASKET (Woven Gondola)\n  // Basket Floor (5x5)\n  for (let x = cx - 2; x <= cx + 2; x++) {\n    for (let z = cz - 2; z <= cz + 2; z++) {\n      const isCorner = (Math.abs(x - cx) === 2 && Math.abs(z - cz) === 2);\n      setSafe(x, basketY, z, isCorner ? woodStripped : woodPlanks);\n    }\n  }\n\n  // Basket Railing / Walls (y = basketY + 1)\n  for (let x = cx - 2; x <= cx + 2; x++) {\n    for (let z = cz - 2; z <= cz + 2; z++) {\n      const isPerimeter = (Math.abs(x - cx) === 2 || Math.abs(z - cz) === 2);\n      const isCorner = (Math.abs(x - cx) === 2 && Math.abs(z - cz) === 2);\n      const isNorthDoor = (x === cx && z === cz - 2 && styleIdx === 0);\n\n      if (isCorner) {\n        setSafe(x, basketY + 1, z, woodLog);\n        setSafe(x, basketY + 2, z, woodFence);\n      } else if (isPerimeter) {\n        if (!isNorthDoor) {\n          setSafe(x, basketY + 1, z, woodFence);\n        }\n      }\n    }\n  }\n\n  // Interior basket fittings\n  setSafe(cx - 1, basketY + 1, cz, woodSlab);\n  setSafe(cx + 1, basketY + 1, cz, \"minecraft:iron_bars\");\n\n  // Outer Ballast Sandbags on Gondola\n  setSafe(cx - 3, basketY + 1, cz, current.sandbag);\n  setSafe(cx + 3, basketY + 1, cz, current.sandbag);\n  setSafe(cx, basketY + 1, cz + 3, current.sandbag);\n  setSafe(cx - 2, basketY, cz - 2, current.sandbag);\n  setSafe(cx + 2, basketY, cz - 2, current.sandbag);\n  setSafe(cx - 2, basketY, cz + 2, current.sandbag);\n  setSafe(cx + 2, basketY, cz + 2, current.sandbag);\n\n  // 4. GROUND MOORING & TETHERING STATIONS\n  const anchorCoords = [\n    [2, 2],\n    [12, 2],\n    [2, 12],\n    [12, 12]\n  ];\n  const basketCorners = [\n    [cx - 2, cz - 2],\n    [cx + 2, cz - 2],\n    [cx - 2, cz + 2],\n    [cx + 2, cz + 2]\n  ];\n\n  for (let i = 0; i < 4; i++) {\n    const [ax, az] = anchorCoords[i];\n    const [bx, bz] = basketCorners[i];\n    const agY = groundY(ax, az);\n\n    // Stone footing anchored into terrain\n    fillColumnToGround(ax, az, agY + 1, stonePlinth);\n\n    // Timber winch / bollard on top\n    setSafe(ax, agY + 1, az, woodLog);\n    setSafe(ax, agY + 2, az, \"minecraft:iron_bars\");\n\n    // Sandbags around the anchor\n    const offsets = [[1, 0], [-1, 0], [0, 1], [0, -1]];\n    for (const [ox, oz] of offsets) {\n      const sx = ax + ox;\n      const sz = az + oz;\n      if (sx >= 0 && sx < size[0] && sz >= 0 && sz < size[2]) {\n        fillColumnToGround(sx, sz, groundY(sx, sz) + 1, current.sandbag);\n      }\n    }\n\n    // Heavy mooring guy-cable to basket corner\n    draw6ConnectedLine(ax, agY + 2, az, bx, basketY, bz, \"minecraft:chain\");\n  }\n\n  // 5. INSTANCE-SPECIFIC ACCESS & CENTRAL TETHER\n  if (styleIdx === 0) {\n    // Boarding Gangway / Stairs on North side leading to ground\n    const stairsZ = [cz - 2, cz - 3, cz - 4];\n    for (let i = 0; i < stairsZ.length; i++) {\n      const z = stairsZ[i];\n      const targetY = basketY - i;\n      fillColumnToGround(cx, z, targetY, woodPlanks);\n      fillColumnToGround(cx - 1, z, targetY + 1, woodFence);\n      fillColumnToGround(cx + 1, z, targetY + 1, woodFence);\n    }\n    // Central mooring tether straight down\n    fillColumnToGround(cx, cz, basketY, woodLog);\n  } else if (styleIdx === 1) {\n    // Hanging rope ladder on South side down to ground\n    const ladZ = cz + 2;\n    fillColumnToGround(cx, ladZ, basketY, woodFence);\n    fillColumnToGround(cx, cz, basketY, \"minecraft:chain\");\n  } else if (styleIdx === 2) {\n    // Grand Promenade Mooring Mast & Pylon\n    fillColumnToGround(cx, cz, basketY, woodLog);\n    fillColumnToGround(cx + 1, cz, basketY - 1, woodFence);\n    fillColumnToGround(cx - 1, cz, basketY - 1, woodFence);\n    fillColumnToGround(cx, cz + 1, basketY - 1, woodFence);\n    fillColumnToGround(cx, cz - 1, basketY - 1, woodFence);\n  } else {\n    // Timber Launch Pad / Boardwalk Deck on ground\n    const padY = seatY + 1;\n    for (let x = cx - 3; x <= cx + 3; x++) {\n      for (let z = cz - 3; z <= cz + 3; z++) {\n        fillColumnToGround(x, z, padY, stonePavement);\n      }\n    }\n    // Central anchor bollard\n    fillColumnToGround(cx, cz, basketY, woodLog);\n  }\n\n  return {\n    name: current.name,\n    seatY: seatY,\n    anchors: {\n      front: [cx, groundY(cx, 0), 0],\n      door: [cx, groundY(cx, cz - 3), cz - 3]\n    }\n  };\n}"
+    }
+  }
+}

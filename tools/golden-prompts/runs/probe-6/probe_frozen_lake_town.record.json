@@ -1,0 +1,171 @@
+{
+  "id": "probe_frozen_lake_town",
+  "family": "probe",
+  "kit": "settlement",
+  "prompt": "An ice-fishing town on a frozen lake in the taiga: huts out on the ice around their fishing holes, sleds and skis by the doors, and a timber church with a bell tower on the shore.",
+  "seed": 943,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.35,
+    "decline": 0.1,
+    "formality": 0.2,
+    "climate": {
+      "biome": "minecraft:snowy_taiga",
+      "temperature": -0.8,
+      "humidity": 0.1,
+      "snow": "always"
+    },
+    "character": {
+      "label": "taiga ice fishing settlement",
+      "materialTheme": "boreal_pine",
+      "archetypes": {
+        "prefer": [
+          "cottage",
+          "church",
+          "warehouse",
+          "watchtower"
+        ]
+      },
+      "flora": {
+        "prefer": [
+          "spruce_tall",
+          "spruce_ancient",
+          "conifer"
+        ]
+      },
+      "motifs": {
+        "roofType": "gable",
+        "massing": "sprawling"
+      },
+      "urbanForm": "linear"
+    },
+    "tokens": {
+      "terrain": "a large frozen lake bordered by snowy taiga spruce forest, with the village lining the shore and extending onto the ice",
+      "icons": "a prominent timber stave church with a bell tower standing on the frozen shore; clusters of wooden ice-fishing shanties and huts positioned directly on the lake ice around cut fishing holes; sleds, skis, fire braziers, and drying racks beside the cabin doors"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 193529,
+    "completionTokens": 38442,
+    "cost": 0.1447
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 32,
+    "maxDepth": 2,
+    "generators": [
+      "authored:lake_ice_carving_station",
+      "building.grammar@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "alpine_chalet",
+      "bell_tower",
+      "cannery",
+      "church",
+      "cottage",
+      "log_cabin",
+      "smithy",
+      "tavern",
+      "warehouse"
+    ],
+    "archetypesInCatalog": 9,
+    "formPacks": [
+      "nordic_viking"
+    ],
+    "props": [
+      "campsite",
+      "cart",
+      "covered_wagon",
+      "hitching_post",
+      "log_pile",
+      "notice_board",
+      "pier",
+      "rowboat"
+    ],
+    "species": [
+      "dark_pine",
+      "low_spruce",
+      "scrub_spruce",
+      "village_spruce",
+      "wild_spruce"
+    ],
+    "envelopes": [
+      "512x512",
+      "22x22",
+      "15x17x21",
+      "9x18x9",
+      "13x11x13",
+      "11x11x17",
+      "11x10x13",
+      "11x12x13",
+      "11x12x11",
+      "13x11x11"
+    ],
+    "constraints": 28,
+    "constraintKinds": [
+      "adjacent_to",
+      "at",
+      "blend",
+      "distance",
+      "facing",
+      "gap",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform",
+      "zone"
+    ],
+    "constraintsWithStrength": 13,
+    "hardConstraints": 0,
+    "forests": 3,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 8,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 31,
+    "eras": [
+      "medieval"
+    ],
+    "bytes": 61916
+  },
+  "wallMs": 597000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 2,
+    "feedbackRounds": 1,
+    "programs": [
+      "ok lake_ice_carving_station [landmark] 1 attempt(s), 27966 tokens ($0.0474), 27 warning(s)",
+      "ok ice_fishing_shanty [plugin] 1 attempt(s), 27740 tokens ($0.0470), 2 warning(s)",
+      "ok shore_fish_drying_racks [plugin] 1 attempt(s), 23607 tokens ($0.0392), 27 warning(s)"
+    ],
+    "programCost": 0.1336,
+    "totalCost": 0.2783,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p6/out/probe_frozen_lake_town/out/frostmere_haven",
+    "finalDiagnostics": {
+      "LOAM-T208": 1,
+      "LOAM-I527": 1,
+      "LOAM-I463": 1,
+      "LOAM-I497": 1,
+      "LOAM-T341": 3,
+      "LOAM-W337": 1,
+      "LOAM-W470": 1
+    },
+    "crash": [],
+    "docName": "frostmere_haven.loam.json"
+  }
+}

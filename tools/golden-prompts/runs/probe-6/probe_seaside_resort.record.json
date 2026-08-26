@@ -1,0 +1,178 @@
+{
+  "id": "probe_seaside_resort",
+  "family": "probe",
+  "kit": "settlement",
+  "prompt": "A Victorian seaside resort on a fair day: a long promenade with a bandstand, a paddle steamer moored at the end of the pleasure pier, and hot-air balloons rising over the beach.",
+  "seed": 945,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "era": "industrial",
+    "wealth": 0.7,
+    "decline": 0,
+    "formality": 0.6,
+    "climate": {
+      "temperature": 0.3,
+      "humidity": 0.5,
+      "snow": "never"
+    },
+    "character": {
+      "label": "Victorian seaside resort",
+      "materialTheme": "temperate_timber",
+      "urbanForm": "linear",
+      "archetypes": {
+        "prefer": [
+          "hotel",
+          "gazebo",
+          "lighthouse",
+          "tavern",
+          "warehouse"
+        ]
+      },
+      "props": {
+        "prefer": [
+          "fountain",
+          "gazebo",
+          "market_barrow"
+        ]
+      },
+      "motifs": {
+        "roofType": "mansard",
+        "ornamentDensity": 0.7
+      }
+    },
+    "tokens": {
+      "terrain": "a sandy coastline and beach facing open sea beside a Victorian seaside resort town",
+      "icons": "a grand seafront promenade with a central bandstand; a pleasure pier stretching into the sea with a paddle steamer moored at its end; hot-air balloons rising over the sandy beach",
+      "infra": "boardwalk promenade along the beachfront; pleasure_pier jutting out into open water"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 302931,
+    "completionTokens": 66377,
+    "cost": 0.2381
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 34,
+    "maxDepth": 2,
+    "generators": [
+      "authored:paddle_steamer",
+      "authored:victorian_bandstand",
+      "building.grammar@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "bakery",
+      "boarding_house",
+      "cottage",
+      "dance_hall",
+      "hotel",
+      "lighthouse",
+      "tea_house",
+      "theater"
+    ],
+    "archetypesInCatalog": 8,
+    "formPacks": [],
+    "props": [
+      "bench",
+      "carousel",
+      "fairground_stall",
+      "ferris_wheel",
+      "fountain",
+      "gazebo",
+      "helter_skelter",
+      "lamp_post",
+      "market_barrow",
+      "midway_arch",
+      "pier",
+      "shooting_gallery",
+      "swing_boats"
+    ],
+    "species": [
+      "downland_oak",
+      "garden_birch",
+      "resort_oak",
+      "shrub_hazel"
+    ],
+    "envelopes": [
+      "512x512",
+      "48x22",
+      "19x22x43",
+      "15x17x15",
+      "17x28x15",
+      "15x15x19",
+      "15x13x17",
+      "13x11x13",
+      "13x13x17",
+      "11x12x13",
+      "11x20x11"
+    ],
+    "constraints": 27,
+    "constraintKinds": [
+      "adjacent_to",
+      "band",
+      "blend",
+      "distance",
+      "facing",
+      "gap",
+      "max",
+      "min",
+      "on",
+      "reference",
+      "terrain_conform",
+      "zone"
+    ],
+    "constraintsWithStrength": 11,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 7,
+    "programReferences": 2,
+    "conformsTrue": 0,
+    "labels": 29,
+    "eras": [
+      "industrial"
+    ],
+    "bytes": 65552
+  },
+  "wallMs": 862000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 3,
+    "feedbackRounds": 1,
+    "programs": [
+      "ok paddle_steamer [landmark] 1 attempt(s), 35300 tokens ($0.0612), 13 warning(s)",
+      "ok victorian_bandstand [landmark] 3 attempt(s), 76739 tokens ($0.0878), 21 warning(s)",
+      "ok hot_air_balloon [plugin] 1 attempt(s), 27625 tokens ($0.0468), 26 warning(s)"
+    ],
+    "programCost": 0.1973,
+    "totalCost": 0.4354,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/p6/out/probe_seaside_resort/out/victorian_seaside_resort",
+    "finalDiagnostics": {
+      "LOAM-W330": 2,
+      "LOAM-T208": 1,
+      "LOAM-W523": 1,
+      "LOAM-W522": 1,
+      "LOAM-W524": 1,
+      "LOAM-I497": 1,
+      "LOAM-T341": 2,
+      "LOAM-W337": 1,
+      "LOAM-W470": 1
+    },
+    "crash": [],
+    "docName": "victorian_seaside_resort.loam.json"
+  }
+}

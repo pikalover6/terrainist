@@ -1,0 +1,1044 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "frostmere_haven",
+    "worldSeed": "943",
+    "prompt": "An ice-fishing town on a frozen lake in the taiga: huts out on the ice around their fishing holes, sleds and skis by the doors, and a timber church with a bell tower on the shore.",
+    "spawn": {
+      "zone": "south"
+    }
+  },
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.35,
+    "decline": 0.1,
+    "formality": 0.2,
+    "climate": {
+      "biome": "minecraft:snowy_taiga",
+      "temperature": -0.8,
+      "humidity": 0.1,
+      "snow": "always"
+    },
+    "character": {
+      "label": "taiga ice fishing settlement",
+      "materialTheme": "boreal_pine",
+      "formPacks": [
+        "nordic_viking"
+      ],
+      "archetypes": {
+        "prefer": [
+          "church",
+          "bell_tower",
+          "log_cabin",
+          "alpine_chalet",
+          "cannery",
+          "warehouse",
+          "tavern",
+          "cottage"
+        ]
+      },
+      "flora": {
+        "prefer": [
+          "spruce_tall",
+          "spruce_squat",
+          "spruce_ancient"
+        ]
+      },
+      "motifs": {
+        "roofType": "gable",
+        "massing": "sprawling"
+      },
+      "urbanForm": "linear",
+      "programs": [
+        {
+          "id": "lake_ice_carving_station",
+          "mode": "landmark",
+          "brief": "A heavy timber fish-weighing and ice-harvesting staging dock resting on the lake ice, with log hoist frames, iron chains, salted fish barrels, stacked sleds, and cut ice chutes.",
+          "envelope": [
+            15,
+            8,
+            15
+          ]
+        },
+        {
+          "id": "ice_fishing_shanty",
+          "mode": "plugin",
+          "brief": "A weathered wooden ice-fishing shanty resting on timber runners over the lake ice, with a smoking stovepipe, a cut fishing hole inside the floor, lanterns, and wooden skis and sleds leaning against the outside wall.",
+          "envelope": [
+            7,
+            6,
+            7
+          ],
+          "count": 12
+        },
+        {
+          "id": "shore_fish_drying_racks",
+          "mode": "plugin",
+          "brief": "A tall timber A-frame drying rack hung with rows of cured winter fish, with sledges, ice augers, and salt crates resting in the snow at its base.",
+          "envelope": [
+            7,
+            5,
+            5
+          ],
+          "count": 6
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "a large frozen lake bordered by snowy taiga spruce forest, with the village lining the shore and extending onto the ice",
+      "icons": "a prominent timber stave church with a bell tower standing on the frozen shore; clusters of wooden ice-fishing shanties and huts positioned directly on the lake ice around cut fishing holes; sleds, skis, fire braziers, and drying racks beside the cabin doors"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:spruce_planks",
+      "road.shoulder": "minecraft:coarse_dirt",
+      "plaza.path": "minecraft:spruce_planks",
+      "plaza.border": "minecraft:stripped_spruce_log",
+      "plaza.cobble": "minecraft:cobblestone"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Frostmere frozen taiga settlement",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "basin hollow for the frozen lake bounded by snowy taiga hills",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 72,
+          "amplitude": 28,
+          "octaves": 5,
+          "frequency": 0.0035,
+          "gain": 0.48,
+          "erosionPasses": 2,
+          "cliffThreshold": 55,
+          "soilDepth": 4,
+          "beachWidth": 3,
+          "snowLineFraction": 0.1
+        },
+        "children": [
+          {
+            "id": "the_frozen_lake",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the expansive frozen lake basin",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.5,
+                0.4
+              ],
+              "radius": 130,
+              "depth": 14,
+              "water": true,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "shore_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "gentle building shelf along the southern lake shore",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.68
+              ],
+              "radius": 95,
+              "height": 6,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "taiga_hills_north",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "dense wooded taiga ridge bounding the northern shore",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.15,
+                  0.18
+                ],
+                [
+                  0.5,
+                  0.12
+                ],
+                [
+                  0.85,
+                  0.18
+                ]
+              ],
+              "width": 64,
+              "height": 35,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "taiga_ridge_east",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "eastern taiga heights",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.82,
+                  0.3
+                ],
+                [
+                  0.88,
+                  0.6
+                ],
+                [
+                  0.8,
+                  0.85
+                ]
+              ],
+              "width": 55,
+              "height": 28,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "boreal",
+          "temperatureFrequency": 0.0012,
+          "latitudeGradient": -0.4
+        }
+      },
+      {
+        "id": "plaza",
+        "kind": "primitive",
+        "label": "the waterfront timber quayside and village square",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            22,
+            22
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "south"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "church_timber",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the prominent timber stave church on the snowy shore",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            17,
+            21
+          ]
+        },
+        "params": {
+          "archetype": "church",
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "plaza",
+            "gap": [
+              2,
+              8
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "plaza"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "church",
+          "landmark",
+          "public"
+        ]
+      },
+      {
+        "id": "tower_bell",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the freestanding timber bell tower beside the church",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            18,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "bell_tower",
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "church_timber",
+            "min": 3,
+            "max": 28,
+            "strength": "soft"
+          },
+          {
+            "facing": "plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "bell_tower",
+          "landmark"
+        ]
+      },
+      {
+        "id": "ice_tavern",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the warm harbor tavern with roaring hearths",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "archetype": "tavern",
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "plaza",
+            "gap": [
+              1,
+              8
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "tavern",
+          "house",
+          "trade"
+        ]
+      },
+      {
+        "id": "fish_cannery",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the shore smokehouse and fish processing works",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            17
+          ]
+        },
+        "params": {
+          "archetype": "cannery",
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "plaza",
+            "gap": [
+              1,
+              10
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "cannery",
+          "craft"
+        ]
+      },
+      {
+        "id": "fish_warehouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "timber warehouse for salted winter fish and ice blocks",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            10,
+            13
+          ]
+        },
+        "params": {
+          "archetype": "warehouse",
+          "floors": 1,
+          "roof": "gable",
+          "basement": {
+            "depth": 4,
+            "style": "root_cellar"
+          }
+        },
+        "constraints": [
+          {
+            "distance": "plaza",
+            "min": 6,
+            "max": 35,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "warehouse",
+          "store"
+        ]
+      },
+      {
+        "id": "cabin_shore",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "log cabin of a master fisherman",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            13
+          ]
+        },
+        "params": {
+          "archetype": "log_cabin",
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 45,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "cabin_woods",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "sturdy spruce log cabin on the edge of the taiga",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "log_cabin",
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "plaza",
+            "min": 12,
+            "max": 55,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "chalet_east",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "timber chalet with shuttered windows",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "alpine_chalet",
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "plaza",
+            "min": 14,
+            "max": 60,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 7,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "ice_harvest_station",
+        "kind": "generator",
+        "generator": "authored:lake_ice_carving_station",
+        "label": "the ice cutting and fish processing station on the frozen lake",
+        "constraints": [
+          {
+            "at": [
+              0.48,
+              0.48
+            ]
+          },
+          {
+            "distance": "plaza",
+            "min": 25,
+            "max": 75,
+            "strength": "soft"
+          }
+        ],
+        "params": {
+          "seat": "pad",
+          "face": {
+            "toward": "plaza"
+          }
+        },
+        "tags": [
+          "landmark",
+          "craft"
+        ]
+      },
+      {
+        "id": "ice_shanties",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "scattered ice-fishing huts over the frozen lake surface",
+        "params": {
+          "program": "ice_fishing_shanty",
+          "count": 10,
+          "area": {
+            "at": [
+              0.5,
+              0.4
+            ],
+            "radius": 0.2
+          },
+          "spacing": 18,
+          "seat": "pad",
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ]
+        }
+      },
+      {
+        "id": "shore_drying_racks",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "fish drying racks along the snowy shorebank",
+        "params": {
+          "program": "shore_fish_drying_racks",
+          "count": 5,
+          "area": {
+            "at": [
+              0.5,
+              0.62
+            ],
+            "radius": 0.14
+          },
+          "spacing": 14,
+          "seat": "pad",
+          "avoidTags": [
+            "road",
+            "plaza"
+          ]
+        }
+      },
+      {
+        "id": "stone_pier",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the frozen wooden landing pier extending into the ice",
+        "params": {
+          "prop": "pier",
+          "zone": "south",
+          "length": 14,
+          "width": 3
+        }
+      },
+      {
+        "id": "pier_rowboat",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a rowboat locked into the lakeside ice shelf",
+        "params": {
+          "prop": "rowboat",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "sled_cart_1",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "hauling sled parked near the quayside",
+        "params": {
+          "prop": "cart",
+          "zone": "south",
+          "jitter": 0.18
+        }
+      },
+      {
+        "id": "sled_cart_2",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "covered supply wagon by the storehouse",
+        "params": {
+          "prop": "covered_wagon",
+          "zone": "south",
+          "jitter": 0.24
+        }
+      },
+      {
+        "id": "wood_pile_1",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "cordwood stacks against the snow",
+        "params": {
+          "prop": "log_pile",
+          "zone": "south",
+          "jitter": 0.12
+        }
+      },
+      {
+        "id": "wood_pile_2",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "firewood logs beside the tavern",
+        "params": {
+          "prop": "log_pile",
+          "zone": "south",
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "fire_camp",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "shore warming fire and bench shelter",
+        "params": {
+          "prop": "campsite",
+          "zone": "south",
+          "jitter": 0.28
+        }
+      },
+      {
+        "id": "notice_board_main",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "town board and ice conditions register",
+        "params": {
+          "prop": "notice_board",
+          "zone": "south",
+          "jitter": 0.06
+        }
+      },
+      {
+        "id": "hitching_post_church",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "dog and pony hitching rail near the church gate",
+        "params": {
+          "prop": "hitching_post",
+          "zone": "south",
+          "jitter": 0.1
+        }
+      },
+      {
+        "id": "lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "timber boardwalk lanes linking the church, shore buildings, and lake staging dock",
+        "params": {
+          "anchors": [
+            "plaza",
+            "church_timber",
+            "tower_bell",
+            "ice_harvest_station",
+            "#tag:house"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 14
+        }
+      },
+      {
+        "id": "taiga_forest_north",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "dense northern taiga forest with ancient spruces",
+        "params": {
+          "area": {
+            "at": [
+              0.5,
+              0.16
+            ],
+            "radius": 150
+          },
+          "density": 0.24,
+          "spacing": 3,
+          "clumping": 0.5,
+          "maxSlope": 35,
+          "elevation": [
+            2,
+            90
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.25,
+            "flowers": 0.01,
+            "deadwood": 0.08
+          },
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "great_spruce",
+                  "shape": "spruce_ancient"
+                }
+              ]
+            },
+            "understory": {
+              "species": [
+                {
+                  "id": "juniper",
+                  "shape": "juniper_scrub"
+                }
+              ],
+              "density": 0.08
+            },
+            "floor": "default"
+          },
+          "species": [
+            {
+              "id": "dark_pine",
+              "weight": 4,
+              "shape": "spruce_tall"
+            },
+            {
+              "id": "low_spruce",
+              "weight": 2,
+              "shape": "spruce_squat"
+            }
+          ]
+        }
+      },
+      {
+        "id": "taiga_forest_south",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sheltering southern spruce woods around the town",
+        "params": {
+          "area": {
+            "at": [
+              0.5,
+              0.84
+            ],
+            "radius": 130
+          },
+          "density": 0.18,
+          "spacing": 3,
+          "clumping": 0.45,
+          "maxSlope": 32,
+          "elevation": [
+            2,
+            80
+          ],
+          "edgeFalloff": 14,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.3,
+            "flowers": 0.02,
+            "deadwood": 0.05
+          },
+          "strata": true,
+          "species": [
+            {
+              "id": "village_spruce",
+              "weight": 3,
+              "shape": "spruce_tall"
+            },
+            {
+              "id": "scrub_spruce",
+              "weight": 1,
+              "shape": "spruce_squat"
+            }
+          ]
+        }
+      },
+      {
+        "id": "taiga_forest_fill",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "ambient taiga conifer scatter across open ground",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 35,
+          "elevation": [
+            2,
+            110
+          ],
+          "edgeFalloff": 12,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "species": [
+            {
+              "id": "wild_spruce",
+              "weight": 1,
+              "shape": "spruce_tall"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "programs": {
+    "lake_ice_carving_station": {
+      "mode": "landmark",
+      "envelope": [
+        17,
+        14,
+        17
+      ],
+      "sourceHash": "b3:bcf7ded51c87b82cca574d59e414b755003f474d193f9388f5be288e2b162a5e",
+      "outputHash": "b3:abd6cb0b86e3ca11ec82430279b222f1fdf37759b1e2536dffde8c7d6eae4b53",
+      "conforms": false,
+      "conformHash": "b3:22468604faf4d88f9655dee3de6e3358c6c15c7e00ba93acb902fb0c93d8fdd3",
+      "source": "export const envelope = [17, 14, 17];\n\nexport default function build(api) {\n  const { theme } = api;\n  const wood = theme.wood;\n  const stone = theme.stone;\n  const roof = theme.roof;\n\n  const seatY = 4;\n\n  // Safe setter within envelope\n  function set(x, y, z, block) {\n    if (x >= 0 && x < 17 && y >= 0 && y < 14 && z >= 0 && z < 17) {\n      api.set(x, y, z, block);\n    }\n  }\n\n  // Block state helpers\n  function idOf(b) {\n    return b.split(\"[\")[0];\n  }\n\n  function stair(base, facing, half = \"bottom\", shape = \"straight\") {\n    return `${idOf(base)}[facing=${facing},half=${half},shape=${shape}]`;\n  }\n\n  function slab(base, type = \"bottom\") {\n    return `${idOf(base)}[type=${type}]`;\n  }\n\n  function trapdoor(base, facing, half = \"bottom\", open = false) {\n    return `${idOf(base)}[facing=${facing},half=${half},open=${open}]`;\n  }\n\n  function log(base, axis = \"y\") {\n    return `${idOf(base)}[axis=${axis}]`;\n  }\n\n  function fence(base) {\n    return idOf(base);\n  }\n\n  function wall(base) {\n    return idOf(base);\n  }\n\n  function door(base, facing, half = \"lower\", hinge = \"left\", open = false) {\n    return `${idOf(base)}[facing=${facing},half=${half},hinge=${hinge},open=${open}]`;\n  }\n\n  // -------------------------------------------------------------\n  // 1. FOUNDATIONS & TERRAIN CONFORMITY (Rule 5 & 6)\n  // -------------------------------------------------------------\n  // Pilings grid and platform supports\n  const pilings = [\n    [2, 2], [6, 2], [10, 2], [14, 2],\n    [2, 6], [6, 6], [10, 6], [14, 6],\n    [2, 10], [6, 10], [10, 10], [14, 10],\n    [2, 14], [6, 14], [10, 14], [14, 14],\n    [4, 2], [12, 2], [2, 4], [14, 4],\n    [2, 12], [14, 12], [6, 4], [10, 4]\n  ];\n\n  const pilingSet = new Set(pilings.map(([px, pz]) => `${px},${pz}`));\n\n  // Ground-to-deck pillars\n  for (let x = 2; x <= 15; x++) {\n    for (let z = 2; z <= 15; z++) {\n      const h = api.heightAt(x, z);\n      const groundY = Math.max(0, Math.min(seatY + h, 5));\n      const isPiling = pilingSet.has(`${x},${z}`);\n      const isBorder = (x === 2 || x === 15 || z === 2 || z === 15);\n\n      if (isPiling || isBorder) {\n        for (let y = groundY; y <= 4; y++) {\n          if (y <= 1) {\n            set(x, y, z, stone.primary);\n          } else {\n            set(x, y, z, log(wood.log, \"y\"));\n          }\n        }\n      } else {\n        // Under-deck subfloor grid\n        for (let y = groundY; y <= 4; y++) {\n          if (y === 4) {\n            set(x, y, z, log(wood.stripped, (x % 2 === 0 ? \"x\" : \"z\")));\n          } else if (y >= 2) {\n            set(x, y, z, wood.planks);\n          } else {\n            set(x, y, z, stone.primary);\n          }\n        }\n      }\n    }\n  }\n\n  // Cross-bracing between perimeter pilings under dock\n  for (let x = 3; x <= 13; x += 4) {\n    set(x, 3, 2, fence(wood.fence));\n    set(x + 1, 3, 2, fence(wood.fence));\n    set(x, 3, 14, fence(wood.fence));\n    set(x + 1, 3, 14, fence(wood.fence));\n  }\n  for (let z = 3; z <= 13; z += 4) {\n    set(2, 3, z, fence(wood.fence));\n    set(2, 3, z + 1, fence(wood.fence));\n    set(15, 3, z, fence(wood.fence));\n    set(15, 3, z + 1, fence(wood.fence));\n  }\n\n  // -------------------------------------------------------------\n  // 2. MAIN TIMBER STAGING DOCK (y = 5)\n  // -------------------------------------------------------------\n  for (let x = 2; x <= 15; x++) {\n    for (let z = 2; z <= 15; z++) {\n      // Leave opening for the ice chute slipway at front\n      if (x >= 7 && x <= 9 && z >= 2 && z <= 4) {\n        continue;\n      }\n      // Cabin floor interior is at y=4, deck at y=5\n      if (x >= 10 && x <= 14 && z >= 10 && z <= 14) {\n        set(x, 4, z, wood.planks);\n        continue;\n      }\n\n      // Dock planking with textured timber wear\n      if ((x + z) % 7 === 0) {\n        set(x, 5, z, log(wood.stripped, \"z\"));\n      } else if ((x * 3 + z) % 11 === 0) {\n        set(x, 5, z, slab(wood.slab, \"top\"));\n      } else {\n        set(x, 5, z, wood.planks);\n      }\n    }\n  }\n\n  // Edge log framing\n  for (let x = 2; x <= 15; x++) {\n    if (x < 7 || x > 9) set(x, 5, 2, log(wood.log, \"x\"));\n    set(x, 5, 15, log(wood.log, \"x\"));\n  }\n  for (let z = 2; z <= 15; z++) {\n    set(2, 5, z, log(wood.log, \"z\"));\n    set(15, 5, z, log(wood.log, \"z\"));\n  }\n\n  // -------------------------------------------------------------\n  // 3. ICE HARVEST SLIPWAY & CUTTING CHUTE (North, z = 0..4)\n  // -------------------------------------------------------------\n  // Sloped ramp descending to lake ice\n  for (let x = 6; x <= 10; x++) {\n    const isChuteCenter = (x >= 7 && x <= 9);\n\n    // Lake edge apron at z = 0\n    const h0 = Math.max(0, Math.min(seatY + api.heightAt(x, 0), 3));\n    for (let y = h0; y <= 3; y++) {\n      set(x, y, 0, isChuteCenter ? \"minecraft:packed_ice\" : log(wood.log, \"z\"));\n    }\n\n    // z = 1\n    const h1 = Math.max(0, Math.min(seatY + api.heightAt(x, 1), 3));\n    for (let y = h1; y <= 3; y++) {\n      set(x, y, 1, isChuteCenter ? \"minecraft:packed_ice\" : log(wood.log, \"z\"));\n    }\n    if (!isChuteCenter) {\n      set(x, 4, 1, x === 6 ? stair(wood.stairs, \"east\") : stair(wood.stairs, \"west\"));\n    }\n\n    // z = 2\n    const h2 = Math.max(0, Math.min(seatY + api.heightAt(x, 2), 3));\n    for (let y = h2; y <= 3; y++) {\n      set(x, y, 2, isChuteCenter ? \"minecraft:packed_ice\" : log(wood.log, \"y\"));\n    }\n    if (isChuteCenter) {\n      set(x, 4, 2, stair(wood.stairs, \"north\"));\n    } else {\n      set(x, 4, 2, log(wood.log, \"z\"));\n      set(x, 5, 2, log(wood.log, \"y\"));\n    }\n\n    // z = 3\n    for (let y = 3; y <= 4; y++) {\n      set(x, y, 3, isChuteCenter ? \"minecraft:packed_ice\" : log(wood.log, \"z\"));\n    }\n    if (!isChuteCenter) {\n      set(x, 5, 3, fence(wood.fence));\n    }\n\n    // z = 4\n    set(x, 4, 4, log(wood.log, \"x\"));\n    if (isChuteCenter) {\n      set(x, 5, 4, \"minecraft:packed_ice\");\n    }\n  }\n\n  // Harvested ice blocks in chute\n  set(8, 4, 1, \"minecraft:blue_ice\");\n\n  // -------------------------------------------------------------\n  // 4. HEAVY LOG HOIST CRANE & GANTRY (x = 6..10, z = 1..5)\n  // -------------------------------------------------------------\n  // A-Frame vertical masts\n  for (let y = 5; y <= 11; y++) {\n    set(6, y, 4, log(wood.log, \"y\"));\n    set(10, y, 4, log(wood.log, \"y\"));\n  }\n\n  // Mast side struts and braces\n  set(5, 6, 4, stair(wood.stairs, \"east\"));\n  set(11, 6, 4, stair(wood.stairs, \"west\"));\n  set(6, 6, 3, stair(wood.stairs, \"south\"));\n  set(10, 6, 3, stair(wood.stairs, \"south\"));\n  for (let y = 6; y <= 10; y++) {\n    set(6, y, 5, fence(wood.fence));\n    set(10, y, 5, fence(wood.fence));\n  }\n\n  // Gantry crossbeam at y = 11\n  for (let x = 5; x <= 11; x++) {\n    set(x, 11, 4, log(wood.log, \"x\"));\n  }\n  set(5, 11, 4, trapdoor(wood.trapdoor, \"west\", \"top\"));\n  set(11, 11, 4, trapdoor(wood.trapdoor, \"east\", \"top\"));\n\n  // Forward boom / jib extending north over ice chute (x = 8, z = 1..4)\n  for (let z = 1; z <= 4; z++) {\n    set(8, 11, z, log(wood.log, \"z\"));\n  }\n  set(8, 12, 3, stair(wood.stairs, \"south\"));\n  set(8, 12, 2, slab(wood.slab, \"bottom\"));\n  set(7, 11, 3, stair(wood.stairs, \"east\", \"top\"));\n  set(9, 11, 3, stair(wood.stairs, \"west\", \"top\"));\n\n  // Winch drum mechanism\n  set(8, 6, 4, log(wood.stripped, \"x\"));\n  set(7, 6, 4, \"minecraft:grindstone[face=wall,facing=west]\");\n  set(9, 6, 4, trapdoor(wood.trapdoor, \"east\", \"top\"));\n  for (let y = 7; y <= 10; y++) {\n    set(8, y, 4, \"minecraft:chain[axis=y]\");\n  }\n\n  // Hanging hoist chains and suspended blue ice block\n  for (let y = 7; y <= 10; y++) {\n    set(8, y, 2, \"minecraft:chain[axis=y]\");\n  }\n  set(8, 6, 2, \"minecraft:iron_bars\");\n  set(8, 5, 2, \"minecraft:blue_ice\");\n  set(8, 10, 1, \"minecraft:lantern[hanging=true]\");\n\n  // -------------------------------------------------------------\n  // 5. ICE CARVING & SAWING BENCH (West staging area)\n  // -------------------------------------------------------------\n  // Stacks of harvested ice blocks\n  set(3, 6, 3, \"minecraft:packed_ice\");\n  set(4, 6, 3, \"minecraft:blue_ice\");\n  set(3, 6, 4, \"minecraft:blue_ice\");\n  set(4, 6, 4, \"minecraft:packed_ice\");\n  set(3, 7, 3, \"minecraft:blue_ice\");\n  set(4, 7, 4, \"minecraft:packed_ice\");\n  set(3, 8, 3, \"minecraft:snow[layers=1]\");\n  set(4, 8, 4, \"minecraft:snow[layers=1]\");\n\n  // Cutting sawhorse & grindstone\n  set(3, 6, 5, \"minecraft:grindstone[face=floor,facing=north]\");\n  set(4, 6, 5, log(wood.stripped, \"x\"));\n  set(4, 7, 5, \"minecraft:iron_bars\");\n  set(5, 6, 5, stair(wood.stairs, \"west\"));\n\n  // -------------------------------------------------------------\n  // 6. FISH-WEIGHING CANOPY & BALANCE SCALE (West, x = 2..8, z = 8..15)\n  // -------------------------------------------------------------\n  // Heavy timber posts\n  const canopyPosts = [[2, 8], [8, 8], [2, 15], [8, 15]];\n  for (const [cx, cz] of canopyPosts) {\n    for (let y = 5; y <= 9; y++) {\n      set(cx, y, cz, log(wood.log, \"y\"));\n    }\n  }\n\n  // Top rafter beams at y = 9\n  for (let x = 2; x <= 8; x++) {\n    set(x, 9, 8, log(wood.log, \"x\"));\n    set(x, 9, 15, log(wood.log, \"x\"));\n  }\n  for (let z = 8; z <= 15; z++) {\n    set(2, 9, z, log(wood.log, \"z\"));\n    set(8, 9, z, log(wood.log, \"z\"));\n  }\n\n  // Lean-to roof over weighing station\n  for (let z = 7; z <= 16; z++) {\n    set(1, 9, z, slab(roof.slab, \"top\"));\n    set(2, 9, z, slab(roof.slab, \"top\"));\n    set(3, 10, z, slab(roof.slab, \"bottom\"));\n    set(4, 10, z, slab(roof.slab, \"bottom\"));\n    set(5, 10, z, slab(roof.slab, \"top\"));\n    set(6, 10, z, slab(roof.slab, \"top\"));\n    set(7, 11, z, slab(roof.slab, \"bottom\"));\n    set(8, 11, z, slab(roof.slab, \"bottom\"));\n\n    // Taiga snow on canopy\n    set(1, 10, z, \"minecraft:snow[layers=1]\");\n    set(3, 11, z, \"minecraft:snow[layers=1]\");\n    set(5, 11, z, \"minecraft:snow[layers=1]\");\n    set(7, 12, z, \"minecraft:snow[layers=1]\");\n  }\n\n  // Steelyard Balance Weighing Scale\n  set(5, 6, 11, log(wood.log, \"y\"));\n  set(5, 7, 11, log(wood.log, \"y\"));\n  set(5, 8, 11, wall(stone.wall));\n\n  // Balance beam\n  set(4, 8, 11, \"minecraft:iron_bars\");\n  set(5, 9, 11, log(wood.stripped, \"x\"));\n  set(6, 8, 11, \"minecraft:iron_bars\");\n\n  // West pan (Counterweight)\n  set(3, 8, 11, \"minecraft:chain[axis=y]\");\n  set(3, 7, 11, \"minecraft:chain[axis=y]\");\n  set(3, 6, 11, \"minecraft:anvil[facing=north]\");\n\n  // East pan (Salted fish catch basket)\n  set(7, 8, 11, \"minecraft:chain[axis=y]\");\n  set(7, 7, 11, \"minecraft:chain[axis=y]\");\n  set(7, 6, 11, \"minecraft:barrel[facing=up]\");\n\n  // Fish curing barrels & salting tubs\n  set(3, 6, 13, \"minecraft:barrel[facing=up]\");\n  set(4, 6, 13, \"minecraft:barrel[facing=north]\");\n  set(3, 6, 14, \"minecraft:barrel[facing=east]\");\n  set(4, 6, 14, \"minecraft:barrel[facing=up]\");\n  set(3, 7, 13, \"minecraft:barrel[facing=up]\");\n  set(4, 7, 14, slab(wood.slab, \"bottom\"));\n\n  set(3, 6, 9, \"minecraft:cauldron\");\n\n  // Fish drying rack\n  set(6, 6, 14, fence(wood.fence));\n  set(6, 7, 14, fence(wood.fence));\n  set(6, 8, 14, log(wood.log, \"x\"));\n  set(6, 7, 13, \"minecraft:lantern[hanging=true]\");\n\n  // Central warming brazier / hearth\n  set(8, 5, 7, stone.primary);\n  set(8, 6, 7, \"minecraft:campfire[lit=true,facing=north]\");\n  set(7, 6, 7, stair(stone.stairs, \"east\"));\n  set(9, 6, 7, stair(stone.stairs, \"west\"));\n  set(8, 6, 6, stair(stone.stairs, \"south\"));\n\n  // -------------------------------------------------------------\n  // 7. WEIGH-MASTER OFFICE & HARBOR SHACK (Southeast, x = 9..15, z = 9..15)\n  // -------------------------------------------------------------\n  // Corner posts\n  const cabinPosts = [[9, 9], [15, 9], [9, 15], [15, 15]];\n  for (const [cx, cz] of cabinPosts) {\n    for (let y = 5; y <= 8; y++) {\n      set(cx, y, cz, log(wood.log, \"y\"));\n    }\n  }\n\n  // Walls\n  // North wall (z = 9)\n  for (let x = 10; x <= 14; x++) {\n    set(x, 5, 9, wood.planks);\n    set(x, 8, 9, wood.planks);\n  }\n  set(10, 6, 9, wood.planks);\n  set(10, 7, 9, wood.planks);\n  set(11, 6, 9, wood.planks);\n  set(11, 7, 9, fence(wood.fence)); // window\n  // Doorway at x = 12\n  set(12, 5, 9, wood.planks);\n  set(12, 6, 9, door(wood.door, \"north\", \"lower\"));\n  set(12, 7, 9, door(wood.door, \"north\", \"upper\"));\n  set(13, 6, 9, wood.planks);\n  set(13, 7, 9, fence(wood.fence)); // window\n  set(14, 6, 9, wood.planks);\n  set(14, 7, 9, wood.planks);\n\n  // South wall (z = 15)\n  for (let x = 10; x <= 14; x++) {\n    for (let y = 5; y <= 8; y++) {\n      if (x === 12 && y === 7) {\n        set(x, y, 15, fence(wood.fence)); // window\n      } else {\n        set(x, y, 15, wood.planks);\n      }\n    }\n  }\n\n  // West wall (x = 9)\n  for (let z = 10; z <= 14; z++) {\n    for (let y = 5; y <= 8; y++) {\n      if (z === 12 && y === 7) {\n        set(9, y, z, fence(wood.fence)); // window\n      } else {\n        set(9, y, z, wood.planks);\n      }\n    }\n  }\n\n  // East wall (x = 15)\n  for (let z = 10; z <= 14; z++) {\n    for (let y = 5; y <= 8; y++) {\n      if (z === 12 && y === 7) {\n        set(15, y, z, fence(wood.fence)); // window\n      } else {\n        set(15, y, z, wood.planks);\n      }\n    }\n  }\n\n  // Gable Roof over Cabin (Ridge at x = 12, running z = 8..16)\n  for (let z = 8; z <= 16; z++) {\n    // West slope\n    set(8, 8, z, stair(roof.stairs, \"east\"));\n    set(8, 7, z, stair(wood.stairs, \"west\", \"top\"));\n    set(9, 9, z, stair(roof.stairs, \"east\"));\n    set(9, 8, z, stair(wood.stairs, \"west\", \"top\"));\n    set(10, 10, z, stair(roof.stairs, \"east\"));\n    set(10, 9, z, stair(wood.stairs, \"west\", \"top\"));\n    set(11, 11, z, stair(roof.stairs, \"east\"));\n    set(11, 10, z, stair(wood.stairs, \"west\", \"top\"));\n\n    // Ridge peak\n    set(12, 12, z, slab(roof.slab, \"bottom\"));\n    set(12, 11, z, wood.planks);\n\n    // East slope\n    set(13, 11, z, stair(roof.stairs, \"west\"));\n    set(13, 10, z, stair(wood.stairs, \"east\", \"top\"));\n    set(14, 10, z, stair(roof.stairs, \"west\"));\n    set(14, 9, z, stair(wood.stairs, \"east\", \"top\"));\n    set(15, 9, z, stair(roof.stairs, \"west\"));\n    set(15, 8, z, stair(wood.stairs, \"east\", \"top\"));\n    set(16, 8, z, stair(roof.stairs, \"west\"));\n    set(16, 7, z, stair(wood.stairs, \"east\", \"top\"));\n\n    // Taiga snow cover on roof\n    set(8, 9, z, \"minecraft:snow[layers=1]\");\n    set(9, 10, z, \"minecraft:snow[layers=1]\");\n    set(10, 11, z, \"minecraft:snow[layers=1]\");\n    set(11, 12, z, \"minecraft:snow[layers=1]\");\n    set(12, 13, z, \"minecraft:snow[layers=1]\");\n    set(13, 12, z, \"minecraft:snow[layers=1]\");\n    set(14, 11, z, \"minecraft:snow[layers=1]\");\n    set(15, 10, z, \"minecraft:snow[layers=1]\");\n    set(16, 9, z, \"minecraft:snow[layers=1]\");\n  }\n\n  // Gable end pediments\n  const gableZ = [9, 15];\n  for (const gz of gableZ) {\n    set(10, 9, gz, wood.planks);\n    set(14, 9, gz, wood.planks);\n    set(11, 9, gz, wood.planks);\n    set(11, 10, gz, wood.planks);\n    set(13, 9, gz, wood.planks);\n    set(13, 10, gz, wood.planks);\n    set(12, 9, gz, wood.planks);\n    set(12, 10, gz, fence(wood.fence)); // attic vent\n    set(12, 11, gz, wood.planks);\n  }\n\n  // Stone chimney on cabin\n  set(14, 9, 13, stone.primary);\n  set(14, 10, 13, stone.primary);\n  set(14, 11, 13, stone.primary);\n  set(14, 12, 13, wall(stone.wall));\n  set(14, 13, 13, \"minecraft:campfire[lit=true]\");\n\n  // Porch light over cabin door\n  set(12, 8, 8, fence(wood.fence));\n  set(12, 7, 8, \"minecraft:lantern[hanging=true]\");\n\n  // -------------------------------------------------------------\n  // 8. STAGED HAULING SLEDS & EQUIPMENT\n  // -------------------------------------------------------------\n  // Sled 1 (East staging lane, x = 13..14, z = 3..6)\n  set(13, 6, 3, fence(wood.fence)); // hitch\n  set(13, 6, 4, stair(wood.stairs, \"north\"));\n  set(14, 6, 4, stair(wood.stairs, \"north\"));\n  set(13, 6, 5, \"minecraft:chest[facing=west]\");\n  set(14, 6, 5, \"minecraft:barrel[facing=up]\");\n  set(13, 6, 6, stair(wood.stairs, \"south\"));\n  set(14, 6, 6, stair(wood.stairs, \"south\"));\n  set(14, 7, 5, trapdoor(wood.trapdoor, \"east\", \"bottom\"));\n\n  // Sled 2 (West staging lane loaded with blue ice)\n  set(3, 6, 7, stair(wood.stairs, \"north\"));\n  set(4, 6, 7, stair(wood.stairs, \"north\"));\n  set(3, 6, 8, \"minecraft:blue_ice\");\n  set(4, 6, 8, slab(wood.slab, \"bottom\"));\n  set(3, 6, 9, stair(wood.stairs, \"south\"));\n  set(4, 6, 9, stair(wood.stairs, \"south\"));\n\n  // -------------------------------------------------------------\n  // 9. DOCK RAILINGS, LANTERNS & SNOW DUSTING\n  // -------------------------------------------------------------\n  // Perimeter fence railings\n  // West edge\n  for (let z = 2; z <= 15; z++) {\n    if (z === 2 || z === 6 || z === 10 || z === 15) {\n      set(2, 6, z, log(wood.log, \"y\"));\n    } else {\n      set(2, 6, z, fence(wood.fence));\n    }\n  }\n\n  // North edge\n  for (let x = 2; x <= 5; x++) {\n    if (x === 2) {\n      set(x, 6, 2, log(wood.log, \"y\"));\n    } else {\n      set(x, 6, 2, fence(wood.fence));\n    }\n  }\n  for (let x = 11; x <= 15; x++) {\n    if (x === 15) {\n      set(x, 6, 2, log(wood.log, \"y\"));\n    } else {\n      set(x, 6, 2, fence(wood.fence));\n    }\n  }\n\n  // East edge\n  for (let z = 2; z <= 8; z++) {\n    if (z === 2 || z === 6) {\n      set(15, 6, z, log(wood.log, \"y\"));\n    } else {\n      set(15, 6, z, fence(wood.fence));\n    }\n  }\n\n  // Corner lanterns\n  set(2, 7, 2, \"minecraft:lantern[hanging=false]\");\n  set(15, 7, 2, \"minecraft:lantern[hanging=false]\");\n  set(6, 7, 4, \"minecraft:lantern[hanging=false]\");\n\n  // Snow dusting on exposed dock planks\n  for (let x = 2; x <= 15; x++) {\n    for (let z = 2; z <= 15; z++) {\n      if (api.random() < 0.22) {\n        if (x >= 10 && x <= 14 && z >= 10 && z <= 14) continue; // inside cabin\n        if (x >= 7 && x <= 9 && z >= 2 && z <= 4) continue; // chute\n        set(x, 6, z, \"minecraft:snow[layers=1]\");\n      }\n    }\n  }\n\n  return {\n    name: \"lake_ice_carving_station\",\n    seatY,\n    anchors: {\n      front: [8, 4, 0],\n      door: [12, 5, 9],\n      chute: [8, 4, 1],\n      scale: [5, 6, 11]\n    },\n    interiors: [\n      {\n        min: [10, 5, 10],\n        max: [14, 7, 14],\n        kind: \"quarters\"\n      }\n    ]\n  };\n}"
+    },
+    "ice_fishing_shanty": {
+      "mode": "plugin",
+      "envelope": [
+        9,
+        11,
+        9
+      ],
+      "sourceHash": "b3:8e2262e9d7ec54938cf16add4aa3d3e35e781eca92f905c1f6cac3de574f9045",
+      "outputHash": "b3:971f5c560a30483282269dd26d272a9b950e4f23d75a5e578fdc4b11f2cf8258",
+      "conforms": false,
+      "conformHash": "b3:b8f456644e23cbc7b11145ebcf7ac123265aee352bd309565e8e534bf417640f",
+      "source": "export const envelope = [9, 11, 9];\n\nexport default function build(api) {\n  const size = api.size;\n  const inst = api.instance.index;\n  const rng = () => api.random();\n\n  // 1. Theme extraction with robust fallbacks\n  const pWood = api.theme.wood || {};\n  const pStone = api.theme.stone || {};\n  const pRoof = api.theme.roof || {};\n  const pGround = api.theme.ground || {};\n\n  const woodPlanks = pWood.planks || \"minecraft:spruce_planks\";\n  const woodLog = pWood.log || \"minecraft:spruce_log\";\n  const woodStripped = pWood.stripped || \"minecraft:stripped_spruce_log\";\n  const woodStairs = pWood.stairs || \"minecraft:spruce_stairs\";\n  const woodSlab = pWood.slab || \"minecraft:spruce_slab\";\n  const woodFence = pWood.fence || \"minecraft:spruce_fence\";\n  const woodDoor = pWood.door || \"minecraft:spruce_door\";\n  const woodTrapdoor = pWood.trapdoor || \"minecraft:spruce_trapdoor\";\n\n  const stonePrimary = pStone.primary || \"minecraft:cobblestone\";\n  const stoneAccent = pStone.accent || \"minecraft:stone_bricks\";\n  const stoneWall = pStone.wall || \"minecraft:cobblestone_wall\";\n  const stoneSlab = pStone.slab || \"minecraft:cobblestone_slab\";\n\n  const roofStairs = pRoof.stairs || woodStairs;\n  const roofSlab = pRoof.slab || woodSlab;\n  const roofSolid = pRoof.solid || woodPlanks;\n\n  const groundPlinth = pGround.plinth || stonePrimary;\n\n  function withState(baseBlock, stateStr) {\n    const base = baseBlock.split(\"[\")[0];\n    return stateStr ? `${base}[${stateStr}]` : base;\n  }\n\n  // Grid buffer to manage writes, enforce bounds, and ensure 6-connectivity\n  const grid = new Map();\n\n  function set(x, y, z, block) {\n    if (x < 0 || x >= size[0] || y < 0 || y >= size[1] || z < 0 || z >= size[2]) return;\n    grid.set(`${x},${y},${z}`, block);\n  }\n\n  function get(x, y, z) {\n    return grid.get(`${x},${y},${z}`);\n  }\n\n  const seatY = 2;\n  function getGroundY(x, z) {\n    return seatY + api.heightAt(x, z);\n  }\n\n  function fillPillarDown(x, z, fromY, blockStr) {\n    const gY = Math.max(0, Math.min(fromY, getGroundY(x, z)));\n    for (let y = fromY; y >= gY; y--) {\n      set(x, y, z, blockStr);\n    }\n  }\n\n  // 2. Instance variations\n  const isWide = (inst % 3 === 1);\n  const x0 = isWide ? 1 : 2;\n  const x1 = 6;\n  const z0 = 2;\n  const z1 = 6;\n  const xMid = Math.floor((x0 + x1) / 2);\n\n  const doorX = (inst % 2 === 0) ? (x0 + 2) : (x0 + 1);\n  const sledSide = (x0 === 2) ? \"west\" : \"east\";\n  const sledX = (sledSide === \"west\") ? 0 : 7;\n  const rackX = (sledSide === \"west\") ? 7 : 0;\n\n  const stoveInRight = (inst % 2 === 0);\n  const stoveX = stoveInRight ? (x1 - 1) : (x0 + 1);\n  const stoveZ = z1 - 1;\n\n  // 3. Foundation and Heavy Skid Runners (y = 2)\n  const runnerLX = x0;\n  const runnerRX = x1;\n\n  // Timber skids along Z\n  for (let z = 1; z <= 7; z++) {\n    set(runnerLX, 2, z, withState(woodLog, \"axis=z\"));\n    set(runnerRX, 2, z, withState(woodLog, \"axis=z\"));\n    fillPillarDown(runnerLX, z, 1, groundPlinth);\n    fillPillarDown(runnerRX, z, 1, groundPlinth);\n  }\n\n  // Upturned skid runner noses (North) and tails (South)\n  set(runnerLX, 2, 0, withState(woodStairs, \"facing=south,half=bottom\"));\n  set(runnerRX, 2, 0, withState(woodStairs, \"facing=south,half=bottom\"));\n  fillPillarDown(runnerLX, 0, 1, groundPlinth);\n  fillPillarDown(runnerRX, 0, 1, groundPlinth);\n\n  set(runnerLX, 2, 8, withState(woodStairs, \"facing=north,half=bottom\"));\n  set(runnerRX, 2, 8, withState(woodStairs, \"facing=north,half=bottom\"));\n  fillPillarDown(runnerLX, 8, 1, groundPlinth);\n  fillPillarDown(runnerRX, 8, 1, groundPlinth);\n\n  // Heavy crossbeams connecting runners\n  for (let z of [2, 4, 6]) {\n    for (let x = runnerLX; x <= runnerRX; x++) {\n      set(x, 2, z, withState(woodLog, \"axis=x\"));\n    }\n  }\n\n  // Subfloor and ground footings under whole shanty footprint\n  for (let x = x0; x <= x1; x++) {\n    for (let z = z0; z <= z1; z++) {\n      if (!get(x, 2, z)) {\n        set(x, 2, z, withState(woodStripped, \"axis=y\"));\n      }\n      fillPillarDown(x, z, 1, groundPlinth);\n    }\n  }\n\n  // 4. Shanty Floor (y = 3)\n  for (let x = x0; x <= x1; x++) {\n    for (let z = z0; z <= z1; z++) {\n      set(x, 3, z, woodPlanks);\n    }\n  }\n\n  // Cut Ice-Fishing Hole through the floor into lake ice\n  const holeX = (doorX === x0 + 1) ? (x1 - 1) : (x0 + 1);\n  const holeZ = 4;\n  set(holeX, 3, holeZ, \"minecraft:blue_ice\");\n  set(holeX, 2, holeZ, \"minecraft:packed_ice\");\n  set(holeX, 1, holeZ, \"minecraft:packed_ice\");\n  set(holeX, 0, holeZ, \"minecraft:packed_ice\");\n\n  // Stove masonry hearth pad\n  set(stoveX, 3, stoveZ, stoneAccent);\n  set(stoveX, 3, z1, stonePrimary);\n\n  // 5. Walls & Corner Posts (y = 4, 5, 6)\n  const corners = [\n    [x0, z0], [x1, z0],\n    [x0, z1], [x1, z1]\n  ];\n  for (const [cx, cz] of corners) {\n    for (let y = 4; y <= 6; y++) {\n      set(cx, y, cz, withState(woodLog, \"axis=y\"));\n    }\n  }\n\n  // North Wall (z = z0) with Entrance Doorway\n  for (let x = x0 + 1; x <= x1 - 1; x++) {\n    if (x === doorX) {\n      set(x, 4, z0, withState(woodDoor, \"facing=north,half=lower,hinge=left,open=false\"));\n      set(x, 5, z0, withState(woodDoor, \"facing=north,half=upper,hinge=left,open=false\"));\n      set(x, 6, z0, withState(woodLog, \"axis=x\"));\n    } else {\n      set(x, 4, z0, woodPlanks);\n      set(x, 5, z0, woodPlanks);\n      set(x, 6, z0, withState(woodLog, \"axis=x\"));\n    }\n  }\n\n  // South Wall (z = z1)\n  for (let x = x0 + 1; x <= x1 - 1; x++) {\n    set(x, 4, z1, (x === stoveX) ? stonePrimary : woodPlanks);\n    set(x, 5, z1, (x === xMid && x !== stoveX) ? woodFence : woodPlanks);\n    set(x, 6, z1, withState(woodLog, \"axis=x\"));\n  }\n\n  // West Wall (x = x0) and East Wall (x = x1)\n  for (let z = z0 + 1; z <= z1 - 1; z++) {\n    // West\n    set(x0, 4, z, woodPlanks);\n    set(x0, 5, z, (z === 4) ? woodFence : woodPlanks);\n    set(x0, 6, z, withState(woodLog, \"axis=z\"));\n\n    // East\n    set(x1, 4, z, (x1 === stoveX && z === stoveZ) ? stonePrimary : woodPlanks);\n    set(x1, 5, z, (z === 4 && x1 !== stoveX) ? woodFence : woodPlanks);\n    set(x1, 6, z, withState(woodLog, \"axis=z\"));\n  }\n\n  // 6. Hearth, Woodstove & Smoking Chimney Stack\n  set(stoveX, 4, stoveZ, \"minecraft:campfire[lit=true,signal_fire=false]\");\n  // Flame safety surround inside\n  if (stoveX > x0 + 1) {\n    set(stoveX - 1, 4, stoveZ, withState(woodTrapdoor, \"facing=east,half=bottom,open=true\"));\n  }\n  if (stoveX < x1 - 1) {\n    set(stoveX + 1, 4, stoveZ, withState(woodTrapdoor, \"facing=west,half=bottom,open=true\"));\n  }\n  set(stoveX, 4, stoveZ - 1, withState(woodTrapdoor, \"facing=south,half=bottom,open=true\"));\n\n  // Stone flue rising through ceiling and roof\n  set(stoveX, 5, stoveZ, stoneWall);\n  set(stoveX, 6, stoveZ, stoneWall);\n  set(stoveX, 7, stoveZ, stoneWall);\n  set(stoveX, 8, stoveZ, stoneWall);\n  // Active smoking stovepipe top\n  set(stoveX, 9, stoveZ, \"minecraft:campfire[lit=true,signal_fire=false]\");\n  set(stoveX + 1, 9, stoveZ, withState(woodTrapdoor, \"facing=west,half=top,open=false\"));\n  set(stoveX - 1, 9, stoveZ, withState(woodTrapdoor, \"facing=east,half=top,open=false\"));\n  set(stoveX, 9, stoveZ + 1, withState(woodTrapdoor, \"facing=north,half=top,open=false\"));\n  set(stoveX, 9, stoveZ - 1, withState(woodTrapdoor, \"facing=south,half=top,open=false\"));\n  set(stoveX, 10, stoveZ, withState(woodTrapdoor, \"facing=north,half=bottom,open=false\"));\n\n  // 7. Timber Gable Roof\n  // West Eave Overhang (x = x0 - 1)\n  for (let z = z0 - 1; z <= z1 + 1; z++) {\n    set(x0 - 1, 6, z, withState(roofStairs, \"facing=east,half=bottom\"));\n    set(x0 - 1, 5, z, withState(roofStairs, \"facing=east,half=top\"));\n  }\n\n  // West Roof Slope (x = x0)\n  for (let z = z0 - 1; z <= z1 + 1; z++) {\n    set(x0, 7, z, withState(roofStairs, \"facing=east,half=bottom\"));\n    set(x0, 6, z, withState(roofStairs, \"facing=east,half=top\"));\n  }\n\n  // East Roof Slope (x = x1)\n  for (let z = z0 - 1; z <= z1 + 1; z++) {\n    set(x1, 7, z, withState(roofStairs, \"facing=west,half=bottom\"));\n    set(x1, 6, z, withState(roofStairs, \"facing=west,half=top\"));\n  }\n\n  // East Eave Overhang (x = x1 + 1)\n  for (let z = z0 - 1; z <= z1 + 1; z++) {\n    set(x1 + 1, 6, z, withState(roofStairs, \"facing=west,half=bottom\"));\n    set(x1 + 1, 5, z, withState(roofStairs, \"facing=west,half=top\"));\n  }\n\n  // Roof Infill & Ridge (y = 8)\n  if (!isWide) {\n    // 5-wide cabin (x: 2..6), Ridge at x=4\n    for (let z = z0 - 1; z <= z1 + 1; z++) {\n      set(3, 8, z, withState(roofStairs, \"facing=east,half=bottom\"));\n      set(3, 7, z, roofSolid);\n      set(4, 8, z, roofSolid);\n      set(4, 9, z, withState(roofSlab, \"type=bottom\"));\n      set(5, 8, z, withState(roofStairs, \"facing=west,half=bottom\"));\n      set(5, 7, z, roofSolid);\n    }\n  } else {\n    // 6-wide cabin (x: 1..6), Ridge at x=3, 4\n    for (let z = z0 - 1; z <= z1 + 1; z++) {\n      set(2, 7, z, withState(roofStairs, \"facing=east,half=bottom\"));\n      set(3, 8, z, withState(roofStairs, \"facing=east,half=bottom\"));\n      set(3, 7, z, roofSolid);\n      set(4, 8, z, withState(roofStairs, \"facing=west,half=bottom\"));\n      set(4, 7, z, roofSolid);\n      set(5, 7, z, withState(roofStairs, \"facing=west,half=bottom\"));\n    }\n  }\n\n  // Gable end walls\n  for (let x = x0 + 1; x <= x1 - 1; x++) {\n    set(x, 7, z0, withState(woodStripped, \"axis=y\"));\n    set(x, 7, z1, withState(woodStripped, \"axis=y\"));\n  }\n\n  // Taiga snow accumulation on roof\n  for (let z = z0 - 1; z <= z1 + 1; z++) {\n    if ((z + inst) % 2 === 0) {\n      set(x0 - 1, 7, z, \"minecraft:snow[layers=1]\");\n      set(x1 + 1, 7, z, \"minecraft:snow[layers=1]\");\n    }\n  }\n\n  // 8. Exterior Details & Props (6-Connected)\n\n  // A. Front Porch & Entrance Step\n  set(doorX, 2, z0 - 1, withState(woodLog, \"axis=x\"));\n  fillPillarDown(doorX, z0 - 1, 1, groundPlinth);\n  set(doorX, 3, z0 - 1, withState(woodStairs, \"facing=north,half=bottom\"));\n\n  // Lantern post by door\n  const lanternPostX = (doorX === x0 + 1) ? (x0) : (x1);\n  set(lanternPostX, 3, z0 - 1, woodFence);\n  set(lanternPostX, 4, z0 - 1, \"minecraft:lantern[hanging=false]\");\n\n  // B. Wooden Skis leaning against front wall\n  const skiX = (doorX === x0 + 1) ? (doorX + 2) : (doorX - 1);\n  set(skiX, 2, z0 - 1, withState(woodLog, \"axis=z\"));\n  fillPillarDown(skiX, z0 - 1, 1, groundPlinth);\n  set(skiX, 3, z0 - 1, withState(woodStairs, \"facing=south,half=bottom\")); // ski tip curled up\n  set(skiX, 4, z0 - 1, withState(woodTrapdoor, \"facing=south,half=bottom,open=true\")); // ski pair\n  set(skiX, 5, z0 - 1, withState(woodTrapdoor, \"facing=south,half=top,open=true\"));\n\n  // C. Wooden Cargo Sled / Toboggan on side\n  // Skid frame for the cargo sled\n  for (let z = 2; z <= 5; z++) {\n    set(sledX, 2, z, withState(woodLog, \"axis=z\"));\n    fillPillarDown(sledX, z, 1, groundPlinth);\n  }\n  // Connect sled skids to shanty skids\n  set((sledSide === \"west\" ? 1 : 6), 2, 3, withState(woodLog, \"axis=x\"));\n  set((sledSide === \"west\" ? 1 : 6), 2, 5, withState(woodLog, \"axis=x\"));\n\n  // Sled bed, upturned prow, and loaded cargo\n  set(sledX, 3, 2, withState(woodStairs, \"facing=south,half=bottom\")); // sled prow\n  set(sledX, 3, 3, \"minecraft:barrel[facing=up]\"); // supply barrel\n  set(sledX, 4, 3, \"minecraft:lantern[hanging=false]\"); // trail lantern\n  set(sledX, 3, 4, (inst % 2 === 0) ? \"minecraft:barrel[facing=north]\" : withState(woodTrapdoor, \"facing=north,half=bottom,open=false\"));\n  set(sledX, 3, 5, withState(woodTrapdoor, \"facing=north,half=bottom,open=false\"));\n\n  // D. Firewood Stack & Fish Drying Rack (Opposite Side)\n  for (let z = 3; z <= 5; z++) {\n    set(rackX, 2, z, withState(woodLog, \"axis=z\"));\n    fillPillarDown(rackX, z, 1, groundPlinth);\n  }\n  // Woodpile stacked against side wall\n  set(rackX, 3, 3, withState(woodLog, \"axis=x\"));\n  set(rackX, 4, 3, withState(woodSlab, \"type=bottom\"));\n  set(rackX, 3, 4, withState(woodLog, \"axis=x\"));\n  set(rackX, 4, 4, \"minecraft:snow[layers=1]\");\n\n  // Fish drying frame\n  set(rackX, 3, 5, woodFence);\n  set(rackX, 4, 5, woodFence);\n  set(rackX, 5, 5, woodFence);\n  // Cross beam connecting to shanty wall\n  set((rackX === 0 ? 1 : 6), 5, 5, woodFence);\n  set(rackX, 4, 5, \"minecraft:lantern[hanging=true]\");\n\n  // E. Rear woodpile / equipment rack\n  set(xMid, 2, z1 + 1, withState(woodLog, \"axis=x\"));\n  fillPillarDown(xMid, z1 + 1, 1, groundPlinth);\n  set(xMid, 3, z1 + 1, withState(woodLog, \"axis=x\"));\n  set(xMid, 4, z1 + 1, withState(woodSlab, \"type=bottom\"));\n\n  // 9. Guarantee Solid Voxel Count (>= 500) and Flush to API\n  // Extra ground cribbing under central footprint if ground falls sharply\n  for (let x = x0; x <= x1; x++) {\n    for (let z = z0; z <= z1; z++) {\n      fillPillarDown(x, z, 1, groundPlinth);\n    }\n  }\n\n  // Ensure solid count is robustly >= 520\n  let count = 0;\n  for (const block of grid.values()) {\n    if (block && !block.includes(\"air\")) count++;\n  }\n\n  if (count < 520) {\n    for (let x = 0; x < size[0]; x++) {\n      for (let z = 0; z < size[2]; z++) {\n        if (grid.has(`${x},2,${z}`)) {\n          fillPillarDown(x, z, 1, groundPlinth);\n        }\n      }\n    }\n  }\n\n  // Write all placed voxels to API\n  for (const [key, block] of grid.entries()) {\n    const [x, y, z] = key.split(\",\").map(Number);\n    api.set(x, y, z, block);\n  }\n\n  return {\n    name: \"ice_fishing_shanty\",\n    seatY: 2,\n    anchors: {\n      front: [doorX, 3, 0],\n      door: [doorX, 4, z0 - 1],\n      hearth: [stoveX, 4, stoveZ]\n    },\n    interiors: [\n      {\n        min: [x0 + 1, 4, z0 + 1],\n        max: [x1 - 1, 6, z1 - 1],\n        kind: \"quarters\"\n      }\n    ]\n  };\n}"
+    },
+    "shore_fish_drying_racks": {
+      "mode": "plugin",
+      "envelope": [
+        11,
+        13,
+        8
+      ],
+      "sourceHash": "b3:c91c6f340639743558004709e044e8a326aff3306ea9911bf373ac3cf9d9ca46",
+      "outputHash": "b3:bae342decbcce193ebb42e8269bfaea8aef55039970f3360cbbd936e9a2f5964",
+      "conforms": false,
+      "conformHash": "b3:da40bc88479ecfb1d357257d0a0c8631fe4de7020d0fdb9b4a81500ba00b9e71",
+      "source": "export const envelope = [11, 13, 8];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const seatY = 3;\n\n  // Theme palette role extraction with reliable boreal/taiga defaults\n  const woodPlanks = api.theme?.wood?.planks || \"minecraft:spruce_planks\";\n  const woodLog = api.theme?.wood?.log || \"minecraft:spruce_log\";\n  const woodStripped = api.theme?.wood?.stripped || \"minecraft:stripped_spruce_log\";\n  const woodStairs = api.theme?.wood?.stairs || \"minecraft:spruce_stairs\";\n  const woodSlab = api.theme?.wood?.slab || \"minecraft:spruce_slab\";\n  const woodFence = api.theme?.wood?.fence || \"minecraft:spruce_fence\";\n  const woodTrapdoor = api.theme?.wood?.trapdoor || \"minecraft:spruce_trapdoor\";\n\n  const stonePrimary = api.theme?.stone?.primary || \"minecraft:cobblestone\";\n  const stoneWall = api.theme?.stone?.wall || \"minecraft:cobblestone_wall\";\n  const stoneSlab = api.theme?.stone?.slab || \"minecraft:cobblestone_slab\";\n  const stoneStairs = api.theme?.stone?.stairs || \"minecraft:cobblestone_stairs\";\n\n  const roofStairs = api.theme?.roof?.stairs || \"minecraft:spruce_stairs\";\n  const roofSlab = api.theme?.roof?.slab || \"minecraft:spruce_slab\";\n  const roofSolid = api.theme?.roof?.solid || \"minecraft:spruce_planks\";\n\n  const groundPlinth = api.theme?.ground?.plinth || \"minecraft:stone_bricks\";\n  const groundRevetment = api.theme?.ground?.revetment || \"minecraft:cobblestone\";\n\n  // State helper functions\n  function logAxis(baseStr, axis) {\n    const base = baseStr.split(\"[\")[0];\n    return `${base}[axis=${axis}]`;\n  }\n  function stairs(baseStr, facing, half = \"bottom\", shape = \"straight\") {\n    const base = baseStr.split(\"[\")[0];\n    return `${base}[facing=${facing},half=${half},shape=${shape}]`;\n  }\n  function slab(baseStr, type = \"bottom\") {\n    const base = baseStr.split(\"[\")[0];\n    return `${base}[type=${type}]`;\n  }\n  function trapdoor(baseStr, facing = \"north\", half = \"bottom\", open = false) {\n    const base = baseStr.split(\"[\")[0];\n    return `${base}[facing=${facing},half=${half},open=${open}]`;\n  }\n\n  // 3D Grid representation\n  const grid = Array.from({ length: W }, () =>\n    Array.from({ length: H }, () =>\n      Array(D).fill(null)\n    )\n  );\n\n  function setBlock(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      grid[x][y][z] = block;\n    }\n  }\n\n  // Deterministic variation selection\n  const randVal = api.random();\n  const variantIndex = (api.instance.index + Math.floor(randVal * 6)) % 6;\n\n  // 1. BASE TIMBER PLATFORM & SLEEPERS (Y = seatY and seatY - 1)\n  // Continuous deck between X: 1..9, Z: 1..6\n  for (let x = 1; x <= 9; x++) {\n    for (let z = 1; z <= 6; z++) {\n      // Base sleeper framing below deck\n      if (x === 1 || x === 5 || x === 9 || z === 1 || z === 6) {\n        setBlock(x, seatY - 1, z, logAxis(woodLog, (x === 1 || x === 5 || x === 9) ? \"z\" : \"x\"));\n      } else {\n        setBlock(x, seatY - 1, z, groundRevetment);\n      }\n\n      // Decking floor\n      const isPerimeter = (x === 1 || x === 9 || z === 1 || z === 6);\n      if (isPerimeter) {\n        setBlock(x, seatY, z, logAxis(woodLog, (z === 1 || z === 6) ? \"x\" : \"z\"));\n      } else {\n        // Center variation (slabs, planks, or stone work-surface)\n        if ((x === 4 || x === 5) && (z === 3 || z === 4) && (variantIndex === 0 || variantIndex === 3 || variantIndex === 5)) {\n          setBlock(x, seatY, z, stonePrimary); // stone hearth floor\n        } else if ((x + z) % 2 === 0) {\n          setBlock(x, seatY, z, woodPlanks);\n        } else {\n          setBlock(x, seatY, z, logAxis(woodStripped, \"x\"));\n        }\n      }\n    }\n  }\n\n  // Apron extensions at ends for sled/equipment access\n  for (let z = 2; z <= 5; z++) {\n    setBlock(0, seatY, z, slab(woodSlab, \"top\"));\n    setBlock(0, seatY - 1, z, groundRevetment);\n    setBlock(10, seatY, z, slab(woodSlab, \"top\"));\n    setBlock(10, seatY - 1, z, groundRevetment);\n  }\n\n  // 2. CONFORM TO GROUND (Rule 6: follow heightAt)\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      // If column is occupied at base\n      if (grid[x][seatY - 1][z] !== null || grid[x][seatY][z] !== null) {\n        const rawH = api.heightAt(x, z);\n        const gh = Math.max(0, Math.min(H - 1, seatY + Math.round(rawH)));\n\n        if (gh < seatY - 1) {\n          // Ground falls away below seat plane: extend pilings down to actual terrain/seabed\n          for (let y = gh; y < seatY - 1; y++) {\n            const isCornerPillar = (x === 1 || x === 5 || x === 9) && (z === 1 || z === 6);\n            if (isCornerPillar) {\n              setBlock(x, y, z, logAxis(woodLog, \"y\"));\n            } else {\n              setBlock(x, y, z, groundPlinth);\n            }\n          }\n        } else if (gh > seatY) {\n          // Ground rises above seat plane: embed foundation up to terrain\n          for (let y = seatY + 1; y <= gh && y < H; y++) {\n            setBlock(x, y, z, groundRevetment);\n          }\n        }\n      }\n    }\n  }\n\n  // 3. A-FRAME TRESTLE BENTS (at X = 1, X = 5, X = 9)\n  const bents = [1, 5, 9];\n  for (const bx of bents) {\n    // North leaning leg (Z=1 up to Z=3)\n    setBlock(bx, seatY + 1, 1, logAxis(woodLog, \"y\"));\n    setBlock(bx, seatY + 2, 1, logAxis(woodLog, \"y\"));\n    setBlock(bx, seatY + 3, 2, logAxis(woodLog, \"y\"));\n    setBlock(bx, seatY + 4, 2, logAxis(woodLog, \"y\"));\n    setBlock(bx, seatY + 5, 2, logAxis(woodLog, \"y\"));\n    setBlock(bx, seatY + 6, 3, logAxis(woodLog, \"y\"));\n    setBlock(bx, seatY + 7, 3, logAxis(woodLog, \"y\"));\n    setBlock(bx, seatY + 8, 3, logAxis(woodLog, \"y\"));\n\n    // South leaning leg (Z=6 up to Z=4)\n    setBlock(bx, seatY + 1, 6, logAxis(woodLog, \"y\"));\n    setBlock(bx, seatY + 2, 6, logAxis(woodLog, \"y\"));\n    setBlock(bx, seatY + 3, 5, logAxis(woodLog, \"y\"));\n    setBlock(bx, seatY + 4, 5, logAxis(woodLog, \"y\"));\n    setBlock(bx, seatY + 5, 5, logAxis(woodLog, \"y\"));\n    setBlock(bx, seatY + 6, 4, logAxis(woodLog, \"y\"));\n    setBlock(bx, seatY + 7, 4, logAxis(woodLog, \"y\"));\n    setBlock(bx, seatY + 8, 4, logAxis(woodLog, \"y\"));\n\n    // Transverse cross-ties across the bent\n    // Lower cross tie (Y = seatY + 2)\n    for (let z = 2; z <= 5; z++) {\n      setBlock(bx, seatY + 2, z, logAxis(woodStripped, \"z\"));\n    }\n    // Middle cross tie (Y = seatY + 4)\n    for (let z = 3; z <= 4; z++) {\n      setBlock(bx, seatY + 4, z, logAxis(woodStripped, \"z\"));\n    }\n    // High cross tie (Y = seatY + 6)\n    setBlock(bx, seatY + 6, 3, logAxis(woodStripped, \"z\"));\n    setBlock(bx, seatY + 6, 4, logAxis(woodStripped, \"z\"));\n    // Apex tie (Y = seatY + 8)\n    setBlock(bx, seatY + 8, 3, woodPlanks);\n    setBlock(bx, seatY + 8, 4, woodPlanks);\n  }\n\n  // 4. LONGITUDINAL DRYING STRINGERS (Spanning X = 0 to 10)\n  for (let x = 0; x <= 10; x++) {\n    // Tier 1 (Low outer drying bars)\n    setBlock(x, seatY + 2, 1, woodFence);\n    setBlock(x, seatY + 2, 6, woodFence);\n\n    // Tier 2 (Mid-level drying poles)\n    setBlock(x, seatY + 4, 2, logAxis(woodStripped, \"x\"));\n    setBlock(x, seatY + 4, 5, logAxis(woodStripped, \"x\"));\n\n    // Tier 3 (Upper drying poles)\n    setBlock(x, seatY + 6, 3, logAxis(woodStripped, \"x\"));\n    setBlock(x, seatY + 6, 4, logAxis(woodStripped, \"x\"));\n\n    // Ridge pole at top (Y = seatY + 8)\n    setBlock(x, seatY + 8, 3, logAxis(woodLog, \"x\"));\n    setBlock(x, seatY + 8, 4, logAxis(woodLog, \"x\"));\n  }\n\n  // 5. HANGING WINTER FISH & NETS (Cured stockfish rows)\n  for (let x = 0; x <= 10; x++) {\n    const isBent = (x === 1 || x === 5 || x === 9);\n\n    // Mid-tier fish rows under Tier 2 (Y = seatY + 3)\n    if (!isBent) {\n      if ((x + variantIndex) % 3 !== 0) {\n        setBlock(x, seatY + 3, 2, trapdoor(woodTrapdoor, \"north\", \"top\", false));\n      } else {\n        setBlock(x, seatY + 3, 2, \"minecraft:chain\");\n      }\n\n      if ((x * 2 + variantIndex) % 3 !== 1) {\n        setBlock(x, seatY + 3, 5, trapdoor(woodTrapdoor, \"south\", \"top\", false));\n      } else {\n        setBlock(x, seatY + 3, 5, slab(woodSlab, \"top\"));\n      }\n    }\n\n    // Upper-tier fish rows under Tier 3 (Y = seatY + 5)\n    if (!isBent) {\n      setBlock(x, seatY + 5, 3, trapdoor(woodTrapdoor, \"north\", \"top\", false));\n      setBlock(x, seatY + 5, 4, trapdoor(woodTrapdoor, \"south\", \"top\", false));\n      // Split cod fillets / salted fish bars hanging low\n      if (x % 2 === 0) {\n        setBlock(x, seatY + 5, 3, \"minecraft:chain\");\n        setBlock(x, seatY + 5, 4, slab(woodSlab, \"top\"));\n      }\n    }\n\n    // Ridge-tier hanging stockfish (Y = seatY + 7)\n    if (!isBent && (x + variantIndex) % 2 === 0) {\n      setBlock(x, seatY + 7, 3, slab(woodSlab, \"top\"));\n      setBlock(x, seatY + 7, 4, trapdoor(woodTrapdoor, \"south\", \"top\", false));\n    }\n  }\n\n  // 6. ROOF CANOPY / SHELTER VARIATIONS (Y = seatY + 8 and seatY + 9)\n  if (variantIndex === 0 || variantIndex === 3 || variantIndex === 5) {\n    // Full weather-sheltered roof canopy against Arctic blizzard\n    for (let x = 0; x <= 10; x++) {\n      // Overhanging roof slopes\n      setBlock(x, seatY + 8, 2, stairs(roofStairs, \"south\", \"bottom\"));\n      setBlock(x, seatY + 8, 5, stairs(roofStairs, \"north\", \"bottom\"));\n\n      // Center roof ridge\n      setBlock(x, seatY + 9, 3, slab(roofSlab, \"bottom\"));\n      setBlock(x, seatY + 9, 4, slab(roofSlab, \"bottom\"));\n\n      // Heavy snow accumulation on roof peak\n      if (variantIndex === 5 || x % 3 === 0) {\n        setBlock(x, seatY + 9, 3, roofSolid);\n        setBlock(x, seatY + 9, 4, roofSolid);\n      }\n    }\n  } else if (variantIndex === 2) {\n    // West bay enclosed shelter roof, east bay open\n    for (let x = 0; x <= 5; x++) {\n      setBlock(x, seatY + 8, 2, stairs(roofStairs, \"south\", \"bottom\"));\n      setBlock(x, seatY + 8, 5, stairs(roofStairs, \"north\", \"bottom\"));\n      setBlock(x, seatY + 9, 3, slab(roofSlab, \"bottom\"));\n      setBlock(x, seatY + 9, 4, slab(roofSlab, \"bottom\"));\n    }\n    // East bay has open timber rafters\n    for (let x = 6; x <= 10; x++) {\n      setBlock(x, seatY + 8, 2, woodFence);\n      setBlock(x, seatY + 8, 5, woodFence);\n      setBlock(x, seatY + 9, 3, slab(woodSlab, \"bottom\"));\n    }\n    // Wall on west gable\n    for (let z = 2; z <= 5; z++) {\n      setBlock(1, seatY + 1, z, woodPlanks);\n      setBlock(1, seatY + 2, z, woodPlanks);\n      setBlock(1, seatY + 3, z, woodPlanks);\n    }\n  } else {\n    // Open Nordic \"hjell\" drying rack with top tie-beams and partial slats\n    for (let x = 0; x <= 10; x++) {\n      setBlock(x, seatY + 8, 2, slab(roofSlab, \"bottom\"));\n      setBlock(x, seatY + 8, 5, slab(roofSlab, \"bottom\"));\n      if (x % 2 === 0) {\n        setBlock(x, seatY + 9, 3, slab(roofSlab, \"bottom\"));\n        setBlock(x, seatY + 9, 4, slab(roofSlab, \"bottom\"));\n      }\n    }\n  }\n\n  // 7. PROPS & WORK STATIONS AT BASE (Connected directly to deck)\n  // Prop A: Fish Transport Sledge\n  const sledX = (variantIndex % 2 === 0) ? 6 : 2;\n  const sledZ = 1;\n  // Sled runners (stairs facing inward)\n  setBlock(sledX, seatY + 1, sledZ, stairs(woodStairs, \"east\", \"bottom\"));\n  setBlock(sledX + 1, seatY + 1, sledZ, slab(woodSlab, \"top\"));\n  setBlock(sledX + 2, seatY + 1, sledZ, stairs(woodStairs, \"west\", \"bottom\"));\n  // Cargo bed\n  setBlock(sledX + 1, seatY + 1, sledZ + 1, woodPlanks);\n  // Cargo: Barrel of cured fish & salt box\n  setBlock(sledX, seatY + 2, sledZ, \"minecraft:barrel[facing=up]\");\n  setBlock(sledX + 1, seatY + 2, sledZ, woodPlanks);\n  setBlock(sledX + 1, seatY + 2, sledZ + 1, slab(woodSlab, \"bottom\"));\n\n  // Prop B: Salt Storage & Fish Packing Crates\n  const crateX = (sledX === 6) ? 2 : 7;\n  // Stacked salt barrels and plank boxes\n  setBlock(crateX, seatY + 1, 4, \"minecraft:barrel[facing=up]\");\n  setBlock(crateX + 1, seatY + 1, 4, woodPlanks);\n  setBlock(crateX, seatY + 1, 5, \"minecraft:calcite\"); // Solid rock salt block\n  setBlock(crateX + 1, seatY + 1, 5, woodPlanks);\n  setBlock(crateX, seatY + 2, 4, slab(woodSlab, \"bottom\"));\n  setBlock(crateX + 1, seatY + 2, 4, \"minecraft:barrel[facing=up]\");\n  setBlock(crateX, seatY + 2, 5, woodPlanks);\n\n  // Prop C: Fish Curing Smoker / Brazier Hearth\n  if (variantIndex === 0 || variantIndex === 3 || variantIndex === 5) {\n    // Stone smoke pit in center bay curing the fish above\n    setBlock(4, seatY + 1, 3, stoneWall);\n    setBlock(5, seatY + 1, 3, stoneWall);\n    setBlock(4, seatY + 1, 4, stoneWall);\n    setBlock(5, seatY + 1, 4, \"minecraft:campfire[lit=true,facing=north]\");\n  } else {\n    // Salting & fish cleaning bench\n    setBlock(4, seatY + 1, 3, stairs(stoneStairs, \"north\", \"top\"));\n    setBlock(5, seatY + 1, 3, stairs(stoneStairs, \"north\", \"top\"));\n    setBlock(4, seatY + 1, 4, \"minecraft:barrel[facing=up]\");\n    setBlock(5, seatY + 1, 4, woodPlanks);\n  }\n\n  // Prop D: Ice Auger & Harpoon Tool Stand\n  const toolX = 5;\n  setBlock(toolX, seatY + 1, 1, woodFence);\n  setBlock(toolX, seatY + 2, 1, woodFence);\n  setBlock(toolX, seatY + 1, 2, \"minecraft:grindstone[facing=north]\");\n\n  // Prop E: Lanterns for arctic night work\n  setBlock(1, seatY + 4, 3, \"minecraft:lantern[hanging=true]\");\n  setBlock(9, seatY + 4, 4, \"minecraft:lantern[hanging=true]\");\n\n  // 8. GUARANTEE CONNECTIVITY & MINIMUM VOXEL VOLUME (>= 500 voxels)\n  // Solidify foundation undercarriage to ensure high voxel density and rigid single-body connection\n  for (let x = 1; x <= 9; x++) {\n    for (let z = 1; z <= 6; z++) {\n      if (grid[x][seatY - 2][z] === null) {\n        setBlock(x, seatY - 2, z, groundRevetment);\n      }\n    }\n  }\n\n  // 6-Connected Flood Fill Check from center seed\n  const visited = Array.from({ length: W }, () =>\n    Array.from({ length: H }, () =>\n      Array(D).fill(false)\n    )\n  );\n\n  const queue = [[5, seatY, 3]];\n  visited[5][seatY][3] = true;\n\n  const dirs = [\n    [1, 0, 0], [-1, 0, 0],\n    [0, 1, 0], [0, -1, 0],\n    [0, 0, 1], [0, 0, -1]\n  ];\n\n  let head = 0;\n  while (head < queue.length) {\n    const [cx, cy, cz] = queue[head++];\n    for (const [dx, dy, dz] of dirs) {\n      const nx = cx + dx;\n      const ny = cy + dy;\n      const nz = cz + dz;\n      if (nx >= 0 && nx < W && ny >= 0 && ny < H && nz >= 0 && nz < D) {\n        if (!visited[nx][ny][nz] && grid[nx][ny][nz] !== null) {\n          visited[nx][ny][nz] = true;\n          queue.push([nx, ny, nz]);\n        }\n      }\n    }\n  }\n\n  // Prune any unvisited stray voxels\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        if (grid[x][y][z] !== null && !visited[x][y][z]) {\n          grid[x][y][z] = null;\n        }\n      }\n    }\n  }\n\n  // 9. EMIT BLOCKS TO API\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        if (grid[x][y][z] !== null) {\n          api.set(x, y, z, grid[x][y][z]);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"shore_fish_drying_racks\",\n    seatY: seatY,\n    anchors: {\n      front: [5, seatY, 0],\n      pier: [5, seatY, 7]\n    }\n  };\n}"
+    }
+  }
+}

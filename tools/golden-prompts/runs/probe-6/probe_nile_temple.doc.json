@@ -1,0 +1,655 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "nile_river_town",
+    "worldSeed": "941",
+    "prompt": "A New Kingdom Egyptian river town: mud-brick houses and workshops along the bank, a pylon temple with an avenue of sphinxes running down to the water, and reed boats drawn up on the Nile's mud.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "intent": {
+    "era": "ancient",
+    "wealth": 0.5,
+    "formality": 0.4,
+    "climate": {
+      "biome": "minecraft:desert",
+      "temperature": 0.9,
+      "humidity": -0.7,
+      "snow": "never"
+    },
+    "character": {
+      "label": "New Kingdom Egyptian river town",
+      "materialTheme": "sun_clay",
+      "formPacks": [
+        "nile_egypt"
+      ],
+      "archetypes": {
+        "prefer": [
+          "hypostyle_hall",
+          "mortuary_temple",
+          "mudbrick_granary",
+          "nilometer",
+          "canopic_shrine",
+          "courtyard_house"
+        ],
+        "forbid": [
+          "townhouse",
+          "terraced_row",
+          "shop_row",
+          "office",
+          "apartment_block"
+        ]
+      },
+      "urbanForm": "linear",
+      "courtyards": 0.6,
+      "motifs": {
+        "roofType": "flat",
+        "massing": "blocky"
+      },
+      "programs": [
+        {
+          "id": "pylon_temple",
+          "mode": "landmark",
+          "brief": "A colossal New Kingdom Egyptian pylon temple complex built from sun-dried sandstone and mud-brick, featuring two massive battered pylon gate towers with flagstaff grooves flanking a tall central portal, opening into an inner peristyle courtyard.",
+          "envelope": [
+            41,
+            26,
+            48
+          ]
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "a broad Nile riverbank with muddy shallows and reed beds beside the desert floodplain",
+      "infra": "sphinx_avenue leading from the monumental pylon temple down to the Nile water's edge",
+      "icons": "pylon temple with sphinx processional avenue; mud-brick workshops and courtyard houses along the bank; reed boats beached on the river mud; grain silos and nilometer by the water"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": "minecraft:sand",
+      "ground.subsurface": "minecraft:sandstone",
+      "ground.beach": {
+        "mix": [
+          [
+            "minecraft:mud",
+            3
+          ],
+          [
+            "minecraft:packed_mud",
+            2
+          ],
+          [
+            "minecraft:clay",
+            1
+          ]
+        ]
+      },
+      "ground.underwater": "minecraft:mud",
+      "road.surface": "minecraft:packed_mud",
+      "road.shoulder": "minecraft:sand"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "A New Kingdom Egyptian river town along the Nile",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "the Nile river valley and desert floodplain",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 64,
+          "amplitude": 14,
+          "octaves": 4,
+          "frequency": 0.003,
+          "gain": 0.45,
+          "erosionPasses": 2,
+          "continentalness": {
+            "frequency": 0.001,
+            "seaFraction": 0.45
+          },
+          "cliffThreshold": 55,
+          "soilDepth": 3,
+          "beachWidth": 6,
+          "snowLineFraction": 0.99
+        },
+        "children": [
+          {
+            "id": "the_nile",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the wide course of the Nile river flowing to the sea",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.24,
+                  0.98
+                ],
+                [
+                  0.26,
+                  0.65
+                ],
+                [
+                  0.28,
+                  0.35
+                ],
+                "coast"
+              ],
+              "width": 64,
+              "depth": 14,
+              "meander": 0.35
+            }
+          },
+          {
+            "id": "eastern_bluffs",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the desert limestone cliffs rising to the east",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.86,
+                  0.05
+                ],
+                [
+                  0.88,
+                  0.5
+                ],
+                [
+                  0.85,
+                  0.95
+                ]
+              ],
+              "width": 54,
+              "height": 30,
+              "profile": "sharp"
+            }
+          },
+          {
+            "id": "temple_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "raised platform for the sacred temple precinct",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.6,
+                0.5
+              ],
+              "radius": 90,
+              "height": 6,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "town_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "level terrace along the bank for the town",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.44,
+                0.42
+              ],
+              "radius": 110,
+              "height": 4,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "arid",
+          "temperatureFrequency": 0.0012,
+          "humidityFrequency": 0.0016
+        }
+      },
+      {
+        "id": "date_palm_groves",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "groves of date palms along the fertile Nile bank",
+        "params": {
+          "area": {
+            "at": [
+              0.38,
+              0.5
+            ],
+            "radius": 150
+          },
+          "density": 0.06,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 20,
+          "elevation": [
+            1,
+            30
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "undergrowth": {
+            "grass": 0.2,
+            "flowers": 0.02,
+            "deadwood": 0.05
+          },
+          "species": [
+            {
+              "id": "date_palm",
+              "weight": 3,
+              "shape": "acacia_umbrella"
+            },
+            {
+              "id": "oasis_hardwood",
+              "weight": 1,
+              "shape": "desert_ironwood"
+            }
+          ]
+        }
+      },
+      {
+        "id": "desert_scrub",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse desert scrub out in the arid wastes",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.01,
+          "spacing": 6,
+          "clumping": 0.3,
+          "maxSlope": 30,
+          "edgeFalloff": 10,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "species": [
+            {
+              "id": "juniper_bush",
+              "weight": 1,
+              "shape": "juniper_scrub"
+            }
+          ]
+        }
+      },
+      {
+        "id": "river_quai",
+        "kind": "primitive",
+        "label": "the mud-brick quay and river landing on the Nile bank",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            28,
+            22
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.36,
+              0.48
+            ]
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public",
+          "landing"
+        ]
+      },
+      {
+        "id": "pylon_temple_complex",
+        "kind": "generator",
+        "generator": "authored:pylon_temple",
+        "label": "the grand pylon temple facing west towards the Nile",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            41,
+            26,
+            48
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.6,
+              0.5
+            ]
+          },
+          {
+            "distance": "river_quai",
+            "min": 20,
+            "max": 80,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6
+          }
+        ],
+        "params": {
+          "face": {
+            "toward": "river_quai"
+          },
+          "seat": "pad"
+        },
+        "tags": [
+          "landmark",
+          "temple",
+          "sacred"
+        ]
+      },
+      {
+        "id": "river_town_district",
+        "kind": "district",
+        "label": "the mud-brick river quarter along the bank",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            120,
+            130
+          ]
+        },
+        "params": {
+          "fabric": "linear",
+          "density": "medium",
+          "mix": [
+            "courtyard_house",
+            "mudbrick_granary",
+            "canopic_shrine",
+            "nilometer",
+            "glassworks",
+            "kiln",
+            "brewery"
+          ],
+          "courtyards": 0.6
+        },
+        "constraints": [
+          {
+            "at": [
+              0.45,
+              0.36
+            ]
+          },
+          {
+            "distance": "river_quai",
+            "min": 6,
+            "max": 70,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "tags": [
+          "town",
+          "district"
+        ],
+        "children": [
+          {
+            "id": "temple_granary",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the mud-brick grain silo and storehouse",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                11,
+                15
+              ]
+            },
+            "params": {
+              "archetype": "warehouse",
+              "floors": 1,
+              "roof": "flat"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "west",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "granary",
+              "store"
+            ]
+          },
+          {
+            "id": "pottery_workshop",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the artisans pottery and brick workshop",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                11,
+                10,
+                13
+              ]
+            },
+            "params": {
+              "archetype": "kiln",
+              "floors": 1,
+              "roof": "flat"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "craft"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "nile_floodplain_fields",
+        "kind": "generator",
+        "generator": "precinct.farm@0",
+        "label": "fertile floodplain fields sown with emmer wheat and flax",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            96,
+            84
+          ]
+        },
+        "params": {
+          "parcels": 6,
+          "parcelSize": 16,
+          "crops": [
+            "wheat",
+            "beetroots",
+            "pasture"
+          ],
+          "edge": "none"
+        },
+        "constraints": [
+          {
+            "at": [
+              0.44,
+              0.68
+            ]
+          },
+          {
+            "distance": "river_town_district",
+            "min": 10,
+            "max": 60,
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "gate": {
+            "type": "road_stub",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "farm",
+          "rural"
+        ]
+      },
+      {
+        "id": "temple_sphinx_avenue",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "the processional avenue of sphinxes running from the pylon temple down to the water",
+        "params": {
+          "entry": "sphinx_avenue",
+          "route": {
+            "along": "lanes",
+            "offset": 0
+          }
+        }
+      },
+      {
+        "id": "quayside_pier",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "timber and mud pier projecting into the river",
+        "params": {
+          "prop": "pier",
+          "zone": "west",
+          "length": 10,
+          "width": 3
+        }
+      },
+      {
+        "id": "beached_reed_boat_1",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a reed skiff moored at the quayside landing",
+        "params": {
+          "prop": "rowboat",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "beached_reed_boat_2",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a second reed boat resting in the Nile shallows",
+        "params": {
+          "prop": "rowboat",
+          "zone": "west",
+          "jitter": 0.2
+        }
+      },
+      {
+        "id": "nile_cargo_barge",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a river transport barge in the Nile shallows",
+        "params": {
+          "prop": "barge",
+          "zone": "west",
+          "jitter": 0.1
+        }
+      },
+      {
+        "id": "quai_market_stall",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a market barrow on the river landing",
+        "params": {
+          "prop": "market_barrow",
+          "zone": "center",
+          "jitter": 0.1
+        }
+      },
+      {
+        "id": "temple_votive_monolith",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a carved stone stela standing near the temple approach",
+        "params": {
+          "prop": "statue_plinth",
+          "zone": "center",
+          "jitter": 0.15
+        }
+      },
+      {
+        "id": "lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "the processional way and packed-mud lanes connecting temple, quay, and town",
+        "params": {
+          "anchors": [
+            "river_quai",
+            "pylon_temple_complex",
+            "river_town_district",
+            "nile_floodplain_fields",
+            "#tag:house"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": false
+        }
+      }
+    ]
+  },
+  "programs": {
+    "pylon_temple": {
+      "mode": "landmark",
+      "envelope": [
+        41,
+        26,
+        48
+      ],
+      "sourceHash": "b3:b02c6e5f059c7da9b8155615f18f225500538b924497623b8b49a587fc2d91d8",
+      "outputHash": "b3:ffcead7421f668caf66d6f4f0472473238a02b12a69dd7cab50ea4a05764987d",
+      "conforms": false,
+      "conformHash": "b3:6c905f91eba7e2cad159555dda1fd2c1b55091cadb9077766d4b92dce0bc11f7",
+      "source": "export const envelope = [41, 26, 48];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const cx = 20; // Center X\n\n  // ---------------------------------------------------------------------------\n  // PALETTE RESOLUTION\n  // ---------------------------------------------------------------------------\n  const pStone = api.theme?.stone?.primary || \"minecraft:sandstone\";\n  const pAccent = api.theme?.stone?.accent || \"minecraft:chiseled_sandstone\";\n  const pCutStone = api.theme?.ground?.plinth || \"minecraft:cut_sandstone\";\n  const pSmoothStone = api.theme?.ground?.pavement || \"minecraft:smooth_sandstone\";\n  const pStairs = api.theme?.stone?.stairs || \"minecraft:sandstone_stairs\";\n  const pSlab = api.theme?.stone?.slab || \"minecraft:sandstone_slab\";\n  const pWall = api.theme?.stone?.wall || \"minecraft:sandstone_wall\";\n  const pWoodPlanks = api.theme?.wood?.planks || \"minecraft:birch_planks\";\n  const pWoodFence = api.theme?.wood?.fence || \"minecraft:birch_fence\";\n  const pWoodLog = api.theme?.wood?.log || \"minecraft:stripped_birch_log\";\n  const pWoodTrapdoor = api.theme?.wood?.trapdoor || \"minecraft:birch_trapdoor\";\n  const pRoofSolid = api.theme?.roof?.solid || \"minecraft:smooth_sandstone\";\n  const pRoofSlab = api.theme?.roof?.slab || \"minecraft:smooth_sandstone_slab\";\n\n  // Special thematic blocks\n  const pGold = \"minecraft:gold_block\";\n  const pLapis = \"minecraft:lapis_block\";\n  const pRedTerracotta = \"minecraft:red_terracotta\";\n  const pBrazier = \"minecraft:campfire[lit=true]\";\n  const pLantern = \"minecraft:lantern[hanging=false]\";\n  const pHangingLantern = \"minecraft:lantern[hanging=true]\";\n\n  // ---------------------------------------------------------------------------\n  // DRAWING HELPERS\n  // ---------------------------------------------------------------------------\n  function set(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      api.set(x, y, z, block);\n    }\n  }\n\n  function fill(x1, y1, z1, x2, y2, z2, block) {\n    const minX = Math.min(x1, x2), maxX = Math.max(x1, x2);\n    const minY = Math.min(y1, y2), maxY = Math.max(y1, y2);\n    const minZ = Math.min(z1, z2), maxZ = Math.max(z1, z2);\n    for (let x = minX; x <= maxX; x++) {\n      for (let y = minY; y <= maxY; y++) {\n        for (let z = minZ; z <= maxZ; z++) {\n          set(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  // Ground conformity: guarantees solid foundation from the seat plane / ground\n  const occupiedColumns = new Uint8Array(W * D);\n  function markOccupied(x, z) {\n    if (x >= 0 && x < W && z >= 0 && z < D) {\n      occupiedColumns[x * D + z] = 1;\n    }\n  }\n\n  function fillFoundation(x1, z1, x2, z2, topY) {\n    for (let x = x1; x <= x2; x++) {\n      for (let z = z1; z <= z2; z++) {\n        markOccupied(x, z);\n        const groundH = api.heightAt(x, z);\n        const startY = Math.min(topY, groundH);\n        for (let y = startY; y <= topY; y++) {\n          set(x, y, z, pCutStone);\n        }\n      }\n    }\n  }\n\n  // ---------------------------------------------------------------------------\n  // 1. FOUNDATIONS & SUB-FLOORS\n  // ---------------------------------------------------------------------------\n  // Entrance approach / Dromos foundation (Z: 0..3, X: 11..29)\n  fillFoundation(11, 0, 29, 3, 1);\n  // Main temple complex footprint foundation (Z: 4..47, X: 2..38)\n  fillFoundation(2, 4, 38, 47, 1);\n  // Hypostyle & Sanctuary raised sub-floor (Z: 33..47, X: 2..38)\n  fillFoundation(2, 33, 38, 47, 2);\n\n  // ---------------------------------------------------------------------------\n  // 2. ENTRANCE APPROACH & GUARDIAN SPHINXES (Z: 0..3)\n  // ---------------------------------------------------------------------------\n  // Central Processional Ramp\n  for (let x = 17; x <= 23; x++) {\n    set(x, 0, 0, `${pStairs}[facing=south,half=bottom]`);\n    set(x, 1, 1, pSmoothStone);\n    set(x, 1, 2, pSmoothStone);\n    set(x, 1, 3, pSmoothStone);\n  }\n  // Ramp Edging\n  set(16, 1, 0, pCutStone);\n  set(24, 1, 0, pCutStone);\n  for (let z = 1; z <= 3; z++) {\n    set(16, 1, z, pCutStone);\n    set(24, 1, z, pCutStone);\n  }\n\n  // Guardian Sphinxes (Couchant lions facing North)\n  function buildSphinx(startX) {\n    // Plinth\n    fill(startX, 1, 1, startX + 2, 1, 3, pCutStone);\n    // Body (Recumbent lion)\n    set(startX + 1, 2, 3, `${pStairs}[facing=north,half=bottom]`);\n    set(startX + 1, 2, 2, pStone);\n    set(startX, 2, 2, `${pStairs}[facing=east,half=bottom]`);\n    set(startX + 2, 2, 2, `${pStairs}[facing=west,half=bottom]`);\n    // Forepaws extending north\n    set(startX, 2, 1, `${pStairs}[facing=south,half=bottom]`);\n    set(startX + 2, 2, 1, `${pStairs}[facing=south,half=bottom]`);\n    // Chest and Head\n    set(startX + 1, 2, 1, pStone);\n    set(startX + 1, 3, 1, pAccent); // Pharaonic face / nemes\n    set(startX + 1, 4, 1, `${pStairs}[facing=north,half=bottom]`); // Crown\n  }\n  buildSphinx(12); // Left Sphinx\n  buildSphinx(26); // Right Sphinx\n\n  // ---------------------------------------------------------------------------\n  // 3. MONUMENTAL BATTERED PYLON TOWERS (Z: 4..14, Y: 1..22)\n  // ---------------------------------------------------------------------------\n  // Helper for pylon battering (sloping walls inward as height increases)\n  function getPylonBounds(y) {\n    const zMin = 4 + Math.floor(y / 7);\n    const zMax = 14 - Math.floor(y / 11);\n    const leftXMin = 2 + Math.floor(y / 7);\n    const leftXMax = 17;\n    const rightXMin = 23;\n    const rightXMax = 38 - Math.floor(y / 7);\n    return { zMin, zMax, leftXMin, leftXMax, rightXMin, rightXMax };\n  }\n\n  // Construct battered pylon towers course by course\n  for (let y = 1; y <= 21; y++) {\n    const { zMin, zMax, leftXMin, leftXMax, rightXMin, rightXMax } = getPylonBounds(y);\n    const bandBlock = (y === 6 || y === 12 || y === 18) ? pAccent : pStone;\n\n    // LEFT PYLON\n    for (let x = leftXMin; x <= leftXMax; x++) {\n      for (let z = zMin; z <= zMax; z++) {\n        // Hollow out interior vault & stairwell (Y: 2..19)\n        const isInterior = (x >= 6 && x <= 14 && z >= 7 && z <= 11 && y >= 2 && y <= 19);\n        if (isInterior) {\n          // Interior stairs winding along walls\n          const stairStep = (y - 2) % 16;\n          let isStair = false;\n          if (stairStep < 4 && z === 7 && x === 6 + stairStep) isStair = true;\n          else if (stairStep >= 4 && stairStep < 8 && x === 14 && z === 7 + (stairStep - 4)) isStair = true;\n          else if (stairStep >= 8 && stairStep < 12 && z === 11 && x === 14 - (stairStep - 8)) isStair = true;\n          else if (stairStep >= 12 && x === 6 && z === 11 - (stairStep - 12)) isStair = true;\n\n          if (isStair) {\n            set(x, y, z, pCutStone);\n          } else {\n            set(x, y, z, \"minecraft:air\");\n          }\n        } else {\n          set(x, y, z, bandBlock);\n        }\n      }\n    }\n\n    // RIGHT PYLON\n    for (let x = rightXMin; x <= rightXMax; x++) {\n      for (let z = zMin; z <= zMax; z++) {\n        const isInterior = (x >= 26 && x <= 34 && z >= 7 && z <= 11 && y >= 2 && y <= 19);\n        if (isInterior) {\n          const stairStep = (y - 2) % 16;\n          let isStair = false;\n          if (stairStep < 4 && z === 7 && x === 34 - stairStep) isStair = true;\n          else if (stairStep >= 4 && stairStep < 8 && x === 26 && z === 7 + (stairStep - 4)) isStair = true;\n          else if (stairStep >= 8 && stairStep < 12 && z === 11 && x === 26 + (stairStep - 8)) isStair = true;\n          else if (stairStep >= 12 && x === 34 && z === 11 - (stairStep - 12)) isStair = true;\n\n          if (isStair) {\n            set(x, y, z, pCutStone);\n          } else {\n            set(x, y, z, \"minecraft:air\");\n          }\n        } else {\n          set(x, y, z, bandBlock);\n        }\n      }\n    }\n  }\n\n  // Internal access doorways from the courtyard into pylon stairwells\n  fill(10, 1, 14, 10, 3, 14, \"minecraft:air\"); // Left door\n  fill(30, 1, 14, 30, 3, 14, \"minecraft:air\"); // Right door\n\n  // Flagstaff Grooves and Tall Timber Masts on Facades\n  const flagstaffX = [7, 13, 27, 33];\n  flagstaffX.forEach((fx) => {\n    // Flagstaff stone base socket\n    set(fx, 1, 3, pAccent);\n\n    // Carve vertical groove into pylon facade and place tall mast\n    for (let y = 1; y <= 21; y++) {\n      const { zMin } = getPylonBounds(y);\n      set(fx, y, zMin, pAccent); // Recessed groove\n      set(fx, y, zMin - 1, pWoodFence); // Tall wooden flag mast\n\n      // Bronze/copper mounting brackets\n      if (y === 6 || y === 12 || y === 18) {\n        set(fx, y, zMin - 1, pAccent);\n      }\n    }\n\n    // Flagstaff upper extension above pylon roof\n    const topZ = getPylonBounds(21).zMin - 1;\n    set(fx, 22, topZ, pWoodFence);\n    set(fx, 23, topZ, pWoodFence);\n    set(fx, 24, topZ, pWoodFence);\n    set(fx, 25, topZ, pGold); // Gilded finial\n    // Hanging ceremonial banner\n    set(fx, 24, topZ - 1, pRedTerracotta);\n    set(fx, 23, topZ - 1, pRedTerracotta);\n  });\n\n  // Cavetto Cornice at Pylon Summits (Y: 21..23)\n  function buildCavettoCornice(minX, maxX, minZ, maxZ) {\n    // Torus molding rim (Y: 21)\n    for (let x = minX; x <= maxX; x++) {\n      set(x, 21, minZ, pAccent);\n      set(x, 21, maxZ, pAccent);\n    }\n    for (let z = minZ; z <= maxZ; z++) {\n      set(minX, 21, z, pAccent);\n      set(maxX, 21, z, pAccent);\n    }\n\n    // Flared Cavetto Overhang (Y: 22)\n    for (let x = minX - 1; x <= maxX + 1; x++) {\n      set(x, 22, minZ - 1, `${pStairs}[facing=north,half=top]`);\n      set(x, 22, maxZ + 1, `${pStairs}[facing=south,half=top]`);\n    }\n    for (let z = minZ - 1; z <= maxZ + 1; z++) {\n      set(minX - 1, 22, z, `${pStairs}[facing=west,half=top]`);\n      set(maxX + 1, 22, z, `${pStairs}[facing=east,half=top]`);\n    }\n    // Solid corner caps\n    set(minX - 1, 22, minZ - 1, pStone);\n    set(maxX + 1, 22, minZ - 1, pStone);\n    set(minX - 1, 22, maxZ + 1, pStone);\n    set(maxX + 1, 22, maxZ + 1, pStone);\n\n    // Roof Terrace Paving (Y: 21)\n    fill(minX + 1, 21, minZ + 1, maxX - 1, maxZ - 1, pRoofSolid);\n  }\n\n  const topBounds = getPylonBounds(21);\n  buildCavettoCornice(topBounds.leftXMin, topBounds.leftXMax, topBounds.zMin, topBounds.zMax);\n  buildCavettoCornice(topBounds.rightXMin, topBounds.rightXMax, topBounds.zMin, topBounds.zMax);\n\n  // ---------------------------------------------------------------------------\n  // 4. CENTRAL GATEWAY PORTAL (X: 18..22, Z: 4..14)\n  // ---------------------------------------------------------------------------\n  // Portal Jambs & Gateway Passage\n  fill(18, 1, 4, 18, 11, 14, pStone);\n  fill(22, 1, 4, 22, 11, 14, pStone);\n  // Clear open archway (width 3, height 8)\n  fill(19, 1, 4, 21, 8, 14, \"minecraft:air\");\n  // Floor in passage\n  fill(19, 1, 4, 21, 1, 14, pSmoothStone);\n\n  // Arch Springing & Lintel\n  for (let z = 4; z <= 14; z++) {\n    set(19, 8, z, `${pStairs}[facing=east,half=top]`);\n    set(20, 8, z, `${pSlab}[type=top]`);\n    set(21, 8, z, `${pStairs}[facing=west,half=top]`);\n    fill(19, 9, z, 21, 11, z, pStone);\n  }\n\n  // Winged Sun Disk Relief Frieze on Facade (Z: 4, Y: 10..11)\n  set(19, 10, 4, pAccent);\n  set(20, 10, 4, pGold); // Solar disk\n  set(21, 10, 4, pAccent);\n  set(20, 11, 4, pLapis);\n\n  // Portal Cavetto Cornice (Y: 12..13)\n  for (let x = 17; x <= 23; x++) {\n    set(x, 12, 3, `${pStairs}[facing=north,half=top]`);\n    set(x, 13, 3, pRoofSlab);\n    set(x, 12, 14, `${pStairs}[facing=south,half=top]`);\n    set(x, 13, 14, pRoofSlab);\n  }\n  fill(18, 12, 4, 22, 12, 13, pStone);\n\n  // ---------------------------------------------------------------------------\n  // 5. INNER PERISTYLE COURTYARD (Z: 14..33)\n  // ---------------------------------------------------------------------------\n  // Courtyard Outer Flank Walls\n  fill(2, 1, 14, 3, 9, 33, pStone);\n  fill(37, 1, 14, 38, 9, 33, pStone);\n  // Wall decorative bands & copings\n  for (let z = 14; z <= 33; z++) {\n    set(3, 5, z, pAccent);\n    set(37, 5, z, pAccent);\n    set(2, 10, z, `${pStairs}[facing=west,half=bottom]`);\n    set(3, 10, z, `${pStairs}[facing=east,half=bottom]`);\n    set(37, 10, z, `${pStairs}[facing=west,half=bottom]`);\n    set(38, 10, z, `${pStairs}[facing=east,half=bottom]`);\n  }\n\n  // Courtyard Floor Paving (Y: 1)\n  fill(4, 1, 15, 36, 1, 32, pSmoothStone);\n  // Processional central axial pathway\n  fill(19, 1, 15, 21, 1, 32, pCutStone);\n\n  // Papyrus Colonnades (Porticos on East & West flanks)\n  function buildPapyrusColumn(colX, colZ) {\n    // Plinth base\n    set(colX, 1, colZ, pAccent);\n    // Column shaft\n    fill(colX, 2, colZ, colX, 6, colZ, pStone);\n    // Papyrus Open Bud Capital (Y: 7)\n    set(colX, 7, colZ, pAccent);\n    set(colX, 7, colZ - 1, `${pStairs}[facing=north,half=top]`);\n    set(colX, 7, colZ + 1, `${pStairs}[facing=south,half=top]`);\n    set(colX - 1, 7, colZ, `${pStairs}[facing=west,half=top]`);\n    set(colX + 1, 7, colZ, `${pStairs}[facing=east,half=top]`);\n  }\n\n  const colZPositions = [17, 21, 25, 29];\n  colZPositions.forEach((cz) => {\n    buildPapyrusColumn(10, cz); // West colonnade row\n    buildPapyrusColumn(30, cz); // East colonnade row\n  });\n\n  // Colonnade Architraves & Portico Roof (Y: 8..9)\n  // West portico\n  fill(10, 8, 15, 10, 8, 32, pStone);\n  for (let cz of colZPositions) {\n    fill(4, 8, cz, 10, 8, cz, pStone);\n  }\n  fill(4, 9, 15, 10, 9, 32, pRoofSlab);\n\n  // East portico\n  fill(30, 8, 15, 30, 8, 32, pStone);\n  for (let cz of colZPositions) {\n    fill(30, 8, cz, 36, 8, cz, pStone);\n  }\n  fill(30, 9, 15, 36, 9, 32, pRoofSlab);\n\n  // Central Sun Altar / Barque Dais (X: 19..21, Z: 23..25)\n  fill(18, 1, 22, 22, 1, 26, pCutStone);\n  fill(19, 2, 23, 21, 2, 25, pAccent);\n  // Altar steps\n  set(20, 2, 22, `${pStairs}[facing=south,half=bottom]`);\n  set(20, 2, 26, `${pStairs}[facing=north,half=bottom]`);\n  set(18, 2, 24, `${pStairs}[facing=east,half=bottom]`);\n  set(22, 2, 24, `${pStairs}[facing=west,half=bottom]`);\n  // Offering Table & Sacred Brazier\n  set(20, 3, 24, pGold);\n  set(20, 4, 24, pBrazier);\n\n  // ---------------------------------------------------------------------------\n  // 6. HYPOSTYLE HALL & VESTIBULE (Z: 33..41)\n  // ---------------------------------------------------------------------------\n  // Raised Hypostyle Floor at Y: 2\n  fill(4, 2, 33, 36, 2, 41, pSmoothStone);\n  // Entrance steps up to Hypostyle Hall\n  for (let x = 18; x <= 22; x++) {\n    set(x, 2, 32, `${pStairs}[facing=south,half=bottom]`);\n  }\n\n  // Intercolumnar Screen Facade (Z: 33)\n  fill(4, 2, 33, 17, 5, 33, pStone);\n  fill(23, 2, 33, 36, 5, 33, pStone);\n  for (let x = 4; x <= 17; x++) set(x, 5, 33, pAccent);\n  for (let x = 23; x <= 36; x++) set(x, 5, 33, pAccent);\n  // Screen facade doorway\n  fill(18, 2, 33, 22, 7, 33, \"minecraft:air\");\n  set(18, 7, 33, `${pStairs}[facing=east,half=top]`);\n  set(22, 7, 33, `${pStairs}[facing=west,half=top]`);\n  fill(18, 8, 33, 22, 8, 33, pStone);\n\n  // Outer Flank Walls for Hypostyle\n  fill(2, 2, 34, 3, 10, 41, pStone);\n  fill(37, 2, 34, 38, 10, 41, pStone);\n\n  // Massive Hypostyle Columns (Papyrus Bundles)\n  const hypostyleColumns = [\n    [8, 36], [14, 36], [26, 36], [32, 36],\n    [8, 40], [14, 40], [26, 40], [32, 40],\n  ];\n\n  hypostyleColumns.forEach(([hx, hz]) => {\n    // Plinth\n    set(hx, 2, hz, pAccent);\n    // Shaft\n    fill(hx, 3, hz, hx, 7, hz, pStone);\n    // Bud capital\n    set(hx, 8, hz, pAccent);\n    set(hx, 8, hz - 1, `${pStairs}[facing=north,half=top]`);\n    set(hx, 8, hz + 1, `${pStairs}[facing=south,half=top]`);\n    set(hx - 1, 8, hz, `${pStairs}[facing=west,half=top]`);\n    set(hx + 1, 8, hz, `${pStairs}[facing=east,half=top]`);\n  });\n\n  // Hypostyle Architraves (Y: 9)\n  for (let z of [36, 40]) {\n    fill(4, 9, z, 36, 9, z, pStone);\n  }\n  for (let x of [8, 14, 26, 32]) {\n    fill(x, 9, 33, x, 9, 41, pStone);\n  }\n\n  // Side Aisles Lower Roof (Y: 10)\n  fill(4, 10, 33, 13, 10, 41, pRoofSolid);\n  fill(27, 10, 33, 36, 10, 41, pRoofSolid);\n\n  // Central Nave Clerestory & Raised Roof (Y: 11..13)\n  // Clerestory stone lattice window grilles\n  for (let z = 34; z <= 41; z++) {\n    set(13, 11, z, pWall);\n    set(13, 12, z, pStone);\n    set(27, 11, z, pWall);\n    set(27, 12, z, pStone);\n  }\n  // Central Nave high roof\n  fill(13, 13, 33, 27, 13, 41, pRoofSolid);\n\n  // ---------------------------------------------------------------------------\n  // 7. HOLY OF HOLIES / INNER NAOS SANCTUARY (Z: 42..47)\n  // ---------------------------------------------------------------------------\n  // Sanctuary Floor at Y: 2\n  fill(4, 2, 42, 36, 2, 46, pSmoothStone);\n\n  // Rear Enclosure Wall\n  fill(2, 2, 46, 38, 10, 47, pStone);\n\n  // Sanctuary Partition Walls (Enclosing central Naos chamber)\n  fill(17, 2, 42, 17, 10, 46, pStone);\n  fill(23, 2, 42, 23, 10, 46, pStone);\n  // Front partition wall of Sanctuary\n  fill(18, 2, 42, 22, 10, 42, pStone);\n  // Doorway into Inner Sanctuary (X: 19..21, Y: 2..5)\n  fill(19, 2, 42, 21, 5, 42, \"minecraft:air\");\n  set(19, 5, 42, `${pStairs}[facing=east,half=top]`);\n  set(21, 5, 42, `${pStairs}[facing=west,half=top]`);\n\n  // Roof over Sanctuary and Treasuries (Y: 10)\n  fill(4, 10, 42, 36, 10, 46, pRoofSolid);\n\n  // The Holy Naos Shrine (X: 19..21, Z: 44..45)\n  fill(19, 2, 44, 21, 2, 45, pCutStone);\n  // Gilded Shrine Casing\n  fill(19, 3, 44, 21, 5, 45, pAccent);\n  // Shrine inner niche with Sacred Deity Relic\n  set(20, 3, 44, \"minecraft:air\");\n  set(20, 4, 44, \"minecraft:air\");\n  set(20, 3, 45, pGold); // Golden barque / idol\n  set(20, 4, 45, pLapis);\n\n  // Side Treasuries Doorways from Hypostyle Hall\n  fill(10, 2, 41, 11, 4, 41, \"minecraft:air\"); // Left treasury entrance\n  fill(29, 2, 41, 30, 4, 41, \"minecraft:air\"); // Right treasury entrance\n\n  // ---------------------------------------------------------------------------\n  // 8. ATMOSPHERIC DETAILS & TEMPLE LIGHTING\n  // ---------------------------------------------------------------------------\n  // Braziers flanking the sanctuary portal\n  set(16, 2, 41, pBrazier);\n  set(24, 2, 41, pBrazier);\n\n  // Sanctuary inner hanging lanterns\n  set(18, 6, 44, pHangingLantern);\n  set(22, 6, 44, pHangingLantern);\n\n  // Courtyard portico shaded lanterns\n  for (let cz of [19, 27]) {\n    set(6, 8, cz, pHangingLantern);\n    set(34, 8, cz, pHangingLantern);\n  }\n\n  // ---------------------------------------------------------------------------\n  // 9. SOLID GROUND CONFORMITY PASS (Rule 6)\n  // ---------------------------------------------------------------------------\n  // Scan all columns in envelope: wherever we built structure, extend downward\n  // solid to the real terrain height (handles cliffs, slopes, river banks, seabed).\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      if (occupiedColumns[x * D + z]) {\n        const gh = api.heightAt(x, z);\n        if (gh < 0) {\n          for (let y = gh; y < 0; y++) {\n            set(x, y, z, pCutStone);\n          }\n        }\n      }\n    }\n  }\n\n  // ---------------------------------------------------------------------------\n  // RETURN CONTRACT\n  // ---------------------------------------------------------------------------\n  return {\n    name: \"pylon_temple\",\n    seatY: 0,\n    anchors: {\n      front: [cx, 1, 0],       // Monument looks out to North (-Z)\n      door: [cx, 1, 4],        // Main Pylon gateway entrance\n      altar: [cx, 2, 24],      // Courtyard sun altar\n      sanctuary: [cx, 2, 44],  // Holy Naos sacred barque shrine\n    },\n    interiors: [\n      { min: [6, 2, 7], max: [14, 18, 11], kind: \"vault\" },       // Left Pylon Vault\n      { min: [26, 2, 7], max: [34, 18, 11], kind: \"vault\" },      // Right Pylon Vault\n      { min: [5, 2, 34], max: [35, 9, 41], kind: \"hall\" },        // Hypostyle Hall\n      { min: [18, 2, 43], max: [22, 9, 45], kind: \"vault\" },      // Holy of Holies Sanctuary\n      { min: [5, 2, 42], max: [16, 9, 45], kind: \"quarters\" },    // West Treasury\n      { min: [24, 2, 42], max: [35, 9, 45], kind: \"quarters\" },   // East Treasury\n    ],\n  };\n}"
+    }
+  }
+}

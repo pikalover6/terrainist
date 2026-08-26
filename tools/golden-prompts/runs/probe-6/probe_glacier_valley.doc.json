@@ -1,0 +1,587 @@
+{
+  "loam": "0.1",
+  "profile": "terrain",
+  "meta": {
+    "name": "glacier_valley",
+    "worldSeed": "944",
+    "prompt": "A glacier filling a U-shaped mountain valley: the ice tongue ending in a milky lake at its snout, lateral moraines along both walls, and a braided river running out across the gravel below — no settlement of any kind.",
+    "spawn": {
+      "at": [
+        0.5,
+        0.7
+      ]
+    }
+  },
+  "intent": {
+    "climate": {
+      "biome": "minecraft:snowy_slopes",
+      "temperature": -0.9,
+      "humidity": 0.2,
+      "snow": "always"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": {
+        "mix": [
+          [
+            "minecraft:snow_block",
+            5
+          ],
+          [
+            "minecraft:gravel",
+            2
+          ],
+          [
+            "minecraft:coarse_dirt",
+            1
+          ]
+        ]
+      },
+      "ground.beach": {
+        "mix": [
+          [
+            "minecraft:gravel",
+            4
+          ],
+          [
+            "minecraft:andesite",
+            2
+          ],
+          [
+            "minecraft:coarse_dirt",
+            1
+          ]
+        ]
+      },
+      "ground.underwater": {
+        "mix": [
+          [
+            "minecraft:clay",
+            3
+          ],
+          [
+            "minecraft:calcite",
+            2
+          ],
+          [
+            "minecraft:gravel",
+            2
+          ],
+          [
+            "minecraft:diorite",
+            1
+          ]
+        ]
+      },
+      "ground.cliff": {
+        "mix": [
+          [
+            "minecraft:stone",
+            4
+          ],
+          [
+            "minecraft:andesite",
+            2
+          ],
+          [
+            "minecraft:cobblestone",
+            1
+          ]
+        ]
+      },
+      "ground.peak": {
+        "mix": [
+          [
+            "minecraft:packed_ice",
+            4
+          ],
+          [
+            "minecraft:blue_ice",
+            2
+          ],
+          [
+            "minecraft:snow_block",
+            2
+          ]
+        ]
+      }
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Glacial Trough and Outwash Plain",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 80,
+          "amplitude": 68,
+          "octaves": 5,
+          "frequency": 0.003,
+          "gain": 0.54,
+          "lacunarity": 2,
+          "ridged": true,
+          "warp": {
+            "amount": 26,
+            "frequency": 0.0035
+          },
+          "erosionPasses": 3,
+          "cliffThreshold": 46,
+          "soilDepth": 2,
+          "beachWidth": 8,
+          "snowLineFraction": 0.45
+        },
+        "children": [
+          {
+            "id": "west_mountain_wall",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "steep western mountain wall enclosing the valley",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.14,
+                  0.05
+                ],
+                [
+                  0.18,
+                  0.5
+                ],
+                [
+                  0.15,
+                  0.95
+                ]
+              ],
+              "width": 95,
+              "height": 78,
+              "profile": "sharp"
+            }
+          },
+          {
+            "id": "east_mountain_wall",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "steep eastern mountain wall enclosing the valley",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.86,
+                  0.05
+                ],
+                [
+                  0.82,
+                  0.5
+                ],
+                [
+                  0.85,
+                  0.95
+                ]
+              ],
+              "width": 95,
+              "height": 78,
+              "profile": "sharp"
+            }
+          },
+          {
+            "id": "west_lateral_moraine",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "gravelly lateral moraine ridge along the west wall",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.36,
+                  0.08
+                ],
+                [
+                  0.38,
+                  0.38
+                ],
+                [
+                  0.41,
+                  0.56
+                ]
+              ],
+              "width": 26,
+              "height": 16,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "east_lateral_moraine",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "gravelly lateral moraine ridge along the east wall",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.64,
+                  0.08
+                ],
+                [
+                  0.62,
+                  0.38
+                ],
+                [
+                  0.59,
+                  0.56
+                ]
+              ],
+              "width": 26,
+              "height": 16,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "terminal_moraine",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "terminal moraine ridge damming the proglacial lake",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.38,
+                  0.56
+                ],
+                [
+                  0.5,
+                  0.58
+                ],
+                [
+                  0.62,
+                  0.56
+                ]
+              ],
+              "width": 30,
+              "height": 14,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "u_shaped_trough",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "broad U-shaped glacial trough carved down the center",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.5,
+                  0.02
+                ],
+                [
+                  0.5,
+                  0.48
+                ],
+                [
+                  0.5,
+                  0.98
+                ]
+              ],
+              "width": 120,
+              "depth": 36,
+              "profile": "rounded",
+              "meander": 0.25,
+              "flooded": "never"
+            }
+          },
+          {
+            "id": "proglacial_lake",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "milky proglacial lake at the glacier snout",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.5,
+                0.51
+              ],
+              "radius": 56,
+              "depth": 4,
+              "water": true,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "braided_channel_west",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "west braided outflow stream carrying meltwater across outwash gravel",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.48,
+                  0.64
+                ],
+                [
+                  0.44,
+                  0.74
+                ],
+                [
+                  0.49,
+                  0.86
+                ],
+                [
+                  0.46,
+                  0.99
+                ]
+              ],
+              "width": 8,
+              "depth": 4,
+              "meander": 0.65,
+              "flooded": "never"
+            }
+          },
+          {
+            "id": "braided_channel_east",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "east braided outflow stream branching through the valley floor",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.52,
+                  0.64
+                ],
+                [
+                  0.55,
+                  0.76
+                ],
+                [
+                  0.5,
+                  0.88
+                ],
+                [
+                  0.53,
+                  0.99
+                ]
+              ],
+              "width": 7,
+              "depth": 3,
+              "meander": 0.7,
+              "flooded": "never"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "boreal",
+          "temperatureFrequency": 0.0012,
+          "latitudeGradient": -0.35
+        }
+      },
+      {
+        "id": "ice_cave_terminus",
+        "kind": "generator",
+        "generator": "authored:glacial_ice_cave_terminus",
+        "constraints": [
+          {
+            "at": [
+              0.5,
+              0.48
+            ]
+          }
+        ]
+      },
+      {
+        "id": "iceberg_scatter",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "params": {
+          "program": "calved_iceberg",
+          "count": 8,
+          "area": {
+            "at": [
+              0.5,
+              0.51
+            ],
+            "radius": 0.08
+          },
+          "spacing": 16,
+          "maxSlope": 15
+        }
+      },
+      {
+        "id": "erratic_boulders",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "params": {
+          "program": "glacial_erratic_boulder",
+          "count": 14,
+          "area": {
+            "at": [
+              0.5,
+              0.72
+            ],
+            "radius": 0.28
+          },
+          "spacing": 22,
+          "maxSlope": 28
+        }
+      },
+      {
+        "id": "outwash_scrub",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "stunted subalpine conifers and hardy scrub in the lower outwash valley",
+        "params": {
+          "area": {
+            "at": [
+              0.5,
+              0.78
+            ],
+            "radius": 130
+          },
+          "density": 0.04,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 30,
+          "elevation": [
+            4,
+            60
+          ],
+          "edgeFalloff": 16,
+          "undergrowth": {
+            "grass": 0.25,
+            "flowers": 0.02,
+            "deadwood": 0.08
+          },
+          "species": [
+            {
+              "id": "stunted_spruce",
+              "shape": "spruce_squat",
+              "weight": 4
+            },
+            {
+              "id": "alpine_larch",
+              "shape": "larch_columnar",
+              "weight": 2
+            },
+            {
+              "id": "juniper",
+              "shape": "juniper_scrub",
+              "weight": 3
+            }
+          ]
+        }
+      },
+      {
+        "id": "sparse_alpine_wilderness",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "rare windswept scrub across the upper slopes",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.008,
+          "spacing": 6,
+          "clumping": 0.6,
+          "maxSlope": 35,
+          "elevation": [
+            2,
+            75
+          ],
+          "edgeFalloff": 12,
+          "species": [
+            {
+              "id": "highland_juniper",
+              "shape": "juniper_scrub",
+              "weight": 2
+            },
+            {
+              "id": "krummholz_spruce",
+              "shape": "spruce_squat",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "subglacial_chasms",
+        "kind": "generator",
+        "generator": "cave.carver@0",
+        "label": "narrow fracture ravines beneath the mountain walls",
+        "params": {
+          "style": "ravine",
+          "density": 0.18,
+          "frequency": 0.015,
+          "radius": [
+            2,
+            4
+          ],
+          "yRange": [
+            20,
+            85
+          ],
+          "entrances": 1,
+          "decorate": true
+        }
+      }
+    ]
+  },
+  "programs": {
+    "glacial_ice_cave_terminus": {
+      "mode": "landmark",
+      "envelope": [
+        32,
+        26,
+        24
+      ],
+      "sourceHash": "b3:b097838e6124f2bc705f56bd90d892ed3357166716755eac76cf86345c18a613",
+      "outputHash": "b3:72510e289bcc1d3d001802c1772b7202ecbc9b6950d7e0d482a076d1907a52a0",
+      "conforms": false,
+      "conformHash": "b3:5b8f79c93f629aa987ba37ce38ab84fca66eb99b31c9d0545065ae58548b4e8e",
+      "source": "export const envelope = [32, 26, 24];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const SEAT_Y = 4;\n\n  // Palette definitions\n  const BLUE_ICE = \"minecraft:blue_ice\";\n  const PACKED_ICE = \"minecraft:packed_ice\";\n  const CLEAR_ICE = \"minecraft:ice\";\n  const SNOW_BLOCK = \"minecraft:snow_block\";\n  const SEA_LANTERN = \"minecraft:sea_lantern\";\n\n  const MORAINE_GRAVEL = api.theme?.ground?.scree || \"minecraft:gravel\";\n  const MORAINE_STONE = api.theme?.stone?.primary || \"minecraft:stone\";\n  const MORAINE_ANDESITE = api.theme?.stone?.accent || \"minecraft:andesite\";\n  const MORAINE_COBBLE = \"minecraft:cobblestone\";\n\n  // Fast 3D Simplex-style Perlin gradient noise\n  const seed = Math.floor(api.random() * 100000) + 713;\n  const perm = new Uint8Array(512);\n  let s = seed & 0xffff;\n  for (let i = 0; i < 256; i++) {\n    s = (s * 1664525 + 1013904223) & 0xffffffff;\n    perm[i] = i;\n  }\n  for (let i = 255; i > 0; i--) {\n    s = (s * 1664525 + 1013904223) & 0xffffffff;\n    const j = Math.abs(s) % (i + 1);\n    const tmp = perm[i];\n    perm[i] = perm[j];\n    perm[j] = tmp;\n  }\n  for (let i = 0; i < 256; i++) perm[256 + i] = perm[i];\n\n  function grad(hash, x, y, z) {\n    const h = hash & 15;\n    const u = h < 8 ? x : y;\n    const v = h < 4 ? y : h === 12 || h === 14 ? x : z;\n    return ((h & 1) === 0 ? u : -u) + ((h & 2) === 0 ? v : -v);\n  }\n\n  function noise3D(x, y, z) {\n    const X = Math.floor(x) & 255;\n    const Y = Math.floor(y) & 255;\n    const Z = Math.floor(z) & 255;\n    const fx = x - Math.floor(x);\n    const fy = y - Math.floor(y);\n    const fz = z - Math.floor(z);\n    const u = fx * fx * fx * (fx * (fx * 6 - 15) + 10);\n    const v = fy * fy * fy * (fy * (fy * 6 - 15) + 10);\n    const w = fz * fz * fz * (fz * (fz * 6 - 15) + 10);\n\n    const A = perm[X] + Y, AA = perm[A] + Z, AB = perm[A + 1] + Z;\n    const B = perm[X + 1] + Y, BA = perm[B] + Z, BB = perm[B + 1] + Z;\n\n    return (\n      (1 - w) * (\n        (1 - v) * ((1 - u) * grad(perm[AA], fx, fy, fz) + u * grad(perm[BA], fx - 1, fy, fz)) +\n        v * ((1 - u) * grad(perm[AB], fx, fy - 1, fz) + u * grad(perm[BB], fx - 1, fy - 1, fz))\n      ) +\n      w * (\n        (1 - v) * ((1 - u) * grad(perm[AA + 1], fx, fy, fz - 1) + u * grad(perm[BA + 1], fx - 1, fy, fz - 1)) +\n        v * ((1 - u) * grad(perm[AB + 1], fx, fy - 1, fz - 1) + u * grad(perm[BB + 1], fx - 1, fy - 1, fz - 1))\n      )\n    );\n  }\n\n  function fbm(x, y, z, octaves = 3) {\n    let val = 0;\n    let amp = 0.5;\n    let freq = 1.0;\n    for (let i = 0; i < octaves; i++) {\n      val += amp * noise3D(x * freq, y * freq, z * freq);\n      amp *= 0.5;\n      freq *= 2.0;\n    }\n    return val;\n  }\n\n  // 3D Voxel Grid: 32 x 26 x 24\n  const grid = new Array(W * H * D).fill(null);\n  function getIndex(x, y, z) {\n    return x + W * (y + H * z);\n  }\n  function setVoxel(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      grid[getIndex(x, y, z)] = block;\n    }\n  }\n  function getVoxel(x, y, z) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      return grid[getIndex(x, y, z)];\n    }\n    return null;\n  }\n\n  // 1. Compute Base Glacier Geometry & Snout Morphology\n  for (let z = 0; z < D; z++) {\n    const relZ = z / (D - 1); // 0 at front, 1 at back\n    for (let x = 0; x < W; x++) {\n      const relX = (x - 15.5) / 15.5; // -1 to +1\n      const isMoraine = Math.abs(relX) > 0.75;\n      const moraineDist = Math.max(0, (Math.abs(relX) - 0.75) / 0.25);\n\n      // Top surface of the glacier (U-valley slope + seracs)\n      const uShape = Math.pow(Math.abs(relX), 1.8) * 3.2;\n      const longitudinalRise = relZ * 4.8;\n      const seracNoise = fbm(x * 0.22, z * 0.22, 2.3, 3) * 3.0;\n      const topSurfaceY = Math.min(H - 2, Math.floor(16.5 + longitudinalRise + uShape + seracNoise));\n\n      // Front Calving Snout position\n      const cliffNoise = fbm(x * 0.35, 1.2, 5.7, 2) * 2.2;\n      let snoutZ = 6.8 + cliffNoise;\n      if (isMoraine) {\n        // Moraines extend further down-valley towards front\n        snoutZ -= moraineDist * 4.0;\n      }\n\n      // Cavern Portal Geometry\n      const caveCenterOffset = Math.sin(z * 0.3) * 1.5;\n      const caveCenterX = 15.5 + caveCenterOffset;\n      const caveRadiusX = 5.6 - relZ * 1.2;\n      const caveBaseY = SEAT_Y;\n      const caveArchHeight = 9.8 - relZ * 2.2;\n\n      // Fill Column\n      for (let y = 0; y <= topSurfaceY; y++) {\n        let isSolid = false;\n\n        // Glacier main body condition\n        if (z >= snoutZ) {\n          isSolid = true;\n        }\n\n        // Calved Iceberg formations in the proglacial forefield (z < snoutZ)\n        if (!isSolid) {\n          // Berg 1 (West calved monolith)\n          const d1 = Math.pow((x - 8) / 3.2, 2) + Math.pow((z - 3.2) / 2.2, 2) + Math.pow((y - SEAT_Y - 2) / 3.0, 2);\n          if (d1 <= 1.0) isSolid = true;\n\n          // Berg 2 (East calved pinnacle)\n          const d2 = Math.pow((x - 23) / 2.8, 2) + Math.pow((z - 2.8) / 2.0, 2) + Math.pow((y - SEAT_Y - 1.5) / 2.5, 2);\n          if (d2 <= 1.0) isSolid = true;\n\n          // Berg 3 (Center submerged shatter)\n          const d3 = Math.pow((x - 15) / 2.2, 2) + Math.pow((z - 2.0) / 1.5, 2) + Math.pow((y - SEAT_Y) / 1.8, 2);\n          if (d3 <= 1.0) isSolid = true;\n\n          // Berg 4 (Moraine flank ice block west)\n          const d4 = Math.pow((x - 3.5) / 2.5, 2) + Math.pow((z - 2.5) / 2.0, 2) + Math.pow((y - SEAT_Y - 1) / 2.2, 2);\n          if (d4 <= 1.0) isSolid = true;\n\n          // Berg 5 (Moraine flank ice block east)\n          const d5 = Math.pow((x - 28) / 2.5, 2) + Math.pow((z - 2.8) / 2.0, 2) + Math.pow((y - SEAT_Y - 1.5) / 2.6, 2);\n          if (d5 <= 1.0) isSolid = true;\n        }\n\n        // Hollow out the Subglacial Ice Cave Tunnel\n        if (isSolid && z >= 5) {\n          const dx = (x - caveCenterX) / caveRadiusX;\n          if (Math.abs(dx) < 1.0) {\n            const archFactor = Math.pow(1.0 - dx * dx, 0.58) * (1.0 - 0.12 * Math.abs(dx));\n            const tunnelNoise = fbm(x * 0.4, y * 0.4, z * 0.35, 2) * 1.0;\n            const caveCeilY = caveBaseY + caveArchHeight * archFactor + tunnelNoise;\n\n            // Meltwater river channel floor trough\n            const channelBedY = (Math.abs(dx) < 0.4) ? caveBaseY - 1 : caveBaseY;\n\n            if (y >= channelBedY && y <= caveCeilY) {\n              isSolid = false;\n            }\n          }\n        }\n\n        // Carve Deep Crevasses across upper glacier surface\n        if (isSolid && y >= topSurfaceY - 6) {\n          // Transverse Crevasse 1 (mid glacier)\n          const crev1Z = 13.0 + Math.sin(x * 0.45) * 1.1;\n          if (Math.abs(z - crev1Z) < 0.75 && y >= topSurfaceY - 5) {\n            isSolid = false;\n          }\n\n          // Transverse Crevasse 2 (upper glacier)\n          const crev2Z = 19.2 + Math.cos(x * 0.4) * 0.9;\n          if (Math.abs(z - crev2Z) < 0.85 && y >= topSurfaceY - 6) {\n            isSolid = false;\n          }\n        }\n\n        if (isSolid) {\n          // Determine Block Substance & Stratigraphy\n          let block = PACKED_ICE;\n\n          if (isMoraine) {\n            // Lateral Moraine debris till\n            const nMor = fbm(x * 0.6, y * 0.6, z * 0.6, 2);\n            if (nMor > 0.3) block = MORAINE_GRAVEL;\n            else if (nMor > 0.0) block = MORAINE_ANDESITE;\n            else if (nMor > -0.3) block = MORAINE_STONE;\n            else block = MORAINE_COBBLE;\n          } else if (y >= topSurfaceY - 1) {\n            // Firn / fresh snow cap on top surface\n            block = SNOW_BLOCK;\n          } else {\n            // Glacial Stratification (blue compression ice bands & clear ice veins)\n            const fold = fbm(x * 0.2, y * 0.25, z * 0.2, 3) * 3.5;\n            const bandVal = Math.sin(y * 0.75 + z * 0.25 + fold);\n\n            if (y <= SEAT_Y + 1) {\n              // Basal compressed ice layer\n              block = BLUE_ICE;\n            } else if (bandVal > 0.4) {\n              block = BLUE_ICE;\n            } else if (bandVal < -0.65) {\n              block = CLEAR_ICE;\n            } else {\n              block = PACKED_ICE;\n            }\n          }\n\n          setVoxel(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  // 2. Interior Cave Lining, Sapphire Glow & Meltwater Run\n  for (let z = 5; z < D; z++) {\n    const relZ = z / (D - 1);\n    const caveCenterX = 15.5 + Math.sin(z * 0.3) * 1.5;\n    const caveRadiusX = 5.6 - relZ * 1.2;\n\n    for (let x = 0; x < W; x++) {\n      const dx = (x - caveCenterX) / caveRadiusX;\n      if (Math.abs(dx) <= 1.4) {\n        for (let y = SEAT_Y - 1; y < H - 2; y++) {\n          const v = getVoxel(x, y, z);\n          if (v !== null) {\n            // Check if this solid block borders cavern air\n            const hasAirNeighbor = (\n              getVoxel(x + 1, y, z) === null ||\n              getVoxel(x - 1, y, z) === null ||\n              getVoxel(x, y + 1, z) === null ||\n              getVoxel(x, y - 1, z) === null ||\n              getVoxel(x, y, z + 1) === null ||\n              getVoxel(x, y, z - 1) === null\n            );\n\n            if (hasAirNeighbor) {\n              if (y <= SEAT_Y) {\n                // Subglacial meltwater river bed\n                if (Math.abs(dx) < 0.45) {\n                  setVoxel(x, y, z, (x + z) % 3 === 0 ? CLEAR_ICE : BLUE_ICE);\n                } else {\n                  setVoxel(x, y, z, (x + z) % 2 === 0 ? MORAINE_GRAVEL : BLUE_ICE);\n                }\n              } else {\n                // Glowing blue ice cavern perimeter\n                setVoxel(x, y, z, (x * 7 + y * 13 + z * 19) % 5 === 0 ? CLEAR_ICE : BLUE_ICE);\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // 3. Hidden Ethereal Glacial Luminance (Lanterns behind translucent clear ice)\n  const glowPoints = [\n    [16, 12, 11],\n    [12, 10, 15],\n    [19, 10, 15],\n    [15, 11, 19],\n    [17, 9, 22],\n    [14, 6, 8],\n    [18, 6, 8]\n  ];\n  for (const [gx, gy, gz] of glowPoints) {\n    if (getVoxel(gx, gy, gz) !== null) {\n      setVoxel(gx, gy, gz, SEA_LANTERN);\n      // Envelope lantern with clear ice for shimmering subglacial glow\n      const neighbors = [\n        [gx + 1, gy, gz], [gx - 1, gy, gz],\n        [gx, gy + 1, gz], [gx, gy - 1, gz],\n        [gx, gy, gz + 1], [gx, gy, gz - 1]\n      ];\n      for (const [nx, ny, nz] of neighbors) {\n        if (getVoxel(nx, ny, nz) === PACKED_ICE) {\n          setVoxel(nx, ny, nz, CLEAR_ICE);\n        }\n      }\n    }\n  }\n\n  // 4. Hanging Glacial Icicle Formations\n  // Scans for ceiling air pockets under solid ice blocks\n  for (let z = 5; z < D - 1; z++) {\n    for (let x = 8; x <= 23; x++) {\n      for (let y = SEAT_Y + 2; y < 16; y++) {\n        if (getVoxel(x, y, z) === null) {\n          const above = getVoxel(x, y + 1, z);\n          if (above === BLUE_ICE || above === PACKED_ICE || above === CLEAR_ICE) {\n            // Pseudo-random deterministic icicle generation\n            const hVal = (x * 37 + y * 17 + z * 59) % 100;\n            if (hVal < 28) {\n              // 1-block icicle\n              setVoxel(x, y, z, \"minecraft:pointed_dripstone[vertical_direction=down,thickness=tip]\");\n            } else if (hVal < 42 && getVoxel(x, y - 1, z) === null) {\n              // 2-block icicle\n              setVoxel(x, y, z, \"minecraft:pointed_dripstone[vertical_direction=down,thickness=frustum]\");\n              setVoxel(x, y - 1, z, \"minecraft:pointed_dripstone[vertical_direction=down,thickness=tip]\");\n            } else if (hVal < 50 && getVoxel(x, y - 1, z) === null && getVoxel(x, y - 2, z) === null) {\n              // 3-block massive ice stalactite\n              setVoxel(x, y, z, \"minecraft:pointed_dripstone[vertical_direction=down,thickness=base]\");\n              setVoxel(x, y - 1, z, \"minecraft:pointed_dripstone[vertical_direction=down,thickness=frustum]\");\n              setVoxel(x, y - 2, z, \"minecraft:pointed_dripstone[vertical_direction=down,thickness=tip]\");\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // 5. Follow Ground Terrain: Foundation / Skirt anchoring down to heightAt (Rule 6)\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      // Find lowest solid voxel in column\n      let lowestY = -1;\n      let highestY = -1;\n      for (let y = 0; y < H; y++) {\n        const v = getVoxel(x, y, z);\n        if (v !== null && !v.startsWith(\"minecraft:pointed_dripstone\")) {\n          if (lowestY === -1) lowestY = y;\n          highestY = y;\n        }\n      }\n\n      const hAt = api.heightAt(x, z);\n      // Terrain ground level in node coordinates (SEAT_Y is plane 4)\n      const terrainGroundY = Math.max(0, Math.min(H - 1, SEAT_Y + Math.floor(hAt)));\n\n      if (lowestY !== -1) {\n        // If terrain drops away below the lowest solid block, extend foundation skirt\n        if (terrainGroundY < lowestY) {\n          const relX = (x - 15.5) / 15.5;\n          const isMoraine = Math.abs(relX) > 0.75;\n          const mat = isMoraine ? MORAINE_GRAVEL : BLUE_ICE;\n\n          for (let y = terrainGroundY; y < lowestY; y++) {\n            setVoxel(x, y, z, mat);\n          }\n        }\n      } else if (z >= 6) {\n        // Continuous basal seal along the glacier footprint\n        const relX = (x - 15.5) / 15.5;\n        const isMoraine = Math.abs(relX) > 0.75;\n        const mat = isMoraine ? MORAINE_GRAVEL : BLUE_ICE;\n        for (let y = terrainGroundY; y <= SEAT_Y; y++) {\n          setVoxel(x, y, z, mat);\n        }\n      }\n    }\n  }\n\n  // 6. Ensure Base Monolith Connectivity (Rule 9: One connected solid body)\n  // Ensure the basal bed connecting all bergs, portal walls, and moraines is continuous\n  for (let z = 0; z < D; z++) {\n    for (let x = 0; x < W; x++) {\n      const hAt = api.heightAt(x, z);\n      const groundY = Math.max(0, Math.min(H - 1, SEAT_Y + Math.floor(hAt)));\n      if (getVoxel(x, groundY, z) === null && z >= 2) {\n        const relX = (x - 15.5) / 15.5;\n        const mat = Math.abs(relX) > 0.7 ? MORAINE_GRAVEL : (x % 2 === 0 ? BLUE_ICE : MORAINE_STONE);\n        setVoxel(x, groundY, z, mat);\n      }\n    }\n  }\n\n  // 7. Emit Voxels Deterministically to the World API\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const block = getVoxel(x, y, z);\n        if (block !== null) {\n          api.set(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"Glacial Ice Cave Terminus\",\n    seatY: SEAT_Y,\n    anchors: {\n      front: [16, SEAT_Y, 0],\n      portal: [16, SEAT_Y, 6],\n      crevasse: [16, 20, 13]\n    }\n  };\n}"
+    },
+    "calved_iceberg": {
+      "mode": "plugin",
+      "envelope": [
+        15,
+        12,
+        15
+      ],
+      "sourceHash": "b3:5434888373ff6294240e112c760bd74b6288796185cdaf7edee52e3c15c7f831",
+      "outputHash": "b3:90f41e79b4338a65eb5be7700d093fbfaebb7a72e67cf688eb2923115ed8cb4a",
+      "conforms": false,
+      "conformHash": "b3:7cf6361248114a57294475f323286fff4dfd8c58d6eda56584ea3109282a7117",
+      "source": "export const envelope = [15, 12, 15];\n\nexport default function build(api) {\n  const [sizeX, sizeY, sizeZ] = api.size;\n  const seatY = 3;\n\n  // 3D Perlin gradient noise generator\n  function createNoise3D() {\n    const perm = new Uint8Array(512);\n    const p = new Uint8Array(256);\n    for (let i = 0; i < 256; i++) p[i] = i;\n    for (let i = 255; i > 0; i--) {\n      const j = Math.floor(api.random() * (i + 1));\n      const tmp = p[i];\n      p[i] = p[j];\n      p[j] = tmp;\n    }\n    for (let i = 0; i < 512; i++) perm[i] = p[i & 255];\n\n    const grad3 = [\n      [1, 1, 0], [-1, 1, 0], [1, -1, 0], [-1, -1, 0],\n      [1, 0, 1], [-1, 0, 1], [1, 0, -1], [-1, 0, -1],\n      [0, 1, 1], [0, -1, 1], [0, 1, -1], [-0, -1, -1],\n      [1, 1, 0], [-1, 1, 0], [0, -1, 1], [0, -1, -1]\n    ];\n\n    function dot(g, x, y, z) {\n      return g[0] * x + g[1] * y + g[2] * z;\n    }\n    function fade(t) {\n      return t * t * t * (t * (t * 6 - 15) + 10);\n    }\n    function lerp(a, b, t) {\n      return a + t * (b - a);\n    }\n\n    return function noise(x, y, z) {\n      const X = Math.floor(x) & 255;\n      const Y = Math.floor(y) & 255;\n      const Z = Math.floor(z) & 255;\n      const xf = x - Math.floor(x);\n      const yf = y - Math.floor(y);\n      const zf = z - Math.floor(z);\n\n      const u = fade(xf);\n      const v = fade(yf);\n      const w = fade(zf);\n\n      const A = perm[X] + Y;\n      const AA = perm[A] + Z;\n      const AB = perm[A + 1] + Z;\n      const B = perm[X + 1] + Y;\n      const BA = perm[B] + Z;\n      const BB = perm[B + 1] + Z;\n\n      const g000 = grad3[perm[AA] % 16];\n      const g100 = grad3[perm[BA] % 16];\n      const g010 = grad3[perm[AB] % 16];\n      const g110 = grad3[perm[BB] % 16];\n      const g001 = grad3[perm[AA + 1] % 16];\n      const g101 = grad3[perm[BA + 1] % 16];\n      const g011 = grad3[perm[AB + 1] % 16];\n      const g111 = grad3[perm[BB + 1] % 16];\n\n      const x1 = lerp(dot(g000, xf, yf, zf), dot(g100, xf - 1, yf, zf), u);\n      const x2 = lerp(dot(g010, xf, yf - 1, zf), dot(g110, xf - 1, yf - 1, zf), u);\n      const y1 = lerp(x1, x2, v);\n\n      const x3 = lerp(dot(g001, xf, yf, zf - 1), dot(g101, xf - 1, yf, zf - 1), u);\n      const x4 = lerp(dot(g011, xf, yf - 1, zf - 1), dot(g111, xf - 1, yf - 1, zf - 1), u);\n      const y2 = lerp(x3, x4, v);\n\n      return lerp(y1, y2, w);\n    };\n  }\n\n  const noise = createNoise3D();\n\n  // Iceberg Archetype selection per plugin instance\n  const idx = api.instance.index;\n  const archetype = (idx + Math.floor(api.random() * 2)) % 5;\n\n  const cx = 7.0 + (api.random() - 0.5) * 1.6;\n  const cz = 7.0 + (api.random() - 0.5) * 1.6;\n  const rx = 5.0 + api.random() * 1.2;\n  const rz = 5.0 + api.random() * 1.2;\n  const rot = api.random() * Math.PI * 2;\n  const cosR = Math.cos(rot);\n  const sinR = Math.sin(rot);\n\n  const peakH = 10.2 + api.random() * 0.7;\n  const tiltX = (api.random() - 0.5) * 0.5;\n  const tiltZ = (api.random() - 0.5) * 0.5;\n  const shearCut = 1.6 + api.random() * 1.0;\n\n  function topHeight(lx, lz) {\n    const r = Math.hypot(lx / rx, lz / rz);\n\n    if (archetype === 0) {\n      // Jagged Spire / Cathedral serac\n      const px = -1.2;\n      const pz = 0.4;\n      const dp = Math.hypot(lx - px, lz - pz);\n      const spire = peakH - dp * 1.7;\n      const shoulder = 6.8 - Math.hypot(lx + 1.8, lz - 0.2) * 1.1;\n      let h = Math.max(spire, shoulder);\n      if (lx > shearCut) h -= (lx - shearCut) * 4.0;\n      return h;\n    } else if (archetype === 1) {\n      // Tabular Calved Slab with crevasse\n      let h = 8.6 + tiltX * lx + tiltZ * lz;\n      if (r > 0.75) h -= (r - 0.75) * 9.0;\n      const crevasseDist = Math.abs(lx - 0.4);\n      if (crevasseDist < 0.9) h -= (0.9 - crevasseDist) * 3.2;\n      return h;\n    } else if (archetype === 2) {\n      // Twin Horns / Calving Saddle\n      const h1 = peakH - Math.hypot(lx + 1.6, lz + 0.4) * 1.6;\n      const h2 = (peakH - 1.4) - Math.hypot(lx - 1.6, lz - 0.6) * 1.5;\n      const saddle = 5.8 - Math.hypot(lx, lz) * 0.8;\n      return Math.max(Math.max(h1, h2), saddle);\n    } else if (archetype === 3) {\n      // Eroded Dome\n      return peakH - r * 3.2;\n    } else {\n      // Capsized Wedge / Blade\n      const spine = peakH - Math.abs(lx) * 0.65;\n      const smoothFlank = spine - (lz + 0.5) * 1.35;\n      let h = Math.min(spine, smoothFlank);\n      if (lz < -shearCut) h -= (-shearCut - lz) * 5.0;\n      return h;\n    }\n  }\n\n  // 3D Voxel Grid\n  const grid = Array.from({ length: sizeX }, () =>\n    Array.from({ length: sizeY }, () => new Uint8Array(sizeZ))\n  );\n\n  for (let x = 0; x < sizeX; x++) {\n    for (let z = 0; z < sizeZ; z++) {\n      const gy = Math.max(0, Math.min(seatY + api.heightAt(x, z), 8));\n      const dx = x - cx;\n      const dz = z - cz;\n      const lx = dx * cosR - dz * sinR;\n      const lz = dx * sinR + dz * cosR;\n      const r = Math.hypot(lx / rx, lz / rz);\n\n      if (r > 1.15) continue;\n\n      let th = topHeight(lx, lz);\n      th += noise(x * 0.35, 1.2, z * 0.35) * 1.1 + noise(x * 0.75, 2.5, z * 0.75) * 0.45;\n      const maxH = Math.min(sizeY - 1, Math.floor(th));\n\n      for (let y = gy; y <= maxH; y++) {\n        const n3d = noise(x * 0.28, y * 0.28, z * 0.28) * 0.75 +\n                    noise(x * 0.6, y * 0.6, z * 0.6) * 0.35;\n\n        const waveNotch = (y >= seatY && y <= seatY + 1 && r > 0.62) ? 0.32 : 0;\n        let d = (th - y) / 2.8 + (1.0 - r) * 1.4 + n3d - waveNotch;\n\n        if (archetype === 3) {\n          const tunnelD = Math.hypot(lx * 0.85, (y - (seatY + 1.2)) * 1.15);\n          if (tunnelD < 1.45 && Math.abs(lz) < 4.2) {\n            d -= (1.45 - tunnelD) * 2.2;\n          }\n        }\n\n        if (d > 0.08) {\n          grid[x][y][z] = 1;\n        }\n      }\n    }\n  }\n\n  // Ensure solid downward ground footing at every occupied column\n  for (let x = 0; x < sizeX; x++) {\n    for (let z = 0; z < sizeZ; z++) {\n      const gy = Math.max(0, Math.min(seatY + api.heightAt(x, z), 8));\n      let hasSolid = false;\n      let highestSolid = -1;\n\n      for (let y = gy; y < sizeY; y++) {\n        if (grid[x][y][z]) {\n          hasSolid = true;\n          highestSolid = y;\n        }\n      }\n\n      if (hasSolid && highestSolid >= seatY) {\n        for (let y = gy; y <= highestSolid; y++) {\n          grid[x][y][z] = 1;\n        }\n      }\n    }\n  }\n\n  // 6-Connected Component Analysis\n  function getVoxelIndex(x, y, z) {\n    return x * (sizeY * sizeZ) + y * sizeZ + z;\n  }\n\n  const visited = new Uint8Array(sizeX * sizeY * sizeZ);\n  let largestComponent = [];\n\n  for (let x = 0; x < sizeX; x++) {\n    for (let y = 0; y < sizeY; y++) {\n      for (let z = 0; z < sizeZ; z++) {\n        const vIdx = getVoxelIndex(x, y, z);\n        if (grid[x][y][z] && !visited[vIdx]) {\n          const comp = [];\n          const queue = [[x, y, z]];\n          visited[vIdx] = 1;\n          let head = 0;\n\n          while (head < queue.length) {\n            const [qx, qy, qz] = queue[head++];\n            comp.push([qx, qy, qz]);\n\n            const neighbors = [\n              [qx + 1, qy, qz], [qx - 1, qy, qz],\n              [qx, qy + 1, qz], [qx, qy - 1, qz],\n              [qx, qy, qz + 1], [qx, qy, qz - 1]\n            ];\n\n            for (const [nx, ny, nz] of neighbors) {\n              if (nx >= 0 && nx < sizeX && ny >= 0 && ny < sizeY && nz >= 0 && nz < sizeZ) {\n                const nIdx = getVoxelIndex(nx, ny, nz);\n                if (grid[nx][ny][nz] && !visited[nIdx]) {\n                  visited[nIdx] = 1;\n                  queue.push([nx, ny, nz]);\n                }\n              }\n            }\n          }\n\n          if (comp.length > largestComponent.length) {\n            largestComponent = comp;\n          }\n        }\n      }\n    }\n  }\n\n  // Retain only the largest single solid component\n  for (let x = 0; x < sizeX; x++) {\n    for (let y = 0; y < sizeY; y++) {\n      for (let z = 0; z < sizeZ; z++) {\n        grid[x][y][z] = 0;\n      }\n    }\n  }\n  for (const [x, y, z] of largestComponent) {\n    grid[x][y][z] = 1;\n  }\n\n  // Guarantee minimum volume and height constraints\n  let totalSolid = largestComponent.length;\n  let minY = sizeY;\n  let maxY = 0;\n  for (const [, y] of largestComponent) {\n    if (y < minY) minY = y;\n    if (y > maxY) maxY = y;\n  }\n\n  if (totalSolid < 550 || (maxY - minY + 1) < 8) {\n    const icx = Math.round(cx);\n    const icz = Math.round(cz);\n    for (let dx = -4; dx <= 4; dx++) {\n      for (let dz = -4; dz <= 4; dz++) {\n        const px = icx + dx;\n        const pz = icz + dz;\n        if (px >= 1 && px < sizeX - 1 && pz >= 1 && pz < sizeZ - 1) {\n          const d2 = dx * dx + dz * dz;\n          if (d2 <= 18) {\n            const gy = Math.max(0, Math.min(seatY + api.heightAt(px, pz), 8));\n            const cap = Math.min(sizeY - 1, Math.max(gy + 8, 10 - Math.floor(Math.sqrt(d2) * 0.9)));\n            for (let y = gy; y <= cap; y++) {\n              grid[px][y][pz] = 1;\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // Exterior distance analysis\n  function isSolid(x, y, z) {\n    if (x < 0 || x >= sizeX || y < 0 || y >= sizeY || z < 0 || z >= sizeZ) return false;\n    return grid[x][y][z] === 1;\n  }\n\n  const moraineBlock = api.theme?.ground?.scree || api.theme?.stone?.accent || \"minecraft:gravel\";\n\n  // Block placement\n  for (let x = 0; x < sizeX; x++) {\n    for (let z = 0; z < sizeZ; z++) {\n      const gy = Math.max(0, Math.min(seatY + api.heightAt(x, z), 8));\n\n      for (let y = 0; y < sizeY; y++) {\n        if (!grid[x][y][z]) continue;\n\n        const hasAirAbove = !isSolid(x, y + 1, z);\n        const hasAirNeighbor = !isSolid(x + 1, y, z) || !isSolid(x - 1, y, z) ||\n                               !isSolid(x, y, z + 1) || !isSolid(x, y, z - 1);\n\n        let blockType = \"minecraft:blue_ice\";\n\n        // Moraine grit on seabed/ground contact\n        if (y === gy && api.random() < 0.28) {\n          blockType = moraineBlock;\n        } else if (hasAirAbove) {\n          // Weathered snow top on horizontal and gentle upper surfaces\n          if (y >= seatY + 2 && api.random() < 0.85) {\n            blockType = \"minecraft:snow_block\";\n          } else {\n            blockType = \"minecraft:packed_ice\";\n          }\n        } else if (y >= 9) {\n          // Upper firn\n          const r = api.random();\n          if (r < 0.5) blockType = \"minecraft:snow_block\";\n          else if (r < 0.88) blockType = \"minecraft:packed_ice\";\n          else blockType = \"minecraft:blue_ice\";\n        } else if (hasAirNeighbor) {\n          // Exposed sheared calving walls\n          const r = api.random();\n          if (r < 0.58) blockType = \"minecraft:packed_ice\";\n          else if (r < 0.86) blockType = \"minecraft:blue_ice\";\n          else blockType = \"minecraft:ice\";\n        } else {\n          // Deep core\n          blockType = \"minecraft:blue_ice\";\n        }\n\n        api.set(x, y, z, blockType);\n\n        // Snow layer on exposed top surfaces\n        if (hasAirAbove && y + 1 < sizeY && blockType !== moraineBlock) {\n          const isFlat = isSolid(x + 1, y, z) && isSolid(x - 1, y, z) &&\n                         isSolid(x, y, z + 1) && isSolid(x, y, z - 1);\n          const layers = isFlat ? (api.random() < 0.4 ? 2 : 1) : 1;\n          api.set(x, y + 1, z, `minecraft:snow[layers=${layers}]`);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"calved_iceberg\",\n    seatY: seatY\n  };\n}"
+    },
+    "glacial_erratic_boulder": {
+      "mode": "plugin",
+      "envelope": [
+        13,
+        12,
+        13
+      ],
+      "sourceHash": "b3:523c99406b4fb06b8303667c6a514f04210b4555c287170713ddab9ebdad2458",
+      "outputHash": "b3:1ee7ed27a665ec9cc92fede6acf6b14960d9747ed55e1b7bfb9fcbd8a9bfc358",
+      "conforms": false,
+      "conformHash": "b3:1e1fae943a7fd96517b086380eaedcee863db80b982ba204f87eee084cf118fb",
+      "source": "export const envelope = [13, 12, 13];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const seatY = 3;\n\n  // 1. World Palette Extraction with robust fallbacks\n  const theme = api.theme;\n  const stonePri = theme.stone?.primary || \"minecraft:deepslate\";\n  const stoneAcc = theme.stone?.accent || \"minecraft:tuff\";\n  const stoneWall = theme.stone?.wall || \"minecraft:cobbled_deepslate_wall\";\n  const groundScree = theme.ground?.scree || \"minecraft:gravel\";\n  const groundBank = theme.ground?.bank || \"minecraft:coarse_dirt\";\n  const groundPlinth = theme.ground?.plinth || \"minecraft:cobblestone\";\n  const groundRevet = theme.ground?.revetment || \"minecraft:stone\";\n\n  // 2. Procedural Variation Parameters (Plugin Mode: 14 unique instances)\n  const idx = api.instance?.index ?? 0;\n  const rng = () => api.random();\n\n  // Boulder morphology archetype\n  // 0: Frost-Shattered / Cleaved Monolith\n  // 1: Perched / Balanced Boulder with undercut neck\n  // 2: Whaleback / Roche Moutonnée (streamlined stoss, plucked lee)\n  // 3: Sharp-Faceted Cleavage Giant\n  // 4: Tabular / Horizontally Stratified Bedding Block\n  const archetype = (idx + Math.floor(rng() * 2)) % 5;\n\n  // Boulder Center\n  const cx = 6.0 + (rng() - 0.5) * 0.8;\n  const cy = 6.6 + (rng() - 0.5) * 0.6;\n  const cz = 6.0 + (rng() - 0.5) * 0.8;\n\n  // Radii\n  const rx = 4.2 + (rng() - 0.5) * 0.8;\n  const ry = 3.6 + (rng() - 0.5) * 0.6;\n  const rz = 4.2 + (rng() - 0.5) * 0.8;\n\n  // Superellipsoid exponents (controls blockiness vs roundness)\n  const pShape = archetype === 3 ? 3.2 + rng() * 0.6 : 2.2 + rng() * 0.8;\n  const qShape = archetype === 4 ? 3.0 + rng() * 0.5 : 2.1 + rng() * 0.7;\n\n  // 3D Rotations and tilts\n  const rotY = (idx * 0.45 + rng() * 0.8) % (Math.PI * 2);\n  const cosY = Math.cos(rotY);\n  const sinY = Math.sin(rotY);\n  const tiltX = (rng() - 0.5) * 0.22;\n  const tiltZ = (rng() - 0.5) * 0.22;\n\n  // Frost Fissure parameters (archetype 0 or random gelifraction)\n  const hasFissure = archetype === 0 || rng() < 0.35;\n  const fissureAngle = rng() * Math.PI;\n  const fissureNx = Math.cos(fissureAngle);\n  const fissureNz = Math.sin(fissureAngle);\n  const fissureWidth = 0.55 + rng() * 0.35;\n  const fissureOffset = (rng() - 0.5) * 1.0;\n\n  // Planar shear facets (geological joint planes)\n  const numFacets = 4 + Math.floor(rng() * 4);\n  const facets = [];\n  for (let i = 0; i < numFacets; i++) {\n    const fPhi = (rng() - 0.5) * Math.PI * 0.75;\n    const fTheta = rng() * Math.PI * 2;\n    facets.push({\n      nx: Math.cos(fPhi) * Math.cos(fTheta),\n      ny: Math.sin(fPhi),\n      nz: Math.cos(fPhi) * Math.sin(fTheta),\n      d: 3.3 + rng() * 1.3,\n    });\n  }\n\n  // Metamorphic banding / vein direction\n  const veinLen = Math.hypot(0.4, 0.8, 0.3);\n  const vnx = 0.4 / veinLen, vny = 0.8 / veinLen, vnz = 0.3 / veinLen;\n  const veinPeriod = 2.4 + rng() * 1.2;\n\n  // 3. Grid for Solid Voxel State: 0 = air, 1 = rock, 2 = vein, 3 = ice crack, 4 = scree/base\n  const solid = Array.from({ length: W }, () =>\n    Array.from({ length: H }, () => new Uint8Array(D))\n  );\n\n  // Evaluate boulder implicit surface\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const dx = x - cx;\n        const dy = y - cy;\n        const dz = z - cz;\n\n        // Apply rotation\n        let x1 = dx * cosY - dz * sinY;\n        let z1 = dx * sinY + dz * cosY;\n        let y1 = dy + x1 * tiltX + z1 * tiltZ;\n\n        // Archetype geometry modulations\n        if (archetype === 1) {\n          // Perched / Undercut pedestal\n          if (y1 < -0.8) {\n            const pinch = 1.0 - 0.5 * Math.min(1.0, Math.pow((-y1 - 0.8) / 2.2, 2));\n            x1 /= Math.max(0.35, pinch);\n            z1 /= Math.max(0.35, pinch);\n          }\n        } else if (archetype === 2) {\n          // Whaleback (asymmetrical stoss & lee)\n          if (z1 > 0) y1 += z1 * 0.3; // smooth sloping ramp\n          else y1 -= Math.abs(z1) * 0.15; // steep plucked face\n        } else if (archetype === 4) {\n          // Tabular stepped terraces\n          y1 += 0.22 * Math.sin(y1 * 3.14);\n        }\n\n        // Superellipsoid distance\n        const normX = Math.abs(x1 / rx);\n        const normY = Math.abs(y1 / ry);\n        const normZ = Math.abs(z1 / rz);\n        let dist = Math.pow(\n          Math.pow(normX, pShape) + Math.pow(normY, qShape) + Math.pow(normZ, pShape),\n          1.0 / pShape\n        );\n\n        // Weathering micro-noise\n        const noise =\n          0.07 * Math.sin(2.3 * x + 1.2 * y) +\n          0.07 * Math.cos(2.5 * z + 1.4 * y) +\n          0.04 * Math.sin(3.1 * x + 2.9 * z);\n        dist += noise;\n\n        // Planar joint facet truncation\n        for (let i = 0; i < facets.length; i++) {\n          const f = facets[i];\n          const fVal = x1 * f.nx + y1 * f.ny + z1 * f.nz - f.d;\n          if (fVal > 0) dist += fVal * 0.65;\n        }\n\n        if (dist <= 1.0) {\n          // Check frost fissure\n          if (hasFissure) {\n            const fissDist = Math.abs(dx * fissureNx + dz * fissureNz - fissureOffset);\n            if (fissDist < fissureWidth) {\n              if (y > cy && fissDist < fissureWidth * 0.35) {\n                continue; // Open chasm at top\n              } else if (y >= cy - 1.2) {\n                solid[x][y][z] = 3; // Ice wedging\n                continue;\n              }\n            }\n          }\n\n          // Check metamorphic vein vs primary rock\n          const vVal = (x * vnx + y * vny + z * vnz) / veinPeriod;\n          const vFract = vVal - Math.floor(vVal);\n          solid[x][y][z] = vFract < 0.28 ? 2 : 1;\n        }\n      }\n    }\n  }\n\n  // 4. Terrain Conformation (Rule 6) — Anchor to ground across all columns\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const groundY = Math.max(0, Math.min(H - 1, Math.round(seatY + api.heightAt(x, z))));\n\n      // Find lowest and highest boulder voxels in column\n      let minY = H;\n      let maxY = -1;\n      for (let y = 0; y < H; y++) {\n        if (solid[x][y][z] > 0) {\n          if (y < minY) minY = y;\n          if (y > maxY) maxY = y;\n        }\n      }\n\n      if (maxY >= 0) {\n        // Boulder occupies this column: extend solid foundation down to ground\n        if (minY > groundY) {\n          for (let y = groundY; y < minY; y++) {\n            solid[x][y][z] = y === groundY ? 4 : 1;\n          }\n        }\n      } else {\n        // Adjacent apron: moraine scree and gravel outwash\n        let isNeighbor = false;\n        const nbrs = [[1, 0], [-1, 0], [0, 1], [0, -1]];\n        for (let i = 0; i < 4; i++) {\n          const nx = x + nbrs[i][0];\n          const nz = z + nbrs[i][1];\n          if (nx >= 0 && nx < W && nz >= 0 && nz < D) {\n            for (let y = 0; y < H; y++) {\n              if (solid[nx][y][nz] > 0) {\n                isNeighbor = true;\n                break;\n              }\n            }\n            if (isNeighbor) break;\n          }\n        }\n\n        if (isNeighbor && groundY < H) {\n          // Ground collar\n          solid[x][groundY][z] = 4;\n          // Occasional stepped scree bank\n          if (rng() < 0.28 && groundY + 1 < H) {\n            solid[x][groundY + 1][z] = 4;\n          }\n        }\n      }\n    }\n  }\n\n  // 5. Connectivity Guarantee (Rule 9: Single 6-connected solid, >= 500 voxels, >= 8 tall)\n  const visited = Array.from({ length: W }, () =>\n    Array.from({ length: H }, () => new Uint8Array(D))\n  );\n  const dirs = [\n    [1, 0, 0], [-1, 0, 0],\n    [0, 1, 0], [0, -1, 0],\n    [0, 0, 1], [0, 0, -1],\n  ];\n  const components = [];\n\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        if (solid[x][y][z] > 0 && !visited[x][y][z]) {\n          const comp = [];\n          const queue = [[x, y, z]];\n          visited[x][y][z] = 1;\n          let head = 0;\n          while (head < queue.length) {\n            const [qx, qy, qz] = queue[head++];\n            comp.push([qx, qy, qz]);\n            for (let d = 0; d < 6; d++) {\n              const nx = qx + dirs[d][0];\n              const ny = qy + dirs[d][1];\n              const nz = qz + dirs[d][2];\n              if (nx >= 0 && nx < W && ny >= 0 && ny < H && nz >= 0 && nz < D) {\n                if (solid[nx][ny][nz] > 0 && !visited[nx][ny][nz]) {\n                  visited[nx][ny][nz] = 1;\n                  queue.push([nx, ny, nz]);\n                }\n              }\n            }\n          }\n          components.push(comp);\n        }\n      }\n    }\n  }\n\n  // Retain only largest component\n  let maxComp = [];\n  for (let i = 0; i < components.length; i++) {\n    if (components[i].length > maxComp.length) {\n      maxComp = components[i];\n    }\n  }\n\n  const inMax = Array.from({ length: W }, () =>\n    Array.from({ length: H }, () => new Uint8Array(D))\n  );\n  for (let i = 0; i < maxComp.length; i++) {\n    const [x, y, z] = maxComp[i];\n    inMax[x][y][z] = 1;\n  }\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        if (!inMax[x][y][z]) solid[x][y][z] = 0;\n      }\n    }\n  }\n\n  // Ensure minimum solid voxel count >= 520\n  let solidCount = maxComp.length;\n  while (solidCount < 530) {\n    const toAdd = [];\n    for (let x = 1; x < W - 1; x++) {\n      for (let y = 1; y < H - 1; y++) {\n        for (let z = 1; z < D - 1; z++) {\n          if (solid[x][y][z] === 0) {\n            for (let d = 0; d < 6; d++) {\n              const nx = x + dirs[d][0];\n              const ny = y + dirs[d][1];\n              const nz = z + dirs[d][2];\n              if (solid[nx][ny][nz] > 0) {\n                toAdd.push([x, y, z]);\n                break;\n              }\n            }\n          }\n        }\n      }\n    }\n    if (toAdd.length === 0) break;\n    for (let i = 0; i < toAdd.length; i++) {\n      if (solidCount < 530) {\n        const [ax, ay, az] = toAdd[i];\n        solid[ax][ay][az] = 1;\n        solidCount++;\n      }\n    }\n  }\n\n  // Ensure height >= 8 blocks\n  let globalMinY = H;\n  let globalMaxY = -1;\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        if (solid[x][y][z] > 0) {\n          if (y < globalMinY) globalMinY = y;\n          if (y > globalMaxY) globalMaxY = y;\n        }\n      }\n    }\n  }\n\n  if (globalMaxY - globalMinY + 1 < 8) {\n    const topTarget = Math.min(H - 1, globalMinY + 7);\n    const midX = Math.round(cx);\n    const midZ = Math.round(cz);\n    for (let y = globalMaxY; y <= topTarget; y++) {\n      solid[midX][y][midZ] = 1;\n    }\n  }\n\n  // 6. Block Placement & Texturing\n  const grid = Array.from({ length: W }, () =>\n    Array.from({ length: H }, () => new Array(D).fill(null))\n  );\n\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const st = solid[x][y][z];\n        if (st === 0) continue;\n\n        let block = stonePri;\n        if (st === 3) {\n          // Glacial ice wedging\n          block = rng() < 0.6 ? \"minecraft:packed_ice\" : \"minecraft:snow_block\";\n        } else if (st === 2) {\n          // Metamorphic accent vein\n          block = stoneAcc;\n        } else if (st === 4) {\n          // Moraine scree / plinth collar\n          const r = rng();\n          if (r < 0.45) {\n            // Safe placement for gravity scree (must have solid underneath or y=0)\n            const hasBase = y === 0 || (y > 0 && solid[x][y - 1][z] > 0);\n            block = hasBase ? groundScree : groundPlinth;\n          } else if (r < 0.75) {\n            block = groundBank;\n          } else {\n            block = groundRevet;\n          }\n        } else {\n          // Main rock body with natural weathering\n          const r = rng();\n          if (r < 0.15) block = stoneAcc;\n          else if (r < 0.22) block = groundRevet;\n          else block = stonePri;\n        }\n\n        grid[x][y][z] = block;\n\n        // Alpine Snow Dusting on horizontal top surfaces\n        if (y + 1 < H && solid[x][y + 1][z] === 0 && st !== 3) {\n          // Only dust snow if not already covered\n          if (!grid[x][y + 1][z]) {\n            grid[x][y + 1][z] = rng() < 0.85 ? \"minecraft:snow[layers=1]\" : \"minecraft:snow[layers=2]\";\n          }\n        }\n      }\n    }\n  }\n\n  // 7. Write to World API\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        if (grid[x][y][z] !== null) {\n          api.set(x, y, z, grid[x][y][z]);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"glacial_erratic_boulder\",\n    seatY: seatY,\n  };\n}"
+    }
+  }
+}
