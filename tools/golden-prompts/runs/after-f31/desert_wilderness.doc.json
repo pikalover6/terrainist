@@ -1,0 +1,171 @@
+{
+  "loam": "0.1",
+  "profile": "terrain",
+  "meta": {
+    "name": "cracked_salt_desert",
+    "worldSeed": 313,
+    "prompt": "A vast salt desert under a hard sun, cracked flat to the horizon, with nothing living on it.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "intent": {
+    "climate": {
+      "biome": "minecraft:desert",
+      "temperature": 1,
+      "humidity": -1,
+      "snow": "never"
+    },
+    "character": {
+      "label": "salt desert"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": {
+        "mix": [
+          [
+            "minecraft:calcite",
+            6
+          ],
+          [
+            "minecraft:diorite",
+            2
+          ],
+          [
+            "minecraft:bone_block",
+            1
+          ],
+          [
+            "minecraft:white_terracotta",
+            1
+          ]
+        ]
+      },
+      "ground.subsurface": {
+        "mix": [
+          [
+            "minecraft:calcite",
+            4
+          ],
+          [
+            "minecraft:sandstone",
+            3
+          ],
+          [
+            "minecraft:diorite",
+            1
+          ]
+        ]
+      },
+      "ground.cliff": {
+        "mix": [
+          [
+            "minecraft:smooth_sandstone",
+            3
+          ],
+          [
+            "minecraft:diorite",
+            2
+          ],
+          [
+            "minecraft:calcite",
+            1
+          ]
+        ]
+      },
+      "ground.beach": "minecraft:calcite",
+      "ground.peak": "minecraft:calcite",
+      "ground.stone": "minecraft:smooth_sandstone",
+      "ground.underwater": "minecraft:sand"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Cracked Salt Expanse",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 65,
+          "amplitude": 4,
+          "octaves": 4,
+          "frequency": 0.0015,
+          "erosionPasses": 3,
+          "cliffThreshold": 60,
+          "soilDepth": 2,
+          "beachWidth": 2,
+          "snowLineFraction": 1
+        },
+        "children": [
+          {
+            "id": "central_salt_pan",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "wide sunken salt pan",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 180,
+              "depth": 3,
+              "water": false,
+              "flooded": "never"
+            }
+          },
+          {
+            "id": "cracked_fissure_west",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "shallow dry fissure cutting through the crust",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.15,
+                  0.3
+                ],
+                [
+                  0.45,
+                  0.55
+                ],
+                [
+                  0.85,
+                  0.7
+                ]
+              ],
+              "width": 12,
+              "depth": 3,
+              "meander": 0.6,
+              "flooded": "never"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "arid",
+          "temperatureFrequency": 0.001,
+          "humidityFrequency": 0.001,
+          "latitudeGradient": 0
+        }
+      }
+    ]
+  }
+}

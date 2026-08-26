@@ -47,3 +47,14 @@ fired in the final compile and never reached the author. **F31.** Unit 41:
 plane; montfort is re-generated fresh and read again.
 
 Installed for the walk as `walled_hill_city` (Prism, `--saves`).
+
+## Unit 41 — F31 answered
+
+The kit's `hillside` and `urbanForm` rows now say the form is village-scale
+and a hill city wants `grid`/`organic`; `W527` carries a form-aware fix hint
+and is in `FEEDBACK_CODES`. Re-generated from the same prompt and seed
+(`montfort_hill_k3`): the model chose `grown` fabric, 67 lots with 6 dropped,
+37 buildings, no `W527` — **T4 PASS** by read and by the instrument. The
+golden gate on the kit change passed (`after-f31` vs `after-f27`, 11 of 11,
+icons 28 of 28); the golden `walled_medieval_city` moved from `hillside` to
+`grown` on its own.

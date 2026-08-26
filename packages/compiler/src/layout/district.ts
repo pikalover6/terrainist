@@ -2571,7 +2571,10 @@ export function layDistrict(
           "WALLED_QUARTER_SPARSE",
           nodePath,
           `"${nodePath}" is walled and built ${builtColumns} of its ${blockLand} ${land} — ${Math.round(coverage * 100)} %, under the ${Math.round(WALLED_COVERAGE_FLOOR * 100)} % a walled quarter needs before the circuit reads as a town wall rather than as a fence round open ground`,
-          `Raise "density", lower "params.blockSize" so the fabric draws more streets and shallower blocks, or shrink "envelope.size" so the wall encloses the fabric that was actually built.`,
+          (requested === "hillside"
+            ? `The "hillside" form is village-scale by construction — two to four contour strips hold a few dozen lots however large the envelope — so a walled city cannot fill its circuit with it: draw the city with "grid" or "organic" fabric on its terraced plane (the compiler terraces a flattened quarter itself) and keep "hillside" for a quarter on the slopes outside the wall. Otherwise: `
+            : "") +
+            `Raise "density", lower "params.blockSize" so the fabric draws more streets and shallower blocks, or shrink "envelope.size" so the wall encloses the fabric that was actually built.`,
         ),
       );
     }

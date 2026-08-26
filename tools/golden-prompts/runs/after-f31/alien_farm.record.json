@@ -1,0 +1,166 @@
+{
+  "id": "alien_farm",
+  "family": "alien_farm",
+  "kit": "settlement",
+  "prompt": "A small farm town being invaded by aliens.",
+  "seed": 302,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "cache",
+    "value": {
+      "era": "industrial",
+      "wealth": 0.35,
+      "decline": 0.4,
+      "formality": 0.2,
+      "event": {
+        "kind": "siege",
+        "severity": 0.8,
+        "recency": 0
+      },
+      "climate": {
+        "biome": "minecraft:plains",
+        "temperature": 0,
+        "humidity": 0.1
+      },
+      "character": {
+        "label": "invaded farming community",
+        "materialTheme": "temperate_timber",
+        "formPacks": [
+          "agrarian",
+          "alien_scifi"
+        ],
+        "archetypes": {
+          "prefer": [
+            "cottage",
+            "granary",
+            "windmill",
+            "tavern",
+            "field_lab",
+            "hive_mound"
+          ]
+        },
+        "urbanForm": "linear",
+        "motifs": {
+          "roofType": "gable",
+          "massing": "sprawling"
+        }
+      },
+      "tokens": {
+        "terrain": "rolling farmland with grain fields surrounding a small rural crossroads town",
+        "event_direction": "extraterrestrial invaders and bio-structures spreading from the outer crop fields into the village centre",
+        "infra": "crop_circle pressed into the wheat fields; crash_furrow ending at a downed alien craft; quarantine_fence along the outer pasture; barricade_line across the main lane",
+        "icons": "strange metallic scout craft hovering or crashed in the fields; glowing alien pylons; abandoned farm equipment and hay wagons along the lanes"
+      }
+    }
+  },
+  "intentUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "reasoningTokens": 0,
+    "cost": 0,
+    "cached": true
+  },
+  "menu": {
+    "injected": false,
+    "reason": "flag off"
+  },
+  "attempts": 1,
+  "diagnostics": [
+    []
+  ],
+  "usage": {
+    "promptTokens": 84416,
+    "completionTokens": 14205,
+    "reasoningTokens": 7959,
+    "cost": 0.058290375
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 31,
+    "maxDepth": 2,
+    "generators": [
+      "authored:crashed_saucer",
+      "authored:mothership",
+      "building.grammar@0",
+      "infra.entry@0",
+      "precinct.farm@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "cottage",
+      "farmhouse",
+      "general_store",
+      "granary",
+      "inn",
+      "smithy",
+      "tavern",
+      "windmill"
+    ],
+    "archetypesInCatalog": 8,
+    "formPacks": [
+      "agrarian",
+      "alien_scifi"
+    ],
+    "props": [
+      "cart",
+      "covered_wagon",
+      "notice_board",
+      "scarecrow",
+      "well_head"
+    ],
+    "species": [
+      "broad_oak",
+      "meadow_oak",
+      "pale_birch"
+    ],
+    "envelopes": [
+      "512x512",
+      "24x24",
+      "13x11x13",
+      "13x10x11",
+      "9x12x9",
+      "9x8x9",
+      "13x13x15",
+      "9x11x9",
+      "9x16x9",
+      "112x96"
+    ],
+    "constraints": 27,
+    "constraintKinds": [
+      "adjacent_to",
+      "at",
+      "blend",
+      "distance",
+      "facing",
+      "gap",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform",
+      "zone"
+    ],
+    "constraintsWithStrength": 12,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 7,
+    "programReferences": 2,
+    "conformsTrue": 0,
+    "labels": 30,
+    "eras": [
+      "industrial"
+    ],
+    "bytes": 11458
+  },
+  "wallMs": 73541
+}

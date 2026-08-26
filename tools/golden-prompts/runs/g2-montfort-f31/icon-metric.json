@@ -1,0 +1,120 @@
+{
+  "run": "g2-montfort-f31",
+  "scoredAt": "2026-08-26",
+  "thresholds": {
+    "dominantHeight": 1.5,
+    "dominantFootprint": 2
+  },
+  "scores": [
+    {
+      "id": "montfort_hill",
+      "icons": [
+        {
+          "id": "keep",
+          "dominantRequired": true,
+          "inDocument": [
+            "world.terrain.citadel_peak",
+            "world.citadel_keep",
+            "program:hilltop_castle_keep",
+            "intent.tokens",
+            "world"
+          ],
+          "inWorld": [
+            "citadel_keep",
+            "program:world.citadel_keep",
+            "marker:world.citadel_keep",
+            "marker:citadel_peak.center",
+            "marker:citadel_peak.peak",
+            "marker:citadel_peak.foot"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": true,
+            "by": "citadel_keep",
+            "height": 35,
+            "footprint": 625,
+            "medianHeight": 15,
+            "medianFootprint": 143,
+            "heightRatio": 2.33,
+            "footprintRatio": 4.37,
+            "base": 106,
+            "medianBase": 94,
+            "elevation": 12,
+            "spanRatio": 1.92
+          }
+        },
+        {
+          "id": "wall",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.terrain.city_hill",
+            "world.city_quarter",
+            "intent.tokens",
+            "world.approach_roads",
+            "world.valley_watchtower"
+          ],
+          "inWorld": [
+            "wall:world.city_quarter",
+            "valley_watchtower",
+            "world.valley_watchtower"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "town",
+          "dominantRequired": false,
+          "inDocument": [
+            "intent.tokens",
+            "world.city_quarter.great_guildhall",
+            "world.city_quarter.high_church"
+          ],
+          "inWorld": [
+            "world.city_quarter.infill_-54_-58",
+            "world.city_quarter.infill_48_6",
+            "world.city_quarter.infill_-78_40",
+            "world.city_quarter.infill_62_40",
+            "world.city_quarter.infill_-56_88",
+            "world.lowland_farm.farmhouse",
+            "high_church",
+            "world.city_quarter.high_church",
+            "world.city_quarter.infill_-9_47",
+            "world.city_quarter.infill_-56_73",
+            "great_guildhall",
+            "world.city_quarter.great_guildhall"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "districts",
+        "lots": 67,
+        "blocks": 20,
+        "envelope": 28800,
+        "lotsPer10k": 23.3,
+        "floor": 3,
+        "ok": true
+      },
+      "boxes": {
+        "era": "medieval",
+        "preModern": true,
+        "count": 0,
+        "of": 37,
+        "sample": []
+      },
+      "era": {
+        "era": "medieval",
+        "forbidden": [],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 0,
+        "diagnostics": 14
+      },
+      "alarms": []
+    }
+  ]
+}

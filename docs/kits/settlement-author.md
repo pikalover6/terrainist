@@ -1830,7 +1830,7 @@ always implies one:
 | `grown` | no plan at all: the quarter split by one street at a time, so the streets meet in **T-junctions**, the blocks come out every size, and no line of sight runs more than a couple of blocks. A market where the first two streets crossed | medieval, an old quarter, "grew over centuries", "no two streets parallel" | 38 blocks. Reads no terrain |
 | `radial` | everything faces one place: a round-point, concentric ring streets, radial avenues that double in as they go out | a ring town, a baroque capital, a star fort, "everything faces the palace" | `6 × blockSize` on the short axis — a big quarter |
 | `canal` | the primary circulation is **water**: every second or third street is a channel with quays, and the cross streets bridge it | a canal town, Venice, Amsterdam, "streets of water" | `3 × blockSize`. Water nearby is optional — a landlocked quarter gets a closed pound and a note saying so |
-| `hillside` | the town plans its own terraces: two to four **principal streets along the contours**, level, each with a buildable strip cut beside it and nothing cut anywhere else, one carriage road switchbacking up the flank for the carts, and stairs for every other cross-connection. Most of the hillside stays hillside | a hill town, cliffside, Cinque Terre, "a town on a mountainside", "houses stacked on terraces" | real relief — at least 8 blocks of it — and ground the compiler has **not** levelled |
+| `hillside` | the town plans its own terraces: two to four **principal streets along the contours**, level, each with a buildable strip cut beside it and nothing cut anywhere else, one carriage road switchbacking up the flank for the carts, and stairs for every other cross-connection. Most of the hillside stays hillside. **Village-scale by construction**: two to four strips yield a few dozen lots however large the envelope, so a walled *city* on a hill is not this form — give the city `grid` or `organic` on its terraced plane and keep `hillside` for the slopes outside the wall | a hill town, cliffside, Cinque Terre, "a town on a mountainside", "houses stacked on terraces" | real relief — at least 8 blocks of it — and ground the compiler has **not** levelled |
 | `linear` | one street, and the town is what fronts it: an avenue the length of the quarter, dead-end ribs off it, and open ground beyond the lots (which stays open ground — write a `precinct.farm@0` beside it if you want fields there) | a ribbon village, a roadside village, a valley village, "strung along the road" | `3 × blockSize` along its long axis |
 
 Two things follow from the table and are worth stating plainly.
@@ -1852,6 +1852,14 @@ other form is happier on a pad, so the standing advice below — give a district
 cuts the terraces it needs and leaves the rest of the slope alone, and a quarter
 the solver already flattened has no contours left to follow. Put it on a real
 slope with a `zone` or `at` constraint and leave the ground alone.
+
+**`hillside` is a village-scale form.** Its lots are what its two to four
+contour strips can hold — a few dozen — whatever the envelope's size, so a
+walled quarter drawn with it builds a tenth of the land inside its wall and the
+compiler says so (`LOAM-W527`, a fenced meadow). A hill *city* — walled, dense,
+"a city on a hill" — wants `grid` or `organic` on its terraced plane (the
+compiler terraces a flattened quarter itself), with `hillside` kept for a
+quarter on the slopes outside the wall.
 
 **`terraced` is an old name for `hillside`.** It is still legal to write and it
 still builds a hill town — the compiler resolves it and says so with one
@@ -2903,7 +2911,7 @@ world hold two places that read differently**.
 | `archetypes` | `{ "prefer": [...], "forbid": [...], "weights": { "cottage": 3 } }`. In a strongly-dated world, keep the era's own words here and in any `mix`: pack members and era-plausible vernacular over anachronisms — `townhouse` and `warehouse` read as modern words even where the compiler builds them plainly. A style rule, not a gate |
 | `props` / `flora` | `{ "prefer": [...], "forbid": [...] }` — ids, never phrases; see the vocabulary below |
 | `motifs` | `{ "roofType": "gable"\|"hip"\|"flat"\|"dome"\|"shed"\|"mansard", "massing": "blocky"\|"stepped"\|"towered"\|"sprawling", "windowRhythm": "sparse"\|"regular"\|"dense"\|"banded", "ornamentDensity": 0..1 }`. **`roofType: "flat"` builds a parapeted box**: on a tall envelope with few floors (say 15×14×21 with `floors: 2`) it reads as a modern apartment block, not a Bronze Age terrace. For a pre-modern flat-roofed quarter pair it with `massing: "stepped"` and keep envelopes low (≈ 4 × floors in height); reserve an explicit `roof: "flat"` for buildings you want to read as slab-topped |
-| `urbanForm` | one of `grid`, `organic`, `grown`, `radial`, `canal`, `hillside`, `linear` — the urban form every quarter in this scope is drawn with. This is how a *city* gets anything but its default quarters: a city's cells are chosen by the compiler, and without this key they are the same grid-and-lanes table every city has always had. An id outside the seven is a warning (`LOAM-W487`) naming the legal values, and every quarter keeps the form it would have had |
+| `urbanForm` | one of `grid`, `organic`, `grown`, `radial`, `canal`, `hillside`, `linear` — the urban form every quarter in this scope is drawn with — and `hillside` is the village-scale one: a walled or dense city that chooses it gets a fenced meadow (`LOAM-W527`); a hill city wants `grid`/`organic`, with a `hillside` quarter outside the wall if the slopes call for one. This is how a *city* gets anything but its default quarters: a city's cells are chosen by the compiler, and without this key they are the same grid-and-lanes table every city has always had. An id outside the seven is a warning (`LOAM-W487`) naming the legal values, and every quarter keeps the form it would have had |
 | `courtyards` | 0..1 — the courtyard share for every quarter in this scope, exactly as `params.courtyards`. Outranked by an explicit `params.courtyards`. Out of range is a warning (`LOAM-W488`) naming the range, and it is **not** clamped: the quarter keeps the share it would have had |
 | `ground` | one of `pad`, `benched`, `stepped` — the ground policy for every quarter in this scope, exactly as `params.ground`. Outranked by an explicit `params.ground`. An unknown value is `LOAM-W488` naming the legal values |
 

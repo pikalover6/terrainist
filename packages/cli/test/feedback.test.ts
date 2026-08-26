@@ -100,6 +100,12 @@ describe("feedbackDiagnostics", () => {
     expect(renderCompileFeedback(report([T113])) ?? "").toContain("CARVE_DRY");
   });
 
+  it("sends the walled-quarter warning back (F31: a fenced meadow is the document's to fix)", () => {
+    const W527 = diag("LOAM-W527", "WALLED_QUARTER_SPARSE");
+    expect(feedbackDiagnostics([W527]).map((d) => d.code)).toEqual(["LOAM-W527"]);
+    expect(renderCompileFeedback(report([W527])) ?? "").toContain("WALLED_QUARTER_SPARSE");
+  });
+
   it("sends the land budget back — the whole reason that code exists", () => {
     // LOAM-W526 is never fatal (leniency is permanent) and changes no block, so
     // outside this set it would accomplish nothing at all: the walked failure is

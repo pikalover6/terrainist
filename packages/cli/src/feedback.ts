@@ -50,6 +50,12 @@ export const FEEDBACK_CODES: readonly string[] = [
   // landmass before the city and size it to the city. Outside the feedback set
   // it accomplishes nothing at all.
   "LOAM-W526", // SETTLEMENT_LAND_SHORT
+  // A walled quarter that built under half the land inside its streets: the
+  // circuit reads as a fence round a meadow. It changes no block and is never
+  // fatal; its fix hint names the form (the Stocktake Run's F31: a walled
+  // city drawn with the village-scale `hillside` form fired this in the final
+  // compile of every round and the author never heard it).
+  "LOAM-W527", // WALLED_QUARTER_SPARSE
 ];
 
 /** Codes that mean the compiler misbehaved, not the document. */

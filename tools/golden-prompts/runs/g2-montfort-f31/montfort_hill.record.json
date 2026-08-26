@@ -1,0 +1,146 @@
+{
+  "id": "montfort_hill",
+  "family": "g2",
+  "kit": "settlement",
+  "prompt": "A walled medieval city on a hill, its castle keep above the rooftops.",
+  "seed": 311,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "era": "medieval",
+    "character": {
+      "label": "walled medieval hill city",
+      "materialTheme": "temperate_timber",
+      "fortification": "walled",
+      "urbanForm": "hillside",
+      "ground": "stepped",
+      "courtyards": 0.5,
+      "motifs": {
+        "roofType": "gable",
+        "massing": "towered"
+      },
+      "archetypes": {
+        "prefer": [
+          "watchtower",
+          "church",
+          "manor",
+          "tavern",
+          "cottage"
+        ]
+      }
+    },
+    "tokens": {
+      "terrain": "a prominent hill rising above the surrounding landscape",
+      "icons": "a fortified castle keep standing at the highest point of the hill above the rooftops; a complete circuit of stone city walls with gatehouses and defensive towers"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 277647,
+    "completionTokens": 39227,
+    "cost": 0.15
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 16,
+    "maxDepth": 2,
+    "generators": [
+      "authored:hilltop_castle_keep",
+      "building.grammar@0",
+      "precinct.farm@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "armory",
+      "bakery",
+      "barracks",
+      "church",
+      "cottage",
+      "guildhall",
+      "keep",
+      "shop_row",
+      "smithy",
+      "tavern",
+      "townhouse",
+      "watchtower"
+    ],
+    "archetypesInCatalog": 12,
+    "formPacks": [],
+    "props": [
+      "covered_wagon"
+    ],
+    "species": [
+      "field_birch",
+      "field_oak",
+      "hill_birch",
+      "hill_oak"
+    ],
+    "envelopes": [
+      "512x512",
+      "180x160",
+      "13x17x19",
+      "13x14x17",
+      "84x76",
+      "7x19x7"
+    ],
+    "constraints": 8,
+    "constraintKinds": [
+      "at",
+      "blend",
+      "distance",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform",
+      "zone"
+    ],
+    "constraintsWithStrength": 3,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 3,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 15,
+    "eras": [
+      "medieval"
+    ],
+    "bytes": 30332
+  },
+  "wallMs": 366000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 3,
+    "feedbackRounds": 1,
+    "programs": [
+      "ok hilltop_castle_keep [landmark] 1 attempt(s), 30933 tokens ($0.0532), 4 warning(s)"
+    ],
+    "programCost": 0.0539,
+    "totalCost": 0.2039,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/u41/mont/montfort_hill/out/walled_hill_citadel",
+    "finalDiagnostics": {
+      "LOAM-T208": 1,
+      "LOAM-T242": 1,
+      "LOAM-T224": 1,
+      "LOAM-I412": 2,
+      "LOAM-I463": 4,
+      "LOAM-I504": 1,
+      "LOAM-I497": 1,
+      "LOAM-W489": 1,
+      "LOAM-T341": 1,
+      "LOAM-W470": 1
+    },
+    "crash": [],
+    "docName": "walled_hill_citadel.loam.json"
+  }
+}

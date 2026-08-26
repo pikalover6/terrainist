@@ -1,0 +1,97 @@
+prompt     A walled medieval city on a hill, its castle keep above the rooftops.
+seed       311
+size       512x512
+model      google/gemini-3.7-flash
+effort     high
+kit        settlement
+
+intent     {"era":"medieval","character":{"label":"walled medieval hill city","materialTheme":"temperate_timber","fortification":"walled","urbanForm":"hillside","ground":"stepped","courtyards":0.5,"motifs":{"roofType":"gable","massing":"towered"},"archetypes":{"prefer":["watchtower","church","manor","tavern","cottage"]}},"tokens":{"terrain":"a prominent hill rising above the surrounding landscape","icons":"a fortified castle keep standing at the highest point of the hill above the rooftops; a complete circuit of stone city walls with gatehouses and defensive towers"}}
+           1 attempt(s), 8098 tokens
+
+authored with google/gemini-3.7-flash in 1 attempt(s)
+  attempt 1   valid
+  tokens     84250 in + 9791 out = 94041  ($0.0500)
+programs   1 of 1 kept (budget 3 landmark / 3 plugin)
+  ok     hilltop_castle_keep [landmark]  1 attempt(s), 30933 tokens  ($0.0532), 4 warning(s)
+  tokens     3704 in + 27988 out = 31692  (18275 of the out reasoning)  ($0.0539)
+
+wiring     1 program(s) authored but never invoked: hilltop_castle_keep [landmark]
+
+  wired in 1 attempt(s); 96911 in + 14633 out = 111544 tokens  ($0.0361)
+
+  document   /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/u41/mont/montfort_hill/out/walled_hill_citadel.loam.json
+
+
+compile feedback, round 1 of 2:
+
+
+Layout solver report:
+
+  world.citadel_keep: placed after landmark_coarse_ring (97 candidates considered)
+    unsatisfied at constraint [0] (declared soft, now soft, weight 2, cost 0.56)
+    unsatisfied distance constraint [1] (declared soft, now soft, weight 1, cost 0.01)
+
+  revision 1 authored in 1 attempt(s)
+  tokens     96486 in + 14803 out = 111289  ($0.0639)
+
+compiled "walled_hill_citadel" — 1.21.11 (DataVersion 4671)
+  world      /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/u41/mont/montfort_hill/out/walled_hill_citadel
+  seed       311
+  region     512x512 at (-256, -256)
+  heights    53.6..106.2  sea 63  snow line 104.1
+  land       78.6% of columns above sea level
+  biomes     plains 35.6%, windswept_hills 29.7%, ocean 21.4%, forest 10.8%, beach 1.5%, river 0.9%
+  trees      2810 (slope_woods=2476, wilderness_cover=755)
+  chunks     1024
+  blocks     37130149 (481382 vegetation)
+  markers    78
+  spawn      [0, 73, 170]
+  timings    validate 1ms  field 178ms  layout 486ms  climate 58ms  columns 45ms  caves 0ms  structures 1665ms  programs 162ms  scatter 634ms  biomes 57ms  validators 7ms  emit 3363ms  total 6784ms
+  programs   world.citadel_keep=hilltop_castle_keep×1 (4542 blocks)
+  doc        /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/u41/mont/montfort_hill/out/walled_hill_citadel.loam.json
+  report     /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/u41/mont/montfort_hill/out/walled_hill_citadel.report.json
+
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED at world.approach_roads: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+  fix: nothing to change — give the node an "envelope" only if you want the solver to reserve a box for it as well
+
+note LOAM-T242 GROUND_PLANE_DRIFT at world.city_quarter: 404 of 14250 platform column(s) in "world.city_quarter" within 12 block(s) of a graded carriageway stand off the street's own storey lattice, the worst by 3 block(s)
+  fix: Nothing to change in the document — a document cannot move its own storey lattice. A non-zero count is a compiler finding: the anchor did not hold on this quarter.
+
+warning LOAM-T224 COURTYARD_NONE at world.city_quarter: no block in "world.city_quarter" can hold a courtyard: 14 of 20 have a core narrower than 9 columns
+  fix: raise "params.blockSize" so a block is at least 41 columns across, or raise "density" to "high" so the perimeter builds a continuous street wall
+
+note LOAM-I412 SEAM_SERVED at world.city_quarter: seams served (S1): 0 wall(s), 0 tier stack(s) over 0 face(s) and 0 column(s), 3 bank(s), 9 kerb seam(s), and 0 seam(s) a building already stood on
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.city_quarter: multi-level ground: 0 retaining wall(s) over 0 column(s) (0 parapeted), 9 kerb seam(s), 3 bank(s), and 0 seam(s) a building already stood on; 70 column(s) graded as bank
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.city_quarter: transitions by context (§5): 313 edge column(s) — fill 313 (33 bank, 280 kerb), cut 0 (none)
+  fix: No action needed.
+
+note LOAM-I504 FARM_TRACK at world.lowland_farm: "world.lowland_farm" publishes a road_stub at its gate: a road.network@0 node anchored on "world.lowland_farm" runs the lane to it
+  fix: add "lowland_farm" to the "anchors" of the document's road.network@0 node, or give that node a "lanes" entry naming it
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world.city_quarter: every cut face finished: 158 column(s) faced in the hill's own rock
+  fix: No action needed.
+
+note LOAM-I463 SWEEP_FEATURES_PLACED at world: face finish: 188 column(s) striped in the hill's own rock, 34 paved face(s) footed, 10 crown notch(es) closed
+  fix: No action needed.
+
+note LOAM-I497 GROUND_STAGE at world: ground stage: 910 intent(s) (building.footprint 72, farm.parcel 6, quarter.plane 806, retaining.skirt 1, road.network 1, street.network 18, street.sidewalk 1, verge 5), 5 resolve(s), 3234 column(s) moved, 271 transition(s) (bank 75, built 8, kerb 167, rock 21), 91 of them unbuilt by any pass; coverage 1098 boundary pair(s) — 916 in a transition, 131 suppressed by request, 51 by a face, 0 a kerb, 0 uncovered (excluded: 43784 natural, 0 wet)
+  fix: Nothing — this is the stage's own golden, and it is a note so that a count moving is visible in a diff before a block moves in a world.
+
+note LOAM-I412 SEAM_SERVED at world: terminal seam builder (§3.3): 1 derived transition(s) built (rock 1) over 0 column(s) of face, 0 of graded bank (0 eased under §7.2's natural blend) and 25 finished in the hill's own rock; 87 absorbed under S7, 0 refused
+  fix: No action needed.
+
+warning LOAM-W489 INTENT_FORTIFICATION_UNKNOWN at world: intent.character.fortification asks for a wall and 1 node(s) already declare "params.walls" — the authored walls are built and no second circuit is added
+  fix: this is the intended precedence; delete "params.walls" if you want the dial to decide the wall, or leave it if the parameters are what you meant
+
+note LOAM-T341 PROGRAM_SEATED_PAD at world.citadel_keep: "hilltop_castle_keep" writes the same sole on every column, so it is seated on a levelled pad rather than on the real ground
+  fix: no change needed here — the fix is in the program: read api.heightAt at every column it touches and answer it, and the next authoring run will seat it on the ground itself
+
+note LOAM-W470 BIOME_CLAMPED at world: land use clamped 31517 footprint columns (plus 29667 feathered over 40 columns) to minecraft:windswept_hills, from the ambient majority (minecraft:windswept_hills, 59% of 17583 ring columns); snow policy auto resolved to "never" on a 0/31517 vote
+  fix: no change needed — set "intent.climate.biome" or "intent.climate.snow" to override the derived ground
+  authoring  3 model run(s), 1 compile-feedback round(s), 277647 in + 39227 out = 316874 tokens (12935 of the out reasoning) ($0.1500)
+
+next: terrainist install /private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/u41/mont/montfort_hill/out/walled_hill_citadel

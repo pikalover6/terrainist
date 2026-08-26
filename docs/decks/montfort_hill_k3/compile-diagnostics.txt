@@ -1,0 +1,14 @@
+note LOAM-T208 GENERATOR_NOT_IMPLEMENTED: road.network@0 reserves a route corridor at substage 3b (which `along` binds to and structures are costed against) but is not itself a placed node: it has no envelope, no yaw and no footprint, and its lanes are routed in the connective pass
+note LOAM-T242 GROUND_PLANE_DRIFT: 404 of 14250 platform column(s) in "world.city_quarter" within 12 block(s) of a graded carriageway stand off the street's own storey lattice, the worst by 3 block(s)
+warning LOAM-T224 COURTYARD_NONE: no block in "world.city_quarter" can hold a courtyard: 14 of 20 have a core narrower than 9 columns
+note LOAM-I412 SEAM_SERVED: seams served (S1): 0 wall(s), 0 tier stack(s) over 0 face(s) and 0 column(s), 3 bank(s), 9 kerb seam(s), and 0 seam(s) a building already stood on
+note LOAM-I463 SWEEP_FEATURES_PLACED: multi-level ground: 0 retaining wall(s) over 0 column(s) (0 parapeted), 9 kerb seam(s), 3 bank(s), and 0 seam(s) a building already stood on; 70 column(s) graded as bank
+note LOAM-I463 SWEEP_FEATURES_PLACED: transitions by context (§5): 313 edge column(s) — fill 313 (33 bank, 280 kerb), cut 0 (none)
+note LOAM-I504 FARM_TRACK: "world.lowland_farm" publishes a road_stub at its gate: a road.network@0 node anchored on "world.lowland_farm" runs the lane to it
+note LOAM-I463 SWEEP_FEATURES_PLACED: every cut face finished: 158 column(s) faced in the hill's own rock
+note LOAM-I463 SWEEP_FEATURES_PLACED: face finish: 188 column(s) striped in the hill's own rock, 34 paved face(s) footed, 10 crown notch(es) closed
+note LOAM-I497 GROUND_STAGE: ground stage: 910 intent(s) (building.footprint 72, farm.parcel 6, quarter.plane 806, retaining.skirt 1, road.network 1, street.network 18, street.sidewalk 1, verge 5), 5 resolve(s), 3234 column(s) moved, 271 transition(s) (bank 75, built 8, kerb 167, rock 21), 91 of them unbuilt by any pass; coverage 1098 boundary pair(s) — 916 in a transition, 131 suppressed by request, 51 by a face, 0 a kerb, 0 uncovered (excluded: 43784 natural, 0 wet)
+note LOAM-I412 SEAM_SERVED: terminal seam builder (§3.3): 1 derived transition(s) built (rock 1) over 0 column(s) of face, 0 of graded bank (0 eased under §7.2's natural blend) and 25 finished in the hill's own rock; 87 absorbed under S7, 0 refused
+warning LOAM-W489 INTENT_FORTIFICATION_UNKNOWN: intent.character.fortification asks for a wall and 1 node(s) already declare "params.walls" — the authored walls are built and no second circuit is added
+note LOAM-T341 PROGRAM_SEATED_PAD: "hilltop_castle_keep" writes the same sole on every column, so it is seated on a levelled pad rather than on the real ground
+note LOAM-W470 BIOME_CLAMPED: land use clamped 31517 footprint columns (plus 29667 feathered over 40 columns) to minecraft:windswept_hills, from the ambient majority (minecraft:windswept_hills, 59% of 17583 ring columns); snow policy auto resolved to "never" on a 0/31517 vote
