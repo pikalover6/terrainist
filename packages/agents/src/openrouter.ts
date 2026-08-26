@@ -147,7 +147,11 @@ export async function chatComplete(options: ChatOptions): Promise<CompletionResu
         body: JSON.stringify(body),
       });
     } catch (cause) {
-      lastFailure = new Error(`OpenRouter fetch failed: ${(cause as Error).message}`);
+      // undici's "fetch failed" carries the network error in `cause` (the
+      // Stocktake Run's G1 lost two generations to it, unit 46); say which.
+      const inner = (cause as { cause?: { message?: string; code?: string } }).cause;
+      const why = inner === undefined ? "" : ` (${inner.code ?? ""}${inner.code && inner.message ? ": " : ""}${inner.message ?? ""})`;
+      lastFailure = new Error(`OpenRouter fetch failed: ${(cause as Error).message}${why}`);
       if (attempt < attempts) await sleepMs(backoff(attempt));
       continue;
     }

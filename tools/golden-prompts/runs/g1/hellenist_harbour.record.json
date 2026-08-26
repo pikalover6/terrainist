@@ -1,0 +1,164 @@
+{
+  "id": "hellenist_harbour",
+  "family": "hellenist_city",
+  "kit": "settlement",
+  "prompt": "A modern Hellenist city being invaded by sea monsters.",
+  "seed": 305,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "era": "modern",
+    "wealth": 0.8,
+    "decline": 0.2,
+    "formality": 0.85,
+    "event": {
+      "kind": "siege",
+      "severity": 0.8,
+      "recency": 0
+    },
+    "climate": {
+      "temperature": 0.7,
+      "humidity": 0.3,
+      "snow": "never"
+    },
+    "character": {
+      "label": "modern Hellenist coastal metropolis",
+      "materialTheme": "modern_city",
+      "formPacks": [
+        "classical_mediterranean"
+      ],
+      "archetypes": {
+        "prefer": [
+          "stoa",
+          "peripteral_temple",
+          "propylaea",
+          "bouleuterion",
+          "odeon",
+          "palaestra"
+        ]
+      },
+      "urbanForm": "grid",
+      "motifs": {
+        "massing": "stepped",
+        "windowRhythm": "regular",
+        "ornamentDensity": 0.7
+      }
+    },
+    "tokens": {
+      "terrain": "a modern coastal city with a wide waterfront promenade and open sea",
+      "event_direction": "giant sea monsters emerge from the open water attacking the coastal promenade and harbour front",
+      "infra": "barricade_line along the waterfront boulevard; emergency_cordon sealing off the damaged quays",
+      "icons": "monumental colonnaded modern buildings; wide marble-lined avenues meeting the sea; breaching tentacles and leviathans crushing piers"
+    }
+  },
+  "attempts": 2,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 404413,
+    "completionTokens": 83444,
+    "cost": 0.3081
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 22,
+    "maxDepth": 2,
+    "generators": [
+      "authored:colossal_leviathan",
+      "authored:guardian_colossus_apollo",
+      "building.grammar@0",
+      "infra.entry@0",
+      "precinct.harbour@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "apartment_block",
+      "cathedral",
+      "cottage",
+      "department_store",
+      "museum",
+      "office",
+      "shop_row",
+      "skyscraper",
+      "townhouse"
+    ],
+    "archetypesInCatalog": 9,
+    "formPacks": [
+      "classical_mediterranean"
+    ],
+    "props": [
+      "buoy",
+      "fountain"
+    ],
+    "species": [
+      "coastal_shrub",
+      "slim_birch",
+      "spreading_oak",
+      "wild_oak"
+    ],
+    "envelopes": [
+      "512x512",
+      "320x220",
+      "21x68x19",
+      "19x18x23",
+      "96x16x64"
+    ],
+    "constraints": 7,
+    "constraintKinds": [
+      "at",
+      "distance",
+      "max",
+      "min"
+    ],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 2,
+    "programReferences": 2,
+    "conformsTrue": 0,
+    "labels": 19,
+    "eras": [
+      "modern"
+    ],
+    "bytes": 68786
+  },
+  "wallMs": 985000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 3,
+    "feedbackRounds": 2,
+    "programs": [
+      "ok colossal_leviathan [landmark] 1 attempt(s), 28412 tokens ($0.0483), 14 warning(s)",
+      "ok guardian_colossus_apollo [landmark] 1 attempt(s), 39923 tokens ($0.0698), 10 warning(s)",
+      "ok breaching_tentacle [plugin] 2 attempt(s), 57349 tokens ($0.0757), 2 warning(s)"
+    ],
+    "programCost": 0.1938,
+    "totalCost": 0.5019,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g1/out/hellenist_harbour/out/hellenist_city_invasion",
+    "finalDiagnostics": {
+      "LOAM-T208": 1,
+      "LOAM-W521": 1,
+      "LOAM-I512": 2,
+      "LOAM-W409": 1,
+      "LOAM-W517": 1,
+      "LOAM-I463": 2,
+      "LOAM-I497": 1,
+      "LOAM-T234": 1,
+      "LOAM-T341": 1,
+      "LOAM-W337": 1,
+      "LOAM-W470": 1
+    },
+    "crash": [],
+    "docName": "hellenist_city_invasion.loam.json"
+  }
+}

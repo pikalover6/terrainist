@@ -7,29 +7,21 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 45 (G6: the workstreams audited, the kit
-  measured 3×3 at these bytes, the kill-ladder written and its first rung
-  executed; G6 holds on five lines and is open on WS-B) is committed.
-- **Next unit:** unit 46 — **G1: the eleven golden fresh at the final
-  bytes.** `generate-all.mjs` on `prompts.json` (end to end; ≈ $2.6 by the
-  before-sample's $0.20 / world and pass 6's $0.36; cap $4.00), records in
-  `runs/g1`, the icon metric (present 3-of-3 on every prompt), full-height
-  renders read against T1–T9 per prompt, one record
-  `docs/decks/G1-GOLDEN-2026-08-25.md` with a row per world and the read
-  that backs it, PASS/FAIL per T-line, the three contested passes
-  repeated only if a read is contested (≈ $0.6 more). Pre-register the
-  prediction (11 of 11 generate; icons 33 of 33; by read ≥ 9 pass; the
-  known reads: the sea monsters, the horse and citadel, the ruined
-  metropolis at its decline, the walled city on `grown`) and the decision
-  rule (a FAIL gets an F-number; a compiler cause is a fix unit and that
-  prompt re-run; a model cause is the read's and the kit's). Then unit 47
-  — G7: the final deck (walk cards for the G1 worlds, installed with
-  `--saves`), the closing report in the ledger (the gates, the ladder,
-  the debts, the recommendations: P8 first), `STATUS: DONE`. Spend so far
-  $21.54 of $35.00.
-- **Last commit:** 0ac62c6 (unit 44). Convention: this line names the
+- **In flight:** nothing — unit 46 (G1: the eleven golden generated fresh at
+  the final bytes — eleven of eleven pass by read (troy's citadel and the railway as read-its), icons 28 of 28, one metric alarm; two worlds needed network retries) is committed.
+- **Next unit:** unit 47 — **G7 and the close.** Install the eleven G1
+  worlds to the Prism instance (`--saves`, never `--replace`) with a walk
+  card each (`docs/decks/g1/<id>/WALK-CARD.md`, stations from the
+  placements); write the closing report into the ledger (a `## CLOSING
+  REPORT` section: the gates G1–G7 with their verdicts and records, the
+  findings ledger F1–F32 in one table, the proposals P1–P11 ranked with P8
+  first, the kill-ladder for Kai, the debts — WS-B, T5's plinth, the
+  citadel's scale — and the spend); confirm every instrument, probe and
+  VERDICT.md is in the tree; set the top of this ledger to `STATUS: DONE`
+  in the same commit. Spend so far $24.72 of $35.00.
+- **Last commit:** b6e8626 (unit 45). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
-- **Spend:** $21.54 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
+- **Spend:** $24.72 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
 - **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19, D25,
   D32.)
 - **Findings queue (law 1: bugs before anything else):**
@@ -785,6 +777,7 @@ running state. The NOW block is rewritten at the end of every turn.
 | 43 | F32 — two bi14 runs, one CLI compile, the FULL suite | 0.00 | 17.79 |
 | 44 | probe pass 6 — six new worlds generated end to end (`runs/probe-6`), the icon metric | 2.13 | 19.92 |
 | 45 | G6 — the kit 3×3 (`runs/final-1/2/3`, authoring-only), the icon metric | 1.62 | 21.54 |
+| 46 | G1 — the eleven golden end to end (`runs/g1`), four network retries, the icon metric | 3.18 | 24.72 |
 
 ## VERDICTS
 
@@ -808,6 +801,8 @@ running state. The NOW block is rewritten at the end of every turn.
 - **G6 (unit 45):** `docs/decks/G6-WORKSTREAMS-2026-08-25.md` — WS-A PASS,
   WS-B **OPEN** (no terrain-kit audit; folded by probes), WS-C PASS, WS-D
   PASS, WS-E PASS, WS-F PASS (ladder written, rung 1 executed).
+- **G1 (unit 46):** `docs/decks/G1-GOLDEN-2026-08-25.md` — eleven of eleven pass by read (troy's citadel and the railway as read-its), icons 28 of 28, one metric alarm; two worlds needed network retries. Kai's
+  walk: pending on all (installed in unit 47).
 
 ## REACH
 
@@ -1080,6 +1075,31 @@ failure class** (D90). **G4 met.**
 **Kit 3×3 at the final bytes (unit 45, $1.62):** three authoring-only runs of
 the golden 11 (`runs/final-1/2/3`), the kit at `8298c67`'s bytes and the
 compiler at `affdad0`'s. All three: 11 of 11 authored clean, 13 attempts; icons present 28 of 28; pairwise gates pass (the band: one attempt on one or two prompts, ±2 archetypes); dominance 0 of 8 on authoring-only runs (F24) — the kit is stable at its final bytes.
+
+**G1 — pre-registered (unit 46, 2026-08-25), before any spend.** The eleven
+golden prompts (`tools/golden-prompts/prompts.json`, the roster of A0)
+generated end to end at the final bytes — compiler `affdad0`, kit
+`8298c67` — with `generate-all.mjs` (concurrency 3), records in `runs/g1`,
+the icon metric, full-height renders, one record
+`docs/decks/G1-GOLDEN-2026-08-25.md` with a row per world: icons before the
+read, the read, the T-lines, PASS/FAIL. ≈ $2.6 by the before-sample's
+$0.20 / world and pass 6's $0.36; cap $4.00. **Prediction:** 11 of 11
+generate (the before-sample lost one, `railway_town`, to a lint the
+instrument fixes since unit 27); icons present 33 of 33 (28 of 28 on every
+authoring run since unit 31, plus the five program-carried icons the
+authoring runs never write); by read ≥ 9 pass their T-lines — the known
+reads: troy's horse and citadel (T2), the sea monsters, the aliens, the
+mushrooms and the redwoods dominant as programs (as in the before-sample),
+the ruined metropolis at the model's decline (T6, P6), the walled city on
+`grown` (T4, F31), the two terrain-only worlds by read; the likely fails:
+`railway_town` (a canal and a railway — F26's carve note and F27's icon at
+house scale) and `alien_farm` on T9 (a modern pack in a farm town, the
+census's `packEraMismatch`). **Decision rule:** each world is read against
+its own T-lines; a FAIL gets an F-number; a compiler cause is a fix unit and
+that one prompt re-run at the fixed bytes; a model cause is the read's and
+the kit's; a contested pass is repeated (≈ $0.25 each, up to three). G1 is
+met when every world passes or every FAIL is attributed to a cause that is
+not the compiler's.
 
 ## PROPOSALS
 
@@ -1753,3 +1773,10 @@ compiler at `affdad0`'s. All three: 11 of 11 authored clean, 13 attempts; icons 
   rung 1 executed (census 7.3 archived). No compiler code changed. Files:
   the record, `tools/worlds/archive/`, `runs/final-*`, `runs/noise-*`
   metrics, the census (4.4, 7.3), the ledger. Spend $1.62.
+- **unit 46 — G1, the eleven golden fresh (2026-08-25):** `generate-all.mjs`
+  on `prompts.json` end to end at `affdad0`/`8298c67` (records `runs/g1`,
+  $3.18 with four network retries), the icon metric (no alarms on any
+  scored world), full-height renders read (`docs/decks/G1-GOLDEN-2026-08-25.md`):
+  eleven of eleven pass by read (troy's citadel and the railway as read-its), icons 28 of 28, one metric alarm; two worlds needed network retries. `agents/openrouter.ts` now names the network cause behind
+  "fetch failed" (agents tests 166 pass). Tests: FULL suite Test Files 351 passed | 1 skipped (352), Tests 5695 passed | 31 skipped (5726). Files:
+  `runs/g1`, the record, `openrouter.ts`, the ledger. Spend $3.18.

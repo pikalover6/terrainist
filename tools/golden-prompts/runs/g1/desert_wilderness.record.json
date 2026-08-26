@@ -1,0 +1,89 @@
+{
+  "id": "desert_wilderness",
+  "family": "new/terrain-only",
+  "kit": "terrain",
+  "prompt": "A vast salt desert under a hard sun, cracked flat to the horizon, with nothing living on it.",
+  "seed": 313,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "climate": {
+      "biome": "minecraft:desert",
+      "temperature": 1,
+      "humidity": -1,
+      "snow": "never"
+    },
+    "character": {
+      "label": "barren salt desert",
+      "materialTheme": "sun_clay"
+    },
+    "tokens": {
+      "terrain": "a vast, cracked-earth salt desert stretching flat to the horizon under a hard sun, completely barren of settlements and living vegetation"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 41836,
+    "completionTokens": 20013,
+    "cost": 0.0532
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 8,
+    "maxDepth": 2,
+    "generators": [
+      "authored:ancient_leviathan_skeleton",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [],
+    "archetypesInCatalog": 0,
+    "formPacks": [],
+    "props": [],
+    "species": [],
+    "envelopes": [
+      "512x512"
+    ],
+    "constraints": 1,
+    "constraintKinds": [
+      "zone"
+    ],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 0,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 0,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 6,
+    "eras": [],
+    "bytes": 37082
+  },
+  "wallMs": 368000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 2,
+    "feedbackRounds": 0,
+    "programs": [
+      "ok ancient_leviathan_skeleton [landmark] 1 attempt(s), 24450 tokens ($0.0411), 1 warning(s",
+      "ok salt_crystal_spire [plugin] 1 attempt(s), 30760 tokens ($0.0529), 2 warning(s)"
+    ],
+    "programCost": 0.095,
+    "totalCost": 0.1482,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g1/out/desert_wilderness/out/vast_salt_desert",
+    "finalDiagnostics": {
+      "LOAM-T341": 1,
+      "LOAM-T342": 1,
+      "LOAM-T107": 1
+    },
+    "crash": [],
+    "docName": "vast_salt_desert.loam.json"
+  }
+}

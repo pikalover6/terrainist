@@ -1,0 +1,177 @@
+{
+  "id": "railway_town",
+  "family": "new/alias",
+  "kit": "settlement",
+  "prompt": "A soot-blackened industrial town where the railway meets the canal.",
+  "seed": 312,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "era": "industrial",
+    "wealth": 0.35,
+    "decline": 0.25,
+    "formality": 0.5,
+    "character": {
+      "label": "soot-blackened canal and rail industrial hub",
+      "materialTheme": "temperate_timber",
+      "urbanForm": "canal",
+      "archetypes": {
+        "prefer": [
+          "warehouse",
+          "factory",
+          "tenement",
+          "dock",
+          "tavern",
+          "workshop"
+        ]
+      },
+      "props": {
+        "prefer": [
+          "crane",
+          "cart",
+          "chimney",
+          "lamp_post",
+          "bollard"
+        ]
+      },
+      "motifs": {
+        "roofType": "shed",
+        "massing": "blocky",
+        "windowRhythm": "regular",
+        "ornamentDensity": 0.1
+      }
+    },
+    "tokens": {
+      "terrain": "a flat industrial corridor cut by a shipping canal meeting rail sidings and a marshaling yard",
+      "infra": "railway_line running parallel to the water basin; towpath along the canal edge; iron_bridge crossing the canal",
+      "icons": "brick factory chimneys venting black smoke; soot-stained brick warehouses; coal barges moored in the canal; rail loading gantries and sidings"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 284687,
+    "completionTokens": 48784,
+    "cost": 0.1982
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 31,
+    "maxDepth": 2,
+    "generators": [
+      "authored:transshipment_gantry",
+      "building.grammar@0",
+      "infra.entry@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "brickworks",
+      "coal_tipple",
+      "cottage",
+      "factory_hall",
+      "gasworks",
+      "general_store",
+      "machine_shop",
+      "roundhouse",
+      "signal_box",
+      "tavern",
+      "townhouse",
+      "train_station",
+      "warehouse"
+    ],
+    "archetypesInCatalog": 13,
+    "formPacks": [],
+    "props": [
+      "barge",
+      "bollard_row",
+      "freight_car",
+      "lamp_post",
+      "locomotive",
+      "log_pile",
+      "pier",
+      "rail_line"
+    ],
+    "species": [
+      "scrub_birch",
+      "stunted_oak"
+    ],
+    "envelopes": [
+      "512x512",
+      "180x150",
+      "15x14x19",
+      "11x13x13",
+      "15x13x21",
+      "9x13x11",
+      "15x14x21",
+      "13x14x17",
+      "15x15x15",
+      "11x12x15"
+    ],
+    "constraints": 17,
+    "constraintKinds": [
+      "at",
+      "blend",
+      "distance",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform"
+    ],
+    "constraintsWithStrength": 7,
+    "hardConstraints": 0,
+    "forests": 1,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 8,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 30,
+    "eras": [
+      "industrial"
+    ],
+    "bytes": 40974
+  },
+  "wallMs": 538000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 3,
+    "feedbackRounds": 2,
+    "programs": [
+      "ok transshipment_gantry [landmark] 1 attempt(s), 32429 tokens ($0.0558), 17 warning(s)",
+      "ok factory_smokestack [plugin] 1 attempt(s), 21047 tokens ($0.0345), 3 warning(s)"
+    ],
+    "programCost": 0.0903,
+    "totalCost": 0.2885,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g1/retry3/railway_town/out/soot_junction",
+    "finalDiagnostics": {
+      "LOAM-T208": 1,
+      "LOAM-W521": 1,
+      "LOAM-I526": 1,
+      "LOAM-T242": 1,
+      "LOAM-I512": 1,
+      "LOAM-T224": 1,
+      "LOAM-I412": 2,
+      "LOAM-I463": 5,
+      "LOAM-T239": 1,
+      "LOAM-T228": 1,
+      "LOAM-I497": 1,
+      "LOAM-W413": 1,
+      "LOAM-T232": 1,
+      "LOAM-T341": 1,
+      "LOAM-W337": 1,
+      "LOAM-W470": 1,
+      "LOAM-T107": 1
+    },
+    "crash": [],
+    "docName": "soot_junction.loam.json"
+  }
+}

@@ -1,0 +1,170 @@
+{
+  "id": "alien_farm",
+  "family": "alien_farm",
+  "kit": "settlement",
+  "prompt": "A small farm town being invaded by aliens.",
+  "seed": 302,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "era": "industrial",
+    "wealth": 0.4,
+    "decline": 0.2,
+    "formality": 0.2,
+    "event": {
+      "kind": "siege",
+      "severity": 0.8,
+      "recency": 0
+    },
+    "climate": {
+      "biome": "minecraft:plains",
+      "temperature": 0.3,
+      "humidity": 0.2,
+      "snow": "never"
+    },
+    "character": {
+      "label": "rural farm settlement facing alien invasion",
+      "materialTheme": "temperate_timber",
+      "formPacks": [
+        "agrarian",
+        "alien_scifi"
+      ],
+      "archetypes": {
+        "prefer": [
+          "cottage",
+          "windmill",
+          "watchtower"
+        ]
+      },
+      "props": {
+        "prefer": [
+          "cart",
+          "well_head",
+          "notice_board"
+        ]
+      },
+      "urbanForm": "linear"
+    },
+    "tokens": {
+      "event_direction": "alien drop craft descend from the skies and land in the outlying pastures, pushing toward the town center",
+      "infra": "crop_circle pressed across the south wheat field; crash_furrow from the ridge ending at a downed alien scout vessel; barricade_line across the main approach road into town",
+      "terrain": "rolling farmland, cultivated fields, and pastures surrounding a clustered rural hamlet",
+      "icons": "alien tripod or saucer looming over the fields, glowing mycelial/resin nodes spreading across pastures, hastily barricaded homesteads"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 84417,
+    "completionTokens": 12109,
+    "cost": 0.0544
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 23,
+    "maxDepth": 2,
+    "generators": [
+      "authored:crashed_scout",
+      "authored:mothership",
+      "building.grammar@0",
+      "infra.entry@0",
+      "precinct.farm@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "barn",
+      "church",
+      "cottage",
+      "farmhouse",
+      "general_store",
+      "granary",
+      "silo",
+      "tavern",
+      "windmill"
+    ],
+    "archetypesInCatalog": 9,
+    "formPacks": [
+      "agrarian",
+      "alien_scifi"
+    ],
+    "props": [
+      "cart",
+      "notice_board"
+    ],
+    "species": [
+      "copse_birch",
+      "field_oak",
+      "pasture_oak"
+    ],
+    "envelopes": [
+      "512x512",
+      "180x150",
+      "13x15x17",
+      "9x16x9",
+      "9x18x9",
+      "130x110",
+      "18x10x18",
+      "56x32x56"
+    ],
+    "constraints": 7,
+    "constraintKinds": [
+      "at",
+      "blend",
+      "distance",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform",
+      "zone"
+    ],
+    "constraintsWithStrength": 1,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 3,
+    "programReferences": 2,
+    "conformsTrue": 0,
+    "labels": 21,
+    "eras": [
+      "industrial"
+    ],
+    "bytes": 49320
+  },
+  "wallMs": 489000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 1,
+    "feedbackRounds": 0,
+    "programs": [
+      "ok mothership [landmark] 1 attempt(s), 28855 tokens ($0.0491), 2 warning(s)",
+      "ok crashed_scout [landmark] 2 attempt(s), 45560 tokens ($0.0640), 2 warning(s)",
+      "ok drop_pod [plugin] 1 attempt(s), 17762 tokens ($0.0283), 1 warning(s)"
+    ],
+    "programCost": 0.1414,
+    "totalCost": 0.1958,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g1/out/alien_farm/out/farm_town_alien_invasion",
+    "finalDiagnostics": {
+      "LOAM-W330": 2,
+      "LOAM-T208": 1,
+      "LOAM-I512": 1,
+      "LOAM-W517": 1,
+      "LOAM-I504": 1,
+      "LOAM-I497": 1,
+      "LOAM-T233": 1,
+      "LOAM-W337": 2,
+      "LOAM-W470": 1
+    },
+    "crash": [],
+    "docName": "farm_town_alien_invasion.loam.json"
+  }
+}

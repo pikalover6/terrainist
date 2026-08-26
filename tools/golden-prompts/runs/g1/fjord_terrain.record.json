@@ -1,0 +1,94 @@
+{
+  "id": "fjord_terrain",
+  "family": "new/terrain-only",
+  "kit": "terrain",
+  "prompt": "A deep fjord cutting inland between pine ridges, its water open to the sea.",
+  "seed": 314,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "climate": {
+      "biome": "minecraft:old_growth_pine_taiga",
+      "temperature": -0.3,
+      "humidity": 0.5,
+      "snow": "auto"
+    },
+    "character": {
+      "materialTheme": "boreal_pine",
+      "flora": {
+        "prefer": [
+          "spruce_tall",
+          "conifer",
+          "old_growth"
+        ]
+      }
+    },
+    "tokens": {
+      "terrain": "a deep fjord cutting inland between steep pine ridges, with deep navigable water opening to the sea"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 13489,
+    "completionTokens": 5523,
+    "cost": 0.0154
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 9,
+    "maxDepth": 2,
+    "generators": [
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [],
+    "archetypesInCatalog": 0,
+    "formPacks": [],
+    "props": [],
+    "species": [
+      "larch_n",
+      "larch_s",
+      "squat_spruce_n",
+      "squat_spruce_s",
+      "tall_spruce_n",
+      "tall_spruce_s",
+      "wild_larch",
+      "wild_spruce"
+    ],
+    "envelopes": [
+      "512x512"
+    ],
+    "constraints": 0,
+    "constraintKinds": [],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 3,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 0,
+    "programReferences": 0,
+    "conformsTrue": 0,
+    "labels": 0,
+    "eras": [],
+    "bytes": 3513
+  },
+  "wallMs": 35000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 1,
+    "feedbackRounds": 0,
+    "programs": [],
+    "programCost": 0,
+    "totalCost": 0.0154,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g1/out/fjord_terrain/out/pine_fjord",
+    "finalDiagnostics": {},
+    "crash": [],
+    "docName": "pine_fjord.loam.json"
+  }
+}

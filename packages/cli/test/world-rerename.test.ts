@@ -1,7 +1,7 @@
 /**
  * The retroactive v -> r re-rename plan.
  *
- * `tools/worlds/rerename-worlds.mjs` moves the whole battery onto build
+ * `tools/worlds/archive/rerename-worlds.mjs` moves the whole battery onto build
  * cohorts in one pass over a real saves folder, which is exactly the kind of
  * operation that gets one chance. The properties worth pinning are the ones a
  * dry run cannot show at a glance: that no two worlds land on one name, that
@@ -14,7 +14,7 @@
 import { describe, expect, it } from "vitest";
 
 // @ts-expect-error — plain-JS tool module, no declarations.
-import { RELEASES, RELEASE_OF, buildPlan, checkPlan, releaseName } from "../../../tools/worlds/rerename-worlds.mjs";
+import { RELEASES, RELEASE_OF, buildPlan, checkPlan, releaseName } from "../../../tools/worlds/archive/rerename-worlds.mjs";
 
 interface Row {
   folder: string;

@@ -1,0 +1,171 @@
+{
+  "id": "glowcap_vale",
+  "family": "glowcap_vale",
+  "kit": "settlement",
+  "prompt": "A glowing mushroom vale where a strange village has grown between the caps.",
+  "seed": 307,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.4,
+    "decline": 0.1,
+    "formality": 0.1,
+    "climate": {
+      "temperature": 0.2,
+      "humidity": 0.8,
+      "snow": "never"
+    },
+    "character": {
+      "label": "glowing mushroom village",
+      "materialTheme": "temperate_timber",
+      "formPacks": [
+        "swamp_witch"
+      ],
+      "urbanForm": "grown",
+      "archetypes": {
+        "prefer": [
+          "cottage",
+          "tavern",
+          "watchtower"
+        ]
+      },
+      "props": {
+        "prefer": [
+          "lantern",
+          "well_head",
+          "standing_stones"
+        ]
+      },
+      "flora": {
+        "prefer": [
+          "fungal",
+          "glow",
+          "glowcap",
+          "mushroom_giant_red",
+          "mushroom_shelf_brown"
+        ]
+      }
+    },
+    "tokens": {
+      "terrain": "a deep enclosed vale filled with towering giant glowing mushrooms",
+      "icons": "village dwellings nestled beneath and built between giant mushroom caps; elevated wooden footbridges and ladders strung between fungal stalks; glowing spores and bioluminescent lanterns lighting winding lanes"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 185447,
+    "completionTokens": 27149,
+    "cost": 0.1204
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 24,
+    "maxDepth": 2,
+    "generators": [
+      "authored:colossal_glowcap_spire",
+      "building.grammar@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "apothecary",
+      "cottage",
+      "crystal_shrine",
+      "hobbit_hole",
+      "inn",
+      "mushroom_house",
+      "tavern",
+      "watchtower",
+      "witch_hut"
+    ],
+    "archetypesInCatalog": 9,
+    "formPacks": [
+      "swamp_witch"
+    ],
+    "props": [
+      "cairn",
+      "standing_stones",
+      "well_head"
+    ],
+    "species": [
+      "highland_spruce",
+      "scrub_spruce",
+      "shelf_fungus",
+      "vale_willow"
+    ],
+    "envelopes": [
+      "512x512",
+      "22x22",
+      "32x48x32",
+      "11x16x11",
+      "13x11x13",
+      "9x10x9",
+      "11x16x11",
+      "11x14x13",
+      "9x8x9",
+      "11x13x13",
+      "7x19x7"
+    ],
+    "constraints": 25,
+    "constraintKinds": [
+      "adjacent_to",
+      "blend",
+      "distance",
+      "facing",
+      "gap",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform",
+      "zone"
+    ],
+    "constraintsWithStrength": 11,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 8,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 24,
+    "eras": [
+      "medieval"
+    ],
+    "bytes": 43899
+  },
+  "wallMs": 446000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 2,
+    "feedbackRounds": 1,
+    "programs": [
+      "ok colossal_glowcap_spire [landmark] 1 attempt(s), 28142 tokens ($0.0478), 26 warning(s)",
+      "ok fungal_canopy_dwellings [plugin] 1 attempt(s), 32219 tokens ($0.0555), 26 warning(s)"
+    ],
+    "programCost": 0.1033,
+    "totalCost": 0.2237,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g1/out/glowcap_vale/out/glowcap_vale",
+    "finalDiagnostics": {
+      "LOAM-W330": 1,
+      "LOAM-T208": 1,
+      "LOAM-W522": 1,
+      "LOAM-I497": 1,
+      "LOAM-T341": 1,
+      "LOAM-W337": 1,
+      "LOAM-W470": 1,
+      "LOAM-T107": 1
+    },
+    "crash": [],
+    "docName": "glowcap_vale.loam.json"
+  }
+}

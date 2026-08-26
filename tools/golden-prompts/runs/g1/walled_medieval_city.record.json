@@ -1,0 +1,164 @@
+{
+  "id": "walled_medieval_city",
+  "family": "new/set-piece",
+  "kit": "settlement",
+  "prompt": "A walled medieval city on a hill, its castle keep above the rooftops.",
+  "seed": 311,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.5,
+    "decline": 0.1,
+    "formality": 0.35,
+    "character": {
+      "label": "walled hill city",
+      "materialTheme": "temperate_timber",
+      "fortification": "walled",
+      "urbanForm": "hillside",
+      "ground": "stepped",
+      "courtyards": 0.5,
+      "archetypes": {
+        "prefer": [
+          "watchtower",
+          "manor",
+          "tavern",
+          "church",
+          "cottage"
+        ],
+        "forbid": [
+          "office",
+          "apartment_block",
+          "warehouse"
+        ]
+      },
+      "motifs": {
+        "roofType": "gable",
+        "massing": "towered"
+      }
+    },
+    "tokens": {
+      "terrain": "a steep hill crowned with a high citadel keep overlooking tiered residential quarters below",
+      "icons": "a prominent stone castle keep at the summit, a defensive circuit wall with towers and gates enclosing the slope, densely packed gabled houses along stepped lanes"
+    }
+  },
+  "attempts": 1,
+  "diagnostics": [],
+  "usage": {
+    "promptTokens": 380731,
+    "completionTokens": 61391,
+    "cost": 0.2579
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 18,
+    "maxDepth": 2,
+    "generators": [
+      "authored:hilltop_castle_keep",
+      "building.grammar@0",
+      "precinct.farm@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "apothecary",
+      "bakery",
+      "barracks",
+      "castle",
+      "church",
+      "cottage",
+      "general_store",
+      "guildhall",
+      "inn",
+      "keep",
+      "smithy",
+      "tavern",
+      "terraced_row",
+      "town_hall",
+      "townhouse"
+    ],
+    "archetypesInCatalog": 15,
+    "formPacks": [],
+    "props": [
+      "cart",
+      "notice_board"
+    ],
+    "species": [
+      "field_birch",
+      "pasture_oak",
+      "round_oak",
+      "slim_birch",
+      "spreading_oak"
+    ],
+    "envelopes": [
+      "512x512",
+      "32x48x32",
+      "200x170",
+      "15x18x21",
+      "13x16x13",
+      "13x12x9",
+      "96x80",
+      "13x12x11"
+    ],
+    "constraints": 7,
+    "constraintKinds": [
+      "at",
+      "blend",
+      "distance",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform",
+      "zone"
+    ],
+    "constraintsWithStrength": 3,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 4,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 17,
+    "eras": [
+      "medieval"
+    ],
+    "bytes": 35841
+  },
+  "wallMs": 555000,
+  "generate": {
+    "exit": "0",
+    "modelRuns": 4,
+    "feedbackRounds": 2,
+    "programs": [
+      "ok hilltop_castle_keep [landmark] 1 attempt(s), 40953 tokens ($0.0719), 11 warning(s)"
+    ],
+    "programCost": 0.0728,
+    "totalCost": 0.3307,
+    "compiled": true,
+    "worldDir": "/private/tmp/claude-501/-Users-kaihoward-Dev-terrainist/2b841858-0cd5-4ee7-a91f-8948e9e8b722/scratchpad/g1/out/walled_medieval_city/out/walled_hill_city",
+    "finalDiagnostics": {
+      "LOAM-W330": 1,
+      "LOAM-T208": 1,
+      "LOAM-T242": 1,
+      "LOAM-I512": 1,
+      "LOAM-I412": 2,
+      "LOAM-I463": 5,
+      "LOAM-I504": 1,
+      "LOAM-I497": 1,
+      "LOAM-W489": 1,
+      "LOAM-I524": 1,
+      "LOAM-I415": 1,
+      "LOAM-T341": 1,
+      "LOAM-W470": 1
+    },
+    "crash": [],
+    "docName": "walled_hill_city.loam.json"
+  }
+}
