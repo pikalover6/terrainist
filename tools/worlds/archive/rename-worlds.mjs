@@ -47,7 +47,7 @@ import { readdir, rename, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { stampLevelDat } from "../../packages/cli/dist/install.js";
+import { stampLevelDat } from "../../../packages/cli/dist/install.js";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 

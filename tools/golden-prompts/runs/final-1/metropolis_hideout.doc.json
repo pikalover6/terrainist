@@ -1,0 +1,915 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "overgrown_metropolis_hideout",
+    "worldSeed": 304,
+    "prompt": "A high-tech apocalyptic hideout in the massively overgrown ruins of a metropolis.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "intent": {
+    "era": "far_future",
+    "wealth": 0.4,
+    "decline": 0.9,
+    "formality": 0.3,
+    "climate": {
+      "humidity": 0.7
+    },
+    "character": {
+      "label": "overgrown post-apocalyptic high-tech hideout",
+      "materialTheme": "modern_city",
+      "formPacks": [
+        "alien_scifi"
+      ],
+      "archetypes": {
+        "prefer": [
+          "bunker_complex",
+          "laboratory",
+          "field_station",
+          "greenhouse",
+          "watchtower",
+          "office",
+          "apartment_block"
+        ],
+        "forbid": [
+          "cottage",
+          "manor",
+          "tavern",
+          "church",
+          "windmill"
+        ]
+      },
+      "motifs": {
+        "massing": "blocky",
+        "windowRhythm": "sparse"
+      },
+      "urbanForm": "grid",
+      "programs": [
+        {
+          "id": "skyscrapers_core_hideout",
+          "mode": "landmark",
+          "brief": "A fortified survival redoubt built inside the hollow shattered base of a collapsed skyscraper. Features reinforced blast plating, glowing terminal banks, power conduits wired into the foundation, and heavy radio antennae piercing the canopy.",
+          "envelope": [
+            28,
+            36,
+            28
+          ]
+        },
+        {
+          "id": "improvised_relay_mast",
+          "mode": "plugin",
+          "brief": "A scavenged communications dish and sensor spire tangled in vines and rust, mounted on a concrete rubble footing with jury-rigged solar cells.",
+          "envelope": [
+            7,
+            14,
+            7
+          ],
+          "count": 6
+        }
+      ]
+    },
+    "tokens": {
+      "fittings": "blast_door on the bunker_complex; airlock_vestibule on the laboratory",
+      "infra": "barricade_line across the fractured boulevard; quarantine_fence around the reinforced perimeter",
+      "terrain": "a ruined metropolis grid of shattered skyscrapers and collapsed elevated roads choked with deep canopy forest and dense undergrowth",
+      "icons": "a reinforced high-tech hideout nestled in the hollow base of a ruined skyscraper; solar panels and satellite dishes tangled in vines; defensive floodlights and sensor towers hidden in the foliage"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": {
+        "mix": [
+          [
+            "minecraft:gray_concrete",
+            3
+          ],
+          [
+            "minecraft:cobblestone",
+            2
+          ],
+          [
+            "minecraft:mossy_cobblestone",
+            2
+          ],
+          [
+            "minecraft:coarse_dirt",
+            1
+          ]
+        ]
+      },
+      "road.shoulder": "minecraft:mossy_cobblestone",
+      "ground.surface": {
+        "mix": [
+          [
+            "minecraft:grass_block",
+            4
+          ],
+          [
+            "minecraft:moss_block",
+            2
+          ],
+          [
+            "minecraft:podzol",
+            1
+          ],
+          [
+            "minecraft:coarse_dirt",
+            1
+          ]
+        ]
+      }
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "The overgrown ruins of the metropolis and the reinforced hideout",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "fractured metropolis shelf cut by seismic fissures and overgrown transit rifts",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 72,
+          "amplitude": 28,
+          "octaves": 5,
+          "frequency": 0.0032,
+          "erosionPasses": 2,
+          "cliffThreshold": 52,
+          "soilDepth": 4,
+          "beachWidth": 4,
+          "snowLineFraction": 0.95
+        },
+        "children": [
+          {
+            "id": "metropolis_plateau",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the raised foundation shelf of the old city grid",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.44
+              ],
+              "radius": 180,
+              "height": 8,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "collapsed_highway_cut",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "sunken collapsed transit corridor running through the district",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.15,
+                  0.38
+                ],
+                [
+                  0.5,
+                  0.42
+                ],
+                [
+                  0.85,
+                  0.46
+                ]
+              ],
+              "width": 26,
+              "depth": 10,
+              "profile": "sharp",
+              "flooded": "never"
+            }
+          },
+          {
+            "id": "seismic_fissure",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "fractured fault line cutting across the metropolis",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.38,
+                  0.12
+                ],
+                [
+                  0.46,
+                  0.5
+                ],
+                [
+                  0.58,
+                  0.88
+                ]
+              ],
+              "width": 16,
+              "depth": 12,
+              "profile": "sharp",
+              "flooded": "never"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0014,
+          "humidityFrequency": 0.0014
+        }
+      },
+      {
+        "id": "overgrown_canopy",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "massive dense canopy choking the ruined cityscape",
+        "params": {
+          "area": {
+            "at": [
+              0.5,
+              0.5
+            ],
+            "radius": 230
+          },
+          "density": 0.18,
+          "spacing": 4,
+          "clumping": 0.55,
+          "maxSlope": 35,
+          "elevation": [
+            2,
+            90
+          ],
+          "edgeFalloff": 16,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "undergrowth": {
+            "grass": 0.55,
+            "flowers": 0.08,
+            "deadwood": 0.15
+          },
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "giant_oak",
+                  "shape": "oak_spreading"
+                },
+                {
+                  "id": "kapok_tall",
+                  "shape": "kapok_emergent"
+                }
+              ]
+            },
+            "understory": {
+              "species": [
+                {
+                  "id": "hazel",
+                  "shape": "hazel_shrub"
+                },
+                {
+                  "id": "fern_scrub",
+                  "shape": "tree_fern"
+                }
+              ],
+              "density": 0.12
+            },
+            "floor": "default"
+          },
+          "species": [
+            {
+              "id": "broadleaf",
+              "shape": "jungle_broadleaf",
+              "weight": 3
+            },
+            {
+              "id": "spreading_oak",
+              "shape": "oak_spreading",
+              "weight": 2
+            },
+            {
+              "id": "willow",
+              "shape": "willow_weeping",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "wilderness_fill",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse volunteer overgrowth across the outer ruins",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 5,
+          "clumping": 0.5,
+          "maxSlope": 34,
+          "elevation": [
+            2,
+            100
+          ],
+          "edgeFalloff": 10,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza"
+          ],
+          "species": [
+            {
+              "id": "wild_oak",
+              "shape": "oak_round"
+            }
+          ]
+        }
+      },
+      {
+        "id": "ruined_concourse",
+        "kind": "primitive",
+        "label": "the cracked central concourse cleared by survivors",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            26,
+            26
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "ruined_metropolis",
+            "min": 8,
+            "max": 32,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 5
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "ruined_metropolis",
+        "kind": "district",
+        "label": "the heavily decayed skyscrapers and commercial avenues of the fallen city",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            260,
+            190
+          ]
+        },
+        "params": {
+          "fabric": "grid",
+          "density": "high",
+          "mix": [
+            "skyscraper",
+            "office",
+            "apartment_block",
+            "department_store",
+            "data_center",
+            "parking_garage",
+            "brutalist_block"
+          ],
+          "blockSize": 42
+        },
+        "intent": {
+          "decline": 0.92,
+          "wealth": 0.3
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 8
+          }
+        ],
+        "tags": [
+          "district",
+          "ruins",
+          "metropolis"
+        ],
+        "children": [
+          {
+            "id": "shattered_tower_north",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "a thirteen-storey shattered skyscraper shell overgrown with vines",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                18,
+                56,
+                18
+              ]
+            },
+            "params": {
+              "archetype": "skyscraper",
+              "floors": 13,
+              "roof": "flat",
+              "decay": 0.85
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "skyscraper"
+            ]
+          },
+          {
+            "id": "collapsed_corporate_hq",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "an eleven-storey cracked corporate tower",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                20,
+                48,
+                16
+              ]
+            },
+            "params": {
+              "archetype": "office",
+              "floors": 11,
+              "roof": "flat",
+              "decay": 0.8
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "landmark",
+              "office"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "command_redoubt",
+        "kind": "generator",
+        "generator": "authored:skyscrapers_core_hideout",
+        "label": "the reinforced high-tech redoubt inside the base of a shattered skyscraper",
+        "constraints": [
+          {
+            "distance": "ruined_metropolis",
+            "min": 10,
+            "max": 28
+          },
+          {
+            "distance": "ruined_concourse",
+            "min": 8,
+            "max": 24
+          }
+        ],
+        "params": {
+          "seat": "pad"
+        },
+        "tags": [
+          "landmark",
+          "hideout",
+          "command"
+        ]
+      },
+      {
+        "id": "ops_bunker",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "hardened subterranean operations bunker with heavy blast doors",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "archetype": "bunker_complex",
+          "floors": 1,
+          "entrance": {
+            "treatment": "blast_door"
+          }
+        },
+        "constraints": [
+          {
+            "adjacent_to": "ruined_concourse",
+            "gap": [
+              2,
+              8
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "ruined_concourse"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "house",
+          "bunker",
+          "secure"
+        ]
+      },
+      {
+        "id": "bio_research_lab",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "sealed research and synthesis lab with an airlock vestibule",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            17
+          ]
+        },
+        "params": {
+          "archetype": "laboratory",
+          "floors": 2,
+          "roof": "flat",
+          "entrance": {
+            "treatment": "airlock_vestibule"
+          }
+        },
+        "constraints": [
+          {
+            "distance": "ruined_concourse",
+            "min": 6,
+            "max": 36,
+            "strength": "soft"
+          },
+          {
+            "distance": "ops_bunker",
+            "min": 6
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "laboratory",
+          "science"
+        ]
+      },
+      {
+        "id": "hydroponics_facility",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "climate-controlled food generation and botany bay",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            10,
+            15
+          ]
+        },
+        "params": {
+          "archetype": "greenhouse",
+          "floors": 1,
+          "roof": "flat",
+          "entrance": {
+            "treatment": "airlock_vestibule"
+          }
+        },
+        "constraints": [
+          {
+            "distance": "ruined_concourse",
+            "min": 8,
+            "max": 40,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "greenhouse",
+          "food"
+        ]
+      },
+      {
+        "id": "fusion_substation",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "shielded power conversion substation",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            12,
+            15
+          ]
+        },
+        "params": {
+          "archetype": "substation",
+          "floors": 1,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "distance": "ops_bunker",
+            "min": 8,
+            "max": 32,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "substation",
+          "power"
+        ]
+      },
+      {
+        "id": "energy_storage",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "high-capacity grid battery bank",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            15
+          ]
+        },
+        "params": {
+          "archetype": "battery_shed",
+          "floors": 1,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "distance": "fusion_substation",
+            "min": 6,
+            "max": 20,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "battery",
+          "power"
+        ]
+      },
+      {
+        "id": "metro_deep_access",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "deep subterranean transit station used as an underground tunnel link",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "archetype": "subway_station",
+          "floors": 1,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "distance": "ruined_concourse",
+            "min": 10,
+            "max": 44,
+            "strength": "soft"
+          },
+          {
+            "connected": "ops_bunker",
+            "via": "tunnel",
+            "style": "dressed"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "blend": 4
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south",
+            "tags": [
+              "primary"
+            ]
+          }
+        },
+        "tags": [
+          "subway_station",
+          "transit"
+        ]
+      },
+      {
+        "id": "sensor_grid",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "perimeter early-warning sensor relays and comm antennas",
+        "params": {
+          "program": "improvised_relay_mast",
+          "count": 6,
+          "area": {
+            "zone": "center"
+          },
+          "spacing": 25,
+          "seat": "pad"
+        }
+      },
+      {
+        "id": "solar_farm",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "scavenged solar panel array providing auxiliary power",
+        "params": {
+          "prop": "solar_array",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "power_turbine",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "repaired composite wind turbine on the perimeter",
+        "params": {
+          "prop": "wind_turbine",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "hideout_helipad",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "reinforced evacuation landing pad",
+        "params": {
+          "prop": "helipad",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "scavenger_camp",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "scavenger forward watchpost and equipment depot",
+        "params": {
+          "prop": "campsite",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "perimeter_cordon",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "quarantine fence line securing the hideout concourse",
+        "params": {
+          "entry": "quarantine_fence",
+          "route": {
+            "ring": "ruined_concourse",
+            "margin": 36
+          }
+        }
+      },
+      {
+        "id": "boulevard_barricade",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "fortified barricade thrown across the fractured main boulevard",
+        "params": {
+          "entry": "barricade_line",
+          "route": {
+            "across": "ruined_metropolis"
+          }
+        }
+      },
+      {
+        "id": "hideout_access_ways",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "reinforced paved access lanes connecting hideout facilities",
+        "params": {
+          "anchors": [
+            "ruined_concourse",
+            "command_redoubt",
+            "ops_bunker",
+            "bio_research_lab",
+            "hydroponics_facility",
+            "fusion_substation",
+            "metro_deep_access",
+            "ruined_metropolis"
+          ],
+          "pattern": "grid",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 14
+        }
+      }
+    ]
+  }
+}

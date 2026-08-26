@@ -79,7 +79,7 @@ closing report.
 | 4.1 | `STAIR_DRESS = false` | §12: kept as the flight object's vocabulary | keep-with-note | ruled |
 | 4.2 | the stair-corpus off-path | §12: the ratified fallback until the native flight object | keep-with-note | ruled |
 | 4.3 | `TERRACE_BY_TERRAIN`, `RIM_SEAT_MAX_DROP`, `TERRACE_STEP_SPAN` | "fallback-only since the election solve" | verify (§8), then delete or keep-with-note | see §8 |
-| 4.4 | the Run's own switches at their shipped value (`SEAM_BLOCK_MIN_DROP`, `STRIP_FRONTAGE_BY_CLAIM`, `PLANNED_SITE_WHOLE_STRIP`, `LOT_PARCEL_OWN_STATIONS`, `STREET_FACE_ALONG_SIDE`, `PARK_BUDGET_BY_AREA`, `HIGHRISE_DOOR_HEAD_SOLID`, `OCEAN_FILL_CONTINUES`, `POOL_NEVER_LOWERS`) | each keeps the world it replaced recompilable; one line to undo | keep-with-note until the closing report; then a deletion ladder | open |
+| 4.4 | the Run's own switches at their shipped value (`SEAM_BLOCK_MIN_DROP`, `STRIP_FRONTAGE_BY_CLAIM`, `PLANNED_SITE_WHOLE_STRIP`, `LOT_PARCEL_OWN_STATIONS`, `STREET_FACE_ALONG_SIDE`, `PARK_BUDGET_BY_AREA`, `HIGHRISE_DOOR_HEAD_SOLID`, `OCEAN_FILL_CONTINUES`, `POOL_NEVER_LOWERS`) | each keeps the world it replaced recompilable; one line to undo | keep-with-note until the closing report; then a deletion ladder | kept; the deletion ladder is written (`G6-WORKSTREAMS-2026-08-25.md` WS-F, rungs 2–3: the Run's twelve switches, the older set, the two at `false`), each rung Kai's to ratify before it lands (law 6) |
 | 4.5 | junction-steps, silenced street-stairs/descent, terminus landings (the spec's list) | | probe, then delete (S each) | open |
 
 ## 5. Tests that pin nothing, goldens taught around bugs
@@ -104,7 +104,7 @@ closing report.
 |---|---|---|---|---|
 | 7.1 | `tools/session-log` | retired (unit 0) | deleted | done |
 | 7.2 | `CLAUDE.md` 6.4 KB → 25 lines; funnel cells archived | unit 0 | done | done |
-| 7.3 | `tools/worlds/RENAME-*.md`, `rerename-worlds.mjs` | one-off migrations kept beside live tools | probe, then archive (S) | open |
+| 7.3 | `tools/worlds/RENAME-*.md`, `rerename-worlds.mjs` | one-off migrations kept beside live tools | probe, then archive (S) | **done (unit 45)** — archived to `tools/worlds/archive/` with a README; the WS-F kill-ladder's first rung (`G6-WORKSTREAMS-2026-08-25.md`) |
 | 7.4 | `tools/golden-prompts/runs/` pre-Run directories (`noise-*`, `t204-after`, `menu-on-*`) | the noise floor's evidence; keep | keep-with-note | noted |
 
 ## 8. The unit-16 probes, verbatim

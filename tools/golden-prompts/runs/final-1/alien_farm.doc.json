@@ -1,0 +1,654 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "pasture_invasion",
+    "worldSeed": 302,
+    "prompt": "A small farm town being invaded by aliens.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:dirt_path",
+      "road.shoulder": "minecraft:coarse_dirt"
+    }
+  },
+  "intent": {
+    "era": "industrial",
+    "wealth": 0.35,
+    "decline": 0.4,
+    "formality": 0.2,
+    "event": {
+      "kind": "siege",
+      "severity": 0.85,
+      "recency": 0
+    },
+    "climate": {
+      "biome": "minecraft:plains",
+      "temperature": 0,
+      "humidity": 0.1
+    },
+    "character": {
+      "label": "invaded farming community",
+      "materialTheme": "temperate_timber",
+      "formPacks": [
+        "agrarian",
+        "alien_scifi"
+      ],
+      "archetypes": {
+        "prefer": [
+          "cottage",
+          "farmhouse",
+          "barn",
+          "general_store",
+          "tavern",
+          "silo",
+          "windmill"
+        ],
+        "forbid": [
+          "skyscraper",
+          "office",
+          "apartment_block"
+        ]
+      },
+      "urbanForm": "linear",
+      "motifs": {
+        "roofType": "gable",
+        "massing": "sprawling"
+      },
+      "programs": [
+        {
+          "id": "hovering_mothership",
+          "mode": "landmark",
+          "brief": "A massive triangular alien warship hovering low and ominous over the rural settlement, dark angular plates with glowing shroomlight conduits and ventral beam apertures.",
+          "envelope": [
+            56,
+            22,
+            56
+          ]
+        },
+        {
+          "id": "crashed_saucer",
+          "mode": "landmark",
+          "brief": "A disc-shaped extraterrestrial metallic scout craft embedded nose-down in the soil, warped hull plating torn open, faint cyan glow venting from the fractured interior seam.",
+          "envelope": [
+            22,
+            12,
+            22
+          ]
+        },
+        {
+          "id": "alien_pod",
+          "mode": "plugin",
+          "brief": "A one-occupant metallic drop pod punched into the pasture at an angle, open hatch framing a glowing interior chamber and scorched dirt.",
+          "envelope": [
+            7,
+            8,
+            7
+          ],
+          "count": 12
+        }
+      ]
+    },
+    "tokens": {
+      "terrain": "rolling farmland with grain fields surrounding a small rural crossroads town",
+      "event_direction": "extraterrestrial invaders and bio-structures spreading from the outer crop fields into the village centre",
+      "infra": "crop_circle pressed into the wheat fields; crash_furrow ending at a downed alien craft; quarantine_fence along the outer pasture; barricade_line across the main lane",
+      "icons": "strange metallic scout craft hovering or crashed in the fields; glowing alien pylons; abandoned farm equipment and hay wagons along the lanes"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "The invaded farming valley",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "gentle rolling agricultural lowlands",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 68,
+          "amplitude": 16,
+          "octaves": 4,
+          "frequency": 0.003,
+          "gain": 0.48,
+          "erosionPasses": 2,
+          "cliffThreshold": 55,
+          "soilDepth": 4,
+          "beachWidth": 3,
+          "snowLineFraction": 0.95
+        },
+        "children": [
+          {
+            "id": "town_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "broad shelf holding the crossroads village",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 105,
+              "height": 5,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "north_rise",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "low rise behind the northern farm parcels",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.18,
+                  0.18
+                ],
+                [
+                  0.48,
+                  0.14
+                ],
+                [
+                  0.82,
+                  0.2
+                ]
+              ],
+              "width": 64,
+              "height": 18,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "creek_basin",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "shallow livestock watering basin",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.22,
+                0.72
+              ],
+              "radius": 42,
+              "depth": 7,
+              "water": true,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "temperatureFrequency": 0.0012
+        }
+      },
+      {
+        "id": "outskirt_woods",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "boundary oak wood on the northwest ridge",
+        "params": {
+          "area": {
+            "zone": "northwest"
+          },
+          "density": 0.18,
+          "spacing": 3,
+          "clumping": 0.45,
+          "maxSlope": 30,
+          "elevation": [
+            2,
+            80
+          ],
+          "edgeFalloff": 14,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "undergrowth": {
+            "grass": 0.4,
+            "flowers": 0.05,
+            "deadwood": 0.04
+          },
+          "species": [
+            {
+              "id": "field_oak",
+              "weight": 3,
+              "shape": "oak_round"
+            },
+            {
+              "id": "spreading_oak",
+              "weight": 2,
+              "shape": "oak_spreading"
+            }
+          ]
+        }
+      },
+      {
+        "id": "wilderness_cover",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse trees and fence-line saplings across pastures",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "spacing": 4,
+          "clumping": 0.5,
+          "maxSlope": 32,
+          "elevation": [
+            1,
+            90
+          ],
+          "edgeFalloff": 10,
+          "avoidTags": [
+            "structure",
+            "road",
+            "plaza",
+            "precinct"
+          ],
+          "species": [
+            {
+              "id": "pasture_oak",
+              "weight": 1,
+              "shape": "oak_round"
+            }
+          ]
+        }
+      },
+      {
+        "id": "town",
+        "kind": "district",
+        "label": "the farm town along the main high road",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            150,
+            110
+          ]
+        },
+        "params": {
+          "fabric": "linear",
+          "density": "medium",
+          "mix": [
+            "farmhouse",
+            "cottage",
+            "general_store",
+            "tavern",
+            "barn",
+            "smithy"
+          ],
+          "blockSize": 36,
+          "plaza": true
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "blend": 6
+          }
+        ],
+        "tags": [
+          "town",
+          "settlement"
+        ],
+        "children": [
+          {
+            "id": "town_hall",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the county hall and muster post",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                13,
+                16,
+                13
+              ]
+            },
+            "params": {
+              "archetype": "town_hall",
+              "floors": 2
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "civic",
+              "landmark"
+            ]
+          },
+          {
+            "id": "central_granary",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "the grain depot by the crossroads",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                11,
+                11,
+                13
+              ]
+            },
+            "params": {
+              "archetype": "warehouse",
+              "floors": 1,
+              "roof": "gable"
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "west",
+                "tags": [
+                  "primary"
+                ]
+              }
+            },
+            "tags": [
+              "store",
+              "landmark"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "north_holding",
+        "kind": "generator",
+        "generator": "precinct.farm@0",
+        "label": "the northern wheat and root holding",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            112,
+            96
+          ]
+        },
+        "params": {
+          "parcels": 6,
+          "parcelSize": 18,
+          "crops": [
+            "wheat",
+            "potatoes",
+            "pasture"
+          ],
+          "edge": "fence"
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "distance": "town",
+            "min": 14,
+            "max": 52
+          }
+        ],
+        "tags": [
+          "farm",
+          "rural"
+        ]
+      },
+      {
+        "id": "east_holding",
+        "kind": "generator",
+        "generator": "precinct.farm@0",
+        "label": "the eastern pasture and grain holding",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            96,
+            88
+          ]
+        },
+        "params": {
+          "parcels": 4,
+          "parcelSize": 16,
+          "crops": [
+            "wheat",
+            "carrots",
+            "pasture"
+          ],
+          "edge": "fence"
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "distance": "town",
+            "min": 12,
+            "max": 48
+          }
+        ],
+        "tags": [
+          "farm",
+          "rural"
+        ]
+      },
+      {
+        "id": "mothership",
+        "kind": "generator",
+        "generator": "authored:hovering_mothership",
+        "label": "the alien command dreadnought hovering low over the township",
+        "params": {
+          "hover": 26,
+          "face": {
+            "toward": "town"
+          }
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "town",
+            "max": 30
+          }
+        ],
+        "tags": [
+          "alien",
+          "landmark"
+        ]
+      },
+      {
+        "id": "crashed_craft",
+        "kind": "generator",
+        "generator": "authored:crashed_saucer",
+        "label": "the downed alien scout saucer embedded in the southeast pasture",
+        "params": {
+          "seat": "embed",
+          "embedDepth": 4,
+          "face": {
+            "toward": "town"
+          }
+        },
+        "constraints": [
+          {
+            "at": [
+              0.74,
+              0.68
+            ]
+          },
+          {
+            "distance": "town",
+            "min": 32,
+            "max": 90
+          }
+        ],
+        "tags": [
+          "alien",
+          "wreck",
+          "landmark"
+        ]
+      },
+      {
+        "id": "drop_pod_assault",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "alien drop pods punched into the pastures",
+        "params": {
+          "program": "alien_pod",
+          "count": 12,
+          "area": {
+            "at": [
+              0.6,
+              0.48
+            ],
+            "radius": 0.38
+          },
+          "spacing": 26,
+          "seat": "embed",
+          "embedDepth": 2,
+          "face": {
+            "toward": "town"
+          },
+          "avoidTags": [
+            "building"
+          ]
+        }
+      },
+      {
+        "id": "wheat_crop_circle",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "the geometric glyph pressed into the northern wheat fields",
+        "params": {
+          "entry": "crop_circle",
+          "route": {
+            "over": "north_holding"
+          }
+        }
+      },
+      {
+        "id": "saucer_trench",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "the scorched crash furrow carved into the dirt leading to the saucer",
+        "params": {
+          "entry": "crash_furrow",
+          "route": {
+            "into": "crashed_craft",
+            "run": 52
+          }
+        }
+      },
+      {
+        "id": "quarantine_line",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "military containment perimeter around the contaminated eastern holding",
+        "params": {
+          "entry": "quarantine_fence",
+          "route": {
+            "ring": "east_holding",
+            "margin": 10
+          }
+        }
+      },
+      {
+        "id": "high_street_barricade",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "hastily thrown barricade across the main approach into town",
+        "params": {
+          "entry": "barricade_line",
+          "route": {
+            "across": "town"
+          }
+        }
+      },
+      {
+        "id": "abandoned_wagon",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "abandoned supply wagon near the crossroads",
+        "params": {
+          "prop": "covered_wagon",
+          "zone": "center",
+          "jitter": 0.18
+        }
+      },
+      {
+        "id": "pasture_cart",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "overturned farm cart by the lane",
+        "params": {
+          "prop": "cart",
+          "zone": "east",
+          "jitter": 0.22
+        }
+      },
+      {
+        "id": "village_notice",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "bulletin board posted with evacuation orders",
+        "params": {
+          "prop": "notice_board",
+          "zone": "center",
+          "jitter": 0.08
+        }
+      },
+      {
+        "id": "field_scarecrow",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "scarecrow standing in the outer field",
+        "params": {
+          "prop": "scarecrow",
+          "zone": "north",
+          "jitter": 0.25
+        }
+      },
+      {
+        "id": "lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "country lanes connecting the town to the holdings and outer crash site",
+        "params": {
+          "anchors": [
+            "town",
+            "north_holding",
+            "east_holding",
+            "crashed_craft"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true,
+          "lanternSpacing": 16
+        }
+      }
+    ]
+  }
+}

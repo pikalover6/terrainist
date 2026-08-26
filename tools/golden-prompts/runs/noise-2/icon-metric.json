@@ -1,0 +1,289 @@
+{
+  "run": "noise-2",
+  "scoredAt": "2026-08-26",
+  "thresholds": {
+    "dominantHeight": 1.5,
+    "dominantFootprint": 2
+  },
+  "scores": [
+    {
+      "id": "troy_horse",
+      "icons": [
+        {
+          "id": "trojan_horse",
+          "dominantRequired": true,
+          "inDocument": [
+            "world",
+            "world.trojan_horse",
+            "world.trojan_avenues",
+            "intent.tokens"
+          ],
+          "inWorld": [],
+          "present": true,
+          "note": "asked for as a program this document has no source for (authoring-only run): document read",
+          "dominance": {
+            "dominant": false,
+            "note": "program not authored in this run"
+          }
+        },
+        {
+          "id": "citadel",
+          "dominantRequired": true,
+          "inDocument": [
+            "world.terrain.citadel_shelf",
+            "world.citadel_troy",
+            "world.citadel_troy.citadel_armory",
+            "world.citadel_troy.siege_granary",
+            "world.trojan_avenues",
+            "intent.tokens",
+            "world.citadel_troy.priams_megaron"
+          ],
+          "inWorld": [
+            "citadel_troy",
+            "priams_megaron",
+            "temple_of_athena",
+            "citadel_armory",
+            "siege_granary",
+            "terrace_-1_-122",
+            "terrace_-84_-98",
+            "terrace_-54_-98",
+            "terrace_-17_-71",
+            "terrace_49_-57",
+            "terrace_-17_-52",
+            "terrace_-48_-24"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": true,
+            "by": "terrace_-84_-98",
+            "height": 24,
+            "footprint": 375,
+            "medianHeight": 15,
+            "medianFootprint": 160,
+            "heightRatio": 1.6,
+            "footprintRatio": 2.34,
+            "base": 72,
+            "medianBase": 80,
+            "elevation": -8,
+            "spanRatio": 1.67
+          }
+        },
+        {
+          "id": "walls",
+          "dominantRequired": false,
+          "inDocument": [
+            "world.citadel_troy",
+            "intent.tokens",
+            "world.trojan_horse",
+            "world.trojan_avenues"
+          ],
+          "inWorld": [
+            "wall:world.citadel_troy"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "districts",
+        "lots": 79,
+        "blocks": 42,
+        "envelope": 39900,
+        "lotsPer10k": 19.8,
+        "floor": 15,
+        "ok": true
+      },
+      "boxes": {
+        "era": "ancient",
+        "preModern": true,
+        "count": 0,
+        "of": 50,
+        "sample": []
+      },
+      "era": {
+        "era": "ancient",
+        "forbidden": [
+          "townhouse",
+          "terraced_row",
+          "shop_row",
+          "office",
+          "apartment_block"
+        ],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 2,
+        "diagnostics": 75
+      },
+      "alarms": [
+        "icon trojan_horse placed but unmeasured (program not authored in this run)"
+      ]
+    },
+    {
+      "id": "walled_medieval_city",
+      "icons": [
+        {
+          "id": "wall",
+          "dominantRequired": false,
+          "inDocument": [
+            "world",
+            "world.terrain.city_hill",
+            "intent.tokens",
+            "world.roads"
+          ],
+          "inWorld": [
+            "wall:world.hill_city"
+          ],
+          "present": true,
+          "dominance": null
+        },
+        {
+          "id": "keep",
+          "dominantRequired": true,
+          "inDocument": [
+            "world",
+            "world.terrain.keep_pinnacle",
+            "world.hill_city.castle_keep",
+            "intent.tokens"
+          ],
+          "inWorld": [
+            "marker:keep_pinnacle.center",
+            "marker:keep_pinnacle.peak",
+            "marker:keep_pinnacle.foot"
+          ],
+          "present": true,
+          "dominance": {
+            "dominant": false,
+            "note": "nothing placed to measure"
+          }
+        },
+        {
+          "id": "town",
+          "dominantRequired": false,
+          "inDocument": [
+            "intent.tokens",
+            "world.hill_city.city_minster"
+          ],
+          "inWorld": [
+            "world.hill_city.infill_19_-88",
+            "world.hill_city.infill_63_71",
+            "world.valley_fields.farmhouse",
+            "world.hill_city.infill_50_58"
+          ],
+          "present": true,
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "districts",
+        "lots": 35,
+        "blocks": 8,
+        "envelope": 52900,
+        "lotsPer10k": 6.6,
+        "floor": 15,
+        "ok": false
+      },
+      "boxes": {
+        "era": "medieval",
+        "preModern": true,
+        "count": 0,
+        "of": 17,
+        "sample": []
+      },
+      "era": {
+        "era": "medieval",
+        "forbidden": [],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 2,
+        "diagnostics": 33
+      },
+      "alarms": [
+        "icon keep placed but unmeasured (nothing placed to measure)",
+        "density 6.6 < floor 15"
+      ]
+    },
+    {
+      "id": "fjord_terrain",
+      "icons": [
+        {
+          "id": "fjord",
+          "dominantRequired": false,
+          "inDocument": [
+            "world",
+            "world.terrain.north_pine_ridge",
+            "world.terrain.south_pine_ridge",
+            "world.terrain.deep_fjord_chasm",
+            "world.ridge_pines",
+            "intent.tokens"
+          ],
+          "inWorld": [
+            "marker:deep_fjord_chasm.head",
+            "marker:deep_fjord_chasm.mouth"
+          ],
+          "present": true,
+          "note": "terrain icon: document read",
+          "dominance": null
+        },
+        {
+          "id": "pine_ridges",
+          "dominantRequired": false,
+          "inDocument": [
+            "world",
+            "world.terrain.north_pine_ridge",
+            "world.terrain.south_pine_ridge",
+            "world.ridge_pines",
+            "world.wilderness",
+            "intent.tokens",
+            "world.fissure_caves"
+          ],
+          "inWorld": [
+            "forest:ridge_pines",
+            "marker:north_pine_ridge.head",
+            "marker:north_pine_ridge.mouth",
+            "marker:north_pine_ridge.peak",
+            "marker:south_pine_ridge.head",
+            "marker:south_pine_ridge.mouth",
+            "marker:south_pine_ridge.peak"
+          ],
+          "present": true,
+          "note": "terrain icon: document read",
+          "dominance": null
+        }
+      ],
+      "density": {
+        "basis": "none",
+        "lots": 0,
+        "blocks": 0,
+        "envelope": 0,
+        "lotsPer10k": 0,
+        "floor": 0,
+        "ok": true
+      },
+      "boxes": {
+        "era": "",
+        "preModern": false,
+        "count": 0,
+        "of": 0,
+        "sample": []
+      },
+      "era": {
+        "era": "",
+        "forbidden": [],
+        "violations": [],
+        "packEraMismatch": 0
+      },
+      "floors": {
+        "compiled": true,
+        "errors": 0,
+        "diagnostics": 1
+      },
+      "alarms": []
+    }
+  ]
+}

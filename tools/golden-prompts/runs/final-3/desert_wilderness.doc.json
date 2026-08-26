@@ -1,0 +1,144 @@
+{
+  "loam": "0.1",
+  "profile": "terrain",
+  "meta": {
+    "name": "salt_desert",
+    "worldSeed": 313,
+    "prompt": "A vast salt desert under a hard sun, cracked flat to the horizon, with nothing living on it.",
+    "spawn": {
+      "at": [
+        0.5,
+        0.5
+      ]
+    }
+  },
+  "intent": {
+    "climate": {
+      "biome": "minecraft:desert",
+      "temperature": 1,
+      "humidity": -1,
+      "snow": "never"
+    },
+    "character": {
+      "label": "salt desert"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": {
+        "mix": [
+          [
+            "minecraft:calcite",
+            5
+          ],
+          [
+            "minecraft:diorite",
+            2
+          ],
+          [
+            "minecraft:white_terracotta",
+            1
+          ]
+        ]
+      },
+      "ground.subsurface": "minecraft:calcite",
+      "ground.cliff": {
+        "mix": [
+          [
+            "minecraft:diorite",
+            3
+          ],
+          [
+            "minecraft:smooth_sandstone",
+            2
+          ]
+        ]
+      },
+      "ground.beach": "minecraft:calcite",
+      "ground.stone": "minecraft:smooth_sandstone"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "The Salt Expanse",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "flat cracked salt plain",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 65,
+          "amplitude": 4,
+          "octaves": 4,
+          "frequency": 0.001,
+          "lacunarity": 2,
+          "gain": 0.4,
+          "erosionPasses": 3,
+          "cliffThreshold": 60,
+          "soilDepth": 2,
+          "beachWidth": 0
+        },
+        "children": [
+          {
+            "id": "central_playa",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "vast shallow dry salt pan",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 210,
+              "depth": 3,
+              "water": false,
+              "flooded": "never",
+              "irregularity": 0.25
+            }
+          },
+          {
+            "id": "northwest_playa",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "secondary shallow salt flat depression",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.25,
+                0.28
+              ],
+              "radius": 130,
+              "depth": 2,
+              "water": false,
+              "flooded": "never",
+              "irregularity": 0.2
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "label": "scorching arid climate",
+        "params": {
+          "forceTheme": "arid",
+          "temperatureFrequency": 0.001,
+          "humidityFrequency": 0.001,
+          "latitudeGradient": 0
+        }
+      }
+    ]
+  }
+}

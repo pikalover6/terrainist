@@ -1,0 +1,196 @@
+{
+  "loam": "0.1",
+  "profile": "terrain",
+  "meta": {
+    "name": "vast_salt_desert",
+    "worldSeed": 313,
+    "prompt": "A vast salt desert under a hard sun, cracked flat to the horizon, with nothing living on it.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "intent": {
+    "climate": {
+      "biome": "minecraft:desert",
+      "temperature": 1,
+      "humidity": -1,
+      "snow": "never"
+    },
+    "character": {
+      "label": "salt desert"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": {
+        "mix": [
+          [
+            "minecraft:calcite",
+            5
+          ],
+          [
+            "minecraft:diorite",
+            2
+          ],
+          [
+            "minecraft:bone_block",
+            2
+          ],
+          [
+            "minecraft:smooth_basalt",
+            1
+          ]
+        ]
+      },
+      "ground.subsurface": {
+        "mix": [
+          [
+            "minecraft:smooth_sandstone",
+            3
+          ],
+          [
+            "minecraft:sandstone",
+            2
+          ],
+          [
+            "minecraft:calcite",
+            1
+          ]
+        ]
+      },
+      "ground.cliff": {
+        "mix": [
+          [
+            "minecraft:sandstone",
+            3
+          ],
+          [
+            "minecraft:calcite",
+            2
+          ],
+          [
+            "minecraft:terracotta",
+            1
+          ]
+        ]
+      },
+      "ground.beach": {
+        "mix": [
+          [
+            "minecraft:calcite",
+            4
+          ],
+          [
+            "minecraft:sand",
+            2
+          ]
+        ]
+      },
+      "ground.stone": "minecraft:smooth_sandstone",
+      "ground.peak": "minecraft:calcite"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Vast Salt Desert",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "salt_flats",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "flat sunbaked salt plains",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 66,
+          "amplitude": 4,
+          "octaves": 4,
+          "frequency": 0.0018,
+          "gain": 0.35,
+          "erosionPasses": 3,
+          "soilDepth": 2,
+          "cliffThreshold": 65,
+          "beachWidth": 2,
+          "snowLineFraction": 1
+        },
+        "children": [
+          {
+            "id": "central_playa",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "broad dry salt pan depression",
+            "params": {
+              "verb": "basin",
+              "zone": "center",
+              "radius": 160,
+              "depth": 3,
+              "water": false,
+              "flooded": "never",
+              "irregularity": 0.22
+            }
+          },
+          {
+            "id": "low_salt_terrace",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "subtle raised crust shelf",
+            "params": {
+              "verb": "plateau",
+              "zone": "northwest",
+              "radius": 130,
+              "height": 3,
+              "rim": 28,
+              "irregularity": 0.2
+            }
+          },
+          {
+            "id": "dry_fissure_swale",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "shallow sunbaked drainage depression",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.12,
+                  0.38
+                ],
+                [
+                  0.48,
+                  0.46
+                ],
+                [
+                  0.88,
+                  0.54
+                ]
+              ],
+              "width": 64,
+              "depth": 2,
+              "meander": 0.35,
+              "flooded": "never"
+            }
+          }
+        ]
+      },
+      {
+        "id": "arid_climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "label": "parched desert climate",
+        "params": {
+          "forceTheme": "arid",
+          "temperatureFrequency": 0.001,
+          "humidityFrequency": 0.001,
+          "latitudeGradient": 0
+        }
+      }
+    ]
+  }
+}

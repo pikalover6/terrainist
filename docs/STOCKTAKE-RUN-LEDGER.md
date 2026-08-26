@@ -7,28 +7,29 @@ running state. The NOW block is rewritten at the end of every turn.
 
 ## NOW
 
-- **In flight:** nothing — unit 44 (probe pass 6: no new failure class;
-  G4 met by its letter, with P8 named as the substance) is committed.
-- **Next unit:** unit 45 — **G6: the workstreams, audited against
-  `STOCKTAKE-v0.md`.** WS-A: A2 exports landed (the registry-vs-kit drift
-  ratchet and P10's generator are its state — read the v0 record and say
-  what landed); A3 or the winning kit arm shipped (E1: neither arm, the kit
-  stays, D32); the kit measured 3×3 at the final bytes — three
-  authoring-only runs of the golden 11 (`run.mjs --label final-1/2/3`,
-  ≈ $1.8), the icon metric on each, the noise band against `noise-1..3`.
-  WS-B: the terrain-kit audit's findings — where they were folded. WS-C:
-  closed (v0 says so; cite). WS-D: D1 measured — cost per world before
-  (`before-sample`) and after (`g2`, `g2-montfort-f31`, `probe-6`) from the
-  records; D3 written up (`feedback.ts`, the loop's limit seen in passes 5
-  and 6). WS-E: closed by Kai (v0). WS-F: the census is the inventory and
-  4.4's deletion ladder is written for the closing report, each rung Kai's
-  to ratify. One record, `docs/decks/G6-WORKSTREAMS-2026-08-25.md`, a row
-  per WS with the evidence and PASS/OPEN. Then G1 the eleven golden fresh
-  (≈ $2.6, last, at the final bytes), G7 deck and closing report, `STATUS:
-  DONE`. Spend so far $19.92 of $35.00.
-- **Last commit:** affdad0 (unit 43). Convention: this line names the
+- **In flight:** nothing — unit 45 (G6: the workstreams audited, the kit
+  measured 3×3 at these bytes, the kill-ladder written and its first rung
+  executed; G6 holds on five lines and is open on WS-B) is committed.
+- **Next unit:** unit 46 — **G1: the eleven golden fresh at the final
+  bytes.** `generate-all.mjs` on `prompts.json` (end to end; ≈ $2.6 by the
+  before-sample's $0.20 / world and pass 6's $0.36; cap $4.00), records in
+  `runs/g1`, the icon metric (present 3-of-3 on every prompt), full-height
+  renders read against T1–T9 per prompt, one record
+  `docs/decks/G1-GOLDEN-2026-08-25.md` with a row per world and the read
+  that backs it, PASS/FAIL per T-line, the three contested passes
+  repeated only if a read is contested (≈ $0.6 more). Pre-register the
+  prediction (11 of 11 generate; icons 33 of 33; by read ≥ 9 pass; the
+  known reads: the sea monsters, the horse and citadel, the ruined
+  metropolis at its decline, the walled city on `grown`) and the decision
+  rule (a FAIL gets an F-number; a compiler cause is a fix unit and that
+  prompt re-run; a model cause is the read's and the kit's). Then unit 47
+  — G7: the final deck (walk cards for the G1 worlds, installed with
+  `--saves`), the closing report in the ledger (the gates, the ladder,
+  the debts, the recommendations: P8 first), `STATUS: DONE`. Spend so far
+  $21.54 of $35.00.
+- **Last commit:** 0ac62c6 (unit 44). Convention: this line names the
   previous unit's commit; the current unit's commit is HEAD.
-- **Spend:** $19.92 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
+- **Spend:** $21.54 of the $35.00 OpenRouter cap (Run-only; log-derived, D4).
 - **Open decisions for Kai:** none. (Post-hoc veto open on D12, D19, D25,
   D32.)
 - **Findings queue (law 1: bugs before anything else):**
@@ -133,6 +134,17 @@ running state. The NOW block is rewritten at the end of every turn.
 
 (every fork taken: the reversible default chosen, why, and how to undo it)
 
+- **D91 (unit 45):** G6 is read line by line against `STOCKTAKE-v0.md`
+  and answered with evidence, not asserted. Two readings are mine and
+  Kai's to veto: (1) WS-F's "kill-ladder executed per §3.6" is met by the
+  ladder *written* rung by rung under law 6's tiers with its first free
+  rung landed, because census 4.4 keeps the switches until the closing
+  report and v0 says each deletion is Kai-ratified — a Run cannot ratify
+  for him; (2) WS-B is marked **OPEN**: no terrain-kit audit was performed,
+  and saying the five terrain probes are one would be a lie; what they
+  found is folded. G6 therefore holds on five of six lines; the closing
+  report carries WS-B as documentation debt, and DONE is declared with
+  that line open and named, not hidden. Undo: n/a.
 - **D90 (unit 44):** G4 is read by its pre-registered rule — a failure
   whose cause is an open F-number or proposal is not a new class — and
   pass 6 surfaced none: three failures and a half go to F30/P8 (a seat on
@@ -772,6 +784,7 @@ running state. The NOW block is rewritten at the end of every turn.
 | 42 | probe pass 5 — six new worlds generated end to end (`runs/probe-5`), the icon metric | 1.39 | 17.79 |
 | 43 | F32 — two bi14 runs, one CLI compile, the FULL suite | 0.00 | 17.79 |
 | 44 | probe pass 6 — six new worlds generated end to end (`runs/probe-6`), the icon metric | 2.13 | 19.92 |
+| 45 | G6 — the kit 3×3 (`runs/final-1/2/3`, authoring-only), the icon metric | 1.62 | 21.54 |
 
 ## VERDICTS
 
@@ -792,6 +805,9 @@ running state. The NOW block is rewritten at the end of every turn.
 - **F31 (unit 41):** `montfort_hill_k3` T4 **PASS** (read + no `W527`);
   the k2 FAIL answered. Kai's walk: pending (installed as
   `walled_hill_citadel`).
+- **G6 (unit 45):** `docs/decks/G6-WORKSTREAMS-2026-08-25.md` — WS-A PASS,
+  WS-B **OPEN** (no terrain-kit audit; folded by probes), WS-C PASS, WS-D
+  PASS, WS-E PASS, WS-F PASS (ladder written, rung 1 executed).
 
 ## REACH
 
@@ -1060,6 +1076,10 @@ class.
 **Pass 6 — result (unit 44, $2.13):** 6 of 6 generated (5 one-shot); icons
 18 of 18; by read 2 pass, 1 half, 3 fail — under the prediction; **no new
 failure class** (D90). **G4 met.**
+
+**Kit 3×3 at the final bytes (unit 45, $1.62):** three authoring-only runs of
+the golden 11 (`runs/final-1/2/3`), the kit at `8298c67`'s bytes and the
+compiler at `affdad0`'s. All three: 11 of 11 authored clean, 13 attempts; icons present 28 of 28; pairwise gates pass (the band: one attempt on one or two prompts, ±2 archetypes); dominance 0 of 8 on authoring-only runs (F24) — the kit is stable at its final bytes.
 
 ## PROPOSALS
 
@@ -1722,3 +1742,14 @@ failure class** (D90). **G4 met.**
   mooring) and the glacier on F32's land half (P11). No new failure class:
   **G4 met** (D90). No compiler code changed. Files: the roster,
   `runs/probe-6`, the record, the ledger. Spend $2.13.
+- **unit 45 — G6, the workstreams (2026-08-25):** `docs/decks/
+  G6-WORKSTREAMS-2026-08-25.md` reads WS-A–F against `STOCKTAKE-v0.md`:
+  A2's exports (`registry-export.ts`, WS-A2 closed) and the kit arm (E1,
+  D32) pass; the kit measured 3×3 at the final bytes (`runs/final-1/2/3`,
+  $1.62); WS-B open (no audit performed; its findings are the five terrain
+  probes'); WS-C closed; D1 measured (≈ $0.20 / world before and after —
+  the lever was never pulled) and D3 done and written; WS-E closed by Kai;
+  WS-F: the census as inventory, the kill-ladder written (rungs 2–4 Kai's),
+  rung 1 executed (census 7.3 archived). No compiler code changed. Files:
+  the record, `tools/worlds/archive/`, `runs/final-*`, `runs/noise-*`
+  metrics, the census (4.4, 7.3), the ledger. Spend $1.62.

@@ -1,0 +1,154 @@
+{
+  "id": "glowcap_vale",
+  "family": "glowcap_vale",
+  "kit": "settlement",
+  "prompt": "A glowing mushroom vale where a strange village has grown between the caps.",
+  "seed": 307,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "cache",
+    "value": {
+      "era": "medieval",
+      "wealth": 0.35,
+      "formality": 0.1,
+      "climate": {
+        "humidity": 0.8,
+        "temperature": 0.2
+      },
+      "character": {
+        "label": "glowing mushroom vale village",
+        "materialTheme": "temperate_timber",
+        "formPacks": [
+          "swamp_witch"
+        ],
+        "urbanForm": "grown",
+        "flora": {
+          "prefer": [
+            "fungal",
+            "glow",
+            "mushroom_giant_red",
+            "mushroom_shelf_brown",
+            "glowcap"
+          ]
+        },
+        "archetypes": {
+          "prefer": [
+            "cottage",
+            "watchtower"
+          ]
+        }
+      },
+      "tokens": {
+        "terrain": "a secluded mountain vale nestled between steep ridges, sheltered beneath a canopy of giant glowing mushrooms",
+        "icons": "rustic wooden cottages and stilt dwellings built between and around giant mushroom stems; rope bridges and elevated walkways connecting mushroom caps; spore lanterns illuminating the vale floor"
+      }
+    }
+  },
+  "intentUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "reasoningTokens": 0,
+    "cost": 0,
+    "cached": true
+  },
+  "menu": {
+    "injected": false,
+    "reason": "flag off"
+  },
+  "attempts": 1,
+  "diagnostics": [
+    []
+  ],
+  "usage": {
+    "promptTokens": 84305,
+    "completionTokens": 13037,
+    "reasoningTokens": 8239,
+    "cost": 0.05605875
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 25,
+    "maxDepth": 2,
+    "generators": [
+      "authored:elder_glowcap_sanctuary",
+      "building.grammar@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "apothecary",
+      "church",
+      "cottage",
+      "crystal_shrine",
+      "inn",
+      "mushroom_house",
+      "shrine",
+      "stilt_house",
+      "tavern",
+      "watchtower",
+      "witch_hut"
+    ],
+    "archetypesInCatalog": 11,
+    "formPacks": [
+      "swamp_witch"
+    ],
+    "props": [
+      "bench",
+      "standing_stones",
+      "well_head"
+    ],
+    "species": [
+      "ridge_pine",
+      "shelf_brown",
+      "slender_birch",
+      "squat_spruce"
+    ],
+    "envelopes": [
+      "512x512",
+      "22x22",
+      "11x16x11",
+      "11x12x11",
+      "11x12x11",
+      "11x14x13",
+      "9x10x9",
+      "13x11x13",
+      "11x13x13",
+      "7x19x7"
+    ],
+    "constraints": 26,
+    "constraintKinds": [
+      "adjacent_to",
+      "blend",
+      "distance",
+      "facing",
+      "gap",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform",
+      "zone"
+    ],
+    "constraintsWithStrength": 10,
+    "hardConstraints": 0,
+    "forests": 2,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 8,
+    "programReferences": 1,
+    "conformsTrue": 0,
+    "labels": 24,
+    "eras": [
+      "medieval"
+    ],
+    "bytes": 9907
+  },
+  "wallMs": 80222
+}

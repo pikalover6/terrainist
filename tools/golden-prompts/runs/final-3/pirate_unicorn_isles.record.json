@@ -1,0 +1,142 @@
+{
+  "id": "pirate_unicorn_isles",
+  "family": "pirates_v_unicorns",
+  "kit": "settlement",
+  "prompt": "A pirate island and a unicorn island, at war.",
+  "seed": 301,
+  "size": 512,
+  "model": "google/gemini-3.7-flash",
+  "effort": "high",
+  "ok": true,
+  "intent": {
+    "source": "cache",
+    "value": {
+      "climate": {
+        "temperature": 0.6,
+        "humidity": 0.3,
+        "snow": "never"
+      },
+      "tokens": {
+        "terrain": "two distinct islands separated by a contested strait of open water",
+        "event_direction": "pirate sloops and coastal cannon batteries facing across the strait at the fortified unicorn island",
+        "infra": "cannon_battery along the pirate shore; beacon_tower and defensive_barricade along the unicorn island coastline",
+        "region_pirate_island": "era renaissance, wealth 0.35, decline 0.4, formality 0.15; materialTheme temperate_timber; formPacks [nautical_pirate]; prefer archetypes tavern, watchtower, warehouse, lighthouse; props galleon, cart; fortified buccaneer cove, ship repair yards, coastal artillery",
+        "region_unicorn_island": "era renaissance, wealth 0.85, decline 0.05, formality 0.75; materialTheme white_quartz; prefer archetypes church, manor, watchtower; props standing_stones, fountain; sacred unicorn pastures, pristine defensive ramparts and magical shrine towers"
+      }
+    }
+  },
+  "intentUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "reasoningTokens": 0,
+    "cost": 0,
+    "cached": true
+  },
+  "menu": {
+    "injected": false,
+    "reason": "flag off"
+  },
+  "attempts": 1,
+  "diagnostics": [
+    []
+  ],
+  "usage": {
+    "promptTokens": 84296,
+    "completionTokens": 12305,
+    "reasoningTokens": 6795,
+    "cost": 0.054682875
+  },
+  "resolvedModel": "google/gemini-3.7-flash",
+  "census": {
+    "nodes": 29,
+    "maxDepth": 2,
+    "generators": [
+      "authored:celestial_unicorn_colossus",
+      "authored:skull_rock_fortress",
+      "building.grammar@0",
+      "infra.entry@0",
+      "prop.place@0",
+      "road.network@0",
+      "scatter.forest@0",
+      "scatter.program@0",
+      "terrain.climate@0",
+      "terrain.edit@0",
+      "terrain.heightfield@0"
+    ],
+    "archetypes": [
+      "armory",
+      "beacon_spire",
+      "castle",
+      "cathedral",
+      "cottage",
+      "courtyard_house",
+      "crystal_shrine",
+      "inn",
+      "library",
+      "log_cabin",
+      "manor_house",
+      "monastery",
+      "sawmill",
+      "shop_row",
+      "tavern",
+      "tea_house",
+      "warehouse",
+      "wizard_tower"
+    ],
+    "archetypesInCatalog": 18,
+    "formPacks": [
+      "arcane_magical",
+      "nautical_pirate"
+    ],
+    "props": [
+      "fishing_sloop",
+      "fountain",
+      "galleon",
+      "pier",
+      "standing_stones"
+    ],
+    "species": [
+      "cherry_bloom",
+      "jungle_canopy",
+      "silver_birch",
+      "sprawling_oak",
+      "wild_oak"
+    ],
+    "envelopes": [
+      "512x512",
+      "130x130",
+      "15x12x15",
+      "13x12x17",
+      "130x130",
+      "17x20x23",
+      "13x15x13",
+      "9x21x9"
+    ],
+    "constraints": 11,
+    "constraintKinds": [
+      "at",
+      "blend",
+      "distance",
+      "max",
+      "min",
+      "reference",
+      "terrain_conform"
+    ],
+    "constraintsWithStrength": 0,
+    "hardConstraints": 0,
+    "forests": 3,
+    "forestFillsAtOrAboveCoverage": 0,
+    "forestRadiiBelowTwo": 0,
+    "explicitArchetypeParams": 5,
+    "programReferences": 2,
+    "conformsTrue": 0,
+    "labels": 28,
+    "eras": [
+      "renaissance",
+      "pirate",
+      "fantasy"
+    ],
+    "bytes": 11850
+  },
+  "wallMs": 75952
+}
