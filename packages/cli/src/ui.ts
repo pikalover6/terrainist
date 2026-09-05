@@ -81,7 +81,13 @@ export async function runUi(args: readonly string[]): Promise<number> {
   const options = parseUiArgs(args);
   const server = createUiServer(options);
   await new Promise<void>((resolve, reject) => {
-    server.once("error", reject);
+    server.once("error", (err: NodeJS.ErrnoException) => {
+      reject(
+        err.code === "EADDRINUSE"
+          ? new Error(`port ${options.port} is already in use (another terrainist ui, perhaps) — pass --port <n> to use another`)
+          : err,
+      );
+    });
     server.listen(options.port, "127.0.0.1", () => resolve());
   });
   console.log(`terrainist ui at http://localhost:${options.port}/  (worlds in ${options.outDir}; Ctrl-C to stop)`);
