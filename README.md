@@ -8,19 +8,21 @@ Describe a world in a sentence, get a Minecraft world you can walk through.
   <img src="gallery/showcase.png" alt="A walled town seen from its castle keep, banners flying" width="1000">
 </p>
 
-Terrainist takes a text prompt, has a language model plan a world from it —
-the terrain, the climate, the forests, the roads, and every building, ruin,
-ship or statue by name and place — and then builds that plan into a Minecraft
+Terrainist takes a text prompt, has a language model plan a world from it, and then builds that plan into a Minecraft
 Java world (1.21.11) with a deterministic compiler. The model decides *what*
-the world is; the compiler decides *how* to build it, the same way every time.
+the world is; the compiler decides *how* to build it.
 
-More prompts and what came out of them are in [`gallery/`](gallery/).
+See [`gallery/`](gallery/) for a few examples.
+
+NOTE: In its current state, this project is largely untested with various highly incomplete features.
 
 ## Quick start
 
 You need Node 22 or newer and an API key for an OpenAI-compatible chat API.
 OpenRouter is the default; OpenAI or a local server such as Ollama or vLLM
-work the same way.
+should work the same way.
+
+I'd highly recommend trying with Gemini 3.8 flash at high reasoning, as that is what was used during development. 
 
 ```sh
 git clone https://github.com/pikalover6/terrainist.git
@@ -33,11 +35,10 @@ echo 'TERRAINIST_API_KEY=your-key' > .env
 npx terrainist generate "a fishing village of stilt houses on a cold northern fjord" --install
 ```
 
-That writes the world under `out/`, copies it into your Minecraft saves folder,
-and it shows up in the world list the next time you open the game.
+That writes the world under `out/` and copies it into your Minecraft saves folder (autodetected if not specified).
 
-Prefer a page over a terminal? `npx terrainist ui` serves one at
-http://localhost:4747: type a prompt, watch the log, install with a button.
+There's a webui you can use with `npx terrainist ui`, it serves one at
+http://localhost:4747.
 
 ## Configuration
 
@@ -50,7 +51,7 @@ Three settings, read from the environment or from `.env` in the repo root:
 | `TERRAINIST_MODEL` | the model to ask | `google/gemini-3.8-flash` |
 
 Requests use the standard OpenAI chat-completions shape, including
-`reasoning_effort`, so any server that speaks it is a drop-in.
+`reasoning_effort`.
 
 ## Commands
 
@@ -91,6 +92,8 @@ Useful things to know about `generate`:
    it is used.
 3. The compiler builds it: terrain, settlement layout, ground works, buildings
    and props, vegetation, then validation and Minecraft region files.
+
+Reading [`AGENTS.md`](AGENTS.md) and [`kits/settlement-author.md`](kits/settlement-author.md) is also helpful for understanding part of what is going on.
 
 | package | |
 | --- | --- |
