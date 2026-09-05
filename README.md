@@ -2,6 +2,19 @@
 
 Text prompt → Minecraft world.
 
+<a href="https://x.com/pikalover6_"><img alt="by @pikalover6_ on X" src="https://img.shields.io/badge/by-%40pikalover6__-000000?style=flat&logo=x&logoColor=white"></a>
+
+<p align="center">
+  <img src="docs/gallery/slideshow.gif" alt="Five generated worlds, each captioned with the prompt that made it" width="1000">
+</p>
+<p align="center">
+  <a href="docs/gallery/1-clown-park.png"><img src="docs/gallery/1-clown-park.png" width="19%" alt="Creepy world that is one massive amusement park with huge clown statues"></a>
+  <a href="docs/gallery/2-troy.png"><img src="docs/gallery/2-troy.png" width="19%" alt="Troy, with the Trojan Horse inside"></a>
+  <a href="docs/gallery/3-island-sea-monsters.png"><img src="docs/gallery/3-island-sea-monsters.png" width="19%" alt="Tropical private island being invaded by massive sea monsters"></a>
+  <a href="docs/gallery/4-overgrown-city.png"><img src="docs/gallery/4-overgrown-city.png" width="19%" alt="A post apocalyptic, abandoned, overgrown formerly high-tech city with secret hideouts"></a>
+  <a href="docs/gallery/5-statue-on-the-moon.png"><img src="docs/gallery/5-statue-on-the-moon.png" width="19%" alt="The Statue of Liberty on the moon, on display in an extremely advanced moon alien civilization after they stole it"></a>
+</p>
+
 A language model writes a short **Loam 1** document from your prompt — the land,
 the climate, the woods, the roads, and every *thing* in the world by name and
 place. A deterministic compiler turns that document into a Minecraft Java world
