@@ -1,0 +1,242 @@
+{
+  "ruined_cottage 13x17x15 floors=1 seed=a": {
+    "ops": 3400,
+    "sha256": "8e17d823fce3abcec16c8b9b93299dbf7fad49a2d8bfd5cf25a06118f01e5dd3"
+  },
+  "ruined_cottage 13x17x15 floors=1 seed=b": {
+    "ops": 3400,
+    "sha256": "916387ffb794d908a10b73ebd9acea2c52a38993c8c940770a0cf4378f813a9e"
+  },
+  "ruined_cottage 13x17x15 floors=2 seed=a": {
+    "ops": 4020,
+    "sha256": "ade5d57b1048f9cce4ff9a7074713cc0afbf92038a0d5ac5642c4c39faaab7a5"
+  },
+  "ruined_cottage 13x17x15 floors=2 seed=b": {
+    "ops": 4018,
+    "sha256": "7b6a9842af8b0b98088bfd9de66af103035904cc18f87faf4e6bb271238008ed"
+  },
+  "ruined_cottage 11x13x13 floors=1 seed=a": {
+    "ops": 2614,
+    "sha256": "b1842e1c75dcd705ac97f1f209d5e9b125c39d80c8aa28643ccb93d10a170c99"
+  },
+  "ruined_cottage 11x13x13 floors=1 seed=b": {
+    "ops": 2616,
+    "sha256": "a28b8501437b6b8b92cd45f8beddeacffbf5aac0df09568027e5aed16463c7e1"
+  },
+  "ruined_cottage 11x13x13 floors=2 seed=a": {
+    "ops": 2723,
+    "sha256": "1b61f5f8ea8f45fff03a9795a44c68b21396e5d97bea182c9acfe29cf7d795d8"
+  },
+  "ruined_cottage 11x13x13 floors=2 seed=b": {
+    "ops": 2725,
+    "sha256": "4ebdfea80e44e814c96d94006a71ef7a17a91963733e0215021867532765d0d9"
+  },
+  "ruined_cottage 9x11x9 floors=1 seed=a": {
+    "ops": 1608,
+    "sha256": "9d401ff525468bcf431905e99d283f0014dcc03dd251b362c4b0c7eadf231086"
+  },
+  "ruined_cottage 9x11x9 floors=1 seed=b": {
+    "ops": 1609,
+    "sha256": "4b4c40c204f2cba5b5ece8b54ae9869a932f35ca3bb6655de20a2ec0477aacf4"
+  },
+  "ruined_cottage 9x11x9 floors=2 seed=a": {
+    "ops": 1513,
+    "sha256": "034fcb50d9ffb09d1c47ff8aea605bd2f15220e3447e738a5df1c415930ee450"
+  },
+  "ruined_cottage 9x11x9 floors=2 seed=b": {
+    "ops": 1512,
+    "sha256": "9bbf1be6cf73545679699c6cfd8b1a99b01107aa113a7a70b791719225d2685b"
+  },
+  "ruined_keep 13x17x15 floors=1 seed=a": {
+    "ops": 2127,
+    "sha256": "5f647ef88199be3a071618e5f93405cd5db718c1c77eb15a3a6421fe0d657b4c"
+  },
+  "ruined_keep 13x17x15 floors=1 seed=b": {
+    "ops": 2128,
+    "sha256": "aa4723a65ec88e1ba472d9df32c7a8b842bfc574761f6b941493f86fc72dfd1a"
+  },
+  "ruined_keep 13x17x15 floors=2 seed=a": {
+    "ops": 2495,
+    "sha256": "58b123938f72bf1126e60290ba9761a5070084c37d02f4d65418ecc0eb7c23fd"
+  },
+  "ruined_keep 13x17x15 floors=2 seed=b": {
+    "ops": 2494,
+    "sha256": "e5b11d8512818947e6dcaf4e322fa40430e2d4b2d6d009f6cbc6b847401eed99"
+  },
+  "ruined_keep 11x13x13 floors=1 seed=a": {
+    "ops": 1641,
+    "sha256": "d751dfea8102e88e702d8d1e008872f13da8f58939e631a32ed234e53c0c33b2"
+  },
+  "ruined_keep 11x13x13 floors=1 seed=b": {
+    "ops": 1643,
+    "sha256": "19399230d996fba794a9a2c74eddac1bd90a20e645dc5a5dbfbeec2a4601b2bc"
+  },
+  "ruined_keep 11x13x13 floors=2 seed=a": {
+    "ops": 1757,
+    "sha256": "4321087abb313c5ae5def16249fb763555c09076baf6cbe713ecc1fc1ac24af0"
+  },
+  "ruined_keep 11x13x13 floors=2 seed=b": {
+    "ops": 1759,
+    "sha256": "bd2951a870dd7bcb16c9b20604a01c6a0a43848bff187a26e2bc433fa2adeae9"
+  },
+  "ruined_keep 9x11x9 floors=1 seed=a": {
+    "ops": 1000,
+    "sha256": "055511287c36f75cd4818b7091409aa3c073c6967e8f25031645e8742e6c3dcd"
+  },
+  "ruined_keep 9x11x9 floors=1 seed=b": {
+    "ops": 1001,
+    "sha256": "1e041a1e65a8eef9ad0111ab7bc435be0dfcae709118ebb79d88e5f3ab296c2b"
+  },
+  "ruined_keep 9x11x9 floors=2 seed=a": {
+    "ops": 1035,
+    "sha256": "0494be394ee12c021e5191eb7bc6ac51e22bc4ab2435a8ccfd883617bf4e1573"
+  },
+  "ruined_keep 9x11x9 floors=2 seed=b": {
+    "ops": 1034,
+    "sha256": "2893b471b5d4666167aff37b641a8fdf244a1cfab4346b3b940a63048a3f6763"
+  },
+  "ruined_church 13x17x15 floors=1 seed=a": {
+    "ops": 3396,
+    "sha256": "4ff0f566bdcce22966dd401bb78ddd7be2bb1db980ab2ab83923015447b27433"
+  },
+  "ruined_church 13x17x15 floors=1 seed=b": {
+    "ops": 3397,
+    "sha256": "19a04d9902b0638adaad0045e203d064aa4dbf514de6053211aeba52ef1cc5e2"
+  },
+  "ruined_church 13x17x15 floors=2 seed=a": {
+    "ops": 4020,
+    "sha256": "13f38226fa0abb1d063f098086918649bea3f259b1992c0d08d41d68e5a189bf"
+  },
+  "ruined_church 13x17x15 floors=2 seed=b": {
+    "ops": 4019,
+    "sha256": "6c141a6824008c87ae32d6212b7cd407098ba3ddb49f1f44d73c6d43c66481c8"
+  },
+  "ruined_church 11x13x13 floors=1 seed=a": {
+    "ops": 2609,
+    "sha256": "b2e0c3b184d51a82c1fda1b7973969ec3375587e626334c47b491189e4533825"
+  },
+  "ruined_church 11x13x13 floors=1 seed=b": {
+    "ops": 2611,
+    "sha256": "f9f64216f207363707fb78ecf897ab924332ded766531a30d98c10f9580687a0"
+  },
+  "ruined_church 11x13x13 floors=2 seed=a": {
+    "ops": 2722,
+    "sha256": "5356f37bfe4cb28890639ce397ced08ba2d37b0ae5f271191415acf089ca340e"
+  },
+  "ruined_church 11x13x13 floors=2 seed=b": {
+    "ops": 2724,
+    "sha256": "48f5d04bdfe5663bafd1ae51872418c98604637618091e3e94f0d34931938ade"
+  },
+  "ruined_church 9x11x9 floors=1 seed=a": {
+    "ops": 1610,
+    "sha256": "852dc4cd787d99ced26fc0d7ac1df6780ddcdeb5a0bfdb1aa27ac3db3157bd69"
+  },
+  "ruined_church 9x11x9 floors=1 seed=b": {
+    "ops": 1611,
+    "sha256": "4a7df77c975954649058cb28eca50eff1f42f14bad0a934bc09eb0e0c73e1738"
+  },
+  "ruined_church 9x11x9 floors=2 seed=a": {
+    "ops": 1519,
+    "sha256": "d841dcce49ac320b597bfac904f7bfceb5c964fb9c0d1e2d3532c2b43fbce343"
+  },
+  "ruined_church 9x11x9 floors=2 seed=b": {
+    "ops": 1518,
+    "sha256": "bea9598dd6aa65c73f63e75839c935a254eceb2b7b84a9f461d640ebd03d817e"
+  },
+  "collapsed_tower 13x17x15 floors=1 seed=a": {
+    "ops": 4103,
+    "sha256": "619282ce4e9730cf8d14f649280c370524c1f36c3cc50ea9afe842b2ca67780d"
+  },
+  "collapsed_tower 13x17x15 floors=1 seed=b": {
+    "ops": 4102,
+    "sha256": "a19645e6f92600e09ead6567ab093dc6bb72bb17d7fb4f36ce5ee60d8c02dee4"
+  },
+  "collapsed_tower 13x17x15 floors=2 seed=a": {
+    "ops": 5147,
+    "sha256": "a0c8c47f6440b56128d72207ff1cbc6fb04a7ae390125d12b2e3afdf5c9e0cc1"
+  },
+  "collapsed_tower 13x17x15 floors=2 seed=b": {
+    "ops": 5144,
+    "sha256": "1019a256eda9a55705445bdd7d2dc362e1e8a1f20be9b0ca31fa9f14bbd423e9"
+  },
+  "collapsed_tower 11x13x13 floors=1 seed=a": {
+    "ops": 3104,
+    "sha256": "58d4f1cc9831a03afda3acef61047491ca3a31c239ce588bbaf9575e6ba0132e"
+  },
+  "collapsed_tower 11x13x13 floors=1 seed=b": {
+    "ops": 3106,
+    "sha256": "aa32227b8ed021b9ccad87ccc346ecd1321262e539ccdfea2d43f4c4487be360"
+  },
+  "collapsed_tower 11x13x13 floors=2 seed=a": {
+    "ops": 3112,
+    "sha256": "04d34a8e90bf1a71877f657cb5fa63b21157f72b794df06ada9e7f46721eaa02"
+  },
+  "collapsed_tower 11x13x13 floors=2 seed=b": {
+    "ops": 3114,
+    "sha256": "e4d86124ab4cb474c61965dde73aa779a359125bd8cf1890b98b0b3c90f54b64"
+  },
+  "collapsed_tower 9x11x9 floors=1 seed=a": {
+    "ops": 1795,
+    "sha256": "d457ded7877dff59a75d5b7e42fd785cba57abc25ead4203c8ccc10ab612051f"
+  },
+  "collapsed_tower 9x11x9 floors=1 seed=b": {
+    "ops": 1796,
+    "sha256": "77288a13cc14da184920e2bdb4f37e8d856656a5c6a2f65958fd17455d656d5b"
+  },
+  "collapsed_tower 9x11x9 floors=2 seed=a": {
+    "ops": 1607,
+    "sha256": "4ff8cffc6d72867e1fee75de0fcab1dd515e378432012b32a3a9c6682ac1e1f1"
+  },
+  "collapsed_tower 9x11x9 floors=2 seed=b": {
+    "ops": 1606,
+    "sha256": "512588a6c9eee28aa1c612c43dc466ed67e05e6db536ece1ac51c087334c09c4"
+  },
+  "overgrown_villa 13x17x15 floors=1 seed=a": {
+    "ops": 3402,
+    "sha256": "626b2ea426e03495061006dc43217cadfe468dc28c64c81cb95f713d71791cc1"
+  },
+  "overgrown_villa 13x17x15 floors=1 seed=b": {
+    "ops": 3402,
+    "sha256": "9e76668e175d070784552b810ccb269cefe1e916e5142d0bb2288063aae660cf"
+  },
+  "overgrown_villa 13x17x15 floors=2 seed=a": {
+    "ops": 4018,
+    "sha256": "15f1c14db53124fe83a77ccd3ad6d7ca1ebf8ed2a8a5d3c65a68d63f1106bc82"
+  },
+  "overgrown_villa 13x17x15 floors=2 seed=b": {
+    "ops": 4016,
+    "sha256": "18b95fd98123fbc543e345cd8b266ea7644eb9d2ab0e333ca4da54289e79d82b"
+  },
+  "overgrown_villa 11x13x13 floors=1 seed=a": {
+    "ops": 2618,
+    "sha256": "cda676bbfe5501933512947a0e479ddaa54e4ec26141cd0b8c91492e4eb664ac"
+  },
+  "overgrown_villa 11x13x13 floors=1 seed=b": {
+    "ops": 2619,
+    "sha256": "1e0de9afdd4cead17a09b1a2a6dae19272290344765752dd3683f1fbe07a8c52"
+  },
+  "overgrown_villa 11x13x13 floors=2 seed=a": {
+    "ops": 2725,
+    "sha256": "15dab1fba8bf16c7a2e6e350bcf050f3810f09914f4d15486eda137d29624c5f"
+  },
+  "overgrown_villa 11x13x13 floors=2 seed=b": {
+    "ops": 2726,
+    "sha256": "7f80318f20c9038bd2ec9fccea5f6833d44e85aa2f4a2577ab7357cdf34b946c"
+  },
+  "overgrown_villa 9x11x9 floors=1 seed=a": {
+    "ops": 1614,
+    "sha256": "43d809062857a45b7bd6186dd8f8fcc75f11bed59526069a8b9951dff5322d3f"
+  },
+  "overgrown_villa 9x11x9 floors=1 seed=b": {
+    "ops": 1615,
+    "sha256": "8775a4c243b071416b25698a1ee79105b77f00ddabef46a41dd5dc73644cf3c5"
+  },
+  "overgrown_villa 9x11x9 floors=2 seed=a": {
+    "ops": 1523,
+    "sha256": "e6ed9ec22d2d5fbd71ad70c0e21ab4433e5cde4a6ca8d009415ae46afd6a6aa9"
+  },
+  "overgrown_villa 9x11x9 floors=2 seed=b": {
+    "ops": 1522,
+    "sha256": "e0a49dd8d01c0094e7796d7a1dd981d4b7294eccd97ee347bf745e15671f2d45"
+  }
+}

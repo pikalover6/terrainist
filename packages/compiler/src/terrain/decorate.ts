@@ -1,0 +1,693 @@
+/**
+ * Ground cover: undergrowth, shore life and water plants.
+ *
+ * The scatter pass puts trunks and canopies in the world; this pass puts
+ * *everything else* — the grass, ferns, flower patches, mushrooms, fallen logs,
+ * mud, moss, seagrass, kelp and lily pads that separate a lush world from a
+ * heightmap with trees stuck in it.
+ *
+ * Two rules make it safe:
+ *
+ * 1. **Every decision is position-keyed.** A column's cover is a pure function
+ *    of its coordinates and the node's seed, so the pass can be read in any
+ *    order and re-run at will (`detail.ts` explains the hash).
+ * 2. **Nothing here touches fluids.** Water plants replace the water block they
+ *    stand in (Minecraft renders seagrass and kelp waterlogged by definition),
+ *    and lily pads sit in the air block above a settled surface. The column
+ *    plan's `fluidKind`/`fluidTop` are never modified, so the fluid-stability
+ *    invariant proved before this pass still holds after it.
+ *
+ * A few decisions change the *surface block* rather than adding one — podzol
+ * under a dense spruce canopy, coarse and rooted dirt patches. Those write back
+ * into the column plan, which is why the pass runs before biome painting and
+ * emit.
+ */
+
+import { SurfaceClass, fbm2, type Classification, type Seed256 } from "@terrainist/stdlib";
+
+import type { PrismarineStack } from "../emit/prismarine.js";
+
+import type { StructureClip } from "./clip.js";
+import { FluidKind, type ColumnPlan } from "./columns.js";
+import { detailSeed, hash2, hashInt, hashPick } from "./detail.js";
+import type { Palette } from "./palette.js";
+import type { ScatteredNode, TreePlacement } from "./vegetation.js";
+import { TOWN_GREEN_DENSITY, canopyCover } from "./vegetation.js";
+
+/** One decoration block, in absolute world coordinates. */
+export interface DecorBlock {
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+  readonly stateId: number;
+}
+
+/** What the decoration pass produced, for the compile report. */
+export interface DecorationResult {
+  readonly blocks: readonly DecorBlock[];
+  /** Counts by category: `grass`, `flowers`, `deadwood`, `shade`, `water`, `shore`. */
+  readonly counts: Readonly<Record<string, number>>;
+}
+
+/** Everything {@link decorate} reads. */
+export interface DecorateInput {
+  readonly plan: ColumnPlan;
+  readonly classification: Classification;
+  /** Per-column temperature, for taiga-vs-forest cover choices. */
+  readonly temperature: Float32Array;
+  readonly trees: readonly TreePlacement[];
+  readonly forests: readonly ScatteredNode[];
+  readonly palette: Palette;
+  readonly stack: PrismarineStack;
+  /**
+   * Structure boxes ground cover may not enter. Undergrowth is already kept out
+   * of claimed columns by each node's eligibility mask; this catches the one
+   * thing that escapes it — a fallen log, which starts on a legal column and
+   * then runs for up to four blocks in a straight line. Deadwood is held to the
+   * wider `inApron` test rather than `blockedColumn`, because a log that merely
+   * *stops* at a wall is still a log lying against it.
+   */
+  readonly clip?: StructureClip;
+  /**
+   * The settlement's share of ambient undergrowth density on its own unbuilt
+   * ground — the `terrain.settlementGreenery` fan-out's answer, defaulting to
+   * {@link TOWN_GREEN_DENSITY}.
+   *
+   * The *same* number the scatter pass handed {@link undergrowthFeather} as the
+   * ramp's inner endpoint, which is what makes the two one field: the interior
+   * sits flat at this share and the band outside climbs from it to ambient.
+   */
+  readonly greenShare?: number;
+  /** Root node seed; the decoration streams hang off it. */
+  readonly seed: Seed256;
+}
+
+/**
+ * Surfaces the town green will grow on — the natural ones, by name.
+ *
+ * The green's other tests ask *who claimed this column*; this one asks what the
+ * ground actually is, and it is the backstop for everything the claims miss.
+ * With the claims at their finest — every block every pass wrote — the compiled
+ * fixture still grew short grass and ferns on `cobblestone` and `stone`: a
+ * terrace revetment materialised into the column plan's own *surface* array
+ * rather than pushed as structure blocks, so neither the block-column mask nor
+ * any occupancy tag knew about it. A whitelist rather than a list of paving
+ * materials, so the next material the fabric learns to build with is excluded
+ * by default rather than included by omission.
+ *
+ * `ground.stone` is deliberately absent: nothing tufts out of bare rock in
+ * vanilla either, and on a cut hillside a stone surface is nearly always
+ * something somebody cut.
+ */
+const NATURAL_SURFACE_SYMBOLS: readonly string[] = Object.freeze([
+  "ground.surface",
+  "ground.subsurface",
+  "ground.coarse_dirt",
+  "ground.rooted_dirt",
+  "ground.podzol",
+  "ground.gravel",
+  "ground.sand",
+  "ground.beach",
+  "ground.clay",
+  "ground.mud",
+  "ground.snow_block",
+]);
+
+/** Temperature below which a forest floor dresses as taiga (ferns, berries). */
+const TAIGA_TEMPERATURE = 0.4;
+
+/** Canopy columns overhead at which a floor counts as deep shade. */
+const DENSE_SHADE = 3;
+
+/** Ocean depth (blocks below sea level) up to which seagrass grows. */
+const SEAGRASS_MAX_DEPTH = 12;
+/** Depth band in which kelp forests grow. */
+const KELP_MIN_DEPTH = 12;
+const KELP_MAX_DEPTH = 30;
+
+/** Block states the pass places, resolved once. */
+interface DecorStates {
+  readonly shortGrass: number;
+  readonly tallGrassLower: number;
+  readonly tallGrassUpper: number;
+  readonly fern: number;
+  readonly deadBush: number;
+  readonly mossCarpet: number;
+  readonly brownMushroom: number;
+  readonly redMushroom: number;
+  readonly berryBush: number;
+  readonly azalea: number;
+  readonly lilyPad: number;
+  readonly seagrass: number;
+  readonly tallSeagrassLower: number;
+  readonly tallSeagrassUpper: number;
+  readonly kelpPlant: number;
+  readonly kelpTip: number;
+  readonly flowers: readonly number[];
+  readonly logX: number;
+  readonly logZ: number;
+  readonly podzol: number;
+  readonly coarseDirt: number;
+  readonly rootedDirt: number;
+  /** The floor variants of §5.6 (WP-C). Resolved always, used only when asked. */
+  readonly mycelium: number;
+  readonly mossBlock: number;
+  /**
+   * Glow lichen lying on the ground it grows out of.
+   *
+   * A multiface block with no support is a block that pops on the first update,
+   * so the state is written with `down = true` — attached to the top face of
+   * the column's own surface block, which is the only face a floor lichen has.
+   */
+  readonly glowLichen: number;
+  readonly fireflyBush: number;
+}
+
+function resolveStates(palette: Palette, stack: PrismarineStack): DecorStates {
+  const state = (symbol: string): number => palette.state(symbol);
+  const withProps = (name: string, props: Record<string, string>, fallback: number): number =>
+    stack.blockStateOf(name, props) ?? fallback;
+  const tallGrass = state("foliage.tall_grass");
+  const tallSeagrass = state("foliage.tall_seagrass");
+  const log = "minecraft:spruce_log";
+  return {
+    shortGrass: state("foliage.short_grass"),
+    tallGrassLower: withProps("minecraft:tall_grass", { half: "lower" }, tallGrass),
+    tallGrassUpper: withProps("minecraft:tall_grass", { half: "upper" }, tallGrass),
+    fern: state("foliage.fern"),
+    deadBush: state("foliage.dead_bush"),
+    mossCarpet: state("foliage.moss_carpet"),
+    brownMushroom: state("foliage.brown_mushroom"),
+    redMushroom: state("foliage.red_mushroom"),
+    berryBush: state("foliage.sweet_berry_bush"),
+    azalea: state("foliage.azalea"),
+    lilyPad: state("foliage.lily_pad"),
+    seagrass: state("foliage.seagrass"),
+    tallSeagrassLower: withProps("minecraft:tall_seagrass", { half: "lower" }, tallSeagrass),
+    tallSeagrassUpper: withProps("minecraft:tall_seagrass", { half: "upper" }, tallSeagrass),
+    kelpPlant: state("foliage.kelp_plant"),
+    kelpTip: state("foliage.kelp"),
+    flowers: [
+      state("flower.poppy"),
+      state("flower.dandelion"),
+      state("flower.cornflower"),
+      state("flower.oxeye_daisy"),
+      state("flower.azure_bluet"),
+    ],
+    logX: withProps(log, { axis: "x" }, state("wood.spruce_log")),
+    logZ: withProps(log, { axis: "z" }, state("wood.spruce_log")),
+    podzol: state("ground.podzol"),
+    coarseDirt: state("ground.coarse_dirt"),
+    rootedDirt: state("ground.rooted_dirt"),
+    mycelium: state("ground.mycelium"),
+    mossBlock: state("ground.moss_block"),
+    glowLichen: withProps(
+      "minecraft:glow_lichen",
+      { down: "true", up: "false", north: "false", south: "false", east: "false", west: "false" },
+      state("glow.lichen"),
+    ),
+    fireflyBush: state("foliage.firefly_bush"),
+  };
+}
+
+/**
+ * Decorate the whole world.
+ *
+ * Mutates `input.plan.surface` where a cover choice replaces the ground block;
+ * everything else comes back as {@link DecorBlock}s for the emitter.
+ */
+export function decorate(input: DecorateInput): DecorationResult {
+  const { plan, palette, stack, trees } = input;
+  const { region } = plan;
+  const states = resolveStates(palette, stack);
+  const blocks: DecorBlock[] = [];
+  const counts: Record<string, number> = {
+    grass: 0,
+    flowers: 0,
+    deadwood: 0,
+    shade: 0,
+    water: 0,
+    shore: 0,
+  };
+
+  const canopy = canopyCover(plan, trees);
+  const occupied = trunkMask(plan, trees);
+  const decorated = new Uint8Array(region.width * region.depth);
+
+  const seeds = {
+    patch: detailSeed(input.seed, "decor.patch"),
+    water: detailSeed(input.seed, "decor.water"),
+    shore: detailSeed(input.seed, "decor.shore"),
+    // One stream for the settlement-edge feather, hung off the *root* seed and
+    // not off any node's, so two woods meeting at the same column agree about
+    // whether it keeps its plants. See `undergrowthFeather` in vegetation.ts.
+    feather: detailSeed(input.seed, "decor.settlement-feather"),
+    // The interior thinning, on its own stream for the same reason: the town
+    // green is a property of the settlement, not of whichever wood happens to
+    // reach it.
+    green: detailSeed(input.seed, "decor.town-green"),
+  };
+
+  const naturalSurface = new Set<number>(
+    NATURAL_SURFACE_SYMBOLS.map((symbol) => palette.state(symbol)),
+  );
+
+  for (const node of input.forests) {
+    decorateForest(
+      node,
+      input,
+      states,
+      canopy,
+      occupied,
+      decorated,
+      blocks,
+      counts,
+      seeds,
+      naturalSurface,
+    );
+  }
+  decorateWater(input, states, blocks, counts, seeds.water);
+  decorateShore(input, states, occupied, blocks, counts, seeds.shore);
+
+  return { blocks, counts };
+}
+
+/* -------------------------------------------------------------------------- */
+/* Forest floors                                                               */
+/* -------------------------------------------------------------------------- */
+
+function decorateForest(
+  node: ScatteredNode,
+  input: DecorateInput,
+  states: DecorStates,
+  canopy: Uint8Array,
+  occupied: Uint8Array,
+  decorated: Uint8Array,
+  blocks: DecorBlock[],
+  counts: Record<string, number>,
+  seeds: { patch: number; feather: number; green: number },
+  naturalSurface: ReadonlySet<number>,
+): void {
+  const { plan, classification, temperature, palette } = input;
+  const { region, ground, fluidKind, surface, volcanic, lavaFlow } = plan;
+  // Law 2 of the intent layer, spelled out at the point of use: no fan-out
+  // answer means today's constant, which is what every document without an
+  // `era` has always compiled to.
+  const greenShare = input.greenShare ?? TOWN_GREEN_DENSITY;
+  const cover = detailSeed(node.seed, "undergrowth");
+  const { grass, flowers, deadwood } = node.params.undergrowth;
+  /**
+   * Which floor table this wood dresses from (§5.6).
+   *
+   * `default` is today's, unchanged and unconditional — the reach law: a node
+   * that declared no `strata` has no `floor`, so every existing world takes
+   * exactly the branches it always took. The two variants reuse this pass's
+   * structure (a soil conversion, then a per-column draw against the same
+   * `grass`/`flowers`/`deadwood` probabilities) and only swap the tables.
+   */
+  const floor = node.strata?.floor ?? "default";
+  const fungal = floor === "fungal";
+  const glow = floor === "glow";
+
+  for (let j = 0; j < region.depth; j++) {
+    const z = region.z0 + j;
+    for (let i = 0; i < region.width; i++) {
+      const idx = j * region.width + i;
+      // Two grounds this pass dresses, and the difference is the whole of the
+      // town-green fix: the node's own eligibility mask (natural ground the
+      // wood may plant on), and — where the settlement claimed a rectangle but
+      // nobody built in it — the green (see `townGreenMask`). Everything below
+      // treats them alike except where `green` says otherwise.
+      const green = node.green?.[idx] === 1;
+      if (node.mask[idx] !== 1 && !green) continue;
+      if (decorated[idx] === 1) continue;
+      if (occupied[idx] === 1) continue;
+      if (input.clip?.blockedColumn(region.x0 + i, z) === true) continue;
+      if (fluidKind[idx] !== FluidKind.NONE) continue;
+      if (volcanic[idx] === 1 || lavaFlow[idx] === 1) continue;
+      if (classification.classes[idx] !== SurfaceClass.SOIL) continue;
+      decorated[idx] = 1;
+
+      const x = region.x0 + i;
+      const y = (ground[idx] as number) + 1;
+      const cold = (temperature[idx] as number) < TAIGA_TEMPERATURE;
+      const shade = canopy[idx] as number;
+
+      // --- soil conversions (these replace the surface, not sit on it) ------
+      const soilNoise = fbm2(seeds.patch, x, z, {
+        octaves: 2,
+        frequency: 0.035,
+        lacunarity: 2,
+        gain: 0.5,
+      });
+      // The green's backstop: whatever the claims said, the ground itself has
+      // to still be ground. See {@link NATURAL_SURFACE_SYMBOLS}.
+      if (green && !naturalSurface.has(surface[idx] as number)) continue;
+
+      if (green) {
+        // Inside the town nothing here converts the ground: podzol and coarse
+        // dirt are the *surface*, and rewriting a swept yard's grass into bare
+        // dirt is a change to what was built, not to what grows on it. The
+        // green adds plants and only plants.
+        if (hash2(seeds.green, x, z, 0) >= greenShare) continue;
+      } else if (fungal && shade >= DENSE_SHADE) {
+        // Mycelium under the caps: the grove's ground is the reason it reads as
+        // a *place* rather than as a wood somebody put mushrooms in.
+        surface[idx] = states.mycelium;
+      } else if ((fungal || glow) && soilNoise > 0.42) {
+        // The variants take moss where the default takes coarse and rooted
+        // dirt: a damp hollow has no bare patches.
+        surface[idx] = states.mossBlock;
+      } else if (cold && shade >= DENSE_SHADE && hash2(cover, x, z, 1) < 0.7) {
+        surface[idx] = states.podzol;
+      } else if (soilNoise > 0.42) {
+        surface[idx] = hash2(cover, x, z, 2) < 0.6 ? states.coarseDirt : states.rootedDirt;
+        // Bare ground stays bare.
+        continue;
+      }
+
+      // --- the settlement-edge feather --------------------------------------
+      // Claimed ground is already out (it never reaches the node mask); this is
+      // the *natural* side of that boundary, climbing from the interior share at
+      // the edge to ambient at the band's rim so the mask stops reading as a
+      // drawn line. Below the soil conversions on purpose: coarse dirt and
+      // podzol are the ground itself, and the feather is about what grows on it.
+      //
+      // Not applied on the green — but not because the two disagree: the
+      // feather's inner endpoint *is* `greenShare`, so the interior draw above
+      // and this ramp are one density field, and asking both would square it.
+      // One test per column, on whichever side of the boundary it lies.
+      const survival = green ? 1 : (node.feather?.[idx] ?? 1);
+      const draw = hash2(seeds.feather, x, z, 0);
+      if (survival < 1 && draw >= survival) continue;
+      // The share of the field that is *ambient wood* rather than town: 0 at the
+      // claim edge, 1 at the band's rim. Small vegetation rides the whole field
+      // (the town has grass too); deadwood rides only this part. Same draw, so
+      // the two are nested rather than independent — a column that keeps a log
+      // has already kept its grass.
+      const ambient =
+        greenShare >= 1 ? 1 : Math.max(0, (survival - greenShare) / (1 - greenShare));
+
+      // --- fallen logs (claim several columns, so try them first) -----------
+      // A log is a four-block beam, so "this column is not claimed" is not
+      // enough: it must start, and stay, outside the structure apron, or it
+      // ends up lying against a wall reading as a dropped roof timber.
+      // A fallen log is not small vegetation: it is a metre-thick beam that
+      // claims up to four columns, and in a back yard it reads as timber
+      // somebody dumped. The green grows grass and flowers, nothing that lies
+      // down — and the feather band is the same story told as a gradient, which
+      // is why deadwood is held to `ambient` while the plants are not.
+      if (
+        !green &&
+        shade === 0 &&
+        (ambient >= 1 || draw < ambient) &&
+        input.clip?.inApron(x, z) !== true &&
+        hash2(cover, x, z, 3) < deadwood * 0.15
+      ) {
+        const length = hashInt(cover, x, z, 4, 2, 4);
+        const alongX = hash2(cover, x, z, 5) < 0.5;
+        let placed = 0;
+        for (let k = 0; k < length; k++) {
+          const lx = alongX ? x + k : x;
+          const lz = alongX ? z : z + k;
+          const li = lx - region.x0;
+          const lj = lz - region.z0;
+          if (li < 0 || lj < 0 || li >= region.width || lj >= region.depth) break;
+          const lidx = lj * region.width + li;
+          if (occupied[lidx] === 1 || fluidKind[lidx] !== FluidKind.NONE) break;
+          if (input.clip?.inApron(lx, lz) === true) break;
+          if ((ground[lidx] as number) !== (ground[idx] as number)) break;
+          decorated[lidx] = 1;
+          occupied[lidx] = 1;
+          blocks.push({ x: lx, y, z: lz, stateId: alongX ? states.logX : states.logZ });
+          placed++;
+        }
+        if (placed > 0) {
+          counts["deadwood"] = (counts["deadwood"] ?? 0) + placed;
+          continue;
+        }
+      }
+
+      // --- shade cover ------------------------------------------------------
+      if (shade >= DENSE_SHADE) {
+        const r = hash2(cover, x, z, 6);
+        // §5.6: the fungal floor draws mushrooms at **4×** the default shade
+        // rate — the 0.16..0.19 band becomes 0.16..0.28 — and keeps the moss
+        // carpet it already had. Same draw, same salt, wider band.
+        if (fungal && r >= 0.16 && r < 0.28) {
+          blocks.push({
+            x,
+            y,
+            z,
+            stateId: hash2(cover, x, z, 7) < 0.5 ? states.brownMushroom : states.redMushroom,
+          });
+          counts["shade"] = (counts["shade"] ?? 0) + 1;
+          continue;
+        }
+        if (r < 0.16) {
+          blocks.push({ x, y, z, stateId: states.mossCarpet });
+          counts["shade"] = (counts["shade"] ?? 0) + 1;
+          continue;
+        }
+        if (r < 0.19) {
+          blocks.push({
+            x,
+            y,
+            z,
+            stateId: hash2(cover, x, z, 7) < 0.5 ? states.brownMushroom : states.redMushroom,
+          });
+          counts["shade"] = (counts["shade"] ?? 0) + 1;
+          continue;
+        }
+      }
+
+      // --- berries (taiga only) ---------------------------------------------
+      if (cold && shade > 0 && hash2(cover, x, z, 8) < 0.03) {
+        blocks.push({ x, y, z, stateId: states.berryBush });
+        counts["shade"] = (counts["shade"] ?? 0) + 1;
+        continue;
+      }
+
+      // --- dead bush on stony ground ----------------------------------------
+      if (
+        surface[idx] === palette.state("ground.gravel") &&
+        hash2(cover, x, z, 9) < deadwood * 3
+      ) {
+        blocks.push({ x, y, z, stateId: states.deadBush });
+        counts["deadwood"] = (counts["deadwood"] ?? 0) + 1;
+        continue;
+      }
+
+      // --- flower patches ----------------------------------------------------
+      // A low-frequency noise picks the meadows; inside one, flowers are common.
+      const patch = fbm2(seeds.patch, x, z, {
+        octaves: 2,
+        frequency: 0.012,
+        lacunarity: 2,
+        gain: 0.5,
+      });
+      // §5.6, the glow floor: lichen on the surface column at the flower rate
+      // and a firefly bush at a fifth of it — the two blocks that make a hollow
+      // walkable and legible at night — with the default grass draw underneath
+      // them. Not gated on the flower *patch*: a light source that only occurs
+      // in meadows is a light source a player never meets under a canopy.
+      if (glow) {
+        const g0 = hash2(cover, x, z, 10);
+        if (g0 < Math.min(1, flowers * 6)) {
+          blocks.push({ x, y, z, stateId: states.glowLichen });
+          counts["flowers"] = (counts["flowers"] ?? 0) + 1;
+          continue;
+        }
+        if (g0 < Math.min(1, flowers * 7.2)) {
+          blocks.push({ x, y, z, stateId: states.fireflyBush });
+          counts["flowers"] = (counts["flowers"] ?? 0) + 1;
+          continue;
+        }
+      }
+      // The fungal floor has no flowers at all: a mycelium hollow with poppies
+      // in it is two biomes arguing.
+      if (patch > 0.28 && shade < DENSE_SHADE && !fungal && !glow) {
+        if (hash2(cover, x, z, 10) < Math.min(1, flowers * 6)) {
+          // Species is picked per *meadow*, not per column: a real flower field
+          // is mostly one kind with a second mixed through it, and rolling five
+          // species per block turns a meadow into confetti.
+          const cellX = x >> 4;
+          const cellZ = z >> 4;
+          const primary = hash2(cover, x, z, 14) < 0.25 ? 15 : 11;
+          blocks.push({ x, y, z, stateId: hashPick(cover, cellX, cellZ, primary, states.flowers) });
+          counts["flowers"] = (counts["flowers"] ?? 0) + 1;
+          continue;
+        }
+      }
+
+      // --- grass, ferns and tall grass ---------------------------------------
+      const g = hash2(cover, x, z, 12);
+      if (g < grass) {
+        const kind = hash2(cover, x, z, 13);
+        if (cold && kind < 0.35) {
+          blocks.push({ x, y, z, stateId: states.fern });
+        } else if (kind > 0.85 && y + 1 <= 318) {
+          blocks.push({ x, y, z, stateId: states.tallGrassLower });
+          blocks.push({ x, y: y + 1, z, stateId: states.tallGrassUpper });
+        } else {
+          blocks.push({ x, y, z, stateId: states.shortGrass });
+        }
+        counts["grass"] = (counts["grass"] ?? 0) + 1;
+      }
+    }
+  }
+}
+
+/**
+ * Canopy columns overhead, per column — the shade map.
+ *
+ * Re-exported from `vegetation.ts`, which owns it now: the understory stratum
+ * (§5.4) and the undergrowth pass must read one answer, not two.
+ */
+{ canopyCover };
+
+/** 1 on every column a trunk stands in. */
+function trunkMask(plan: ColumnPlan, trees: readonly TreePlacement[]): Uint8Array {
+  const { region } = plan;
+  const mask = new Uint8Array(region.width * region.depth);
+  // A cave mouth has eaten the surface block of the columns it opens, so there
+  // is nothing under them for a moss carpet or a flower to stand on. Folding
+  // that into the same mask the trunks use keeps every surface-decor loop
+  // honest without each one having to remember the cave pass exists.
+  const entrances = plan.caves?.entranceColumns;
+  if (entrances !== undefined) {
+    for (let idx = 0; idx < mask.length; idx++) if (entrances[idx] === 1) mask[idx] = 1;
+  }
+  for (const tree of trees) {
+    const span = tree.mega ? 2 : 1;
+    for (let dz = 0; dz < span; dz++) {
+      for (let dx = 0; dx < span; dx++) {
+        const i = tree.x + dx - region.x0;
+        const j = tree.z + dz - region.z0;
+        if (i < 0 || j < 0 || i >= region.width || j >= region.depth) continue;
+        mask[j * region.width + i] = 1;
+      }
+    }
+  }
+  return mask;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Water                                                                       */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Seagrass, kelp and lily pads.
+ *
+ * Depth is measured from the *fluid surface* of the column, so a lake pool gets
+ * the same treatment as the sea. Kelp is capped two blocks below the surface so
+ * a fully grown strand never breaks the waterline.
+ */
+function decorateWater(
+  input: DecorateInput,
+  states: DecorStates,
+  blocks: DecorBlock[],
+  counts: Record<string, number>,
+  seed: number,
+): void {
+  const { plan } = input;
+  const { region, ground, fluidTop, fluidKind, lakeMask } = plan;
+
+  for (let j = 0; j < region.depth; j++) {
+    const z = region.z0 + j;
+    for (let i = 0; i < region.width; i++) {
+      const idx = j * region.width + i;
+      if (fluidKind[idx] !== FluidKind.WATER) continue;
+      const x = region.x0 + i;
+      const floor = ground[idx] as number;
+      const top = fluidTop[idx] as number;
+      const depth = top - floor;
+      if (depth < 2) continue;
+
+      if (lakeMask[idx] === 1) {
+        // Lily pads: only on a lake, only near its shore.
+        if (nearShore(plan, i, j, 3) && hash2(seed, x, z, 1) < 0.07) {
+          blocks.push({ x, y: top + 1, z, stateId: states.lilyPad });
+          counts["water"] = (counts["water"] ?? 0) + 1;
+        }
+        continue;
+      }
+
+      if (depth <= SEAGRASS_MAX_DEPTH) {
+        const r = hash2(seed, x, z, 2);
+        if (r < 0.3) {
+          if (r < 0.06 && depth >= 3) {
+            blocks.push({ x, y: floor + 1, z, stateId: states.tallSeagrassLower });
+            blocks.push({ x, y: floor + 2, z, stateId: states.tallSeagrassUpper });
+            counts["water"] = (counts["water"] ?? 0) + 2;
+          } else {
+            blocks.push({ x, y: floor + 1, z, stateId: states.seagrass });
+            counts["water"] = (counts["water"] ?? 0) + 1;
+          }
+        }
+        continue;
+      }
+
+      if (depth <= KELP_MAX_DEPTH && depth > KELP_MIN_DEPTH) {
+        if (hash2(seed, x, z, 3) >= 0.08) continue;
+        const maxHeight = Math.max(0, top - 2 - floor);
+        if (maxHeight < 3) continue;
+        const height = hashInt(seed, x, z, 4, 3, maxHeight);
+        for (let k = 0; k < height; k++) {
+          blocks.push({
+            x,
+            y: floor + 1 + k,
+            z,
+            stateId: k === height - 1 ? states.kelpTip : states.kelpPlant,
+          });
+        }
+        counts["water"] = (counts["water"] ?? 0) + height;
+      }
+    }
+  }
+}
+
+/** True when a water column has a non-water column within `reach`. */
+function nearShore(plan: ColumnPlan, i: number, j: number, reach: number): boolean {
+  const { region, fluidKind } = plan;
+  for (let dj = -reach; dj <= reach; dj++) {
+    const jj = j + dj;
+    if (jj < 0 || jj >= region.depth) continue;
+    for (let di = -reach; di <= reach; di++) {
+      const ii = i + di;
+      if (ii < 0 || ii >= region.width) continue;
+      if (fluidKind[jj * region.width + ii] === FluidKind.NONE) return true;
+    }
+  }
+  return false;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Shores                                                                      */
+/* -------------------------------------------------------------------------- */
+
+/** Occasional azalea bushes along a lake shore. */
+function decorateShore(
+  input: DecorateInput,
+  states: DecorStates,
+  occupied: Uint8Array,
+  blocks: DecorBlock[],
+  counts: Record<string, number>,
+  seed: number,
+): void {
+  const { plan, classification } = input;
+  const { region, ground, fluidKind } = plan;
+
+  for (let j = 0; j < region.depth; j++) {
+    const z = region.z0 + j;
+    for (let i = 0; i < region.width; i++) {
+      const idx = j * region.width + i;
+      if (classification.classes[idx] !== SurfaceClass.LAKESHORE) continue;
+      if (fluidKind[idx] !== FluidKind.NONE || occupied[idx] === 1) continue;
+      const x = region.x0 + i;
+      if (hash2(seed, x, z, 1) >= 0.02) continue;
+      blocks.push({ x, y: (ground[idx] as number) + 1, z, stateId: states.azalea });
+      counts["shore"] = (counts["shore"] ?? 0) + 1;
+    }
+  }
+}

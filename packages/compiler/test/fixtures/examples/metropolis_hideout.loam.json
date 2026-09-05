@@ -1,0 +1,736 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "metropolis_hideout",
+    "worldSeed": "304",
+    "prompt": "A high-tech apocalyptic hideout in the massively overgrown ruins of a metropolis.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "intent": {
+    "era": "far_future",
+    "wealth": 0.5,
+    "decline": 0.85,
+    "formality": 0.6,
+    "climate": {
+      "temperature": 0.3,
+      "humidity": 0.7,
+      "snow": "never"
+    },
+    "character": {
+      "label": "overgrown ruined metropolis hideout",
+      "materialTheme": "modern_city",
+      "formPacks": [
+        "alien_scifi"
+      ],
+      "flora": {
+        "prefer": [
+          "oak_spreading",
+          "jungle_broadleaf",
+          "kapok_emergent"
+        ]
+      },
+      "motifs": {
+        "massing": "towered",
+        "windowRhythm": "banded"
+      }
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:mossy_cobblestone",
+      "road.shoulder": "minecraft:coarse_dirt",
+      "ground.surface": {
+        "mix": [
+          [
+            "minecraft:grass_block",
+            4
+          ],
+          [
+            "minecraft:moss_block",
+            3
+          ],
+          [
+            "minecraft:coarse_dirt",
+            2
+          ],
+          [
+            "minecraft:mud",
+            1
+          ]
+        ]
+      },
+      "ground.cliff": "minecraft:deepslate"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Sector 7 overgrown metropolis ruins and survivor redoubt",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "broken urban shelf and collapsed transit gorges",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 68,
+          "amplitude": 24,
+          "frequency": 0.0032,
+          "beachWidth": 2,
+          "snowLineFraction": 0.99
+        },
+        "children": [
+          {
+            "id": "metropolis_bench",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "level ground holding the central skyscraper district",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 170,
+              "height": 6,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "collapsed_highway_trench",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "a sunken cracked highway ravine cutting through the city",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.16,
+                  0.36
+                ],
+                [
+                  0.48,
+                  0.52
+                ],
+                [
+                  0.84,
+                  0.64
+                ]
+              ],
+              "width": 26,
+              "depth": 8,
+              "flooded": "never",
+              "profile": "sharp"
+            }
+          },
+          {
+            "id": "subway_collapse_basin",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "a sunken structural collapse crater in the south",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.32,
+                0.72
+              ],
+              "radius": 44,
+              "depth": 10,
+              "water": false,
+              "flooded": "never",
+              "profile": "sharp"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate"
+        }
+      },
+      {
+        "id": "overgrowth_canopy",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "dense jungle and spreading oak canopy reclaiming concrete structures",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.22,
+          "elevation": [
+            2,
+            120
+          ],
+          "undergrowth": {
+            "grass": 0.55,
+            "flowers": 0.08,
+            "deadwood": 0.16
+          },
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "ancient_kapok",
+                  "shape": "kapok_emergent"
+                },
+                {
+                  "id": "great_beech",
+                  "shape": "beech_giant"
+                }
+              ]
+            },
+            "understory": {
+              "species": [
+                {
+                  "id": "wild_tree_fern",
+                  "shape": "tree_fern"
+                },
+                {
+                  "id": "hazel_brush",
+                  "shape": "hazel_shrub"
+                }
+              ]
+            },
+            "floor": "default"
+          },
+          "species": [
+            {
+              "id": "strangler_oak",
+              "weight": 3,
+              "shape": "oak_spreading"
+            },
+            {
+              "id": "reclaim_jungle",
+              "weight": 2,
+              "shape": "jungle_broadleaf"
+            },
+            {
+              "id": "overgrowth_birch",
+              "weight": 1,
+              "shape": "birch_slim"
+            }
+          ]
+        }
+      },
+      {
+        "id": "wild_periphery",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "scrub and tall pines encroaching from the perimeter",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.06,
+          "elevation": [
+            1,
+            140
+          ],
+          "undergrowth": {
+            "grass": 0.4,
+            "flowers": 0.04,
+            "deadwood": 0.12
+          },
+          "species": [
+            {
+              "id": "conifer_wall",
+              "weight": 2,
+              "shape": "spruce_tall"
+            },
+            {
+              "id": "field_oak",
+              "weight": 1,
+              "shape": "oak_round"
+            }
+          ]
+        }
+      },
+      {
+        "id": "ruined_metropolis",
+        "kind": "district",
+        "label": "the decayed, overgrown skyscraper grid of Sector 7",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            280,
+            280
+          ]
+        },
+        "intent": {
+          "decline": 0.88,
+          "wealth": 0.35,
+          "character": {
+            "label": "decayed corporate towers",
+            "materialTheme": "modern_city"
+          }
+        },
+        "params": {
+          "fabric": "grid",
+          "density": "high",
+          "mix": [
+            "skyscraper",
+            "office",
+            "apartment_block",
+            "brutalist_block",
+            "data_center",
+            "parking_garage",
+            "department_store",
+            "subway_station"
+          ],
+          "plaza": true,
+          "ground": "stepped"
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median"
+          }
+        ],
+        "tags": [
+          "ruins",
+          "metropolis",
+          "urban"
+        ],
+        "children": [
+          {
+            "id": "shattered_tower",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "a sixteen-storey shattered corporate tower choked in vines",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                20,
+                68,
+                20
+              ]
+            },
+            "params": {
+              "floors": 16,
+              "roof": "flat",
+              "decay": 0.85
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south"
+              }
+            },
+            "tags": [
+              "skyscraper",
+              "landmark"
+            ]
+          },
+          {
+            "id": "collapsed_concourse",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "a hollowed-out concrete atrium concourse",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                15,
+                14,
+                19
+              ]
+            },
+            "params": {
+              "floors": 2,
+              "decay": 0.8
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "north"
+              }
+            },
+            "tags": [
+              "shopping_mall",
+              "landmark"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "hideout_bunker",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the primary reinforced survival command redoubt with heavy blast door",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "flat",
+          "entrance": {
+            "treatment": "blast_door"
+          },
+          "basement": {
+            "depth": 5,
+            "style": "bunker_hold"
+          }
+        },
+        "constraints": [
+          {
+            "distance": "ruined_metropolis",
+            "min": 14,
+            "max": 75
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south"
+          }
+        },
+        "tags": [
+          "bunker_complex",
+          "hideout"
+        ]
+      },
+      {
+        "id": "hideout_lab",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the bio-analysis and tech research laboratory with sealed airlock",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            17
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "flat",
+          "entrance": {
+            "treatment": "airlock_vestibule"
+          },
+          "basement": {
+            "depth": 4,
+            "style": "vault"
+          }
+        },
+        "constraints": [
+          {
+            "distance": "hideout_bunker",
+            "min": 14,
+            "max": 48
+          },
+          {
+            "connected": "hideout_bunker",
+            "via": "tunnel",
+            "style": "dressed"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east"
+          }
+        },
+        "tags": [
+          "laboratory",
+          "hideout"
+        ]
+      },
+      {
+        "id": "comm_control_tower",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the communications relay and sensor control spire",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            20,
+            11
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "distance": "hideout_bunker",
+            "min": 14,
+            "max": 45
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north"
+          }
+        },
+        "tags": [
+          "control_tower",
+          "hideout"
+        ]
+      },
+      {
+        "id": "power_substation",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the high-capacity electrical transformer and battery substation",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            12,
+            15
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "distance": "hideout_bunker",
+            "min": 16,
+            "max": 50
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west"
+          }
+        },
+        "tags": [
+          "substation",
+          "hideout"
+        ]
+      },
+      {
+        "id": "data_vault",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the salvaged corporate server mainframe vault",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            12,
+            17
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "distance": "hideout_lab",
+            "min": 14,
+            "max": 42
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south"
+          }
+        },
+        "tags": [
+          "data_center",
+          "hideout"
+        ]
+      },
+      {
+        "id": "reactor_core",
+        "kind": "generator",
+        "generator": "authored:fusion_reactor_core",
+        "label": "the jury-rigged high-tech fusion reactor powering the hideout",
+        "constraints": [
+          {
+            "distance": "hideout_bunker",
+            "min": 20,
+            "max": 60
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median"
+          }
+        ],
+        "params": {
+          "seat": "pad"
+        },
+        "tags": [
+          "landmark",
+          "hideout"
+        ]
+      },
+      {
+        "id": "perimeter_turrets",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "automated heavy sentry turrets defending the redoubt approach",
+        "params": {
+          "program": "defense_turret_pod",
+          "count": 6,
+          "area": {
+            "zone": "center"
+          },
+          "spacing": 20,
+          "avoidTags": [
+            "road"
+          ]
+        }
+      },
+      {
+        "id": "high_street_barricade",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "fortified barricade across the arterial avenue leading to the hideout",
+        "params": {
+          "entry": "barricade_line",
+          "route": {
+            "across": "ruined_metropolis"
+          }
+        }
+      },
+      {
+        "id": "redoubt_security_fence",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "perimeter security cordon enclosing the active redoubt complex",
+        "params": {
+          "entry": "quarantine_fence",
+          "route": {
+            "ring": "hideout_bunker",
+            "margin": 22
+          }
+        }
+      },
+      {
+        "id": "solar_power_array",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "scavenged solar collector field powering auxiliary batteries",
+        "params": {
+          "prop": "solar_array",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "wind_mast",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "emergency auxiliary wind turbine erected on the rubble",
+        "params": {
+          "prop": "wind_turbine",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "emergency_helipad",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "reinforced evacuation landing pad",
+        "params": {
+          "prop": "helipad",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "scavenger_cairn",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "rubble marker designating the edge of the survivor safe zone",
+        "params": {
+          "prop": "cairn",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "patrol_network",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "defended patrol paths connecting the redoubt doors to the ruined metropolis",
+        "params": {
+          "anchors": [
+            "ruined_metropolis",
+            "hideout_bunker",
+            "hideout_lab",
+            "comm_control_tower",
+            "#tag:hideout"
+          ],
+          "pattern": "organic",
+          "width": 2,
+          "lanterns": true
+        }
+      }
+    ]
+  },
+  "programs": {
+    "fusion_reactor_core": {
+      "mode": "landmark",
+      "envelope": [
+        21,
+        26,
+        21
+      ],
+      "sourceHash": "b3:26a57b68821a70bfe48a8fc27c761455ccea895f87242d10dd23963ea0da1ab6",
+      "outputHash": "b3:efabc4a43802f7026ac587096db1fa727382f65ce4ad9d4531d405f0755feef1",
+      "source": "export const envelope = [21, 26, 21];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const cx = Math.floor(W / 2);\n  const cz = Math.floor(D / 2);\n\n  // Safe theme extraction with fallbacks\n  const stonePri = api.theme.stone.primary || \"minecraft:polished_deepslate\";\n  const stoneAcc = api.theme.stone.accent || \"minecraft:deepslate_tiles\";\n  const stoneSlab = api.theme.stone.slab || \"minecraft:polished_deepslate_slab\";\n  const stoneWall = api.theme.stone.wall || \"minecraft:cobblestone_wall\";\n  const groundPlinth = api.theme.ground.plinth || \"minecraft:smooth_stone\";\n  const groundPave = api.theme.ground.pavement || \"minecraft:stone\";\n\n  // Sci-fi & Apocalyptic palette\n  const BLK_CORE = \"minecraft:sea_lantern\";\n  const BLK_PLASMA = \"minecraft:cyan_stained_glass\";\n  const BLK_TINTED = \"minecraft:tinted_glass\";\n  const BLK_CASING = \"minecraft:iron_block\";\n  const BLK_COIL = \"minecraft:cut_copper\";\n  const BLK_COIL_OX = \"minecraft:oxidized_cut_copper\";\n  const BLK_DARK = \"minecraft:polished_deepslate\";\n  const BLK_TILES = \"minecraft:deepslate_tiles\";\n  const BLK_CRYING = \"minecraft:crying_obsidian\";\n  const BLK_BARS = \"minecraft:iron_bars\";\n  const BLK_CHAIN = \"minecraft:chain[axis=y]\";\n  const BLK_ROD = \"minecraft:lightning_rod[facing=up]\";\n  const BLK_MOSS = \"minecraft:moss_block\";\n\n  function setBlock(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      api.set(x, y, z, block);\n    }\n  }\n\n  // -------------------------------------------------------------\n  // 1. BASE FOUNDATION & GROUND ADAPTATION (y = 0..3)\n  // -------------------------------------------------------------\n  for (let z = 0; z < D; z++) {\n    for (let x = 0; x < W; x++) {\n      const dx = Math.abs(x - cx);\n      const dz = Math.abs(z - cz);\n\n      // Octagonal blast footprint\n      if (dx <= 9 && dz <= 9 && dx + dz <= 13) {\n        const h = api.heightAt(x, z);\n        const groundLimit = Math.min(0, Math.floor(h));\n\n        // Ground skirt downward\n        for (let y = groundLimit; y < 0; y++) {\n          setBlock(x, y, z, groundPlinth);\n        }\n\n        // Base slab (y = 0)\n        const randVal = api.random();\n        let baseBlock = groundPave;\n        if (randVal < 0.2) baseBlock = stonePri;\n        else if (randVal < 0.3) baseBlock = BLK_MOSS;\n        setBlock(x, 0, z, baseBlock);\n\n        // Heavy blast perimeter rim (y = 1)\n        const isRim = dx === 9 || dz === 9 || dx + dz === 13;\n        if (isRim) {\n          setBlock(x, 1, z, stoneAcc);\n          if (api.random() < 0.6) {\n            setBlock(x, 2, z, stoneWall);\n          }\n        } else {\n          // Inner floor\n          const r = Math.hypot(dx, dz);\n          if (r > 5.5) {\n            setBlock(x, 1, z, stonePri);\n          } else {\n            // Reactor trench pit floor\n            setBlock(x, 1, z, BLK_DARK);\n          }\n        }\n      }\n    }\n  }\n\n  // -------------------------------------------------------------\n  // 2. CRYOGENIC / ENERGY COOLANT TRENCHES (y = 1..2)\n  // -------------------------------------------------------------\n  for (let d = 1; d <= 6; d++) {\n    // Cross trenches from core\n    const coords = [\n      [cx + d, cz],\n      [cx - d, cz],\n      [cx, cz + d],\n      [cx, cz - d]\n    ];\n    for (const [tx, tz] of coords) {\n      setBlock(tx, 0, tz, BLK_CORE);\n      setBlock(tx, 1, tz, BLK_PLASMA);\n      setBlock(tx, 2, tz, BLK_BARS);\n    }\n  }\n\n  // -------------------------------------------------------------\n  // 3. FRONT OBSERVATION / CONTROL ALCOVE (North side: z = 1..5)\n  // -------------------------------------------------------------\n  for (let z = 1; z <= 5; z++) {\n    for (let x = cx - 3; x <= cx + 3; x++) {\n      // Floor\n      setBlock(x, 1, z, BLK_DARK);\n\n      // Walls of the vestibule\n      const isWestWall = x === cx - 3;\n      const isEastWall = x === cx + 3;\n      const isNorthDoorway = z === 1 && (x === cx - 1 || x === cx + 1);\n\n      if (isWestWall || isEastWall || isNorthDoorway) {\n        for (let y = 2; y <= 4; y++) {\n          setBlock(x, y, z, stonePri);\n        }\n      }\n\n      // Glass observation window into core on South side of room\n      if (z === 5 && Math.abs(x - cx) <= 2) {\n        setBlock(x, 2, z, BLK_DARK);\n        setBlock(x, 3, z, BLK_TINTED);\n        setBlock(x, 4, z, BLK_DARK);\n      }\n\n      // Ceiling\n      setBlock(x, 5, z, stoneSlab);\n    }\n  }\n\n  // Control console plinths inside vestibule\n  setBlock(cx - 2, 2, 4, BLK_TILES);\n  setBlock(cx + 2, 2, 4, BLK_TILES);\n  setBlock(cx - 2, 3, 4, BLK_BARS);\n  setBlock(cx + 2, 3, 4, BLK_BARS);\n\n  // -------------------------------------------------------------\n  // 4. CENTRAL PLASMA PILLAR & CONSTRICTION CHAMBER (y = 2..24)\n  // -------------------------------------------------------------\n  for (let y = 2; y <= 24; y++) {\n    // Center glow emitter\n    if (y % 2 === 0) {\n      setBlock(cx, y, cz, BLK_CORE);\n    } else if (y === 5 || y === 11 || y === 17 || y === 23) {\n      setBlock(cx, y, cz, BLK_CRYING);\n    } else {\n      setBlock(cx, y, cz, BLK_PLASMA);\n    }\n\n    // Inner containment envelope (radius 1)\n    const ring1 = [\n      [cx + 1, cz],\n      [cx - 1, cz],\n      [cx, cz + 1],\n      [cx, cz - 1]\n    ];\n    for (const [rx, rz] of ring1) {\n      if (y === 5 || y === 10 || y === 15 || y === 20) {\n        setBlock(rx, y, rz, BLK_CASING);\n      } else {\n        setBlock(rx, y, rz, BLK_PLASMA);\n      }\n    }\n\n    // Outer plasma glass envelope corners (dx=1, dz=1)\n    const corners = [\n      [cx + 1, cz + 1],\n      [cx - 1, cz + 1],\n      [cx + 1, cz - 1],\n      [cx - 1, cz - 1]\n    ];\n    for (const [rx, rz] of corners) {\n      if (y === 5 || y === 10 || y === 15 || y === 20) {\n        setBlock(rx, y, rz, BLK_BARS);\n      } else if (y >= 6 && y <= 16) {\n        setBlock(rx, y, rz, BLK_TINTED);\n      }\n    }\n  }\n\n  // -------------------------------------------------------------\n  // 5. TOROIDAL MAGNETIC CONTAINMENT CHAMBER (y = 7..15)\n  // -------------------------------------------------------------\n  const torusCenterY = 11;\n  const majorRadius = 4.4;\n  const tubeRadius = 1.6;\n\n  for (let y = 7; y <= 15; y++) {\n    for (let z = cz - 7; z <= cz + 7; z++) {\n      for (let x = cx - 7; x <= cx + 7; x++) {\n        const distXZ = Math.hypot(x - cx, z - cz);\n        const distTorus = Math.hypot(distXZ - majorRadius, y - torusCenterY);\n\n        if (distTorus <= tubeRadius) {\n          const angle = Math.atan2(z - cz, x - cx);\n          // 4 Magnetic compression coils at 45 degree intervals\n          const isCoil = Math.abs(Math.sin(angle * 2)) > 0.82;\n\n          if (distTorus <= 0.7) {\n            // Plasma core inside torus\n            setBlock(x, y, z, isCoil ? BLK_CORE : BLK_PLASMA);\n          } else {\n            // Torus outer hull\n            if (isCoil) {\n              const coilMat = api.random() < 0.5 ? BLK_COIL : BLK_COIL_OX;\n              setBlock(x, y, z, coilMat);\n            } else {\n              setBlock(x, y, z, BLK_TINTED);\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // -------------------------------------------------------------\n  // 6. 4 MASSIVE BLAST SHIELD STABILIZER PYLONS (NW, NE, SW, SE)\n  // -------------------------------------------------------------\n  const diagonals = [\n    [-1, -1],\n    [1, -1],\n    [-1, 1],\n    [1, 1]\n  ];\n\n  for (const [sx, sz] of diagonals) {\n    for (let y = 1; y <= 24; y++) {\n      const progress = y / 24;\n      // Inward curve from r = 7.0 at base to r = 4.2 at top\n      const rad = 7.0 - 2.8 * Math.pow(progress, 0.75);\n      const px = Math.round(cx + sx * rad * 0.7071);\n      const pz = Math.round(cz + sz * rad * 0.7071);\n\n      // Pylon 2x2 column\n      for (let ox = 0; ox <= 1; ox++) {\n        for (let oz = 0; oz <= 1; oz++) {\n          const bx = px + (sx > 0 ? -ox : ox);\n          const bz = pz + (sz > 0 ? -oz : oz);\n\n          let pylonBlock = stonePri;\n          if (y % 6 === 0) pylonBlock = stoneAcc;\n          else if (y % 4 === 0) pylonBlock = BLK_DARK;\n          else if (api.random() < 0.15) pylonBlock = BLK_MOSS;\n\n          setBlock(bx, y, bz, pylonBlock);\n        }\n      }\n\n      // Reinforcement cages on outer pylon faces\n      const outerX = px + sx;\n      const outerZ = pz + sz;\n      if (y >= 4 && y <= 20 && y % 3 === 0) {\n        setBlock(outerX, y, outerZ, BLK_BARS);\n      }\n    }\n\n    // Pylon Tops (y = 25)\n    const topRad = 4.2;\n    const topX = Math.round(cx + sx * topRad * 0.7071);\n    const topZ = Math.round(cz + sz * topRad * 0.7071);\n    setBlock(topX, 24, topZ, BLK_TILES);\n    setBlock(topX, 25, topZ, BLK_ROD);\n\n    // Horizontal Magnetic Strut Braces connecting Pylons to Torus/Core\n    const braceLevels = [8, 14, 21];\n    for (const by of braceLevels) {\n      const bRad = 7.0 - 2.8 * Math.pow(by / 24, 0.75);\n      const startX = Math.round(cx + sx * bRad * 0.7071);\n      const startZ = Math.round(cz + sz * bRad * 0.7071);\n\n      // Ray from pylon inward to core\n      const steps = 4;\n      for (let s = 1; s <= steps; s++) {\n        const t = s / steps;\n        const ix = Math.round(startX + t * (cx - startX));\n        const iz = Math.round(startZ + t * (cz - startZ));\n        if (Math.hypot(ix - cx, iz - cz) > 1.8) {\n          setBlock(ix, by, iz, BLK_DARK);\n          if (by === 14) {\n            setBlock(ix, by + 1, iz, BLK_BARS);\n          }\n        }\n      }\n    }\n  }\n\n  // -------------------------------------------------------------\n  // 7. HIGH-VOLTAGE ENERGY CONDUITS & SUSPENSION CABLES (y = 17..20)\n  // -------------------------------------------------------------\n  const cardinals = [\n    [1, 0],\n    [-1, 0],\n    [0, 1],\n    [0, -1]\n  ];\n\n  for (const [dx, dz] of cardinals) {\n    for (let dist = 2; dist <= 9; dist++) {\n      const x = cx + dx * dist;\n      const z = cz + dz * dist;\n\n      // Suspended conduit at y = 18\n      setBlock(x, 18, z, BLK_TILES);\n      setBlock(x, 17, z, BLK_BARS);\n\n      // Hanging chains at outer ends\n      if (dist === 8) {\n        setBlock(x, 16, z, BLK_CHAIN);\n        setBlock(x, 15, z, BLK_CHAIN);\n        setBlock(x, 14, z, BLK_CORE);\n      }\n    }\n  }\n\n  // -------------------------------------------------------------\n  // 8. UPPER EMITTER CROWN & FOCAL ARRAY (y = 22..25)\n  // -------------------------------------------------------------\n  // Choke Ring at y = 22\n  for (let z = cz - 3; z <= cz + 3; z++) {\n    for (let x = cx - 3; x <= cx + 3; x++) {\n      const r = Math.hypot(x - cx, z - cz);\n      if (r >= 2.0 && r <= 3.2) {\n        setBlock(x, 22, z, BLK_CASING);\n      }\n    }\n  }\n\n  // Nozzle Taper at y = 23\n  for (let z = cz - 2; z <= cz + 2; z++) {\n    for (let x = cx - 2; x <= cx + 2; x++) {\n      const r = Math.hypot(x - cx, z - cz);\n      if (r >= 1.2 && r <= 2.2) {\n        setBlock(x, 23, z, stoneAcc);\n      }\n    }\n  }\n\n  // Aperture & Emitter Array at y = 24..25\n  setBlock(cx, 24, cz, BLK_CORE);\n  setBlock(cx + 1, 24, cz, BLK_ROD);\n  setBlock(cx - 1, 24, cz, BLK_ROD);\n  setBlock(cx, 24, cz + 1, BLK_ROD);\n  setBlock(cx, 24, cz - 1, BLK_ROD);\n\n  setBlock(cx, 25, cz, BLK_ROD);\n\n  // -------------------------------------------------------------\n  // 9. JURY-RIGGED OVERGROWTH & CABLE DETAILS\n  // -------------------------------------------------------------\n  for (let i = 0; i < 30; i++) {\n    const rx = Math.floor(api.random() * (W - 2)) + 1;\n    const rz = Math.floor(api.random() * (D - 2)) + 1;\n    const dx = Math.abs(rx - cx);\n    const dz = Math.abs(rz - cz);\n\n    if (dx <= 8 && dz <= 8 && dx + dz <= 12) {\n      if (api.random() < 0.4) {\n        setBlock(rx, 2, rz, BLK_BARS);\n      }\n    }\n  }\n\n  // Return structure metadata\n  return {\n    name: \"fusion_reactor_core\",\n    seatY: 0,\n    anchors: {\n      front: [cx, 1, 0],\n      maintenance: [cx, 1, 2],\n      core_center: [cx, 11, cz]\n    },\n    interiors: [\n      {\n        min: [cx - 2, 2, 2],\n        max: [cx + 2, 4, 4],\n        kind: \"laboratory\"\n      }\n    ]\n  };\n}"
+    },
+    "defense_turret_pod": {
+      "mode": "plugin",
+      "envelope": [
+        9,
+        12,
+        9
+      ],
+      "sourceHash": "b3:0342a84b1b5a8a09547503b340893aeb9f5bc1ece970a117729c8a1cb2088450",
+      "outputHash": "b3:50cbf87456d47a52a819aa99116480b53e7f59aee8184e2361a7ee3126b98ab7",
+      "source": "export const envelope = [9, 12, 9];\n\nexport default function build(api) {\n  const [W, H, D] = envelope;\n  const seatY = 2;\n  const cx = 4;\n  const cz = 4;\n\n  // Grid buffer to manage precise multi-layer geometry and connectivity\n  const grid = Array.from({ length: W }, () =>\n    Array.from({ length: H }, () => Array(D).fill(null))\n  );\n\n  function setBlock(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      grid[x][y][z] = block;\n    }\n  }\n\n  // --- Theme Palette Resolution ---\n  const stonePrimary = api.theme.stone?.primary || \"minecraft:deepslate_tiles\";\n  const stoneAccent = api.theme.stone?.accent || \"minecraft:polished_deepslate\";\n  const stoneWall = api.theme.stone?.wall || \"minecraft:polished_deepslate_wall\";\n  const groundPlinth = api.theme.ground?.plinth || \"minecraft:smooth_stone\";\n  const groundPavement = api.theme.ground?.pavement || \"minecraft:stone_bricks\";\n  const groundRevetment = api.theme.ground?.revetment || \"minecraft:cobblestone\";\n  const wallCore = api.theme.wall?.core || \"minecraft:reinforced_deepslate\";\n  const moss = \"minecraft:moss_block\";\n  const leaves = \"minecraft:oak_leaves[persistent=true]\";\n\n  // Sentry archetype variation (6 distinct heavy pod configurations)\n  const variant = api.instance.index % 6;\n\n  // -------------------------------------------------------------\n  // LAYER 0 (y = 2): Fortified Foundation Plinth & Tripod Outriggers\n  // -------------------------------------------------------------\n  // Main octagonal plinth plate (7x7)\n  for (let x = 1; x <= 7; x++) {\n    for (let z = 1; z <= 7; z++) {\n      const dx = Math.abs(x - cx);\n      const dz = Math.abs(z - cz);\n      if (dx + dz <= 5) {\n        const r = api.random();\n        const b = r < 0.28 ? moss : (r < 0.55 ? groundPavement : groundPlinth);\n        setBlock(x, seatY, z, b);\n      }\n    }\n  }\n\n  // Heavy perimeter footing pads and stabilizers\n  const baseOutriggers = [\n    [0, 3], [0, 4], [0, 5],\n    [8, 3], [8, 4], [8, 5],\n    [3, 0], [4, 0], [5, 0],\n    [3, 8], [4, 8], [5, 8],\n    [1, 1], [7, 1], [1, 7], [7, 7],\n    [0, 0], [8, 0], [0, 8], [8, 8]\n  ];\n  for (const [ox, oz] of baseOutriggers) {\n    const r = api.random();\n    setBlock(ox, seatY, oz, r < 0.3 ? groundRevetment : stoneAccent);\n  }\n\n  // -------------------------------------------------------------\n  // LAYER 1 (y = 3): Upper Plinth Collar, Cable Trunks & Hydraulics\n  // -------------------------------------------------------------\n  for (let x = 1; x <= 7; x++) {\n    for (let z = 1; z <= 7; z++) {\n      const dx = Math.abs(x - cx);\n      const dz = Math.abs(z - cz);\n      if (dx + dz <= 4 && dx <= 3 && dz <= 3) {\n        const r = api.random();\n        setBlock(x, seatY + 1, z, r < 0.2 ? moss : (r < 0.5 ? wallCore : stonePrimary));\n      }\n    }\n  }\n\n  // Corner hydraulic anchor knuckles\n  setBlock(1, seatY + 1, 1, stoneAccent);\n  setBlock(7, seatY + 1, 1, stoneAccent);\n  setBlock(1, seatY + 1, 7, stoneAccent);\n  setBlock(7, seatY + 1, 7, stoneAccent);\n  setBlock(0, seatY + 1, 4, stoneAccent);\n  setBlock(8, seatY + 1, 4, stoneAccent);\n  setBlock(4, seatY + 1, 0, stoneAccent);\n  setBlock(4, seatY + 1, 8, stoneAccent);\n\n  // Power feeder junction at rear\n  setBlock(4, seatY + 1, 6, \"minecraft:lodestone\");\n  setBlock(4, seatY + 1, 7, \"minecraft:redstone_block\");\n  setBlock(3, seatY + 1, 6, \"minecraft:iron_bars\");\n  setBlock(5, seatY + 1, 6, \"minecraft:iron_bars\");\n  setBlock(4, seatY + 1, 2, \"minecraft:hopper[facing=down]\");\n\n  // -------------------------------------------------------------\n  // LAYER 2 (y = 4): Sentry Pedestal Core & Angled Bracing Struts\n  // -------------------------------------------------------------\n  // Central solid machinery column\n  for (let x = 2; x <= 6; x++) {\n    for (let z = 2; z <= 6; z++) {\n      const dx = Math.abs(x - cx);\n      const dz = Math.abs(z - cz);\n      setBlock(x, seatY + 2, z, dx + dz <= 3 ? wallCore : stonePrimary);\n    }\n  }\n\n  // Heavy angled outrigger leg struts\n  setBlock(1, seatY + 2, 1, \"minecraft:polished_deepslate_stairs[facing=south,half=bottom]\");\n  setBlock(2, seatY + 2, 1, stoneAccent);\n  setBlock(1, seatY + 2, 2, stoneAccent);\n\n  setBlock(7, seatY + 2, 1, \"minecraft:polished_deepslate_stairs[facing=south,half=bottom]\");\n  setBlock(6, seatY + 2, 1, stoneAccent);\n  setBlock(7, seatY + 2, 2, stoneAccent);\n\n  setBlock(1, seatY + 2, 7, \"minecraft:polished_deepslate_stairs[facing=north,half=bottom]\");\n  setBlock(2, seatY + 2, 7, stoneAccent);\n  setBlock(1, seatY + 2, 6, stoneAccent);\n\n  setBlock(7, seatY + 2, 7, \"minecraft:polished_deepslate_stairs[facing=north,half=bottom]\");\n  setBlock(6, seatY + 2, 7, stoneAccent);\n  setBlock(7, seatY + 2, 6, stoneAccent);\n\n  // Auxiliary power unit / battery module\n  setBlock(3, seatY + 2, 7, \"minecraft:iron_block\");\n  setBlock(4, seatY + 2, 7, \"minecraft:crying_obsidian\");\n  setBlock(5, seatY + 2, 7, \"minecraft:iron_block\");\n  setBlock(0, seatY + 2, 4, \"minecraft:chain[axis=y]\");\n  setBlock(8, seatY + 2, 4, \"minecraft:chain[axis=y]\");\n\n  // -------------------------------------------------------------\n  // LAYER 3 (y = 5): Slewing Ring, Bearing Race & Traverse Skirt\n  // -------------------------------------------------------------\n  for (let x = 2; x <= 6; x++) {\n    for (let z = 2; z <= 6; z++) {\n      setBlock(x, seatY + 3, z, stonePrimary);\n    }\n  }\n  setBlock(cx, seatY + 3, cz, \"minecraft:heavy_core\");\n\n  // Armored protective bevel skirt around slewing traverse\n  for (let x = 1; x <= 7; x++) {\n    for (let z = 1; z <= 7; z++) {\n      if (x === 1 || x === 7 || z === 1 || z === 7) {\n        const dx = Math.abs(x - cx);\n        const dz = Math.abs(z - cz);\n        if (dx + dz <= 4) {\n          setBlock(x, seatY + 3, z, stoneAccent);\n        }\n      }\n    }\n  }\n  setBlock(1, seatY + 3, 4, \"minecraft:hopper[facing=down]\");\n  setBlock(7, seatY + 3, 4, \"minecraft:hopper[facing=down]\");\n  setBlock(4, seatY + 3, 1, \"minecraft:iron_block\");\n  setBlock(4, seatY + 3, 7, \"minecraft:iron_block\");\n\n  // -------------------------------------------------------------\n  // LAYER 4 (y = 6): Turret Chassis Tub, Glacis & Ammo Sponsons\n  // -------------------------------------------------------------\n  for (let x = 1; x <= 7; x++) {\n    for (let z = 1; z <= 7; z++) {\n      const dx = Math.abs(x - cx);\n      const dz = Math.abs(z - cz);\n      if (dx + dz <= 4 || (dx <= 2 && dz <= 2)) {\n        setBlock(x, seatY + 4, z, stonePrimary);\n      }\n    }\n  }\n\n  // Side-mounted ammo feed sponsons\n  for (let z = 3; z <= 5; z++) {\n    setBlock(0, seatY + 4, z, \"minecraft:iron_block\");\n    setBlock(1, seatY + 4, z, \"minecraft:iron_block\");\n    setBlock(7, seatY + 4, z, \"minecraft:iron_block\");\n    setBlock(8, seatY + 4, z, \"minecraft:iron_block\");\n  }\n\n  // Sloped forward glacis plate\n  for (let x = 2; x <= 6; x++) {\n    setBlock(x, seatY + 4, 1, \"minecraft:polished_deepslate_stairs[facing=north,half=bottom]\");\n  }\n  setBlock(4, seatY + 4, 0, stoneAccent);\n\n  // Rear heat sink vents\n  setBlock(3, seatY + 4, 7, \"minecraft:iron_bars\");\n  setBlock(4, seatY + 4, 7, \"minecraft:cauldron\");\n  setBlock(5, seatY + 4, 7, \"minecraft:iron_bars\");\n\n  // -------------------------------------------------------------\n  // LAYER 5 (y = 7): Turret Combat Pod, Targeter & Heavy Armament\n  // -------------------------------------------------------------\n  for (let x = 2; x <= 6; x++) {\n    for (let z = 2; z <= 6; z++) {\n      setBlock(x, seatY + 5, z, stoneAccent);\n    }\n  }\n  setBlock(1, seatY + 5, 2, stoneAccent);\n  setBlock(7, seatY + 5, 2, stoneAccent);\n  setBlock(1, seatY + 5, 6, stoneAccent);\n  setBlock(7, seatY + 5, 6, stoneAccent);\n\n  // Central tracking sensor aperture (North face)\n  setBlock(4, seatY + 5, 1, \"minecraft:observer[facing=north]\");\n\n  // Side high-capacity ammo drums\n  for (let z = 3; z <= 5; z++) {\n    setBlock(0, seatY + 5, z, \"minecraft:iron_block\");\n    setBlock(1, seatY + 5, z, wallCore);\n    setBlock(7, seatY + 5, z, wallCore);\n    setBlock(8, seatY + 5, z, \"minecraft:iron_block\");\n  }\n\n  // Rear engine / radiator unit\n  setBlock(3, seatY + 5, 7, \"minecraft:iron_bars\");\n  setBlock(4, seatY + 5, 7, \"minecraft:lodestone\");\n  setBlock(5, seatY + 5, 7, \"minecraft:iron_bars\");\n\n  // Archetype weapon armament\n  if (variant === 0) {\n    // Twin Heavy Kinetic Autocannons\n    setBlock(3, seatY + 5, 2, \"minecraft:dispenser[facing=north]\");\n    setBlock(3, seatY + 5, 1, \"minecraft:iron_block\");\n    setBlock(3, seatY + 5, 0, \"minecraft:anvil\");\n    setBlock(5, seatY + 5, 2, \"minecraft:dispenser[facing=north]\");\n    setBlock(5, seatY + 5, 1, \"minecraft:iron_block\");\n    setBlock(5, seatY + 5, 0, \"minecraft:anvil\");\n    setBlock(3, seatY + 4, 0, \"minecraft:iron_bars\");\n    setBlock(5, seatY + 4, 0, \"minecraft:iron_bars\");\n  } else if (variant === 1) {\n    // Heavy Plasma Projector / Particle Beam\n    setBlock(4, seatY + 5, 2, \"minecraft:crying_obsidian\");\n    setBlock(4, seatY + 5, 1, \"minecraft:sea_lantern\");\n    setBlock(4, seatY + 5, 0, \"minecraft:dispenser[facing=north]\");\n    setBlock(3, seatY + 5, 1, \"minecraft:iron_bars\");\n    setBlock(5, seatY + 5, 1, \"minecraft:iron_bars\");\n    setBlock(3, seatY + 5, 0, \"minecraft:lightning_rod[facing=north]\");\n    setBlock(5, seatY + 5, 0, \"minecraft:lightning_rod[facing=north]\");\n  } else if (variant === 2) {\n    // Quad Rotary Vulcan / Flak Pod (Lower tier)\n    setBlock(3, seatY + 5, 2, \"minecraft:dispenser[facing=north]\");\n    setBlock(3, seatY + 5, 1, \"minecraft:iron_block\");\n    setBlock(3, seatY + 5, 0, \"minecraft:hopper[facing=north]\");\n    setBlock(5, seatY + 5, 2, \"minecraft:dispenser[facing=north]\");\n    setBlock(5, seatY + 5, 1, \"minecraft:iron_block\");\n    setBlock(5, seatY + 5, 0, \"minecraft:hopper[facing=north]\");\n  } else if (variant === 3) {\n    // Heavy Railgun / Gauss Driver\n    setBlock(4, seatY + 5, 2, \"minecraft:heavy_core\");\n    setBlock(4, seatY + 5, 1, \"minecraft:iron_block\");\n    setBlock(4, seatY + 5, 0, \"minecraft:dispenser[facing=north]\");\n    setBlock(3, seatY + 5, 1, stoneWall);\n    setBlock(5, seatY + 5, 1, stoneWall);\n    setBlock(3, seatY + 5, 0, \"minecraft:iron_bars\");\n    setBlock(5, seatY + 5, 0, \"minecraft:iron_bars\");\n  } else if (variant === 4) {\n    // Hybrid Missile Pod (Left) & Autocannon (Right)\n    setBlock(2, seatY + 5, 1, \"minecraft:dispenser[facing=north]\");\n    setBlock(3, seatY + 5, 1, \"minecraft:dispenser[facing=north]\");\n    setBlock(2, seatY + 5, 0, \"minecraft:iron_bars\");\n    setBlock(3, seatY + 5, 0, \"minecraft:iron_bars\");\n    setBlock(5, seatY + 5, 2, \"minecraft:dispenser[facing=north]\");\n    setBlock(5, seatY + 5, 1, \"minecraft:iron_block\");\n    setBlock(5, seatY + 5, 0, \"minecraft:anvil\");\n  } else {\n    // Heavy Fortified Siege Mortar\n    setBlock(4, seatY + 5, 2, \"minecraft:heavy_core\");\n    setBlock(4, seatY + 5, 1, \"minecraft:iron_block\");\n    setBlock(4, seatY + 5, 0, \"minecraft:dispenser[facing=north]\");\n    setBlock(3, seatY + 5, 1, \"minecraft:iron_block\");\n    setBlock(5, seatY + 5, 1, \"minecraft:iron_block\");\n    setBlock(3, seatY + 5, 0, \"minecraft:polished_deepslate_stairs[facing=north,half=bottom]\");\n    setBlock(5, seatY + 5, 0, \"minecraft:polished_deepslate_stairs[facing=north,half=bottom]\");\n  }\n\n  // -------------------------------------------------------------\n  // LAYER 6 (y = 8): Armored Carapace & Sloped Carapace Plates\n  // -------------------------------------------------------------\n  for (let x = 2; x <= 6; x++) {\n    for (let z = 2; z <= 6; z++) {\n      setBlock(x, seatY + 6, z, stonePrimary);\n    }\n  }\n\n  // Perimeter sloped armor cowls\n  for (let x = 2; x <= 6; x++) {\n    setBlock(x, seatY + 6, 2, \"minecraft:polished_deepslate_stairs[facing=south,half=bottom]\");\n    setBlock(x, seatY + 6, 6, \"minecraft:polished_deepslate_stairs[facing=north,half=bottom]\");\n  }\n  for (let z = 3; z <= 5; z++) {\n    setBlock(1, seatY + 6, z, \"minecraft:polished_deepslate_stairs[facing=east,half=bottom]\");\n    setBlock(7, seatY + 6, z, \"minecraft:polished_deepslate_stairs[facing=west,half=bottom]\");\n    setBlock(0, seatY + 6, z, \"minecraft:iron_block\");\n    setBlock(8, seatY + 6, z, \"minecraft:iron_block\");\n  }\n\n  // Upper weapon deck details\n  if (variant === 1) {\n    setBlock(3, seatY + 6, 4, \"minecraft:crying_obsidian\");\n    setBlock(5, seatY + 6, 4, \"minecraft:crying_obsidian\");\n    setBlock(4, seatY + 6, 3, \"minecraft:sea_lantern\");\n  } else if (variant === 2) {\n    // Upper Flak barrels\n    setBlock(3, seatY + 6, 1, \"minecraft:dispenser[facing=north]\");\n    setBlock(3, seatY + 6, 0, \"minecraft:hopper[facing=north]\");\n    setBlock(5, seatY + 6, 1, \"minecraft:dispenser[facing=north]\");\n    setBlock(5, seatY + 6, 0, \"minecraft:hopper[facing=north]\");\n  } else if (variant === 3) {\n    // Upper Railgun accelerator rail\n    setBlock(4, seatY + 6, 1, \"minecraft:iron_block\");\n    setBlock(4, seatY + 6, 0, \"minecraft:iron_bars\");\n  } else if (variant === 4) {\n    // Upper 2 missile launcher cells\n    setBlock(2, seatY + 6, 1, \"minecraft:dispenser[facing=north]\");\n    setBlock(3, seatY + 6, 1, \"minecraft:dispenser[facing=north]\");\n    setBlock(2, seatY + 6, 0, \"minecraft:iron_bars\");\n    setBlock(3, seatY + 6, 0, \"minecraft:iron_bars\");\n  } else if (variant === 5) {\n    // Mortar elevation breech\n    setBlock(4, seatY + 6, 1, \"minecraft:iron_block\");\n    setBlock(4, seatY + 6, 0, \"minecraft:dispenser[facing=up]\");\n  }\n\n  // -------------------------------------------------------------\n  // LAYER 7 (y = 9): Sensor Platform Deck & Targeting Optics\n  // -------------------------------------------------------------\n  for (let x = 3; x <= 5; x++) {\n    for (let z = 3; z <= 5; z++) {\n      setBlock(x, seatY + 7, z, stoneAccent);\n    }\n  }\n\n  if (variant === 0 || variant === 3) {\n    setBlock(4, seatY + 7, 4, \"minecraft:heavy_core\");\n    setBlock(3, seatY + 7, 3, \"minecraft:observer[facing=north]\");\n    setBlock(5, seatY + 7, 3, \"minecraft:sea_lantern\");\n    setBlock(4, seatY + 7, 2, \"minecraft:polished_deepslate_stairs[facing=south,half=bottom]\");\n  } else if (variant === 1) {\n    setBlock(4, seatY + 7, 4, \"minecraft:sea_lantern\");\n    setBlock(4, seatY + 7, 3, \"minecraft:observer[facing=north]\");\n    setBlock(3, seatY + 7, 4, \"minecraft:crying_obsidian\");\n    setBlock(5, seatY + 7, 4, \"minecraft:crying_obsidian\");\n  } else if (variant === 2 || variant === 4) {\n    setBlock(4, seatY + 7, 4, \"minecraft:lodestone\");\n    setBlock(4, seatY + 7, 3, \"minecraft:target\");\n    setBlock(3, seatY + 7, 5, \"minecraft:iron_block\");\n    setBlock(5, seatY + 7, 5, \"minecraft:iron_block\");\n  } else {\n    setBlock(4, seatY + 7, 4, \"minecraft:iron_block\");\n    setBlock(4, seatY + 7, 3, \"minecraft:observer[facing=north]\");\n    setBlock(4, seatY + 7, 2, \"minecraft:iron_bars\");\n  }\n  setBlock(3, seatY + 7, 6, \"minecraft:hopper[facing=down]\");\n  setBlock(5, seatY + 7, 6, \"minecraft:hopper[facing=down]\");\n\n  // -------------------------------------------------------------\n  // LAYER 8 (y = 10): Radar Dish & Tracking Scanners\n  // -------------------------------------------------------------\n  if (variant === 0 || variant === 3) {\n    setBlock(4, seatY + 8, 4, \"minecraft:lodestone\");\n    setBlock(3, seatY + 8, 4, \"minecraft:daylight_detector[inverted=false]\");\n    setBlock(5, seatY + 8, 4, \"minecraft:daylight_detector[inverted=false]\");\n    setBlock(4, seatY + 8, 3, \"minecraft:daylight_detector[inverted=false]\");\n    setBlock(4, seatY + 8, 5, \"minecraft:daylight_detector[inverted=false]\");\n  } else if (variant === 1) {\n    setBlock(4, seatY + 8, 4, \"minecraft:iron_bars\");\n    setBlock(4, seatY + 8, 3, \"minecraft:lightning_rod[facing=up]\");\n    setBlock(3, seatY + 8, 4, \"minecraft:iron_bars\");\n    setBlock(5, seatY + 8, 4, \"minecraft:iron_bars\");\n  } else if (variant === 2 || variant === 4) {\n    setBlock(3, seatY + 8, 4, \"minecraft:daylight_detector[inverted=false]\");\n    setBlock(5, seatY + 8, 4, \"minecraft:daylight_detector[inverted=false]\");\n    setBlock(4, seatY + 8, 4, \"minecraft:iron_block\");\n    setBlock(4, seatY + 8, 3, \"minecraft:iron_bars\");\n  } else {\n    setBlock(4, seatY + 8, 4, \"minecraft:polished_deepslate_slab\");\n    setBlock(4, seatY + 8, 3, \"minecraft:iron_bars\");\n    setBlock(3, seatY + 8, 4, \"minecraft:iron_bars\");\n    setBlock(5, seatY + 8, 4, \"minecraft:iron_bars\");\n  }\n\n  // -------------------------------------------------------------\n  // LAYER 9 (y = 11): Comms Antenna Mast & Lightning Rod Spike\n  // -------------------------------------------------------------\n  setBlock(4, seatY + 9, 4, \"minecraft:lightning_rod[facing=up]\");\n  if (variant === 0 || variant === 3) {\n    setBlock(4, seatY + 9, 3, \"minecraft:iron_bars\");\n  } else if (variant === 2 || variant === 4) {\n    setBlock(3, seatY + 9, 4, \"minecraft:iron_bars\");\n  }\n\n  // -------------------------------------------------------------\n  // Overgrowth, Foliage & Battle-Worn Apocalyptic Detail\n  // -------------------------------------------------------------\n  const foliageAnchors = [\n    [1, seatY, 3], [1, seatY + 1, 3], [1, seatY + 2, 2], [2, seatY + 3, 1],\n    [7, seatY, 5], [7, seatY + 1, 6], [6, seatY + 2, 6], [7, seatY + 3, 6],\n    [2, seatY + 5, 3], [6, seatY + 5, 5], [2, seatY + 4, 5]\n  ];\n  for (const [lx, ly, lz] of foliageAnchors) {\n    if (api.random() < 0.65 && !grid[lx][ly][lz]) {\n      let hasNeighbor = false;\n      const dirs = [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]];\n      for (const [dx, dy, dz] of dirs) {\n        const nx = lx + dx, ny = ly + dy, nz = lz + dz;\n        if (nx >= 0 && nx < W && ny >= 0 && ny < H && nz >= 0 && nz < D && grid[nx][ny][nz]) {\n          hasNeighbor = true;\n          break;\n        }\n      }\n      if (hasNeighbor) {\n        setBlock(lx, ly, lz, leaves);\n      }\n    }\n  }\n\n  // Creeping vines attached to vertical hull plates\n  for (let x = 0; x < W; x++) {\n    for (let y = seatY; y < H - 2; y++) {\n      for (let z = 0; z < D; z++) {\n        if (!grid[x][y][z] && api.random() < 0.28) {\n          if (z + 1 < D && grid[x][y][z + 1] && !grid[x][y][z + 1].includes(\"vine\")) {\n            setBlock(x, y, z, \"minecraft:vine[south=true]\");\n          } else if (z - 1 >= 0 && grid[x][y][z - 1] && !grid[x][y][z - 1].includes(\"vine\")) {\n            setBlock(x, y, z, \"minecraft:vine[north=true]\");\n          } else if (x + 1 < W && grid[x + 1][y][z] && !grid[x + 1][y][z].includes(\"vine\")) {\n            setBlock(x, y, z, \"minecraft:vine[east=true]\");\n          } else if (x - 1 >= 0 && grid[x - 1][y][z] && !grid[x - 1][y][z].includes(\"vine\")) {\n            setBlock(x, y, z, \"minecraft:vine[west=true]\");\n          }\n        }\n      }\n    }\n  }\n\n  // -------------------------------------------------------------\n  // Foundation Footing Extension to Terrain (Rule 6 & Rule 4)\n  // -------------------------------------------------------------\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      if (grid[x][seatY][z]) {\n        const groundDelta = Math.round(api.heightAt(x, z));\n        const lowestY = Math.max(0, Math.min(seatY, seatY + groundDelta));\n        for (let gy = lowestY; gy < seatY; gy++) {\n          const r = api.random();\n          const foundationBlock = r < 0.3 ? groundRevetment : (r < 0.6 ? stonePrimary : wallCore);\n          setBlock(x, gy, z, foundationBlock);\n        }\n      }\n    }\n  }\n\n  // -------------------------------------------------------------\n  // Emission to World\n  // -------------------------------------------------------------\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        if (grid[x][y][z]) {\n          api.set(x, y, z, grid[x][y][z]);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"defense_turret_pod\",\n    seatY: seatY,\n    anchors: {\n      front: [cx, seatY + 5, 0],\n      base: [cx, seatY, cz]\n    }\n  };\n}"
+    }
+  }
+}

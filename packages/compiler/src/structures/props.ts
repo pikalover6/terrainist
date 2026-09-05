@@ -1,0 +1,1275 @@
+/**
+ * `prop.place@0` — placement and emit.
+ *
+ * The grammar in `@terrainist/stdlib` builds a prop in node-local space and
+ * knows nothing about the world it will stand in. This module is the other
+ * half: it turns a node's coarse placement params into a column, finds ground
+ * (or water) that the prop actually fits on, rotates the ops by the chosen
+ * yaw, translates them into the world, resolves every (name, props) pair
+ * through the version-pinned block table, and carries a pier's piles down to
+ * the bed.
+ *
+ * ## Why placement lives here and not in the solver
+ *
+ * A prop is small and its constraint is *local and physical* — "on still
+ * water", "on flat ground", "at the end of that pier". The layout solver
+ * places things whose constraint is social: this building near that one, this
+ * plaza in the middle. Feeding nine one-block-tall props through the solver
+ * would cost a full anneal to answer a question a spiral search answers
+ * exactly. So `prop.place@0` takes the same *coarse vocabulary* every profile
+ * node speaks (`zone`, `at`) to pick a target column, and then resolves the
+ * physical part itself.
+ *
+ * The search is a spiral ordered by squared distance, then z, then x — a total
+ * order on columns, so the site a prop lands on is a pure function of the plan
+ * and the target, with no dependence on iteration order.
+ *
+ * ## Fluid safety
+ *
+ * {@link checkPropFluidSafety} re-derives the two claims the grammar makes:
+ * that no prop writes air into a water column, and that every water block a
+ * prop *does* write is enclosed — solid or water on all four sides and solid
+ * below. It reads the emitted blocks and the column plan, so it catches a
+ * grammar change that breaks the invariant even when the plan-side
+ * `checkFluidStability` cannot see it (the plan does not know the boat is
+ * there).
+ */
+
+import {
+  PROP_NAMES,
+  generateProp,
+  isPropName,
+  propFootprint,
+  resolvePropPalette,
+  rotateLocalColumn,
+  rotateOps,
+  type BuildingMaterials,
+  type LocalVoxelOp,
+  type PropBase,
+  type PropName,
+  type Seed256,
+  type StructureYaw,
+} from "@terrainist/stdlib";
+import { Rng, streamSeed } from "@terrainist/stdlib";
+import { error, warning, type LoamDiagnostic } from "@terrainist/spec";
+import type { Yaw } from "@terrainist/spec/ir";
+import { isZoneToken } from "../layout/frames.js";
+import { jitteredZonePoint, type Frame, type Point2, type Rect } from "../layout/frames.js";
+import { rectAt, rotatedExtents } from "../layout/ports.js";
+import type { OccupancyGrid } from "../layout/types.js";
+import type { GroundClaim, GroundIntent } from "../layout/ground-contract.js";
+import type { GroundDriver } from "../layout/ground-driver.js";
+import type { StreetDatum } from "../layout/street-datum.js";
+import type { PrismarineStack } from "../emit/prismarine.js";
+import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
+
+import type { StructureBlock } from "./buildings.js";
+
+
+/** How far from its target column a prop will look for a site it fits on. */
+const PROP_SEARCH_RADIUS = 48;
+
+/** Deepest a pier pile is driven before the placer gives up on the column. */
+const MAX_PILE_DEPTH = 24;
+
+/**
+ * Ground unevenness a *small* land prop tolerates under its footprint.
+ *
+ * The floor of {@link propReliefTolerance}, and the whole tolerance for
+ * anything up to {@link PROP_RELIEF_SPAN} blocks on its long side.
+ */
+export const PROP_MAX_RELIEF = 1;
+
+/**
+ * Blocks of footprint that buy one more block of tolerated relief.
+ *
+ * A flat block of one relief is a reasonable ask of a cart. It is not a
+ * reasonable ask of a 40-block drydock: natural terrain that is level to one
+ * block over forty is a lake bed, so the drydock was unplaceable *anywhere*
+ * outdoors and the compile said only `LOAM-E170 CANNOT_FIT`.
+ *
+ * The design, of the two on the table:
+ *
+ * - Tolerance scales with the footprint's long side — `max(1, ceil(long/12))` —
+ *   so a big prop may be sited on ground that is gently rolling rather than
+ *   flat, and
+ * - the placer *levels* what it stands on, but **only when the site is rougher
+ *   than {@link PROP_MAX_RELIEF}**.
+ *
+ * That second clause is the point. A cart, a well or a bench sits on ground it
+ * already fitted, emits not one block of pad, and costs exactly what it always
+ * did — no new blocks, no moved worlds, no goldens to reroll. The pad is a
+ * large-prop feature that small props never pay for.
+ */
+const PROP_RELIEF_SPAN = 12;
+
+/**
+ * Ground unevenness this footprint tolerates, in blocks.
+ *
+ * A pure function of the rectangle, so the placer's fitness test and the pad
+ * that follows it cannot disagree about what "fits" meant.
+ */
+export function propReliefTolerance(rect: Rect): number {
+  const long = Math.max(rect.x1 - rect.x0 + 1, rect.z1 - rect.z0 + 1);
+  return Math.max(PROP_MAX_RELIEF, Math.ceil(long / PROP_RELIEF_SPAN));
+}
+
+/** Rings of levelled skirt carried outside a prop's pad. */
+export const PROP_PAD_SKIRT = 1;
+
+/** One prop the compiler is asked to materialize. */
+export interface PropJob {
+  readonly nodePath: string;
+  /** The `prop` param — a name from the catalog. */
+  readonly prop: string;
+  /** The rest of the node's params: coarse placement plus the prop's own. */
+  readonly params: Readonly<Record<string, unknown>>;
+  readonly seed: Seed256;
+  /** The theme triple this prop was dealt, if the caller assigned one. */
+  readonly materials?: BuildingMaterials;
+  readonly style?: Readonly<Record<string, string>>;
+}
+
+/** Where one prop ended up. */
+export interface PlacedProp {
+  readonly nodePath: string;
+  readonly prop: PropName;
+  readonly yaw: StructureYaw;
+  /** The world footprint, inclusive. */
+  readonly footprint: Rect;
+  /** World Y of local `y = 0`. */
+  readonly baseY: number;
+  readonly base: PropBase;
+  readonly blockCount: number;
+  /**
+   * Where this prop's blocks start in {@link PropPassResult.blocks} — the
+   * half-open range `[blockStart, blockStart + blockCount)` is exactly its own.
+   *
+   * Recorded so {@link reseatProps} can find them again after pass 5c. The
+   * blocks are pushed contiguously per prop (its ops, then its piles), which is
+   * what makes one offset enough.
+   */
+  readonly blockStart: number;
+  /** Where another prop may moor: a pier's seaward end, in world columns. */
+  readonly anchor?: Point2;
+}
+
+/** Everything {@link buildProps} reads. */
+export interface PropPassInput {
+  readonly jobs: readonly PropJob[];
+  readonly plan: ColumnPlan;
+  /**
+ * The ground contract's driver.
+   *
+   * Present on the world pipeline, where every pad's level goes through
+   * `commit`; absent for the terrarium, the exhibits and the authored programs,
+   * which write their own plans and are outside the contract (§3.12).
+   */
+  readonly ground?: GroundDriver;
+  readonly stack: PrismarineStack;
+  /** Claimed under the `prop` and `structure` tags when present. */
+  readonly occupancy?: OccupancyGrid;
+  /**
+   * Footprints already taken by earlier passes, which a prop may not land on.
+   * The building pass's footprints, in practice.
+   */
+  readonly reserved?: readonly Rect[];
+  /**
+   * The quarters' street datums, forwarded to every placement — 8E.
+   *
+   * `buildStructures` hands these over only when at least one district graded
+   * one. `FRONTAGE_TIE` is on, so a settlement quarter with a street graph does
+   * grade one and this field is present for it; a compile with no graded datum
+   * (no quarter, no streets) still calls the pass with the datum-free argument
+   * object it has always been called with.
+   */
+  readonly datums?: readonly (StreetDatum | undefined)[];
+}
+
+/** What the prop pass produced. */
+export interface PropPassResult {
+  readonly blocks: readonly StructureBlock[];
+  readonly placed: readonly PlacedProp[];
+  readonly diagnostics: readonly LoamDiagnostic[];
+  /**
+   * What this pass declared under the ground contract
+ * : one entry per prop that needed a pad,
+   * naming **only the columns its own filter selected** — the fill-never-cut
+   * `if (g >= want) continue` — at their targets. The intents it handed to the
+   * driver, kept as a return value for the report and the tests.
+   */
+  readonly padDeclarations: readonly PropPadDeclaration[];
+}
+
+/** One prop's pad, as §3.10b declares it. */
+interface PropPadDeclaration {
+  readonly source: string;
+  readonly columns: readonly GroundClaim[];
+}
+
+/* -------------------------------------------------------------------------- */
+/* the pass                                                                    */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Materialize every prop, in document order.
+ *
+ * Order matters in one direction only: a pier placed earlier is an anchor a
+ * later `at: "pier"` boat can moor to, which is the whole reason the two are
+ * separate props rather than one composite.
+ */
+export function buildProps(input: PropPassInput): PropPassResult {
+  const { plan, stack } = input;
+  const blocks: StructureBlock[] = [];
+  const placed: PlacedProp[] = [];
+  const diagnostics: LoamDiagnostic[] = [];
+  const padDeclarations: PropPadDeclaration[] = [];
+  const missing = new Set<string>();
+  const taken: Rect[] = [...(input.reserved ?? [])];
+
+  for (const job of input.jobs) {
+    if (!isPropName(job.prop)) {
+      diagnostics.push(
+        error(
+          "STRUCTURE_PARAM",
+          job.nodePath,
+          `prop.place@0 does not know a prop called ${JSON.stringify(job.prop)}`,
+          `use one of: ${PROP_NAMES.join(", ")}`,
+        ),
+      );
+      continue;
+    }
+    const site = planPropPlacement({
+      prop: job.prop,
+      params: job.params,
+      seed: job.seed,
+      plan,
+      taken,
+      anchors: placed,
+      ...(input.datums === undefined ? {} : { datums: input.datums }),
+    });
+    if (site === undefined) {
+      diagnostics.push(
+        warning(
+          "CANNOT_FIT",
+          job.nodePath,
+          `no site within ${PROP_SEARCH_RADIUS} blocks fits the ${job.prop}`,
+          propFootprint(job.prop, job.params).base === "ground"
+            ? "flatten the ground near its target, or move the node with a coarse zone/at param"
+            : 'this world has no water this prop can sit on within reach — widen the lake or lower "seaLevel"-relative land, or drop the explicit "at" pin so the placer may seek the waterline itself',
+        ),
+      );
+      continue;
+    }
+    if (site.reseated !== undefined) {
+      diagnostics.push(
+        warning(
+          "PROP_RESEATED",
+          job.nodePath,
+          `no water within ${PROP_SEARCH_RADIUS} blocks of the ${job.prop}'s coarse target, so it sought the waterline and seated at [${site.footprint.x0}, ${site.footprint.z0}]`,
+          'nothing to fix if the prop is where you want it; to hold it to one part of the world, give the node an explicit "at": {"x", "z"} on the water and it will fail in place instead of moving',
+        ),
+      );
+    }
+
+    // The pad, before the prop: a land prop stands on the plane `groundBase`
+    // chose, and on a site rougher than `PROP_MAX_RELIEF` that plane is above
+    // some of the ground under it. Levelling first means the prop's own blocks
+    // are laid over finished ground, and `plan.ground` is right for everything
+    // downstream. Water and shore props never get one — their base is a water
+    // surface, which is level by definition.
+    if (propFootprint(job.prop, job.params).base === "ground") {
+      // §3.10b: the pad claims, the driver decides, `levelPropPad` lays the
+      // plinth. `padDeclarations` is the same set, kept as a return value for
+      // the report and the tests.
+      const pad: GroundClaim[] = [];
+      // WP-G2: the two entry points are chosen **by type**, not by an
+      // `undefined` check inside one. `input.ground` is present on every
+      // settlement compile (`StructurePassInput.ground` is required); it is
+      // absent only for the terrarium and the exhibits.
+      const padGround = { source: `${job.nodePath}#pad`, declare: pad };
+      blocks.push(
+        ...(input.ground === undefined
+          ? levelPropPadUndeclared(plan, site.footprint, site.baseY, padGround)
+          : levelPropPad(plan, site.footprint, site.baseY, {
+              ...padGround,
+              driver: input.ground,
+            })),
+      );
+      if (pad.length > 0) padDeclarations.push({ source: `${job.nodePath}#pad`, columns: pad });
+    }
+
+    const generated = generateProp({
+      prop: job.prop,
+      seed: job.seed,
+      params: job.params,
+      ...(job.materials === undefined ? {} : { materials: job.materials }),
+      ...(job.style === undefined ? {} : { style: job.style }),
+    });
+    const [sizeX, , sizeZ] = generated.meta.size;
+    const rotated = rotateOps(generated.ops, site.yaw, sizeX, sizeZ);
+
+    let count = 0;
+    const blockStart = blocks.length;
+    for (const op of rotated) {
+      const stateId = resolveState(stack, op, missing);
+      if (stateId === undefined) continue;
+      blocks.push({
+        x: site.footprint.x0 + op.x,
+        y: site.baseY + op.y,
+        z: site.footprint.z0 + op.z,
+        stateId,
+      });
+      count++;
+    }
+    count += drivePiles(generated.meta.piles, generated.meta, site, plan, stack, job, blocks);
+
+    const anchorLocal = generated.meta.anchor;
+    const anchor =
+      anchorLocal === undefined
+        ? undefined
+        : rotateLocalColumn(anchorLocal.x, anchorLocal.z, sizeX, sizeZ, site.yaw);
+
+    placed.push({
+      nodePath: job.nodePath,
+      prop: job.prop,
+      yaw: site.yaw,
+      footprint: site.footprint,
+      baseY: site.baseY,
+      base: generated.meta.base,
+      blockCount: count,
+      blockStart,
+      ...(anchor === undefined
+        ? {}
+        : { anchor: { x: site.footprint.x0 + anchor.x, z: site.footprint.z0 + anchor.z } }),
+    });
+    taken.push(site.footprint);
+    if (input.occupancy !== undefined) claim(input.occupancy, site.footprint);
+  }
+
+  for (const name of [...missing].sort()) {
+    diagnostics.push(
+      warning(
+        "BAD_PALETTE",
+        "",
+        `prop.place@0 wanted block "${name}", which does not exist in ${stack.minecraftVersion}`,
+        `override the symbol that names "${name}" with a block id that exists in Minecraft ${stack.minecraftVersion}`,
+      ),
+    );
+  }
+
+  return { blocks, placed, diagnostics, padDeclarations };
+}
+
+/**
+ * **Stand every land prop back on the resolved ground** — pass 5e, under the
+ * freeze.
+ *
+ * `buildProps` runs in the declaring half, because `prop.pad` is a tier-D claim
+ * and every declarer runs before every builder (v1 §1.6). Until pass 5c,
+ * though, `plan.ground` is still the *pristine* baseline, so `groundBase` — the
+ * plane the prop's feet are put on — answers with the hill as it was before the
+ * settlement cut it. Worse, `prop.pad` is rank 130 and `farm.parcel` is rank
+ * 125: they share tier D, so §1.4 does not let the prop see the parcel's level
+ * even in principle, and a scarecrow on a field the holding levelled *must*
+ * settle after the resolve or not at all. Measured on the farm-yard fixture: a
+ * scarecrow standing at 74 over a parcel the resolver put at 72 — two
+ * `unsupported.chain` findings, and the only ones that world had.
+ *
+ * A prop is rigid and stands on one plane, so re-seating is exactly a vertical
+ * shift: recompute {@link groundBase} over the same footprint against the frozen
+ * plan and move the prop's own blocks by the difference. The blocks are mutated
+ * in place, so the emitter's lay order and the attribution spans are untouched —
+ * a prop that was laid third is still laid third, at the height the resolver
+ * decided.
+ *
+ * Left alone: a prop whose base is not `"ground"` (its plane is a water surface,
+ * which the resolver does not move), and a footprint `groundBase` now refuses —
+ * too much relief, or gone wet. Refusing to guess is the right answer there: the
+ * prop keeps the plane it was sited on and the physics lint keeps its right to
+ * complain about it.
+ *
+ * Returns how many props moved, for the report.
+ */
+export function reseatProps(
+  plan: ColumnPlan,
+  blocks: readonly StructureBlock[],
+  placed: readonly PlacedProp[],
+): number {
+  let moved = 0;
+  for (const prop of placed) {
+    if (prop.base !== "ground") continue;
+    if (prop.blockCount === 0) continue;
+    const now = groundBase(plan, prop.footprint);
+    if (now === undefined || now === prop.baseY) continue;
+    const delta = now - prop.baseY;
+    for (let i = prop.blockStart; i < prop.blockStart + prop.blockCount; i++) {
+      const block = blocks[i] as { y: number } | undefined;
+      if (block === undefined) continue;
+      block.y += delta;
+    }
+    moved++;
+  }
+  return moved;
+}
+
+/* -------------------------------------------------------------------------- */
+/* placement                                                                   */
+/* -------------------------------------------------------------------------- */
+
+/** A site a prop fits on. */
+export interface PropSite {
+  readonly footprint: Rect;
+  readonly baseY: number;
+  readonly yaw: StructureYaw;
+  /**
+   * Set when the site came from the waterline reseat rather than the node's
+   * own coarse target: the column the second search was centred on.
+   *
+   * A pier or a ship whose `zone` lands inland is not unbuildable — the water
+   * it belongs on is simply further than {@link PROP_SEARCH_RADIUS} away. The
+   * placer seeks the waterline and says so, exactly as `precinct.harbour@0`
+   * reseats itself on the best coastline in the world rather than reporting a
+   * world with an ocean in it as having nowhere to put a quay.
+   */
+  readonly reseated?: Point2;
+}
+
+/** Everything {@link planPropPlacement} reads. */
+export interface PropPlacementInput {
+  readonly prop: PropName;
+  readonly params: Readonly<Record<string, unknown>>;
+  readonly seed: Seed256;
+  readonly plan: ColumnPlan;
+  /** Footprints already claimed; a prop never lands on one. */
+  readonly taken?: readonly Rect[];
+  /** Props already placed, for `at: "pier"`. */
+  readonly anchors?: readonly PlacedProp[];
+  /**
+   * The quarters' street datums — 8E's prop client of F1 ({@link datumPropBase}).
+   *
+   * `FRONTAGE_TIE` is on, so a quarter with a street graph grades a datum and
+   * this field arrives with it; it is absent only where no quarter graded one,
+   * and that is the compile where this path stays unused.
+   */
+  readonly datums?: readonly (StreetDatum | undefined)[];
+}
+
+/**
+ * Resolve a prop's coarse params to a concrete site, or `undefined`.
+ *
+ * The coarse vocabulary is the profile's, deliberately: `zone` names one of
+ * the nine cells of the region, jittered off the node's own `coarse` stream
+ * exactly as §4.9.3 does; `at` is either an explicit `{x, z}` or the token
+ * `"pier"`, which means "the seaward end of the nearest pier already placed".
+ * Neither ever appears in an authored document as an absolute coordinate
+ * unless the author insists.
+ *
+ * `yaw` may be given; otherwise it is drawn from the node's `yaw` stream,
+ * except for a pier, whose yaw is the direction the water is in and is not a
+ * matter of taste.
+ */
+export function planPropPlacement(input: PropPlacementInput): PropSite | undefined {
+  const { plan, prop, params } = input;
+  const foot = propFootprint(prop, params);
+  const { point: target, pinned } = coarseTarget(input);
+  const yawParam = readYaw(params["yaw"]);
+
+  const search = (from: Point2): PropSite | undefined => {
+    if (foot.base === "shore") return placeShore(input, foot, from, yawParam);
+    const yaws: readonly StructureYaw[] = yawParam === undefined ? [drawYaw(input.seed)] : [yawParam];
+    for (const column of spiral(from, PROP_SEARCH_RADIUS)) {
+      for (const yaw of yaws) {
+        const [w, d] = rotatedExtents(foot.size, yaw as unknown as Yaw);
+        const rect = rectAt(column.x, column.z, w, d);
+        if (overlapsTaken(rect, input.taken)) continue;
+        // F1's prop client. The ground test still has to pass — a prop beside a
+        // street may not stand in water or across a cliff any more than one in a
+        // field may — and only the *plane* comes from the datum when it answers.
+        const ground = foot.base === "water" ? waterBase(plan, rect) : groundBase(plan, rect);
+        if (ground === undefined) continue;
+        const baseY =
+          foot.base === "water" || input.datums === undefined
+            ? ground
+            : datumPropBase(input.datums, rect) ?? ground;
+        return { footprint: rect, baseY, yaw };
+      }
+    }
+    return undefined;
+  };
+
+  const local = search(target);
+  if (local !== undefined) return local;
+
+  // The waterline reseat. A land prop stays where it was asked for — dry ground
+  // is everywhere a settlement is, so "no flat site within 48 blocks" is a real
+  // fact about the target. A prop that belongs *in* or *on* water is different:
+  // its target is a zone, the water is wherever the coast happens to run, and
+  // an archipelago is exactly the world where the two do not coincide. So the
+  // search seeks the waterline once, from the nearest column that could carry
+  // this base, and the caller notes that it moved. A pin (an explicit `at`, or
+  // an `at: "pier"` that found its pier) is honoured: pinned means *here*, and
+  // a pinned prop fails in place rather than sailing off, which is the rule
+  // `precinct.harbour@0` already follows.
+  if (pinned || foot.base === "ground") return undefined;
+  for (const seed of waterSeats(plan, target, foot.base)) {
+    const reseated = search(seed);
+    if (reseated !== undefined) return { ...reseated, reseated: seed };
+  }
+  return undefined;
+}
+
+/** How many separate bodies of water a reseat will try before giving up. */
+const PROP_RESEAT_SEATS = 8;
+
+/**
+ * Columns that could seat this base, nearest first, one per body of water.
+ *
+ * `water` wants a column deep enough to float a hull; `shore` wants dry land
+ * with water next door — the coastline, as `layout/products.ts` defines it. The
+ * order is the placer's order everywhere else (squared distance, then z, then
+ * x), so the seats are a pure function of the plan and the target.
+ *
+ * Seats are kept {@link PROP_SEARCH_RADIUS} apart because the search that
+ * follows one covers that radius: without the spacing, all
+ * {@link PROP_RESEAT_SEATS} tries would land in the same inland pond and a
+ * longship would be reported unbuildable on a world that is four fifths ocean.
+ */
+function waterSeats(
+  plan: ColumnPlan,
+  target: Point2,
+  base: "water" | "shore",
+  limit: number = PROP_RESEAT_SEATS,
+): Point2[] {
+  const { x0, z0, width, depth } = plan.region;
+  const seats: Point2[] = [];
+  for (let round = 0; round < limit; round++) {
+    let best: Point2 | undefined;
+    let bestDist = Infinity;
+    for (let j = 0; j < depth; j++) {
+      for (let i = 0; i < width; i++) {
+        const idx = j * width + i;
+        if (base === "water") {
+          if (plan.fluidKind[idx] !== FluidKind.WATER) continue;
+          if ((plan.fluidTop[idx] as number) - (plan.ground[idx] as number) < 2) continue;
+        } else {
+          if (plan.fluidKind[idx] !== FluidKind.NONE) continue;
+          if (!hasWaterNeighbour(plan, i, j)) continue;
+        }
+        const x = x0 + i;
+        const z = z0 + j;
+        const dist = (x - target.x) ** 2 + (z - target.z) ** 2;
+        // Strictly-less keeps the scan order's own tiebreak, which is z then x.
+        if (dist >= bestDist) continue;
+        if (seats.some((s) => Math.abs(s.x - x) < PROP_SEARCH_RADIUS && Math.abs(s.z - z) < PROP_SEARCH_RADIUS)) {
+          continue;
+        }
+        bestDist = dist;
+        best = { x, z };
+      }
+    }
+    if (best === undefined) break;
+    seats.push(best);
+  }
+  return seats;
+}
+
+/** True when one of a column's four neighbours holds water. */
+function hasWaterNeighbour(plan: ColumnPlan, i: number, j: number): boolean {
+  const { width, depth } = plan.region;
+  const steps: readonly [number, number][] = [
+    [1, 0],
+    [-1, 0],
+    [0, 1],
+    [0, -1],
+  ];
+  for (const [di, dj] of steps) {
+    const ni = i + di;
+    const nj = j + dj;
+    if (ni < 0 || nj < 0 || ni >= width || nj >= depth) continue;
+    if (plan.fluidKind[nj * width + ni] === FluidKind.WATER) return true;
+  }
+  return false;
+}
+
+/**
+ * The column a prop aims at, before it looks at what is actually there.
+ *
+ * Priority: an explicit `at`, then `at: "pier"`, then `zone`, then the middle
+ * of the region.
+ */
+function coarseTarget(input: PropPlacementInput): { point: Point2; pinned: boolean } {
+  const { plan, params } = input;
+  const frame: Frame = {
+    x0: plan.region.x0,
+    z0: plan.region.z0,
+    width: plan.region.width,
+    depth: plan.region.depth,
+  };
+  const centre: Point2 = {
+    x: frame.x0 + (frame.width >> 1),
+    z: frame.z0 + (frame.depth >> 1),
+  };
+
+  const at = params["at"];
+  if (typeof at === "object" && at !== null) {
+    const point = at as { x?: unknown; z?: unknown };
+    if (typeof point.x === "number" && typeof point.z === "number") {
+      return { point: { x: Math.round(point.x), z: Math.round(point.z) }, pinned: true };
+    }
+  }
+  if (at === "pier") {
+    const piers = (input.anchors ?? []).filter((p) => p.anchor !== undefined);
+    if (piers.length > 0) {
+      // Nearest pier end to the region centre — a total order, so which pier a
+      // boat moors at does not depend on the order the anchors arrived in.
+      let best = piers[0] as PlacedProp;
+      for (const candidate of piers) {
+        if (compareByDistance(candidate.anchor as Point2, best.anchor as Point2, centre) < 0) {
+          best = candidate;
+        }
+      }
+      return { point: best.anchor as Point2, pinned: true };
+    }
+  }
+  const zone = params["zone"];
+  if (typeof zone === "string" && isZoneToken(zone)) {
+    const jitter = typeof params["jitter"] === "number" ? params["jitter"] : 0.15;
+    return {
+      point: jitteredZonePoint(frame, zone, jitter, streamSeed(input.seed, "coarse"), 0),
+      pinned: false,
+    };
+  }
+  return { point: centre, pinned: false };
+}
+
+/** Order two anchors by distance to a point, then by column, for stability. */
+function compareByDistance(a: Point2, b: Point2, to: Point2): number {
+  const da = (a.x - to.x) ** 2 + (a.z - to.z) ** 2;
+  const db = (b.x - to.x) ** 2 + (b.z - to.z) ** 2;
+  return da - db || a.z - b.z || a.x - b.x;
+}
+
+/** A yaw param, when it is one of the four legal quarter turns. */
+function readYaw(raw: unknown): StructureYaw | undefined {
+  if (raw === 0 || raw === 90 || raw === 180 || raw === 270) return raw;
+  return undefined;
+}
+
+/** The yaw a prop is dealt when the node does not name one. */
+function drawYaw(seed: Seed256): StructureYaw {
+  const yaws: readonly StructureYaw[] = [0, 90, 180, 270];
+  return yaws[new Rng(streamSeed(seed, "prop.yaw")).int(0, 3)] as StructureYaw;
+}
+
+
+/**
+ * Columns around a target, in a total order: squared distance, then z, then x.
+ *
+ * Generated rather than sorted — the ring radius bounds the search, and the
+ * caller stops at the first fit — but the order is the sort's order, which is
+ * what makes two runs agree.
+ */
+function* spiral(target: Point2, radius: number): Generator<Point2> {
+  const cells: Point2[] = [];
+  for (let dz = -radius; dz <= radius; dz++) {
+    for (let dx = -radius; dx <= radius; dx++) {
+      cells.push({ x: target.x + dx, z: target.z + dz });
+    }
+  }
+  cells.sort((a, b) => compareByDistance(a, b, target));
+  for (const cell of cells) yield cell;
+}
+
+/** True when a rectangle meets any already-claimed rectangle. */
+function overlapsTaken(rect: Rect, taken: readonly Rect[] | undefined): boolean {
+  if (taken === undefined) return false;
+  return taken.some(
+    (r) => !(rect.x1 < r.x0 || rect.x0 > r.x1 || rect.z1 < r.z0 || rect.z0 > r.z1),
+  );
+}
+
+/** Column index of a world column, or `undefined` outside the region. */
+function indexOf(plan: ColumnPlan, x: number, z: number): number | undefined {
+  const i = x - plan.region.x0;
+  const j = z - plan.region.z0;
+  if (i < 0 || j < 0 || i >= plan.region.width || j >= plan.region.depth) return undefined;
+  return j * plan.region.width + i;
+}
+
+/**
+ * The base plane of a land prop, or `undefined` when the ground will not do.
+ *
+ * Every column has to be dry, inside the region, and within
+ * {@link propReliefTolerance} of every other — a cart standing half in a
+ * hillside is worse than a cart somewhere else. The plane is the *highest*
+ * ground under the footprint plus one, so nothing is ever buried; the columns
+ * below it are brought up to meet it by {@link levelPropPad}.
+ */
+export function groundBase(plan: ColumnPlan, rect: Rect): number | undefined {
+  let lo = Infinity;
+  let hi = -Infinity;
+  for (let z = rect.z0; z <= rect.z1; z++) {
+    for (let x = rect.x0; x <= rect.x1; x++) {
+      const idx = indexOf(plan, x, z);
+      if (idx === undefined) return undefined;
+      if (plan.fluidKind[idx] !== FluidKind.NONE) return undefined;
+      const g = plan.ground[idx] as number;
+      if (g < lo) lo = g;
+      if (g > hi) hi = g;
+    }
+  }
+  if (hi - lo > propReliefTolerance(rect)) return undefined;
+  return hi + 1;
+}
+
+/**
+ * The base plane the **street datum** gives a prop standing in its band — 8E.
+ *
+ * prop-pad client of F1: "a prop
+ * inside the datum's band takes `datum.levelNear` as its `baseY` instead of the
+ * median under it; a prop outside the band is unchanged". This removes the
+ * bollard-on-a-plinth case: `levelPropPad` is fill-only and late, so a lamp
+ * sited beside a kerb the surfacer has not cut yet takes the *natural* ground's
+ * height and ends up standing on its own two-block footing beside a road that
+ * graded away underneath it.
+ *
+ * The probe is one `levelNear` call per datum from the footprint's centre, with
+ * a reach that just covers the footprint (half its diagonal, rounded up), so
+ * "inside the band" means *any column of the prop's own footprint is banded* —
+ * a three-wide bench with one corner on the pavement counts, and a prop a
+ * chunk away from any street does not. Datums are consulted in the caller's
+ * order and the first that answers wins, which is district order and therefore
+ * the document's; within one datum `levelNear` breaks ties by ascending region
+ * index (F11). No RNG, no iteration order, integer in and integer out.
+ *
+ * Returns the plane a prop's feet stand on — `level + 1`, the first air column
+ * above the carriageway surface, exactly what {@link groundBase} returns — or
+ * `undefined` when no datum bands the footprint.
+ */
+export function datumPropBase(
+  datums: readonly (StreetDatum | undefined)[],
+  rect: Rect,
+): number | undefined {
+  const w = rect.x1 - rect.x0 + 1;
+  const d = rect.z1 - rect.z0 + 1;
+  const cx = rect.x0 + ((w - 1) >> 1);
+  const cz = rect.z0 + ((d - 1) >> 1);
+  // Half the footprint's diagonal: the smallest reach from the centre that
+  // still reaches every column the prop occupies, whatever its aspect.
+  const reach = Math.ceil(Math.hypot(w - 1, d - 1) / 2);
+  for (const datum of datums) {
+    if (datum === undefined) continue;
+    const level = datum.levelNear(cx, cz, reach);
+    if (level !== undefined) return level + 1;
+  }
+  return undefined;
+}
+
+/** What {@link levelPropPad} does with the level it computes. */
+export interface PropPadGround {
+  /** `<nodePath>#pad` — the claim's source (§9 step 3). Used with `driver`. */
+  readonly source?: string;
+  /**
+   * Optional sink for §3.10b's `prop.pad` claim: every column this call fills,
+   * at the level it fills it to. Write-only, and never read.
+   */
+  readonly declare?: GroundClaim[];
+}
+
+/**
+ * One column of pad, **decided but not yet laid**.
+ *
+ * The type is exported because the pad is decided at pass 5b, where `prop.pad`
+ * is a tier-D declaration, and laid at 5f, after the freeze (§7.1). Between
+ * the two the decision has to survive as data — and it has to be the decision
+ * made against the ground the declarer read, because `g` is where the fill
+ * starts and after the freeze `plan.ground` is the level the pad itself asked
+ * for.
+ */
+export interface PropPadColumn {
+  readonly idx: number;
+  readonly x: number;
+  readonly z: number;
+  /** The level the pad asks for. */
+  readonly want: number;
+  /** The ground under it **before** the pad, which the fill starts one above. */
+  readonly g: number;
+  readonly fill: number;
+  readonly cap: number;
+}
+
+/**
+ * Bring the ground under a prop up to its base plane, and one ring beyond it.
+ *
+ * Fill only: the pad raises the low columns to `baseY - 1` with the material
+ * already under them, and never cuts. Cutting would mean deleting terrain
+ * blocks — and the vegetation, snow and surface decoration standing on them —
+ * from a pass that runs after every one of those, which is how you get a
+ * floating tree. Raising is what a building's foundation skirt does, one ring
+ * out, and it reads the same way: a plinth.
+ *
+ * A no-op unless the site is rougher than {@link PROP_MAX_RELIEF}, which is
+ * what keeps a cart exactly as cheap as it has always been.
+ *
+ * **Converted at WP-5**. Given a driver,
+ * the selection below becomes a `prop.pad` claim and the driver writes the
+ * level: that is inversion I4, "everything built beats a prop pad", and the
+ * fill-never-cut rule needs no new field because the `if (g >= want) continue`
+ * filter already reads the resolved ground of every tier above (§9a.4's view).
+ * What stays here is material — the cap, the fill states and the blocks — over
+ * the columns the pad **claimed**, because ownership decides geometry and
+ * deliberately not material (§9a.6, step 4).
+ *
+ * Returns the blocks it laid.
+ *
+ * **WP-G2** item 3): the driver is now
+ * a **required** argument, so the settlement path cannot reach a mutating
+ * branch by omitting it. The direct-write path still exists for the callers the
+ * contract does not govern (§3.12) — the authored programs' `site-treatment`
+ * pads, the terrarium, the exhibits, the unit tests — but it is a separately
+ * named export, {@link levelPropPadUndeclared}, rather than an `undefined`
+ * check inside this one.
+ */
+function levelPropPad(
+  plan: ColumnPlan,
+  rect: Rect,
+  baseY: number,
+  ground: PropPadGround & { readonly driver: GroundDriver },
+): StructureBlock[] {
+  return padColumns(plan, rect, baseY, ground, ground.driver);
+}
+
+/**
+ * {@link levelPropPad} for a plan the ground contract does not govern.
+ *
+ * The **non-settlement** entry point, enumerated in
+ * `test/ground-writers.test.ts`: with no driver to accumulate into there is no
+ * resolver answer to paint against, so the pad writes its own `ground`,
+ * `fluidTop` and `snow`. Callers: `programs/site-treatment.ts` (authored
+ * programs, deliberately outside the contract — `terrain/compile.ts:892-896`),
+ * `terrarium.ts`, `exhibits/*`, and `test/props.test.ts`.
+ */
+export function levelPropPadUndeclared(
+  plan: ColumnPlan,
+  rect: Rect,
+  baseY: number,
+  ground: Omit<PropPadGround, "driver"> = {},
+): StructureBlock[] {
+  return padColumns(plan, rect, baseY, ground, undefined);
+}
+
+/**
+ * The deepest fill a pad at `baseY` would have to lay under `rect` — the pad's
+ * own gate, and the thing an apron is sized on.
+ *
+ * Split out because three callers ask the identical question against three
+ * different grounds ({@link decidePropPad} here, `treatProgramSite`'s gate and
+ * `programApronRings`' `lift`), and asking it twice from two loops is how the
+ * gate and the apron come to disagree about whether a site is rough.
+ */
+export function propPadRelief(plan: ColumnPlan, rect: Rect, baseY: number): number {
+  const top = baseY - 1;
+  let relief = 0;
+  for (let z = rect.z0; z <= rect.z1; z++) {
+    for (let x = rect.x0; x <= rect.x1; x++) {
+      const idx = indexOf(plan, x, z);
+      if (idx === undefined) continue;
+      relief = Math.max(relief, top - (plan.ground[idx] as number));
+    }
+  }
+  return relief;
+}
+
+/**
+ * **The decision half of a pad** (§3.10b, split in time at WP-G6 §7.1).
+ *
+ * Which columns a pad at `baseY` would fill, to what level, from what ground.
+ * Pure: it reads `plan` and writes nothing, declares nothing and emits no
+ * block. Empty when the site is flatter than {@link PROP_MAX_RELIEF}, which is
+ * what keeps a cart exactly as cheap as it has always been.
+ */
+export function decidePropPad(
+  plan: ColumnPlan,
+  rect: Rect,
+  baseY: number,
+): readonly PropPadColumn[] {
+  const top = baseY - 1;
+  if (propPadRelief(plan, rect, baseY) <= PROP_MAX_RELIEF) return [];
+
+  const skirted: Rect = {
+    x0: rect.x0 - PROP_PAD_SKIRT,
+    z0: rect.z0 - PROP_PAD_SKIRT,
+    x1: rect.x1 + PROP_PAD_SKIRT,
+    z1: rect.z1 + PROP_PAD_SKIRT,
+  };
+  // Sorted iteration by construction: the loops are the order, so the block
+  // list is a pure function of the geometry.
+  const pad: PropPadColumn[] = [];
+  for (let z = skirted.z0; z <= skirted.z1; z++) {
+    for (let x = skirted.x0; x <= skirted.x1; x++) {
+      const idx = indexOf(plan, x, z);
+      if (idx === undefined) continue;
+      if (plan.fluidKind[idx] !== FluidKind.NONE) continue;
+      const inside = x >= rect.x0 && x <= rect.x1 && z >= rect.z0 && z <= rect.z1;
+      // The skirt steps down one block, so the pad's edge is a kerb rather than
+      // a wall — the same trick the road shoulders use to blend a cut.
+      const want = inside ? top : top - 1;
+      const g = plan.ground[idx] as number;
+      if (g >= want) continue;
+      const fill = plan.subsurface[idx] as number;
+      pad.push({ idx, x, z, want, g, fill, cap: inside ? fill : (plan.surface[idx] as number) });
+    }
+  }
+  return pad;
+}
+
+/**
+ * A decided pad as the `prop.pad` claim it is (§3.10b), or `undefined` when the
+ * pad is empty and there is nothing to claim.
+ */
+export function propPadIntent(
+  source: string,
+  pad: readonly PropPadColumn[],
+): GroundIntent | undefined {
+  if (pad.length === 0) return undefined;
+  return {
+    source,
+    sourceClass: "prop.pad",
+    kind: "platform",
+    columns: pad.map((column) => ({ idx: column.idx, y: column.want })),
+    transition: "step",
+  };
+}
+
+/**
+ * **The painting half of a pad** — §9 step 2's second loop, over the columns
+ * {@link decidePropPad} chose.
+ *
+ * The fill runs from the ground the pad measured to the level it asked for
+ * whether or not the rank let it have the column: a plinth is what the prop
+ * stands on, and narrowing it to the won columns would change the painting on
+ * every contested one. That is also why it may run long after the decision was
+ * taken (WP-G6 §7.1): every level it needs is in the {@link PropPadColumn}s,
+ * and none of it is re-read from a `plan` the freeze has since rewritten.
+ *
+ * `write` is false on every path the ground contract governs — the level is the
+ * resolver's to write, not this pass's — and true only for the enumerated
+ * non-settlement callers of {@link levelPropPadUndeclared}.
+ */
+export function paintPropPad(
+  plan: ColumnPlan,
+  pad: readonly PropPadColumn[],
+  write: boolean,
+): StructureBlock[] {
+  const out: StructureBlock[] = [];
+  for (const { idx, x, z, want, g, fill, cap } of pad) {
+    for (let y = g + 1; y <= want; y++) {
+      out.push({ x, y, z, stateId: y === want ? cap : fill });
+    }
+    // Outside the guard on purpose — and outside the contract. The ground
+    // contract's three arrays are ground/fluidTop/fluidKind
+ // ; `surface` is not one of them, so this
+    // write is never arbitrated and never reported. Census class 2, S5.
+    plan.surface[idx] = cap;
+    if (!write) continue;
+    plan.ground[idx] = want;
+    plan.fluidTop[idx] = want;
+    // A pad is bare ground: the snow layer that sat on the old surface is
+    // now buried, and re-laying it is the climate pass's business, not this
+    // pass's. Clearing it keeps the emitter from floating one.
+    plan.snow[idx] = 0;
+  }
+  return out;
+}
+
+function padColumns(
+  plan: ColumnPlan,
+  rect: Rect,
+  baseY: number,
+  ground: PropPadGround,
+  driver: GroundDriver | undefined,
+): StructureBlock[] {
+  const pad = decidePropPad(plan, rect, baseY);
+  if (pad.length === 0) return [];
+  for (const column of pad) ground.declare?.push({ idx: column.idx, y: column.want });
+  const intent = propPadIntent(ground.source ?? "prop#pad", pad);
+  if (driver !== undefined && intent !== undefined) driver.commit([intent]);
+  // The declared path never writes: `levelPropPad` takes a `GroundDriver` by
+  // type, so only `levelPropPadUndeclared` — the enumerated non-settlement
+  // entry point — can pass `undefined` here.
+  return paintPropPad(plan, pad, driver === undefined);
+}
+
+/**
+ * The base plane of a water prop: the water surface, or `undefined`.
+ *
+ * Every column has to be water, at the *same* surface level — a boat straddling
+ * a lake and a river one block lower would sit in a step — and deep enough for
+ * the hull course at `y = -1` to be replacing water rather than the bed.
+ */
+export function waterBase(plan: ColumnPlan, rect: Rect): number | undefined {
+  let top: number | undefined;
+  for (let z = rect.z0; z <= rect.z1; z++) {
+    for (let x = rect.x0; x <= rect.x1; x++) {
+      const idx = indexOf(plan, x, z);
+      if (idx === undefined) return undefined;
+      if (plan.fluidKind[idx] !== FluidKind.WATER) return undefined;
+      const surface = plan.fluidTop[idx] as number;
+      if (top === undefined) top = surface;
+      else if (top !== surface) return undefined;
+      // Two blocks of water: the hull course sits in the lower one.
+      if (surface - (plan.ground[idx] as number) < 2) return undefined;
+    }
+  }
+  return top;
+}
+
+/**
+ * Place a pier: find a dry column with water in front of it, and face that way.
+ *
+ * The yaw is derived, not drawn. A pier's local `+z` is seaward, so the yaw is
+ * whichever quarter turn maps `+z` onto the direction the water is in; a pier
+ * facing inland is not a stylistic choice, it is a bug.
+ */
+function placeShore(
+  input: PropPlacementInput,
+  foot: { readonly size: readonly [number, number, number]; readonly minY: number },
+  target: Point2,
+  yawParam: StructureYaw | undefined,
+): PropSite | undefined {
+  const { plan } = input;
+  const length = foot.size[2];
+  const width = foot.size[0];
+  const yaws: readonly StructureYaw[] =
+    yawParam === undefined ? [0, 90, 180, 270] : [yawParam];
+
+  for (const column of spiral(target, PROP_SEARCH_RADIUS)) {
+    const shoreIdx = indexOf(plan, column.x, column.z);
+    if (shoreIdx === undefined) continue;
+    if (plan.fluidKind[shoreIdx] !== FluidKind.NONE) continue;
+    const baseY = (plan.ground[shoreIdx] as number) + 1;
+
+    for (const yaw of yaws) {
+      // `+z` local maps to this world step under the yaw.
+      const [fx, fz] = seawardStep(yaw);
+      // Sideways is the local `+x`, which is `+z` turned back a quarter.
+      const [sx, sz] = seawardStep(((yaw + 270) % 360) as StructureYaw);
+      const cells: { x: number; z: number; z0: number }[] = [];
+      let ok = true;
+      let wet = 0;
+      for (let l = 0; l < length && ok; l++) {
+        for (let w = 0; w < width; w++) {
+          const x = column.x + fx * l + sx * w;
+          const z = column.z + fz * l + sz * w;
+          const idx = indexOf(plan, x, z);
+          if (idx === undefined) {
+            ok = false;
+            break;
+          }
+          cells.push({ x, z, z0: l });
+          const water = plan.fluidKind[idx] === FluidKind.WATER;
+          if (water) wet++;
+          // The landward bay must be dry and the seaward end must be wet: a
+          // pier that starts in the lake is a raft, and one that ends on the
+          // beach is a boardwalk.
+          if (l === 0 && water) ok = false;
+          if (l === length - 1 && !water) ok = false;
+          // The deck rides one block above the shore, so a column the deck
+          // would be *inside* disqualifies the site.
+          if (!water && (plan.ground[idx] as number) >= baseY + 1) ok = false;
+        }
+      }
+      if (!ok || wet * 2 < cells.length) continue;
+      const xs = cells.map((c) => c.x);
+      const zs = cells.map((c) => c.z);
+      const rect: Rect = {
+        x0: Math.min(...xs),
+        z0: Math.min(...zs),
+        x1: Math.max(...xs),
+        z1: Math.max(...zs),
+      };
+      if (overlapsTaken(rect, input.taken)) continue;
+      return { footprint: rect, baseY, yaw };
+    }
+  }
+  return undefined;
+}
+
+/** The world step local `+z` becomes under a yaw. */
+function seawardStep(yaw: StructureYaw): [number, number] {
+  switch (yaw) {
+    case 0:
+      return [0, 1];
+    case 90:
+      return [-1, 0];
+    case 180:
+      return [0, -1];
+    default:
+      return [1, 0];
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* piles                                                                       */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Carry a pier's piles down to the bed.
+ *
+ * The grammar emits the pile *head* at `y = -1` and names the column; how far
+ * it is to the bottom is a fact about the world, not about the pier, so it is
+ * resolved here. Everything from the head down to one above the ground is
+ * filled with the same log the head is made of, which is what stops a pier
+ * from reading as a plank floating over open water.
+ */
+function drivePiles(
+  piles: readonly { readonly x: number; readonly z: number }[],
+  meta: { readonly size: readonly [number, number, number] },
+  site: PropSite,
+  plan: ColumnPlan,
+  stack: PrismarineStack,
+  job: PropJob,
+  blocks: StructureBlock[],
+): number {
+  if (piles.length === 0) return 0;
+  const palette = resolvePropPalette(job.materials, job.style);
+  const stateId =
+    stack.blockStateOf(palette.log, { axis: "y" }) ?? stack.blockByName(palette.log)?.stateId;
+  if (stateId === undefined) return 0;
+  const [sizeX, , sizeZ] = meta.size;
+  let added = 0;
+  for (const pile of piles) {
+    const local = rotateLocalColumn(pile.x, pile.z, sizeX, sizeZ, site.yaw);
+    const x = site.footprint.x0 + local.x;
+    const z = site.footprint.z0 + local.z;
+    const idx = indexOf(plan, x, z);
+    if (idx === undefined) continue;
+    const floor = plan.ground[idx] as number;
+    // `y = -1` is already written by the grammar; this is the shaft under it.
+    const bottom = Math.max(floor + 1, site.baseY - 1 - MAX_PILE_DEPTH);
+    for (let y = site.baseY - 2; y >= bottom; y--) {
+      blocks.push({ x, y, z, stateId });
+      added++;
+    }
+  }
+  return added;
+}
+
+/* -------------------------------------------------------------------------- */
+/* fluid safety                                                                */
+/* -------------------------------------------------------------------------- */
+
+/** One water block a prop wrote that could flow. */
+interface PropWaterLeak {
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+  /** Which face is open: `down`, or a cardinal. */
+  readonly face: string;
+}
+
+/** What {@link checkPropFluidSafety} found. */
+export interface PropFluidReport {
+  /** Water blocks the props wrote. */
+  readonly waterBlocks: number;
+  /** Of those, the ones with an open face. Zero is required. */
+  readonly leaks: readonly PropWaterLeak[];
+}
+
+/**
+ * Re-derive the prop grammar's fluid claim from the blocks it actually emitted.
+ *
+ * A prop's water is stable when, for every water block it wrote, the block
+ * below and all four horizontal neighbours are *occupied* — by another block
+ * this pass wrote, by the plan's solid ground, or by the plan's own water at
+ * that level. That is the same test `checkFluidStability` runs against the
+ * column plan, applied to the one thing the plan cannot see: blocks stamped on
+ * top of it.
+ *
+ * Props that write no water pass trivially, which is the correct answer: a
+ * boat replaces water with wood, and removing water can only ever *reduce* the
+ * faces the remaining water has.
+ */
+export function checkPropFluidSafety(
+  blocks: readonly StructureBlock[],
+  plan: ColumnPlan,
+  stack: PrismarineStack,
+): PropFluidReport {
+  const occupied = new Set<string>();
+  const water: StructureBlock[] = [];
+  for (const block of blocks) {
+    occupied.add(`${block.x},${block.y},${block.z}`);
+    const name = stack.blockNameByStateId(block.stateId);
+    if (name === "water") water.push(block);
+  }
+
+  const filled = (x: number, y: number, z: number): boolean => {
+    if (occupied.has(`${x},${y},${z}`)) return true;
+    const idx = indexOf(plan, x, z);
+    if (idx === undefined) return true; // outside the world: no face to flow through
+    if (y <= (plan.ground[idx] as number)) return true;
+    return plan.fluidKind[idx] !== FluidKind.NONE && y <= (plan.fluidTop[idx] as number);
+  };
+
+  const leaks: PropWaterLeak[] = [];
+  for (const cell of water) {
+    if (!filled(cell.x, cell.y - 1, cell.z)) {
+      leaks.push({ x: cell.x, y: cell.y, z: cell.z, face: "down" });
+      continue;
+    }
+    for (const [face, dx, dz] of [
+      ["north", 0, -1],
+      ["east", 1, 0],
+      ["south", 0, 1],
+      ["west", -1, 0],
+    ] as const) {
+      if (filled(cell.x + dx, cell.y, cell.z + dz)) continue;
+      leaks.push({ x: cell.x, y: cell.y, z: cell.z, face });
+      break;
+    }
+  }
+  return { waterBlocks: water.length, leaks };
+}
+
+/* -------------------------------------------------------------------------- */
+
+/** Resolve one op to a state id, remembering names the block table refuses. */
+function resolveState(
+  stack: PrismarineStack,
+  op: LocalVoxelOp,
+  missing: Set<string>,
+): number | undefined {
+  if (op.props !== undefined) {
+    const withProps = stack.blockStateOf(op.block, op.props);
+    if (withProps !== undefined) return withProps;
+  }
+  const plain = stack.blockByName(op.block);
+  if (plain === undefined) {
+    missing.add(op.block);
+    return undefined;
+  }
+  return plain.stateId;
+}
+
+/** Claim a prop's footprint under the `prop` and `structure` tags. */
+function claim(occupancy: OccupancyGrid, rect: Rect): void {
+  const { region } = occupancy;
+  const tags = occupancy.byTag as Map<string, Uint8Array>;
+  let mask = tags.get("prop");
+  if (mask === undefined) {
+    mask = new Uint8Array(occupancy.mask.length);
+    tags.set("prop", mask);
+  }
+  for (let z = rect.z0; z <= rect.z1; z++) {
+    const j = z - region.z0;
+    if (j < 0 || j >= region.depth) continue;
+    for (let x = rect.x0; x <= rect.x1; x++) {
+      const i = x - region.x0;
+      if (i < 0 || i >= region.width) continue;
+      const idx = j * region.width + i;
+      occupancy.mask[idx] = 1;
+      mask[idx] = 1;
+    }
+  }
+}

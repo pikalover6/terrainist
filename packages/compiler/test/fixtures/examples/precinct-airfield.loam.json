@@ -1,0 +1,200 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "precinct_airfield",
+    "worldSeed": 8811223344,
+    "prompt": "A small country aerodrome on a broad shelf: one runway, a taxiway, an apron of stands with light aircraft parked nose-out, two hangars, a terminal and a control tower, and a lane running out to a pair of houses.",
+    "spawn": {
+      "zone": "south"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:dirt_path"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "A country aerodrome",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        320,
+        320
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "A broad gentle shelf, no sea",
+        "params": {
+          "amplitude": 9,
+          "baseHeight": 76,
+          "seaLevel": 63,
+          "frequency": 0.0032,
+          "beachWidth": 3,
+          "snowLineFraction": 0.98
+        },
+        "children": [
+          {
+            "id": "airfield_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The shelf the field is graded on",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.45
+              ],
+              "radius": 120,
+              "height": 5,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate"
+        }
+      },
+      {
+        "id": "windbreak",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "A windbreak away from the field",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.05,
+          "elevation": [
+            2,
+            90
+          ],
+          "species": [
+            {
+              "id": "field_oak",
+              "weight": 1,
+              "shape": "oak_round"
+            }
+          ]
+        }
+      },
+      {
+        "id": "aerodrome",
+        "kind": "generator",
+        "generator": "precinct.airport@0",
+        "label": "The aerodrome: runway, taxiway, apron, terminal and tower",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            140,
+            24,
+            92
+          ]
+        },
+        "params": {
+          "stands": 4,
+          "hangars": 2
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          }
+        ],
+        "tags": [
+          "precinct",
+          "airfield"
+        ]
+      },
+      {
+        "id": "keepers_house",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The field keeper's house",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            8
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "zone": "south"
+          }
+        ],
+        "ports": {
+          "front": {
+            "type": "door",
+            "face": "north"
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "fuel_store",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The fuel store",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            8,
+            6,
+            7
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          }
+        ],
+        "ports": {
+          "front": {
+            "type": "door",
+            "face": "west"
+          }
+        },
+        "tags": [
+          "shed"
+        ]
+      },
+      {
+        "id": "lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "The lane out to the terminal",
+        "params": {
+          "anchors": [
+            "keepers_house",
+            "fuel_store",
+            "aerodrome"
+          ],
+          "width": 3,
+          "lanterns": true
+        }
+      }
+    ]
+  }
+}

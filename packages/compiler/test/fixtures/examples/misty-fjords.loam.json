@@ -1,0 +1,298 @@
+{
+  "loam": "0.1",
+  "profile": "terrain",
+  "meta": {
+    "name": "misty_fjords",
+    "worldSeed": 813205,
+    "prompt": "misty fjords with a black-sand coast",
+    "spawn": {
+      "at": [
+        0.28,
+        0.62
+      ]
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.beach": {
+        "mix": [
+          [
+            "minecraft:black_concrete_powder",
+            3
+          ],
+          [
+            "minecraft:gravel",
+            2
+          ],
+          [
+            "minecraft:basalt",
+            1
+          ]
+        ]
+      },
+      "ground.underwater": {
+        "mix": [
+          [
+            "minecraft:gravel",
+            3
+          ],
+          [
+            "minecraft:black_concrete_powder",
+            2
+          ]
+        ]
+      },
+      "ground.cliff": {
+        "mix": [
+          [
+            "minecraft:stone",
+            5
+          ],
+          [
+            "minecraft:andesite",
+            2
+          ],
+          [
+            "minecraft:basalt",
+            1
+          ]
+        ]
+      }
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Misty fjords with a black-sand coast",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "Ridged coastal massif, drowned to a fjord coastline",
+        "params": {
+          "ridged": true,
+          "amplitude": 78,
+          "baseHeight": 74,
+          "seaLevel": 63,
+          "frequency": 0.0032,
+          "beachWidth": 3,
+          "snowLineFraction": 0.78,
+          "continentalness": {
+            "frequency": 0.0009,
+            "seaFraction": 0.45
+          }
+        },
+        "children": [
+          {
+            "id": "the_divide",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The Divide — the spine that separates the inlets",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.12,
+                  0.34
+                ],
+                [
+                  0.42,
+                  0.28
+                ],
+                [
+                  0.72,
+                  0.38
+                ],
+                [
+                  0.92,
+                  0.3
+                ]
+              ],
+              "width": 54,
+              "height": 62,
+              "profile": "sharp"
+            }
+          },
+          {
+            "id": "hornspire",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "Hornspire — the highest peak above the inner fjord",
+            "params": {
+              "verb": "peak",
+              "at": [
+                0.6,
+                0.33
+              ],
+              "radius": 70,
+              "height": 74,
+              "profile": "sharp"
+            }
+          },
+          {
+            "id": "north_inlet",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "A deep inlet running inland from the western sea",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.62,
+                  0.5
+                ],
+                [
+                  0.4,
+                  0.53
+                ],
+                [
+                  0.2,
+                  0.56
+                ],
+                [
+                  0,
+                  0.58
+                ]
+              ],
+              "width": 46,
+              "depth": 96
+            }
+          },
+          {
+            "id": "long_fjord",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The long fjord — reaches the deepest inland",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.78,
+                  0.66
+                ],
+                [
+                  0.5,
+                  0.7
+                ],
+                [
+                  0.24,
+                  0.74
+                ],
+                [
+                  0,
+                  0.78
+                ]
+              ],
+              "width": 40,
+              "depth": 104
+            }
+          },
+          {
+            "id": "south_arm",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "A shorter southern arm branching off the coast",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.42,
+                  0.9
+                ],
+                [
+                  0.26,
+                  0.94
+                ],
+                [
+                  0.06,
+                  0.98
+                ]
+              ],
+              "width": 34,
+              "depth": 88
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "label": "Cold, wet, maritime",
+        "params": {
+          "forceTheme": "boreal",
+          "latitudeGradient": -0.2
+        }
+      },
+      {
+        "id": "shore_spruce",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "Dense spruce on the south-eastern shore terraces",
+        "params": {
+          "area": {
+            "zone": "southeast"
+          },
+          "density": 0.6,
+          "elevation": [
+            2,
+            80
+          ],
+          "species": [
+            {
+              "id": "shore_spruce",
+              "weight": 3,
+              "shape": "spruce_tall"
+            },
+            {
+              "id": "krummholz",
+              "weight": 1,
+              "shape": "spruce_squat"
+            }
+          ]
+        }
+      },
+      {
+        "id": "wilderness",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "Sparse cover everywhere else — the unremarkable wilderness fill",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.15,
+          "elevation": [
+            1,
+            110
+          ],
+          "species": [
+            {
+              "id": "wild_spruce",
+              "weight": 4,
+              "shape": "spruce_tall"
+            },
+            {
+              "id": "wild_squat",
+              "weight": 2,
+              "shape": "spruce_squat"
+            },
+            {
+              "id": "coast_birch",
+              "weight": 1,
+              "shape": "birch_slim"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

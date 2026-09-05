@@ -1,0 +1,627 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "red_rock_gulch",
+    "worldSeed": "7626043506518879394",
+    "prompt": "A gold-rush frontier town in a red-rock canyon: false-front saloons on one main street, a stamp mill by the creek, a rail line with a locomotive at a wooden station, an assay office, a boot hill, and the wreck of a crashed airship on the mesa above.",
+    "spawn": {
+      "at": [
+        0.45,
+        0.52
+      ]
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": "minecraft:red_sand",
+      "ground.subsurface": "minecraft:red_sandstone",
+      "ground.stone": "minecraft:terracotta",
+      "ground.cliff": {
+        "mix": [
+          [
+            "minecraft:terracotta",
+            0.4
+          ],
+          [
+            "minecraft:orange_terracotta",
+            0.3
+          ],
+          [
+            "minecraft:red_terracotta",
+            0.2
+          ],
+          [
+            "minecraft:brown_terracotta",
+            0.1
+          ]
+        ]
+      },
+      "road.surface": "minecraft:dirt_path",
+      "road.shoulder": "minecraft:coarse_dirt",
+      "liquid.water": "minecraft:water",
+      "flora.canyon_scrub_acacia_umbrella_0.trunk": "minecraft:acacia_log",
+      "flora.canyon_scrub_acacia_umbrella_0.leaves": "minecraft:acacia_leaves",
+      "flora.canyon_scrub_desert_ironwood_1.trunk": "minecraft:dark_oak_log",
+      "flora.canyon_scrub_desert_ironwood_1.leaves": "minecraft:oak_leaves"
+    }
+  },
+  "intent": {
+    "era": "frontier",
+    "wealth": 0.5,
+    "decline": 0.25,
+    "formality": 0.2,
+    "event": {
+      "kind": "boom",
+      "severity": 0.7,
+      "recency": 0.1
+    },
+    "climate": {
+      "biome": "minecraft:badlands",
+      "temperature": 0.8,
+      "humidity": -0.8,
+      "snow": "never"
+    },
+    "character": {
+      "label": "gold-rush frontier town",
+      "props": {
+        "prefer": [
+          "cart",
+          "notice_board",
+          "well_head"
+        ]
+      },
+      "motifs": {
+        "roofType": "shed",
+        "massing": "blocky",
+        "windowRhythm": "regular",
+        "ornamentDensity": 0.2
+      },
+      "materialTheme": "temperate_timber",
+      "formPacks": [
+        "frontier_west"
+      ]
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 85,
+          "amplitude": 25,
+          "frequency": 0.003125,
+          "beachWidth": 0,
+          "snowLineFraction": 1
+        },
+        "children": [
+          {
+            "id": "mesa_plateau",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.35,
+                0.22
+              ],
+              "height": 40,
+              "radius": 80,
+              "profile": "sharp",
+              "irregularity": 0.144
+            }
+          },
+          {
+            "id": "red_rock_canyon",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.08,
+                  0.52
+                ],
+                [
+                  0.32,
+                  0.52
+                ],
+                [
+                  0.65,
+                  0.52
+                ],
+                [
+                  0.92,
+                  0.52
+                ]
+              ],
+              "width": 70,
+              "depth": 25,
+              "profile": "sharp",
+              "flooded": "never",
+              "meander": 0.3
+            }
+          },
+          {
+            "id": "gold_creek",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.08,
+                  0.58
+                ],
+                [
+                  0.32,
+                  0.58
+                ],
+                [
+                  0.65,
+                  0.58
+                ],
+                [
+                  0.92,
+                  0.58
+                ]
+              ],
+              "width": 8,
+              "depth": 3,
+              "profile": "rounded",
+              "flooded": "never",
+              "meander": 0.4
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "arid",
+          "latitudeGradient": 0
+        }
+      },
+      {
+        "id": "canyon_scrub",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "params": {
+          "density": 0.008,
+          "undergrowth": {
+            "grass": 0.05,
+            "deadwood": 0.4
+          },
+          "species": [
+            {
+              "id": "canyon_scrub_acacia_umbrella_0",
+              "shape": "acacia_umbrella",
+              "weight": 0.4,
+              "minHeight": 5,
+              "maxHeight": 8,
+              "trunkPalette": "flora.canyon_scrub_acacia_umbrella_0.trunk",
+              "leafPalette": "flora.canyon_scrub_acacia_umbrella_0.leaves"
+            },
+            {
+              "id": "canyon_scrub_desert_ironwood_1",
+              "shape": "desert_ironwood",
+              "weight": 0.6,
+              "minHeight": 17,
+              "maxHeight": 22,
+              "trunkPalette": "flora.canyon_scrub_desert_ironwood_1.trunk",
+              "leafPalette": "flora.canyon_scrub_desert_ironwood_1.leaves"
+            }
+          ]
+        }
+      },
+      {
+        "id": "saloon_golden_nugget",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "params": {
+          "archetype": "false_front_saloon",
+          "floors": 2,
+          "roof": "flat",
+          "windowRhythm": "dense",
+          "wallSymbol": "minecraft:spruce_planks",
+          "trimSymbol": "minecraft:dark_oak_log",
+          "roofSymbol": "minecraft:dark_oak_slab"
+        },
+        "constraints": [
+          {
+            "along": "red_rock_canyon",
+            "offset": 8,
+            "side": "left"
+          },
+          {
+            "at": [
+              0.42,
+              0.5
+            ]
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south"
+          }
+        }
+      },
+      {
+        "id": "saloon_silver_dollar",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "params": {
+          "archetype": "false_front_saloon",
+          "floors": 2,
+          "roof": "flat",
+          "windowRhythm": "regular",
+          "wallSymbol": "minecraft:oak_planks",
+          "trimSymbol": "minecraft:spruce_log",
+          "roofSymbol": "minecraft:oak_slab"
+        },
+        "constraints": [
+          {
+            "along": "red_rock_canyon",
+            "offset": 8,
+            "side": "right"
+          },
+          {
+            "at": [
+              0.44,
+              0.54
+            ]
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north"
+          }
+        }
+      },
+      {
+        "id": "saloon_last_chance",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "params": {
+          "archetype": "false_front_saloon",
+          "floors": 1,
+          "roof": "flat",
+          "windowRhythm": "sparse",
+          "wallSymbol": "minecraft:birch_planks",
+          "trimSymbol": "minecraft:spruce_log",
+          "roofSymbol": "minecraft:birch_slab"
+        },
+        "constraints": [
+          {
+            "along": "red_rock_canyon",
+            "offset": 8,
+            "side": "left"
+          },
+          {
+            "at": [
+              0.46,
+              0.5
+            ]
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south"
+          }
+        }
+      },
+      {
+        "id": "assay_office",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "params": {
+          "archetype": "assay_office",
+          "floors": 1,
+          "roof": "flat",
+          "windowRhythm": "regular",
+          "basement": {
+            "depth": 3,
+            "style": "vault"
+          },
+          "wallSymbol": "minecraft:oak_planks",
+          "trimSymbol": "minecraft:dark_oak_log",
+          "roofSymbol": "minecraft:dark_oak_slab"
+        },
+        "constraints": [
+          {
+            "along": "red_rock_canyon",
+            "offset": 8,
+            "side": "left"
+          },
+          {
+            "at": [
+              0.5,
+              0.5
+            ]
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south"
+          }
+        }
+      },
+      {
+        "id": "general_store",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "params": {
+          "archetype": "general_store",
+          "floors": 2,
+          "roof": "flat",
+          "windowRhythm": "regular",
+          "wallSymbol": "minecraft:spruce_planks",
+          "trimSymbol": "minecraft:stripped_spruce_log",
+          "roofSymbol": "minecraft:spruce_slab"
+        },
+        "constraints": [
+          {
+            "along": "red_rock_canyon",
+            "offset": 8,
+            "side": "right"
+          },
+          {
+            "at": [
+              0.48,
+              0.54
+            ]
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north"
+          }
+        }
+      },
+      {
+        "id": "town_livery",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "params": {
+          "archetype": "livery_stable",
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse",
+          "wallSymbol": "minecraft:dark_oak_planks",
+          "trimSymbol": "minecraft:dark_oak_log",
+          "roofSymbol": "minecraft:spruce_stairs"
+        },
+        "constraints": [
+          {
+            "along": "red_rock_canyon",
+            "offset": 10,
+            "side": "right"
+          },
+          {
+            "at": [
+              0.54,
+              0.54
+            ]
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north"
+          }
+        }
+      },
+      {
+        "id": "main_street_boardwalk",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "params": {
+          "entry": "boardwalk",
+          "route": {
+            "along": "red_rock_canyon",
+            "offset": 6,
+            "side": "left"
+          }
+        }
+      },
+      {
+        "id": "gold_stamp_mill",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "params": {
+          "archetype": "stamp_mill",
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "sparse",
+          "wallSymbol": "minecraft:dark_oak_planks",
+          "trimSymbol": "minecraft:spruce_log",
+          "roofSymbol": "minecraft:deepslate_tile_stairs"
+        },
+        "constraints": [
+          {
+            "along": "gold_creek",
+            "offset": 6,
+            "side": "left"
+          },
+          {
+            "at": [
+              0.52,
+              0.56
+            ]
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south"
+          }
+        }
+      },
+      {
+        "id": "wooden_train_station",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "params": {
+          "archetype": "train_station",
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "regular",
+          "wallSymbol": "minecraft:spruce_planks",
+          "trimSymbol": "minecraft:dark_oak_log",
+          "roofSymbol": "minecraft:spruce_stairs"
+        },
+        "constraints": [
+          {
+            "along": "red_rock_canyon",
+            "offset": 12,
+            "side": "left"
+          },
+          {
+            "at": [
+              0.62,
+              0.5
+            ]
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south"
+          }
+        }
+      },
+      {
+        "id": "frontier_rail_line",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "rail_line",
+          "at": {
+            "x": 61,
+            "z": 5
+          },
+          "yaw": 90,
+          "length": 64
+        }
+      },
+      {
+        "id": "steam_locomotive",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "locomotive",
+          "at": {
+            "x": 61,
+            "z": 5
+          },
+          "yaw": 90
+        }
+      },
+      {
+        "id": "boot_hill",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "params": {
+          "prop": "boot_hill_row",
+          "at": {
+            "x": -61,
+            "z": -31
+          },
+          "yaw": 0
+        }
+      },
+      {
+        "id": "crashed_airship",
+        "kind": "generator",
+        "generator": "authored:crashed_airship",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            44,
+            14,
+            20
+          ]
+        },
+        "params": {
+          "brief": "A shattered steampunk dirigible wrecked atop the red-rock mesa, its torn canvas envelope exposing twisted brass trusses, cracked steam boilers, a crumpled wooden gondola, and shattered propeller blades embedded in the sandstone.",
+          "seat": "embed"
+        },
+        "constraints": [
+          {
+            "at": [
+              0.35,
+              0.22
+            ]
+          }
+        ]
+      },
+      {
+        "id": "airship_crash_furrow",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "params": {
+          "entry": "crash_furrow",
+          "route": {
+            "into": "crashed_airship",
+            "run": 48
+          }
+        }
+      },
+      {
+        "id": "roads",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "params": {
+          "anchors": [
+            "saloon_golden_nugget",
+            "saloon_silver_dollar",
+            "saloon_last_chance",
+            "assay_office",
+            "general_store",
+            "town_livery",
+            "gold_stamp_mill",
+            "wooden_train_station"
+          ],
+          "pattern": "ribbon",
+          "width": 3,
+          "lanterns": false,
+          "junctionStyle": "plain"
+        }
+      }
+    ]
+  },
+  "programs": {
+    "crashed_airship": {
+      "mode": "landmark",
+      "envelope": [
+        26,
+        22,
+        46
+      ],
+      "sourceHash": "b3:89fac55eb61ccf09be6726f6b76f6cfb079872d77fb5b844801f491837d28065",
+      "outputHash": "b3:99b650ba0caa991ef425b78678df0ecf8ed814d162b0ff81473415093747d518",
+      "conforms": false,
+      "conformHash": "b3:831a185cb9afb5ba1a8683cdd36b4db4f9fb40a9cbb6b5a82f3b1c2d182a5155",
+      "source": "export const envelope = [26, 22, 46];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const seatY = 7;\n\n  // The settlement's authentic palette\n  const wood = api.theme.wood;\n  const stone = api.theme.stone;\n  const ground = api.theme.ground;\n  const roof = api.theme.roof;\n\n  const pPlanks = wood.planks || \"minecraft:spruce_planks\";\n  const pLog = wood.log || \"minecraft:spruce_log\";\n  const pFence = wood.fence || \"minecraft:spruce_fence\";\n  const pSlab = wood.slab || \"minecraft:spruce_slab\";\n\n  const pStone = stone.primary || \"minecraft:red_sandstone\";\n  const pStoneAccent = stone.accent || \"minecraft:cut_red_sandstone\";\n  const pStoneWall = stone.wall || \"minecraft:red_sandstone_wall\";\n  const pScree = ground.scree || \"minecraft:gravel\";\n  const pRoof = roof.solid || \"minecraft:terracotta\";\n\n  // Steampunk metal & canvas substructure (Rule 7 literal substances)\n  const pCopper = \"minecraft:cut_copper\";\n  const pCopperExposed = \"minecraft:exposed_cut_copper\";\n  const pCopperBlock = \"minecraft:copper_block\";\n  const pIronBars = \"minecraft:iron_bars\";\n  const pChain = \"minecraft:chain\";\n  const pBoiler = \"minecraft:blast_furnace\";\n  const pCauldron = \"minecraft:cauldron\";\n  const pCanvas = \"minecraft:white_terracotta\";\n  const pCanvasAlt = \"minecraft:terracotta\";\n  const pAsh = \"minecraft:basalt\";\n\n  // Local grid to orchestrate geometry & guarantee 6-connectivity\n  const grid = new Map();\n  function setBlock(x, y, z, block) {\n    if (x < 0 || x >= W || y < 0 || y >= H || z < 0 || z >= D) return;\n    grid.set(`${x},${y},${z}`, block);\n  }\n\n  // Dirigible spine & envelope geometry\n  function getSpine(z) {\n    const t = Math.max(0, Math.min(1, (z - 2) / 40));\n    // Keel tilted upward from prow impact towards stern\n    const cx = 12.5 + 1.1 * Math.sin(t * Math.PI) + 0.3 * t;\n    const cy = seatY + 1.2 + t * 6.2;\n    // Aerodynamic teardrop cross-section radius\n    const R = 5.2 * Math.sin(Math.pow(t, 0.65) * Math.PI) + 1.2;\n    return { cx, cy, R, t };\n  }\n\n  // Roll angle (listing ~12 degrees to starboard after crash)\n  const roll = 0.21;\n  const cosR = Math.cos(roll);\n  const sinR = Math.sin(roll);\n\n  // 1. Continuous Main Keel Backbone (nose to stern)\n  for (let z = 2; z <= 42; z++) {\n    const { cx, cy, R } = getSpine(z);\n    const dy = -R * 0.85;\n    const rx = -dy * sinR;\n    const ry = dy * cosR;\n    const kx = Math.round(cx + rx);\n    const ky = Math.round(cy + ry);\n\n    setBlock(kx, ky, z, pCopperBlock);\n    setBlock(kx, ky + 1, z, pLog);\n    if (z >= 10 && z <= 32) {\n      setBlock(kx + 1, ky, z, pLog);\n    }\n  }\n\n  // 2. Rib Rings (Transverse structural hoops)\n  const ringZs = [4, 8, 12, 16, 20, 24, 28, 32, 36, 40];\n  for (const zr of ringZs) {\n    const { cx, cy, R } = getSpine(zr);\n    const steps = 38;\n    for (let i = 0; i < steps; i++) {\n      const theta = (i / steps) * Math.PI * 2;\n\n      // Crash fractures: missing damaged arcs\n      if (zr === 4 && theta > Math.PI * 0.3 && theta < Math.PI * 0.7) continue; // crushed prow\n      if (zr === 8 && theta > Math.PI * 0.15 && theta < Math.PI * 0.45) continue; // snapped upper rib\n      if (zr === 28 && (theta < Math.PI * 0.3 || theta > Math.PI * 1.8)) continue; // boiler explosion blowout\n\n      const dx = R * Math.cos(theta);\n      const dy = R * Math.sin(theta) * 0.85;\n      const rx = dx * cosR - dy * sinR;\n      const ry = dx * sinR + dy * cosR;\n      const bx = Math.round(cx + rx);\n      const by = Math.round(cy + ry);\n\n      const rBlock = (i % 3 === 0) ? pCopperBlock : (i % 2 === 0 ? pCopper : pCopperExposed);\n      setBlock(bx, by, zr, rBlock);\n    }\n\n    // Radial spokes and tension tie rods\n    if (zr === 16 || zr === 20 || zr === 24 || zr === 32) {\n      const spokes = [0, Math.PI * 0.5, Math.PI, Math.PI * 1.5];\n      for (const sp of spokes) {\n        for (let r = 1; r < R - 0.7; r += 1.0) {\n          const dx = r * Math.cos(sp);\n          const dy = r * Math.sin(sp) * 0.85;\n          const rx = dx * cosR - dy * sinR;\n          const ry = dx * sinR + dy * cosR;\n          const bx = Math.round(cx + rx);\n          const by = Math.round(cy + ry);\n          setBlock(bx, by, zr, pIronBars);\n        }\n      }\n    }\n  }\n\n  // 3. Longitudinal Stringers & Braces\n  const stringerAngles = [\n    0, Math.PI * 0.33, Math.PI * 0.67,\n    Math.PI, Math.PI * 1.33, Math.PI * 1.67\n  ];\n  for (let sIdx = 0; sIdx < stringerAngles.length; sIdx++) {\n    const baseAngle = stringerAngles[sIdx];\n    for (let z = 4; z <= 40; z++) {\n      if (sIdx === 1 && z >= 9 && z <= 14) continue; // twisted off near impact\n      if (sIdx === 4 && z >= 25 && z <= 29) continue; // ruptured near engine\n\n      const { cx, cy, R } = getSpine(z);\n      const dx = R * Math.cos(baseAngle);\n      const dy = R * Math.sin(baseAngle) * 0.85;\n      const rx = dx * cosR - dy * sinR;\n      const ry = dx * sinR + dy * cosR;\n      const bx = Math.round(cx + rx);\n      const by = Math.round(cy + ry);\n\n      setBlock(bx, by, z, (z % 4 === 0) ? pCopperBlock : pIronBars);\n    }\n  }\n\n  // 4. Torn Canvas Envelope\n  for (let z = 5; z <= 39; z++) {\n    const { cx, cy, R } = getSpine(z);\n    // Port upper canopy (weathered remaining fabric)\n    if (z >= 20 && z <= 38) {\n      const thMin = Math.PI * 0.62;\n      const thMax = Math.PI * 1.28;\n      for (let th = thMin; th <= thMax; th += 0.12) {\n        const tearBorder = 0.14 * Math.sin(z * 1.4);\n        if (th < thMin + tearBorder || th > thMax - tearBorder) continue;\n\n        const dx = R * Math.cos(th);\n        const dy = R * Math.sin(th) * 0.85;\n        const rx = dx * cosR - dy * sinR;\n        const ry = dx * sinR + dy * cosR;\n        const bx = Math.round(cx + rx);\n        const by = Math.round(cy + ry);\n\n        const blk = (z + Math.round(th * 6)) % 4 === 0 ? pRoof : pCanvas;\n        setBlock(bx, by, z, blk);\n      }\n    }\n\n    // Forward shredded canopy flap\n    if (z >= 7 && z <= 13) {\n      const thMin = Math.PI * 0.38;\n      const thMax = Math.PI * 0.72;\n      for (let th = thMin; th <= thMax; th += 0.15) {\n        if (api.random() < 0.16) continue;\n        const dx = R * Math.cos(th);\n        const dy = R * Math.sin(th) * 0.85;\n        const rx = dx * cosR - dy * sinR;\n        const ry = dx * sinR + dy * cosR;\n        const bx = Math.round(cx + rx);\n        const by = Math.round(cy + ry);\n        setBlock(bx, by, z, pCanvasAlt);\n      }\n    }\n  }\n\n  // 5. Steampunk Machinery & Twin Steam Boilers\n  const spine26 = getSpine(26);\n  const engCx = Math.round(spine26.cx);\n  const engCy = Math.round(spine26.cy);\n\n  // Engine deck\n  for (let x = engCx - 2; x <= engCx + 2; x++) {\n    for (let z = 24; z <= 29; z++) {\n      setBlock(x, engCy - 2, z, pCopper);\n    }\n  }\n\n  // Port Boiler (massive brass steam vessel)\n  for (let z = 25; z <= 28; z++) {\n    setBlock(engCx - 2, engCy - 1, z, \"minecraft:blast_furnace[facing=west]\");\n    setBlock(engCx - 2, engCy, z, pCopperBlock);\n    setBlock(engCx - 1, engCy - 1, z, pCopperBlock);\n    setBlock(engCx - 1, engCy, z, pCauldron);\n  }\n  // Boiler exhaust stack\n  setBlock(engCx - 2, engCy + 1, 26, pCopper);\n  setBlock(engCx - 2, engCy + 2, 26, pIronBars);\n  setBlock(engCx - 2, engCy + 3, 26, pIronBars);\n\n  // Starboard Boiler (ruptured and charred)\n  for (let z = 25; z <= 27; z++) {\n    setBlock(engCx + 2, engCy - 1, z, pAsh);\n    setBlock(engCx + 1, engCy - 1, z, \"minecraft:blast_furnace[facing=east]\");\n    setBlock(engCx + 2, engCy, z, \"minecraft:crying_obsidian\");\n  }\n  setBlock(engCx + 1, engCy, 26, pCauldron);\n  setBlock(engCx + 2, engCy + 1, 26, pChain);\n\n  // Main propeller drive shaft\n  for (let z = 28; z <= 41; z++) {\n    const sp = getSpine(z);\n    const scx = Math.round(sp.cx);\n    const scy = Math.round(sp.cy - 1);\n    setBlock(scx, scy, z, pCopperBlock);\n  }\n\n  // 6. Rear Stern Propeller Assembly\n  const sternSpine = getSpine(41);\n  const phx = Math.round(sternSpine.cx);\n  const phy = Math.round(sternSpine.cy - 1);\n  const phz = 41;\n\n  setBlock(phx, phy, phz, pCopperBlock);\n  setBlock(phx, phy, phz + 1, pCopperBlock);\n  setBlock(phx, phy, phz + 2, \"minecraft:lightning_rod[facing=south]\");\n\n  // Blade 1: Upward\n  for (let dy = 1; dy <= 4; dy++) {\n    setBlock(phx, phy + dy, phz + 1, pPlanks);\n    if (dy >= 2) setBlock(phx + 1, phy + dy, phz + 1, pSlab);\n  }\n  // Blade 2: Starboard downward\n  for (let d = 1; d <= 3; d++) {\n    setBlock(phx + d, phy - d, phz + 1, pPlanks);\n    setBlock(phx + d, phy - d + 1, phz + 1, pSlab);\n  }\n  // Blade 3: Port upward\n  for (let d = 1; d <= 3; d++) {\n    setBlock(phx - d, phy + Math.floor(d * 0.5), phz + 1, pPlanks);\n  }\n  // Blade 4: Snapped blade stub & tip driven into mesa rock\n  setBlock(phx - 1, phy - 1, phz + 1, pPlanks);\n  const propGroundY = seatY + api.heightAt(phx - 2, 39);\n  for (let y = propGroundY - 1; y <= propGroundY + 3; y++) {\n    setBlock(phx - 2, y, 39, pPlanks);\n  }\n  setBlock(phx - 2, propGroundY + 2, 40, pSlab);\n\n  // 7. Port Outrigger Engine Nacelle\n  const outZ = 20;\n  const outX = 4;\n  const outSpine = getSpine(outZ);\n  const outY = Math.round(outSpine.cy - 1);\n  const hullX = Math.round(outSpine.cx - outSpine.R * 0.85);\n\n  for (let x = outX; x <= hullX; x++) {\n    setBlock(x, outY, outZ, pCopperBlock);\n  }\n  for (let z = outZ - 1; z <= outZ + 2; z++) {\n    setBlock(outX, outY, z, pCopper);\n    setBlock(outX, outY - 1, z, pCopperBlock);\n  }\n  const outGy = seatY + api.heightAt(outX, outZ - 1);\n  for (let y = outGy; y <= outY - 2; y++) {\n    setBlock(outX, y, outZ - 1, pCopper);\n  }\n  setBlock(outX, outGy + 1, outZ - 2, pPlanks);\n  setBlock(outX + 1, outGy + 2, outZ - 1, pPlanks);\n\n  // 8. Wooden Gondola & Bridge Cabin\n  const gMinX = 10;\n  const gMaxX = 14;\n  const gMinZ = 12;\n  const gMaxZ = 21;\n  const gFloorY = seatY + 1;\n  const gCeilY = seatY + 5;\n\n  for (let z = gMinZ; z <= gMaxZ; z++) {\n    for (let x = gMinX; x <= gMaxX; x++) {\n      // Solid floor\n      setBlock(x, gFloorY, z, pPlanks);\n\n      // Crumpled forward cabin section (splintered hull)\n      if (z < 15) {\n        if (api.random() > 0.45) {\n          setBlock(x, gFloorY + 1, z, pSlab);\n        }\n        continue;\n      }\n\n      // Ceiling\n      setBlock(x, gCeilY, z, pPlanks);\n\n      // Cabin perimeter walls\n      const isWallX = (x === gMinX || x === gMaxX);\n      const isWallZ = (z === gMinZ || z === gMaxZ);\n\n      if (isWallX || isWallZ) {\n        for (let y = gFloorY + 1; y < gCeilY; y++) {\n          // Open ruptured breach on port side (player entrance)\n          if (x === gMinX && z === 17 && (y === gFloorY + 1 || y === gFloorY + 2)) {\n            continue;\n          }\n          if (y === gFloorY + 2 && (z === 16 || z === 19 || z === 20)) {\n            setBlock(x, y, z, pFence);\n          } else if ((x === gMinX || x === gMaxX) && (z === 15 || z === 21)) {\n            setBlock(x, y, z, pLog);\n          } else {\n            setBlock(x, y, z, pPlanks);\n          }\n        }\n      }\n    }\n  }\n\n  // Heavy timber suspension trusses hanging gondola from keel\n  const strutZs = [14, 16, 18, 20];\n  for (const sz of strutZs) {\n    const sp = getSpine(sz);\n    const kx = Math.round(sp.cx);\n    const ky = Math.round(sp.cy - sp.R * 0.8);\n    for (let y = gCeilY; y <= ky; y++) {\n      setBlock(gMinX, y, sz, pLog);\n      setBlock(gMaxX, y, sz, pLog);\n      setBlock(kx, y, sz, pCopperBlock);\n    }\n  }\n\n  // 9. Ground Impact Furrow & Scree (Crash Trench)\n  for (let z = 1; z <= 22; z++) {\n    const sp = getSpine(z);\n    const cx = Math.round(sp.cx);\n    for (let dx = -3; dx <= 3; dx++) {\n      const x = cx + dx;\n      if (x < 0 || x >= W) continue;\n      const gy = seatY + api.heightAt(x, z);\n\n      if (Math.abs(dx) <= 1) {\n        setBlock(x, gy, z, pScree);\n        setBlock(x, gy - 1, z, pStoneAccent);\n      } else if (Math.abs(dx) === 2) {\n        setBlock(x, gy, z, pStoneAccent);\n        if (api.random() < 0.35) {\n          setBlock(x, gy + 1, z, pStoneWall);\n        }\n      } else if (api.random() < 0.45) {\n        setBlock(x, gy, z, pScree);\n      }\n    }\n  }\n\n  // Prow buried into the red rock\n  for (let z = 1; z <= 3; z++) {\n    const sp = getSpine(z);\n    const cx = Math.round(sp.cx);\n    const gy = seatY + api.heightAt(cx, z);\n    for (let y = gy; y <= gy + 2; y++) {\n      setBlock(cx, y, z, pCopperBlock);\n      setBlock(cx - 1, y, z, pStoneAccent);\n      setBlock(cx + 1, y, z, pStoneAccent);\n    }\n  }\n\n  // 10. Rule 6 Ground Conformance: Extend all occupied columns down to local terrain\n  const colMinY = new Map();\n  for (const key of grid.keys()) {\n    const [x, y, z] = key.split(\",\").map(Number);\n    const colKey = `${x},${z}`;\n    if (!colMinY.has(colKey) || y < colMinY.get(colKey)) {\n      colMinY.set(colKey, y);\n    }\n  }\n\n  for (const [colKey, minY] of colMinY.entries()) {\n    const [x, z] = colKey.split(\",\").map(Number);\n    const gy = seatY + api.heightAt(x, z);\n    if (minY > gy) {\n      let fBlock = pStone;\n      if (x >= gMinX && x <= gMaxX && z >= gMinZ && z <= gMaxZ) {\n        fBlock = (x === gMinX || x === gMaxX || z === gMinZ || z === gMaxZ) ? pLog : pStone;\n      } else if (z < 16) {\n        fBlock = pStoneAccent;\n      }\n      for (let y = minY - 1; y >= gy; y--) {\n        setBlock(x, y, z, fBlock);\n      }\n    }\n  }\n\n  // 11. Clear Interior Quarters/Bridge volume (3x3x3 standable room)\n  for (let x = 11; x <= 13; x++) {\n    for (let y = seatY + 2; y <= seatY + 4; y++) {\n      for (let z = 16; z <= 18; z++) {\n        grid.delete(`${x},${y},${z}`);\n      }\n    }\n  }\n  // Ensure solid floor beneath bridge room\n  for (let x = 11; x <= 13; x++) {\n    for (let z = 16; z <= 18; z++) {\n      setBlock(x, seatY + 1, z, pPlanks);\n    }\n  }\n  // Ensure breach entrance stays open\n  grid.delete(`10,${seatY + 2},17`);\n  grid.delete(`10,${seatY + 3},17`);\n\n  // 12. Rule 9: 6-Connectivity Verification (single contiguous body)\n  const allKeys = Array.from(grid.keys());\n  const visited = new Set();\n  const components = [];\n  const neighbors = [\n    [1, 0, 0], [-1, 0, 0],\n    [0, 1, 0], [0, -1, 0],\n    [0, 0, 1], [0, 0, -1]\n  ];\n\n  for (const k of allKeys) {\n    if (visited.has(k)) continue;\n    const comp = [];\n    const queue = [k];\n    visited.add(k);\n\n    while (queue.length > 0) {\n      const curr = queue.pop();\n      comp.push(curr);\n      const [cx, cy, cz] = curr.split(\",\").map(Number);\n      for (const [dx, dy, dz] of neighbors) {\n        const nk = `${cx + dx},${cy + dy},${cz + dz}`;\n        if (grid.has(nk) && !visited.has(nk)) {\n          visited.add(nk);\n          queue.push(nk);\n        }\n      }\n    }\n    components.push(comp);\n  }\n\n  // Discard any minor detached fragments\n  if (components.length > 1) {\n    components.sort((a, b) => b.length - a.length);\n    for (let i = 1; i < components.length; i++) {\n      for (const k of components[i]) {\n        grid.delete(k);\n      }\n    }\n  }\n\n  // 13. Deterministic block emission\n  const sortedKeys = Array.from(grid.keys()).sort((a, b) => {\n    const [x1, y1, z1] = a.split(\",\").map(Number);\n    const [x2, y2, z2] = b.split(\",\").map(Number);\n    if (z1 !== z2) return z1 - z2;\n    if (y1 !== y2) return y1 - y2;\n    return x1 - x2;\n  });\n\n  for (const k of sortedKeys) {\n    const [x, y, z] = k.split(\",\").map(Number);\n    api.set(x, y, z, grid.get(k));\n  }\n\n  return {\n    name: \"Crashed Airship\",\n    seatY: seatY,\n    anchors: {\n      front: [13, seatY + 1, 0],\n      door: [10, seatY + 2, 17]\n    },\n    interiors: [\n      {\n        min: [11, seatY + 2, 16],\n        max: [13, seatY + 4, 18],\n        kind: \"bridge\"\n      }\n    ]\n  };\n}"
+    }
+  }
+}

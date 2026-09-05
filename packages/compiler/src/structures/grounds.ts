@@ -1,0 +1,1356 @@
+/**
+ * Ground treatment (fabric v2, workstream F2) — the ground between the walls.
+ *
+ * The first showcase walk's verdict was that correct buildings were sitting on
+ * a lawn: the grammar builds a granary and the road pass runs a lane to its
+ * door, and everything in between is untouched terrain grass, right up to the
+ * masonry. Then the lawn ends and closed canopy begins, in a step. Nothing in
+ * the pipeline was responsible for the *space* a settlement occupies, so
+ * nothing made it.
+ *
+ * This module is that responsibility, in three parts, none of which needs F1's
+ * district machinery — every one of them derives from what is already on the
+ * ground, so it applies to every settlement world that compiles today:
+ *
+ * 1. **Lot dressing.** Every placed building gets a treatment chosen by its
+ *    archetype's catalog category ({@link GROUND_TREATMENTS}): a paved apron
+ *    ring downtown, a fenced garden behind a cottage, a gravel working yard at
+ *    a works, a smooth-stone path ring and flower borders at a church. The
+ *    treatment mutates the column plan's *surface*, exactly as the road pass
+ *    does, because a forecourt is a change to the ground rather than an object
+ *    resting on it.
+ * 2. **Worn ground paint.** A settlement-wide speckle of dirt path and coarse
+ *    dirt fanning out from every road and doorstep column, dense against the
+ *    lane and single-digit percent a few blocks off it, so the ground records
+ *    that people walk here.
+ * 3. **The clearing transition band.** Between the felled ground of a
+ *    settlement and the wood outside it, a band of meadow that thins to
+ *    scattered trees, with the stumps and fallen logs of the trees that were
+ *    taken. This one runs *after* the scatter — it thins a planted forest
+ *    rather than deciding where one may grow — and is exported separately as
+ *    {@link buildTransitionBand}.
+ *
+ * ## Rules the whole module obeys
+ *
+ * - **Nothing floats.** Every block is placed at `plan.ground[idx] + 1` of its
+ *   own column, never at a neighbour's height.
+ * - **Nothing lands on water.** A column with any fluid is skipped outright.
+ * - **Nothing overwrites work already done.** Roads, the plaza, doorsteps,
+ *   building footprints and props are all masked out before a single column is
+ *   touched, which is why this pass runs last.
+ * - **Every decision is position-keyed.** `hash2`/`hashInt`/`hashPick` from
+ *   `terrain/detail.ts`, seeded off the node seed — no sequential RNG, no
+ *   traversal-order dependence, and no transcendental arithmetic.
+ */
+
+import { structureById, type Region } from "@terrainist/stdlib";
+
+import type { PrismarineStack } from "../emit/prismarine.js";
+import type { Rect } from "../layout/frames.js";
+import type { OccupancyGrid } from "../layout/types.js";
+import { CLEARING_MARGIN, distanceToHull, type HullPoint } from "../terrain/clearing.js";
+import { FluidKind, type ColumnPlan } from "../terrain/columns.js";
+import { hash2, hashInt, hashPick } from "../terrain/detail.js";
+import type { Palette } from "../terrain/palette.js";
+import type { TreePlacement } from "../terrain/vegetation.js";
+
+import type { BuiltBuilding, StructureBlock } from "./buildings.js";
+import { index, inside } from "./sweep.js";
+
+/* -------------------------------------------------------------------------- */
+/* tunables — Kai dials these after a walk                                     */
+/* -------------------------------------------------------------------------- */
+
+/** Width, in columns, of the paved apron ring around a commercial/civic lot. */
+export const APRON_RADIUS = 2;
+
+/** Width, in columns, of the gravel working yard around an industrial lot. */
+const YARD_RADIUS = 2;
+
+/** Width, in columns, of the path ring around a religious/memorial lot. */
+const SACRED_RADIUS = 2;
+
+/** How deep, in columns, a cottage garden reaches out from the wall it abuts. */
+const GARDEN_DEPTH = 5;
+
+/**
+ * How far a dressed column's ground may sit from the building's floor plane
+ * before the treatment gives up on it, in blocks.
+ *
+ * A forecourt is a flat thing. Painting one across a two-block drop produces a
+ * staircase of mismatched surface blocks, which reads worse than the grass it
+ * replaced — so anything steeper is simply left alone.
+ */
+const LOT_MAX_RELIEF = 2;
+
+/** Share of a garden's interior columns that grow a flower. */
+const GARDEN_FLOWER_DENSITY = 0.14;
+
+/** Share of a garden's interior columns that grow a tuft of grass. */
+const GARDEN_GRASS_DENSITY = 0.26;
+
+/** Share of the outer ring of a sacred lot that carries a border flower. */
+const SACRED_FLOWER_DENSITY = 0.18;
+
+/** How far worn paint fans out from a road or doorstep column, in columns. */
+const WEAR_REACH = 5;
+
+/** Probability a column one step off a lane is worn to path. */
+const WEAR_NEAR = 0.42;
+
+/** Probability a column at {@link WEAR_REACH} is worn — deliberately faint. */
+const WEAR_FAR = 0.03;
+
+/* --- the ruin yard (RUINS-PLAN-v0 §7.2) ----------------------------------- */
+
+/**
+ * Share of a ruin yard's ground worn off at `intensity = 0`, and the share it
+ * reaches at `intensity = 1`.
+ *
+ * A ruined shell standing on a mown lawn undoes itself; a ruined shell standing
+ * on bare dirt reads as a building site. The window between them is the whole
+ * treatment, and it is deliberately not 1 at the top: the green comes back
+ * through a ruin, so some of that ground has to still be green.
+ */
+const RUIN_YARD_WEAR_MIN = 0.3;
+/** @see RUIN_YARD_WEAR_MIN */
+const RUIN_YARD_WEAR_MAX = 0.85;
+
+/** Share of a ruin yard's interior columns that take a block of rubble. */
+const RUIN_YARD_RUBBLE_DENSITY = 0.08;
+
+/** Share of a ruin yard's fence run that has fallen away, at `intensity = 1`. */
+const RUIN_YARD_FENCE_GAP = 0.55;
+
+/**
+ * How much the ruin field lifts the volunteer growth in a ruin yard, and the
+ * wear sweep on the ground around it.
+ *
+ * §7.2's last bullet and §7.3's first: the *global* `decay.vegetationReclaim`
+ * and `decay.coverage` rows keep doing exactly what they do, and the field
+ * lifts them **where the buildings actually fell**. That is the interleave the
+ * F19 row asks for, and it is one line of arithmetic in each of two places.
+ */
+const RUIN_RECLAIM_LIFT = 0.6;
+/** @see RUIN_RECLAIM_LIFT */
+const RUIN_WEAR_LIFT = 0.6;
+
+/** Share of a broken street column that grows a tuft of volunteer green. */
+const BROKEN_STREET_GRASS = 0.3;
+
+/** Share of a broken street column that grows a volunteer flower. */
+const BROKEN_STREET_FLOWER = 0.06;
+
+/** How far past the cleared hull the transition band reaches, in columns. */
+export const TRANSITION_BAND = 14;
+
+/**
+ * Share of the band, measured from its inner edge, that is kept tree-free.
+ *
+ * The inner half is meadow: the ground a village has actually been mowing.
+ * The outer half is the thinning wood.
+ */
+export const TRANSITION_MEADOW_FRACTION = 0.5;
+
+/** In the outer half of the band, one tree in this many survives. */
+export const TRANSITION_TREE_KEEP = 6;
+
+/** Share of felled trees that leave a stump standing. */
+const TRANSITION_STUMP_CHANCE = 0.18;
+
+/** Share of felled trees that leave a log lying where they fell. */
+const TRANSITION_LOG_CHANCE = 0.1;
+
+/** Blocks in a fallen log. */
+const TRANSITION_LOG_LENGTH = 3;
+
+/** Share of meadow columns that grow a tuft of grass. */
+const TRANSITION_GRASS_DENSITY = 0.15;
+
+/** Share of meadow columns that grow a flower. */
+const TRANSITION_FLOWER_DENSITY = 0.05;
+
+/** How far past the outermost footprint the ground pass will paint, in columns. */
+const GROUND_CLIP_MARGIN = 24;
+
+/* -------------------------------------------------------------------------- */
+/* the category → treatment table                                              */
+/* -------------------------------------------------------------------------- */
+
+/** What a lot's leftover ground is made of. */
+export type GroundTreatment = "apron" | "garden" | "yard" | "sacred" | "ruin_yard" | "none";
+
+/**
+ * The treatment each catalog category asks for.
+ *
+ * Keyed by `StructureCategory` — the archetype id of a placed building is the
+ * catalog id of its entry, so `structureById(archetype).category` is the whole
+ * lookup. A category with no entry here (or a building whose archetype is not
+ * in the catalog) falls back to {@link DEFAULT_TREATMENT}, which is a garden:
+ * the least wrong thing to put beside an unknown building is a hedge.
+ */
+export const GROUND_TREATMENTS: Readonly<Record<string, GroundTreatment>> = Object.freeze({
+  residential: "garden",
+  vernacular: "garden",
+  rural: "garden",
+  nomadic: "garden",
+  fantasy: "garden",
+  civic: "apron",
+  commercial: "apron",
+  modern: "apron",
+  science: "apron",
+  leisure: "apron",
+  amusement: "apron",
+  "transport-land": "apron",
+  "transport-water": "apron",
+  "transport-air": "apron",
+  industrial: "yard",
+  energy: "yard",
+  infrastructure: "yard",
+  waterworks: "yard",
+  military: "yard",
+  religious: "sacred",
+  memorial: "sacred",
+  ruins: "none",
+  underground: "none",
+  "street-furniture": "none",
+});
+
+/** Clamp a dial into 0..1. */
+function clampUnit(value: number): number {
+  return value < 0 ? 0 : value > 1 ? 1 : value;
+}
+
+/** The treatment for a building whose category the catalog does not name. */
+export const DEFAULT_TREATMENT: GroundTreatment = "garden";
+
+/** The treatment one archetype's lot gets. */
+export function treatmentOf(archetype: string | undefined): GroundTreatment {
+  if (archetype === undefined) return DEFAULT_TREATMENT;
+  const entry = structureById(archetype);
+  if (entry === undefined) return DEFAULT_TREATMENT;
+  return GROUND_TREATMENTS[entry.category] ?? DEFAULT_TREATMENT;
+}
+
+/* -------------------------------------------------------------------------- */
+/* pass inputs and outputs                                                     */
+/* -------------------------------------------------------------------------- */
+
+/** Everything {@link buildGrounds} reads. */
+export interface GroundPassInput {
+  readonly buildings: readonly BuiltBuilding[];
+  /** Mutated: the surface of every dressed or worn column. */
+  readonly plan: ColumnPlan;
+  readonly palette: Palette;
+  readonly stack: PrismarineStack;
+  /** Detail seed; every decision hangs off it. */
+  readonly seed: number;
+  /** 1 on every road column — aprons meet it, worn paint fans out of it. */
+  readonly roadColumns?: Uint8Array;
+  /** 1 on every plaza column the plaza pass surfaced. */
+  readonly paved?: Uint8Array;
+  /** 1 on the plaza's well, which nothing may enter. */
+  readonly keepClear?: Uint8Array;
+  /** 1 on every column the doorstep pass rewrote. */
+  readonly doorstepColumns?: Uint8Array;
+  /**
+ * 1 on every column a farm parcel won —
+   *
+   * This pass must not dress a field: an apron, a garden, a forecourt or a
+   * `sacred` ring laid over sown rows would be the compiler undoing the crop it
+   * just wrote. The wear sweep is excluded by the same mask and for a stronger
+   * reason — a worn path across a sown field is a defect, not decay.
+   *
+   * The **yard** is not in the mask. §9.2 makes it the one exception: it takes
+   * the existing `yard` treatment, which is exactly what a farmstead's lot
+   * wants.
+   */
+  readonly farmColumns?: Uint8Array;
+  /** Read for its `prop` / `building` / `road` / `plaza` tags; never written. */
+  readonly occupancy?: OccupancyGrid;
+  /**
+   * How worn the settlement's open ground is, 0..1 — the `decay.coverage`
+   * fan-out row's landing place.
+   *
+   * It scales the worn-paint probabilities: a kept-up village keeps today's
+   * faint speckle, an abandoned one has paths worn right across its greens.
+   * Omitted means "today", so a no-intent compile is byte-identical.
+   */
+  readonly decayCoverage?: number;
+  /**
+   * How far volunteer growth has reclaimed the ground, 0..1 — the
+   * `decay.vegetationReclaim` row's landing place.
+   *
+   * It scales garden grass and flower density: nobody weeds an abandoned lot,
+   * so its garden grows *more*, not less. Omitted means "today".
+   */
+  readonly vegetationReclaim?: number;
+  /**
+   * The per-column ruin field (`structures/ruin-field.ts`, RUINS-PLAN §7.1).
+   *
+   * Two things read it: a lot whose field is non-zero takes the `ruin_yard`
+   * treatment **ahead of the category table**, and the wear sweep's chance is
+   * lifted locally by it, so a ruin cluster has the worst ground and an intact
+   * pocket keeps its lawn. Absent when no shell ruined — which is every
+   * document that declares no `decline` — so the pass is unmoved by it.
+   */
+  readonly ruinField?: Float32Array;
+  /**
+   * 1 on every carriageway column the street surfacer broke back to soil
+   * (§7.3), row-major over the plan's region.
+   *
+   * The break-up is a *surface* change and the surfacer owns it; what is left
+   * over is the volunteer growth on top, which belongs here beside every other
+   * blade of grass this pass plants. Absent when nothing broke.
+   */
+  readonly brokenStreet?: Uint8Array;
+}
+
+/** One dressed lot, for the report and for tests. */
+interface DressedLot {
+  readonly nodePath: string;
+  readonly treatment: GroundTreatment;
+  /** Columns whose surface the treatment rewrote. */
+  readonly columns: number;
+  /** Blocks the treatment stood on that ground (fence, flowers, grass). */
+  readonly blocks: number;
+}
+
+/** What {@link buildGrounds} produced. */
+export interface GroundPassResult {
+  readonly blocks: readonly StructureBlock[];
+  readonly lots: readonly DressedLot[];
+  /** Columns rewritten by lot dressing. */
+  readonly dressedColumns: number;
+  /** Columns rewritten by worn paint. */
+  readonly wornColumns: number;
+  /** Lots that took the `ruin_yard` treatment (§7.2). */
+  readonly ruinYards: number;
+  /**
+   * 1 on every column a `ruin_yard` treatment dressed, row-major over the
+   * plan's region; absent when no lot took the treatment.
+   *
+   * Published for RUINS-PLAN-v0-WP6 §6.1, which names the accidental closure
+   * this mask exists to undo: the yard is claimed `ground` by the sweep at the
+   * end of {@link buildGrounds}, `ground` is one of the reclaim's hard tags, so
+   * the one treatment invented to say *this ground is ruined ground* is also
+   * the treatment that forbids a tree from standing on it. Nothing reads the
+   * mask yet — WP-6d's street colonizer is its first reader — and publishing it
+   * writes no block and moves no world.
+   */
+  readonly ruinYardColumns?: Uint8Array;
+  /** Volunteer plants grown on broken street columns (§7.3). */
+  readonly streetReclaim: number;
+}
+
+/**
+ * The block states the ground pass writes, resolved once.
+ *
+ * The three `pave*` states are the **ground roles** of `terrain/palette.ts`,
+ * not the plaza's symbols they used to be. A forecourt is the piece of built
+ * ground a player reads as belonging to the building it rings, so it is laid in
+ * the theme's `plinth` — the building's own base course — broken up with the
+ * pavement and the coping the rest of the quarter is paved and capped with.
+ * Before this it was `plaza.border` (`stone_bricks`) and `plaza.cobble`
+ * (`cobblestone`) whatever theme the settlement was drawn in, which is one of
+ * the six places the "everything is the same grey" defect lived.
+ */
+interface GroundStates {
+  /** The masonry against the wall: the theme's `plinth`. */
+  readonly paveA: number;
+  /** The outer breaking-up course: the theme's `kerb`. */
+  readonly paveB: number;
+  /** The second tone in the body of an apron: the theme's `pavement`. */
+  readonly paveC: number;
+  readonly gravel: number;
+  readonly coarse: number;
+  readonly path: number;
+  readonly smooth: number;
+  readonly fence: number;
+  readonly gate: Readonly<Record<"north" | "south" | "east" | "west", number>>;
+  readonly grass: number;
+  readonly flowers: readonly number[];
+  /** Surface states a treatment is willing to paint over. */
+  readonly soft: ReadonlySet<number>;
+}
+
+/**
+ * The soil family — surface states a treatment is willing to paint over.
+ *
+ * Exported because it is now read by two passes rather than one: this pass
+ * decides what it may dress, and the gentle-ground scan of `structures/farm.ts`
+ * decides what a field may be seated on names this
+ * very set). Two hand-kept copies of "what counts as soil" would drift, and the
+ * drift would look like a farm refusing perfectly good ground.
+ */
+export function softSurfaceStates(palette: Palette, stack: PrismarineStack): ReadonlySet<number> {
+  const soft = new Set<number>();
+  for (const name of [
+    "minecraft:grass_block",
+    "minecraft:dirt",
+    "minecraft:coarse_dirt",
+    "minecraft:podzol",
+    "minecraft:rooted_dirt",
+    "minecraft:moss_block",
+    "minecraft:mud",
+  ]) {
+    const state = stack.blockByName(name)?.stateId;
+    if (state !== undefined) soft.add(state);
+  }
+  for (const s of ["ground.surface", "ground.coarse_dirt", "ground.podzol", "ground.mud"]) {
+    if (palette.has(s)) soft.add(palette.state(s));
+  }
+  return soft;
+}
+
+function resolveStates(palette: Palette, stack: PrismarineStack): GroundStates {
+  const named = (name: string): number => stack.blockByName(name)?.stateId ?? 0;
+  const symbol = (s: string, fallback: string): number =>
+    palette.has(s) ? palette.state(s) : named(fallback);
+  const gate = (facing: string): number =>
+    stack.blockStateOf("minecraft:oak_fence_gate", {
+      facing,
+      in_wall: "false",
+      open: "false",
+      powered: "false",
+    }) ?? named("minecraft:oak_fence_gate");
+  const soft = softSurfaceStates(palette, stack);
+  return {
+    // The ground roles first, with the pre-role symbol as the fallback, so a
+    // caller that never ran `defineGroundRoles` — every unit test that dresses
+    // a lot on a bare palette — lays exactly what it always laid.
+    paveA: symbol("ground.plinth", "minecraft:stone_bricks"),
+    paveB: symbol("street.curb", "minecraft:cobblestone"),
+    paveC: symbol("street.sidewalk", "minecraft:smooth_stone"),
+    // A working yard is earth and grit and was never part of the grey: it keeps
+    // the terrain profile's own symbols, which a document can already override.
+    gravel: symbol("ground.gravel", "minecraft:gravel"),
+    coarse: symbol("ground.coarse_dirt", "minecraft:coarse_dirt"),
+    path: symbol("road.surface", "minecraft:dirt_path"),
+    smooth: symbol("street.sidewalk", "minecraft:smooth_stone"),
+    fence: symbol("road.post", "minecraft:oak_fence"),
+    gate: { north: gate("north"), south: gate("south"), east: gate("east"), west: gate("west") },
+    grass: symbol("foliage.short_grass", "minecraft:short_grass"),
+    flowers: [
+      symbol("flower.poppy", "minecraft:poppy"),
+      symbol("flower.dandelion", "minecraft:dandelion"),
+      symbol("flower.cornflower", "minecraft:cornflower"),
+      symbol("flower.oxeye_daisy", "minecraft:oxeye_daisy"),
+      symbol("flower.azure_bluet", "minecraft:azure_bluet"),
+    ],
+    soft,
+  };
+}
+
+/* -------------------------------------------------------------------------- */
+/* the pass                                                                    */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Dress every lot, then wear the ground between them.
+ *
+ * Runs last in the structure pass, after the doorsteps: everything it must not
+ * touch has by then declared itself, and the ground it reads is the ground the
+ * emitter will lay.
+ */
+export function buildGrounds(input: GroundPassInput): GroundPassResult {
+  const { plan } = input;
+  const { region } = plan;
+  const cells = region.width * region.depth;
+  const blocks: StructureBlock[] = [];
+  const lots: DressedLot[] = [];
+
+  if (input.buildings.length === 0) {
+    return { blocks, lots, dressedColumns: 0, wornColumns: 0, ruinYards: 0, streetReclaim: 0 };
+  }
+
+  const states = resolveStates(input.palette, input.stack);
+  const reserved = reservedMask(input, cells);
+  // Columns this pass has claimed itself, so two neighbouring lots do not
+  // fight over the strip between them: first treatment wins, in building order.
+  const taken = new Uint8Array(cells);
+  const clip = clipBounds(input.buildings, region);
+
+  const free = (x: number, z: number): number => {
+    if (!inside(region, x, z)) return -1;
+    if (x < clip.x0 || x > clip.x1 || z < clip.z0 || z > clip.z1) return -1;
+    const idx = index(region, x, z);
+    if (reserved[idx] === 1 || taken[idx] === 1) return -1;
+    if (plan.fluidKind[idx] !== FluidKind.NONE) return -1;
+    return idx;
+  };
+
+  let dressedColumns = 0;
+  let ruinYards = 0;
+  // §6.1's published mask. Allocated only when a ruin yard actually appears, so
+  // a world that ruins nothing allocates nothing and returns nothing.
+  let ruinYardColumns: Uint8Array | undefined;
+  for (const built of input.buildings) {
+    // §7.2: the ruin field is asked **first**, ahead of the category table. A
+    // ruined shell's ground is ruined ground whatever the archetype's category
+    // would have laid there — a fallen-in chapel does not keep its churchyard.
+    const ruin = ruinAt(input, built);
+    const treatment: GroundTreatment =
+      ruin > 0 ? "ruin_yard" : treatmentOf(built.meta.params.archetype as unknown as string);
+    if (treatment === "none") {
+      lots.push({ nodePath: built.nodePath, treatment, columns: 0, blocks: 0 });
+      continue;
+    }
+    const before = blocks.length;
+    const columns =
+      treatment === "ruin_yard"
+        ? dressRuinYard(
+            input,
+            states,
+            built,
+            ruin,
+            free,
+            taken,
+            blocks,
+            (ruinYardColumns ??= new Uint8Array(cells)),
+          )
+        : treatment === "garden"
+          ? dressGarden(input, states, built, free, taken, blocks)
+          : dressRing(input, states, built, treatment, free, taken, blocks);
+    if (treatment === "ruin_yard") ruinYards++;
+    dressedColumns += columns;
+    lots.push({
+      nodePath: built.nodePath,
+      treatment,
+      columns,
+      blocks: blocks.length - before,
+    });
+  }
+
+  const wornColumns = wearGround(input, states, reserved, taken, clip);
+  // §7.3, the second half: the surfacer broke a share of the carriageway back
+  // to soil, and soil at high decline grows things. The columns stay `road` in
+  // the occupancy grid, so the scatter still refuses to plant a tree in one —
+  // a road reclaimed by scrub, not a forest with a buried road under it.
+  const streetReclaim = reclaimBrokenStreets(input, states, blocks);
+
+  // Treated ground is spoken for. The two passes still to come — the scatter
+  // and the ground-cover decoration — both read the occupancy grid, and
+  // neither should be planting an oak in a forecourt or tufting grass out of a
+  // worn path. Claiming here is the whole of that instruction.
+  if (input.occupancy !== undefined && input.occupancy.mask.length === cells) {
+    const tags = input.occupancy.byTag as Map<string, Uint8Array>;
+    let tag = tags.get("ground");
+    if (tag === undefined) {
+      tag = new Uint8Array(cells);
+      tags.set("ground", tag);
+    }
+    for (let k = 0; k < cells; k++) {
+      if (taken[k] !== 1) continue;
+      input.occupancy.mask[k] = 1;
+      tag[k] = 1;
+    }
+  }
+
+  return {
+    blocks,
+    lots,
+    dressedColumns,
+    wornColumns,
+    ruinYards,
+    streetReclaim,
+    ...(ruinYardColumns === undefined ? {} : { ruinYardColumns }),
+  };
+}
+
+/** How ruined the ground under one building is, 0 when the field is absent. */
+function ruinAt(input: GroundPassInput, built: BuiltBuilding): number {
+  const field = input.ruinField;
+  const { region } = input.plan;
+  if (field === undefined || field.length !== region.width * region.depth) return 0;
+  // The centre of the footprint: inside a ruined lot's own rect the field is
+  // flat at the band's intensity, so any interior column answers the same.
+  const x = (built.footprint.x0 + built.footprint.x1) >> 1;
+  const z = (built.footprint.z0 + built.footprint.z1) >> 1;
+  if (!inside(region, x, z)) return 0;
+  return field[index(region, x, z)] as number;
+}
+
+/**
+ * Every column this pass may not touch.
+ *
+ * Building footprints (the rect, not just the covered cells — the envelope is
+ * what the solver levelled), roads, the plaza and its well, doorsteps, and
+ * anything the occupancy grid has tagged as a building, a road, a plaza or a
+ * prop. The union is computed once because every treatment asks the same
+ * question of every column it considers.
+ */
+function reservedMask(input: GroundPassInput, cells: number): Uint8Array {
+  const { region } = input.plan;
+  const mask = new Uint8Array(cells);
+  const or = (source: Uint8Array | undefined): void => {
+    if (source === undefined || source.length !== cells) return;
+    for (let k = 0; k < cells; k++) if (source[k] === 1) mask[k] = 1;
+  };
+  or(input.roadColumns);
+  or(input.paved);
+  or(input.keepClear);
+  or(input.doorstepColumns);
+  // §9.2, and it lands in `reservedMask` rather than in each treatment because
+  // this one mask is what both `free()` and the wear sweep already read.
+  or(input.farmColumns);
+  if (input.occupancy !== undefined && input.occupancy.mask.length === cells) {
+    for (const tag of ["building", "interior", "road", "plaza", "prop"]) {
+      or(input.occupancy.byTag.get(tag));
+    }
+  }
+  for (const built of input.buildings) {
+    for (let z = built.footprint.z0; z <= built.footprint.z1; z++) {
+      for (let x = built.footprint.x0; x <= built.footprint.x1; x++) {
+        if (!inside(region, x, z)) continue;
+        mask[index(region, x, z)] = 1;
+      }
+    }
+    // …and the apron columns the building itself stood something in.
+    //
+    // A window box is a fence on the ground *outside* the wall with a pot on
+    // top of it, and a porch lamp is two fence posts and a lantern; both live
+    // one column into the apron and neither is in the footprint. Without this
+    // the lot dressing plants a garden flower in that exact column, the flower
+    // is written after the fence and wins, and the pot above it is left
+    // hanging — `unsupported.chain`, found by C1's probe world and reproducible
+    // anywhere a building with a window box gets a soft-ground lot.
+    for (const key of built.apron?.floor?.keys() ?? []) {
+      const comma = key.indexOf(",");
+      const x = Number(key.slice(0, comma));
+      const z = Number(key.slice(comma + 1));
+      if (!inside(region, x, z)) continue;
+      mask[index(region, x, z)] = 1;
+    }
+  }
+  return mask;
+}
+
+/** The union of every footprint, grown by {@link GROUND_CLIP_MARGIN}. */
+function clipBounds(buildings: readonly BuiltBuilding[], region: Region): Rect {
+  let x0 = Number.POSITIVE_INFINITY;
+  let x1 = Number.NEGATIVE_INFINITY;
+  let z0 = Number.POSITIVE_INFINITY;
+  let z1 = Number.NEGATIVE_INFINITY;
+  for (const b of buildings) {
+    x0 = Math.min(x0, b.footprint.x0);
+    x1 = Math.max(x1, b.footprint.x1);
+    z0 = Math.min(z0, b.footprint.z0);
+    z1 = Math.max(z1, b.footprint.z1);
+  }
+  return {
+    x0: Math.max(region.x0, x0 - GROUND_CLIP_MARGIN),
+    x1: Math.min(region.x0 + region.width - 1, x1 + GROUND_CLIP_MARGIN),
+    z0: Math.max(region.z0, z0 - GROUND_CLIP_MARGIN),
+    z1: Math.min(region.z0 + region.depth - 1, z1 + GROUND_CLIP_MARGIN),
+  };
+}
+
+/* -------------------------------------------------------------------------- */
+/* treatment 1: the ring — aprons, yards and sacred paths                      */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * A ring of treated ground around a footprint, `radius` columns wide.
+ *
+ * All three ring treatments share the geometry and differ only in what they
+ * lay: an apron is masonry throughout, a yard is gravel and coarse dirt, and a
+ * sacred ring is smooth stone next to the wall with a flower border outside it.
+ */
+function dressRing(
+  input: GroundPassInput,
+  states: GroundStates,
+  built: BuiltBuilding,
+  treatment: GroundTreatment,
+  free: (x: number, z: number) => number,
+  taken: Uint8Array,
+  blocks: StructureBlock[],
+): number {
+  const { plan, seed } = input;
+  const radius =
+    treatment === "apron" ? APRON_RADIUS : treatment === "yard" ? YARD_RADIUS : SACRED_RADIUS;
+  const rect = built.footprint;
+  let count = 0;
+
+  for (let z = rect.z0 - radius; z <= rect.z1 + radius; z++) {
+    for (let x = rect.x0 - radius; x <= rect.x1 + radius; x++) {
+      const dx = x < rect.x0 ? rect.x0 - x : x > rect.x1 ? x - rect.x1 : 0;
+      const dz = z < rect.z0 ? rect.z0 - z : z > rect.z1 ? z - rect.z1 : 0;
+      const d = Math.max(dx, dz);
+      if (d === 0 || d > radius) continue;
+      const idx = free(x, z);
+      if (idx < 0) continue;
+      const g = plan.ground[idx] as number;
+      if (Math.abs(g - built.floorY) > LOT_MAX_RELIEF) continue;
+
+      if (treatment === "sacred" && d > 1) {
+        // The outer ring of a churchyard is not paved — it is the grass the
+        // path runs through, with a border of flowers along it.
+        taken[idx] = 1;
+        if (
+          states.soft.has(plan.surface[idx] as number) &&
+          hash2(seed, x, z, 41) < SACRED_FLOWER_DENSITY
+        ) {
+          blocks.push({ x, y: g + 1, z, stateId: hashPick(seed, x, z, 42, states.flowers) });
+        }
+        continue;
+      }
+
+      plan.surface[idx] = ringState(states, treatment, seed, x, z, d, radius);
+      plan.snow[idx] = 0;
+      if (plan.soil[idx] === 0) plan.soil[idx] = 1;
+      taken[idx] = 1;
+      count++;
+    }
+  }
+  return count;
+}
+
+/** The surface block one ring column gets. */
+function ringState(
+  states: GroundStates,
+  treatment: GroundTreatment,
+  seed: number,
+  x: number,
+  z: number,
+  d: number,
+  radius: number,
+): number {
+  const r = hash2(seed, x, z, 7);
+  if (treatment === "yard") {
+    if (r < 0.45) return states.gravel;
+    if (r < 0.85) return states.coarse;
+    return states.path;
+  }
+  if (treatment === "sacred") return states.smooth;
+  // An apron: the building's own base course against the wall, breaking up into
+  // the quarter's kerb and grit at its outer edge so it meets the lane rather
+  // than stopping at a drawn line.
+  if (d < radius) {
+    return r < 0.7 ? states.paveA : states.paveC;
+  }
+  if (r < 0.5) return states.paveB;
+  if (r < 0.8) return states.paveA;
+  return states.gravel;
+}
+
+/* -------------------------------------------------------------------------- */
+/* treatment 2: the cottage garden                                             */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * A fenced garden plot beside a house, on the side away from the traffic.
+ *
+ * The side is chosen by looking for road columns around the footprint: the
+ * garden goes opposite the busiest face, which is the face the door and the
+ * lane are on. With no road anywhere near, the plot goes south, which is a
+ * choice rather than a guess and is at least consistent.
+ *
+ * The fence runs the three outer edges of the plot — the fourth is the house
+ * wall — with a gate at the midpoint of the far edge, so the garden is enterable
+ * rather than sealed.
+ */
+function dressGarden(
+  input: GroundPassInput,
+  states: GroundStates,
+  built: BuiltBuilding,
+  free: (x: number, z: number) => number,
+  taken: Uint8Array,
+  blocks: StructureBlock[],
+): number {
+  const { plan, seed } = input;
+  const rect = built.footprint;
+  const side = quietSide(input, rect);
+
+  // The plot, one column clear of the wall so the fence never touches masonry.
+  const plot: Rect =
+    side === "north"
+      ? { x0: rect.x0, x1: rect.x1, z0: rect.z0 - GARDEN_DEPTH, z1: rect.z0 - 1 }
+      : side === "south"
+        ? { x0: rect.x0, x1: rect.x1, z0: rect.z1 + 1, z1: rect.z1 + GARDEN_DEPTH }
+        : side === "west"
+          ? { x0: rect.x0 - GARDEN_DEPTH, x1: rect.x0 - 1, z0: rect.z0, z1: rect.z1 }
+          : { x0: rect.x1 + 1, x1: rect.x1 + GARDEN_DEPTH, z0: rect.z0, z1: rect.z1 };
+
+  // The far edge — where the gate goes — and its outward facing.
+  const gateX =
+    side === "west" ? plot.x0 : side === "east" ? plot.x1 : Math.floor((plot.x0 + plot.x1) / 2);
+  const gateZ =
+    side === "north" ? plot.z0 : side === "south" ? plot.z1 : Math.floor((plot.z0 + plot.z1) / 2);
+
+  let count = 0;
+  for (let z = plot.z0; z <= plot.z1; z++) {
+    for (let x = plot.x0; x <= plot.x1; x++) {
+      const idx = free(x, z);
+      if (idx < 0) continue;
+      const g = plan.ground[idx] as number;
+      if (Math.abs(g - built.floorY) > LOT_MAX_RELIEF) continue;
+      taken[idx] = 1;
+      count++;
+
+      const edge = x === plot.x0 || x === plot.x1 || z === plot.z0 || z === plot.z1;
+      // The edge against the house is the house; nothing is built on it.
+      const againstWall =
+        (side === "north" && z === plot.z1) ||
+        (side === "south" && z === plot.z0) ||
+        (side === "west" && x === plot.x1) ||
+        (side === "east" && x === plot.x0);
+      if (edge && !againstWall) {
+        const isGate = x === gateX && z === gateZ;
+        blocks.push({
+          x,
+          y: g + 1,
+          z,
+          stateId: isGate ? states.gate[side] : states.fence,
+        });
+        continue;
+      }
+      if (edge) continue;
+
+      // Inside: the ground stays what it is (a garden is grass), and the hash
+      // decides between a flower, a tuft and bare ground.
+      if (!states.soft.has(plan.surface[idx] as number)) continue;
+      const r = hash2(seed, x, z, 11);
+      // `vegetationReclaim` lifts both densities toward a fully-grown-over
+      // plot. 0 (or absent) is exactly today's garden.
+      const reclaim = input.vegetationReclaim === undefined ? 0 : clampUnit(input.vegetationReclaim);
+      const flowerDensity = GARDEN_FLOWER_DENSITY + (1 - GARDEN_FLOWER_DENSITY) * reclaim * 0.5;
+      const grassDensity = GARDEN_GRASS_DENSITY + (1 - GARDEN_GRASS_DENSITY) * reclaim * 0.7;
+      if (r < flowerDensity) {
+        blocks.push({ x, y: g + 1, z, stateId: hashPick(seed, x, z, 12, states.flowers) });
+      } else if (r < flowerDensity + grassDensity) {
+        blocks.push({ x, y: g + 1, z, stateId: states.grass });
+      }
+    }
+  }
+  return count;
+}
+
+/** The side of a footprint with the least road against it. */
+function quietSide(
+  input: GroundPassInput,
+  rect: Rect,
+): "north" | "south" | "east" | "west" {
+  const road = input.roadColumns;
+  const { region } = input.plan;
+  const counts: Record<"north" | "south" | "east" | "west", number> = {
+    north: 0,
+    south: 0,
+    east: 0,
+    west: 0,
+  };
+  if (road !== undefined && road.length === region.width * region.depth) {
+    const reach = 4;
+    for (let k = 1; k <= reach; k++) {
+      for (let x = rect.x0; x <= rect.x1; x++) {
+        if (inside(region, x, rect.z0 - k) && road[index(region, x, rect.z0 - k)] === 1) counts.north++;
+        if (inside(region, x, rect.z1 + k) && road[index(region, x, rect.z1 + k)] === 1) counts.south++;
+      }
+      for (let z = rect.z0; z <= rect.z1; z++) {
+        if (inside(region, rect.x0 - k, z) && road[index(region, rect.x0 - k, z)] === 1) counts.west++;
+        if (inside(region, rect.x1 + k, z) && road[index(region, rect.x1 + k, z)] === 1) counts.east++;
+      }
+    }
+  }
+  // Fixed tie-break order, so a building with no road anywhere gardens south.
+  const order = ["south", "north", "east", "west"] as const;
+  let best: "north" | "south" | "east" | "west" = "south";
+  let bestCount = Number.POSITIVE_INFINITY;
+  for (const side of order) {
+    if (counts[side] < bestCount) {
+      bestCount = counts[side];
+      best = side;
+    }
+  }
+  return best;
+}
+
+/* -------------------------------------------------------------------------- */
+/* treatment 4: the ruin yard (RUINS-PLAN-v0 §7.2)                             */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The ground beside a shell that fell in.
+ *
+ * It is the cottage garden's own geometry — the plot on the quiet side, the
+ * fence on its three outer edges — with everything about it gone over: the
+ * surface worn to coarse dirt and grit at a density the band's `intensity`
+ * sets, a scatter of full blocks of the shell's **own** survivor material (the
+ * apron spill extended outward, not a second mechanism), the fence run with
+ * gaps in it and **no gate**, and the volunteer growth lifted where the
+ * building actually fell.
+ *
+ * Reusing the garden's plot rather than inventing a ruin-shaped rect is the
+ * ruin law again: a ruined lot is the ordinary lot decayed, not a second
+ * grammar. It also means the yard inherits, for free, every rule that keeps the
+ * garden out of trouble — the relief clamp, the fence never touching masonry,
+ * the reservation the whole pass reads.
+ */
+function dressRuinYard(
+  input: GroundPassInput,
+  states: GroundStates,
+  built: BuiltBuilding,
+  intensity: number,
+  free: (x: number, z: number) => number,
+  taken: Uint8Array,
+  blocks: StructureBlock[],
+  /** §6.1's mask, marked for every column this treatment claims. */
+  yardColumns: Uint8Array,
+): number {
+  const { plan, seed } = input;
+  const rect = built.footprint;
+  const side = quietSide(input, rect);
+  const dial = clampUnit(intensity);
+  const plot: Rect =
+    side === "north"
+      ? { x0: rect.x0, x1: rect.x1, z0: rect.z0 - GARDEN_DEPTH, z1: rect.z0 - 1 }
+      : side === "south"
+        ? { x0: rect.x0, x1: rect.x1, z0: rect.z1 + 1, z1: rect.z1 + GARDEN_DEPTH }
+        : side === "west"
+          ? { x0: rect.x0 - GARDEN_DEPTH, x1: rect.x0 - 1, z0: rect.z0, z1: rect.z1 }
+          : { x0: rect.x1 + 1, x1: rect.x1 + GARDEN_DEPTH, z0: rect.z0, z1: rect.z1 };
+
+  // The shell's own survivor material, taken from the plinth course it stands
+  // on: a ruin's rubble is the building, and cobblestone beside a concrete
+  // frame is the re-clad rule's mistake made outdoors (§5.2).
+  const rubbleState = survivorMaterial(built) ?? states.paveB;
+  const wear = RUIN_YARD_WEAR_MIN + (RUIN_YARD_WEAR_MAX - RUIN_YARD_WEAR_MIN) * dial;
+  const reclaim = clampUnit(
+    (input.vegetationReclaim === undefined ? 0 : clampUnit(input.vegetationReclaim)) +
+      RUIN_RECLAIM_LIFT * dial,
+  );
+  const flowerDensity = GARDEN_FLOWER_DENSITY + (1 - GARDEN_FLOWER_DENSITY) * reclaim * 0.5;
+  const grassDensity = GARDEN_GRASS_DENSITY + (1 - GARDEN_GRASS_DENSITY) * reclaim * 0.7;
+
+  let count = 0;
+  for (let z = plot.z0; z <= plot.z1; z++) {
+    for (let x = plot.x0; x <= plot.x1; x++) {
+      const idx = free(x, z);
+      if (idx < 0) continue;
+      const g = plan.ground[idx] as number;
+      if (Math.abs(g - built.floorY) > LOT_MAX_RELIEF) continue;
+      taken[idx] = 1;
+      yardColumns[idx] = 1;
+      count++;
+
+      const edge = x === plot.x0 || x === plot.x1 || z === plot.z0 || z === plot.z1;
+      const againstWall =
+        (side === "north" && z === plot.z1) ||
+        (side === "south" && z === plot.z0) ||
+        (side === "west" && x === plot.x1) ||
+        (side === "east" && x === plot.x0);
+      if (edge && !againstWall) {
+        // The broken fence: the same run, with gaps. No gate — nobody has
+        // walked through this one on purpose in a long time.
+        if (hash2(seed, x, z, 44) < RUIN_YARD_FENCE_GAP * dial) continue;
+        blocks.push({ x, y: g + 1, z, stateId: states.fence });
+        continue;
+      }
+      if (edge) continue;
+
+      if (!states.soft.has(plan.surface[idx] as number)) continue;
+      // The surface first: worn through in patches, and never snowed on — a
+      // yard nobody clears is bare where it is bare and green where it is not.
+      if (hash2(seed, x, z, 45) < wear) {
+        const r = hash2(seed, x, z, 46);
+        plan.surface[idx] = r < 0.5 ? states.coarse : r < 0.82 ? states.path : states.gravel;
+        plan.snow[idx] = 0;
+        if (plan.soil[idx] === 0) plan.soil[idx] = 1;
+        continue;
+      }
+      // Then what stands on the ground that is left: rubble, or the green
+      // coming back through it.
+      if (hash2(seed, x, z, 47) < RUIN_YARD_RUBBLE_DENSITY * dial) {
+        blocks.push({ x, y: g + 1, z, stateId: rubbleState });
+        continue;
+      }
+      const r = hash2(seed, x, z, 11);
+      if (r < flowerDensity) {
+        blocks.push({ x, y: g + 1, z, stateId: hashPick(seed, x, z, 12, states.flowers) });
+      } else if (r < flowerDensity + grassDensity) {
+        blocks.push({ x, y: g + 1, z, stateId: states.grass });
+      }
+    }
+  }
+  return count;
+}
+
+/**
+ * The shell's own material, read off the plinth course it stands on.
+ *
+ * The lowest-keyed skirt column, in sorted key order, so the answer is a pure
+ * function of the building rather than of map iteration order.
+ */
+function survivorMaterial(built: BuiltBuilding): number | undefined {
+  const skirt = built.apron?.skirt;
+  if (skirt === undefined || skirt.size === 0) return undefined;
+  let bestKey: string | undefined;
+  for (const key of skirt.keys()) {
+    if (bestKey === undefined || key < bestKey) bestKey = key;
+  }
+  return bestKey === undefined ? undefined : skirt.get(bestKey);
+}
+
+/* -------------------------------------------------------------------------- */
+/* the broken street's volunteer growth (RUINS-PLAN-v0 §7.3)                   */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Grow grass and flowers on the carriageway columns the surfacer broke to soil.
+ *
+ * Deliberately plants only, never a solid: `dirt`, `grass_block` and
+ * `coarse_dirt` are all in the walkability audit's `SOLID_TOP` set and a tuft
+ * of short grass is passable, so a broken street stays a walkable street. That
+ * is §7.3's caveat, and it is the reason the break-up is allowed at all.
+ */
+function reclaimBrokenStreets(
+  input: GroundPassInput,
+  states: GroundStates,
+  blocks: StructureBlock[],
+): number {
+  const broken = input.brokenStreet;
+  const { plan, seed } = input;
+  const { region } = plan;
+  const cells = region.width * region.depth;
+  if (broken === undefined || broken.length !== cells) return 0;
+  const reclaim = input.vegetationReclaim === undefined ? 0 : clampUnit(input.vegetationReclaim);
+  const grassDensity = BROKEN_STREET_GRASS * (0.5 + 0.5 * reclaim);
+  const flowerDensity = BROKEN_STREET_FLOWER * (0.5 + 0.5 * reclaim);
+  let grown = 0;
+  for (let j = 0; j < region.depth; j++) {
+    const z = region.z0 + j;
+    for (let i = 0; i < region.width; i++) {
+      const idx = j * region.width + i;
+      if (broken[idx] !== 1) continue;
+      if (plan.fluidKind[idx] !== FluidKind.NONE) continue;
+      // The surfacer decided the column; this only ever agrees with it, so a
+      // column something else repainted afterwards grows nothing.
+      if (!states.soft.has(plan.surface[idx] as number)) continue;
+      const x = region.x0 + i;
+      const g = plan.ground[idx] as number;
+      const r = hash2(seed, x, z, 48);
+      if (r < flowerDensity) {
+        blocks.push({ x, y: g + 1, z, stateId: hashPick(seed, x, z, 49, states.flowers) });
+        grown++;
+      } else if (r < flowerDensity + grassDensity) {
+        blocks.push({ x, y: g + 1, z, stateId: states.grass });
+        grown++;
+      }
+    }
+  }
+  return grown;
+}
+
+/* -------------------------------------------------------------------------- */
+/* treatment 3: worn ground paint                                              */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Speckle the ground around every lane and doorstep with dirt path.
+ *
+ * A breadth-first sweep out from the road and doorstep columns gives each
+ * nearby column a step distance; the probability of wear falls linearly from
+ * {@link WEAR_NEAR} at one step to {@link WEAR_FAR} at {@link WEAR_REACH}, and
+ * the roll itself is the column's own hash. Only columns whose surface is still
+ * soil are eligible, so a treated apron, a cobbled plaza or a beach is never
+ * dirtied.
+ */
+function wearGround(
+  input: GroundPassInput,
+  states: GroundStates,
+  reserved: Uint8Array,
+  taken: Uint8Array,
+  clip: Rect,
+): number {
+  const { plan, seed } = input;
+  const { region } = plan;
+  const cells = region.width * region.depth;
+  const sources: number[] = [];
+  const push = (source: Uint8Array | undefined): void => {
+    if (source === undefined || source.length !== cells) return;
+    for (let k = 0; k < cells; k++) if (source[k] === 1) sources.push(k);
+  };
+  push(input.roadColumns);
+  push(input.doorstepColumns);
+  if (sources.length === 0) return 0;
+
+  const dist = new Int32Array(cells).fill(-1);
+  let frontier = sources;
+  for (const k of frontier) dist[k] = 0;
+  for (let step = 1; step <= WEAR_REACH; step++) {
+    const next: number[] = [];
+    for (const k of frontier) {
+      const i = k % region.width;
+      const j = (k - i) / region.width;
+      for (const [di, dj] of [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+      ] as const) {
+        const ni = i + di;
+        const nj = j + dj;
+        if (ni < 0 || nj < 0 || ni >= region.width || nj >= region.depth) continue;
+        const nk = nj * region.width + ni;
+        if (dist[nk] !== -1) continue;
+        dist[nk] = step;
+        next.push(nk);
+      }
+    }
+    frontier = next;
+    if (frontier.length === 0) break;
+  }
+
+  let worn = 0;
+  for (let j = 0; j < region.depth; j++) {
+    const z = region.z0 + j;
+    if (z < clip.z0 || z > clip.z1) continue;
+    for (let i = 0; i < region.width; i++) {
+      const x = region.x0 + i;
+      if (x < clip.x0 || x > clip.x1) continue;
+      const idx = j * region.width + i;
+      const d = dist[idx] as number;
+      if (d <= 0 || d > WEAR_REACH) continue;
+      if (reserved[idx] === 1 || taken[idx] === 1) continue;
+      if (plan.fluidKind[idx] !== FluidKind.NONE) continue;
+      if (!states.soft.has(plan.surface[idx] as number)) continue;
+      // Linear falloff. Integer arithmetic only — no transcendentals anywhere
+      // in this module, which §6.5 rule 6 requires and a test enforces.
+      const t = (d - 1) / (WEAR_REACH - 1);
+      // `decayCoverage` is a *coverage*, not a multiplier: it lifts the whole
+      // falloff toward total wear, so 0 is today's speckle and 1 is bare
+      // ground everywhere the sweep reached.
+      const base = WEAR_NEAR + (WEAR_FAR - WEAR_NEAR) * t;
+      // §7.3: the row's coverage is the settlement's answer; the ruin field is
+      // the local one. Ruin clusters get the worst ground and an intact pocket
+      // keeps a passable street, which is coherence for one line of arithmetic.
+      const ruin =
+        input.ruinField === undefined || input.ruinField.length !== cells
+          ? 0
+          : (input.ruinField[idx] as number);
+      const lift = clampUnit(
+        (input.decayCoverage === undefined ? 0 : clampUnit(input.decayCoverage)) +
+          RUIN_WEAR_LIFT * ruin,
+      );
+      const chance = base + (1 - base) * lift;
+      if (hash2(seed, x, z, 23) >= chance) continue;
+      plan.surface[idx] = hash2(seed, x, z, 24) < 0.65 ? states.path : states.coarse;
+      plan.snow[idx] = 0;
+      if (plan.soil[idx] === 0) plan.soil[idx] = 1;
+      taken[idx] = 1;
+      worn++;
+    }
+  }
+  return worn;
+}
+
+/* -------------------------------------------------------------------------- */
+/* the clearing transition band                                                */
+/* -------------------------------------------------------------------------- */
+
+/** Everything {@link buildTransitionBand} reads. */
+export interface TransitionBandInput {
+  readonly plan: ColumnPlan;
+  /** The settlement clearing's hulls — one per cluster of footprints. */
+  readonly hulls: readonly (readonly HullPoint[])[];
+  /** The scatter's trees, already clipped against the structures. */
+  readonly trees: readonly TreePlacement[];
+  readonly palette: Palette;
+  readonly stack: PrismarineStack;
+  readonly seed: number;
+  readonly occupancy?: OccupancyGrid;
+  /**
+   * Ground the band may not dress, as a column predicate.
+   *
+   * The caller passes the decoration apron here — the dilated footprints, lane
+   * corridors and plaza the ground-cover pass already refuses to drop deadwood
+   * on. A stump leaning against a garden wall is the same defect whether the
+   * undergrowth pass or this one placed it.
+   */
+  readonly avoid?: (x: number, z: number) => boolean;
+}
+
+/** What {@link buildTransitionBand} produced. */
+export interface TransitionBandResult {
+  /** The trees that survive — the input list minus the felled ones. */
+  readonly trees: readonly TreePlacement[];
+  /** Stumps, fallen logs, meadow grass and flowers. */
+  readonly blocks: readonly StructureBlock[];
+  readonly felled: number;
+  readonly stumps: number;
+  readonly logs: number;
+  readonly meadowBlocks: number;
+  /** 1 on every column inside the band. */
+  readonly band: Uint8Array;
+}
+
+/**
+ * Thin the wood where it meets a settlement, and dress what is left.
+ *
+ * A post-pass over the scatter's output, which is the only honest place for it:
+ * the question "does this settlement abut dense forest?" cannot be answered
+ * before the forest has been planted, and thinning a planted stand keeps every
+ * surviving tree exactly where the scatter put it.
+ *
+ * The band is the annulus from {@link CLEARING_MARGIN} — the edge of the
+ * totally cleared hull — out to `CLEARING_MARGIN + TRANSITION_BAND`. Its inner
+ * {@link TRANSITION_MEADOW_FRACTION} is felled outright and dressed as meadow;
+ * its outer part keeps one tree in {@link TRANSITION_TREE_KEEP}. Every felled
+ * tree gets a hash roll for a stump or a fallen log, so the thinning reads as
+ * something people did rather than as trees that never grew.
+ */
+export function buildTransitionBand(input: TransitionBandInput): TransitionBandResult {
+  const { plan } = input;
+  const { region } = plan;
+  const cells = region.width * region.depth;
+  const band = new Uint8Array(cells);
+  const blocks: StructureBlock[] = [];
+
+  if (input.hulls.length === 0) {
+    return {
+      trees: input.trees,
+      blocks,
+      felled: 0,
+      stumps: 0,
+      logs: 0,
+      meadowBlocks: 0,
+      band,
+    };
+  }
+
+  const states = resolveStates(input.palette, input.stack);
+  const inner = CLEARING_MARGIN;
+  const outer = CLEARING_MARGIN + TRANSITION_BAND;
+  const meadowEdge = inner + Math.round(TRANSITION_BAND * TRANSITION_MEADOW_FRACTION);
+
+  /** Distance from the nearest hull, or `outer` when nothing is near. */
+  const distance = (x: number, z: number): number => {
+    let best = outer + 1;
+    for (const hull of input.hulls) {
+      const d = distanceToHull(hull, x, z);
+      if (d < best) best = d;
+    }
+    return best;
+  };
+
+  // --- the band mask, and the meadow it carries ----------------------------
+  let meadowBlocks = 0;
+  const occupied = input.occupancy?.mask;
+  for (let j = 0; j < region.depth; j++) {
+    const z = region.z0 + j;
+    for (let i = 0; i < region.width; i++) {
+      const x = region.x0 + i;
+      const idx = j * region.width + i;
+      const d = distance(x, z);
+      if (d <= inner || d > outer) continue;
+      band[idx] = 1;
+      if (d > meadowEdge) continue;
+      if (plan.fluidKind[idx] !== FluidKind.NONE) continue;
+      if (occupied !== undefined && occupied.length === cells && occupied[idx] === 1) continue;
+      if (input.avoid?.(x, z) === true) continue;
+      if (!states.soft.has(plan.surface[idx] as number)) continue;
+      const g = plan.ground[idx] as number;
+      const r = hash2(input.seed, x, z, 61);
+      if (r < TRANSITION_FLOWER_DENSITY) {
+        blocks.push({ x, y: g + 1, z, stateId: hashPick(input.seed, x, z, 62, states.flowers) });
+        meadowBlocks++;
+      } else if (r < TRANSITION_FLOWER_DENSITY + TRANSITION_GRASS_DENSITY) {
+        blocks.push({ x, y: g + 1, z, stateId: states.grass });
+        meadowBlocks++;
+      }
+    }
+  }
+
+  // --- the thinning --------------------------------------------------------
+  const kept: TreePlacement[] = [];
+  let felled = 0;
+  let stumps = 0;
+  let logs = 0;
+  for (const tree of input.trees) {
+    if (!inside(region, tree.x, tree.z) || band[index(region, tree.x, tree.z)] !== 1) {
+      kept.push(tree);
+      continue;
+    }
+    const d = distance(tree.x, tree.z);
+    const survives =
+      d > meadowEdge && hashInt(input.seed, tree.x, tree.z, 71, 0, TRANSITION_TREE_KEEP - 1) === 0;
+    if (survives) {
+      kept.push(tree);
+      continue;
+    }
+    felled++;
+    const roll = hash2(input.seed, tree.x, tree.z, 72);
+    if (roll < TRANSITION_STUMP_CHANCE) {
+      if (placeStump(input, tree, blocks)) stumps++;
+    } else if (roll < TRANSITION_STUMP_CHANCE + TRANSITION_LOG_CHANCE) {
+      if (placeFallenLog(input, tree, blocks)) logs++;
+    }
+  }
+
+  return { trees: kept, blocks, felled, stumps, logs, meadowBlocks, band };
+}
+
+/** One or two courses of the felled tree's own log, left standing. */
+function placeStump(
+  input: TransitionBandInput,
+  tree: TreePlacement,
+  blocks: StructureBlock[],
+): boolean {
+  const { plan } = input;
+  const { region } = plan;
+  if (!inside(region, tree.x, tree.z)) return false;
+  if (input.avoid?.(tree.x, tree.z) === true) return false;
+  const idx = index(region, tree.x, tree.z);
+  if (plan.fluidKind[idx] !== FluidKind.NONE) return false;
+  const occupied = input.occupancy?.mask;
+  if (occupied !== undefined && occupied.length === region.width * region.depth && occupied[idx] === 1) {
+    return false;
+  }
+  const g = plan.ground[idx] as number;
+  // Exactly one course. A two-block stump is a two-log column with nothing over
+  // it, which every "no bare trunk tip" invariant in the suite reads as a tree
+  // that lost its canopy — and it is not worth breaking that invariant for.
+  blocks.push({ x: tree.x, y: g + 1, z: tree.z, stateId: tree.trunkState });
+  return true;
+}
+
+/**
+ * A log lying where the tree fell: {@link TRANSITION_LOG_LENGTH} blocks along
+ * one axis, each one resting on its own column's ground.
+ *
+ * The log's axis is rewritten off the tree's own trunk state, so a felled birch
+ * leaves a birch log — decoding the state and re-encoding it with a horizontal
+ * axis rather than guessing at a species.
+ */
+function placeFallenLog(
+  input: TransitionBandInput,
+  tree: TreePlacement,
+  blocks: StructureBlock[],
+): boolean {
+  const { plan, stack } = input;
+  const { region } = plan;
+  const alongX = hashInt(input.seed, tree.x, tree.z, 74, 0, 1) === 0;
+  const decoded = stack.blockStateProps(tree.trunkState);
+  const laid =
+    decoded === undefined
+      ? tree.trunkState
+      : (stack.blockStateOf(decoded.name, { ...decoded.props, axis: alongX ? "x" : "z" }) ??
+        tree.trunkState);
+
+  const placed: StructureBlock[] = [];
+  for (let k = 0; k < TRANSITION_LOG_LENGTH; k++) {
+    const x = tree.x + (alongX ? k : 0);
+    const z = tree.z + (alongX ? 0 : k);
+    if (!inside(region, x, z)) return false;
+    if (input.avoid?.(x, z) === true) return false;
+    const idx = index(region, x, z);
+    if (plan.fluidKind[idx] !== FluidKind.NONE) return false;
+    const occupied = input.occupancy?.mask;
+    if (occupied !== undefined && occupied.length === region.width * region.depth && occupied[idx] === 1) {
+      return false;
+    }
+    placed.push({ x, y: (plan.ground[idx] as number) + 1, z, stateId: laid });
+  }
+  blocks.push(...placed);
+  return true;
+}

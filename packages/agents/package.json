@@ -1,0 +1,30 @@
+{
+  "name": "@terrainist/agents",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "The model-calling stage: intent classifier, document author, program author.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pikalover6/terrainist.git",
+    "directory": "packages/agents"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@terrainist/spec": "*"
+  }
+}

@@ -1,0 +1,1522 @@
+/**
+ * Layout solver v1.
+ *
+ * Runs at substages 3c–3f: after the master height field is composed and
+ * classified, before anything is materialized. It answers exactly one
+ * question — where does each structure go — and answers it the way §4.7 asks:
+ * deterministically, terminating, and accounting for every node in a report.
+ *
+ * The algorithm is deliberately simple, because §4.7's non-obligations say it
+ * may be: **greedy insertion in document order over a seeded candidate pool,
+ * then a bounded local-improvement pass.** No backtracking, no global
+ * optimality, no SAT. Every constraint is either a domain restriction or a
+ * cost, which is what lets a better solver drop in later without the language
+ * moving.
+ *
+ * Determinism, concretely: candidate pools come from the node's `layout`
+ * stream, iteration is document order then candidate index, ties break by the
+ * earlier candidate, and there is no wall-clock, no `Math.random`, and no
+ * hash-map iteration order anywhere in the loop.
+ */
+
+import {
+  Rng,
+  streamSeed,
+  type HeightField,
+  type Region,
+} from "@terrainist/stdlib";
+import {
+  isFarmGenerator,
+  isImplementedConstraint,
+  isTier2,
+  strengthOf,
+  weightOf,
+  warning,
+  type CanonicalConstraint,
+  type LoamDiagnostic,
+  type Yaw,
+} from "@terrainist/spec/ir";
+
+import {
+  clampInt,
+  frameRect,
+  frameNorm as computeFrameNorm,
+  intersectRect,
+  type Frame,
+  type Point2,
+  type Rect,
+} from "./frames.js";
+import {
+  CORRIDOR_RESERVATION_COST,
+  corridorOverlap,
+  roadCorridors,
+  type RoadCorridorAnchor,
+  type RouteCorridor,
+} from "./corridors.js";
+import {
+  coarseAtRegion,
+  coarseZoneRegion,
+  constraintTargetSelector,
+  evaluateConstraint,
+  isUnresolvableTarget,
+  type Candidate,
+  type EvalContext,
+} from "./cost.js";
+import { STEP_RELIEF, reliefOf } from "./district.js";
+import {
+  buildableColumns,
+  footprintStats,
+  groundFeasible,
+  terrainCost,
+  terrainFeasible,
+  type FootprintStats,
+  type TerrainVeto,
+} from "./fitness.js";
+import { resolvePorts, rotatedSize } from "./ports.js";
+import { clampY } from "../terrain/columns.js";
+import {
+  COARSE_RING_MAX,
+  COARSE_RING_STEP,
+  DEFAULT_BLEND,
+  DEFAULT_CANDIDATES,
+  DEFAULT_IMPROVEMENT_ROUNDS,
+  DEFAULT_MAX_SLOPE,
+  makePlacement,
+  type ConstraintReport,
+  type CorridorReport,
+  type CoarseReport,
+  type LadderRung,
+  type LayoutNodeInput,
+  type LayoutRequest,
+  type LayoutResult,
+  type OccupancyGrid,
+  type PadEdit,
+  type Placement,
+  type ResolvedPort,
+  type SolverNodeReport,
+} from "./types.js";
+
+// v0.2 §4.6 rungs 2–4: not yet — `tolerance` relaxation, shrinking a flexible
+// envelope toward `minSize`, and growing a flexible parent are all declared in
+// `LadderRung` and reported, but never applied: this solver's only composite is
+// the root region, and no node resizes. `envelope.flexible`/`minSize` are
+// therefore carried and ignored.
+// v0.2 §4.3: not yet — `mirror` is always false; the solver chooses yaw only.
+
+/** Cost difference below which a local-improvement move is not worth making. */
+const IMPROVEMENT_EPSILON = 1e-9;
+
+/** How far above sea level a footprint's lowest column must sit. */
+const MIN_FREEBOARD = 1;
+
+/** Slope veto for a `city` footprint — see {@link scoreCandidate}. */
+const CITY_MAX_SLOPE = 82;
+
+/**
+ * What a  candidate is charged for not meeting the water.
+ *
+ * Far above the [0, 1] band every normalized constraint cost lives in, so a dry
+ * candidate loses to any wet one, and two dry candidates are still ranked
+ * against each other by their ordinary costs.
+ */
+const AMPHIBIOUS_COST = 50;
+
+/** Fraction of the candidate pool drawn from the coarse zero-cost region. */
+const COARSE_SAMPLE_SHARE = 0.7;
+
+/** A scored candidate. */
+interface Scored {
+  readonly candidate: Candidate;
+  readonly stats: FootprintStats;
+  readonly terrain: number;
+  readonly soft: number;
+  readonly total: number;
+  readonly feasible: boolean;
+  readonly evals: readonly { index: number; cost: number; satisfied: boolean; feasible: boolean }[];
+  /** How badly an infeasible candidate misses, for the last-resort fallback. */
+  readonly penalty: number;
+  /** Why the ground rejected this candidate, or `null` when it did not. */
+  readonly veto: TerrainVeto;
+  /**
+   * The ground is the *only* thing refusing this candidate: no sibling overlaps
+   * it and no constraint of the node's own vetoes it. What
+   * {@link landmarkCoarseSeat} needs to know before it seats a landmark on
+   * ground a building would be refused.
+   */
+  readonly groundOnly: boolean;
+  /** This candidate is a landmark seated on its coarse target (`LOAM-W520`). */
+  readonly coarseSeat?: true;
+  /** This candidate is the nearest feasible site to a blocked coarse target. */
+  readonly coarseRing?: true;
+}
+
+/** Place every structure node. */
+export function solveLayout(request: LayoutRequest): LayoutResult {
+  const { region, nodes } = request;
+  const frame: Frame = { x0: region.x0, z0: region.z0, width: region.width, depth: region.depth };
+  const norm = computeFrameNorm(frame);
+  const diagnostics: LoamDiagnostic[] = [];
+  const placed = new Map<string, Placement>();
+  const reports = new Map<string, MutableNodeReport>();
+  const pools = new Map<string, readonly Candidate[]>();
+  const dropped: string[] = [];
+
+  for (const node of nodes) {
+    const ctx: EvalContext = {
+      frame,
+      frameNorm: norm,
+      self: node,
+      placed,
+      nodes,
+      ...(request.corridors === undefined ? {} : { corridors: request.corridors }),
+      ...(request.products === undefined ? {} : { products: request.products }),
+    };
+    const pool = buildCandidates(node, ctx, request);
+    pools.set(node.id, pool);
+
+    const report: MutableNodeReport = {
+      nodePath: node.nodePath,
+      placed: false,
+      size: node.size,
+      appliedRungs: [],
+      constraints: [],
+      coarse: coarseReports(node, ctx),
+      score: { terrain: 0, soft: 0, total: 0 },
+      candidatesConsidered: pool.length,
+    };
+    reports.set(node.id, report);
+
+    const demoted = new Set<number>();
+    let best = bestOf(node, pool, ctx, request, demoted);
+
+    // --- the relaxation ladder (§4.6) ---------------------------------------
+    if (best === null && node.optional) {
+      // The task's ordering: drop optional nodes before demoting anything.
+      // v0.2 §4.6: not yet — the spec demotes (rung 5) before dropping (rung 6);
+      // this solver drops first, so an optional node never silently costs a
+      // sibling its declared constraint.
+      report.appliedRungs.push("node_dropped");
+      dropped.push(node.nodePath);
+      diagnostics.push(
+        warning(
+          "NODE_DROPPED",
+          node.nodePath,
+          `no placement satisfies this node's hard constraints; it is optional, so it was dropped`,
+          'relax a hard constraint (add "strength": "soft"), widen its envelope, or set "optional": false to see the conflict reported instead of the node disappearing',
+        ),
+      );
+      continue;
+    }
+
+    if (best === null) {
+      for (const index of demotionOrder(node, "coarse")) {
+        demoted.add(index);
+        report.appliedRungs.push("constraint_demoted");
+        diagnostics.push(demotionDiagnostic(node, index, "coarse containment"));
+        best = bestOf(node, pool, ctx, request, demoted);
+        if (best !== null) break;
+      }
+    }
+    if (best === null) {
+      for (const index of demotionOrder(node, "other")) {
+        demoted.add(index);
+        report.appliedRungs.push("constraint_demoted");
+        diagnostics.push(demotionDiagnostic(node, index, "constraint"));
+        best = bestOf(node, pool, ctx, request, demoted);
+        if (best !== null) break;
+      }
+    }
+    if (best === null) {
+      // v0.2 §4.6 rung 7: not yet — the spec *fails* the compile here, naming a
+      // minimal conflicting set. This solver reports the conflict and places
+      // the least-bad candidate anyway, so a repair loop always has a world to
+      // look at.
+      best = leastBad(node, pool, ctx, request, demoted);
+      report.appliedRungs.push("unsatisfiable");
+      const histogram = vetoHistogram(node, pool, ctx, request, demoted);
+      report.terrainVeto = histogram;
+      diagnostics.push(unsatisfiableDiagnostic(node, pool.length, histogram));
+    }
+    if (best === null) continue; // Only when the pool is empty (a degenerate region).
+
+    if (best.coarseSeat === true) {
+      report.appliedRungs.push("landmark_coarse_seat");
+      diagnostics.push(coarseSeatDiagnostic(node, best));
+    }
+    if (best.coarseRing === true) report.appliedRungs.push("landmark_coarse_ring");
+    if (report.appliedRungs.length === 0) report.appliedRungs.push("absorbed");
+    commit(node, best, placed, report, demoted);
+  }
+
+  // --- bounded local improvement (§4.7 obligation 3: terminate) -------------
+  const rounds = request.improvementRounds ?? DEFAULT_IMPROVEMENT_ROUNDS;
+  let improvements = 0;
+  let roundsRun = 0;
+  for (let round = 0; round < rounds; round++) {
+    roundsRun = round + 1;
+    let moved = 0;
+    for (const node of nodes) {
+      const current = placed.get(node.id);
+      const pool = pools.get(node.id);
+      const report = reports.get(node.id);
+      if (current === undefined || pool === undefined || report === undefined) continue;
+      placed.delete(node.id);
+      const ctx: EvalContext = {
+      frame,
+      frameNorm: norm,
+      self: node,
+      placed,
+      nodes,
+      ...(request.corridors === undefined ? {} : { corridors: request.corridors }),
+      ...(request.products === undefined ? {} : { products: request.products }),
+    };
+      const demoted = new Set<number>(report.demotedIndices ?? []);
+      const best = bestOf(node, pool, ctx, request, demoted);
+      if (best !== null && best.total < report.score.total - IMPROVEMENT_EPSILON) {
+        commit(node, best, placed, report, demoted);
+        moved++;
+      } else {
+        placed.set(node.id, current);
+      }
+    }
+    improvements += moved;
+    if (moved === 0) break;
+  }
+
+  // --- the landmarks that walked away from their target --------------------
+  // Said *after* the improvement rounds, because an improvement is exactly the
+  // move that would make an earlier report a lie.
+  for (const node of nodes) {
+    const placement = placed.get(node.id);
+    if (placement === undefined) continue;
+    const abandoned = coarseAbandonDiagnostic(node, placement, {
+      frame,
+      frameNorm: norm,
+      self: node,
+      placed,
+      nodes,
+      ...(request.corridors === undefined ? {} : { corridors: request.corridors }),
+      ...(request.products === undefined ? {} : { products: request.products }),
+    });
+    if (abandoned !== undefined) diagnostics.push(abandoned);
+  }
+
+  // --- the land budget (LOAM-W526) -----------------------------------------
+  // Also after the improvement rounds, and for the same reason: the envelope
+  // measured has to be the one the world ships with.
+  diagnostics.push(...landBudgetDiagnostics(nodes, placed, request, frame));
+
+  // --- constraints that bound to nothing at all (LOAM-W523) ----------------
+  // Said once per (node, constraint), here rather than in `evaluateConstraint`:
+  // that runs once per candidate per round and the answer does not depend on
+  // the candidate at all. A selector resolving to no node is a fact about the
+  // document and the solver's node list, both of which are fixed for the whole
+  // solve — so one pass over them says it exactly once, in node order.
+  for (const node of nodes) {
+    const report = reports.get(node.id);
+    const unresolved = new Set<number>();
+    node.constraints.forEach((constraint, index) => {
+      const selector = constraintTargetSelector(constraint);
+      if (selector === undefined || !isUnresolvableTarget(selector, node, nodes)) return;
+      unresolved.add(index);
+      diagnostics.push(
+        warning(
+          "CONSTRAINT_TARGET_UNRESOLVED",
+          node.nodePath,
+          `the "${constraint.type}" constraint [${index}] targets "${selector}", which names no node this solver places; ` +
+            `it was never evaluated against anything and constrained nothing`,
+          `a district's children are placed by the district itself, after this solve, and are invisible to constraints — ` +
+            `bind to the district instead. Otherwise check the id: it must name a sibling in the same placement scope`,
+        ),
+      );
+    });
+    if (report === undefined || unresolved.size === 0) continue;
+    // The report must not go on claiming these are satisfied: nothing was
+    // measured, so "satisfied" was only ever the absence of a measurement.
+    report.constraints = report.constraints.map((c) =>
+      unresolved.has(c.index) ? { ...c, satisfied: false, targetUnresolved: true } : c,
+    );
+  }
+
+  // --- products ------------------------------------------------------------
+  const placements: Placement[] = [];
+  const ports: ResolvedPort[] = [];
+  const padEdits: PadEdit[] = [];
+  for (const node of nodes) {
+    const placement = placed.get(node.id);
+    if (placement === undefined) continue;
+    placements.push(placement);
+    ports.push(...resolvePorts(placement, node.size, node.ports));
+    const pad = padFor(node, placement, request.field);
+    if (pad !== null) padEdits.push(pad);
+  }
+
+  return {
+    placements,
+    report: {
+      nodes: nodes.map((n) => finalizeReport(reports.get(n.id) as MutableNodeReport)),
+      dropped,
+      corridors: (request.corridors ?? []).map((c) => corridorReport(c, region)),
+      improvementRounds: roundsRun,
+      improvements,
+    },
+    occupancy: buildOccupancy(region, nodes, placed),
+    padEdits,
+    ports,
+    diagnostics,
+  };
+}
+
+/* -------------------------------------------------------------------------- */
+/* candidates                                                                  */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Build a node's candidate pool.
+ *
+ * Coarse constraints seed the search (§4.9.4): their jittered point is the
+ * node's *preferred initial anchor*, and the rest of the pool is sampled from
+ * the zero-cost region first, the whole domain second — so a zoned node lands
+ * naturally inside its cell but is never trapped there when the ground is bad.
+ */
+export function buildCandidates(
+  node: LayoutNodeInput,
+  ctx: EvalContext,
+  request: LayoutRequest,
+): Candidate[] {
+  const count = request.candidateCount ?? DEFAULT_CANDIDATES;
+  const domain = frameRect(ctx.frame);
+
+  let zeroCost: Rect | null = null;
+  const seeds: Point2[] = [];
+  for (const [index, constraint] of node.constraints.entries()) {
+    if (constraint.type !== "zone" && constraint.type !== "at") continue;
+    const coarse =
+      constraint.type === "zone" ? coarseZoneRegion(constraint, index, ctx) : coarseAtRegion(constraint, ctx);
+    if (coarse.region === null) continue;
+    seeds.push(coarse.seedPoint);
+    zeroCost = zeroCost === null ? coarse.region : (intersectRect(zeroCost, coarse.region) ?? zeroCost);
+  }
+  const sampleRect = zeroCost === null ? domain : (intersectRect(zeroCost, domain) ?? domain);
+
+  const rng = new Rng(streamSeed(node.seed, "layout"));
+  const anchors: Point2[] = [...seeds];
+  const near = Math.ceil(count * COARSE_SAMPLE_SHARE);
+  for (let i = 0; i < count; i++) {
+    const rect = i < near ? sampleRect : domain;
+    anchors.push({
+      x: rect.x0 + Math.floor(rng.float() * (rect.x1 - rect.x0 + 1)),
+      z: rect.z0 + Math.floor(rng.float() * (rect.z1 - rect.z0 + 1)),
+    });
+  }
+
+  const yaws = node.rotations.length > 0 ? node.rotations : ([0] as readonly Yaw[]);
+  const out: Candidate[] = [];
+  for (const anchor of anchors) {
+    for (const yaw of yaws) {
+      out.push(candidateAt(node, anchor, yaw, ctx.frame));
+    }
+  }
+  return out;
+}
+
+/** Place a node's footprint so its centre is as close to `anchor` as the frame allows. */
+function candidateAt(node: LayoutNodeInput, anchor: Point2, yaw: Yaw, frame: Frame): Candidate {
+  const [w, , d] = rotatedSize(node.size, yaw);
+  const maxX = frame.x0 + frame.width - w;
+  const maxZ = frame.z0 + frame.depth - d;
+  const x0 = clampInt(anchor.x - ((w - 1) >> 1), frame.x0, Math.max(frame.x0, maxX));
+  const z0 = clampInt(anchor.z - ((d - 1) >> 1), frame.z0, Math.max(frame.z0, maxZ));
+  const rect: Rect = { x0, z0, x1: x0 + w - 1, z1: z0 + d - 1 };
+  return { rect, anchor: { x: x0 + ((w - 1) >> 1), z: z0 + ((d - 1) >> 1) }, yaw };
+}
+
+/* -------------------------------------------------------------------------- */
+/* scoring                                                                     */
+/* -------------------------------------------------------------------------- */
+
+/** An authored `terrain_conform.maxSlope`, or `null` when the author named none. */
+export function explicitMaxSlopeOf(node: LayoutNodeInput): number | null {
+  for (const c of node.constraints) {
+    if (c.type === "terrain_conform" && typeof c["maxSlope"] === "number") return c["maxSlope"];
+  }
+  return null;
+}
+
+/** `terrain_conform.maxSlope`, or the profile default. */
+export function maxSlopeOf(node: LayoutNodeInput): number {
+  return explicitMaxSlopeOf(node) ?? DEFAULT_MAX_SLOPE;
+}
+
+/** The keep-clear margin around a node: `clearance` plus envelope `padding`. */
+export function clearanceOf(node: LayoutNodeInput): number {
+  let amount = 0;
+  for (const c of node.constraints) {
+    if (c.type !== "clearance") continue;
+    const direction = c["direction"];
+    // Only horizontal clearance affects the footprint domain; `up`/`down`
+    // clearance is a voxel-level lint after pass 6 (§4.4).
+    if (direction === "up" || direction === "down") continue;
+    if (typeof c["amount"] === "number") amount = Math.max(amount, c["amount"]);
+  }
+  return amount + node.padding;
+}
+
+/** True when this node accepts overlapping a sibling (`overlapAllowed: true`). */
+function allowsOverlap(node: LayoutNodeInput): boolean {
+  return node.constraints.some((c) => c.type === "not_overlapping" && c["overlapAllowed"] === true);
+}
+
+function inflate(rect: Rect, by: number): Rect {
+  return { x0: rect.x0 - by, z0: rect.z0 - by, x1: rect.x1 + by, z1: rect.z1 + by };
+}
+
+/** Overlap area between two rectangles, in columns. */
+function overlapArea(a: Rect, b: Rect): number {
+  const r = intersectRect(a, b);
+  if (r === null) return 0;
+  return (r.x1 - r.x0 + 1) * (r.z1 - r.z0 + 1);
+}
+
+function scoreCandidate(
+  node: LayoutNodeInput,
+  candidate: Candidate,
+  ctx: EvalContext,
+  request: LayoutRequest,
+  demoted: ReadonlySet<number>,
+): Scored {
+  const amphibious = node.generator === "precinct.harbour@0" || node.amphibious === true;
+  const hazardMask = amphibious
+    ? (request.amphibiousHazardMask ?? undefined)
+    : request.hazardMask;
+  const stats = footprintStats(request.field, request.classification, candidate.rect, hazardMask);
+  // A city is *ground*, not a building. A four-hundred-block footprint over
+  // real terrain contains some cliff almost by definition, and vetoing on the
+  // worst column in it reports every candidate as infeasible — which does not
+  // stop the node being placed, it just drops it to the least-violating
+  // position, i.e. a coin toss, with an `UNSATISFIABLE` warning the author
+  // cannot act on. Slope still *costs* (`terrainCost` reads the mean), and C1
+  // gives the cells the ground made steep over to parks.
+  // A district is ground on the same terms — the reasoning above was right and
+  // was simply applied to one `kind` and not the other. An *authored*
+  // `terrain_conform.maxSlope` still wins: saying a number out loud is the one
+  // way an author asks for a stricter (or looser) limit than the default.
+  const districtGround = node.kind === "district";
+  const slopeLimit =
+    node.kind === "city"
+      ? CITY_MAX_SLOPE
+      : node.kind === "district"
+        ? (explicitMaxSlopeOf(node) ?? CITY_MAX_SLOPE)
+        : maxSlopeOf(node);
+  // A harbour is the one node type that is *supposed* to straddle the
+  // waterline: the freeboard veto — no footprint may reach below sea level —
+  // is what a quay exists to overcome, and applying it here would push every
+  // port inland until it had no water to face. Its slope and hazard vetoes
+  // still apply; only the water floor is lifted.
+  const floorY = amphibious ? -Infinity : request.seaLevel + MIN_FREEBOARD;
+  const veto = districtGround
+    ? groundFeasible(stats, slopeLimit, floorY)
+    : terrainFeasible(stats, slopeLimit, floorY);
+  let feasible = veto === null;
+  let penalty = veto === null ? 0 : veto === "too_steep" ? stats.maxSlope - slopeLimit : 1000;
+  let groundOnly = true;
+
+  // …and the other half of the same rule: a harbour that does not *straddle*
+  // the waterline is not a harbour. Lifting the freeboard veto only says water
+  // is allowed; this says it is required, which is what stops the solver from
+  // doing the sensible-for-a-cottage thing and sliding the box up the beach
+  // onto the flattest ground it can find. The median has to be *above* water:
+  // a box that is mostly sea has no room behind its quay for the sheds and the
+  // road, and a harbour with no landward side is a jetty.
+  const touchesWater = stats.min < request.seaLevel;
+  const hasLand = stats.median > request.seaLevel;
+
+  // `not_overlapping` is implicit between all siblings (§4.4).
+  if (!allowsOverlap(node)) {
+    const self = inflate(candidate.rect, clearanceOf(node));
+    for (const [id, other] of ctx.placed) {
+      const otherNode = ctx.nodes.find((n) => n.id === id);
+      const margin = otherNode === undefined ? 0 : clearanceOf(otherNode);
+      const area = overlapArea(self, inflate(other.footprint, margin));
+      if (area > 0) {
+        feasible = false;
+        groundOnly = false;
+        penalty += area;
+      }
+    }
+  }
+
+  // Charged as a *cost*, not a veto. A veto would be honest and would also
+  // report every dry candidate as an unsatisfied hard constraint, which lands
+  // in the author's diagnostics as "nothing satisfies this node" on a document
+  // that placed its port perfectly. A cost an order of magnitude above every
+  // normalized constraint cost buys the same outcome and says nothing.
+  // Wanting water is not the same as tolerating it: a harbour that found no
+  // shore is not a harbour, an inland city that found no shore is a city.
+  const wantsWater = node.generator === "precinct.harbour@0" || node.wantsWater === true;
+  let soft = wantsWater ? amphibiousCost(touchesWater, hasLand) : 0;
+  const evals: { index: number; cost: number; satisfied: boolean; feasible: boolean }[] = [];
+  for (const [index, constraint] of node.constraints.entries()) {
+    const result = evaluateConstraint(constraint, index, candidate, ctx, demoted.has(index));
+    evals.push({ index, cost: result.cost, satisfied: result.satisfied, feasible: result.feasible });
+    soft += result.cost;
+    if (!result.feasible) {
+      feasible = false;
+      groundOnly = false;
+      penalty += 1;
+    }
+  }
+
+  // --- the corridor reservation (§4.9.6) ------------------------------------
+  // Soft, and only soft. A corridor is a *reservation*, not a wall: it was
+  // drawn at 3b from coarse anchor points, before anything knew where the
+  // ground was steep or where the water was, and a hard veto against a guess of
+  // that vintage would throw away buildable placements to protect a line the
+  // router may not even take. What it must do is stop the default outcome —
+  // sixteen houses scattered across the future high street because nothing in
+  // the cost model had heard of it — and a cost does that.
+  //
+  // A node that binds itself to the corridor with `along`/`beside` is exempt:
+  // charging it for being near the street it asked to be near would be the two
+  // halves of §4.4 fighting each other.
+  //
+  // Only **road** corridors reserve ground, and the asymmetry is the point. A
+  // road corridor is a reservation for something that will be built there; a
+  // course corridor is the record of something that already was. Nothing is
+  // going to be routed along a ridge later, so charging a house for standing on
+  // one would be the corridor mechanism inventing a keep-out the author never
+  // asked for — and a `ridge` edit is seventy blocks wide, so it would be a
+  // keep-out over most of the map. A river's channel is already unbuildable
+  // ground and the hazard mask says so. Course corridors exist here for one
+  // reason: `along` and `beside` need something to bind to (§4.4 `course`).
+  const corridors = ctx.corridors ?? [];
+  if (corridors.length > 0 && !bindsToCorridor(node)) {
+    const area = (candidate.rect.x1 - candidate.rect.x0 + 1) * (candidate.rect.z1 - candidate.rect.z0 + 1);
+    let claimed = 0;
+    for (const corridor of corridors) {
+      if (corridor.kind !== "road") continue;
+      if (corridor.anchors.includes(node.nodePath)) continue;
+      claimed += corridorOverlap(corridor, candidate.rect);
+    }
+    if (claimed > 0) soft += (CORRIDOR_RESERVATION_COST * Math.min(claimed, area)) / area;
+  }
+
+  const terrain = terrainCost(stats, slopeLimit);
+  return {
+    candidate,
+    stats,
+    terrain,
+    soft,
+    total: terrain + soft,
+    feasible,
+    evals,
+    penalty,
+    veto,
+    groundOnly,
+  };
+}
+
+/**
+ * What a harbour candidate is charged for its relationship with the sea.
+ *
+ * Two tiers, because the two failures are not equally bad: a box with no water
+ * in it cannot be a harbour at all, while a box that is nearly all water is a
+ * harbour with no room behind its quay — buildable, just poorer. Ranking them
+ * rather than vetoing both is what lets the solver take the best shore
+ * available on a map whose coast is steep.
+ */
+function amphibiousCost(touchesWater: boolean, hasLand: boolean): number {
+  if (!touchesWater) return AMPHIBIOUS_COST;
+  return hasLand ? 0 : AMPHIBIOUS_COST / 2;
+}
+
+/** True when the node declares an `along` (or desugared `beside`) constraint. */
+function bindsToCorridor(node: LayoutNodeInput): boolean {
+  return node.constraints.some((c) => c.type === "along");
+}
+
+/**
+ * The candidate this node is placed on: the cheapest feasible one, unless it
+ * is a landmark that walked away from a coarse target it could have stood on
+ * (see {@link landmarkCoarseSeat}).
+ *
+ * Both halves live here, and not at the call site, because the local
+ * improvement pass re-runs this function: a seat decided once and then
+ * improved away would be the same silent relocation with more steps.
+ */
+function bestOf(
+  node: LayoutNodeInput,
+  pool: readonly Candidate[],
+  ctx: EvalContext,
+  request: LayoutRequest,
+  demoted: ReadonlySet<number>,
+): Scored | null {
+  const best = cheapestFeasible(node, pool, ctx, request, demoted);
+  const seated = landmarkCoarseSeat(node, pool, ctx, request, demoted, best);
+  if (seated !== null) return seated;
+  return landmarkCoarseRing(node, ctx, request, demoted, best) ?? best;
+}
+
+/** The cheapest feasible candidate, or `null`. Ties break by candidate order. */
+function cheapestFeasible(
+  node: LayoutNodeInput,
+  pool: readonly Candidate[],
+  ctx: EvalContext,
+  request: LayoutRequest,
+  demoted: ReadonlySet<number>,
+): Scored | null {
+  let best: Scored | null = null;
+  for (const candidate of pool) {
+    const scored = scoreCandidate(node, candidate, ctx, request, demoted);
+    if (!scored.feasible) continue;
+    if (best === null || scored.total < best.total - IMPROVEMENT_EPSILON) best = scored;
+  }
+  return best;
+}
+
+/**
+ * A **landmark** standing on the coarse target it was pointed at, on ground the
+ * building slope veto refuses.
+ *
+ * The walked defect: a colossus authored `at` the bluff its own document raised
+ * for it was seated fifty-nine blocks from the *other* island's centre, three
+ * hundred and sixteen from where it was asked to stand, and nothing in the
+ * compile said a word. Every candidate on the bluff was `too_steep` — the veto
+ * a *building* is measured by — so the cheapest feasible candidate was the
+ * flattest ground the region had, wherever that happened to be, and a soft
+ * coarse cost of 1.6 was the only trace.
+ *
+ * A landmark is not a building. Its site is padded and levelled like one
+ * (`padFor`), it has no floors to keep level and no doors to reach, and the
+ * terrain profile's own landmark placer refuses cliffs rather than slopes. So
+ * when the ground is the only objection, the target wins — and says so
+ * (`LOAM-W520`).
+ *
+ * Deliberately narrow: only a node that **declared** a coarse `zone`/`at`, only
+ * when the ordinary answer landed outside it, only for candidates the ground
+ * alone refuses, and only for the `too_steep` veto — water, lava and off-map
+ * are not slopes, and a colossus in a lake is not what the author asked for
+ * either. A document with no coarse constraint on a landmark cannot reach this
+ * code at all, which is what keeps every world that came before byte-identical.
+ */
+function landmarkCoarseSeat(
+  node: LayoutNodeInput,
+  pool: readonly Candidate[],
+  ctx: EvalContext,
+  request: LayoutRequest,
+  demoted: ReadonlySet<number>,
+  best: Scored | null,
+): Scored | null {
+  if (node.landmark !== true) return null;
+  const target = coarseTargetRegion(node, ctx);
+  if (target === null) return null;
+  if (best !== null && containsPoint(target, best.candidate.anchor)) return null;
+
+  let seat: Scored | null = null;
+  for (const candidate of pool) {
+    if (!containsPoint(target, candidate.anchor)) continue;
+    const scored = scoreCandidate(node, candidate, ctx, request, demoted);
+    // A feasible candidate inside the target would already have won on cost if
+    // it were going to; taking it here would override the cost model itself.
+    if (scored.feasible) continue;
+    if (!scored.groundOnly || scored.veto !== "too_steep") continue;
+    if (seat === null || scored.total < seat.total - IMPROVEMENT_EPSILON) seat = scored;
+  }
+  return seat === null ? null : { ...seat, feasible: true, coarseSeat: true };
+}
+
+/**
+ * The anchors on one square ring of Chebyshev radius `r` about `(cx, cz)`,
+ * walked in a fixed order so the search is a pure function of its inputs.
+ * `r === 0` is the target's own centre.
+ */
+function* ringAnchors(cx: number, cz: number, r: number): Generator<Point2> {
+  if (r === 0) {
+    yield { x: cx, z: cz };
+    return;
+  }
+  for (let x = cx - r; x <= cx + r; x += COARSE_RING_STEP) {
+    yield { x, z: cz - r };
+    yield { x, z: cz + r };
+  }
+  for (let z = cz - r + COARSE_RING_STEP; z <= cz + r - COARSE_RING_STEP; z += COARSE_RING_STEP) {
+    yield { x: cx - r, z };
+    yield { x: cx + r, z };
+  }
+}
+
+/**
+ * A **landmark** whose coarse target holds no feasible site at all, seated on
+ * the nearest site that *is* feasible rather than on a random one.
+ *
+ * **The walked defect (Kai, r22 deck).** Both landmarks declared a coarse
+ * `at`, both were refused there by the sibling-overlap veto, and the placement
+ * fell to ~29 uniform dice rolls across 512² with `candidateAt`'s frame clamp
+ * piling them onto the region border: the fort finished at (-243, -34) and the
+ * colossus at (242, 210), 163 and 110 blocks from the sites the document
+ * named, with the pirate fort nowhere near the pirate island. Moving the `at`
+ * had no effect at all — measured across four variants, the winner never moved
+ * one block. The solver now searches outward from the target's centre in
+ * {@link COARSE_RING_STEP}-block square rings up to {@link COARSE_RING_MAX}
+ * and takes the cheapest feasible site on the first ring that holds one, and
+ * only when that site is strictly nearer the target than the candidate the
+ * ordinary pass found.
+ *
+ * The two halves are deliberately separate: {@link landmarkCoarseSeat} rescues
+ * a target the **ground** refused, by relaxing the veto and standing there
+ * anyway; this rescues a target the **solver** refused — a sibling footprint,
+ * a clearance ring — where standing there anyway is not on offer, and the only
+ * honest answer is the closest ground the world will take.
+ *
+ * Cost: bounded by construction. The rings are searched outward and the first
+ * one holding a feasible site ends the search, so a target with clear ground a
+ * few blocks out costs a handful of `scoreCandidate` calls; only a target
+ * walled in for two hundred blocks pays the full sweep, and that is a world
+ * whose landmark had nowhere to go regardless.
+ */
+function landmarkCoarseRing(
+  node: LayoutNodeInput,
+  ctx: EvalContext,
+  request: LayoutRequest,
+  demoted: ReadonlySet<number>,
+  best: Scored | null,
+): Scored | null {
+  if (node.landmark !== true) return null;
+  const target = coarseTargetRegion(node, ctx);
+  if (target === null) return null;
+  if (best !== null && containsPoint(target, best.candidate.anchor)) return null;
+
+  const cx = Math.round((target.x0 + target.x1) / 2);
+  const cz = Math.round((target.z0 + target.z1) / 2);
+  const away = (p: Point2): number => {
+    const dx = p.x - cx;
+    const dz = p.z - cz;
+    return dx * dx + dz * dz;
+  };
+  // Never a *worse* answer than the one the ordinary pass found: the ring only
+  // ever moves a landmark closer to the site its document named.
+  const limit = best === null ? Infinity : away(best.candidate.anchor);
+  const yaws = node.rotations.length > 0 ? node.rotations : ([0] as readonly Yaw[]);
+
+  for (let r = 0; r <= COARSE_RING_MAX; r += COARSE_RING_STEP) {
+    let seat: Scored | null = null;
+    for (const anchor of ringAnchors(cx, cz, r)) {
+      for (const yaw of yaws) {
+        const candidate = candidateAt(node, anchor, yaw, ctx.frame);
+        // `candidateAt` clamps into the frame, so an off-map ring point folds
+        // onto the border; the distance guard is what stops that fold from
+        // winning a ring it never really stood on.
+        if (away(candidate.anchor) >= limit) continue;
+        const scored = scoreCandidate(node, candidate, ctx, request, demoted);
+        if (!scored.feasible) continue;
+        if (seat === null || scored.total < seat.total - IMPROVEMENT_EPSILON) seat = scored;
+      }
+    }
+    if (seat !== null) return { ...seat, coarseRing: true };
+  }
+  return null;
+}
+
+/** The zero-cost region a node's coarse constraints agree on, or `null`. */
+function coarseTargetRegion(node: LayoutNodeInput, ctx: EvalContext): Rect | null {
+  let region: Rect | null = null;
+  for (const [index, c] of node.constraints.entries()) {
+    if (c.type !== "zone" && c.type !== "at") continue;
+    const coarse = c.type === "zone" ? coarseZoneRegion(c, index, ctx) : coarseAtRegion(c, ctx);
+    if (coarse.region === null) continue;
+    region = region === null ? coarse.region : (intersectRect(region, coarse.region) ?? region);
+  }
+  return region;
+}
+
+function containsPoint(rect: Rect, p: Point2): boolean {
+  return p.x >= rect.x0 && p.x <= rect.x1 && p.z >= rect.z0 && p.z <= rect.z1;
+}
+
+/** The least-violating candidate, used only at the bottom of the ladder. */
+function leastBad(
+  node: LayoutNodeInput,
+  pool: readonly Candidate[],
+  ctx: EvalContext,
+  request: LayoutRequest,
+  demoted: ReadonlySet<number>,
+): Scored | null {
+  let best: Scored | null = null;
+  for (const candidate of pool) {
+    const scored = scoreCandidate(node, candidate, ctx, request, demoted);
+    if (best === null) {
+      best = scored;
+      continue;
+    }
+    const better =
+      scored.penalty < best.penalty - IMPROVEMENT_EPSILON ||
+      (scored.penalty <= best.penalty + IMPROVEMENT_EPSILON && scored.total < best.total - IMPROVEMENT_EPSILON);
+    if (better) best = scored;
+  }
+  return best;
+}
+
+/* -------------------------------------------------------------------------- */
+/* the ladder                                                                  */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Constraint indices eligible for demotion, in §4.6's fixed order: lowest
+ * `weight` first, then reverse declaration order.
+ *
+ * `within` and `not_overlapping` are never demotable — the first would leave
+ * the domain unbounded, the second would let bodies interpenetrate. Coarse
+ * containment *is*, because the implicit `within: "^"` still bounds the domain
+ * afterwards.
+ */
+export function demotionOrder(node: LayoutNodeInput, group: "coarse" | "other"): number[] {
+  const eligible: { index: number; weight: number }[] = [];
+  for (const [index, c] of node.constraints.entries()) {
+    if (strengthOf(c) !== "hard") continue;
+    if (c.type === "within" || c.type === "not_overlapping") continue;
+    const isCoarse = (c.type === "zone" || c.type === "at") && c["mode"] === "contain";
+    if (group === "coarse" ? !isCoarse : isCoarse) continue;
+    eligible.push({ index, weight: weightOf(c) });
+  }
+  eligible.sort((a, b) => (a.weight !== b.weight ? a.weight - b.weight : b.index - a.index));
+  return eligible.map((e) => e.index);
+}
+
+function demotionDiagnostic(node: LayoutNodeInput, index: number, what: string): LoamDiagnostic {
+  const c = node.constraints[index] as CanonicalConstraint;
+  return warning(
+    // v0.2 §4.6: not yet — the spec gives LOAM-E404 error severity ("does not
+    // stop the compile but gates the repair loop"). This compiler has no
+    // severity that behaves that way yet, so a demotion is a warning and the
+    // solver report carries the machine-readable record.
+    "CONSTRAINT_DEMOTED",
+    node.nodePath,
+    `hard "${c.type}" constraint [${index}] was demoted to soft so this node could be placed`,
+    `widen what it asks for first — a bigger "gap"/"max", a wider "band"; the solver report lists its final cost. ` +
+      `Only write "strength": "soft" if the relationship was a preference all along. ` +
+      `If the prompt names this node or this relationship (a *hilltop* keep, a gate *at* the square), do not soften it — move the node or widen the numbers.`,
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* commit + report                                                             */
+/* -------------------------------------------------------------------------- */
+
+interface MutableNodeReport {
+  nodePath: string;
+  placed: boolean;
+  translation?: readonly [number, number, number];
+  yaw?: Yaw;
+  size: readonly [number, number, number];
+  appliedRungs: LadderRung[];
+  constraints: ConstraintReport[];
+  coarse: CoarseReport[];
+  score: { terrain: number; soft: number; total: number };
+  candidatesConsidered: number;
+  terrainVeto?: VetoHistogram;
+  demotedIndices?: number[];
+}
+
+/** Veto counts over a whole candidate pool. */
+interface VetoHistogram {
+  out_of_region: number;
+  hazard: number;
+  underwater: number;
+  too_steep: number;
+  feasible: number;
+}
+
+/**
+ * Why the ground rejected each candidate, counted over the pool.
+ *
+ * Only ever computed on the `unsatisfiable` path, where one extra scoring pass
+ * is cheap against the answer it buys: without it the report says "nothing was
+ * satisfiable" while listing zero violated constraints, which is the state a
+ * feedback round cannot act on.
+ */
+function vetoHistogram(
+  node: LayoutNodeInput,
+  pool: readonly Candidate[],
+  ctx: EvalContext,
+  request: LayoutRequest,
+  demoted: ReadonlySet<number>,
+): VetoHistogram {
+  const counts: VetoHistogram = {
+    out_of_region: 0,
+    hazard: 0,
+    underwater: 0,
+    too_steep: 0,
+    feasible: 0,
+  };
+  for (const candidate of pool) {
+    const { veto } = scoreCandidate(node, candidate, ctx, request, demoted);
+    if (veto === null) counts.feasible++;
+    else counts[veto]++;
+  }
+  return counts;
+}
+
+function unsatisfiableDiagnostic(
+  node: LayoutNodeInput,
+  poolSize: number,
+  veto: VetoHistogram,
+): LoamDiagnostic {
+  const vetoed = poolSize - veto.feasible;
+  if (vetoed === poolSize && poolSize > 0) {
+    // Not a constraint conflict at all: the ground refused every candidate, and
+    // saying "soften the largest cost" here sends the author (or the authoring
+    // model) to delete constraints that were never violated.
+    const parts: string[] = [];
+    if (veto.underwater > 0) parts.push(`${veto.underwater} sat below sea level`);
+    if (veto.hazard > 0) parts.push(`${veto.hazard} touched water or lava`);
+    if (veto.too_steep > 0) parts.push(`${veto.too_steep} were too steep`);
+    if (veto.out_of_region > 0) parts.push(`${veto.out_of_region} left the region`);
+    return warning(
+      "UNSATISFIABLE",
+      node.nodePath,
+      `none of the ${poolSize} candidate footprints could stand on the ground — ${parts.join(", ")}. ` +
+        `No constraint on this node was violated; it was placed at the least-violating position`,
+      "this is the ground, not your constraints: shrink the node's envelope size, move it with a \"zone\"/\"at\" constraint, or raise \"terrain_conform\".\"maxSlope\"",
+    );
+  }
+  const ground =
+    vetoed > 0
+      ? ` (${vetoed} of ${poolSize} candidates were also vetoed by the ground: ` +
+        `${veto.underwater} below sea level, ${veto.hazard} on water or lava, ${veto.too_steep} too steep)`
+      : "";
+  return warning(
+    "UNSATISFIABLE",
+    node.nodePath,
+    `no candidate satisfies this node's hard constraints even after demotion; it was placed at the least-violating position${ground}`,
+    "loosen the constraints that fight each other — the solver report lists each one's final cost, and the largest is usually the one to soften",
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* the land budget (LOAM-W526)                                                 */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Fraction of a settlement envelope that must be buildable ground before the
+ * compile stops arguing about it.
+ *
+ * Derived from the walked deck rather than chosen: measured over the archived
+ * candidates, a settlement whose envelope is at least this much land is one Kai
+ * walked and accepted (Troy's citadel 0.99, the padfix decks 0.72–0.95, every
+ * `examples/` world 1.00), and the ones below it are the two he rejected — the
+ * Hellenist metropolis at 0.20 and the pirate/unicorn islands at 0.44/0.51.
+ * There is real daylight either side of 0.6, which is the only reason a single
+ * number is honest here.
+ *
+ * The rule it encodes: **half your envelope must be somewhere to stand.** A
+ * quarter with a bay in the corner and a crag along one edge is a good town;
+ * a quarter that is mostly bay is a bay.
+ */
+const LAND_BUDGET_FLOOR = 0.6;
+
+/**
+ * The fraction below which the shortfall is called *severe* in the message.
+ *
+ * Nothing branches on it but the wording — there is one code, one severity,
+ * and one fix hint — but "a fifth of the envelope is land" and "half of it is"
+ * are different worlds and the author is told which one they wrote.
+ */
+const LAND_BUDGET_SEVERE = 0.35;
+
+/**
+ * `LOAM-W526`: what the settlement asked for against what the ground gave it.
+ *
+ * The supply side is {@link buildableColumns}, i.e. the solver's own four
+ * ground tests one column at a time — see that function for why a column count
+ * and not a candidate count. Two rectangles are measured: the envelope the node
+ * actually got, and the whole solve frame. The second is not a threshold, it is
+ * the *fix*: a world with plenty of land elsewhere wants the settlement moved,
+ * and a world with no land anywhere wants the landmass rewritten, and those are
+ * opposite repairs that look identical from inside the envelope.
+ */
+function landBudgetDiagnostics(
+  nodes: readonly LayoutNodeInput[],
+  placed: ReadonlyMap<string, Placement>,
+  request: LayoutRequest,
+  frame: Frame,
+): readonly LoamDiagnostic[] {
+  const out: LoamDiagnostic[] = [];
+  // One scan of the frame per slope limit in play, not one per node: the answer
+  // does not depend on the node, and a district envelope is a quarter of a
+  // square kilometre.
+  const reachCache = new Map<number, ReturnType<typeof buildableColumns>>();
+  const floorY = request.seaLevel + MIN_FREEBOARD;
+
+  for (const node of nodes) {
+    // Settlement-bearing nodes only. A `generator` node is a building: it
+    // stands on the land it found, and the vetoes already answer for it.
+    if (node.kind !== "city" && node.kind !== "district") continue;
+    const placement = placed.get(node.id);
+    if (placement === undefined) continue;
+
+    const slopeLimit = explicitMaxSlopeOf(node) ?? CITY_MAX_SLOPE;
+    const here = buildableColumns(
+      request.field,
+      request.classification,
+      placement.footprint,
+      request.hazardMask,
+      floorY,
+      slopeLimit,
+    );
+    if (here.columns === 0) continue;
+    const share = here.buildable / here.columns;
+    if (share >= LAND_BUDGET_FLOOR) continue;
+
+    let reach = reachCache.get(slopeLimit);
+    if (reach === undefined) {
+      reach = buildableColumns(
+        request.field,
+        request.classification,
+        frameRect(frame),
+        request.hazardMask,
+        floorY,
+        slopeLimit,
+      );
+      reachCache.set(slopeLimit, reach);
+    }
+
+    const kind = node.kind === "city" ? "city" : "quarter";
+    const [w, , d] = placement.size;
+    const pct = (n: number, of: number) => Math.round((100 * n) / Math.max(of, 1));
+    // Water first when water is the story, slope first when slope is: the two
+    // repairs are different edits and the sentence should open with the one the
+    // author has to make.
+    const wet = here.columns - here.dry;
+    const steep = here.dry - here.buildable;
+    const because =
+      wet >= steep
+        ? `${pct(wet, here.columns)}% of it is under water (sea level ${request.seaLevel})`
+        : `${pct(steep, here.columns)}% of it is too steep to build on (past ${Math.round(slopeLimit)}°)`;
+    const elsewhere =
+      reach.buildable >= here.columns
+        ? `the region does hold ${reach.buildable} buildable columns in all (${pct(reach.buildable, reach.columns)}% of the map), so there is ground for it somewhere`
+        : `the whole region holds only ${reach.buildable} buildable columns (${pct(reach.buildable, reach.columns)}% of the map) — less than this one envelope asked for, so there is nowhere to move it to`;
+
+    out.push(
+      warning(
+        "SETTLEMENT_LAND_SHORT",
+        node.nodePath,
+        `this ${kind}'s ${w} × ${d} envelope covers ${here.columns} columns and only ${here.buildable} of them are buildable ground` +
+          ` (${Math.round(share * 100)}%${share < LAND_BUDGET_SEVERE ? ", nowhere near enough to seat a settlement" : ""}): ${because}. ` +
+          `The node was placed and its buildings were fitted into whatever land was left; ${elsewhere}`,
+        `raise or enlarge the LANDMASS UNDER THIS SETTLEMENT — and keep every water body the prompt asks for. ` +
+          `The repair is more land here, never less water anywhere: a harbour city needs its sea beside it, not instead of it, so move the city to the coast rather than drying the coast. ` +
+          `Do it with a wider island/plateau/shelf edit under the envelope, a higher "amount" or a larger "radius"; ` +
+          `or move the ${kind} onto land the region already has with an "at"/"zone" constraint; ` +
+          `or shrink "envelope.size" to the ground that is actually there. ` +
+          `Do NOT drain the region to pass this check: if the prompt names a sea, a strait, two islands or a river, that water is part of the brief and must still be there — ` +
+          `size the land to the settlement AND the water to the premise, side by side`,
+      ),
+    );
+  }
+  return out;
+}
+
+/** `LOAM-W520`: a landmark seated on its coarse target, slope and all. */
+function coarseSeatDiagnostic(node: LayoutNodeInput, seat: Scored): LoamDiagnostic {
+  const { x, z } = seat.candidate.anchor;
+  return warning(
+    "LANDMARK_COARSE_SEATED",
+    node.nodePath,
+    `every site at this landmark's coarse target was refused by the building slope veto (steepest ${Math.round(seat.stats.maxSlope)}\u00b0 across the footprint); it was seated there anyway, at (${x}, ${z}), and its ground is padded — a landmark is not a building`,
+    'nothing to change if the landmark is meant to crown that ground. If it should stand on the flat instead, move the "at"/"zone" target off the slope, or add { "terrain_conform": "flatten", "maxSlope": <degrees> } to say how much slope it will accept',
+  );
+}
+
+/**
+ * `LOAM-W521`: a landmark that ended up outside the coarse target it declared.
+ *
+ * **The walked defect (Kai, final battery deck, `pirate_unicorn_war`):** the
+ * document put the pirate fort at `[0.35, 0.65]` and the unicorn colossus at
+ * `[0.65, 0.35]` — opposite corners, one per faction, one per island. The
+ * colossus was placed 280 blocks from its target, on the *pirates'* island,
+ * beside their fort, and the compile said nothing at all: `at` is a soft cost,
+ * the flattest ground won, and a soft cost that loses leaves no trace.
+ *
+ * {@link landmarkCoarseSeat} already covers the case where the target was
+ * *refused* (`W520`). This covers the quieter one, where the target was merely
+ * outbid — and it is deliberately a **report, not a veto**: the cost model is
+ * still the placer, because overriding it here would move every landmark in
+ * every world that already walks. What changes is that the author can see it.
+ *
+ * Narrow by construction: only a landmark, only one that declared a coarse
+ * `zone`/`at`, only when the anchor finished outside that target's zero-cost
+ * region, and never when `W520` already said the louder version.
+ */
+function coarseAbandonDiagnostic(
+  node: LayoutNodeInput,
+  placement: Placement,
+  ctx: EvalContext,
+): LoamDiagnostic | undefined {
+  if (node.landmark !== true) return undefined;
+  const target = coarseTargetRegion(node, ctx);
+  if (target === null) return undefined;
+  const { anchor } = placement;
+  if (containsPoint(target, anchor)) return undefined;
+  const cx = Math.round((target.x0 + target.x1) / 2);
+  const cz = Math.round((target.z0 + target.z1) / 2);
+  // `Math.sqrt`, never `Math.hypot`: §6.5 rule 6 allows only the exactly
+  // specified members, and this number is printed in a diagnostic.
+  const dx = anchor.x - cx;
+  const dz = anchor.z - cz;
+  const away = Math.round(Math.sqrt(dx * dx + dz * dz));
+  return warning(
+    "LANDMARK_COARSE_ABANDONED",
+    node.nodePath,
+    `this landmark asked to stand at (${cx}, ${cz}) and was placed at (${anchor.x}, ${anchor.z}), ${away} blocks away: a site inside the target was feasible but cost more, and "at"/"zone" is a soft cost the ground can outbid`,
+    'nothing to change if anywhere sensible will do. If the landmark belongs at that spot — its own island, its own faction\'s shore — tighten the target with a "radius"/"tolerance", or bind it to something local ("distance" to a node there, "on": "@terrain:coastline"), so the ground cannot outbid the intent',
+  );
+}
+
+function commit(
+  node: LayoutNodeInput,
+  scored: Scored,
+  placed: Map<string, Placement>,
+  report: MutableNodeReport,
+  demoted: ReadonlySet<number>,
+): void {
+  const { candidate, stats } = scored;
+  const [w, h, d] = rotatedSize(node.size, candidate.yaw);
+  const foundationY = referenceY(node, stats);
+  const placement: Placement = makePlacement({
+    nodePath: node.nodePath,
+    id: node.id,
+    yaw: candidate.yaw,
+    mirror: false,
+    size: [w, h, d],
+    footprint: candidate.rect,
+    anchor: candidate.anchor,
+    foundationY,
+  });
+  placed.set(node.id, placement);
+
+  report.placed = true;
+  report.translation = placement.translation;
+  report.yaw = candidate.yaw;
+  report.score = { terrain: scored.terrain, soft: scored.soft, total: scored.total };
+  report.demotedIndices = [...demoted].sort((a, b) => a - b);
+  report.constraints = node.constraints.map((c, index) => {
+    const e = scored.evals[index];
+    const declared = strengthOf(c);
+    const implemented = isImplemented(c);
+    // §4.4: a desugared `beside` reports as the `beside` the author wrote, not
+    // as the `along` the solver ran. The rewrite is an implementation detail
+    // and a report that leaked it would send them looking for a constraint
+    // their document does not contain.
+    const declaredType = typeof c["desugaredFrom"] === "string" ? (c["desugaredFrom"] as string) : c.type;
+    return {
+      index,
+      type: declaredType,
+      ...(typeof c["target"] === "string" ? { target: c["target"] as string } : {}),
+      declaredStrength: declared,
+      // A tier-2 type is scored soft whatever it declares (§4 `connected`,
+      // §4.9.6 `along`): the half of it the solver owns is a cost, and the
+      // half that could veto belongs to a later pass. Reporting the declared
+      // `hard` as the effective strength would be the report lying about which
+      // knob the author has.
+      effectiveStrength: !implemented
+        ? "ignored"
+        : isTier2(c.type) || demoted.has(index)
+          ? "soft"
+          : declared,
+      weight: weightOf(c),
+      cost: e?.cost ?? 0,
+      satisfied: e?.satisfied ?? true,
+    } satisfies ConstraintReport;
+  });
+  // §4.7 obligation 7: record the realized coarse cost, not just the intent.
+  report.coarse = report.coarse.map((entry) => ({
+    ...entry,
+    cost: report.constraints[entry.index]?.cost ?? 0,
+  }));
+}
+
+function isImplemented(c: CanonicalConstraint): boolean {
+  return isImplementedConstraint(c.type);
+}
+
+function corridorReport(corridor: RouteCorridor, region: Region): CorridorReport {
+  let reserved = 0;
+  const clipped = intersectRect(corridor.bounds, {
+    x0: region.x0,
+    z0: region.z0,
+    x1: region.x0 + region.width - 1,
+    z1: region.z0 + region.depth - 1,
+  });
+  if (clipped !== null) reserved = corridorOverlap(corridor, clipped);
+  return {
+    nodePath: corridor.nodePath,
+    id: corridor.id,
+    kind: corridor.kind,
+    ...(corridor.verb === undefined ? {} : { verb: corridor.verb }),
+    halfWidth: corridor.halfWidth,
+    centerline: corridor.centerline.map((p) => [p.x, p.z] as const),
+    reservedColumns: reserved,
+  };
+}
+
+/**
+ * `road.network@0.corridors()`, resolved against the solver's own node list —
+ * substage 3b (§7.5).
+ *
+ * The anchors are selectors, and the only thing a selector can be resolved
+ * *to* before placement is a node's coarse target point: the jittered `zone`
+ * cell centre or the `at` fraction the search will start from (§4.9.3/§4.9.4).
+ * A node with neither is invisible here, which is the honest answer — it has no
+ * pre-placement position for a corridor to be strung through, and inventing one
+ * would reserve ground on the strength of nothing.
+ *
+ * Anchors are taken in **document order**, not in the order the `anchors`
+ * array names them, so that adding a selector to the array cannot re-topologize
+ * an already-frozen corridor.
+ */
+export function registerRoadCorridors(
+  nodePath: string,
+  anchorIds: readonly string[],
+  nodes: readonly LayoutNodeInput[],
+  region: Region,
+  laneWidth: number,
+): RouteCorridor[] {
+  const frame: Frame = { x0: region.x0, z0: region.z0, width: region.width, depth: region.depth };
+  const norm = computeFrameNorm(frame);
+  const wanted = new Set(anchorIds.map(leafOf));
+  const anchors: RoadCorridorAnchor[] = [];
+
+  for (const node of nodes) {
+    // No `anchors` at all reads as "every placed node", which is what the road
+    // pass itself already does with its own anchor list.
+    if (wanted.size > 0 && !wanted.has(node.id) && !node.tags.some((t) => wanted.has(`#tag:${t}`))) {
+      continue;
+    }
+    const ctx: EvalContext = { frame, frameNorm: norm, self: node, placed: new Map(), nodes };
+    let point: Point2 | null = null;
+    for (const [index, c] of node.constraints.entries()) {
+      if (c.type !== "zone" && c.type !== "at") continue;
+      const coarse = c.type === "zone" ? coarseZoneRegion(c, index, ctx) : coarseAtRegion(c, ctx);
+      if (coarse.region === null) continue;
+      point = coarse.seedPoint;
+      break;
+    }
+    if (point === null) continue;
+    anchors.push({ nodePath: node.nodePath, point });
+  }
+
+  return roadCorridors(nodePath, anchors, laneWidth, frame);
+}
+
+/** The leaf id of a selector: `"^.town_hall"` and `"world.town_hall"` → `"town_hall"`. */
+function leafOf(selector: string): string {
+  const s = selector.trim();
+  if (s.startsWith("#tag:")) return s;
+  const bare = s.startsWith("^.") ? s.slice(2) : s;
+  const withoutPort = bare.split("#")[0] as string;
+  return withoutPort.includes(".") ? (withoutPort.split(".").pop() as string) : withoutPort;
+}
+
+function coarseReports(node: LayoutNodeInput, ctx: EvalContext): CoarseReport[] {
+  const out: CoarseReport[] = [];
+  for (const [index, c] of node.constraints.entries()) {
+    if (c.type !== "zone" && c.type !== "at") continue;
+    const coarse = c.type === "zone" ? coarseZoneRegion(c, index, ctx) : coarseAtRegion(c, ctx);
+    if (coarse.region === null) continue;
+    out.push({
+      index,
+      type: c.type,
+      frame: frameRect(ctx.frame),
+      targetPoint: [coarse.seedPoint.x, coarse.seedPoint.z],
+      targetRegion: coarse.region,
+      mode: coarse.mode,
+      cost: 0,
+    });
+  }
+  return out;
+}
+
+function finalizeReport(report: MutableNodeReport): SolverNodeReport {
+  const { demotedIndices: _drop, ...rest } = report;
+  return rest as SolverNodeReport;
+}
+
+/** The foundation elevation: `terrain_conform.reference` over the footprint. */
+export function referenceY(node: LayoutNodeInput, stats: FootprintStats): number {
+  let reference = "median";
+  for (const c of node.constraints) {
+    if (c.type === "terrain_conform" && typeof c["reference"] === "string") reference = c["reference"];
+  }
+  switch (reference) {
+    case "min":
+      return materialisedLevel(stats.min);
+    case "max":
+      return materialisedLevel(stats.max);
+    case "mean":
+      return materialisedLevel(stats.mean);
+    default:
+      return materialisedLevel(stats.median);
+  }
+}
+
+/**
+ * A continuous height-field statistic, resolved to the block level the terrain
+ * pass will actually materialise there.
+ *
+ * **The rule is `clampY(Math.floor(v))` and nothing else** — the same rule the
+ * street datum samples with (`layout/street-datum.ts` `materialisedGround`) and
+ * the same one `buildColumnPlan` writes with (`terrain/columns.ts`, the
+ * `ground[idx]` write). `Math.round` was the old answer and it is wrong on half
+ * of all columns: flat ground whose top block is 93 carries a field value
+ * anywhere in [93, 94), so a value of 93.6 rounded to 94 and every pad on dead
+ * flat ground shipped standing on a one-block plinth with no ramp to it (Kai's
+ * walk verdict, twice). Flooring makes a pad's foundation the surface block's
+ * own level, so a flat site seats flush.
+ *
+ * `test/pad-datum-agreement.test.ts` asserts this against `clampY` directly,
+ * the way `street-datum.test.ts` does, so the two materialisation rules cannot
+ * drift apart.
+ */
+function materialisedLevel(v: number): number {
+  return clampY(Math.floor(v));
+}
+
+/* -------------------------------------------------------------------------- */
+/* terrain adjustment + occupancy                                              */
+/* -------------------------------------------------------------------------- */
+
+/** `terrain_conform` modes that level the ground under the footprint. */
+const LEVELLING_MODES = new Set(["flatten", "cut_fill", "terrace"]);
+
+/** The pad edit for one placement, or `null` when the node does not touch the ground. */
+export function padFor(
+  node: LayoutNodeInput,
+  placement: Placement,
+  field?: HeightField,
+): PadEdit | null {
+  // A harbour is the one placed node whose footprint is *meant* to be half
+  // water. Levelling it to one plane would raise the sea bed to the median
+  // ground of the box and there would be no harbour left to build, so the quay
+  // grades its own strip in the structure pass, against the waterline it finds.
+  if (node.generator === "precinct.harbour@0") return null;
+  // A holding is the third such node, and the most emphatic
+ // caveat and §5): a farm must **never** level
+  // its envelope. It levels its yard, and each field separately, on ground the
+  // gentle-slope scan already found close to level; a pad laid first would give
+  // the fields a table to stand on and the holding would read as a crop circle.
+  // Most of a holding is ground nobody touched, which is what a holding is.
+  if (isFarmGenerator(node.generator ?? "")) return null;
+  // A city is the other one, and for the same reason one level up: levelling a
+  // whole city to a single plane would raise the sea bed inside its own bay,
+  // erase the shoreline its drive was going to follow, and flatten the hill the
+  // stair district was going to climb. Its buildings still level their own
+  // footprints and its arterials still grade themselves; the *land* survives.
+  if (node.kind === "city") return null;
+  // …and every other amphibious node, for the third time and the same reason:
+  // a `seat: "wade"` landmark stands *in* the water, and a pad under it would
+  // level the sea bed up to the median of a footprint that is half sea — i.e.
+  // it would fill the bay with dirt and stand the colossus on a lawn, which is
+  // exactly the defect wading exists to fix.
+  if (node.amphibious === true) return null;
+  // …and the fourth: a node that levels its own ground in pieces. A `terraced`
+  // quarter's benches *are* its levelling, and a pad laid before the fabric pass
+  // ran would erase the contours the form was going to follow — the form would
+  // then measure a flat quarter and refuse itself. See `LayoutNodeInput.groundPolicy`
+  // and `districtInput` in `from-document.ts`, which is where the policy is set.
+  //
+  // Both non-`"pad"` policies are that node: `"benched"` is what this test
+  // spelled `"stepped"` before Phase 4.2 (the form cuts its own platforms), and
+  // `"stepped"` is `"benched"` plus derived platforms and seam treatment. In
+  // both the quarter's own levelling is the levelling, so there is no pad.
+  if (node.groundPolicy === "benched" || node.groundPolicy === "stepped") return null;
+  // …and the fifth, which is the same node arrived at from the other side: a
+  // quarter whose `"pad"` was a *default* rather than a request, standing on
+  // real relief. It elects `"stepped"` (`STEP_RELIEF`, `layout/district.ts`),
+  // so there is no pad here either — and this is the only place the election
+  // can be made, because it is the first moment a footprint exists.
+  //
+  // The fabric pass re-makes the same election from the same field at the same
+  // footprint, and the two cannot disagree in either direction: elect
+  // `"stepped"` and no pad is laid, so the pass measures the same natural
+  // relief; elect `"pad"` and the pad below flattens the footprint, so the pass
+  // measures a relief of 0. The field is the shared state that keeps them
+  // honest, which is the same trick `districtGroundPolicy` already plays with
+  // the document.
+  if (
+    node.groundElectable === true &&
+    field !== undefined &&
+    reliefOf(field, placement.footprint) >= STEP_RELIEF
+  ) {
+    return null;
+  }
+  // A building cuts and fills to its own median; a plaza or a quarter is one
+  // plane. An author names a mode only to overrule that.
+  let mode = node.kind === "primitive" || node.kind === "district" ? "flatten" : "cut_fill";
+  let blend = DEFAULT_BLEND;
+  for (const c of node.constraints) {
+    if (c.type !== "terrain_conform") continue;
+    if (typeof c["mode"] === "string") mode = c["mode"];
+    if (typeof c["blend"] === "number") blend = c["blend"];
+  }
+  // v0.2 §4.4 `terrain_conform`: not yet — `terrace` levels to one Y like
+  // `flatten` rather than stepping, and `drape`/`stilts`/`float`/`bury` make no
+  // field edit at all.
+  if (!LEVELLING_MODES.has(mode)) return null;
+  // `adaptiveApron` — the fix for "100% flat planes cobbled in with normal
+  // terrain". `blend` is 4 by default and 4 whether the pad is sitting one
+  // block proud of the ground or twelve; the flag lets `applyLevelPad` stretch
+  // it per column to two columns per block of difference, so a quarter on a
+  // hillside walks out to its own ground instead of ending at a cut face. On
+  // level ground the reach is `blend` in every column and nothing moves.
+  return {
+    nodePath: placement.nodePath,
+    footprint: placement.footprint,
+    targetY: placement.foundationY,
+    apron: blend,
+    adaptiveApron: true,
+    // Ground contract v1 §1.5, by node scale rather than by kit. A pad under a
+    // *district* is that quarter's decided plane — the thing its own streets,
+    // plaza and sidewalks are laid on — and calling it a footprint would put a
+    // whole quarter at rank 10, where it takes its own boulevard. Everything
+    // else `padFor` still emits for is one placed structure, which is what
+    // §1.5's "plus the solver's landmark pads" names.
+    claimClass: node.kind === "district" ? "quarter.plane" : "building.footprint",
+  };
+}
+
+/** Build the occupancy grid the scatter pass reads. */
+export function buildOccupancy(
+  region: Region,
+  nodes: readonly LayoutNodeInput[],
+  placed: ReadonlyMap<string, Placement>,
+): OccupancyGrid {
+  const mask = new Uint8Array(region.width * region.depth);
+  const byTag = new Map<string, Uint8Array>();
+
+  for (const node of nodes) {
+    const placement = placed.get(node.id);
+    if (placement === undefined) continue;
+    const rect = inflate(placement.footprint, clearanceOf(node));
+    const tagMasks = ["structure", ...node.tags].map((tag) => {
+      let m = byTag.get(tag);
+      if (m === undefined) {
+        m = new Uint8Array(mask.length);
+        byTag.set(tag, m);
+      }
+      return m;
+    });
+    for (let z = rect.z0; z <= rect.z1; z++) {
+      const j = z - region.z0;
+      if (j < 0 || j >= region.depth) continue;
+      for (let x = rect.x0; x <= rect.x1; x++) {
+        const i = x - region.x0;
+        if (i < 0 || i >= region.width) continue;
+        const idx = j * region.width + i;
+        mask[idx] = 1;
+        for (const m of tagMasks) m[idx] = 1;
+      }
+    }
+  }
+  return { region, mask, byTag };
+}

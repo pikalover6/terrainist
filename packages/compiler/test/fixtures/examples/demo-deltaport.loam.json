@@ -1,0 +1,982 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "deltaport",
+    "worldSeed": "18124079587173138729",
+    "prompt": "A fortified river-delta port town: a stone keep with a gatehouse and curtain walls on the bluff, a walled lower town with an inn, a bakery, market stalls and a green with a well, a busy harbor below with long piers, a three-masted galleon, a cog, and small fishing boats at anchor, a lighthouse tower on the breakwater, a graveyard with a mausoleum outside the walls, and an old mine in the pine hills whose rough rail tunnels and ore chamber connect back to the crypt beneath the keep. Meadows near town, dense pine forest on the heights.",
+    "spawn": {
+      "zone": "south"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:cobblestone",
+      "plaza.cobble": "minecraft:cobblestone"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Deltaport, a fortified river-delta port town",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "rolling country with a southern sea and a river to it",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 74,
+          "amplitude": 28,
+          "frequency": 0.0035,
+          "continentalness": {
+            "frequency": 0.0009,
+            "seaFraction": 0.35
+          },
+          "beachWidth": 5,
+          "snowLineFraction": 0.9
+        },
+        "children": [
+          {
+            "id": "the_river",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the river down to the delta",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.55,
+                  0.1
+                ],
+                [
+                  0.52,
+                  0.32
+                ],
+                [
+                  0.5,
+                  0.52
+                ],
+                [
+                  0.48,
+                  0.68
+                ],
+                "coast"
+              ],
+              "width": 40,
+              "depth": 12
+            }
+          },
+          {
+            "id": "harbor_basin",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the wide harbor basin at the river mouth",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.34,
+                  0.72
+                ],
+                [
+                  0.44,
+                  0.82
+                ],
+                [
+                  0.56,
+                  0.88
+                ],
+                "coast"
+              ],
+              "width": 120,
+              "depth": 20,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "bluff",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the bluff for the keep",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.38,
+                0.4
+              ],
+              "radius": 95,
+              "height": 14,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "pine_hills",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the pine hills in the north",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.1,
+                  0.08
+                ],
+                [
+                  0.3,
+                  0.05
+                ],
+                [
+                  0.55,
+                  0.09
+                ]
+              ],
+              "width": 85,
+              "height": 38,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "lower_town_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "flat ground for the lower town",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.42,
+                0.56
+              ],
+              "radius": 80,
+              "height": 6,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "latitudeGradient": -0.3
+        }
+      },
+      {
+        "id": "heights_pines",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "dense pine forest on the heights",
+        "params": {
+          "area": {
+            "zone": "north"
+          },
+          "density": 0.25,
+          "elevation": [
+            2,
+            120
+          ],
+          "undergrowth": {
+            "grass": 0.3,
+            "flowers": 0.02,
+            "deadwood": 0.04
+          },
+          "species": [
+            {
+              "id": "tall_pine",
+              "weight": 3,
+              "shape": "spruce_tall"
+            },
+            {
+              "id": "scrub_pine",
+              "weight": 1,
+              "shape": "spruce_squat"
+            }
+          ]
+        }
+      },
+      {
+        "id": "meadow_oaks",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "meadow oaks near town",
+        "params": {
+          "area": {
+            "zone": "center"
+          },
+          "density": 0.04,
+          "elevation": [
+            2,
+            60
+          ],
+          "undergrowth": {
+            "grass": 0.5,
+            "flowers": 0.08,
+            "deadwood": 0.01
+          },
+          "species": [
+            {
+              "id": "meadow_oak",
+              "weight": 2,
+              "shape": "oak_round"
+            },
+            {
+              "id": "meadow_birch",
+              "weight": 1,
+              "shape": "birch_slim"
+            }
+          ]
+        }
+      },
+      {
+        "id": "wilderness",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse cover everywhere else",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.03,
+          "elevation": [
+            2,
+            100
+          ],
+          "species": [
+            {
+              "id": "wild_oak",
+              "weight": 1,
+              "shape": "oak_round"
+            }
+          ]
+        }
+      },
+      {
+        "id": "the_green",
+        "kind": "primitive",
+        "label": "the green with a well in the lower town",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            22,
+            22
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "south"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median"
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "the_keep",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the stone keep on the bluff",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            16,
+            13
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable",
+          "basement": {
+            "depth": 5,
+            "style": "crypt"
+          }
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "the_green",
+            "min": 20,
+            "max": 80,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south"
+          }
+        },
+        "tags": [
+          "keep",
+          "house"
+        ]
+      },
+      {
+        "id": "the_gatehouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the gatehouse before the keep",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            14,
+            9
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "distance": "the_keep",
+            "min": 12,
+            "max": 28,
+            "strength": "soft"
+          },
+          {
+            "facing": "the_keep"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north"
+          }
+        },
+        "tags": [
+          "gatehouse"
+        ]
+      },
+      {
+        "id": "the_barracks",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the barracks in the bailey",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            9
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "the_keep",
+            "min": 6,
+            "max": 20,
+            "strength": "soft"
+          },
+          {
+            "distance": "the_gatehouse",
+            "min": 5,
+            "max": 22,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west"
+          }
+        },
+        "tags": [
+          "barracks",
+          "house"
+        ]
+      },
+      {
+        "id": "the_inn",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the inn on the green",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            11
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "dense",
+          "basement": {
+            "depth": 4,
+            "style": "wine_cellar"
+          }
+        },
+        "constraints": [
+          {
+            "adjacent_to": "the_green",
+            "gap": [
+              1,
+              12
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "the_green"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north"
+          }
+        },
+        "tags": [
+          "trade",
+          "inn",
+          "house"
+        ]
+      },
+      {
+        "id": "the_bakery",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the bakery near the green",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "the_green",
+            "gap": [
+              1,
+              12
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "the_green"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 5,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east"
+          }
+        },
+        "tags": [
+          "bakery",
+          "house"
+        ]
+      },
+      {
+        "id": "market_stall_one",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a market stall on the green",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "flat",
+          "windowRhythm": "dense"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "the_green",
+            "gap": [
+              1,
+              10
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "the_green"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 4,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south"
+          }
+        },
+        "tags": [
+          "market_stall"
+        ]
+      },
+      {
+        "id": "market_stall_two",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "another market stall on the green",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "flat",
+          "windowRhythm": "dense"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "the_green",
+            "gap": [
+              1,
+              10
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "the_green"
+          },
+          {
+            "distance": "market_stall_one",
+            "min": 4,
+            "max": 16,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west"
+          }
+        },
+        "tags": [
+          "market_stall"
+        ]
+      },
+      {
+        "id": "lighthouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the lighthouse on the breakwater",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            7,
+            19,
+            7
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "on": "@terrain:coastline",
+            "band": 32
+          },
+          {
+            "distance": "the_green",
+            "min": 20,
+            "max": 120,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "max"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north"
+          }
+        },
+        "tags": [
+          "lookout"
+        ],
+        "optional": true
+      },
+      {
+        "id": "mine_head",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the old mine head in the pine hills",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            12,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "basement": {
+            "depth": 5,
+            "style": "mine"
+          }
+        },
+        "constraints": [
+          {
+            "on": "@terrain:ridge",
+            "band": 50
+          },
+          {
+            "zone": "north"
+          },
+          {
+            "distance": "the_green",
+            "min": 40,
+            "max": 200,
+            "strength": "soft"
+          },
+          {
+            "connected": "the_keep",
+            "via": "tunnel",
+            "style": "mine",
+            "oreChamber": true,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south"
+          }
+        },
+        "tags": [
+          "mine_head"
+        ]
+      },
+      {
+        "id": "the_mausoleum",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the mausoleum outside the walls",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "basement": {
+            "depth": 4,
+            "style": "crypt"
+          }
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "distance": "the_keep",
+            "min": 30,
+            "max": 100
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west"
+          }
+        },
+        "tags": [
+          "mausoleum"
+        ]
+      },
+      {
+        "id": "the_well",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the well on the green",
+        "params": {
+          "prop": "fountain",
+          "zone": "south"
+        }
+      },
+      {
+        "id": "wall_north",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "curtain wall north of the keep",
+        "params": {
+          "prop": "curtain_wall",
+          "zone": "north",
+          "length": 30,
+          "yaw": 0
+        }
+      },
+      {
+        "id": "wall_east",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "curtain wall east of the keep",
+        "params": {
+          "prop": "curtain_wall",
+          "zone": "east",
+          "length": 30,
+          "yaw": 90
+        }
+      },
+      {
+        "id": "wall_west",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "curtain wall west of the keep",
+        "params": {
+          "prop": "curtain_wall",
+          "zone": "west",
+          "length": 30,
+          "yaw": 90
+        }
+      },
+      {
+        "id": "wall_lower_east",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "lower town wall, east side",
+        "params": {
+          "prop": "curtain_wall",
+          "zone": "southeast",
+          "length": 28,
+          "yaw": 90
+        }
+      },
+      {
+        "id": "wall_lower_west",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "lower town wall, west side",
+        "params": {
+          "prop": "curtain_wall",
+          "zone": "southwest",
+          "length": 28,
+          "yaw": 90
+        }
+      },
+      {
+        "id": "main_quay",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the long main quay",
+        "params": {
+          "prop": "pier",
+          "zone": "south",
+          "length": 18,
+          "width": 3
+        }
+      },
+      {
+        "id": "the_galleon",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the three-masted galleon at the quay",
+        "params": {
+          "prop": "galleon",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "the_cog",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the cog at the quay",
+        "params": {
+          "prop": "cog",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "fishing_jetty",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the fishing boat jetty",
+        "params": {
+          "prop": "pier",
+          "zone": "southeast",
+          "length": 10,
+          "width": 2
+        }
+      },
+      {
+        "id": "fishing_boat_one",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a fishing boat at anchor",
+        "params": {
+          "prop": "rowboat",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "fishing_boat_two",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "another fishing boat at anchor",
+        "params": {
+          "prop": "rowboat",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "harbour_buoy",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a harbour buoy",
+        "params": {
+          "prop": "buoy",
+          "zone": "south"
+        }
+      },
+      {
+        "id": "the_graveyard",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the graveyard outside the walls",
+        "params": {
+          "prop": "graveyard",
+          "zone": "east"
+        }
+      },
+      {
+        "id": "green_bench",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a bench by the green",
+        "params": {
+          "prop": "bench",
+          "zone": "south"
+        }
+      },
+      {
+        "id": "green_signpost",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a signpost at the green",
+        "params": {
+          "prop": "signpost",
+          "zone": "south"
+        }
+      },
+      {
+        "id": "town_cart",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a cart near the market",
+        "params": {
+          "prop": "cart",
+          "zone": "south"
+        }
+      },
+      {
+        "id": "lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "the lanes joining every door to the green and the keep",
+        "params": {
+          "anchors": [
+            "the_green",
+            "the_keep",
+            "the_gatehouse",
+            "#tag:house",
+            "mine_head"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true
+        }
+      }
+    ]
+  }
+}

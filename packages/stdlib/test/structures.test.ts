@@ -1,0 +1,864 @@
+/**
+ * `building.grammar@0` unit tests.
+ *
+ * These stand in for the visual QA the G4 code phase deliberately skips: every
+ * property a human would check by walking around the building ("does it have
+ * walls", "can I get in", "can I get upstairs", "is there a roof") is asserted
+ * here instead.
+ */
+
+import { describe, expect, it } from "vitest";
+
+import {
+  BUILDING_STYLE_DEFAULTS,
+  MATERIAL_THEMES,
+  assignMaterials,
+  archetypeOfTags,
+  cardinalStep,
+  generateBuilding,
+  materialKey,
+  pickTheme,
+  nodeSeed,
+  rotateFacing,
+  rotateLocalColumn,
+  rotateOps,
+  rotateProps,
+  type BuildingParams,
+  type BuildingRoof,
+  type LocalVoxelOp,
+  type MaterialTheme,
+  type StructureYaw,
+} from "../src/index.js";
+
+const SEED = nodeSeed(0x5eedn, "world.house");
+const YAWS: readonly StructureYaw[] = [0, 90, 180, 270];
+
+interface Case {
+  readonly label: string;
+  readonly size: readonly [number, number, number];
+  readonly params: BuildingParams;
+}
+
+/** The shapes the village example exercises, plus the degenerate small one. */
+const CASES: readonly Case[] = [
+  { label: "cottage/gable/1", size: [7, 7, 9], params: { floors: 1, roof: "gable" } },
+  { label: "hall/hip/2", size: [13, 12, 11], params: { floors: 2, roof: "hip" } },
+  { label: "inn/gable/2", size: [11, 11, 9], params: { floors: 2, roof: "gable", windowRhythm: "paired" } },
+  { label: "tower/flat/2", size: [7, 12, 7], params: { floors: 2, roof: "flat", windowRhythm: "sparse" } },
+  { label: "shed/gable/1 (long z)", size: [7, 7, 13], params: { floors: 1, roof: "gable" } },
+  { label: "minimum", size: [3, 5, 3], params: { floors: 1, roof: "flat" } },
+];
+
+/**
+ * A fixed style so a test can name the block it expects.
+ *
+ * The grammar now draws its materials from a village theme, which is the whole
+ * point of the diversity work — but a test that wants to say "the door is an
+ * oak door" has to pin the palette, or it is really testing the theme deal.
+ */
+const PINNED: Readonly<Record<string, string>> = Object.freeze({ ...BUILDING_STYLE_DEFAULTS });
+
+function build(c: Case, extra: Partial<Parameters<typeof generateBuilding>[0]> = {}) {
+  return generateBuilding({
+    size: c.size,
+    params: c.params,
+    seed: SEED,
+    foundationDepth: 2,
+    style: PINNED,
+    ...extra,
+  });
+}
+
+/** Ops inside the footprint proper — everything but the apron decorations. */
+function core(ops: readonly LocalVoxelOp[], sx: number, sz: number): LocalVoxelOp[] {
+  return ops.filter((o) => o.x >= 0 && o.x < sx && o.z >= 0 && o.z < sz);
+}
+
+function key(op: { x: number; y: number; z: number }): string {
+  return `${op.x},${op.y},${op.z}`;
+}
+
+describe("generateBuilding — determinism", () => {
+  it("returns byte-identical ops for identical inputs", () => {
+    for (const c of CASES) {
+      expect(JSON.stringify(build(c).ops)).toBe(JSON.stringify(build(c).ops));
+    }
+  });
+
+  it("emits exactly one op per cell, in canonical (y, z, x) order", () => {
+    for (const c of CASES) {
+      const ops = build(c).ops;
+      const seen = new Set(ops.map(key));
+      expect(seen.size).toBe(ops.length);
+      const sorted = [...ops].sort((a, b) => a.y - b.y || a.z - b.z || a.x - b.x);
+      expect(ops).toEqual(sorted);
+    }
+  });
+
+  it("keeps the massing but varies the detail when the seed changes", () => {
+    const c = CASES[1] as Case;
+    const a = build(c);
+    const b = build(c, { seed: nodeSeed(0x5eedn, "world.other_house") });
+    // The shell is the envelope's business, not the seed's: two houses of the
+    // same size and params stand the same height and roof at the same line.
+    expect(b.meta.wallTop).toBe(a.meta.wallTop);
+    expect(b.meta.roofBase).toBe(a.meta.roofBase);
+    expect(b.meta.roofTop).toBe(a.meta.roofTop);
+    expect(b.meta.interior).toEqual(a.meta.interior);
+    // Everything else is allowed — and required — to differ, or the seed is
+    // doing nothing and every house in a village is the same house.
+    expect(b.ops.map((o) => o.block).join()).not.toBe(a.ops.map((o) => o.block).join());
+  });
+
+  it("clamps floors into the 1..2 this v0 builds", () => {
+    const meta = generateBuilding({ size: [9, 20, 9], params: { floors: 9 }, seed: SEED }).meta;
+    expect(meta.params.floors).toBe(2);
+  });
+});
+
+describe("generateBuilding — structural sanity", () => {
+  it("keeps every block inside the footprint or its one-block apron", () => {
+    for (const c of CASES) {
+      const [sx, , sz] = c.size;
+      for (const op of build(c).ops) {
+        expect(op.x, c.label).toBeGreaterThanOrEqual(-1);
+        expect(op.z, c.label).toBeGreaterThanOrEqual(-1);
+        expect(op.x, c.label).toBeLessThanOrEqual(sx);
+        expect(op.z, c.label).toBeLessThanOrEqual(sz);
+      }
+    }
+  });
+
+  it("puts nothing structural in the apron — only the named decorations", () => {
+    const decorations = new Set([
+      PINNED["roof.stairs"] as string,
+      PINNED["roof.slab"] as string,
+      PINNED["wall.fence"] as string,
+      PINNED["wall.trapdoor"] as string,
+      PINNED["light.lantern"] as string,
+    ]);
+    for (const c of CASES) {
+      const [sx, , sz] = c.size;
+      const { ops, meta } = build(c);
+      const apron = ops.filter((o) => o.x < 0 || o.x >= sx || o.z < 0 || o.z >= sz);
+      expect(apron.length, c.label).toBe(meta.apronOps);
+      for (const op of apron) {
+        const ok = decorations.has(op.block) || op.block.startsWith("potted_");
+        expect(ok, `${c.label}: ${op.block} in the apron`).toBe(true);
+      }
+    }
+  });
+
+  it("encloses the perimeter at every wall level", () => {
+    for (const c of CASES) {
+      const [sx, , sz] = c.size;
+      const { ops, meta } = build(c);
+      const filled = new Set(ops.map(key));
+      for (let y = 1; y <= meta.wallTop; y++) {
+        for (let z = 0; z < sz; z++) {
+          for (let x = 0; x < sx; x++) {
+            if (x !== 0 && x !== sx - 1 && z !== 0 && z !== sz - 1) continue;
+            expect(filled.has(`${x},${y},${z}`), `${c.label} wall gap at ${x},${y},${z}`).toBe(true);
+          }
+        }
+      }
+    }
+  });
+
+  it("sinks a foundation skirt to the depth the caller asked for", () => {
+    for (const depth of [1, 3, 6]) {
+      const { ops, meta } = build(CASES[0] as Case, { foundationDepth: depth });
+      expect(meta.foundationDepth).toBe(depth);
+      const below = ops.filter((o) => o.y < 0);
+      const [sx, , sz] = (CASES[0] as Case).size;
+      expect(below.length).toBe(depth * sx * sz);
+      expect(Math.min(...below.map((o) => o.y))).toBe(-depth);
+    }
+  });
+
+  it("cuts the door opening exactly at the declared port", () => {
+    for (const face of ["north", "south", "east", "west"] as const) {
+      const { ops, meta } = build(CASES[0] as Case, { door: { face } });
+      expect(meta.door?.face).toBe(face);
+      const at = new Map(ops.map((o) => [key(o), o] as const));
+      const lower = at.get(`${meta.door?.x},1,${meta.door?.z}`);
+      const upper = at.get(`${meta.door?.x},2,${meta.door?.z}`);
+      expect(lower?.block).toBe(BUILDING_STYLE_DEFAULTS["door.block"]);
+      expect(upper?.block).toBe(BUILDING_STYLE_DEFAULTS["door.block"]);
+      expect(lower?.props?.["half"]).toBe("lower");
+      expect(upper?.props?.["half"]).toBe("upper");
+      // The door faces out of the wall it is cut into.
+      expect(lower?.props?.["facing"]).toBe(face);
+    }
+  });
+
+  it("puts the door on the named face's wall line", () => {
+    const c = CASES[1] as Case;
+    const [sx, , sz] = c.size;
+    expect(build(c, { door: { face: "north" } }).meta.door?.z).toBe(0);
+    expect(build(c, { door: { face: "south" } }).meta.door?.z).toBe(sz - 1);
+    expect(build(c, { door: { face: "west" } }).meta.door?.x).toBe(0);
+    expect(build(c, { door: { face: "east" } }).meta.door?.x).toBe(sx - 1);
+  });
+
+  it("never puts a window in the door column", () => {
+    const { ops, meta } = build(CASES[2] as Case, { door: { face: "south" } });
+    const panes = ops.filter((o) => o.block === BUILDING_STYLE_DEFAULTS["wall.window"]);
+    expect(panes.length).toBe(meta.windowCount);
+    expect(panes.some((o) => o.x === meta.door?.x && o.z === meta.door?.z)).toBe(false);
+    // Corners are structure, never glazing.
+    const [sx, , sz] = (CASES[2] as Case).size;
+    expect(panes.some((o) => (o.x === 0 || o.x === sx - 1) && (o.z === 0 || o.z === sz - 1))).toBe(false);
+  });
+
+  it("roofs the whole footprint, whatever the shape", () => {
+    for (const roof of ["gable", "hip", "flat"] as const) {
+      for (const c of CASES) {
+        const { ops, meta } = generateBuilding({
+          size: c.size,
+          params: { ...c.params, roof },
+          seed: SEED,
+          style: PINNED,
+        });
+        const [sx, , sz] = c.size;
+        const covered = new Set(
+          core(ops, sx, sz)
+            .filter((o) => o.y >= meta.roofBase)
+            .map((o) => `${o.x},${o.z}`),
+        );
+        expect(covered.size, `${c.label} ${roof}`).toBe(sx * sz);
+      }
+    }
+  });
+
+  it("gives every storey a floor plane, and a stair up to it", () => {
+    const c = CASES[1] as Case;
+    const { ops, meta } = build(c);
+    expect(meta.params.floors).toBe(2);
+    expect(meta.floorLevels).toHaveLength(2);
+    expect(meta.stairRuns).toHaveLength(1);
+
+    const stairs = ops.filter((o) => o.block === BUILDING_STYLE_DEFAULTS["stair.interior"]);
+    expect(stairs.length).toBeGreaterThan(0);
+    // The run climbs one block per step, without a gap, from the ground floor
+    // to the storey above.
+    const ys = stairs.map((o) => o.y).sort((a, b) => a - b);
+    expect(ys[0]).toBe(meta.stairRuns[0]);
+    for (let i = 1; i < ys.length; i++) expect((ys[i] as number) - (ys[i - 1] as number)).toBe(1);
+    // The **top** step sits in the upper floor plane, not one below it. A step
+    // at `level - 1` leaves its back tread at `level` while the floor it
+    // serves walks at `level + 1`: a one-block rise, which is a jump.
+    expect(ys[ys.length - 1]).toBe(meta.floorLevels[1]);
+    // The lowest step stands on the floor below, so the first rise is half a
+    // block rather than a hop onto a plinth.
+    expect(ys[0]).toBe((meta.floorLevels[0] as number) + 1);
+
+    // …and the floor above is open over the whole run, so the climb is not
+    // into a ceiling. (The top step is *in* that plane and is not floor.)
+    const stairCells = new Set(stairs.map((o) => `${o.x},${o.z}`));
+    const upper = new Set(
+      ops
+        .filter((o) => o.y === meta.floorLevels[1] && o.block !== BUILDING_STYLE_DEFAULTS["stair.interior"])
+        .map((o) => `${o.x},${o.z}`),
+    );
+    for (const cell of stairCells) expect(upper.has(cell)).toBe(false);
+
+    // Every step has two blocks of headroom: a flight you have to crouch
+    // through is not a flight.
+    const filled = new Set(ops.map((o) => `${o.x},${o.y},${o.z}`));
+    for (const stair of stairs) {
+      for (const dy of [1, 2]) {
+        expect(filled.has(`${stair.x},${stair.y + dy},${stair.z}`)).toBe(false);
+      }
+    }
+  });
+
+  it("pairs both halves of a bed, at every yaw", () => {
+    const c = CASES[0] as Case;
+    for (const yaw of YAWS) {
+      const { ops } = build(c, { params: { ...c.params, archetype: "cottage" } });
+      const [sx, , sz] = c.size;
+      const beds = rotateOps(ops, yaw, sx, sz).filter((o) => o.block === "red_bed");
+      expect(beds.length, `yaw ${yaw}`).toBe(2);
+      const foot = beds.find((o) => o.props?.["part"] === "foot") as LocalVoxelOp;
+      const head = beds.find((o) => o.props?.["part"] === "head") as LocalVoxelOp;
+      expect(foot, `yaw ${yaw} foot`).toBeDefined();
+      expect(head, `yaw ${yaw} head`).toBeDefined();
+      // One `facing`, shared, and the head exactly one step along it. Anything
+      // else renders as two overlapping bed pieces.
+      expect(head.props?.["facing"], `yaw ${yaw}`).toBe(foot.props?.["facing"]);
+      expect(head.y).toBe(foot.y);
+      const [dx, dz] = cardinalStep(foot.props?.["facing"] as never);
+      expect([head.x - foot.x, head.z - foot.z], `yaw ${yaw}`).toEqual([dx, dz]);
+    }
+  });
+
+  it("lays a cottage bed head-to-the-wall, foot into the room", () => {
+    const c = CASES[0] as Case;
+    const { ops, meta } = build(c, { params: { ...c.params, archetype: "cottage" } });
+    const { interior } = meta;
+    const beds = ops.filter((o) => o.block === "red_bed" && o.y === 1);
+    const foot = beds.find((o) => o.props?.["part"] === "foot") as LocalVoxelOp;
+    const head = beds.find((o) => o.props?.["part"] === "head") as LocalVoxelOp;
+    expect(foot).toBeDefined();
+    expect(head).toBeDefined();
+    const inside = (x: number, z: number): boolean =>
+      x >= interior.x0 && x <= interior.x1 && z >= interior.z0 && z <= interior.z1;
+    const [dx, dz] = cardinalStep(head.props?.["facing"] as never);
+    // The head stands at the wall: one more step along `facing` leaves the room.
+    expect(inside(head.x + dx, head.z + dz)).toBe(false);
+    // And the foot points into the room, not into a wall.
+    expect(inside(foot.x, foot.z)).toBe(true);
+    expect(inside(foot.x - dx, foot.z - dz)).toBe(true);
+  });
+
+  it("turns an inn's stair-chairs towards the table", () => {
+    const { ops } = generateBuilding({
+      size: [11, 9, 11],
+      params: { floors: 1, floorHeight: 5, archetype: "inn" },
+      seed: SEED,
+      style: PINNED,
+    });
+    const chairs = ops.filter(
+      (o) => o.block === PINNED["stair.interior"] && o.y === 1 && o.props?.["half"] === "bottom",
+    );
+    const tables = new Set(
+      ops.filter((o) => o.block === PINNED["wall.fence"] && o.y === 1).map((o) => `${o.x},${o.z}`),
+    );
+    expect(tables.size).toBeGreaterThan(0);
+    let seated = 0;
+    for (const chair of chairs) {
+      // A stair's `facing` is where its backrest stands, so the seat opens the
+      // other way: the table must lie OPPOSITE the chair's `facing`.
+      const [dx, dz] = cardinalStep(chair.props?.["facing"] as never);
+      if (!tables.has(`${chair.x - dx},${chair.z - dz}`)) continue;
+      seated++;
+      // ...and never the other way round, which is the bug this guards.
+      expect(tables.has(`${chair.x + dx},${chair.z + dz}`)).toBe(false);
+    }
+    expect(seated).toBe(chairs.length);
+    expect(seated).toBeGreaterThan(0);
+  });
+
+  it("lights every storey", () => {
+    for (const c of CASES) {
+      const { ops, meta } = build(c);
+      const lanterns = ops.filter((o) => o.block === BUILDING_STYLE_DEFAULTS["light.lantern"]);
+      // The porch lamp is a lantern too, and it is not one of the interior
+      // lights `meta.lanternCount` counts. Nor is every interior light a
+      // lantern: a room one cell across gets a wall torch, because a lantern
+      // at head height in a one-wide room blocks the only way through it.
+      const inside = lanterns.filter((o) => o.props?.["hanging"] === "true");
+      const brackets = ops.filter((o) => o.block === "wall_torch");
+      expect(inside.length + brackets.length).toBe(meta.lanternCount);
+      if (meta.interior.x0 <= meta.interior.x1 && meta.interior.z0 <= meta.interior.z1) {
+        expect(meta.lanternCount).toBe(meta.params.floors);
+      }
+      // Every hanging lantern has the floor/ceiling plane above it to hang from.
+      const filled = new Set(ops.map(key));
+      for (const lamp of lanterns) {
+        const supported =
+          filled.has(`${lamp.x},${lamp.y + 1},${lamp.z}`) ||
+          filled.has(`${lamp.x},${lamp.y - 1},${lamp.z}`);
+        expect(supported, `${c.label} lantern at ${key(lamp)}`).toBe(true);
+      }
+    }
+  });
+
+  it("honours the material overrides", () => {
+    const { ops } = generateBuilding({
+      size: [9, 9, 9],
+      params: { wallSymbol: "sandstone", trimSymbol: "acacia_log", roofSymbol: "brick_stairs" },
+      seed: SEED,
+      style: { "floor.interior": "smooth_stone" },
+    });
+    const blocks = new Set(ops.map((o) => o.block));
+    expect(blocks.has("sandstone")).toBe(true);
+    expect(blocks.has("acacia_log")).toBe(true);
+    expect(blocks.has("brick_stairs")).toBe(true);
+    expect(blocks.has("smooth_stone")).toBe(true);
+    expect(blocks.has("oak_planks")).toBe(false);
+  });
+
+  it("falls back to the nearest of the three roofs it builds", () => {
+    const roofOf = (name: string): BuildingRoof =>
+      generateBuilding({ size: [9, 10, 9], params: { roof: name }, seed: SEED }).meta.params.roof;
+    expect(roofOf("steep_gable")).toBe("gable");
+    expect(roofOf("gambrel")).toBe("gable");
+    expect(roofOf("pyramid")).toBe("hip");
+    expect(roofOf("flat")).toBe("flat");
+  });
+});
+
+describe("rotateOps", () => {
+  it("is a bijection of the footprint onto the rotated box", () => {
+    for (const c of CASES) {
+      const [sx, , sz] = c.size;
+      const ops = build(c).ops;
+      for (const yaw of YAWS) {
+        const rotated = rotateOps(ops, yaw, sx, sz);
+        expect(rotated.length).toBe(ops.length);
+        expect(new Set(rotated.map(key)).size).toBe(ops.length);
+        const [rx, rz] = yaw === 90 || yaw === 270 ? [sz, sx] : [sx, sz];
+        for (const op of rotated) {
+          expect(op.x).toBeGreaterThanOrEqual(-1);
+          expect(op.z).toBeGreaterThanOrEqual(-1);
+          expect(op.x).toBeLessThanOrEqual(rx);
+          expect(op.z).toBeLessThanOrEqual(rz);
+        }
+      }
+    }
+  });
+
+  it("composes back to the identity over four quarter turns", () => {
+    const c = CASES[1] as Case;
+    const [sx, , sz] = c.size;
+    const ops = build(c).ops;
+    let round = ops.slice();
+    for (let i = 0; i < 4; i++) {
+      const [w, d] = i % 2 === 0 ? [sx, sz] : [sz, sx];
+      round = rotateOps(round, 90, w, d);
+    }
+    expect(JSON.stringify(round)).toBe(JSON.stringify(ops));
+  });
+
+  it("rotates the `facing` property with the geometry", () => {
+    // The headline case from the brief: a west-facing stair becomes
+    // north-facing under a 90° turn.
+    expect(rotateFacing("west", 90)).toBe("north");
+    expect(rotateFacing("north", 90)).toBe("east");
+    expect(rotateFacing("east", 90)).toBe("south");
+    expect(rotateFacing("south", 90)).toBe("west");
+    expect(rotateFacing("north", 180)).toBe("south");
+    expect(rotateFacing("north", 270)).toBe("west");
+    expect(rotateFacing("north", 0)).toBe("north");
+
+    const op: LocalVoxelOp = { x: 0, y: 1, z: 0, block: "oak_stairs", props: { facing: "west", half: "bottom" } };
+    const [turned] = rotateOps([op], 90, 5, 5);
+    expect(turned?.props?.["facing"]).toBe("north");
+    expect(turned?.props?.["half"]).toBe("bottom");
+  });
+
+  it("rotates the door of a placed building onto the rotated face", () => {
+    const c = CASES[0] as Case;
+    const [sx, , sz] = c.size;
+    const { ops, meta } = build(c, { door: { face: "south" } });
+    const doorOps = ops.filter((o) => o.block === BUILDING_STYLE_DEFAULTS["door.block"]);
+    for (const yaw of YAWS) {
+      const rotated = rotateOps(doorOps, yaw, sx, sz);
+      const expectedFace = rotateFacing("south", yaw);
+      for (const op of rotated) expect(op.props?.["facing"]).toBe(expectedFace);
+      // Under yaw 90 the south wall (z = sz−1) becomes the west wall (x = 0).
+      const moved = rotateLocalColumn(meta.door?.x as number, meta.door?.z as number, sx, sz, yaw);
+      expect(rotated.every((o) => o.x === moved.x && o.z === moved.z)).toBe(true);
+    }
+  });
+
+  it("rotates pillar axes and pane connection flags", () => {
+    expect(rotateProps({ axis: "x" }, 90)).toEqual({ axis: "z" });
+    expect(rotateProps({ axis: "z" }, 90)).toEqual({ axis: "x" });
+    expect(rotateProps({ axis: "x" }, 180)).toEqual({ axis: "x" });
+    expect(rotateProps({ axis: "y" }, 90)).toEqual({ axis: "y" });
+    expect(rotateProps({ east: "true", west: "true" }, 90)).toEqual({ south: "true", north: "true" });
+    expect(rotateProps({ north: "true", south: "true" }, 180)).toEqual({ south: "true", north: "true" });
+    expect(rotateProps(undefined, 90)).toBeUndefined();
+    expect(rotateProps({ half: "upper" }, 90)).toEqual({ half: "upper" });
+  });
+
+  it("keeps the rotated building's walls enclosing its rotated footprint", () => {
+    const c = CASES[4] as Case;
+    const [sx, , sz] = c.size;
+    const { ops, meta } = build(c);
+    for (const yaw of YAWS) {
+      const rotated = rotateOps(ops, yaw, sx, sz);
+      const [w, d] = yaw === 90 || yaw === 270 ? [sz, sx] : [sx, sz];
+      const filled = new Set(rotated.map(key));
+      for (let y = 1; y <= meta.wallTop; y++) {
+        for (let x = 0; x < w; x++) {
+          expect(filled.has(`${x},${y},0`)).toBe(true);
+          expect(filled.has(`${x},${y},${d - 1}`)).toBe(true);
+        }
+      }
+    }
+  });
+});
+
+describe("material themes", () => {
+  it("picks a theme deterministically, and honours an override", () => {
+    const a = pickTheme(SEED);
+    expect(pickTheme(SEED).id).toBe(a.id);
+    expect(MATERIAL_THEMES.map((t) => t.id)).toContain(a.id);
+    for (const theme of MATERIAL_THEMES) {
+      expect(pickTheme(SEED, theme.id).id).toBe(theme.id);
+    }
+    // An unknown name falls back to the seed's draw rather than failing.
+    expect(pickTheme(SEED, "no_such_theme").id).toBe(a.id);
+  });
+
+  it("deals a distinct triple to every building until the palette runs out", () => {
+    for (const theme of MATERIAL_THEMES) {
+      const capacity = theme.woods.length * theme.roofs.length;
+      const deal = assignMaterials(theme, capacity, SEED);
+      expect(new Set(deal.map(materialKey)).size).toBe(capacity);
+      // Below capacity the property still holds — that is the case a village of
+      // eight or nine houses actually exercises.
+      for (const n of [2, 5, 9]) {
+        const some = assignMaterials(theme, n, SEED);
+        expect(new Set(some.map(materialKey)).size).toBe(Math.min(n, capacity));
+      }
+      // Past capacity it wraps, which is the documented exhaustion case.
+      const over = assignMaterials(theme, capacity + 3, SEED);
+      expect(new Set(over.map(materialKey)).size).toBe(capacity);
+    }
+  });
+
+  it("deals the same hand for the same seed and a different one otherwise", () => {
+    const theme = MATERIAL_THEMES[0] as MaterialTheme;
+    const a = assignMaterials(theme, 9, SEED).map(materialKey);
+    expect(assignMaterials(theme, 9, SEED).map(materialKey)).toEqual(a);
+    const other = assignMaterials(theme, 9, nodeSeed(0x5eedn, "world.elsewhere")).map(materialKey);
+    expect(other).not.toEqual(a);
+  });
+
+  it("leaves the foot of a flight an open approach, and rails the well", () => {
+    const { ops, meta } = generateBuilding({
+      size: [11, 12, 11],
+      params: { floors: 2, floorHeight: 4, archetype: "cottage" },
+      seed: SEED,
+      style: PINNED,
+    });
+    const at = new Map(ops.map((o) => [key(o), o] as const));
+    const stairs = ops.filter((o) => o.block === PINNED["stair.interior"]);
+    const { interior } = meta;
+    const level = meta.floorLevels[1] as number;
+
+    // The run stands one cell off the north wall. With its bottom step hard
+    // against that wall the step's front face was buried in it, and the only
+    // approach left was from the side — where the gap between the wall and the
+    // step's raised half is half a block, narrower than a player. That is the
+    // "stairs still need a jump" defect, and this is the shape that fixes it.
+    const feet = stairs.reduce((lo, o) => (o.y < lo.y ? o : lo));
+    expect(feet.z).toBe(interior.z0 + 1);
+    expect(feet.x).toBe(interior.x0);
+    // The approach cell itself is floor and carries nothing.
+    expect(at.get(`${interior.x0},0,${interior.z0}`)?.block).toBe(PINNED["floor.interior"]);
+    expect(at.has(`${interior.x0},1,${interior.z0}`)).toBe(false);
+
+    // The stairwell is a well, not a hatch: the floor above is open over the
+    // run *and* over the approach, because a player rising half a block onto
+    // the first step puts their head through a three-high ceiling.
+    for (let z = interior.z0; z <= feet.z + stairs.length - 1; z++) {
+      const above = at.get(`${interior.x0},${level},${z}`);
+      expect(above === undefined || above.block === PINNED["stair.interior"], `well at z=${z}`).toBe(
+        true,
+      );
+    }
+    // The landing past the top step is real floor, part of the storey it
+    // serves — never a pad hanging on its own.
+    const top = stairs.reduce((hi, o) => (o.y > hi.y ? o : hi));
+    expect(at.get(`${interior.x0},${level},${top.z + 1}`)?.block).toBe(PINNED["floor.interior"]);
+
+    // The one exposed edge of the well is railed.
+    for (let z = interior.z0; z <= top.z; z++) {
+      expect(at.get(`${interior.x0 + 1},${level + 1},${z}`)?.block).toBe(PINNED["wall.fence"]);
+    }
+  });
+
+  it("stacks a granary's hay against the walls and leaves the floor walkable", () => {
+    const { ops, meta } = generateBuilding({
+      size: [11, 9, 11],
+      params: { floors: 1, floorHeight: 5, archetype: "granary" },
+      seed: SEED,
+      style: PINNED,
+    });
+    const { interior } = meta;
+    const hay = ops.filter((o) => o.block === "hay_block");
+    expect(hay.length).toBeGreaterThan(0);
+
+    const columns = new Set(hay.map((o) => `${o.x},${o.z}`));
+    const area = (interior.x1 - interior.x0 + 1) * (interior.z1 - interior.z0 + 1);
+    // A quarter of the floor at most. The first version checkerboarded the
+    // *whole* floor, which is not a granary but a maze with no legal move:
+    // the free cells only touched at their corners.
+    expect(columns.size).toBeLessThanOrEqual(Math.floor(area * 0.25));
+    for (const cell of columns) {
+      const [x, z] = cell.split(",").map(Number) as [number, number];
+      const wallAdjacent =
+        x === interior.x0 || x === interior.x1 || z === interior.z0 || z === interior.z1;
+      expect(wallAdjacent, cell).toBe(true);
+    }
+    // One to three bales, and never up to the joists.
+    for (const cell of columns) {
+      const height = hay.filter((o) => `${o.x},${o.z}` === cell).length;
+      expect(height).toBeGreaterThanOrEqual(1);
+      expect(height).toBeLessThanOrEqual(3);
+      expect(height).toBeLessThan(meta.params.storyHeight - 1);
+    }
+
+    // Bales read as deliberate stores, not scatter: no pile is a lone bale
+    // stranded on its own, every pile is level, and the upper course of a pile
+    // lies along the wall it stands against.
+    const heightAt = new Map<string, number>();
+    for (const cell of columns) {
+      heightAt.set(cell, hay.filter((o) => `${o.x},${o.z}` === cell).length);
+    }
+    for (const cell of columns) {
+      const [x, z] = cell.split(",").map(Number) as [number, number];
+      const neighbours = ([[1, 0], [-1, 0], [0, 1], [0, -1]] as const)
+        .map(([dx, dz]) => `${x + dx},${z + dz}`)
+        .filter((k) => columns.has(k));
+      expect(neighbours.length, `isolated bale at ${cell}`).toBeGreaterThan(0);
+      // A pile is level — its cells all carry the same number of bales.
+      for (const k of neighbours) expect(heightAt.get(k), `${cell} vs ${k}`).toBe(heightAt.get(cell));
+      const onXWall = z === interior.z0 || z === interior.z1;
+      for (const bale of hay.filter((o) => `${o.x},${o.z}` === cell)) {
+        expect(bale.props?.["axis"]).toBe(bale.y === 1 ? "y" : onXWall ? "x" : "z");
+      }
+    }
+
+    // Every free floor cell is still 4-connected to every other one.
+    const free: string[] = [];
+    for (let z = interior.z0; z <= interior.z1; z++) {
+      for (let x = interior.x0; x <= interior.x1; x++) {
+        if (!ops.some((o) => o.x === x && o.z === z && o.y === 1)) free.push(`${x},${z}`);
+      }
+    }
+    const open = new Set(free);
+    const seen = new Set([free[0] as string]);
+    const queue = [free[0] as string];
+    while (queue.length > 0) {
+      const [x, z] = (queue.pop() as string).split(",").map(Number) as [number, number];
+      for (const [dx, dz] of [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+      ] as const) {
+        const k = `${x + dx},${z + dz}`;
+        if (!open.has(k) || seen.has(k)) continue;
+        seen.add(k);
+        queue.push(k);
+      }
+    }
+    expect(seen.size).toBe(open.size);
+  });
+
+  it("reads an archetype off a node's tags", () => {
+    expect(archetypeOfTags(["civic", "hall"])).toBe("hall");
+    expect(archetypeOfTags(["house", "trade"])).toBe("inn");
+    expect(archetypeOfTags(["craft"])).toBe("smithy");
+    expect(archetypeOfTags(["store"])).toBe("granary");
+    expect(archetypeOfTags(["civic", "lookout"])).toBe("watchtower");
+    expect(archetypeOfTags(["house"])).toBe("cottage");
+    expect(archetypeOfTags([])).toBe("cottage");
+  });
+
+  it("furnishes each archetype with something to find inside", () => {
+    const props: Record<string, string[]> = {
+      cottage: ["red_bed", "crafting_table"],
+      inn: ["barrel", "cauldron"],
+      smithy: ["blast_furnace", "anvil", "smithing_table"],
+      granary: ["hay_block", "composter"],
+      hall: ["white_carpet", "blue_banner"],
+    };
+    for (const [archetype, wanted] of Object.entries(props)) {
+      const { ops, meta } = generateBuilding({
+        size: [11, 11, 11],
+        params: { floors: 1, archetype },
+        seed: SEED,
+        style: PINNED,
+      });
+      const blocks = new Set(ops.map((o) => o.block));
+      for (const block of wanted) expect(blocks.has(block), `${archetype}/${block}`).toBe(true);
+      expect(meta.params.archetype).toBe(archetype);
+      expect(meta.furnitureCount).toBeGreaterThan(2);
+    }
+  });
+
+  it("builds a watchtower as a tower, not a house with a flat lid", () => {
+    const { ops, meta } = generateBuilding({
+      size: [7, 19, 7],
+      params: { archetype: "watchtower" },
+      seed: SEED,
+      style: PINNED,
+    });
+    expect(meta.params.archetype).toBe("watchtower");
+    expect(meta.roofTop).toBeGreaterThan(14);
+    // The shaft is set back from the base, so the widest course is not the top.
+    const widthAt = (y: number): number => {
+      const xs = ops.filter((o) => o.y === y).map((o) => o.x);
+      return xs.length === 0 ? 0 : Math.max(...xs) - Math.min(...xs) + 1;
+    };
+    expect(widthAt(3)).toBe(7);
+    expect(widthAt(8)).toBe(5);
+    // Crenellations: the parapet's top course covers only part of its ring.
+    const parapet = ops.filter((o) => o.y === meta.roofTop).length;
+    const below = ops.filter((o) => o.y === meta.roofTop - 1).length;
+    expect(parapet).toBeGreaterThan(4);
+    expect(parapet).toBeLessThan(below);
+    // Climbable, and nothing floating: a ladder the full height of the shaft.
+    expect(ops.filter((o) => o.block === "ladder").length).toBeGreaterThan(8);
+  });
+
+  it("digs a watchtower a cellar and runs its own ladder down into it", () => {
+    // The bug: `emitWatchtower` was a special-cased path that never called the
+    // cellar machinery, so a tower asked for a basement — by the param, or by
+    // a `connected … via "tunnel"` constraint, which implies one — silently
+    // built none, and the tunnel router reported the tower as an end with no
+    // cellar to open into.
+    const depth = 4;
+    const { ops, meta } = generateBuilding({
+      size: [7, 19, 7],
+      params: { archetype: "watchtower", basement: depth },
+      seed: SEED,
+      style: PINNED,
+    });
+    expect(meta.params.archetype).toBe("watchtower");
+    expect(meta.basementDepth).toBe(depth);
+    expect(meta.basementInterior).not.toBe(null);
+    expect(meta.basementAccess).not.toBe(null);
+    // The cellar's floor slab is a storey of its own, which is what makes the
+    // physics lint walk down there.
+    expect(meta.floorLevels[0]).toBe(-(depth + 1));
+
+    const at = new Map(ops.map((o) => [key(o), o] as const));
+    const interior = meta.basementInterior as NonNullable<typeof meta.basementInterior>;
+    const access = meta.basementAccess as NonNullable<typeof meta.basementAccess>;
+
+    // --- the room ----------------------------------------------------------
+    // Air under the shaft, a masonry slab under that, and the ground floor
+    // plane above is its ceiling.
+    for (let d = 1; d <= depth; d++) {
+      for (let z = interior.z0; z <= interior.z1; z++) {
+        for (let x = interior.x0; x <= interior.x1; x++) {
+          const cell = at.get(`${x},${-d},${z}`);
+          expect(cell, `cellar cell ${x},${-d},${z}`).toBeDefined();
+        }
+      }
+    }
+    expect(at.get(`${interior.x0},${-(depth + 1)},${interior.z0}`)?.block).not.toBe("air");
+
+    // --- one continuous ladder ---------------------------------------------
+    // From the cellar floor to the parapet, in a single column: the tower's
+    // existing shaft ladder, carried on through the floor rather than a second
+    // ladder in a corner.
+    const ladders = ops
+      .filter((o) => o.block === "ladder")
+      .map((o) => ({ ...o }))
+      .sort((a, b) => a.y - b.y);
+    expect(ladders.length).toBeGreaterThan(0);
+    for (const rung of ladders) {
+      expect([rung.x, rung.z]).toEqual([access.x, access.z]);
+    }
+    expect((ladders[0] as LocalVoxelOp).y).toBe(-depth);
+    for (const [i, rung] of ladders.entries()) {
+      expect(rung.y, "the ladder has no gap in it").toBe(-depth + i);
+    }
+    // Every rung is backed. `facing: "south"` names the block at `z - 1`, so
+    // the pilaster the tower runs up the shaft has to keep going down.
+    for (const rung of ladders) {
+      expect(rung.props?.["facing"]).toBe("south");
+      const backing = at.get(`${rung.x},${rung.y},${rung.z - 1}`);
+      expect(backing, `backing behind the rung at y ${rung.y}`).toBeDefined();
+      expect(backing?.block).not.toBe("air");
+      expect(backing?.block).not.toBe("ladder");
+    }
+
+    // --- reachable ---------------------------------------------------------
+    // A walk down the ladder column: every cell of it is either air or the
+    // ladder itself, from the base storey to the cellar floor, so the interior
+    // route from the door to the cellar exists.
+    for (let y = -depth; y <= 3; y++) {
+      const cell = at.get(`${access.x},${y},${access.z}`);
+      expect(cell?.block === undefined || cell.block === "air" || cell.block === "ladder").toBe(
+        true,
+      );
+    }
+    // …and the cellar is furnished and lit like any other.
+    expect(meta.lanternCount).toBeGreaterThan(1);
+  });
+
+  it("leaves a watchtower without a basement exactly as it was", () => {
+    const plain = generateBuilding({
+      size: [7, 19, 7],
+      params: { archetype: "watchtower" },
+      seed: SEED,
+      style: PINNED,
+    });
+    expect(plain.meta.basementDepth).toBe(0);
+    expect(plain.meta.basementInterior).toBe(null);
+    expect(plain.ops.every((o) => o.y >= -plain.meta.foundationDepth)).toBe(true);
+  });
+
+  it("runs a one-storey chimney up the wall, not through the room", () => {
+    const { ops, meta } = generateBuilding({
+      size: [9, 8, 9],
+      params: { floors: 1, roof: "gable", archetype: "cottage" },
+      seed: SEED,
+      style: PINNED,
+    });
+    expect(meta.chimney).toBe(true);
+    const at = new Map(ops.map((o) => [key(o), o] as const));
+    const fires = ops.filter((o) => o.block === "campfire").sort((a, b) => a.y - b.y);
+    // Two: the hearth inside the room, and the fire in the chimney head.
+    expect(fires.length).toBe(2);
+
+    // --- the hearth --------------------------------------------------------
+    const hearth = fires[0] as { x: number; y: number; z: number };
+    expect(hearth.y).toBe(1);
+    // It is strictly *inside* the interior, not in the wall plane: a campfire
+    // is neither full nor opaque, and standing one in the exterior wall left a
+    // see-through hole in the wall at floor level.
+    expect(hearth.x).toBeGreaterThanOrEqual(meta.interior.x0);
+    expect(hearth.x).toBeLessThanOrEqual(meta.interior.x1);
+    expect(hearth.z).toBeGreaterThanOrEqual(meta.interior.z0);
+    expect(hearth.z).toBeLessThanOrEqual(meta.interior.z1);
+    // Standing on the floor course below it.
+    expect(at.has(`${hearth.x},0,${hearth.z}`)).toBe(true);
+    // …with the chimney breast solid behind it: the wall cell it faces is the
+    // flue block, at floor level and in the course above, so the wall plane
+    // has no gap. The flue is one of the four neighbours of the hearth cell.
+    const breast = [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+    ]
+      .map(([dx, dz]) => ({ x: hearth.x + (dx as number), z: hearth.z + (dz as number) }))
+      .filter(
+        (c) =>
+          at.get(`${c.x},1,${c.z}`)?.block === PINNED["chimney.block"] &&
+          at.get(`${c.x},2,${c.z}`)?.block === PINNED["chimney.block"] &&
+          (c.x === 0 || c.x === 8 || c.z === 0 || c.z === 8),
+      );
+    expect(breast.length).toBe(1);
+
+    // --- no interior cell is a full column ---------------------------------
+    for (let z = meta.interior.z0; z <= meta.interior.z1; z++) {
+      for (let x = meta.interior.x0; x <= meta.interior.x1; x++) {
+        const filled = [1, 2, 3].every((y) => at.has(`${x},${y},${z}`));
+        expect(filled, `interior column ${x},${z}`).toBe(false);
+      }
+    }
+
+    // --- the head ----------------------------------------------------------
+    const fire = fires[1] as { x: number; y: number; z: number };
+    expect(at.get(`${fire.x},${fire.y - 1},${fire.z}`)?.block).toBe(PINNED["chimney.block"]);
+    expect(at.has(`${fire.x},${fire.y + 1},${fire.z}`)).toBe(false);
+    // Ringed by the rim on every side that is still inside the footprint; the
+    // head is clipped there rather than reaching into the apron.
+    for (const [dx, dz] of [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+    ] as const) {
+      const nx = fire.x + dx;
+      const nz = fire.z + dz;
+      if (nx < 0 || nx > 8 || nz < 0 || nz > 8) continue;
+      expect(at.get(`${nx},${fire.y},${nz}`)?.block).toBe(PINNED["chimney.rim"]);
+    }
+    // The flue clears the ridge, so the smoke is not trapped under the roof.
+    expect(fire.y).toBeGreaterThan(meta.roofTop);
+  });
+});

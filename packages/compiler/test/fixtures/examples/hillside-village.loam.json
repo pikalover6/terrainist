@@ -1,0 +1,832 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "hillside_village",
+    "worldSeed": 4720931,
+    "prompt": "a small hillside village of timber houses around a plaza, a river running down to the sea, a watchtower on the north-east rise",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:dirt_path",
+      "road.shoulder": {
+        "mix": [
+          [
+            "minecraft:gravel",
+            3
+          ],
+          [
+            "minecraft:cobblestone",
+            2
+          ]
+        ]
+      }
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "A hillside village above a river mouth",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        320,
+        320
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "Rolling hills falling away to a southern shore",
+        "params": {
+          "amplitude": 22,
+          "baseHeight": 78,
+          "seaLevel": 63,
+          "frequency": 0.0042,
+          "beachWidth": 4,
+          "snowLineFraction": 0.95,
+          "continentalness": {
+            "frequency": 0.0016,
+            "seaFraction": 0.22
+          }
+        },
+        "children": [
+          {
+            "id": "north_rise",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The rise the watchtower stands on",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.55,
+                  0.3
+                ],
+                [
+                  0.75,
+                  0.22
+                ],
+                [
+                  0.95,
+                  0.2
+                ]
+              ],
+              "width": 60,
+              "height": 26,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "south_bay",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The bay the mill river empties into — the map's sea",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.45,
+                1
+              ],
+              "radius": 110,
+              "depth": 45,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "mill_river",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The mill river, running from the northern hills to the sea",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.72,
+                  0.18
+                ],
+                [
+                  0.6,
+                  0.42
+                ],
+                [
+                  0.52,
+                  0.66
+                ],
+                [
+                  0.44,
+                  0.9
+                ],
+                [
+                  0.4,
+                  1
+                ]
+              ],
+              "width": 9,
+              "depth": 5,
+              "flooded": "auto"
+            }
+          },
+          {
+            "id": "village_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The gentle shelf the village sits on",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.42,
+                0.44
+              ],
+              "radius": 88,
+              "height": 7,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "label": "Mild and green",
+        "params": {
+          "forceTheme": "temperate"
+        }
+      },
+      {
+        "id": "plaza",
+        "kind": "primitive",
+        "label": "The village green",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            22,
+            22
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median"
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "great_hall",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The great hall, facing the green",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            11
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "hip",
+          "windowRhythm": "regular"
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "adjacent_to": "plaza",
+            "gap": [
+              1,
+              8
+            ]
+          },
+          {
+            "facing": "plaza"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median"
+          }
+        ],
+        "ports": {
+          "main_door": {
+            "type": "door",
+            "face": "south"
+          },
+          "approach": {
+            "type": "road_stub",
+            "face": "south"
+          }
+        },
+        "tags": [
+          "civic",
+          "hall"
+        ]
+      },
+      {
+        "id": "inn",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The inn on the green's eastern edge",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            9
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable",
+          "windowRhythm": "paired"
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "adjacent_to": "plaza",
+            "gap": [
+              1,
+              8
+            ]
+          },
+          {
+            "facing": "plaza"
+          },
+          {
+            "distance": "great_hall",
+            "min": 6,
+            "max": 60
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south"
+          }
+        },
+        "tags": [
+          "house",
+          "trade"
+        ]
+      },
+      {
+        "id": "smithy",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The smithy, kept a little apart",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "distance": "plaza",
+            "min": 6,
+            "max": 44
+          },
+          {
+            "distance": "#tag:house",
+            "min": 7
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north"
+          }
+        },
+        "tags": [
+          "craft"
+        ]
+      },
+      {
+        "id": "granary",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The granary above the river bend",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "hip",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "zone": "west"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 70
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east"
+          }
+        },
+        "tags": [
+          "store"
+        ]
+      },
+      {
+        "id": "cottage_north",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A cottage on the northern lane",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            7,
+            7,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "distance": "plaza",
+            "min": 6,
+            "max": 72
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6
+          },
+          {
+            "facing": "plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south"
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "cottage_east",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A cottage on the eastern lane",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            8,
+            7,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "dense"
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "distance": "plaza",
+            "min": 6,
+            "max": 72
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west"
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "cottage_south",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A cottage below the green",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            7,
+            7,
+            8
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "zone": "south"
+          },
+          {
+            "distance": "plaza",
+            "min": 6,
+            "max": 72
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north"
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "cottage_west",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A two-storey cottage on the western lane",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            11,
+            9
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "zone": "west"
+          },
+          {
+            "distance": "plaza",
+            "min": 6,
+            "max": 72
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east"
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "watchtower",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A watchtower on the north-east rise — dropped if the hill will not take it",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            7,
+            19,
+            7
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "flat",
+          "windowRhythm": "sparse"
+        },
+        "optional": true,
+        "constraints": [
+          {
+            "zone": "northeast"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "max"
+          },
+          {
+            "distance": "plaza",
+            "min": 20
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south"
+          }
+        },
+        "tags": [
+          "civic",
+          "lookout"
+        ]
+      },
+      {
+        "id": "chapel",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The chapel and its vestry wing, joined to the great hall by a crypt tunnel",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            14,
+            15
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "wing": {
+            "size": [
+              4,
+              5
+            ],
+            "side": "east",
+            "offset": 5
+          },
+          "basement": {
+            "depth": 4
+          }
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "plaza",
+            "min": 8,
+            "max": 60
+          },
+          {
+            "connected": "great_hall",
+            "via": "tunnel"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median"
+          }
+        ],
+        "ports": {
+          "main_door": {
+            "type": "door",
+            "face": "south"
+          },
+          "crypt_stair": {
+            "type": "tunnel_stub",
+            "face": "north"
+          }
+        },
+        "tags": [
+          "civic",
+          "chapel"
+        ]
+      },
+      {
+        "id": "market_stall",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "A market stall on the edge of the green",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            7,
+            8,
+            7
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "plaza",
+            "min": 2,
+            "max": 40
+          },
+          {
+            "facing": "plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north"
+          }
+        },
+        "tags": [
+          "market"
+        ]
+      },
+      {
+        "id": "bay_pier",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A pier running out into the bay",
+        "params": {
+          "prop": "pier",
+          "zone": "south",
+          "length": 10,
+          "width": 2
+        }
+      },
+      {
+        "id": "pier_boat",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "A rowboat moored at the pier's end",
+        "params": {
+          "prop": "rowboat",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "The lanes joining every door to the green",
+        "params": {
+          "anchors": [
+            "plaza",
+            "#tag:house",
+            "great_hall"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true
+        }
+      },
+      {
+        "id": "hill_oaks",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "Oak woodland on the northern hills",
+        "params": {
+          "area": {
+            "zone": "north"
+          },
+          "density": 0.45,
+          "elevation": [
+            4,
+            120
+          ],
+          "species": [
+            {
+              "id": "hill_oak",
+              "weight": 3,
+              "shape": "oak_round"
+            },
+            {
+              "id": "hill_birch",
+              "weight": 1,
+              "shape": "birch_slim"
+            }
+          ]
+        }
+      },
+      {
+        "id": "river_birches",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "Birch along the river's western bank",
+        "params": {
+          "area": {
+            "zone": "southwest"
+          },
+          "density": 0.35,
+          "elevation": [
+            2,
+            90
+          ],
+          "species": [
+            {
+              "id": "bank_birch",
+              "weight": 1,
+              "shape": "birch_slim"
+            }
+          ]
+        }
+      },
+      {
+        "id": "wilderness",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "Sparse cover everywhere else",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.12,
+          "elevation": [
+            2,
+            130
+          ],
+          "species": [
+            {
+              "id": "wild_oak",
+              "weight": 3,
+              "shape": "oak_round"
+            },
+            {
+              "id": "wild_spruce",
+              "weight": 1,
+              "shape": "spruce_tall"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

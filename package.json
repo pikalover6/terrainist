@@ -1,0 +1,30 @@
+{
+  "name": "terrainist",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Text prompt to Minecraft world: a model authors a Loam 1 document, a deterministic compiler builds it.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pikalover6/terrainist.git"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "test": "vitest run",
+    "kit": "node tools/kit/build.mjs",
+    "kit:check": "node tools/kit/build.mjs --check",
+    "clean": "rm -rf packages/*/dist packages/*/*.tsbuildinfo"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.6.0",
+    "vitest": "^3.0.0"
+  }
+}

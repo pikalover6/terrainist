@@ -1,0 +1,624 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "drowned_atlantean_city",
+    "worldSeed": "14159496336105894512",
+    "prompt": "A drowned Atlantean city half risen from a tropical lagoon: prismarine colonnades, a monumental tide gate over the channel, a leaning bronze colossus waist-deep in the water, pearl divers' huts on stilts, coral gardens, and a moon pool at the heart of the palace.",
+    "spawn": {
+      "at": [
+        0.5,
+        0.54
+      ]
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": "minecraft:sand",
+      "ground.subsurface": "minecraft:sandstone",
+      "ground.stone": "minecraft:prismarine",
+      "ground.cliff": "minecraft:dark_prismarine",
+      "ground.beach": "minecraft:sand",
+      "ground.underwater": "minecraft:sand",
+      "flora.atoll_coastal_fringes_willow_weeping_0.trunk": "minecraft:jungle_log",
+      "flora.atoll_coastal_fringes_willow_weeping_0.leaves": "minecraft:jungle_leaves",
+      "flora.atoll_coastal_fringes_tree_fern_1.trunk": "minecraft:jungle_log",
+      "flora.atoll_coastal_fringes_tree_fern_1.leaves": "minecraft:jungle_leaves"
+    }
+  },
+  "intent": {
+    "era": "ancient",
+    "wealth": 0.75,
+    "decline": 0.65,
+    "formality": 0.7,
+    "climate": {
+      "biome": "minecraft:warm_ocean",
+      "temperature": 0.8,
+      "humidity": 0.8,
+      "snow": "never"
+    },
+    "character": {
+      "label": "drowned Atlantean city",
+      "motifs": {
+        "roofType": "dome",
+        "massing": "stepped",
+        "windowRhythm": "regular",
+        "ornamentDensity": 0.8
+      },
+      "materialTheme": "white_quartz",
+      "formPacks": [
+        "atlantean"
+      ]
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 58,
+          "amplitude": 16,
+          "frequency": 0.003125,
+          "beachWidth": 4,
+          "continentalness": {
+            "seaFraction": 0.55,
+            "frequency": 0.0029411764705882353
+          }
+        },
+        "children": [
+          {
+            "id": "atoll_outer_rim",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.18,
+                  0.3
+                ],
+                [
+                  0.15,
+                  0.65
+                ],
+                [
+                  0.35,
+                  0.82
+                ],
+                [
+                  0.65,
+                  0.85
+                ],
+                [
+                  0.82,
+                  0.68
+                ],
+                [
+                  0.85,
+                  0.35
+                ],
+                [
+                  0.72,
+                  0.18
+                ]
+              ],
+              "width": 36,
+              "height": 12,
+              "meander": 0.5
+            }
+          },
+          {
+            "id": "central_sunken_isle",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "island",
+              "at": [
+                0.5,
+                0.52
+              ],
+              "height": 11,
+              "radius": 82,
+              "irregularity": 0.18
+            }
+          },
+          {
+            "id": "pearl_shoal_flat",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.26,
+                0.62
+              ],
+              "height": 6,
+              "radius": 42,
+              "irregularity": 0.18
+            }
+          },
+          {
+            "id": "lagoon_channel",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.5,
+                  0.52
+                ],
+                [
+                  0.5,
+                  0.3
+                ],
+                [
+                  0.5,
+                  0.05
+                ],
+                "coast"
+              ],
+              "width": 22,
+              "depth": 9,
+              "flooded": "auto",
+              "meander": 0.5
+            }
+          },
+          {
+            "id": "lagoon_deep_pool",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.38,
+                0.4
+              ],
+              "radius": 52,
+              "depth": 8,
+              "water": true,
+              "irregularity": 0.18
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "tropical",
+          "latitudeGradient": 0
+        }
+      },
+      {
+        "id": "atoll_coastal_fringes",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "params": {
+          "area": {
+            "zone": "southwest"
+          },
+          "density": 0.03,
+          "undergrowth": {
+            "grass": 0.4,
+            "flowers": 0.6
+          },
+          "clumping": 0.6,
+          "species": [
+            {
+              "id": "atoll_coastal_fringes_willow_weeping_0",
+              "shape": "willow_weeping",
+              "weight": 2,
+              "minHeight": 7,
+              "maxHeight": 10,
+              "trunkPalette": "flora.atoll_coastal_fringes_willow_weeping_0.trunk",
+              "leafPalette": "flora.atoll_coastal_fringes_willow_weeping_0.leaves"
+            },
+            {
+              "id": "atoll_coastal_fringes_tree_fern_1",
+              "shape": "tree_fern",
+              "weight": 1,
+              "minHeight": 3,
+              "maxHeight": 5,
+              "trunkPalette": "flora.atoll_coastal_fringes_tree_fern_1.trunk",
+              "leafPalette": "flora.atoll_coastal_fringes_tree_fern_1.leaves"
+            }
+          ]
+        }
+      },
+      {
+        "id": "leaning_bronze_colossus",
+        "kind": "generator",
+        "generator": "authored:leaning_bronze_colossus",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            22,
+            38,
+            20
+          ]
+        },
+        "params": {
+          "brief": "A monumental weathered bronze colossus leaning at a perilous tilt, standing waist-deep in the lagoon channel. Formed of green-oxidized copper blocks, cut copper stairs, exposed grating, and sea lantern accents, one arm raised toward the open sea.",
+          "seat": "wade"
+        },
+        "constraints": [
+          {
+            "at": [
+              0.46,
+              0.32
+            ]
+          },
+          {
+            "facing": "tide_gate"
+          }
+        ]
+      },
+      {
+        "id": "tide_gate",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            24,
+            18,
+            12
+          ]
+        },
+        "params": {
+          "archetype": "tide_gate_arch",
+          "decay": 0.5
+        },
+        "constraints": [
+          {
+            "at": [
+              0.5,
+              0.36
+            ]
+          }
+        ]
+      },
+      {
+        "id": "prismarine_colonnade",
+        "kind": "generator",
+        "generator": "authored:prismarine_colonnade",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            16,
+            12,
+            36
+          ]
+        },
+        "params": {
+          "brief": "A grand ceremonial colonnade of fluted prismarine and dark prismarine pillars lining the submerged processional approach, topped with water-worn entablatures, submerged braziers, and glowing sea lanterns.",
+          "seat": "wade"
+        },
+        "constraints": [
+          {
+            "at": [
+              0.5,
+              0.44
+            ]
+          },
+          {
+            "facing": "atlantean_palace"
+          }
+        ]
+      },
+      {
+        "id": "atlantean_palace",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            32,
+            22,
+            32
+          ]
+        },
+        "params": {
+          "archetype": "tidal_palace",
+          "basement": {
+            "depth": 4,
+            "style": "cistern_hall"
+          },
+          "decay": 0.55
+        },
+        "constraints": [
+          {
+            "at": [
+              0.5,
+              0.52
+            ]
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north"
+          }
+        }
+      },
+      {
+        "id": "palace_moon_pool",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            14,
+            8,
+            14
+          ]
+        },
+        "params": {
+          "archetype": "moon_pool_shrine",
+          "decay": 0.4
+        },
+        "constraints": [
+          {
+            "adjacent_to": "atlantean_palace",
+            "gap": [
+              2,
+              6
+            ]
+          },
+          {
+            "facing": "atlantean_palace"
+          }
+        ]
+      },
+      {
+        "id": "inner_coral_garden",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            16,
+            8,
+            16
+          ]
+        },
+        "params": {
+          "archetype": "coral_garden_court"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "atlantean_palace",
+            "gap": [
+              6,
+              12
+            ]
+          }
+        ]
+      },
+      {
+        "id": "outer_coral_garden",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            18,
+            8,
+            18
+          ]
+        },
+        "params": {
+          "archetype": "coral_garden_court"
+        },
+        "constraints": [
+          {
+            "at": [
+              0.38,
+              0.48
+            ]
+          }
+        ]
+      },
+      {
+        "id": "diver_hall",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            16,
+            12,
+            14
+          ]
+        },
+        "params": {
+          "archetype": "pearl_diver_hall",
+          "decay": 0.45
+        },
+        "constraints": [
+          {
+            "at": [
+              0.26,
+              0.62
+            ]
+          }
+        ]
+      },
+      {
+        "id": "diver_hut_1",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            8,
+            9,
+            8
+          ]
+        },
+        "params": {
+          "archetype": "stilt_house",
+          "decay": 0.4
+        },
+        "constraints": [
+          {
+            "adjacent_to": "diver_hall",
+            "gap": [
+              4,
+              8
+            ]
+          }
+        ]
+      },
+      {
+        "id": "diver_hut_2",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            8,
+            9,
+            8
+          ]
+        },
+        "params": {
+          "archetype": "stilt_house",
+          "decay": 0.4
+        },
+        "constraints": [
+          {
+            "adjacent_to": "diver_hall",
+            "gap": [
+              6,
+              12
+            ]
+          }
+        ]
+      },
+      {
+        "id": "diver_hut_3",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            8,
+            9,
+            8
+          ]
+        },
+        "params": {
+          "archetype": "stilt_house",
+          "decay": 0.4
+        },
+        "constraints": [
+          {
+            "adjacent_to": "diver_hut_1",
+            "gap": [
+              4,
+              8
+            ]
+          }
+        ]
+      },
+      {
+        "id": "sunken_city_district",
+        "kind": "district",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            150,
+            130
+          ]
+        },
+        "params": {
+          "fabric": "canal",
+          "density": "medium",
+          "mix": [
+            "trident_temple",
+            "sea_oracle_rotunda",
+            "conch_amphitheater",
+            "drowned_archive",
+            "salt_bath_terme",
+            "tide_bell_tower"
+          ],
+          "blockSize": 28
+        },
+        "constraints": [
+          {
+            "adjacent_to": "atlantean_palace",
+            "gap": [
+              8,
+              20
+            ]
+          }
+        ],
+        "intent": {
+          "wealth": 0.75,
+          "decline": 0.65,
+          "formality": 0.7
+        }
+      },
+      {
+        "id": "roads",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "params": {
+          "anchors": [
+            "atlantean_palace",
+            "tide_gate",
+            "sunken_city_district",
+            "diver_hall"
+          ],
+          "pattern": "organic",
+          "width": 2,
+          "lanterns": true,
+          "junctionStyle": "plain"
+        }
+      }
+    ]
+  },
+  "programs": {
+    "leaning_bronze_colossus": {
+      "mode": "landmark",
+      "envelope": [
+        24,
+        44,
+        24
+      ],
+      "sourceHash": "b3:9db82dd76e8ea8dfde1b64c22e847c4a984a5a8a686db836cbe5213d8ff932d0",
+      "outputHash": "b3:60c5f8a80710981ecc002e5476324739e2807915128d56889ba514afd44f0efe",
+      "conforms": false,
+      "conformHash": "b3:775a731753d8bef10c229afbd072e7005db27b91ec143ec833e24e65f887b3c2",
+      "source": "export const envelope = [24, 44, 24];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const seatY = 10;\n  const grid = new Array(W * H * D).fill(null);\n\n  function idx(x, y, z) {\n    return (x * H + y) * D + z;\n  }\n\n  function set(x, y, z, block) {\n    if (x < 0 || x >= W || y < 0 || y >= H || z < 0 || z >= D) return;\n    grid[idx(x, y, z)] = block;\n  }\n\n  function hash(x, y, z) {\n    let h = (x * 73856093) ^ (y * 19349663) ^ (z * 83492791);\n    h = Math.imul(h ^ (h >>> 16), 2246822507);\n    h = Math.imul(h ^ (h >>> 13), 3266489909);\n    return ((h ^ (h >>> 16)) >>> 0) / 4294967296;\n  }\n\n  function distSqToSegment2D(px, pz, x1, z1, x2, z2) {\n    const dx = x2 - x1, dz = z2 - z1;\n    const lenSq = dx * dx + dz * dz;\n    if (lenSq === 0) return (px - x1) * (px - x1) + (pz - z1) * (pz - z1);\n    let t = ((px - x1) * dx + (pz - z1) * dz) / lenSq;\n    t = Math.max(0, Math.min(1, t));\n    const qx = x1 + t * dx, qz = z1 + t * dz;\n    return (px - qx) * (px - qx) + (pz - qz) * (pz - qz);\n  }\n\n  function bronzeMat(x, y, z, radial = 0) {\n    const h = hash(x, y, z);\n    if (radial > 0.72 && h > 0.52) {\n      return \"minecraft:weathered_copper\";\n    }\n    if (h < 0.2) {\n      return \"minecraft:oxidized_cut_copper\";\n    }\n    return \"minecraft:oxidized_copper\";\n  }\n\n  function drawCapsule(x1, y1, z1, r1, x2, y2, z2, r2, blockFn) {\n    const pad = Math.max(r1, r2) + 1;\n    const minX = Math.max(0, Math.floor(Math.min(x1, x2) - pad));\n    const maxX = Math.min(W - 1, Math.ceil(Math.max(x1, x2) + pad));\n    const minY = Math.max(0, Math.floor(Math.min(y1, y2) - pad));\n    const maxY = Math.min(H - 1, Math.ceil(Math.max(y1, y2) + pad));\n    const minZ = Math.max(0, Math.floor(Math.min(z1, z2) - pad));\n    const maxZ = Math.min(D - 1, Math.ceil(Math.max(z1, z2) + pad));\n\n    const dx = x2 - x1, dy = y2 - y1, dz = z2 - z1;\n    const lenSq = dx * dx + dy * dy + dz * dz;\n\n    for (let x = minX; x <= maxX; x++) {\n      for (let y = minY; y <= maxY; y++) {\n        for (let z = minZ; z <= maxZ; z++) {\n          let t = lenSq === 0 ? 0 : ((x - x1) * dx + (y - y1) * dy + (z - z1) * dz) / lenSq;\n          t = Math.max(0, Math.min(1, t));\n          const qx = x1 + t * dx, qy = y1 + t * dy, qz = z1 + t * dz;\n          const r = r1 + t * (r2 - r1);\n          const dSq = (x - qx) * (x - qx) + (y - qy) * (y - qy) + (z - qz) * (z - qz);\n          if (dSq <= r * r) {\n            const b = typeof blockFn === \"function\" ? blockFn(x, y, z, Math.sqrt(dSq) / r) : blockFn;\n            set(x, y, z, b);\n          }\n        }\n      }\n    }\n  }\n\n  function drawEllipsoid(cx, cy, cz, rx, ry, rz, blockFn) {\n    const minX = Math.max(0, Math.floor(cx - rx));\n    const maxX = Math.min(W - 1, Math.ceil(cx + rx));\n    const minY = Math.max(0, Math.floor(cy - ry));\n    const maxY = Math.min(H - 1, Math.ceil(cy + ry));\n    const minZ = Math.max(0, Math.floor(cz - rz));\n    const maxZ = Math.min(D - 1, Math.ceil(cz + rz));\n\n    for (let x = minX; x <= maxX; x++) {\n      const nx = (x - cx) / rx;\n      for (let y = minY; y <= maxY; y++) {\n        const ny = (y - cy) / ry;\n        for (let z = minZ; z <= maxZ; z++) {\n          const nz = (z - cz) / rz;\n          const dSq = nx * nx + ny * ny + nz * nz;\n          if (dSq <= 1.0) {\n            const b = typeof blockFn === \"function\" ? blockFn(x, y, z, Math.sqrt(dSq)) : blockFn;\n            set(x, y, z, b);\n          }\n        }\n      }\n    }\n  }\n\n  // 1. Ruined submerged piers & foundation (Rule 6 ground conformity)\n  const stonePrim = api.theme.stone.primary;\n  const stoneAcc = api.theme.stone.accent || stonePrim;\n  const plinthBlock = api.theme.ground.plinth || stonePrim;\n\n  const leftPierX = 8, leftPierZ = 14;\n  const rightPierX = 16, rightPierZ = 9;\n\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const dLeftSq = (x - leftPierX) * (x - leftPierX) + (z - leftPierZ) * (z - leftPierZ);\n      const dRightSq = (x - rightPierX) * (x - rightPierX) + (z - rightPierZ) * (z - rightPierZ);\n      const dArchSq = distSqToSegment2D(x, z, leftPierX, leftPierZ, rightPierX, rightPierZ);\n\n      const inLeft = dLeftSq <= 3.6 * 3.6;\n      const inRight = dRightSq <= 3.6 * 3.6;\n      const inArch = dArchSq <= 2.2 * 2.2;\n\n      if (inLeft || inRight || inArch) {\n        const gy = Math.max(0, Math.min(13, Math.round(seatY + api.heightAt(x, z))));\n        const pierTop = inArch && !inLeft && !inRight ? 9 : 10;\n        const yStart = Math.min(gy, pierTop);\n        const yEnd = Math.max(gy, pierTop);\n\n        for (let y = yStart; y <= yEnd; y++) {\n          const h = hash(x, y, z);\n          let b = stonePrim;\n          if (y <= 4) {\n            b = plinthBlock;\n          } else if (y <= 7) {\n            b = h < 0.35 ? \"minecraft:dark_prismarine\" : stonePrim;\n            if (y === 6 && h > 0.88) b = \"minecraft:sea_lantern\";\n          } else {\n            b = h < 0.45 ? \"minecraft:prismarine_bricks\" : stoneAcc;\n          }\n          set(x, y, z, b);\n        }\n\n        // Stepped moulding along pier borders\n        if (pierTop === 10 && (dLeftSq > 2.8 * 2.8 && dLeftSq <= 3.6 * 3.6 || dRightSq > 2.8 * 2.8 && dRightSq <= 3.6 * 3.6)) {\n          set(x, 10, z, \"minecraft:prismarine_bricks\");\n        }\n      }\n    }\n  }\n\n  // 2. Colossus Legs & Feet\n  // Left leg (trailing back, bearing on submerged pier)\n  drawEllipsoid(8, 11, 14, 2.2, 1.2, 2.6, bronzeMat);\n  drawCapsule(8, 11, 14, 1.8, 9, 16, 13, 1.7, bronzeMat);\n  drawEllipsoid(9, 16, 13, 1.9, 1.5, 1.9, bronzeMat);\n  drawCapsule(9, 16, 13, 1.8, 10.5, 22, 12, 2.0, bronzeMat);\n\n  // Right leg (stepping forward toward North)\n  drawEllipsoid(16, 11, 9, 2.2, 1.2, 2.6, bronzeMat);\n  drawCapsule(16, 11, 9, 1.8, 15, 16, 9.5, 1.7, bronzeMat);\n  drawEllipsoid(15, 16, 9.5, 1.9, 1.5, 1.9, bronzeMat);\n  drawCapsule(15, 16, 9.5, 1.8, 13.5, 22, 10.5, 2.0, bronzeMat);\n\n  // 3. Pelvis & Weathered Bronze Pteruges (Skirts)\n  drawCapsule(10.5, 22, 12, 2.1, 13.5, 22, 10.5, 2.1, bronzeMat);\n  drawEllipsoid(12, 21.5, 11.2, 3.2, 1.9, 2.6, (x, y, z, r) =>\n    hash(x, y, z) < 0.35 ? \"minecraft:oxidized_cut_copper\" : bronzeMat(x, y, z, r)\n  );\n\n  // 4. Perilous Leaning Torso (tilting forward to -Z)\n  drawCapsule(12, 22.5, 11.2, 2.5, 12, 26, 9.5, 2.8, bronzeMat);\n  drawCapsule(12, 26, 9.5, 2.8, 12, 30, 7.5, 3.1, bronzeMat);\n  drawCapsule(8.5, 30, 8.5, 1.8, 15.5, 30.5, 7.0, 1.8, bronzeMat);\n\n  // 5. Exposed Ancient Machinery & Glowing Heart\n  set(12, 28, 7, \"minecraft:sea_lantern\");\n  set(12, 27, 7, \"minecraft:sea_lantern\");\n  set(12, 28, 6, \"minecraft:copper_grate\");\n  set(12, 27, 6, \"minecraft:copper_grate\");\n  set(11, 28, 6, \"minecraft:oxidized_copper_grate\");\n  set(13, 28, 6, \"minecraft:oxidized_copper_grate\");\n  set(12, 29, 6, \"minecraft:oxidized_cut_copper_stairs[facing=south,half=bottom]\");\n  set(12, 26, 6, \"minecraft:oxidized_cut_copper_stairs[facing=south,half=top]\");\n\n  // 6. Neck & Sculpted Bronze Head\n  drawCapsule(12, 30.5, 7.5, 1.6, 12, 33, 6.5, 1.5, bronzeMat);\n  drawEllipsoid(12, 34.5, 5.8, 2.1, 2.4, 2.2, bronzeMat);\n\n  // Facial features looking North\n  set(11, 35, 4, \"minecraft:sea_lantern\");\n  set(13, 35, 4, \"minecraft:sea_lantern\");\n  set(12, 35, 4, \"minecraft:weathered_copper\");\n  set(11, 36, 4, \"minecraft:oxidized_cut_copper\");\n  set(12, 36, 4, \"minecraft:oxidized_cut_copper\");\n  set(13, 36, 4, \"minecraft:oxidized_cut_copper\");\n\n  // Helmet crest & Atlantean crown spikes\n  drawCapsule(12, 35, 4.5, 0.8, 12, 37.5, 6.5, 0.8, () => \"minecraft:weathered_copper\");\n  drawCapsule(12, 36.5, 5.5, 0.6, 12, 39, 5.0, 0.4, () => \"minecraft:oxidized_cut_copper\");\n  drawCapsule(11, 36, 5.5, 0.6, 9.5, 38, 5.2, 0.4, () => \"minecraft:oxidized_cut_copper\");\n  drawCapsule(13, 36, 5.5, 0.6, 14.5, 38, 5.2, 0.4, () => \"minecraft:oxidized_cut_copper\");\n\n  // 7. Left Arm & Mantle (bracing against the flank)\n  drawCapsule(8.5, 30, 8.5, 1.6, 7.5, 26, 9.5, 1.4, bronzeMat);\n  drawCapsule(7.5, 26, 9.5, 1.4, 7.5, 22, 11, 1.3, bronzeMat);\n  drawEllipsoid(8, 20.5, 11.5, 1.4, 1.4, 1.4, bronzeMat);\n  drawCapsule(8, 29, 9, 1.1, 7.5, 21, 12.5, 0.9, (x, y, z) =>\n    hash(x, y, z) < 0.4 ? \"minecraft:oxidized_cut_copper\" : \"minecraft:oxidized_copper\"\n  );\n\n  // 8. Right Arm Raised toward Open Sea (-Z)\n  drawCapsule(15.5, 30.5, 7.0, 1.6, 17, 34, 4.8, 1.4, bronzeMat);\n  drawCapsule(17, 34, 4.8, 1.4, 17, 38, 2.8, 1.3, bronzeMat);\n  drawEllipsoid(17, 38.5, 2.5, 1.3, 1.3, 1.3, bronzeMat);\n\n  // Beacon Staff & Brazier\n  drawCapsule(17, 34, 3.2, 0.6, 17, 41, 1.8, 0.6, () => \"minecraft:weathered_copper\");\n\n  // Glowing Sea Beacon in Hand\n  set(17, 40, 2, \"minecraft:sea_lantern\");\n  set(16, 40, 2, \"minecraft:copper_grate\");\n  set(18, 40, 2, \"minecraft:copper_grate\");\n  set(17, 40, 1, \"minecraft:copper_grate\");\n  set(17, 40, 3, \"minecraft:copper_grate\");\n  set(17, 41, 2, \"minecraft:oxidized_copper_grate\");\n\n  // Chalice support under beacon\n  set(17, 39, 2, \"minecraft:oxidized_cut_copper\");\n  set(17, 39, 1, \"minecraft:oxidized_cut_copper_stairs[facing=south,half=top]\");\n  set(17, 39, 3, \"minecraft:oxidized_cut_copper_stairs[facing=north,half=top]\");\n  set(16, 39, 2, \"minecraft:oxidized_cut_copper_stairs[facing=east,half=top]\");\n  set(18, 39, 2, \"minecraft:oxidized_cut_copper_stairs[facing=west,half=top]\");\n\n  // Beacon beacon-fin pointing forward out to sea\n  set(17, 40, 0, \"minecraft:oxidized_cut_copper_stairs[facing=north,half=bottom]\");\n\n  // 9. Emit the completed solid\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const b = grid[idx(x, y, z)];\n        if (b !== null) {\n          api.set(x, y, z, b);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"Leaning Bronze Colossus\",\n    seatY,\n    anchors: {\n      front: [12, seatY, 0],\n      beacon: [17, 40, 2],\n      heart: [12, 28, 6],\n      base: [12, seatY, 12],\n    },\n  };\n}"
+    },
+    "prismarine_colonnade": {
+      "mode": "landmark",
+      "envelope": [
+        17,
+        28,
+        37
+      ],
+      "sourceHash": "b3:b21e42cbaaba63d3646523ae3bfa3d59a45f5cfa6c039454da7a26ad01e50e1a",
+      "outputHash": "b3:65cc6090cb866060ce873ee5e2f560617b0b04187eaa1df1dc4011308494c16b",
+      "conforms": true,
+      "conformHash": "b3:d27851ea9a148f1dde7c7098627d32f98c31c578d759650d07738989615bb413",
+      "source": "export const envelope = [17, 28, 37];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const seatY = 11;\n\n  // Safe setter confined to envelope\n  function set(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      api.set(x, y, z, block);\n    }\n  }\n\n  // Determine highest terrain across the occupied footprint\n  let maxH = 0;\n  for (let z = 0; z < D; z++) {\n    for (let x = 0; x < W; x++) {\n      const h = api.heightAt(x, z);\n      if (h > maxH) maxH = h;\n    }\n  }\n\n  // Walkway floor elevation\n  const floorY = seatY + 1 + Math.max(0, maxH);\n\n  // Theme roles with robust Atlantean fallbacks\n  const plinthBlock = api.theme?.ground?.plinth || \"minecraft:prismarine\";\n  const pavementBlock = api.theme?.ground?.pavement || \"minecraft:prismarine_bricks\";\n  const stonePrimary = api.theme?.stone?.primary || \"minecraft:smooth_quartz\";\n  const stoneAccent = api.theme?.stone?.accent || \"minecraft:chiseled_quartz_block\";\n\n  // Helpers for stair & slab strings\n  function pStairs(facing, half = \"bottom\") {\n    return `minecraft:prismarine_stairs[facing=${facing},half=${half},shape=straight]`;\n  }\n  function dpStairs(facing, half = \"bottom\") {\n    return `minecraft:dark_prismarine_stairs[facing=${facing},half=${half},shape=straight]`;\n  }\n  function pSlab(type = \"bottom\") {\n    return `minecraft:prismarine_slab[type=${type}]`;\n  }\n  function dpSlab(type = \"bottom\") {\n    return `minecraft:dark_prismarine_slab[type=${type}]`;\n  }\n\n  // Pillar positions along processional avenue\n  const pillarZ = [3, 9, 15, 21, 27, 33];\n  const pillarX = [3, 13];\n\n  function isPillarBay(z) {\n    for (let i = 0; i < pillarZ.length; i++) {\n      if (Math.abs(z - pillarZ[i]) <= 1) return true;\n    }\n    return false;\n  }\n\n  // Column footprint determination\n  function isFootprint(x, z) {\n    if (x >= 1 && x <= 15 && z >= 0 && z < D) return true;\n    // Outer wave-break buttresses flanking the monumental pillar bays\n    if ((x === 0 || x === 16) && isPillarBay(z)) return true;\n    return false;\n  }\n\n  // 1. FOUNDATIONS (Strict terrain conformance for every occupied column)\n  for (let z = 0; z < D; z++) {\n    for (let x = 0; x < W; x++) {\n      if (!isFootprint(x, z)) continue;\n\n      const groundY = Math.max(0, seatY + api.heightAt(x, z));\n      const targetTopY = (x === 0 || x === 16) ? floorY : floorY - 1;\n\n      for (let y = groundY; y <= targetTopY; y++) {\n        if (y === targetTopY) {\n          set(x, y, z, \"minecraft:dark_prismarine\");\n        } else if (y >= groundY + 3) {\n          set(x, y, z, (x + z) % 3 === 0 ? stonePrimary : \"minecraft:prismarine_bricks\");\n        } else {\n          set(x, y, z, plinthBlock);\n        }\n      }\n    }\n  }\n\n  // 2. PROCESSIONAL WALKWAY & STYLOBATE PLATFORM (y = floorY)\n  for (let z = 0; z < D; z++) {\n    for (let x = 1; x <= 15; x++) {\n      if (x === 8) {\n        // Central meridian runner\n        if (z % 6 === 0) {\n          set(x, floorY, z, \"minecraft:sea_lantern\");\n        } else if (z % 2 === 0) {\n          set(x, floorY, z, \"minecraft:dark_prismarine\");\n        } else {\n          set(x, floorY, z, \"minecraft:prismarine_bricks\");\n        }\n      } else if (x === 7 || x === 9) {\n        // Flanking ceremonial paving\n        const wear = api.random() < 0.1;\n        if (wear) {\n          set(x, floorY, z, pSlab(\"bottom\"));\n        } else {\n          set(x, floorY, z, (z + x) % 3 === 0 ? pavementBlock : \"minecraft:prismarine_bricks\");\n        }\n      } else if (x === 6 || x === 10) {\n        // Dark prismarine inner border\n        set(x, floorY, z, \"minecraft:dark_prismarine\");\n      } else if (x === 5) {\n        // West channel gutter curb\n        set(x, floorY, z, pStairs(\"east\", \"bottom\"));\n      } else if (x === 11) {\n        // East channel gutter curb\n        set(x, floorY, z, pStairs(\"west\", \"bottom\"));\n      } else if ((x >= 2 && x <= 4) || (x >= 12 && x <= 14)) {\n        // Colonnade stylobate bases\n        set(x, floorY, z, \"minecraft:prismarine_bricks\");\n      } else if (x === 1) {\n        // Outer terrace step west\n        set(x, floorY, z, pStairs(\"east\", \"bottom\"));\n      } else if (x === 15) {\n        // Outer terrace step east\n        set(x, floorY, z, pStairs(\"west\", \"bottom\"));\n      }\n    }\n\n    // Outer wave-break buttresses at pillar bays\n    if (isPillarBay(z)) {\n      set(0, floorY, z, pStairs(\"east\", \"bottom\"));\n      set(16, floorY, z, pStairs(\"west\", \"bottom\"));\n    }\n  }\n\n  // North entrance steps (z = 0) and South exit steps (z = D - 1)\n  for (let x = 6; x <= 10; x++) {\n    set(x, floorY, 0, pStairs(\"south\", \"bottom\"));\n    set(x, floorY, D - 1, pStairs(\"north\", \"bottom\"));\n  }\n\n  // 3. LOW BRAZIERS & CURBS ON STYLOBATE (Between pillars at floorY + 1)\n  for (let i = 0; i < pillarZ.length - 1; i++) {\n    const midZ = Math.round((pillarZ[i] + pillarZ[i + 1]) / 2);\n    for (const xc of pillarX) {\n      set(xc, floorY + 1, midZ, \"minecraft:dark_prismarine\");\n      set(xc, floorY + 2, midZ, \"minecraft:soul_lantern[hanging=false]\");\n      set(xc - 1, floorY + 1, midZ, dpSlab(\"bottom\"));\n      set(xc + 1, floorY + 1, midZ, dpSlab(\"bottom\"));\n      set(xc, floorY + 1, midZ - 1, dpStairs(\"north\", \"bottom\"));\n      set(xc, floorY + 1, midZ + 1, dpStairs(\"south\", \"bottom\"));\n    }\n  }\n\n  // North entrance beacon pylons\n  for (const xc of pillarX) {\n    set(xc, floorY + 1, 0, \"minecraft:dark_prismarine\");\n    set(xc, floorY + 2, 0, \"minecraft:prismarine_bricks\");\n    set(xc, floorY + 3, 0, \"minecraft:sea_lantern\");\n    set(xc, floorY + 4, 0, dpSlab(\"bottom\"));\n\n    set(xc, floorY + 1, D - 1, \"minecraft:dark_prismarine\");\n    set(xc, floorY + 2, D - 1, \"minecraft:prismarine_bricks\");\n    set(xc, floorY + 3, D - 1, \"minecraft:sea_lantern\");\n    set(xc, floorY + 4, D - 1, dpSlab(\"bottom\"));\n  }\n\n  // 4. MONUMENTAL FLUTED PILLARS\n  for (const zc of pillarZ) {\n    for (const xc of pillarX) {\n      // Pedestal base (floorY + 1)\n      set(xc, floorY + 1, zc, \"minecraft:dark_prismarine\");\n      set(xc - 1, floorY + 1, zc, dpStairs(\"west\", \"bottom\"));\n      set(xc + 1, floorY + 1, zc, dpStairs(\"east\", \"bottom\"));\n      set(xc, floorY + 1, zc - 1, dpStairs(\"north\", \"bottom\"));\n      set(xc, floorY + 1, zc + 1, dpStairs(\"south\", \"bottom\"));\n      set(xc - 1, floorY + 1, zc - 1, dpSlab(\"bottom\"));\n      set(xc + 1, floorY + 1, zc - 1, dpSlab(\"bottom\"));\n      set(xc - 1, floorY + 1, zc + 1, dpSlab(\"bottom\"));\n      set(xc + 1, floorY + 1, zc + 1, dpSlab(\"bottom\"));\n\n      // Plinth collar (floorY + 2)\n      set(xc, floorY + 2, zc, \"minecraft:dark_prismarine\");\n      set(xc - 1, floorY + 2, zc, \"minecraft:dark_prismarine\");\n      set(xc + 1, floorY + 2, zc, \"minecraft:dark_prismarine\");\n      set(xc, floorY + 2, zc - 1, \"minecraft:dark_prismarine\");\n      set(xc, floorY + 2, zc + 1, \"minecraft:dark_prismarine\");\n\n      // Fluted shaft (floorY + 3 .. floorY + 6)\n      for (let y = floorY + 3; y <= floorY + 6; y++) {\n        // Internal glowing lantern heart at mid-shaft\n        if (y === floorY + 5) {\n          set(xc, y, zc, \"minecraft:sea_lantern\");\n        } else {\n          set(xc, y, zc, \"minecraft:dark_prismarine\");\n        }\n        // Fluted cross facets\n        set(xc - 1, y, zc, \"minecraft:prismarine_bricks\");\n        set(xc + 1, y, zc, \"minecraft:prismarine_bricks\");\n        set(xc, y, zc - 1, \"minecraft:prismarine_bricks\");\n        set(xc, y, zc + 1, \"minecraft:prismarine_bricks\");\n      }\n\n      // Capital necking (floorY + 7)\n      set(xc, floorY + 7, zc, \"minecraft:dark_prismarine\");\n      set(xc - 1, floorY + 7, zc, \"minecraft:dark_prismarine\");\n      set(xc + 1, floorY + 7, zc, \"minecraft:dark_prismarine\");\n      set(xc, floorY + 7, zc - 1, \"minecraft:dark_prismarine\");\n      set(xc, floorY + 7, zc + 1, \"minecraft:dark_prismarine\");\n\n      // Flaring Capital abacus (floorY + 8)\n      set(xc, floorY + 8, zc, \"minecraft:dark_prismarine\");\n      set(xc - 1, floorY + 8, zc, dpStairs(\"east\", \"top\"));\n      set(xc + 1, floorY + 8, zc, dpStairs(\"west\", \"top\"));\n      set(xc, floorY + 8, zc - 1, dpStairs(\"south\", \"top\"));\n      set(xc, floorY + 8, zc + 1, dpStairs(\"north\", \"top\"));\n      set(xc - 1, floorY + 8, zc - 1, dpSlab(\"top\"));\n      set(xc + 1, floorY + 8, zc - 1, dpSlab(\"top\"));\n      set(xc - 1, floorY + 8, zc + 1, dpSlab(\"top\"));\n      set(xc + 1, floorY + 8, zc + 1, dpSlab(\"top\"));\n    }\n  }\n\n  // 5. ENTABLATURE: ARCHITRAVE BEAMS & TRANSVERSE ARCHES\n  // Longitudinal Architrave (floorY + 9)\n  for (const xc of pillarX) {\n    for (let z = 2; z <= 34; z++) {\n      set(xc, floorY + 9, z, \"minecraft:dark_prismarine\");\n      set(xc - 1, floorY + 9, z, isPillarBay(z) ? \"minecraft:prismarine_bricks\" : pSlab(\"top\"));\n      set(xc + 1, floorY + 9, z, isPillarBay(z) ? \"minecraft:prismarine_bricks\" : pSlab(\"top\"));\n    }\n  }\n\n  // Transverse ceremonial arches across avenue (at each pillar bay)\n  for (const zc of pillarZ) {\n    // Arch vault underside (floorY + 9)\n    set(4, floorY + 9, zc, pStairs(\"west\", \"top\"));\n    set(5, floorY + 9, zc, pSlab(\"top\"));\n    set(6, floorY + 9, zc, pStairs(\"west\", \"top\"));\n    set(7, floorY + 9, zc, \"minecraft:prismarine_bricks\");\n    set(8, floorY + 9, zc, \"minecraft:sea_lantern\");\n    set(9, floorY + 9, zc, \"minecraft:prismarine_bricks\");\n    set(10, floorY + 9, zc, pStairs(\"east\", \"top\"));\n    set(11, floorY + 9, zc, pSlab(\"top\"));\n    set(12, floorY + 9, zc, pStairs(\"east\", \"top\"));\n\n    // Arch tie-beam upper course (floorY + 10)\n    set(5, floorY + 10, zc, pStairs(\"west\", \"bottom\"));\n    set(6, floorY + 10, zc, \"minecraft:prismarine_bricks\");\n    set(7, floorY + 10, zc, \"minecraft:dark_prismarine\");\n    set(8, floorY + 10, zc, \"minecraft:dark_prismarine\");\n    set(9, floorY + 10, zc, \"minecraft:dark_prismarine\");\n    set(10, floorY + 10, zc, \"minecraft:prismarine_bricks\");\n    set(11, floorY + 10, zc, pStairs(\"east\", \"bottom\"));\n\n    // Arch apex keystone crest (floorY + 11 & floorY + 12)\n    set(8, floorY + 11, zc, \"minecraft:dark_prismarine\");\n    set(8, floorY + 12, zc, \"minecraft:sea_lantern\");\n  }\n\n  // 6. FRIEZE COURSE (floorY + 10)\n  for (const xc of pillarX) {\n    for (let z = 2; z <= 34; z++) {\n      const isCenter = pillarZ.includes(z);\n      if (isCenter) {\n        set(xc, floorY + 10, z, \"minecraft:sea_lantern\");\n        set(xc - 1, floorY + 10, z, \"minecraft:dark_prismarine\");\n        set(xc + 1, floorY + 10, z, \"minecraft:dark_prismarine\");\n      } else {\n        const block = (z % 2 === 0) ? \"minecraft:prismarine_bricks\" : stoneAccent;\n        set(xc, floorY + 10, z, block);\n        set(xc - 1, floorY + 10, z, \"minecraft:prismarine_bricks\");\n        set(xc + 1, floorY + 10, z, \"minecraft:prismarine_bricks\");\n      }\n    }\n  }\n\n  // 7. CORNICE & WATER-WORN ENTABLATURE CREST (floorY + 11)\n  for (let z = 2; z <= 34; z++) {\n    for (const xc of pillarX) {\n      set(xc, floorY + 11, z, \"minecraft:dark_prismarine\");\n\n      // Water-worn weathering on outer cornice edges\n      const erode = api.random() < 0.16;\n      if (xc === 3) {\n        if (!erode) {\n          set(xc - 1, floorY + 11, z, pStairs(\"east\", \"bottom\"));\n        } else {\n          set(xc - 1, floorY + 11, z, pSlab(\"bottom\"));\n        }\n        set(xc + 1, floorY + 11, z, pStairs(\"west\", \"bottom\"));\n      } else {\n        set(xc - 1, floorY + 11, z, pStairs(\"east\", \"bottom\"));\n        if (!erode) {\n          set(xc + 1, floorY + 11, z, pStairs(\"west\", \"bottom\"));\n        } else {\n          set(xc + 1, floorY + 11, z, pSlab(\"bottom\"));\n        }\n      }\n    }\n  }\n\n  // 8. CEREMONIAL BRAZIERS ATOP PILLARS (floorY + 12 & floorY + 13)\n  for (const zc of pillarZ) {\n    for (const xc of pillarX) {\n      // Brazier stone bowl\n      set(xc, floorY + 12, zc, \"minecraft:dark_prismarine\");\n      set(xc - 1, floorY + 12, zc, dpStairs(\"west\", \"bottom\"));\n      set(xc + 1, floorY + 12, zc, dpStairs(\"east\", \"bottom\"));\n      set(xc, floorY + 12, zc - 1, dpStairs(\"north\", \"bottom\"));\n      set(xc, floorY + 12, zc + 1, dpStairs(\"south\", \"bottom\"));\n\n      // Luminescent flame / beacon\n      const weathered = api.random() < 0.15;\n      if (!weathered) {\n        set(xc, floorY + 13, zc, \"minecraft:soul_lantern[hanging=false]\");\n      }\n    }\n  }\n\n  return {\n    name: \"prismarine_colonnade\",\n    seatY,\n    anchors: {\n      front: [8, floorY, 0],\n      back: [8, floorY, D - 1],\n      seat: [8, floorY, 18]\n    }\n  };\n}"
+    }
+  }
+}

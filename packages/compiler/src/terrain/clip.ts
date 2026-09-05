@@ -1,0 +1,398 @@
+/**
+ * Clipping vegetation against buildings.
+ *
+ * The scatter pass reserves *trunk* columns only — that is deliberate, and it is
+ * what lets a forest close its canopy instead of reading as speckle. But a
+ * canopy that may overlap its neighbours may also overlap a roof, and the first
+ * village compile did exactly that: oaks planted two blocks off a gable draped
+ * leaves across the tiles, and from any angle the houses looked half-buried.
+ *
+ * The fix is two rules, both applied here:
+ *
+ * 1. **No vegetation voxel may occupy a structure's box.** The box is the placed
+ *    footprint extended vertically from the bottom of the foundation skirt to
+ *    one block above the roof — the "+1" so a canopy cannot sit flush on the
+ *    ridge either — and, *for wood only*, one block wider on every side. Leaves
+ *    are free to touch the wall face; see {@link StructureBox.leafInset}.
+ * 2. **A tree that would lose more than {@link MAX_CLIP_FRACTION} of its volume
+ *    is not planted at all.** Clipping alone would leave half-eaten trees
+ *    pressed against walls, which looks worse than the overlap did; past that
+ *    threshold the honest answer is that the tree was never there.
+ *
+ * Both rules read a set of boxes rather than the occupancy grid, because
+ * occupancy is 2-D and the question here is genuinely 3-D: a tree standing
+ * downhill of a hall may legitimately put its crown *above* the hall's roofline,
+ * and flattening that to "the column is claimed" would delete trees the eye
+ * expects to see.
+ */
+
+import type { Region } from "@terrainist/stdlib";
+
+import type { BuiltBuilding } from "../structures/buildings.js";
+
+import { treeBlocks, treeCanopyRadius, type TreePlacement } from "./vegetation.js";
+
+/** Share of a tree's voxels that may be clipped before it is dropped entirely. */
+export const MAX_CLIP_FRACTION = 0.4;
+
+/** Blocks of headroom kept clear above a road surface. */
+export const ROAD_CANOPY_CLEARANCE = 4;
+
+/**
+ * How far loose ground decor must stay clear of built ground, in blocks.
+ *
+ * `blockedColumn` answers "is this column *under* a structure", and for a plant
+ * that stands in one column that is the whole question. A fallen log is not:
+ * it lies across up to four columns, it is a metre-thick horizontal beam, and
+ * a render review found sixteen of them lying flat against village walls, where
+ * the eye reads them not as deadwood but as timber someone left leaning on the
+ * house. Deadwood therefore keeps an apron: no fallen log within this many
+ * blocks of a footprint, a road corridor or the plaza.
+ *
+ * Four blocks is the log's own maximum length, which is exactly the distance at
+ * which a log can no longer point *at* a wall.
+ */
+export const DECOR_APRON = 4;
+
+/** The shape {@link roadCorridorBoxes} reads out of a routed road. */
+export interface RouteLike {
+  readonly path: readonly { readonly x: number; readonly z: number; readonly y: number }[];
+}
+
+/**
+ * Which part of a plant is being tested against the clip.
+ *
+ * The two answers differ, and only for buildings: see
+ * {@link StructureBox.leafInset}.
+ */
+type ClipPart = "leaves" | "wood";
+
+/** The world-space box one structure occupies, inclusive on every axis. */
+export interface StructureBox {
+  readonly x0: number;
+  readonly z0: number;
+  readonly x1: number;
+  readonly z1: number;
+  readonly y0: number;
+  readonly y1: number;
+  /**
+   * How many blocks to pull each horizontal side in before testing a **leaf**
+   * voxel. Absent — the road corridor's answer — means leaves are clipped
+   * against exactly the same box as wood.
+   *
+   * A building's box is one block wider than its footprint (see
+   * {@link structureBoxes}), and withholding leaves from that ring cut every
+   * canopy near a wall off flat with a one-block gap of air behind it — the
+   * defect Kai photographed on 2026-08-14. Leaf contact against a wall face is
+   * *correct*, so a building sets `leafInset: 1` and a leaf may stand right up
+   * to the masonry; a trunk pressed on a wall still looks wrong, so wood keeps
+   * the ring.
+   */
+  readonly leafInset?: number;
+}
+
+/**
+ * The clip test, plus the column mask that bounds it.
+ *
+ * The mask is the cheap rejection: the overwhelming majority of vegetation
+ * voxels are nowhere near a building, and one array lookup answers for them.
+ */
+export interface StructureClip {
+  readonly boxes: readonly StructureBox[];
+  /** 1 on every column any box covers. */
+  readonly columns: Uint8Array;
+  /**
+   * True when `(x, y, z)` falls inside a structure, for a voxel of `part`.
+   *
+   * `part` defaults to `"wood"`, which is the strictest answer and the one
+   * every caller gave before leaves were let up to the wall.
+   *
+   * **Both readers must pass the same part.** The clip is asked twice — once
+   * per tree in {@link clipTrees}, which decides whether the tree is planted at
+   * all, and once per voxel at emit, which decides what survives — and a reader
+   * that forgot the part would drop trees for hits the other reader no longer
+   * makes. Either both take the exemption or neither does.
+   */
+  blocked(x: number, y: number, z: number, part?: ClipPart): boolean;
+  /** True when the column `(x, z)` is under or over a structure. */
+  blockedColumn(x: number, z: number): boolean;
+  /**
+   * True when `(x, z)` is within {@link DECOR_APRON} blocks of built ground —
+   * a footprint, a road corridor, or a column the caller passed as claimed.
+   */
+  inApron(x: number, z: number): boolean;
+}
+
+/**
+ * Extend each built building's footprint to the box its blocks occupy.
+ *
+ * One block wider than the footprint on every side, because the grammar's
+ * facade details — the eave course above all — live in that apron ring, and a
+ * trunk pressed into an eave looks exactly as wrong as one pressed into a roof.
+ *
+ * **Leaves do not take the ring** (`leafInset: 1`, Kai 2026-08-14). Withholding
+ * them from it sheared every canopy that came near a house off flat, one block
+ * of air short of the wall — the tell of a compiler, not of a wood. Leaf contact
+ * with a facade is what a tree beside a house actually looks like, and the eave
+ * the ring was protecting protects itself: structures stamp *after* trees in the
+ * per-chunk order (`emit.ts`), so a facade block simply overwrites any leaf that
+ * reached its position.
+ */
+export function structureBoxes(buildings: readonly BuiltBuilding[]): StructureBox[] {
+  return buildings.map((b) => ({
+    x0: b.footprint.x0 - 1,
+    z0: b.footprint.z0 - 1,
+    x1: b.footprint.x1 + 1,
+    z1: b.footprint.z1 + 1,
+    // Local y = 0 is the floor; the skirt runs below it and the roof above.
+    y0: b.floorY - b.meta.foundationDepth,
+    y1: b.floorY + b.meta.roofTop + 1,
+    // Leaves are clipped against the exact footprint; wood against the ring.
+    leafInset: 1,
+  }));
+}
+
+/**
+ * The boxes that keep a lane open through a wood.
+ *
+ * A road cut through a forest is a *cut*: you see sky above it. The scatter only
+ * reserves trunk columns, so nothing stopped two oaks either side of a lane from
+ * closing their crowns over it, and the first village had 1198 road columns
+ * roofed in leaves — a tunnel, not a lane.
+ *
+ * One box per route cell, spanning the surfaced band plus a block of verge, and
+ * reaching {@link ROAD_CANOPY_CLEARANCE} above the graded surface. That is the
+ * headroom a rider needs, and no more: a crown that arches *high* over the road
+ * is scenery and is left alone.
+ *
+ * These boxes take **no** {@link StructureBox.leafInset}: lane headroom is a
+ * different law from wall contact, and a lane roofed in leaves is still a
+ * tunnel. Every part of a plant is clipped here, leaves included.
+ */
+export function roadCorridorBoxes(
+  routes: readonly RouteLike[],
+  width: number,
+  clearance: number = ROAD_CANOPY_CLEARANCE,
+): StructureBox[] {
+  const reach = Math.max(1, ((width - 1) >> 1) + 1);
+  const out: StructureBox[] = [];
+  for (const route of routes) {
+    for (const cell of route.path) {
+      out.push({
+        x0: cell.x - reach,
+        x1: cell.x + reach,
+        z0: cell.z - reach,
+        z1: cell.z + reach,
+        y0: cell.y,
+        y1: cell.y + clearance,
+      });
+    }
+  }
+  return out;
+}
+
+/**
+ * Dilate a column mask by `margin` blocks, Chebyshev.
+ *
+ * Separable: a horizontal max filter then a vertical one, which is `O(w · d ·
+ * margin)` rather than `O(w · d · margin²)` and gives the same square apron.
+ */
+function dilateColumns(region: Region, mask: Uint8Array, margin: number): Uint8Array {
+  const { width, depth } = region;
+  if (margin <= 0) return Uint8Array.from(mask);
+  const rows = new Uint8Array(width * depth);
+  for (let j = 0; j < depth; j++) {
+    const base = j * width;
+    for (let i = 0; i < width; i++) {
+      if (mask[base + i] !== 1) continue;
+      const from = Math.max(0, i - margin);
+      const to = Math.min(width - 1, i + margin);
+      for (let k = from; k <= to; k++) rows[base + k] = 1;
+    }
+  }
+  const out = new Uint8Array(width * depth);
+  for (let j = 0; j < depth; j++) {
+    const base = j * width;
+    for (let i = 0; i < width; i++) {
+      if (rows[base + i] !== 1) continue;
+      const from = Math.max(0, j - margin);
+      const to = Math.min(depth - 1, j + margin);
+      for (let k = from; k <= to; k++) out[k * width + i] = 1;
+    }
+  }
+  return out;
+}
+
+/**
+ * Build the clip test for a region and a set of boxes.
+ *
+ * `claimed` is extra built ground that owns no box — the paved plaza, which is
+ * a change to the surface rather than a solid. It contributes to the decor
+ * apron only: there is nothing above it to clip a canopy against.
+ */
+export function makeStructureClip(
+  region: Region,
+  boxes: readonly StructureBox[],
+  claimed?: Uint8Array,
+): StructureClip {
+  const columns = new Uint8Array(region.width * region.depth);
+  for (const box of boxes) {
+    for (let z = box.z0; z <= box.z1; z++) {
+      const j = z - region.z0;
+      if (j < 0 || j >= region.depth) continue;
+      for (let x = box.x0; x <= box.x1; x++) {
+        const i = x - region.x0;
+        if (i < 0 || i >= region.width) continue;
+        columns[j * region.width + i] = 1;
+      }
+    }
+  }
+
+  const blockedColumn = (x: number, z: number): boolean => {
+    const i = x - region.x0;
+    const j = z - region.z0;
+    if (i < 0 || j < 0 || i >= region.width || j >= region.depth) return false;
+    return columns[j * region.width + i] === 1;
+  };
+
+  const built = new Uint8Array(columns);
+  if (claimed !== undefined) {
+    for (let k = 0; k < built.length && k < claimed.length; k++) {
+      if (claimed[k] === 1) built[k] = 1;
+    }
+  }
+  const apron = dilateColumns(region, built, DECOR_APRON);
+
+  return {
+    boxes,
+    columns,
+    blockedColumn,
+    inApron(x: number, z: number): boolean {
+      const i = x - region.x0;
+      const j = z - region.z0;
+      if (i < 0 || j < 0 || i >= region.width || j >= region.depth) return false;
+      return apron[j * region.width + i] === 1;
+    },
+    blocked(x: number, y: number, z: number, part: ClipPart = "wood"): boolean {
+      // The column mask is built from the *full* boxes, so it stays a superset
+      // of the leaf test and remains a valid cheap rejection for both parts.
+      if (!blockedColumn(x, z)) return false;
+      for (const box of boxes) {
+        const inset = part === "leaves" ? (box.leafInset ?? 0) : 0;
+        if (x < box.x0 + inset || x > box.x1 - inset) continue;
+        if (z < box.z0 + inset || z > box.z1 - inset) continue;
+        if (y >= box.y0 && y <= box.y1) return true;
+      }
+      return false;
+    },
+  };
+}
+
+/** What {@link clipTrees} decided. */
+export interface TreeClipResult {
+  /** The trees that survive, in their original order. */
+  readonly trees: readonly TreePlacement[];
+  /** Trees dropped for losing too much of themselves. */
+  readonly dropped: number;
+  /** Voxels the survivors will have clipped away at emit. */
+  readonly clippedBlocks: number;
+}
+
+/**
+ * Apply rule 2: drop every tree that a structure would eat more than
+ * {@link MAX_CLIP_FRACTION} of.
+ *
+ * Rule 1 — clipping the survivors' individual voxels — is applied at emit,
+ * where the blocks are expanded anyway; doing it twice would mean materializing
+ * every tree's voxel list into memory a second time for no gain.
+ */
+export function clipTrees(
+  trees: readonly TreePlacement[],
+  clip: StructureClip,
+  /**
+   * Columns whose tree the clip may not touch — the green skin's elected
+ * trunks as Kai ruled it).
+   *
+   * The clip exists to keep the wood off the fabric, and for every tree in
+   * every world that is exactly right. WP-6d's trunks are the one set the
+   * fabric has already been asked to give ground to: the street law elected
+   * them *on* the carriageway, and Kai's shell ruling elected them *inside* a
+   * roofless shell, so a clip that drops any tree touching a structure box
+   * drops every one of them (measured: 61 placed, 27 standing, 0 in a shell).
+   * A tree *bursting* from a ruin is a tree the clip does not get a vote on.
+   *
+   * Absent for every world that ruins nothing.
+   */
+  exempt?: (x: number, z: number) => boolean,
+): TreeClipResult {
+  const kept: TreePlacement[] = [];
+  let dropped = 0;
+  let clippedBlocks = 0;
+
+  for (const tree of trees) {
+    if (exempt?.(tree.x, tree.z) === true) {
+      kept.push(tree);
+      continue;
+    }
+    const radius = treeCanopyRadius(tree) + (tree.mega ? 2 : 0);
+    // Cheap rejection: a tree whose whole horizontal reach misses every claimed
+    // column cannot be clipped, and that is nearly all of them.
+    if (!nearStructure(clip, tree.x, tree.z, radius + 1)) {
+      kept.push(tree);
+      continue;
+    }
+
+    const blocks = treeBlocks(tree);
+    let hit = 0;
+    let leaves = 0;
+    let leavesHit = 0;
+    let logHit = 0;
+    for (const block of blocks) {
+      // The part goes in, because the per-voxel reader at emit passes it too:
+      // a leaf that will survive against a wall must not be counted here as a
+      // reason to drop the tree. See {@link StructureClip.blocked}.
+      const cut = clip.blocked(
+        tree.x + block.dx,
+        tree.baseY + block.dy,
+        tree.z + block.dz,
+        block.part === "leaves" ? "leaves" : "wood",
+      );
+      if (block.part === "leaves") leaves++;
+      if (!cut) continue;
+      hit++;
+      if (block.part === "leaves") leavesHit++;
+      else logHit++;
+    }
+    // Three ways to fail, and the first one on its own was not enough.
+    //
+    // A road-corridor box is a *low* box — the surfaced band plus four blocks
+    // of headroom — so on a tall tree it eats the trunk and leaves the crown,
+    // and the crown is only a small share of the whole, so the volume rule let
+    // it through. The village had floating canopies and bare two-block log
+    // stumps beside its lanes for exactly that reason. A tree that loses any
+    // of its trunk is not a tree, and neither is one that keeps its trunk but
+    // loses most of its canopy.
+    const eaten =
+      (blocks.length > 0 && hit / blocks.length > MAX_CLIP_FRACTION) ||
+      (leaves > 0 && leavesHit / leaves > MAX_CLIP_FRACTION) ||
+      logHit > 0;
+    if (eaten) {
+      dropped++;
+      continue;
+    }
+    clippedBlocks += hit;
+    kept.push(tree);
+  }
+
+  return { trees: kept, dropped, clippedBlocks };
+}
+
+/** True when any claimed column lies within `reach` of `(x, z)`. */
+function nearStructure(clip: StructureClip, x: number, z: number, reach: number): boolean {
+  for (let dz = -reach; dz <= reach; dz++) {
+    for (let dx = -reach; dx <= reach; dx++) {
+      if (clip.blockedColumn(x + dx, z + dz)) return true;
+    }
+  }
+  return false;
+}

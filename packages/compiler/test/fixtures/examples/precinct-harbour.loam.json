@@ -1,0 +1,216 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "precinct_harbour",
+    "worldSeed": 5566778899,
+    "prompt": "A working harbour on a southern bay: a stone quay along the waterline, three piers running out from it, boats moored alongside on one heading, gantry cranes on the quay, a warehouse and a boathouse behind, and a lane up to the harbourmaster's house.",
+    "spawn": {
+      "zone": "north"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:cobblestone"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "A working harbour on a southern bay",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        320,
+        320
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "Low country falling to a southern bay",
+        "params": {
+          "amplitude": 14,
+          "baseHeight": 72,
+          "seaLevel": 63,
+          "frequency": 0.0038,
+          "beachWidth": 4,
+          "snowLineFraction": 0.98
+        },
+        "children": [
+          {
+            "id": "the_bay",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The bay the harbour works",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.5,
+                1
+              ],
+              "radius": 170,
+              "depth": 12,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "harbour_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The low shelf the quay is cut into",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.42
+              ],
+              "radius": 90,
+              "height": 4,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate"
+        }
+      },
+      {
+        "id": "hinterland",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "Trees inland of the port",
+        "params": {
+          "area": {
+            "zone": "north"
+          },
+          "density": 0.09,
+          "elevation": [
+            3,
+            90
+          ],
+          "species": [
+            {
+              "id": "shore_oak",
+              "weight": 1,
+              "shape": "oak_round"
+            }
+          ]
+        }
+      },
+      {
+        "id": "port",
+        "kind": "generator",
+        "generator": "precinct.harbour@0",
+        "label": "The quay, its piers, its moorings and its sheds",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            96,
+            16,
+            72
+          ]
+        },
+        "params": {
+          "piers": 3,
+          "ships": "fill"
+        },
+        "constraints": [
+          {
+            "zone": "south"
+          }
+        ],
+        "tags": [
+          "precinct",
+          "harbour"
+        ]
+      },
+      {
+        "id": "harbourmaster",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The harbourmaster's house",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            10,
+            9,
+            9
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          }
+        ],
+        "ports": {
+          "front": {
+            "type": "door",
+            "face": "south"
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "chandlery",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The chandlery",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "zone": "west"
+          }
+        ],
+        "ports": {
+          "front": {
+            "type": "door",
+            "face": "east"
+          }
+        },
+        "tags": [
+          "shop"
+        ]
+      },
+      {
+        "id": "lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "The lane from the town down to the quay",
+        "params": {
+          "anchors": [
+            "harbourmaster",
+            "chandlery",
+            "port"
+          ],
+          "width": 3,
+          "lanterns": true
+        }
+      }
+    ]
+  }
+}

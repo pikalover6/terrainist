@@ -1,0 +1,255 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "hilltop_crypt_hamlet",
+    "worldSeed": "10033856625708936625",
+    "prompt": "A small hilltop hamlet with two distinct aboveground buildings: a round stone watchtower with a spiral interior stair, and a long timber-framed longhouse with a hearth and beds. They sit on gentle grassy ground. Carved into the solid rock directly beneath them are two distinct underground spaces: (1) a vaulted stone crypt with arched burial niches and cobweb detail, reached by a descending stone stair hidden under the longhouse floor; and (2) a partially flooded mine — rough tunnels with wooden support frames and rails leading to a small ore chamber studded with exposed ore, reached by a laddered vertical shaft beside the watchtower. A rough dug passage links the crypt to the mine. Keep the surface modest and believable; make the underground feel excavated out of real stone.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {}
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Hilltop hamlet with crypt and mine beneath",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "gentle grassy hills",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 72,
+          "amplitude": 22,
+          "frequency": 0.004,
+          "beachWidth": 3,
+          "snowLineFraction": 0.95
+        },
+        "children": [
+          {
+            "id": "hilltop",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the broad flat hilltop the hamlet sits on",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 100,
+              "height": 10,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate"
+        }
+      },
+      {
+        "id": "green",
+        "kind": "primitive",
+        "label": "the small green between tower and longhouse",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            16,
+            16
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median"
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "watchtower",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "round stone watchtower with spiral interior stair; laddered vertical shaft descends to the flooded mine beneath",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            7,
+            19,
+            7
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "flat",
+          "basement": {
+            "depth": 4
+          }
+        },
+        "constraints": [
+          {
+            "adjacent_to": "green",
+            "gap": [
+              1,
+              12
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "green"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south"
+          }
+        },
+        "tags": [
+          "watchtower"
+        ]
+      },
+      {
+        "id": "longhouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "timber-framed longhouse with hearth and beds; descending stone stair hidden under the floor leads to the vaulted stone crypt beneath",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            10,
+            7
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable",
+          "basement": {
+            "depth": 4
+          }
+        },
+        "constraints": [
+          {
+            "adjacent_to": "green",
+            "gap": [
+              1,
+              12
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "green"
+          },
+          {
+            "connected": "watchtower",
+            "via": "tunnel",
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south"
+          }
+        },
+        "tags": [
+          "hall",
+          "house"
+        ]
+      },
+      {
+        "id": "lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "the path between tower and longhouse across the green",
+        "params": {
+          "anchors": [
+            "green",
+            "#tag:house",
+            "watchtower"
+          ],
+          "pattern": "organic",
+          "width": 2,
+          "lanterns": true
+        }
+      },
+      {
+        "id": "hilltop_trees",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse trees on the hilltop slopes",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.03,
+          "elevation": [
+            2,
+            80
+          ],
+          "undergrowth": {
+            "grass": 0.45,
+            "flowers": 0.04,
+            "deadwood": 0.02
+          },
+          "species": [
+            {
+              "id": "hill_oak",
+              "weight": 2,
+              "shape": "oak_round"
+            },
+            {
+              "id": "hill_birch",
+              "weight": 1,
+              "shape": "birch_slim"
+            }
+          ]
+        }
+      },
+      {
+        "id": "wood_cart",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a cart parked near the longhouse",
+        "params": {
+          "prop": "cart",
+          "zone": "center"
+        }
+      }
+    ]
+  }
+}

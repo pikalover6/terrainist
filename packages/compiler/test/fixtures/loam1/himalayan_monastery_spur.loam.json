@@ -1,0 +1,502 @@
+{
+  "loam": "1",
+  "name": "himalayan_monastery_spur",
+  "seed": "9835359542233705272",
+  "prompt": "A Himalayan monastery town clinging to a cliff spur above a glacial river: a whitewashed dzong with a gold-roofed assembly hall, prayer-flag lines strung across the gorge, a rope bridge, yak byres on the terraces below, and a giant bronze bell in a tower that rings over the whole valley.",
+  "size": [
+    512,
+    512
+  ],
+  "spawn": {
+    "at": [
+      0.5,
+      0.48
+    ]
+  },
+  "terrain": {
+    "sea": 63,
+    "base": 88,
+    "relief": 80,
+    "scale": 260,
+    "ridged": true,
+    "snowline": 0.72,
+    "curve": [
+      [
+        0.0,
+        0.0
+      ],
+      [
+        0.3,
+        0.2
+      ],
+      [
+        0.6,
+        0.55
+      ],
+      [
+        1.0,
+        1.0
+      ]
+    ]
+  },
+  "land": [
+    {
+      "id": "glacial_gorge",
+      "verb": "valley",
+      "course": [
+        [
+          0.32,
+          0.0
+        ],
+        [
+          0.36,
+          0.3
+        ],
+        [
+          0.4,
+          0.5
+        ],
+        [
+          0.42,
+          0.75
+        ],
+        [
+          0.44,
+          1.0
+        ]
+      ],
+      "width": 52,
+      "depth": 44,
+      "profile": "sharp",
+      "wild": 0.65
+    },
+    {
+      "id": "glacial_river",
+      "verb": "river",
+      "course": [
+        [
+          0.32,
+          0.0
+        ],
+        [
+          0.36,
+          0.3
+        ],
+        [
+          0.4,
+          0.5
+        ],
+        [
+          0.42,
+          0.75
+        ],
+        [
+          0.44,
+          1.0
+        ]
+      ],
+      "width": 14,
+      "depth": 8,
+      "flooded": "never",
+      "profile": "rounded"
+    },
+    {
+      "id": "monastery_spur",
+      "verb": "ridge",
+      "course": [
+        [
+          0.72,
+          0.5
+        ],
+        [
+          0.6,
+          0.48
+        ],
+        [
+          0.47,
+          0.47
+        ]
+      ],
+      "width": 44,
+      "height": 56,
+      "profile": "sharp"
+    },
+    {
+      "id": "lower_terraces",
+      "verb": "plateau",
+      "at": [
+        0.56,
+        0.58
+      ],
+      "radius": 50,
+      "height": 24,
+      "profile": "rounded"
+    },
+    {
+      "id": "himalayan_horn",
+      "verb": "peak",
+      "at": [
+        0.85,
+        0.18
+      ],
+      "radius": 76,
+      "height": 90,
+      "profile": "sharp"
+    }
+  ],
+  "climate": {
+    "theme": "boreal",
+    "gradient": -2.0
+  },
+  "palette": {
+    "ground.surface": {
+      "mix": [
+        [
+          "minecraft:stone",
+          0.45
+        ],
+        [
+          "minecraft:snow_block",
+          0.35
+        ],
+        [
+          "minecraft:coarse_dirt",
+          0.2
+        ]
+      ]
+    },
+    "ground.cliff": "minecraft:dripstone_block",
+    "ground.stone": "minecraft:stone",
+    "liquid.water": "minecraft:water",
+    "road.surface": "minecraft:cobblestone",
+    "road.shoulder": "minecraft:gravel"
+  },
+  "woods": [
+    {
+      "id": "alpine_conifers",
+      "species": [
+        {
+          "shape": "spruce_tall",
+          "weight": 3,
+          "height": [
+            8,
+            13
+          ],
+          "trunk": "minecraft:spruce_log",
+          "leaves": "minecraft:spruce_leaves"
+        },
+        {
+          "shape": "larch_columnar",
+          "weight": 2,
+          "height": [
+            10,
+            16
+          ],
+          "trunk": "minecraft:spruce_log",
+          "leaves": "minecraft:spruce_leaves"
+        }
+      ],
+      "density": 0.05,
+      "grove": 0.6,
+      "elevation": [
+        0,
+        85
+      ],
+      "layers": {
+        "emergent": "none",
+        "understory": {
+          "species": [
+            {
+              "shape": "juniper_scrub",
+              "weight": 1,
+              "height": [
+                3,
+                4
+              ],
+              "trunk": "minecraft:spruce_log",
+              "leaves": "minecraft:spruce_leaves"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "intent": {
+    "era": "medieval",
+    "wealth": 0.6,
+    "decline": 0.1,
+    "formality": 0.4,
+    "climate": {
+      "biome": "minecraft:jagged_peaks",
+      "temperature": -0.7,
+      "humidity": 0.0,
+      "snow": "auto"
+    },
+    "character": {
+      "label": "Himalayan cliffside monastery town",
+      "materials": "white_quartz",
+      "packs": [
+        "himalayan_monastery"
+      ],
+      "motifs": {
+        "roofType": "hip",
+        "massing": "stepped",
+        "windowRhythm": "banded",
+        "ornamentDensity": 0.6
+      }
+    }
+  },
+  "things": [
+    {
+      "id": "monastery_town",
+      "is": "district",
+      "size": [
+        140,
+        140
+      ],
+      "form": "hillside",
+      "density": "medium",
+      "ground": "keep",
+      "terraced": true,
+      "where": [
+        {
+          "at": [
+            0.55,
+            0.47
+          ]
+        }
+      ],
+      "mix": [
+        "monk_cell_row",
+        "scripture_library",
+        "butter_tea_kitchen",
+        "chorten_shrine",
+        "prayer_wheel_gallery",
+        "hermit_retreat",
+        "incense_kiln",
+        "debate_courtyard"
+      ],
+      "children": [
+        {
+          "id": "central_dzong",
+          "is": "dzong_hall",
+          "floors": 3,
+          "roof": "hip",
+          "size": [
+            22,
+            17,
+            24
+          ],
+          "materials": {
+            "wall": "minecraft:calcite",
+            "roof": "minecraft:gold_block",
+            "trim": "minecraft:dark_oak_planks"
+          }
+        },
+        {
+          "id": "kora_gate",
+          "is": "kora_gatehouse"
+        },
+        {
+          "id": "stilt_store",
+          "is": "stilt_granary"
+        }
+      ]
+    },
+    {
+      "id": "giant_bell_tower",
+      "is": "valley_bell_tower",
+      "brief": "A monumental whitewashed stone belfry tower banded in dark timber, housing a massive cast bronze temple bell hung beneath a flared golden hip roof, projecting chimes over the entire valley.",
+      "size": [
+        11,
+        26,
+        11
+      ],
+      "where": [
+        {
+          "at": [
+            0.46,
+            0.46
+          ]
+        },
+        {
+          "near": "monastery_town",
+          "gap": [
+            6,
+            14
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rope_bridge",
+      "is": "gorge_rope_bridge",
+      "brief": "A long swaying Himalayan rope suspension bridge crossing high over the glacial gorge, with thick suspension cables, timber plank walkway, and heavy stone abutments wrapped in prayer flags.",
+      "size": [
+        8,
+        12,
+        54
+      ],
+      "where": [
+        {
+          "at": [
+            0.39,
+            0.46
+          ]
+        },
+        {
+          "facing": "giant_bell_tower"
+        }
+      ]
+    },
+    {
+      "id": "gorge_prayer_flags",
+      "is": "canyon_prayer_flag_cables",
+      "brief": "Multiple sagging lines of colorful Tibetan prayer flags strung across the gorge between tall timber masts on opposite cliff edges, fluttering wildly over the abyss.",
+      "size": [
+        10,
+        16,
+        56
+      ],
+      "where": [
+        {
+          "near": "rope_bridge",
+          "gap": [
+            6,
+            14
+          ]
+        }
+      ]
+    },
+    {
+      "id": "terrace_yak_byre_1",
+      "is": "yak_byre",
+      "where": [
+        {
+          "at": [
+            0.55,
+            0.58
+          ]
+        },
+        {
+          "near": "monastery_town",
+          "gap": [
+            18,
+            32
+          ]
+        }
+      ]
+    },
+    {
+      "id": "terrace_yak_byre_2",
+      "is": "yak_byre",
+      "where": [
+        {
+          "near": "terrace_yak_byre_1",
+          "gap": [
+            8,
+            18
+          ]
+        }
+      ]
+    },
+    {
+      "id": "terrace_yak_byre_3",
+      "is": "yak_byre",
+      "where": [
+        {
+          "near": "terrace_yak_byre_1",
+          "gap": [
+            12,
+            24
+          ]
+        }
+      ]
+    },
+    {
+      "id": "yak_terrace_wall",
+      "is": "dry_stone_wall",
+      "route": {
+        "along": "monastery_spur",
+        "offset": 14,
+        "side": "right"
+      }
+    },
+    {
+      "id": "wayside_cairn",
+      "is": "mani_stone_cairn",
+      "where": [
+        {
+          "at": [
+            0.52,
+            0.48
+          ]
+        }
+      ]
+    },
+    {
+      "id": "shrine_flags",
+      "is": "prayer_flag_line",
+      "where": [
+        {
+          "at": [
+            0.47,
+            0.46
+          ]
+        }
+      ]
+    }
+  ],
+  "roads": {
+    "pattern": "organic",
+    "width": 2,
+    "lit": true,
+    "reach": [
+      "monastery_town",
+      "giant_bell_tower",
+      "rope_bridge",
+      "terrace_yak_byre_1"
+    ]
+  },
+  "programs": {
+    "valley_bell_tower": {
+      "mode": "landmark",
+      "envelope": [
+        13,
+        40,
+        13
+      ],
+      "sourceHash": "b3:36c871ab4d28d7228b9b5396282c2047cbea1c0f7c3206f5ab551e6fd0c0ddac",
+      "outputHash": "b3:a93fb52d596063be8023ac7fa391611a462b8cc994f804c713b3e1c5da64627d",
+      "conforms": false,
+      "conformHash": "b3:fbc62c8049778bda642b1f9046b41b08b5ba53ce7f5f85be23cbe9e299babed1",
+      "source": "export const envelope = [13, 40, 13];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const seatY = 12;\n\n  // Safe block placement within envelope\n  const setBlock = (x, y, z, block) => {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      api.set(x, y, z, block);\n    }\n  };\n\n  // State attachment helper: handles pre-existing bracketed states gracefully\n  const withState = (blockStr, stateStr) => {\n    if (!blockStr) return blockStr;\n    const bracketIdx = blockStr.indexOf(\"[\");\n    const base = bracketIdx !== -1 ? blockStr.slice(0, bracketIdx) : blockStr;\n    return stateStr ? `${base}[${stateStr}]` : base;\n  };\n\n  const tm = api.theme;\n\n  // Wood roles\n  const woodPlanks = tm.wood?.planks ?? \"minecraft:spruce_planks\";\n  const woodLog = tm.wood?.log ?? \"minecraft:spruce_log\";\n  const woodStripped = tm.wood?.stripped ?? \"minecraft:stripped_spruce_log\";\n  const woodStairs = tm.wood?.stairs ?? \"minecraft:spruce_stairs\";\n  const woodSlab = tm.wood?.slab ?? \"minecraft:spruce_slab\";\n  const woodFence = tm.wood?.fence ?? \"minecraft:spruce_fence\";\n\n  // Stone & Plinth roles\n  const stonePrimary = tm.stone?.primary ?? \"minecraft:calcite\";\n  const stoneAccent = tm.stone?.accent ?? \"minecraft:diorite\";\n  const stoneStairs = tm.stone?.stairs ?? \"minecraft:stone_brick_stairs\";\n  const plinth = tm.ground?.plinth ?? stonePrimary;\n  const revetment = tm.ground?.revetment ?? plinth;\n  const pavement = tm.ground?.pavement ?? \"minecraft:cobblestone\";\n\n  // Roof roles\n  const roofStairs = tm.roof?.stairs ?? \"minecraft:dark_prismarine_stairs\";\n  const roofSlab = tm.roof?.slab ?? \"minecraft:dark_prismarine_slab\";\n  const roofSolid = tm.roof?.solid ?? \"minecraft:dark_prismarine\";\n\n  // Deterministic masonry mottling (whitewashed stone with textured variation)\n  const getMasonry = (x, y, z) => {\n    return (x * 7 + y * 13 + z * 19) % 4 === 0 ? stoneAccent : stonePrimary;\n  };\n\n  // --- 1. FOUNDATION & PLINTH CONFORMITY (Rule 6) ---\n  // Occupied ground footprint: 11x11 plinth (x: 1..11, z: 1..11) plus north entrance steps (x: 5..7, z: 0)\n  for (let x = 1; x <= 11; x++) {\n    for (let z = 1; z <= 11; z++) {\n      const isCorner = (x === 1 || x === 11) && (z === 1 || z === 11);\n      if (isCorner) continue; // Chamfered corners for Himalayan battered plinth aesthetic\n\n      const gh = Math.round(api.heightAt(x, z));\n      const groundY = Math.max(0, Math.min(H - 1, seatY + gh));\n\n      if (groundY <= seatY) {\n        // Ground falls away: build foundation down to ground\n        for (let y = groundY; y < seatY; y++) {\n          setBlock(x, y, z, y === groundY ? revetment : plinth);\n        }\n      } else {\n        // Ground rises above seat plane: build up to ground level\n        for (let y = seatY; y <= groundY; y++) {\n          setBlock(x, y, z, plinth);\n        }\n      }\n\n      // Plinth terrace deck course at seatY\n      setBlock(x, seatY, z, (x === 1 || x === 11 || z === 1 || z === 11) ? pavement : plinth);\n    }\n  }\n\n  // --- 2. ENTRANCE STAIRS & FRONT APPROACH (North face: z = 0..1) ---\n  for (let x = 5; x <= 7; x++) {\n    const gh = Math.round(api.heightAt(x, 0));\n    const stepGroundY = Math.max(0, Math.min(H - 1, seatY + gh));\n    const bottomY = Math.min(seatY, stepGroundY);\n\n    // Foundation beneath steps\n    for (let y = bottomY; y < seatY; y++) {\n      setBlock(x, y, 0, revetment);\n    }\n\n    // Approach steps leading to door threshold at seatY + 1 (y = 13)\n    setBlock(x, seatY, 0, withState(stoneStairs, \"facing=south,half=bottom\"));\n    setBlock(x, seatY + 1, 1, withState(stoneStairs, \"facing=south,half=bottom\"));\n\n    // Ensure open walkable clearance above exterior steps\n    for (let y = seatY + 1; y <= seatY + 4; y++) {\n      setBlock(x, y, 0, \"minecraft:air\");\n    }\n    for (let y = seatY + 2; y <= seatY + 4; y++) {\n      setBlock(x, y, 1, \"minecraft:air\");\n    }\n  }\n\n  // --- 3. LOWER TOWER SHAFT (y = 13 to 20) ---\n  // Floor level at y = 13\n  for (let x = 2; x <= 10; x++) {\n    for (let z = 2; z <= 10; z++) {\n      setBlock(x, 13, z, (x >= 4 && x <= 8 && z >= 4 && z <= 8) ? woodPlanks : stonePrimary);\n    }\n  }\n\n  // Double-thick battered walls: outer boundary (x=2..10, z=2..10)\n  for (let y = 13; y <= 20; y++) {\n    for (let x = 2; x <= 10; x++) {\n      for (let z = 2; z <= 10; z++) {\n        const isWall = x <= 3 || x >= 9 || z <= 3 || z >= 9;\n        if (!isWall) continue; // Interior volume left empty!\n\n        const isOuter = x === 2 || x === 10 || z === 2 || z === 10;\n        let block = getMasonry(x, y, z);\n\n        // Dark timber horizontal tie-beams (traditional Tibetan shamar bands)\n        if (y === 16 || y === 19) {\n          const axis = (x === 2 || x === 10) ? \"axis=z\" : \"axis=x\";\n          block = withState(woodLog, axis);\n        }\n\n        // Projecting wooden joist ends at y = 19\n        if (y === 19 && isOuter && (x % 2 === 0 || z % 2 === 0)) {\n          block = withState(woodStripped, \"axis=y\");\n        }\n\n        setBlock(x, y, z, block);\n      }\n    }\n\n    // Slit windows with timber lintels on East, West, and South walls\n    if (y === 16 || y === 17) {\n      setBlock(2, y, 6, \"minecraft:air\");\n      setBlock(3, y, 6, \"minecraft:air\");\n      setBlock(10, y, 6, \"minecraft:air\");\n      setBlock(9, y, 6, \"minecraft:air\");\n      setBlock(6, y, 10, \"minecraft:air\");\n      setBlock(6, y, 9, \"minecraft:air\");\n    }\n  }\n\n  // Clear Grand Entrance Portal at North (x = 6, z = 2..3, y = 14..15)\n  for (let y = 14; y <= 15; y++) {\n    setBlock(6, y, 2, \"minecraft:air\");\n    setBlock(6, y, 3, \"minecraft:air\");\n  }\n  // Heavy timber portal frame & Torana lintel\n  setBlock(5, 14, 2, withState(woodLog, \"axis=y\"));\n  setBlock(5, 15, 2, withState(woodLog, \"axis=y\"));\n  setBlock(7, 14, 2, withState(woodLog, \"axis=y\"));\n  setBlock(7, 15, 2, withState(woodLog, \"axis=y\"));\n  setBlock(6, 16, 2, withState(woodLog, \"axis=x\"));\n  setBlock(5, 16, 2, withState(woodLog, \"axis=x\"));\n  setBlock(7, 16, 2, withState(woodLog, \"axis=x\"));\n  // Decorative entrance eave bracket\n  setBlock(6, 17, 1, withState(woodStairs, \"facing=south,half=bottom\"));\n  setBlock(5, 17, 1, withState(woodStairs, \"facing=south,half=bottom\"));\n  setBlock(7, 17, 1, withState(woodStairs, \"facing=south,half=bottom\"));\n\n  // --- 4. UPPER BELFRY PAVILION (y = 21 to 27) ---\n  // Belfry timber floor deck at y = 21\n  for (let x = 2; x <= 10; x++) {\n    for (let z = 2; z <= 10; z++) {\n      setBlock(x, 21, z, woodPlanks);\n    }\n  }\n\n  // Perimeter railing at y = 22\n  for (let x = 2; x <= 10; x++) {\n    setBlock(x, 22, 2, woodFence);\n    setBlock(x, 22, 10, woodFence);\n  }\n  for (let z = 2; z <= 10; z++) {\n    setBlock(2, 22, z, woodFence);\n    setBlock(10, 22, z, woodFence);\n  }\n\n  // 8 Timber Colonnade Pillars (y = 22 to 26)\n  const pillarCoords = [\n    [2, 2], [6, 2], [10, 2],\n    [2, 6],         [10, 6],\n    [2, 10], [6, 10], [10, 10]\n  ];\n  for (const [px, pz] of pillarCoords) {\n    for (let y = 22; y <= 26; y++) {\n      setBlock(px, y, pz, withState(woodLog, \"axis=y\"));\n    }\n    // Tibetan bow-and-cushion bracket capitals at y = 26\n    if (px === 2) setBlock(px - 1, 26, pz, withState(woodStairs, \"facing=east,half=top\"));\n    if (px === 10) setBlock(px + 1, 26, pz, withState(woodStairs, \"facing=west,half=top\"));\n    if (pz === 2) setBlock(px, 26, pz - 1, withState(woodStairs, \"facing=south,half=top\"));\n    if (pz === 10) setBlock(px, 26, pz + 1, withState(woodStairs, \"facing=north,half=top\"));\n  }\n\n  // Heavy timber tie-beam ring & cross-beams at y = 27\n  for (let x = 2; x <= 10; x++) {\n    setBlock(x, 27, 2, withState(woodLog, \"axis=x\"));\n    setBlock(x, 27, 10, withState(woodLog, \"axis=x\"));\n    setBlock(x, 27, 6, withState(woodLog, \"axis=x\")); // Central bell suspension beam\n    setBlock(x, 27, 8, withState(woodLog, \"axis=x\")); // Striker suspension beam\n  }\n  for (let z = 2; z <= 10; z++) {\n    setBlock(2, 27, z, withState(woodLog, \"axis=z\"));\n    setBlock(10, 27, z, withState(woodLog, \"axis=z\"));\n    setBlock(6, 27, z, withState(woodLog, \"axis=z\"));\n  }\n\n  // --- 5. THE GIANT CAST BRONZE TEMPLE BELL & CLAPPER (y = 21 to 27) ---\n  // Hanging forged chains\n  setBlock(6, 26, 6, \"minecraft:chain[axis=y]\");\n  setBlock(6, 25, 6, \"minecraft:chain[axis=y]\");\n  setBlock(5, 25, 6, \"minecraft:chain[axis=y]\");\n  setBlock(7, 25, 6, \"minecraft:chain[axis=y]\");\n\n  // Bell Dragon Crown (y = 24)\n  setBlock(6, 24, 6, \"minecraft:cut_copper\");\n  setBlock(5, 24, 6, \"minecraft:cut_copper_stairs[facing=west,half=bottom]\");\n  setBlock(7, 24, 6, \"minecraft:cut_copper_stairs[facing=east,half=bottom]\");\n  setBlock(6, 24, 5, \"minecraft:cut_copper_stairs[facing=north,half=bottom]\");\n  setBlock(6, 24, 7, \"minecraft:cut_copper_stairs[facing=south,half=bottom]\");\n\n  // Bell Upper Waist (y = 23)\n  setBlock(6, 23, 6, \"minecraft:bell[attachment=ceiling,facing=north]\"); // Interior functional bell\n  setBlock(5, 23, 6, \"minecraft:cut_copper\");\n  setBlock(7, 23, 6, \"minecraft:cut_copper\");\n  setBlock(6, 23, 5, \"minecraft:cut_copper\");\n  setBlock(6, 23, 7, \"minecraft:cut_copper\");\n  setBlock(5, 23, 5, \"minecraft:cut_copper_stairs[facing=west,half=top]\");\n  setBlock(7, 23, 5, \"minecraft:cut_copper_stairs[facing=east,half=top]\");\n  setBlock(5, 23, 7, \"minecraft:cut_copper_stairs[facing=west,half=top]\");\n  setBlock(7, 23, 7, \"minecraft:cut_copper_stairs[facing=east,half=top]\");\n\n  // Bell Flared Sound Lip (y = 22)\n  setBlock(6, 22, 6, \"minecraft:chain[axis=y]\");\n  setBlock(5, 22, 6, \"minecraft:cut_copper_stairs[facing=east,half=bottom]\");\n  setBlock(7, 22, 6, \"minecraft:cut_copper_stairs[facing=west,half=bottom]\");\n  setBlock(6, 22, 5, \"minecraft:cut_copper_stairs[facing=south,half=bottom]\");\n  setBlock(6, 22, 7, \"minecraft:cut_copper_stairs[facing=north,half=bottom]\");\n  setBlock(4, 22, 6, \"minecraft:cut_copper_stairs[facing=west,half=top]\");\n  setBlock(8, 22, 6, \"minecraft:cut_copper_stairs[facing=east,half=top]\");\n  setBlock(6, 22, 4, \"minecraft:cut_copper_stairs[facing=north,half=top]\");\n  setBlock(6, 22, 8, \"minecraft:cut_copper_stairs[facing=south,half=top]\");\n  setBlock(5, 22, 5, \"minecraft:cut_copper\");\n  setBlock(7, 22, 5, \"minecraft:cut_copper\");\n  setBlock(5, 22, 7, \"minecraft:cut_copper\");\n  setBlock(7, 22, 7, \"minecraft:cut_copper\");\n\n  // Bell Clapper Head (y = 21)\n  setBlock(6, 21, 6, \"minecraft:cut_copper_slab[type=top]\");\n\n  // Suspended Horizontal Striker Beam (Monastic wooden ram)\n  // Suspended at z = 8, y = 22\n  for (let x = 5; x <= 7; x++) {\n    setBlock(x, 22, 8, withState(woodStripped, \"axis=x\"));\n  }\n  // Striker suspension chains\n  for (let y = 23; y <= 26; y++) {\n    setBlock(5, y, 8, \"minecraft:chain[axis=y]\");\n    setBlock(7, y, 8, \"minecraft:chain[axis=y]\");\n  }\n\n  // --- 6. FLARED GOLDEN HIP ROOF (y = 28 to 33) ---\n  // Layer 0: Flared Eave Overhang (y = 28) - radius 6 (x: 0..12, z: 0..12)\n  for (let x = 0; x <= 12; x++) {\n    setBlock(x, 28, 0, withState(roofSlab, \"type=bottom\"));\n    setBlock(x, 28, 12, withState(roofSlab, \"type=bottom\"));\n  }\n  for (let z = 0; z <= 12; z++) {\n    setBlock(0, 28, z, withState(roofSlab, \"type=bottom\"));\n    setBlock(12, 28, z, withState(roofSlab, \"type=bottom\"));\n  }\n\n  // Upturned Eave Corners (kick-up) and hanging prayer lanterns/chimes\n  const cornerEaves = [[0, 0], [12, 0], [0, 12], [12, 12]];\n  for (const [cx, cz] of cornerEaves) {\n    setBlock(cx, 29, cz, withState(roofSlab, \"type=bottom\")); // Flared corner tip\n    setBlock(cx, 27, cz, \"minecraft:chain[axis=y]\");\n    setBlock(cx, 26, cz, \"minecraft:lantern[hanging=true]\");\n  }\n\n  // Layer 1: Slope Tier 1 (y = 29) - radius 5 (x: 1..11, z: 1..11)\n  for (let x = 1; x <= 11; x++) {\n    for (let z = 1; z <= 11; z++) {\n      if (x === 1 || x === 11 || z === 1 || z === 11) {\n        if (z === 1) setBlock(x, 29, z, withState(roofStairs, \"facing=south,half=bottom\"));\n        else if (z === 11) setBlock(x, 29, z, withState(roofStairs, \"facing=north,half=bottom\"));\n        else if (x === 1) setBlock(x, 29, z, withState(roofStairs, \"facing=east,half=bottom\"));\n        else if (x === 11) setBlock(x, 29, z, withState(roofStairs, \"facing=west,half=bottom\"));\n      } else {\n        setBlock(x, 29, z, roofSolid);\n      }\n    }\n  }\n\n  // Layer 2: Slope Tier 2 (y = 30) - radius 4 (x: 2..10, z: 2..10)\n  for (let x = 2; x <= 10; x++) {\n    for (let z = 2; z <= 10; z++) {\n      if (x === 2 || x === 10 || z === 2 || z === 10) {\n        if (z === 2) setBlock(x, 30, z, withState(roofStairs, \"facing=south,half=bottom\"));\n        else if (z === 10) setBlock(x, 30, z, withState(roofStairs, \"facing=north,half=bottom\"));\n        else if (x === 2) setBlock(x, 30, z, withState(roofStairs, \"facing=east,half=bottom\"));\n        else if (x === 10) setBlock(x, 30, z, withState(roofStairs, \"facing=west,half=bottom\"));\n      } else {\n        setBlock(x, 30, z, roofSolid);\n      }\n    }\n  }\n\n  // Layer 3: Slope Tier 3 (y = 31) - radius 3 (x: 3..9, z: 3..9)\n  for (let x = 3; x <= 9; x++) {\n    for (let z = 3; z <= 9; z++) {\n      if (x === 3 || x === 9 || z === 3 || z === 9) {\n        if (z === 3) setBlock(x, 31, z, withState(roofStairs, \"facing=south,half=bottom\"));\n        else if (z === 9) setBlock(x, 31, z, withState(roofStairs, \"facing=north,half=bottom\"));\n        else if (x === 3) setBlock(x, 31, z, withState(roofStairs, \"facing=east,half=bottom\"));\n        else if (x === 9) setBlock(x, 31, z, withState(roofStairs, \"facing=west,half=bottom\"));\n      } else {\n        setBlock(x, 31, z, roofSolid);\n      }\n    }\n  }\n\n  // Layer 4: Slope Tier 4 (y = 32) - radius 2 (x: 4..8, z: 4..8)\n  for (let x = 4; x <= 8; x++) {\n    for (let z = 4; z <= 8; z++) {\n      if (x === 4 || x === 8 || z === 4 || z === 8) {\n        if (z === 4) setBlock(x, 32, z, withState(roofStairs, \"facing=south,half=bottom\"));\n        else if (z === 8) setBlock(x, 32, z, withState(roofStairs, \"facing=north,half=bottom\"));\n        else if (x === 4) setBlock(x, 32, z, withState(roofStairs, \"facing=east,half=bottom\"));\n        else if (x === 8) setBlock(x, 32, z, withState(roofStairs, \"facing=west,half=bottom\"));\n      } else {\n        setBlock(x, 32, z, roofSolid);\n      }\n    }\n  }\n\n  // Layer 5: Peak Platform Collar (y = 33) - radius 1 (x: 5..7, z: 5..7)\n  setBlock(6, 33, 5, withState(roofStairs, \"facing=south,half=bottom\"));\n  setBlock(6, 33, 7, withState(roofStairs, \"facing=north,half=bottom\"));\n  setBlock(5, 33, 6, withState(roofStairs, \"facing=east,half=bottom\"));\n  setBlock(7, 33, 6, withState(roofStairs, \"facing=west,half=bottom\"));\n  setBlock(5, 33, 5, withState(roofSlab, \"type=bottom\"));\n  setBlock(7, 33, 5, withState(roofSlab, \"type=bottom\"));\n  setBlock(5, 33, 7, withState(roofSlab, \"type=bottom\"));\n  setBlock(7, 33, 7, withState(roofSlab, \"type=bottom\"));\n  setBlock(6, 33, 6, \"minecraft:gold_block\");\n\n  // --- 7. GANJIRA GOLDEN PINNACLE (DOKHANG SPIRE) (y = 34 to 37) ---\n  // Lotus pedestal at y = 34\n  setBlock(6, 34, 6, \"minecraft:gold_block\");\n  setBlock(5, 34, 6, \"minecraft:cut_copper_stairs[facing=east,half=bottom]\");\n  setBlock(7, 34, 6, \"minecraft:cut_copper_stairs[facing=west,half=bottom]\");\n  setBlock(6, 34, 5, \"minecraft:cut_copper_stairs[facing=south,half=bottom]\");\n  setBlock(6, 34, 7, \"minecraft:cut_copper_stairs[facing=north,half=bottom]\");\n\n  // Sacred Kalasha Vase at y = 35\n  setBlock(6, 35, 6, \"minecraft:gold_block\");\n  setBlock(5, 35, 6, \"minecraft:cut_copper_slab[type=bottom]\");\n  setBlock(7, 35, 6, \"minecraft:cut_copper_slab[type=bottom]\");\n  setBlock(6, 35, 5, \"minecraft:cut_copper_slab[type=bottom]\");\n  setBlock(6, 35, 7, \"minecraft:cut_copper_slab[type=bottom]\");\n\n  // Golden Wheel & Parasol at y = 36\n  setBlock(6, 36, 6, \"minecraft:raw_gold_block\");\n\n  // Cintamani Jewel Spire at y = 37\n  setBlock(6, 37, 6, \"minecraft:lightning_rod[facing=up]\");\n\n  return {\n    name: \"Valley Bell Tower\",\n    seatY: seatY,\n    anchors: {\n      front: [6, seatY + 1, 0],\n      door: [6, seatY + 1, 2],\n    },\n    interiors: [\n      {\n        min: [4, 14, 4],\n        max: [8, 19, 8],\n        kind: \"hall\",\n      },\n    ],\n  };\n}"
+    },
+    "gorge_rope_bridge": {
+      "mode": "landmark",
+      "envelope": [
+        9,
+        22,
+        56
+      ],
+      "sourceHash": "b3:5705e8f0426aa9758060ac15b9c258c16bc867aa4ebc7b36ab03516b7521d222",
+      "outputHash": "b3:880af48078c820d1b4324ae380f5d4daa7a0640d17535c5301555709d9fbf669",
+      "conforms": false,
+      "conformHash": "b3:e99e3cec685e0d8d2bdf227f3e099d71ddd1a6a2f479c659a18265f3e22432f6",
+      "source": "export const envelope = [9, 22, 56];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const seatY = 8;\n\n  // Retrieve theme palettes with robust fallbacks\n  const stone = api.theme.stone.primary || \"minecraft:stone_bricks\";\n  const stoneAccent = api.theme.stone.accent || \"minecraft:chiseled_stone_bricks\";\n  const stoneWall = api.theme.stone.wall || \"minecraft:stone_brick_wall\";\n  const stoneSlab = api.theme.stone.slab || \"minecraft:stone_brick_slab\";\n  const stoneStairs = api.theme.stone.stairs || \"minecraft:stone_brick_stairs\";\n  const plinth = api.theme.ground.plinth || api.theme.stone.primary || \"minecraft:cobblestone\";\n\n  const woodPlanks = api.theme.wood.planks || \"minecraft:spruce_planks\";\n  const woodLog = api.theme.wood.log || \"minecraft:spruce_log\";\n  const woodStripped = api.theme.wood.stripped || \"minecraft:stripped_spruce_log\";\n  const woodSlab = api.theme.wood.slab || \"minecraft:spruce_slab\";\n  const woodFence = api.theme.wood.fence || \"minecraft:spruce_fence\";\n\n  const roofStairs = api.theme.roof.stairs || \"minecraft:dark_oak_stairs\";\n  const roofSlab = api.theme.roof.slab || \"minecraft:dark_oak_slab\";\n  const roofSolid = api.theme.roof.solid || \"minecraft:dark_oak_planks\";\n\n  // Traditional Tibetan 5-color lungta (prayer flags): Sky, Wind, Fire, Water, Earth\n  const PRAYER_FLAGS = [\n    \"minecraft:blue_wool\",\n    \"minecraft:white_wool\",\n    \"minecraft:red_wool\",\n    \"minecraft:green_wool\",\n    \"minecraft:yellow_wool\"\n  ];\n  const PRAYER_CARPETS = [\n    \"minecraft:blue_carpet\",\n    \"minecraft:white_carpet\",\n    \"minecraft:red_carpet\",\n    \"minecraft:green_carpet\",\n    \"minecraft:yellow_carpet\"\n  ];\n\n  // Safe clipped block writer\n  function setBlock(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      api.set(x, y, z, block);\n    }\n  }\n\n  // Terrain height helper conforming to seat plane\n  function groundAt(x, z) {\n    const h = api.heightAt(x, z);\n    return Math.max(0, Math.min(H - 1, Math.round(seatY + h)));\n  }\n\n  // Build foundation column from yDown down to ground\n  function buildFoundation(x, z, yDown, material = plinth) {\n    const gy = groundAt(x, z);\n    const minY = Math.min(yDown, gy);\n    const maxY = Math.max(yDown, gy);\n    for (let y = minY; y <= maxY; y++) {\n      setBlock(x, y, z, material);\n    }\n  }\n\n  // 1. WALKWAY HEIGHT PROFILE ACROSS THE BRIDGE\n  function getDeckY(z) {\n    if (z <= 4) return 8;\n    if (z === 5) return 9;\n    if (z === 6) return 10;\n    if (z >= 7 && z <= 9) return 11;\n    if (z >= 10 && z <= 13) return 12;\n    if (z >= 14 && z <= 21) return 11; // North span sag\n    if (z >= 22 && z <= 33) return 12; // Central pier approach & crest\n    if (z >= 34 && z <= 41) return 11; // South span sag\n    if (z >= 42 && z <= 45) return 12;\n    if (z >= 46 && z <= 48) return 11;\n    if (z === 49) return 10;\n    if (z === 50) return 9;\n    return 8;\n  }\n\n  // 2. ABUTMENTS (North: z = 0..11, South: z = 44..55)\n  function buildAbutment(isNorth) {\n    const zStart = isNorth ? 0 : 44;\n    const zEnd = isNorth ? 11 : 55;\n    const gateZ = isNorth ? 7 : 48;\n    const innerFaceZ = isNorth ? 11 : 44;\n\n    for (let x = 0; x < W; x++) {\n      for (let z = zStart; z <= zEnd; z++) {\n        // Deep foundations conforming to terrain\n        buildFoundation(x, z, 8, plinth);\n\n        const isEdgeX = (x === 1 || x === 7);\n        const isOuterX = (x === 0 || x === 8);\n        const isApproach = isNorth ? (z <= 5) : (z >= 50);\n\n        // Approach roadway side retaining walls\n        if (isApproach) {\n          if (isEdgeX) {\n            for (let y = 8; y <= 10; y++) {\n              setBlock(x, y, z, stone);\n            }\n            setBlock(x, 11, z, stoneWall);\n          } else if (x >= 2 && x <= 6) {\n            setBlock(x, 7, z, plinth);\n            setBlock(x, 8, z, (x === 4 ? stone : plinth));\n          }\n        }\n\n        // Pylon gateway towers\n        const isTowerZ = isNorth ? (z >= 6 && z <= 10) : (z >= 45 && z <= 49);\n        if (isTowerZ) {\n          // Battered stone masonry walls on flanks\n          if (x >= 1 && x <= 2 || x >= 6 && x <= 7) {\n            for (let y = 8; y <= 17; y++) {\n              const blk = (y === 14 || y === 17) ? stoneAccent : stone;\n              setBlock(x, y, z, blk);\n            }\n          }\n\n          // Archway portal over the roadway (x = 3, 4, 5)\n          if (x >= 3 && x <= 5) {\n            // Road bed\n            setBlock(x, 10, z, plinth);\n            setBlock(x, 11, z, woodPlanks);\n\n            // Transverse header timber beams\n            if (z === gateZ) {\n              setBlock(x, 15, z, woodStripped + \"[axis=x]\");\n              setBlock(x, 16, z, stoneAccent);\n            }\n          }\n        }\n      }\n    }\n\n    // Heavy cable anchor bollards inside gateway bastions\n    const anchorZ = isNorth ? 6 : 49;\n    for (const bx of [2, 6]) {\n      setBlock(bx, 11, anchorZ, woodLog + \"[axis=y]\");\n      setBlock(bx, 12, anchorZ, woodLog + \"[axis=y]\");\n      setBlock(bx, 13, anchorZ, woodStripped + \"[axis=y]\");\n      setBlock(bx, 14, anchorZ, \"minecraft:chain[axis=y]\");\n    }\n\n    // Traditional Tibetan timber hip roof with flared eaves over the gateway\n    const roofMinZ = isNorth ? 5 : 44;\n    const roofMaxZ = isNorth ? 11 : 50;\n\n    for (let x = 0; x < W; x++) {\n      for (let z = roofMinZ; z <= roofMaxZ; z++) {\n        // Eaves level\n        if (x === 0 || x === 8 || z === roofMinZ || z === roofMaxZ) {\n          setBlock(x, 18, z, roofStairs + \"[half=bottom]\");\n        } else {\n          setBlock(x, 18, z, roofSolid);\n        }\n\n        // Upper tier crest\n        if (x >= 2 && x <= 6 && z >= roofMinZ + 2 && z <= roofMaxZ - 2) {\n          setBlock(x, 19, z, roofSolid);\n          if (x >= 3 && x <= 5 && z >= roofMinZ + 3 && z <= roofMaxZ - 3) {\n            setBlock(x, 20, z, roofSlab + \"[type=bottom]\");\n          }\n        }\n      }\n    }\n\n    // Prayer flag mast and finial at tower summit\n    const mastZ = isNorth ? 8 : 47;\n    setBlock(4, 20, mastZ, woodFence);\n    setBlock(4, 21, mastZ, PRAYER_FLAGS[4]); // Golden/Yellow top finial\n\n    // Corbelled timber cantilever brackets projecting out over gorge\n    const corbelStep = isNorth ? [10, 11, 12, 13] : [45, 44, 43, 42];\n    for (let i = 0; i < corbelStep.length; i++) {\n      const cz = corbelStep[i];\n      const cy = 11;\n      for (const cx of [2, 3, 5, 6]) {\n        setBlock(cx, cy, cz, woodLog + \"[axis=z]\");\n      }\n      // Diagonal support strut stepping back down to abutment face\n      for (const cx of [2, 6]) {\n        setBlock(cx, cy - 1, cz, woodStripped + \"[axis=z]\");\n        buildFoundation(cx, cz, cy - 2, woodLog + \"[axis=y]\");\n      }\n    }\n  }\n\n  buildAbutment(true);  // North Abutment\n  buildAbutment(false); // South Abutment\n\n  // 3. CENTRAL GORGE ROCK PIER & PRAYER CHORTEN (z = 25..29)\n  for (let x = 2; x <= 6; x++) {\n    for (let z = 25; z <= 29; z++) {\n      // Pier foundation reaching down to the bedrock/riverbed\n      buildFoundation(x, z, 10, stone);\n\n      // Battered upper pier courses\n      setBlock(x, 11, z, stoneAccent);\n      setBlock(x, 12, z, stone);\n    }\n  }\n\n  // Glacial ice-breaker cutwater wedges\n  buildFoundation(4, 24, 11, stone);\n  setBlock(4, 12, 24, stoneStairs + \"[facing=south,half=bottom]\");\n  buildFoundation(4, 30, 11, stone);\n  setBlock(4, 12, 30, stoneStairs + \"[facing=north,half=bottom]\");\n\n  // Transverse saddle logs on pier to carry main suspension ropes\n  for (let x = 1; x <= 7; x++) {\n    setBlock(x, 12, 27, woodLog + \"[axis=x]\");\n  }\n\n  // Prayer chorten and flag posts on central pier flanks\n  for (const px of [1, 7]) {\n    setBlock(px, 11, 27, stone);\n    setBlock(px, 12, 27, stoneAccent);\n    setBlock(px, 13, 27, woodFence);\n    setBlock(px, 14, 27, woodFence);\n    setBlock(px, 15, 27, PRAYER_FLAGS[px === 1 ? 0 : 2]); // Blue and Red flags\n    setBlock(px, 16, 27, woodFence);\n  }\n  // Small shrine lantern at central pier\n  setBlock(2, 13, 27, \"minecraft:lantern[hanging=false]\");\n\n  // 4. TIMBER TRESTLE BENTS (Supporting mid-spans at z = 18 and z = 36)\n  for (const tz of [18, 36]) {\n    // Cross transom beam\n    for (let x = 2; x <= 6; x++) {\n      setBlock(x, 10, tz, woodLog + \"[axis=x]\");\n    }\n    // Vertical legs descending to real terrain\n    for (const lx of [2, 6]) {\n      buildFoundation(lx, tz, 9, woodLog + \"[axis=y]\");\n      setBlock(lx, 11, tz, woodFence);\n      setBlock(lx, 12, tz, woodFence);\n    }\n    // Cross sway-bracing under deck\n    setBlock(3, 9, tz, woodFence);\n    setBlock(4, 9, tz, woodLog + \"[axis=y]\");\n    setBlock(5, 9, tz, woodFence);\n  }\n\n  // 5. WALKWAY DECK & TRANSOMS (z = 0 to 55)\n  for (let z = 0; z < D; z++) {\n    const yDeck = getDeckY(z);\n\n    // Continuous under-deck longitudinal stringers for 6-connectivity\n    for (let x = 3; x <= 5; x++) {\n      setBlock(x, yDeck - 1, z, woodStripped + \"[axis=z]\");\n    }\n\n    // Step transition connectors\n    if (z > 0) {\n      const prevY = getDeckY(z - 1);\n      if (prevY !== yDeck) {\n        const stepMinY = Math.min(prevY, yDeck);\n        const stepMaxY = Math.max(prevY, yDeck);\n        for (let y = stepMinY; y <= stepMaxY; y++) {\n          for (let x = 3; x <= 5; x++) {\n            setBlock(x, y, z, woodPlanks);\n          }\n        }\n      }\n    }\n\n    // Transverse timber ties / transoms every 2 blocks\n    if (z % 2 === 0 && z >= 10 && z <= 45) {\n      for (let x = 2; x <= 6; x++) {\n        setBlock(x, yDeck - 1, z, woodLog + \"[axis=x]\");\n      }\n    }\n\n    // Walkway surface planks\n    for (let x = 3; x <= 5; x++) {\n      // Natural weathered wear: occasional top slab or plank variations\n      if ((x === 3 || x === 5) && (z % 7 === 3)) {\n        setBlock(x, yDeck, z, woodSlab + \"[type=top]\");\n      } else {\n        setBlock(x, yDeck, z, woodPlanks);\n      }\n    }\n\n    // Side safety railings and handrails (x = 2 and x = 6)\n    if (z >= 9 && z <= 46) {\n      for (const rx of [2, 6]) {\n        // Vertical post / rope hanger\n        setBlock(rx, yDeck, z, woodFence);\n        // Handrail rope\n        setBlock(rx, yDeck + 1, z, woodFence);\n\n        // Connect handrail vertically to transom\n        if (z % 2 === 0) {\n          setBlock(rx, yDeck - 1, z, woodStripped + \"[axis=y]\");\n        }\n      }\n    }\n  }\n\n  // 6. MAIN SUSPENSION CABLES & VERTICAL SUSPENDERS\n  // Parabolic sag curve for suspension cables\n  function getCableY(z) {\n    if (z <= 8) return 17;\n    if (z >= 47) return 17;\n\n    // North span (z = 8 to 27)\n    if (z < 27) {\n      const u = (z - 17.5) / 9.5;\n      return Math.round(13 + 4 * (u * u));\n    }\n    // South span (z = 27 to 47)\n    const u = (z - 37) / 10;\n    return Math.round(13 + 4 * (u * u));\n  }\n\n  for (let z = 7; z <= 48; z++) {\n    const cY = getCableY(z);\n    const dY = getDeckY(z);\n\n    for (const cx of [2, 6]) {\n      // Suspension cable segment\n      setBlock(cx, cY, z, \"minecraft:chain[axis=z]\");\n\n      // Vertical suspender chains / rope slings down to deck handrail\n      if (z % 2 === 0 && z >= 10 && z <= 45) {\n        const hTop = cY - 1;\n        const hBot = dY + 1;\n        for (let y = hBot; y <= hTop; y++) {\n          setBlock(cx, y, z, \"minecraft:chain[axis=y]\");\n        }\n      }\n    }\n  }\n\n  // 7. PRAYER FLAGS (LUNGTA) STRUNG ACROSS THE GORGE\n  // (a) Fluttering flags tied along the handrails\n  for (let z = 10; z <= 45; z++) {\n    const dY = getDeckY(z);\n    const flagColor = PRAYER_FLAGS[z % 5];\n    const carpetColor = PRAYER_CARPETS[z % 5];\n\n    // Tied to handrail at alternating intervals\n    if (z % 3 === 0) {\n      setBlock(2, dY + 2, z, carpetColor);\n    }\n    if (z % 3 === 1) {\n      setBlock(6, dY + 2, z, carpetColor);\n    }\n    // Small wool prayer pennants along cable hangers\n    if (z % 4 === 2) {\n      const cY = getCableY(z);\n      setBlock(2, cY - 1, z, flagColor);\n      setBlock(6, cY - 1, z, flagColor);\n    }\n  }\n\n  // (b) High prayer-flag lines strung overhead between the towers\n  for (let z = 8; z <= 47; z++) {\n    // Overhead swaying catenary\n    const u = (z - 27.5) / 19.5;\n    const lineY = Math.round(15 + 4 * (u * u));\n    const flagColor = PRAYER_FLAGS[(z + 2) % 5];\n\n    // Centered prayer line\n    setBlock(4, lineY, z, flagColor);\n\n    // Cross-guy lines connecting overhead line to suspension cables at quarters\n    if (z === 16 || z === 27 || z === 38) {\n      setBlock(3, lineY, z, \"minecraft:chain[axis=x]\");\n      setBlock(5, lineY, z, \"minecraft:chain[axis=x]\");\n    }\n  }\n\n  // (c) Prayer flag bunting bands adorning the pylon tower walls\n  for (let x = 1; x <= 7; x++) {\n    if (x >= 3 && x <= 5) continue;\n    // North tower band\n    setBlock(x, 15, 6, PRAYER_FLAGS[x % 5]);\n    setBlock(x, 15, 10, PRAYER_FLAGS[(x + 1) % 5]);\n    // South tower band\n    setBlock(x, 15, 45, PRAYER_FLAGS[(x + 2) % 5]);\n    setBlock(x, 15, 49, PRAYER_FLAGS[(x + 3) % 5]);\n  }\n\n  return {\n    name: \"gorge_rope_bridge\",\n    seatY: seatY,\n    anchors: {\n      front: [4, 8, 0],\n      door: [4, 8, 0],\n      back: [4, 8, 55]\n    }\n  };\n}"
+    },
+    "canyon_prayer_flag_cables": {
+      "mode": "landmark",
+      "envelope": [
+        10,
+        24,
+        56
+      ],
+      "sourceHash": "b3:ddd05d68412fa4cb222847382094df7a50acddb3d4de5d13013ac7610a16b431",
+      "outputHash": "b3:475e9e9536f01aa24f7601e774f4cff8b281105d0c2e2a414a1960a188f2cd9e",
+      "conforms": false,
+      "conformHash": "b3:9031810c90dd93fecff0fb166d414e0f9bb0dd394768efdb621441919e1c718e",
+      "source": "export const envelope = [10, 24, 56];\n\nexport default function build(api) {\n  const size = api.size;\n  const seatY = 7;\n\n  // Palette resolution from theme with fallbacks\n  const woodLog = api.theme.wood.log;\n  const woodPlanks = api.theme.wood.planks;\n  const woodFence = api.theme.wood.fence;\n  const woodStairs = api.theme.wood.stairs;\n  const woodSlab = api.theme.wood.slab;\n\n  const stonePrimary = api.theme.stone.primary;\n  const stoneAccent = api.theme.stone.accent || stonePrimary;\n  const stoneStairs = api.theme.stone.stairs;\n  const stoneSlab = api.theme.stone.slab;\n  const stoneWall = api.theme.stone.wall;\n\n  const groundPlinth = api.theme.ground.plinth || stonePrimary;\n  const groundPavement = api.theme.ground.pavement || stonePrimary;\n  const groundScree = api.theme.ground.scree || stonePrimary;\n  const groundBank = api.theme.ground.bank || stonePrimary;\n  const groundRevetment = api.theme.ground.revetment || stonePrimary;\n\n  // Traditional Tibetan 5-element sacred prayer flag sequence (Dharani order):\n  // Blue (Sky) -> White (Wind) -> Red (Fire) -> Green (Water) -> Yellow (Earth)\n  const PRAYER_COLORS = [\n    \"minecraft:blue_wool\",\n    \"minecraft:white_wool\",\n    \"minecraft:red_wool\",\n    \"minecraft:green_wool\",\n    \"minecraft:yellow_wool\",\n  ];\n\n  function setBlock(x, y, z, block) {\n    if (x >= 0 && x < size[0] && y >= 0 && y < size[1] && z >= 0 && z < size[2]) {\n      api.set(x, y, z, block);\n    }\n  }\n\n  function logBlock(baseLog, axis = \"y\") {\n    const id = baseLog.split(\"[\")[0];\n    return `${id}[axis=${axis}]`;\n  }\n\n  function stairBlock(baseStair, facing = \"north\", half = \"bottom\") {\n    const id = baseStair.split(\"[\")[0];\n    return `${id}[facing=${facing},half=${half}]`;\n  }\n\n  // Ground elevation conforming strictly to heightAt(x, z)\n  function getGroundY(x, z) {\n    const h = api.heightAt(x, z);\n    return Math.max(0, Math.min(12, Math.round(seatY + h)));\n  }\n\n  // --- 1. GORGE FLOOR, CLIFF EMBANKMENTS & FOUNDATIONS ---\n  // Every column is solidly grounded down to y=0 to ensure 100% terrain conformity\n  for (let z = 0; z < size[2]; z++) {\n    for (let x = 0; x < size[0]; x++) {\n      const gy = getGroundY(x, z);\n\n      // Deep foundation and skirt\n      for (let y = 0; y < gy; y++) {\n        setBlock(x, y, z, groundRevetment);\n      }\n\n      // Surface treatment depends on zone (cliff platforms vs canyon gorge)\n      if (z <= 7 || z >= 48) {\n        // North & South cliff terraces\n        setBlock(x, gy, z, groundPavement);\n      } else {\n        // Deep Canyon Gorge Floor\n        // Flanking canyon side-walls at x=0,1 and x=8,9\n        if (x === 0 || x === 9) {\n          setBlock(x, gy, z, stonePrimary);\n          setBlock(x, gy + 1, z, groundBank);\n          setBlock(x, gy + 2, z, stoneWall);\n        } else if (x === 1 || x === 8) {\n          setBlock(x, gy, z, groundBank);\n          setBlock(x, gy + 1, z, stonePrimary);\n        } else {\n          // Rocky riverbed scree & glacial pavement\n          const hash = ((x * 37 + z * 101) % 100) / 100;\n          if (hash < 0.60) {\n            setBlock(x, gy, z, groundScree);\n          } else if (hash < 0.85) {\n            setBlock(x, gy, z, groundPavement);\n          } else {\n            setBlock(x, gy, z, groundBank);\n          }\n        }\n      }\n    }\n  }\n\n  // --- 2. CANYON BOULDERS & RIVERBED MANI CAIRNS ---\n  const boulders = [\n    { x: 3, z: 15 },\n    { x: 6, z: 23, cairn: true },\n    { x: 4, z: 33, cairn: true },\n    { x: 6, z: 42 },\n  ];\n\n  for (const b of boulders) {\n    const gy = getGroundY(b.x, b.z);\n    for (let dx = -1; dx <= 1; dx++) {\n      for (let dz = -1; dz <= 1; dz++) {\n        if (Math.abs(dx) + Math.abs(dz) <= 1) {\n          setBlock(b.x + dx, gy + 1, b.z + dz, stoneAccent);\n        }\n      }\n    }\n    setBlock(b.x, gy + 2, b.z, stonePrimary);\n\n    if (b.cairn) {\n      // Small mani prayer cairn erected on the boulder in the canyon\n      setBlock(b.x, gy + 3, b.z, stoneWall);\n      setBlock(b.x, gy + 4, b.z, woodFence);\n      setBlock(b.x, gy + 5, b.z, PRAYER_COLORS[(b.z) % 5]);\n    }\n  }\n\n  // --- 3. CLIFF EDGE PARAPETS & MANI WALLS ---\n  // North retaining parapet overlooking the gorge\n  for (let x = 1; x <= 8; x++) {\n    const gy = getGroundY(x, 7);\n    setBlock(x, gy + 1, 7, stairBlock(stoneStairs, \"south\", \"bottom\"));\n  }\n  // South retaining parapet looking north into the gorge\n  for (let x = 1; x <= 8; x++) {\n    const gy = getGroundY(x, 48);\n    setBlock(x, gy + 1, 48, stairBlock(stoneStairs, \"north\", \"bottom\"));\n  }\n\n  // Mani prayer walls on cliff approaches\n  for (let x = 4; x <= 6; x++) {\n    const gyN = getGroundY(x, 2);\n    setBlock(x, gyN + 1, 2, stonePrimary);\n    setBlock(x, gyN + 2, 2, stoneSlab);\n\n    const gyS = getGroundY(x, 53);\n    setBlock(x, gyS + 1, 53, stonePrimary);\n    setBlock(x, gyS + 2, 53, stoneSlab);\n  }\n\n  // --- 4. STEPPED CHORTEN BASTIONS (LHATSE) ---\n  function buildBastion(cx, cz) {\n    const gy = getGroundY(cx, cz);\n    // 3x3 plinth\n    for (let dx = -1; dx <= 1; dx++) {\n      for (let dz = -1; dz <= 1; dz++) {\n        setBlock(cx + dx, gy + 1, cz + dz, groundPlinth);\n        setBlock(cx + dx, gy + 2, cz + dz, stonePrimary);\n      }\n    }\n    // Accent corners\n    setBlock(cx - 1, gy + 2, cz - 1, stoneAccent);\n    setBlock(cx + 1, gy + 2, cz - 1, stoneAccent);\n    setBlock(cx - 1, gy + 2, cz + 1, stoneAccent);\n    setBlock(cx + 1, gy + 2, cz + 1, stoneAccent);\n\n    // Stepped outward stairs\n    setBlock(cx, gy + 3, cz - 1, stairBlock(stoneStairs, \"north\"));\n    setBlock(cx, gy + 3, cz + 1, stairBlock(stoneStairs, \"south\"));\n    setBlock(cx - 1, gy + 3, cz, stairBlock(stoneStairs, \"west\"));\n    setBlock(cx + 1, gy + 3, cz, stairBlock(stoneStairs, \"east\"));\n\n    setBlock(cx - 1, gy + 3, cz - 1, stoneSlab);\n    setBlock(cx + 1, gy + 3, cz - 1, stoneSlab);\n    setBlock(cx - 1, gy + 3, cz + 1, stoneSlab);\n    setBlock(cx + 1, gy + 3, cz + 1, stoneSlab);\n\n    // Tier 4 cornice\n    setBlock(cx, gy + 3, cz, stonePrimary);\n    setBlock(cx, gy + 4, cz, stoneWall);\n  }\n\n  // Build the four massive cliff-edge bastions\n  buildBastion(3, 4);\n  buildBastion(7, 4);\n  buildBastion(3, 51);\n  buildBastion(7, 51);\n\n  // --- 5. TALL TIMBER MASTS & RIGGING ---\n  const gyN = getGroundY(5, 4);\n  const mastTopN = Math.min(22, gyN + 12);\n\n  const gyS = getGroundY(5, 51);\n  const mastTopS = Math.min(22, gyS + 12);\n\n  // North Masts (x=3 and x=7 at z=4)\n  for (const mx of [3, 7]) {\n    const gy = getGroundY(mx, 4);\n    for (let y = gy + 1; y <= mastTopN; y++) {\n      setBlock(mx, y, 4, logBlock(woodLog, \"y\"));\n    }\n    // Gilded pinnacle finial on top of mast\n    setBlock(mx, mastTopN + 1, 4, \"minecraft:gold_block\");\n    // Cross-arm stays\n    setBlock(mx - 1, mastTopN - 1, 4, woodFence);\n    setBlock(mx + 1, mastTopN - 1, 4, woodFence);\n    setBlock(mx - 1, mastTopN - 2, 4, stairBlock(woodStairs, \"west\", \"top\"));\n    setBlock(mx + 1, mastTopN - 2, 4, stairBlock(woodStairs, \"east\", \"top\"));\n\n    // Rear timber brace stepping back into cliff rock\n    setBlock(mx, mastTopN - 4, 3, woodFence);\n    setBlock(mx, mastTopN - 6, 2, woodFence);\n    setBlock(mx, mastTopN - 8, 1, woodFence);\n    for (let y = gy + 1; y <= mastTopN - 9; y++) {\n      setBlock(mx, y, 1, stoneWall);\n    }\n  }\n\n  // North arch crossbeam connecting the two masts\n  for (let x = 3; x <= 7; x++) {\n    setBlock(x, mastTopN - 3, 4, woodPlanks);\n    setBlock(x, mastTopN - 2, 4, woodFence);\n  }\n  setBlock(5, mastTopN - 1, 4, logBlock(woodLog, \"y\"));\n\n  // South Masts (x=3 and x=7 at z=51)\n  for (const mx of [3, 7]) {\n    const gy = getGroundY(mx, 51);\n    for (let y = gy + 1; y <= mastTopS; y++) {\n      setBlock(mx, y, 51, logBlock(woodLog, \"y\"));\n    }\n    // Gilded pinnacle finial\n    setBlock(mx, mastTopS + 1, 51, \"minecraft:gold_block\");\n    // Cross-arm stays\n    setBlock(mx - 1, mastTopS - 1, 51, woodFence);\n    setBlock(mx + 1, mastTopS - 1, 51, woodFence);\n    setBlock(mx - 1, mastTopS - 2, 51, stairBlock(woodStairs, \"west\", \"top\"));\n    setBlock(mx + 1, mastTopS - 2, 51, stairBlock(woodStairs, \"east\", \"top\"));\n\n    // Rear timber brace stepping back south into cliff rock\n    setBlock(mx, mastTopS - 4, 52, woodFence);\n    setBlock(mx, mastTopS - 6, 53, woodFence);\n    setBlock(mx, mastTopS - 8, 54, woodFence);\n    for (let y = gy + 1; y <= mastTopS - 9; y++) {\n      setBlock(mx, y, 54, stoneWall);\n    }\n  }\n\n  // South arch crossbeam\n  for (let x = 3; x <= 7; x++) {\n    setBlock(x, mastTopS - 3, 51, woodPlanks);\n    setBlock(x, mastTopS - 2, 51, woodFence);\n  }\n  setBlock(5, mastTopS - 1, 51, logBlock(woodLog, \"y\"));\n\n  // --- 6. 6-CONNECTED CATENARY PRAYER FLAG CABLES ---\n  function rasterizeCatenary(p0, p1, sag) {\n    const dist = Math.hypot(p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2]);\n    const steps = Math.ceil(dist * 3);\n    const voxels = [];\n    let lastV = null;\n\n    for (let i = 0; i <= steps; i++) {\n      const u = i / steps;\n      const lx = p0[0] + (p1[0] - p0[0]) * u;\n      const ly = p0[1] + (p1[1] - p0[1]) * u;\n      const lz = p0[2] + (p1[2] - p0[2]) * u;\n      const sy = ly - 4 * sag * u * (1 - u);\n\n      const ix = Math.round(lx);\n      const iy = Math.round(sy);\n      const iz = Math.round(lz);\n\n      if (!lastV) {\n        voxels.push([ix, iy, iz]);\n        lastV = [ix, iy, iz];\n      } else if (lastV[0] !== ix || lastV[1] !== iy || lastV[2] !== iz) {\n        // Enforce strict 6-connectivity via Manhattan stepping\n        let cx = lastV[0];\n        let cy = lastV[1];\n        let cz = lastV[2];\n\n        while (cx !== ix || cy !== iy || cz !== iz) {\n          const dx = ix - cx;\n          const dy = iy - cy;\n          const dz = iz - cz;\n\n          const adx = Math.abs(dx);\n          const ady = Math.abs(dy);\n          const adz = Math.abs(dz);\n\n          if (adx >= ady && adx >= adz) {\n            cx += Math.sign(dx);\n          } else if (ady >= adx && ady >= adz) {\n            cy += Math.sign(dy);\n          } else {\n            cz += Math.sign(dz);\n          }\n          voxels.push([cx, cy, cz]);\n        }\n        lastV = [ix, iy, iz];\n      }\n    }\n    return voxels;\n  }\n\n  function renderPrayerCable(p0, p1, sag, colorOffset) {\n    const voxels = rasterizeCatenary(p0, p1, sag);\n\n    for (let i = 0; i < voxels.length; i++) {\n      const [vx, vy, vz] = voxels[i];\n      // Color pattern: 2 blocks per prayer flag element\n      const colorIdx = (Math.floor(i / 2) + colorOffset) % 5;\n      const colorBlock = PRAYER_COLORS[colorIdx];\n\n      setBlock(vx, vy, vz, colorBlock);\n\n      // Fluttering flag tails whipping in canyon winds\n      if (i >= 2 && i <= voxels.length - 3) {\n        const gy = getGroundY(vx, vz);\n\n        // Hanging tail\n        if (i % 3 === 0 && vy - 1 > gy + 1) {\n          setBlock(vx, vy - 1, vz, colorBlock);\n\n          // Horizontal flutter tail trailing in cross-canyon wind draft\n          if (i % 6 === 0) {\n            const windX = (i % 4 === 0) ? vx + 1 : vx - 1;\n            if (windX >= 1 && windX <= 8) {\n              setBlock(windX, vy - 1, vz, colorBlock);\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // Cable 1: West Main High Line\n  renderPrayerCable(\n    [3, mastTopN - 1, 4],\n    [3, mastTopS - 1, 51],\n    5.5,\n    0\n  );\n\n  // Cable 2: East Main High Line\n  renderPrayerCable(\n    [7, mastTopN - 1, 4],\n    [7, mastTopS - 1, 51],\n    5.5,\n    2\n  );\n\n  // Cable 3: Deep Sweeping Center Cable dipping over the abyss\n  renderPrayerCable(\n    [5, mastTopN - 1, 4],\n    [5, mastTopS - 1, 51],\n    7.0,\n    4\n  );\n\n  // Cable 4: Diagonal Cross-Gorge Cable (West to East)\n  renderPrayerCable(\n    [3, mastTopN - 2, 5],\n    [7, mastTopS - 2, 50],\n    6.2,\n    1\n  );\n\n  // Cable 5: Diagonal Cross-Gorge Cable (East to West)\n  renderPrayerCable(\n    [7, mastTopN - 2, 5],\n    [3, mastTopS - 2, 50],\n    6.2,\n    3\n  );\n\n  // Radiating anchor lines fanning down to cliffside boulders\n  renderPrayerCable([3, mastTopN - 4, 4], [1, getGroundY(1, 1) + 2, 1], 1.0, 0);\n  renderPrayerCable([7, mastTopN - 4, 4], [8, getGroundY(8, 1) + 2, 1], 1.0, 3);\n  renderPrayerCable([3, mastTopS - 4, 51], [1, getGroundY(1, 54) + 2, 54], 1.0, 2);\n  renderPrayerCable([7, mastTopS - 4, 51], [8, getGroundY(8, 54) + 2, 54], 1.0, 4);\n\n  return {\n    name: \"canyon_prayer_flag_cables\",\n    seatY,\n    anchors: {\n      front: [5, seatY, 0],\n      north_approach: [5, seatY, 1],\n      south_approach: [5, seatY, 54],\n    },\n  };\n}"
+    }
+  }
+}

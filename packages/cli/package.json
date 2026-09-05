@@ -1,0 +1,43 @@
+{
+  "name": "@terrainist/cli",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "The terrainist command: generate, compile, install, kit, catalog, ui.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pikalover6/terrainist.git",
+    "directory": "packages/cli"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "bin",
+    "dist",
+    "ui"
+  ],
+  "scripts": {
+    "build": "tsc -b"
+  },
+  "dependencies": {
+    "@terrainist/agents": "*",
+    "@terrainist/compiler": "*",
+    "@terrainist/spec": "*",
+    "@terrainist/stdlib": "*",
+    "prismarine-nbt": "^2.8.0",
+    "yazl": "^3.3.1"
+  },
+  "bin": {
+    "terrainist": "./bin/terrainist.js"
+  },
+  "devDependencies": {
+    "@types/yazl": "^3.3.1"
+  }
+}

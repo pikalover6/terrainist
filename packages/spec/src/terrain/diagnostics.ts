@@ -1,0 +1,1453 @@
+/**
+ * Loam terrain-profile diagnostics.
+ *
+ * Every diagnostic carries a stable machine code, the `nodePath` it applies
+ * to, a human message, and a **fix hint**. The hint is not decoration: G3 feeds
+ * these verbatim back to the authoring LLM, so each one must say precisely
+ * what to change in the document.
+ */
+
+/**
+ * Severity of a diagnostic.
+ *
+ * `error` fails the compile; `warning` does not but asks the author to change
+ * something; `note` is informational — the compiler recovered on its own and is
+ * only reporting what it did.
+ */
+export type DiagnosticSeverity = "error" | "warning" | "note";
+
+/** One validation or compilation finding. */
+export interface LoamDiagnostic {
+  /** Stable code, e.g. `"LOAM-T001"`. */
+  readonly code: string;
+  /** Symbolic name of the code, e.g. `"GENERATOR_NOT_IN_PROFILE"`. */
+  readonly name: string;
+  readonly severity: DiagnosticSeverity;
+  /** Dotted node path, e.g. `"world.terrain.the_divide"`; `""` for the document. */
+  readonly nodePath: string;
+  /** What is wrong. */
+  readonly message: string;
+  /** What the author must change to make it right. */
+  readonly fix: string;
+}
+
+/** The terrain-profile diagnostic catalog. */
+export const TERRAIN_DIAGNOSTICS = {
+  // --- LOAM-T0xx: structural -----------------------------------------------
+  BAD_DOCUMENT: "LOAM-T000",
+  GENERATOR_NOT_IN_PROFILE: "LOAM-T001",
+  CONSTRAINTS_NOT_ALLOWED: "LOAM-T002",
+  GENERATOR_CARDINALITY: "LOAM-T003",
+  EDIT_NOT_UNDER_HEIGHTFIELD: "LOAM-T004",
+  DEPTH_EXCEEDED: "LOAM-T005",
+  BAD_ID: "LOAM-T006",
+  DUPLICATE_ID: "LOAM-T007",
+  UNKNOWN_KEY: "LOAM-T008",
+  MISSING_KEY: "LOAM-T009",
+  BAD_TYPE: "LOAM-T010",
+
+  // --- LOAM-T1xx: semantic -------------------------------------------------
+  FRACTIONAL_OUT_OF_RANGE: "LOAM-T100",
+  BAD_ENUM: "LOAM-T101",
+  BAD_PLACEMENT: "LOAM-T102",
+  BAD_COURSE: "LOAM-T103",
+  PARAM_OUT_OF_RANGE: "LOAM-T104",
+  BASIN_RIM_NOT_CLOSED: "LOAM-T105",
+  BAD_PALETTE: "LOAM-T106",
+  SPAWN_UNRESOLVED: "LOAM-T107",
+  UNSTABLE_FLUID: "LOAM-T110",
+  FLOATING_VEGETATION: "LOAM-T111",
+  /** G4.5a — a `river` with no sea to reach, demoted to a chain of ponds. */
+  RIVER_PONDED: "LOAM-T112",
+  /**
+   * G5.1 — a carve that asked to flood (`flooded: "auto"`) ended up with no
+   * ocean-connected water at all, because its course points away from where the
+   * coast actually fell.
+   */
+  CARVE_DRY: "LOAM-T113",
+  /**
+   * G5a — a param this profile does not implement, named rather than silently
+   * dropped. Used by `cave.carver@0` for the half of the v0.2 §7 table it
+   * leaves out.
+   */
+  PARAM_NOT_IMPLEMENTED: "LOAM-T114",
+  /**
+   * G5a — a carved cave interval comes within four blocks of a fluid column,
+   * or below sea level near the ocean. Structurally impossible; the check is a
+   * second opinion on the carve band, and a compiler bug if it ever fires.
+   */
+  CAVE_FLUID_BREACH: "LOAM-T115",
+  /**
+   * G5a — a cave removed a column's top solid block somewhere that is not a
+   * declared entrance mouth. Interior caves must leave the heightmap alone.
+   */
+  CAVE_SURFACE_BREACH: "LOAM-T116",
+  /**
+   * U6 — `scaleReference` was declared on a heightfield that has no spatial
+   * parameter for it to act on, so the landform will not scale with the region
+   * however large the world is made. Inert rather than wrong, hence a warning.
+   */
+  SCALE_REFERENCE_INERT: "LOAM-T117",
+  /**
+   * F21 — a scatter `area.at` radius small enough to be a units mistake.
+   *
+   * A terrain verb's `area.radius` is in **blocks** while `at` is fractional,
+   * and a model that has just written `[0.5, 0.5]` reaches for the same units
+   * for the radius beside it. `radius: 0.55` is legal (it means "half a
+   * block"), draws no tree, and says nothing — so this warns and the document
+   * still compiles. Never an error: a sub-block radius is legal Loam.
+   */
+  SCATTER_RADIUS_UNITS: "LOAM-T118",
+  /**
+   * F21 — a `scatter.forest@0` node that planted **zero** trees while asking
+   * for a non-degenerate region. Author-actionable, and in the compile
+   * feedback set: a wood nobody can see is the silent decline DESIGN.md's
+   * first failure mode is about.
+   */
+  SCATTER_EMPTY: "LOAM-T119",
+  /**
+   * A bounded dense forest lost most of its eligible ground to settlement
+   * clearing. The document can preserve canopy on unbuilt district ground or
+   * move the forest outside the settlement.
+   */
+  FOREST_SETTLEMENT_SUPPRESSED: "LOAM-T120",
+
+  // --- LOAM-T2xx: settlement-profile structure -----------------------------
+  // Profile-scoped rules with no Loam v0.2 counterpart. Anything the core spec
+  // already names keeps the core code (below), per the profile's aliasing rule.
+  STRUCTURE_GENERATOR_NOT_IN_PROFILE: "LOAM-T200",
+  STRUCTURE_NODE_SHAPE: "LOAM-T201",
+  PLAZA_CARDINALITY: "LOAM-T202",
+  BAD_ENVELOPE: "LOAM-T203",
+  BAD_CONSTRAINT: "LOAM-T204",
+  BAD_PORT: "LOAM-T205",
+  STRUCTURE_PARAM: "LOAM-T207",
+  GENERATOR_NOT_IMPLEMENTED: "LOAM-T208",
+  /** G4b `road.network@0` — a route between two anchors has no legal path. */
+  ROAD_UNROUTABLE: "LOAM-T209",
+  /**
+   * F1 `district` — a field of the district node is missing, malformed, or
+   * names something the grammar does not know (an unspellable `mix` entry).
+   */
+  DISTRICT_PARAM: "LOAM-T210",
+  /**
+   * F1 `district` — the envelope is too small to hold a street skeleton at
+   * all: fewer than two streets on an axis, or no block deep enough for a lot.
+   */
+  DISTRICT_TOO_SMALL: "LOAM-T211",
+  /**
+   * C3 life pass — there was frontage to dress and none of it took.
+   *
+   * Informational, and deliberately **not** `CANNOT_FIT`. What it diagnoses is
+   * this pass running before the streetscape rather than after it, which is a
+   * compiler-ordering defect no edit to the document can repair; borrowing the
+   * author-actionable `LOAM-E170` sent it into the authoring loop's feedback
+   * codes and cost every small world two revision rounds it could not satisfy.
+   */
+  LIFE_PASS_EMPTY: "LOAM-T212",
+  /**
+   * C1 `city` — a field of the city node is missing, malformed, or names
+   * something the grammar does not know (an unspellable `mix` entry, a
+   * character key outside the eight).
+   */
+  CITY_PARAM: "LOAM-T213",
+  /**
+   * C1 `city` — the envelope is too small to hold an arterial armature: the
+   * plan cannot draw a spine and leave a district cell either side of it.
+   */
+  CITY_TOO_SMALL: "LOAM-T214",
+  /**
+   * C4 `city` — `params.setPieces` is malformed: not a boolean or object, a
+   * `max` outside 1..6, or a `kinds` entry outside the five kinds.
+   */
+  CITY_SET_PIECES: "LOAM-T215",
+  /**
+   * C4 — `params.vista` on a landmark is malformed, names an arterial kind
+   * that has no terminus to stand at (a ring), or is written on a building
+   * that is not a child of a `city`, where nothing would ever read it.
+   */
+  VISTA_PIN: "LOAM-T216",
+  /**
+   * C4 — a landmark pinned with `params.vista` could not take an axis: every
+   * axis was already claimed, or the node does not fit the ground reserved at
+   * the end of any of them. A warning, because the landmark is still built —
+   * it just goes wherever the fabric would have put it.
+   */
+  VISTA_UNCLAIMED: "LOAM-T217",
+  /**
+   * C4 — there were set pieces to dress and none of them took.
+   *
+   * Informational, and deliberately its own code rather than a borrowed one.
+   * What it diagnoses is a pass-ordering or occupancy fact, not anything the
+   * document can change: the same mistake `LIFE_PASS_EMPTY` was created to undo
+   * when it was first spelt `LOAM-E170` and cost the authoring loop two model
+   * calls per world. It is also only raised when there was something *other
+   * than a landmark* to build — a landmark is a building the grammar put up
+   * three passes earlier, so a city whose only anchors are landmarks writing no
+   * blocks here is the expected outcome, not a report.
+   */
+  SET_PIECES_EMPTY: "LOAM-T218",
+  /**
+   * `infra.wall@0` — `params.walls` is malformed: not an object, an unknown
+   * style, or a margin/pitch/height outside its band.
+   */
+  WALL_PARAM: "LOAM-T219",
+  /**
+   * `infra.wall@0` — a wall was asked for and no course could be derived.
+   *
+   * Informational, and its own code for `LIFE_PASS_EMPTY`'s reason: what it
+   * diagnoses is that the settlement's finished footprint was too small or too
+   * scattered to hull, which is a fact about the ground and the placement
+   * rather than anything the document can restate.
+   */
+  WALL_COURSE_EMPTY: "LOAM-T220",
+  /**
+   * C4 — a hillside stair was refused because it connected to nothing.
+   *
+   * Informational, for `LIFE_PASS_EMPTY`'s reason: it reports a fact about the
+   * finished ground and the street network, not anything the document said. A
+   * public stair is a *connection*, so the pass requires each end to reach a
+   * road, street, plaza cell or building pad; the sweep will happily relocate
+   * the strip to find one, and only when no candidate in the window connects
+   * at both ends does the piece decline whole. That refusal is the right
+   * outcome — masonry, balustrade and lanterns stranded mid-slope with no path
+   * at either end is a folly, and one Kai walked — but it is worth saying out
+   * loud, because "the plan asked for a stair and there is no stair" should
+   * never be silent.
+   */
+  STAIR_UNCONNECTED: "LOAM-T221",
+  /**
+   * Phase 4.1 urban forms — the requested form could not be drawn on this
+   * quarter, so its **announced fallback** was drawn instead.
+   *
+   * A warning rather than an error, deliberately: a terrain mismatch is
+   * something an author may not have been able to predict, and losing a whole
+   * quarter over one costs more than the form did. The message names the
+   * measurement that failed and the thing in the document to change, and the
+   * fallback is recorded on the district in the compile report — so a fallback
+   * is legible in the finished artifact, not only in a feedback round.
+   *
+   * Also carries a form's own notes about the ground it was given (a canal
+   * quarter that is a closed pound; a flight of steps that could not be made
+   * climbable).
+   */
+  DISTRICT_FORM: "LOAM-T222",
+  /**
+   * Phase 4.2 — `params.ground: "stepped"` was asked for and the quarter came
+   * out as **one platform**, so there is nothing to retain and no step to cut.
+   *
+   * A note, not a failure: the quarter still compiles, as `"pad"`. It names the
+   * relief measured and the storey it needed, because "the document asked for a
+   * hill town and got a flat one" is exactly the class of request this repo has
+   * accepted and quietly not met before.
+   */
+  DISTRICT_GROUND: "LOAM-T223",
+  /**
+   * Phase 4.2 — `params.courtyards > 0` and **not one block closed**.
+   *
+   * Names the measurement that failed and how many blocks failed on it, plus
+   * the thing in the document to change: a bigger `blockSize`, or `density:
+   * "high"` so the perimeter builds a continuous street wall. Same reason as
+   * `DISTRICT_GROUND`: never silent, never fatal.
+   */
+  COURTYARD_NONE: "LOAM-T224",
+
+ // --- F17: the holding ------------------------
+  /**
+   * A `precinct.farm@0` envelope that is not a `region`, or is below the
+   * 40 × 40 floor — one yard plus one parcel plus the setbacks.
+   *
+   * Rejected at validate rather than at compile for the reason the precinct
+   * minima are: a holding that does not fit builds nothing, and an author would
+   * far rather be told the number to change.
+   */
+  FARM_TOO_SMALL: "LOAM-T225",
+  /** A `precinct.farm@0` param outside the range §3.3 states; names the range. */
+  FARM_PARAM: "LOAM-T226",
+  /**
+   * A `params.crops` entry outside §6.2's table.
+   *
+   * A warning, not an error: the holding keeps its seeded draw over the crops
+   * it *does* understand, so the fields are still fields.
+   */
+  FARM_CROP_UNKNOWN: "LOAM-W502",
+
+ // --- F19: the ruins treatment ---------------
+  /**
+   * `building.grammar@0` — `params.decay` is not a number in 0..1.
+   *
+   * The one authoring surface for ruining a **named** building. An error rather
+   * than a clamp-and-carry-on because "decay": 80 is an author who meant 0.8 and
+   * would far rather be told than handed an intact building.
+   */
+  DECAY_PARAM: "LOAM-T227",
+  /**
+   * `prop.place@0` — a water-borne or shore prop found no water within its
+   * search radius of the coarse target it was given, and sought the waterline.
+   *
+   * The recovery, not the failure: the pier or the ship is built, on the
+   * nearest column that can carry it, and the note says where. `CANNOT_FIT` is
+   * kept for the honest case — a pinned prop, or a world with no water at all.
+   * The same shape as `PRECINCT_RESEATED`, one scale down.
+   */
+  PROP_RESEATED: "LOAM-T228",
+  /**
+   * A wall's requested `margin` pushed the offset ring outside the world
+   * region, and the ring was stepped in (two columns at a time, floor
+   * `WALL_MIN_MARGIN`) until it fit — the circuit built at the reduced margin.
+   *
+   * The same shape as `PROP_RESEATED`: the author's parameter is advice, the
+   * icon is the thing. A walled city with a slightly tighter ring beats an
+   * unwalled one every time a stranger looks at it (Troy c5, 2026-08-11, was
+   * the measured case: `params.walls` on a settlement grown to the region
+   * edge, and the old answer was silently no wall at all).
+   */
+  WALL_MARGIN_REDUCED: "LOAM-T229",
+  /**
+   * The wall's ring met the world-region edge and flattened along it (the
+   * bounds fold into the course's support fan as four more half-planes), so
+   * the circuit stayed CLOSED where the old answer was no wall at all.
+   * Buildings standing on the flattened stretch read as houses built into the
+   * wall. Ratified 2026-08-11; Troy c5 — a city grown flush to z −256 — was
+   * the measured case.
+   */
+  WALL_COURSE_CLAMPED: "LOAM-T230",
+
+ // --- the infrastructure host -----------
+  // Four codes, continuing from LOAM-T230. Per §13.6's precedent none of them
+  // enters `FEEDBACK_CODES` initially: `BIOME_CLAMPED`'s history is that a code
+  // firing on every world costs money in the authoring loop and buys an
+  // invented change.
+  /**
+   * `infra.entry@0` — the node's params do not name a buildable entry: an
+   * unknown `entry`, a `route` that is not one of the closed forms, or a form
+   * the named entry does not accept.
+   *
+   * An error rather than a clamp, and it names the legal values *and* the
+   * near-misses: an entry id is a closed vocabulary, and "unknown entry" with
+   * no list is the diagnostic an author can do least with.
+   */
+  INFRA_ENTRY_PARAM: "LOAM-T231",
+  /**
+   * `infra.entry@0` — the route resolved shorter than the entry's `minRun`.
+   *
+   * The `WALL_COURSE_EMPTY` analogue, one scale down: the anchor was found and
+   * the derivation ran, and what came back is too short to be the thing the
+   * author asked for. A fence of six columns is not a cordon.
+   */
+  INFRA_ROUTE_EMPTY: "LOAM-T232",
+  /**
+   * `infra.entry@0` — the named anchor is absent, unplaced, or not linear.
+   *
+   * The loud version of the mistake the linework kit already warns about
+   * ("pointing `along` at a building buys you nothing"): a route is named
+   * relative to something the compiler placed, so a name that resolves to
+   * nothing is a route that cannot exist.
+   */
+  INFRA_ROUTE_UNANCHORED: "LOAM-T233",
+  /**
+   * `infra.entry@0` — the run built, and lost more than a stated fraction of
+   * its columns to collision or unbuildable ground.
+   *
+   * So an author *reads* "a fence full of holes" rather than walking into one.
+   * A note, not a warning: the entry is built, and the honest recovery is
+   * reported the way `WALL_MARGIN_REDUCED` reports its own.
+   */
+  INFRA_RUN_REFUSED: "LOAM-T234",
+
+  // --- the linework declaration slot (GROUND-CONTRACT §13.2c) --------------
+  // Two codes, continuing from LOAM-T234, and neither enters `FEEDBACK_CODES`
+  // for the reason the four above it do not: a code that fires on every world
+  // costs money in the authoring loop and buys an invented change (§13.6).
+  //
+  // The resolver's `LOAM-W49x` family already does the *arbitration* half — a
+  // bed that loses columns to rank 0/10/20 is `GROUND_CLAIM_ADJUSTED`, below
+  // `minColumns` it is `GROUND_CLAIM_REFUSED`, a guarded loss is
+  // `GROUND_CONFLICT`. These two carry the half the resolver cannot see,
+  // because it is about the **crossing subtraction** and happens before
+  // anything is declared.
+  /**
+   * `structure.linework` — the bed kept fewer than `minColumns` columns after
+   * the crossing subtraction, so **no bed is declared at all** and the run is
+   * built on the ground it finds.
+   *
+   * The message names the count and which of the two subtractions took them —
+   * carriageway or water — because "my viaduct has no approach" and "my viaduct
+   * is in a river" are different news.
+   */
+  LINEWORK_BED_REFUSED: "LOAM-T235",
+  /**
+   * `structure.linework` — the bed was declared, and the crossing subtraction
+   * cut it into more than one run or removed more than
+   * `INFRA_REFUSAL_FRACTION` of its columns.
+   *
+   * A note, not a warning: the entry is built, and the honest recovery is
+   * reported the way `WALL_MARGIN_REDUCED` and `INFRA_RUN_REFUSED` report
+   * theirs.
+   */
+  LINEWORK_BED_INTERRUPTED: "LOAM-T236",
+  /**
+ * The frontage tie : the surfacer's final
+   * level for a segment departs from the datum it was handed by ≥ 1 block at ≥ 1
+   * station. Names the count and the maximum.
+   *
+   * The one legal cause is the per-station water floor, which the datum cannot
+   * apply because `routeFloorAt` needs a `fluidTop` that does not exist at
+   * layout time (F3 step 4). The same lift is Part III's berm, so this finding
+   * and that one are the same measurement seen from two sides.
+   *
+   * A note: the world is correct either way — a street that rose out of the
+   * water is a street doing the right thing. It is reported because a *large*
+   * drift means the datum and the surfacer have become two graders, which is
+   * exactly the defect F2 exists to prevent.
+   */
+  FRONTAGE_TIE_DRIFT: "LOAM-T237",
+  /**
+   * A district's lots were seated with no datum in reach — the fabric drew a
+   * street the datum could not grade, or the lots front the district boundary.
+   *
+   * F6 ("no frontage, no tie") makes an untied lot a legal outcome: it keeps
+   * exactly the seat it had before the tie existed. So this is a note and never
+   * a warning. It earns its code because a district where *every* lot is untied
+   * is the fabric and the grader disagreeing about where the streets are, and
+   * that is invisible in a world that otherwise looks merely old.
+   */
+  FRONTAGE_UNTIED: "LOAM-T238",
+  /**
+ * The road berm cap bound : a
+   * route's per-station water floor asked to stand more than `ROAD_BERM_MAX`
+   * above that station's own natural ground, and was clamped to it before
+   * `gradeProfile`'s unit-cone envelope could propagate the lift. Names the
+   * route and the station count, and the height it wanted.
+   *
+   * A note, never a warning: the clamp is the *correct* answer — the rim floor
+   * exists to cancel a cut, not to licence a fill — and the world is right
+   * either way. It earns a code because it is the measurement 10C's viaduct
+   * promotion is waiting on: a run that repeatedly wants to stand well above
+   * its own ground is a span, not a street.
+   */
+  ROAD_BERM_CLAMPED: "LOAM-T239",
+  /**
+   * A block was deeper than two rows of frontage reach across, and an alley was
+   * cut through it.
+   *
+   * `subdivide` cuts **rim** frontage — one lot depth against each side that has
+   * a street behind it — so a block whose short axis is past
+   * `2 · LOT_DEPTH + MIN_COURT_SIDE` keeps a core that is not a courtyard but a
+   * field: land inside the fabric that no lot can ever be cut from. The forms
+   * that split a domain (`grown`) bound a leaf's *long* axis and say nothing
+   * about this, so the compiler adds the street the fabric did not: a `lane`
+   * through the block's middle, connected at both ends, carrying a real segment
+   * id so the lots it creates front something.
+   *
+   * A note: the repair is the intended one and it changes nothing the author
+   * wrote. It is reported because an alley the document did not ask for *is* a
+   * street in the finished world, and because the count is the measurement that
+   * says a quarter's `blockSize` and its form are pulling against each other.
+   */
+  DISTRICT_BLOCK_ALLEY: "LOAM-T240",
+  /**
+   * A stepped quarter where one or more blocks found **no graded carriageway**
+   * within `frontageReach` of any of their perimeter columns, and so kept the
+ * quarter's own floor.
+   *
+   * F6's law seen from the platform side, and `LOAM-T238 FRONTAGE_UNTIED`'s
+   * mirror: the interior of a very large quarter, a block against the district
+   * boundary, a block behind a plaza — all legally keep `min(free ground)`,
+   * because inventing a street for a block that has none is how a courtyard ends
+   * up on a road's plane.
+   *
+   * A note, never a warning, and in no feedback set: the world is correct either
+   * way. It earns a code because a quarter where *every* block is untied is the
+   * fabric and the grader disagreeing about where the streets are.
+   */
+  GROUND_PLANE_UNTIED: "LOAM-T241",
+  /**
+   * A platform column **within reach of a carriageway** whose elected level is
+   * neither the datum's own level nor a whole storey from it — the ground plane
+   * and the street plane are off the same lattice (§11.1, G1).
+   *
+   * **This should be `0`**, and it is the alarm that says the anchor did not
+   * hold: `LOAM-T237 FRONTAGE_TIE_DRIFT`'s mirror for the platform election.
+   * The finding this whole part answers is that today it is not zero but a
+   * constant — 4,180 citadel columns at exactly `+1` above the datum that claims
+   * those very columns, one bar and not a distribution (§11.0).
+   *
+   * A note and in no feedback set: a document cannot move its own storey
+   * lattice, so there is nothing for an author to do about it. Names the count
+   * and the worst residual, which is the per-quarter histogram 12C publishes.
+   */
+  GROUND_PLANE_DRIFT: "LOAM-T242",
+  /**
+   * A rolled lot's decay was **refused whole** (RUINS-PLAN §5.7): an open
+   * interior cell was still unreachable from the door after the rubble that
+   * sealed it had been withdrawn, so the **intact** shell was built instead.
+   *
+   * Refused whole rather than shipped broken is the standing pattern (props,
+   * set pieces, programs). A refusal rate above a few percent on a walked world
+   * is a finding about the decay operators, not about the document — which is
+   * why the lot and the reason are both named.
+   */
+  RUIN_LOT_REFUSED: "LOAM-W510",
+  /**
+   * A shell could not take the `shell` decay mode and took `facade`, or took
+   * nothing: a footprint that is not a plain rect, or a wall of fewer than
+   * three courses (table 14: a crumble line drawn on a three-course wall has
+   * nothing to take away).
+   *
+   * A warning rather than a silence because the author's `params.decay` — or
+   * the district's roll — asked for a ruin and got a shell with the sweeping
+   * undone and nothing crumbled. The watchtower and the skyscraper are the two
+   * shapes that reach it.
+   */
+  DECAY_MODE_FALLBACK: "LOAM-W511",
+  /**
+   * An archetype's own fit-out skipped the work that makes it itself — a
+   * lighthouse's bands, gallery and lamp; a spire; a dome — because the shell
+   * left it no room above the eave (a flat roof, a thick-walled interior), and
+   * the plain shell stands where the archetype should. The probe pass that
+   * found it (Stocktake Run unit 33) met a "lighthouse" that was a two-floor
+   * box and heard nothing.
+   */
+  FITOUT_ROOF_SKIPPED: "LOAM-W524",
+  /**
+   * Per district: `decline`, the ruin share, lots rolled / ruined / refused.
+   *
+   * **Not optional.** DESIGN's second failure mode is machinery that exists and
+   * never runs, and "the district ruined 0 of 84 lots because `decline` never
+   * reached the row" is a sentence that must appear somewhere a human looks.
+   */
+  DISTRICT_RUINS: "LOAM-I512",
+  /**
+   * Per settlement: what the green skin wrote (RUINS-PLAN-v0-WP6 §9).
+   *
+   * **Not optional**, for {@link DISTRICT_RUINS}'s reason one storey up: *"the
+   * skin wrote 0 blocks because the field was empty"* is the same sentence
+   * about the same failure mode, and DESIGN's second failure mode is machinery
+   * that exists and never runs.
+   */
+  GREEN_SKIN: "LOAM-I514",
+  /**
+   * The street colonizer's withdraw loop removed elected trunks (WP-6 §6.3).
+   *
+   * U2 — *growth never seals a route* — is not argued, it is checked and then
+   * repaired: the pedestrian graph over the district's street bands must keep
+   * exactly the components it had with the colonizer off, and any trunk that
+   * breaks that is withdrawn in reverse election order. A sustained rate here
+   * is a finding about `STREET_TRUNK_SHARE`, not about the withdraw loop.
+   */
+  GREEN_SKIN_WITHDRAWN: "LOAM-W513",
+  /**
+   * The green rule fell through to the climate fallback (WP-6 §4.6, Q2).
+   *
+   * No `scatter.forest@0` node covers this settlement, so the skin cannot grow
+   * the wood the city stands in and takes the climate table instead. Visible
+   * rather than silent, because the eye compares the leaves in a window hole
+   * against the surrounding landscape.
+   */
+  GREEN_SKIN_NO_SPECIES: "LOAM-W514",
+  /**
+   * A holding seated its yard and **not one field**.
+   *
+   * Names the relief measured against `FIELD_MAX_RELIEF`, because the fix is
+   * almost always the ground rather than the params: a holding is fields on
+   * ground that is already close to level, and a mountainside has none.
+   */
+  FARM_NO_GROUND: "LOAM-W500",
+  /**
+   * Fewer fields than `params.parcels` — the crop-circle rule applied to
+   * fields: a count you asked for is delivered or diagnosed, never silently
+   * rounded. Names requested, delivered, and the dominant refusal reason.
+   */
+  FARM_PARCELS_SHORT: "LOAM-W501",
+  /**
+   * No seatable yard anywhere in the envelope, so the holding places nothing.
+   *
+   * A refusal rather than a farmstead floating over its fields, and a warning
+   * rather than a silence: the report row says so too.
+   */
+  FARM_REFUSED: "LOAM-W503",
+  /**
+   * The holding's gate anchor, named so an author can see what to route to.
+   *
+ * : a holding publishes a `road_stub` at its gate
+   * and an ordinary `road.network@0` node anchored on the holding's id runs the
+   * lane to it. The anchor is a node path, and a node path is exactly the thing
+   * an author cannot guess — so it is said rather than left to be inferred.
+   */
+  FARM_TRACK: "LOAM-I504",
+
+  // --- Phase 0 contract 2: authored programs -------------------------------
+  // The contract's own numbering (W330–W337), kept verbatim so a diagnostic
+  // quoted in the design doc and one printed by the compiler are the same
+  // string.
+  /** A node overrode the envelope the program declared for itself. */
+  PROGRAM_ENVELOPE_OVERRIDDEN: "LOAM-W330",
+  /** More than `clipTolerance` of an instance's writes fell outside the envelope. */
+  PROGRAM_WRITES_CLIPPED: "LOAM-W331",
+  /** An instance exhausted fuel, writes or heap. Dropped whole, never half-written. */
+  PROGRAM_BUDGET_EXCEEDED: "LOAM-E332",
+  /** `sourceHash` does not match the source carried beside it. */
+  PROGRAM_SOURCE_HASH_MISMATCH: "LOAM-E333",
+  /** Re-execution produced a different op stream from the recorded `outputHash`. */
+  PROGRAM_OUTPUT_HASH_MISMATCH: "LOAM-E334",
+  /** The written solid is not one 6-connected component. */
+  PROGRAM_DISCONNECTED: "LOAM-E335",
+  /** A gate step failed: static lint, block registry, physics, or the nonsense guard. */
+  PROGRAM_GATE_FAILED: "LOAM-E336",
+  /** The program was dropped and the node fell back. */
+  PROGRAM_DROPPED: "LOAM-W337",
+  /** The `programs` map or a reference into it is malformed. */
+  PROGRAM_SCHEMA: "LOAM-E338",
+  /**
+   * An instance standing in water wrote fluid above that water's own surface,
+   * and the compiler dropped it.
+   *
+   * The walked defect: a sea monster in a raised rectangle of ocean, three
+   * blocks proud of the bay, with falling-edge faces. A `wade` seat puts
+   * node-local `y = 0` on the **seabed**, so a program that models its own sea
+   * has no way to know where the real surface is — the compiler holds the line
+   * the program cannot see.
+   */
+  PROGRAM_WATER_CLAMPED: "LOAM-W339",
+  /**
+   * The program wrote the same sole on every column of at least one member of
+   * the terrain suite: it is a prefab, not a thing that stands on ground.
+   *
+ * — and this is **never a failure**. It
+   * is a routing decision: the program is seated `pad` and built exactly as it
+   * is today. Gate leniency is permanent, and a beautiful non-conforming
+   * structure is precisely the case leniency exists to protect. What the
+   * warning buys is a change the author can actually make, which is why it is
+   * the one code whose purpose is to teach the authoring model something.
+   */
+  PROGRAM_DID_NOT_CONFORM: "LOAM-W340",
+  /**
+   * This instance stands on a platform because its program did not conform.
+   *
+ * — the compile-report half of
+   * {@link PROGRAM_DID_NOT_CONFORM}. A note, never a failure: "this thing is on
+   * a plinth because the program that wrote it writes the same sole on every
+   * column" is the sentence a walker needs and cannot otherwise get.
+   */
+  PROGRAM_SEATED_PAD: "LOAM-T341",
+  /**
+   * What a conforming instance left for the compiler: how many of its occupied
+   * columns the skirt underpinned, and how many are buried in the hill.
+   *
+ * — the measurement §2.9's carve is
+   * gated on. It has to exist before the carve is built, because building an
+   * earthwork around a hut before knowing how much burial survives site
+   * preference and the program's own answer is inventing one.
+   */
+  PROGRAM_CONFORM_RESIDUAL: "LOAM-T342",
+
+  // --- Loam v0.2 core codes, used verbatim ---------------------------------
+  /** §3.3 — a `region`/`path` envelope given three-element `size`. */
+  ENVELOPE_SIZE_COERCED: "LOAM-W152",
+  /** §3.3 — a box-family envelope given two-element `size`. */
+  ENVELOPE_SIZE_ARITY: "LOAM-E153",
+  /** §1.5 / §7.10 — a constraint type outside the v0.2 registry. */
+  UNKNOWN_CONSTRAINT_TYPE: "LOAM-E104",
+  /** §5.3 — a port type outside the v0.2 table. */
+  UNKNOWN_PORT_TYPE: "LOAM-E105",
+  /** §4.1 — two type keys, neither a declared field of the other. */
+  AMBIGUOUS_SHORTHAND: "LOAM-E169",
+  /** §4.1 — a type name used as a field the resolved type does not declare. */
+  SHADOWED_TYPE_KEY: "LOAM-W173",
+  /** §4.4 `zone` — token outside the nine-grid. */
+  UNKNOWN_ZONE: "LOAM-E162",
+  /** §4.9.1 — a fractional component outside [0,1]. */
+  COARSE_COORD_RANGE: "LOAM-E166",
+  /** §4.4 `within` — the domain is non-empty but too small for the node. */
+  CANNOT_FIT: "LOAM-E170",
+
+  // --- solver report codes (§4.6 relaxation ladder) ------------------------
+  /** §4.6 rung 5. */
+  CONSTRAINT_DEMOTED: "LOAM-E404",
+  /** §4.6 rung 6. */
+  NODE_DROPPED: "LOAM-E405",
+  /** §4.6 rung 7. */
+  UNSATISFIABLE: "LOAM-E406",
+
+  // --- the connective pass (§4 `connected`, pass 6) ------------------------
+  /** §4 `connected` — no route between the two ends, or past `maxLength`. */
+  TUNNEL_UNROUTABLE: "LOAM-E180",
+  /** A gallery came too near water, or left too little rock over its ceiling. */
+  TUNNEL_INTEGRITY: "LOAM-W408",
+  /**
+   * U6 — a precinct kit seated itself away from the footprint the solver gave
+   * it, because the ground the kit needs is a fact about the world rather than
+   * about the envelope. Emitted by `precinct.harbour@0` when it goes and finds
+   * the coast.
+   */
+  PRECINCT_RESEATED: "LOAM-W409",
+  /**
+   * Phase 4.2 — a level platform no street network could reach gave its level
+   * back, and its columns took the level of the neighbouring platform they
+   * touch most (ties to the lower).
+   *
+   * The honest degradation behind "a platform you cannot reach is not a
+   * platform": the quarter ships with fewer levels rather than with an
+   * unreachable one, and the note names the platform and the measurement.
+   */
+  LEVEL_DISSOLVED: "LOAM-W410",
+  /**
+   * A derived platform whose columns are mostly water was not graded: it is
+   * the sea or the river beside the quarter, not ground the quarter stands on,
+   * and grading it to its own bed level made a dry trench below the waterline
+   * (`LOAM-T110` on the first fresh troy after Phase 1, 2026-08-24). Its
+   * columns keep the pristine terrain; the note names the platform.
+   */
+  PLATFORM_SUBMERGED: "LOAM-I526",
+  /**
+   * F32 (the Stocktake Run, unit 43): the author's `intent.climate.snow` is
+   * `"always"`, so every water surface is ice — the count of frozen columns.
+   * Water beneath the ice and lava are untouched.
+   */
+  FROZEN_WATER: "LOAM-I527",
+  /**
+   * Phase 4.2 — a seam was too tall for a retaining wall (`drop` past
+   * `RETAIN_MAX`), so the two platforms were graded into each other as a bank.
+   *
+   * Names the drop. There is no unbuilt cliff either way; this says which of
+   * the two answers the ground got.
+   */
+  RETAINING_REFUSED: "LOAM-W411",
+  /**
+ * **The served seam** S1) — once per
+   * quarter, what every seam *became*: walls, tier stacks (revetted or
+   * terraced), banks, kerbs, and the seams a building already stood on.
+   *
+   * The reversal `LOAM-W411` needed. Fifty-six warnings saying "we did the other
+   * thing" is a report nobody can act on; one note saying "12 walls, 6 stacks,
+   * 3 banks, 41 absorbed" is. It is a note and enters no feedback set for the
+   * `BIOME_CLAMPED` reason: it fires on every stepped quarter, and a code that
+   * fires on every world costs money in the authoring loop and buys an invented
+   * change (§13.6).
+   *
+   * Silent until the tier stack is switched on: while `SEAM_TIERS` is false the
+   * seam accounting is the same accounting `LOAM-W411` reports, so saying it
+   * twice would only move report bytes. `LOAM-W411` is retired when the flag
+   * flips, not before — the warning and the note never both describe one seam.
+   */
+  SEAM_SERVED: "LOAM-I412",
+  /**
+   * A seam whose chosen treatment could not be **placed** — a street, a
+   * footprint or water owns every column it would have used
+ * S1).
+   *
+   * The only honest refusal left once every drop has an answer. A warning rather
+   * than a note precisely because it is rare: under S1 a seam leaves the pass
+   * with a built treatment, so a seam that did not is news.
+   */
+  SEAM_UNSERVED: "LOAM-W413",
+  /**
+ * **S9's derived flights** S9): how many
+   * stairs were cut through a quarter's served seams, and how many stacks the
+   * `MAX_DERIVED_STAIRS` cap refused one.
+   *
+ *, built at last — the step
+   * that has never existed, which is why nothing has ever guaranteed that a
+   * platform is reachable and why a walkthrough found 46 doorstep flights
+   * climbing a bank to doors the bank made unreachable (§4.0a M7).
+   *
+   * A note and in no feedback set: a flight refused by the cap is a level
+   * election that stepped more times than its ground can carry, and S6's
+   * dissolve is the mechanism that answers that — not a re-authoring.
+   */
+  SEAM_STAIR_CUT: "LOAM-I414",
+  /**
+   * **S11's measurement, and it moves nothing.** A fortification course or an
+   * `infra.entry` ring whose fill stands as a face across a platform boundary:
+   * `structures/walls.ts` sweeps its own 1-Lipschitz datum and fills each column
+   * down to ground, so where a circuit crosses a level change the wall material
+   * *is* the face — the eight sheer faces of drop 14 the Troy audit attributed
+   * to walls (§4.1 S11).
+   *
+   * Names how many crossings and the deepest one. Promoting a circuit's crossing
+   * to a tier stack is a real feature and is deliberately **not** built on this
+   * measurement's evidence: §10.8 decides it on the walk with the number in
+   * hand, exactly as WP-10C does for viaduct promotion. Measured, not moved.
+   */
+  WALL_COURSE_CROSSES_SEAM: "LOAM-I415",
+
+  // --- the SweptProfile engine (Phase 0 contract 3) ------------------------
+  /** A swept run was refused whole: unclimbable, or past the fill cap. */
+  SWEEP_RUN_REFUSED: "LOAM-W460",
+  /** Columns of a swept run were skipped because something else owned them. */
+  SWEEP_COLUMNS_SKIPPED: "LOAM-W461",
+  /** A swept run met water it has no crossing behaviour for. */
+  SWEEP_CROSSING_UNSPANNED: "LOAM-W462",
+  /** Interval features (towers, piers, lamps) placed along a swept run. */
+  SWEEP_FEATURES_PLACED: "LOAM-I463",
+
+  // --- the biome / snow land-use clamp (Phase 0 contract 4) ----------------
+  /**
+   * A settlement footprint's biome and snow cover were clamped to one coherent
+   * ground. Names the biome, the column count and the snow vote.
+   *
+   * `note`, not `warning`: nothing the author did is wrong and nothing in the
+   * document can change it. It fires on every settlement world, and the
+   * `LIFE_PASS_EMPTY` comment above records what happens when a code like that
+   * lands in the authoring loop's feedback set.
+   */
+  BIOME_CLAMPED: "LOAM-W470",
+  /** Snow removed from settlement ground the pre-settlement climate frosted. */
+  SNOW_SUPPRESSED: "LOAM-W471",
+  /**
+   * `intent.climate.biome` names a biome id the emitter's table does not
+   * carry. Author-actionable, so a real warning; the clamp falls back to its
+   * derived biome.
+   */
+  BIOME_INTENT_UNKNOWN: "LOAM-W472",
+
+  // --- SemanticIntent (Phase 0 contract 1) ---------------------------------
+  /** `intent.era` names a word the closed alias table does not carry. */
+  INTENT_ERA_UNKNOWN: "LOAM-W480",
+  /** `intent` on a node kind that carries none. Ignored, never fatal. */
+  INTENT_NOT_ALLOWED: "LOAM-W481",
+  /** `intent` declared below district depth, where the fan-out table thins. */
+  INTENT_TOO_DEEP: "LOAM-I482",
+  /** `character.materialTheme` names a theme the material registry does not carry. */
+  INTENT_THEME_UNKNOWN: "LOAM-W484",
+  /** `character.props` names a prop the prop catalog does not build. */
+  INTENT_PROP_UNKNOWN: "LOAM-W485",
+  /** `character.flora` names a species/kind the vegetation pass does not know. */
+  INTENT_FLORA_UNKNOWN: "LOAM-W486",
+  /**
+   * `character.archetypes.forbid` emptied a quarter's whole mix.
+   *
+   * The bias row falls back to the mix the quarter was about to use rather than
+   * to no buildings: a forbid list that names everything is an author mistake,
+   * and an empty quarter is a worse answer to it than a stated one.
+   */
+  INTENT_ARCHETYPE_MIX_EMPTY: "LOAM-W515",
+  /**
+   * `character.formPacks` names a pack the `FORM_PACKS` registry does not
+   * carry. One aggregated warning per scope naming the legal packs and the near
+   * matches; the unknown words are ignored and never fatal.
+   */
+  INTENT_FORM_PACK_UNKNOWN: "LOAM-W516",
+  /**
+   * A scope names a form pack whose eras do not include the scope's resolved
+   * era class.
+   *
+   * **Advice, and it can never be an error.** A modern Hellenist city is
+   * exactly the legal case — era `modern` plus `classical_mediterranean` is the
+   * *point* of that prompt — so this names both and builds the pack anyway.
+   */
+  INTENT_FORM_PACK_ERA: "LOAM-W517",
+
+  // --- the bespoke tier's facing (spec v0.2 amendment 2026-08-14) -----------
+  /**
+   * A bespoke invocation's `face` relation names a target nothing in the
+   * document places — an id no node carries, a tag no node wears, or a node the
+   * solver dropped.
+   *
+   * **Never fatal.** A facing hint is the one thing in a document that can be
+   * wrong without anything being missing: the instance still stands, the
+   * default rule (the road it connects to, else the settlement centre) still
+   * points it somewhere sensible, and the author is told which way it went.
+   */
+  PROGRAM_FACE_UNRESOLVED: "LOAM-W518",
+  /**
+   * A constraint on a bespoke invocation that the compiler cannot act on.
+   *
+   * Two shapes, one code, because they are the same author mistake — a
+   * constraint written where placement is not decided by constraints:
+   *
+   * - **A `facing` constraint on a landmark.** A bespoke instance's yaw is not
+   *   the solver's to pick (its box is reserved already turned), so a `facing`
+   *   here can never turn anything; the ratified spelling is
+   *   `params.face: { "toward": "<node>" }` (LOAM-SPEC §15.1). Left scored it
+   *   would be worse than useless: with the yaw frozen the only way to satisfy
+   *   it is to *move* the landmark, which is how a colossus ends up on the
+   *   wrong island.
+   * - **Anything but `zone`/`at` in the terrain profile**, which has no layout
+   *   solver at all: the two coarse hints are read (they steer the landmark's
+   *   ground search) and everything else is parsed and dropped.
+   *
+   * **Never fatal.** The instance still stands; the author is told which part
+   * of what they wrote did nothing.
+   */
+  LANDMARK_CONSTRAINT_IGNORED: "LOAM-W519",
+  /**
+   * A landmark's coarse `at`/`zone` target was refused by the *building* slope
+   * veto, and the landmark was seated on it anyway.
+   *
+   * A bespoke landmark is not a building: it is padded like one and its site is
+   * levelled, and the terrain profile's own landmark placer refuses cliffs
+   * rather than slopes. So when an author points a colossus at a bluff they
+   * raised for it, the honest answer is the bluff — the alternative the solver
+   * used to take was the cheapest *flat* ground in the region, which can be
+   * three hundred blocks and one island away, with nothing said about it.
+   */
+  LANDMARK_COARSE_SEATED: "LOAM-W520",
+  /**
+   * A landmark finished outside the coarse `at`/`zone` target it declared,
+   * because a site there cost more than one somewhere else.
+   *
+   * `W520`'s quiet sibling: there the target was *refused* and taken anyway,
+   * here it was merely outbid, and a soft cost that loses leaves no trace. The
+   * walked defect was two rival landmarks — one per faction, one per island —
+   * standing on the same island with nothing said about it.
+   */
+  LANDMARK_COARSE_ABANDONED: "LOAM-W521",
+  /**
+   * A landmark's facing was measured again after the solve, because the site it
+   * was measured *from* is not the site it ended up on.
+   *
+   * A quarter turn has to be known before the fit (it swaps the envelope's
+   * width and depth), so the first answer is taken against the best estimate
+   * available then — the coarse `zone`/`at` hint. That estimate is a soft cost
+   * the ground can outbid (`W521`), and when it loses the landmark can finish
+   * on the *other side* of the thing it was told to face: the walked defect was
+   * a wading leviathan that asked to face the city and, having been moved four
+   * hundred blocks past it, faced the open sea.
+   *
+   * So the answer is re-measured from the real site — and adopted only when the
+   * new turn reserves the same footprint the solver already gave it (a 180°
+   * flip always does; every turn does for a square envelope). A turn that would
+   * change the footprint is refused and the pre-solve answer stands, because
+   * the hole in the ground is already the shape it is.
+   *
+   * **Never fatal.** Informational: the instance stands where it stood and
+   * points at what it was told to point at.
+   */
+  PROGRAM_FACE_REMEASURED: "LOAM-W522",
+  /**
+   * A relational constraint names a target that resolves to **nothing at all**,
+   * and was therefore never evaluated against anything.
+   *
+   * The solver's costing loop has a legitimate "target not placed *yet*" state:
+   * a sibling scored before its neighbour exists contributes no cost, and the
+   * local-improvement pass scores it in full once every sibling has a position.
+   * That branch used to swallow a second, entirely different case — a selector
+   * that matches **no node the solver knows about** — and report the constraint
+   * `satisfied: true` in the layout report. The walked defect was a Trojan horse
+   * told to stand 14..42 blocks from `priams_megaron` and standing ~200 away:
+   * `priams_megaron` is a *district child*, placed by the city pass after the
+   * root solve, so the root solver's node list has never heard of it. The same
+   * unresolved id on `face` is loud (`W518`); on `distance` it was silent.
+   *
+   * **A district's children cannot be targeted from a root-level node.** Bind to
+   * the district itself.
+   *
+   * **Never fatal, and it changes no placement.** The constraint is reported
+   * unresolved instead of satisfied and the world is exactly the world that was
+   * being built before; enforcement is future design work.
+   */
+  CONSTRAINT_TARGET_UNRESOLVED: "LOAM-W523",
+  /**
+   * A settlement envelope was seated on ground that is mostly **not land**.
+   *
+   * The walked defect (Kai, `modern_hellenist_invasion`): the document asked
+   * for "a grand coastal metropolis with a wide harbour", authored a full
+   * `city` node with a 340 × 240 envelope — and authored a heightfield that
+   * left 7% of the region above sea level. The world ships as open ocean with
+   * two islets and three buildings on them.
+   *
+   * Nothing in the compile said so, and the reason is precise:
+   * `groundFeasible` reads a ground-scale footprint's **median**, so an
+   * envelope that is nine-tenths sea is feasible as long as its middle column
+   * is dry. No candidate is vetoed, no rung of the ladder is climbed, `E406`
+   * never fires, and the city is "placed" over water. The measurement this
+   * code carries — buildable columns inside the envelope, against the columns
+   * the envelope asked for — is the only one that can tell that world from a
+   * city on a plain.
+   *
+   * **Never fatal**, and it changes no block: gate leniency is permanent
+   * (LOAM-SPEC §15.2) and a deliberate hamlet on a rock is a legal world. It
+   * is in the authoring feedback set instead, because the repair is one the
+   * *document* can make and the model will not guess it: the landmass is
+   * written before the settlement and sized to it.
+   *
+   * **The repair is more land, never less water.** Told to "raise the
+   * landmass", an authoring model will happily dry the whole region — the
+   * walked overcorrection (Kai, `hellenist_city_v10`) came back "basically no
+   * water with sea monsters on land", and `pirates_v17` authored one landmass
+   * for a prompt that demands two islands at war. So the fix line names the
+   * landmass **under the settlement** and nothing else: a harbour city needs
+   * its sea beside it, not instead of it; move the city to the coast rather
+   * than drying the coast. Size the land to the settlement AND the water to
+   * the premise — they are laid out side by side, never traded.
+   */
+  SETTLEMENT_LAND_SHORT: "LOAM-W526",
+  /**
+   * A **walled** quarter whose blocks are mostly empty ground.
+   *
+   * The sibling of {@link SETTLEMENT_LAND_SHORT}, one scale in: that code
+   * catches an envelope seated on water, this one catches an envelope that is
+   * dry, subdivided, walled — and still not a town. The walked defect (Kai,
+   * `trojan_horse_in_troy`, twice): a `grown` × `medium` quarter whose leaf
+   * blocks came out up to 1.8 · `blockSize` across, so `subdivide` cut rim
+   * frontage strips one `LOT_DEPTH` deep and left a core half the block wide
+   * that was never even a lot. Built ground came to 0.34 of the block land
+   * against 0.61 in a walked-good grid quarter — the wall enclosed a field.
+   *
+   * Measured only where the measurement means something: a quarter that
+   * declared `params.walls`, or whose intent named
+   * `character.fortification: "walled"`. A wall is a claim that what is inside
+   * it is dense; an unwalled hamlet at the same coverage is a hamlet.
+   *
+   * **Report-only** and never fatal — gate leniency is permanent
+   * (LOAM-SPEC §15.2), and a deliberate citadel around a parade ground is a
+   * legal world. It earns a code because "the walls are up and there is nothing
+   * behind them" is invisible in every other statistic the report carries and
+   * cost two walks to find.
+   */
+  WALLED_QUARTER_SPARSE: "LOAM-W527",
+  /**
+   * A wall run crossed ground low enough that its footing became the structure.
+   *
+   * A curtain column extrudes its footing straight down to the ground, up to
+   * {@link WALL_MAX_FILL} courses, and anything under that cap is built in
+   * silence. Across a dip that reads as a **dam**: the walked defect was a
+   * 5-wide pier standing 12-15 courses proud of the valley floor, sheer on both
+   * faces, with nothing in the report between "built" and "refused".
+   *
+   * Informational, and it changes nothing: the wall is the wall it was. It names
+   * the run, its length, and the mean and maximum footing so the number is on
+   * the page before somebody walks it.
+   */
+  WALL_FOOTING_DEEP: "LOAM-I524",
+  /**
+   * `ground.cliff` was overridden to a **worked** material, and the cliff class
+   * covers a lot of ground nowhere near anything the document builds.
+   *
+   * `ground.cliff` is a *world* palette, not a settlement palette: it paints
+   * every natural slope past the classifier's cliff threshold anywhere in the
+   * region. The walked defect was a city's sandstone-and-terracotta masonry
+   * applied to 3,701 columns of a wooded ridge 60-100 blocks away — a mountain
+   * dressed in city stone.
+   *
+   * Informational; no block changes. Only worked materials fire it (a stone,
+   * deepslate or tuff cliff is what the default already is), and only when the
+   * painted columns are far from every placement footprint.
+   */
+  CLIFF_PALETTE_REGIONAL: "LOAM-I525",
+
+ // --- the ground contract -----------------
+  // `resolveGround` reconciles every subsystem's claim on a column's level.
+  // Precedence resolving a disagreement is normal and silent; these are the
+  // cases worth a word. None belongs in `FEEDBACK_CODES` (§13.6): a claim table
+  // is not author-actionable.
+  /**
+   * A level claim lost a column another source declared `preserve`. Deliberately
+   * narrow — a lane losing a junction column to a boulevard happens thousands of
+   * times per world; a doorstep cutting into a column a retaining wall's
+   * balustrade stands on is news, and today it is invisible until somebody walks
+   * the world.
+   */
+  GROUND_CONFLICT: "LOAM-W490",
+  /**
+   * A claim lost columns to higher ranks, **aggregated per claim, never per
+   * column** — a hill town would otherwise produce thousands, and a note that
+   * fires on every world is a report nobody reads.
+   */
+  GROUND_CLAIM_ADJUSTED: "LOAM-I491",
+  /** A claim kept fewer columns than its `minColumns`. The resolver never acts on it. */
+  GROUND_CLAIM_REFUSED: "LOAM-W492",
+  /**
+   * A winning level exceeded a `clearance` ceiling and was clamped to it.
+   * Clamping rather than refusing is deliberate: a clamped column is walkable
+   * and reported; a refused one is a hole.
+   */
+  GROUND_CLEARANCE_VIOLATED: "LOAM-W493",
+  /**
+   * A ground-contract invariant: a level outside the world range, a `fluidTop`
+   * below its ground, a duplicate column within one intent, a `preserve` on an
+   * unowned column, a precedence tie. **A compiler bug**, in the class of
+   * `CAVE_FLUID_BREACH`: no legal document can produce it, and the caller aborts
+   * loudly rather than feeding it back to an author.
+   */
+  GROUND_INVARIANT: "LOAM-E494",
+  /** Once per compile, summarising the transitions built and the requests overridden. */
+  GROUND_TRANSITION: "LOAM-I495",
+  /**
+ * A site-planned quarter whose composition
+   * missed a gate on every rung of the replan ladder.
+   *
+   * A note rather than a warning: the ladder has already replanned the quarter
+   * smaller and shipped the best composition it found, so the world is drawn
+   * and walkable; what the author is being told is that this footprint on this
+   * slope is more engineering than town, and which measurement says so.
+   */
+  SITE_COMPOSITION: "LOAM-I496",
+  /**
+   * A site-planned quarter reported a transition its own plan makes
+ * unrepresentable.
+   *
+   * Today that is `walkBack`'s `offPlatform`: a seam whose upper platform is
+   * narrower than the road running on it, so there is no ground of the
+   * platform's own for a wall to stand on. §3.4 rule 2 refuses to claim such a
+   * station in the first place, so a non-zero count is a **compiler bug**, and
+ * an error rather than a warning for the reason records about
+   * the physics lint: it proves a world is well-formed, not that it is any good,
+   * and 395 columns of a planning failure once shipped green. The planner's
+   * guarantee is checkable, so it is checked.
+   */
+  SITE_PLAN_FAILED: "LOAM-E497",
+  /**
+   * A site-planned quarter dissolved a frontage strip back to natural ground
+ * : its usable frontage came out shorter than
+   * the two lots a terrace needs. One note per strip, naming the strip, the
+   * measurement (stations held against the minimum) and the cost (columns
+   * returned) — the note §3.7 always specified and the planner never wrote
+   * until the Stocktake Run found four of montfort_hill's five strips gone
+   * with only an `adapted` string to say so (2026-08-25).
+   */
+  SITE_STRIP_DISSOLVED: "LOAM-I499",
+  /**
+   * A carve declared `flooded: "never"` was flooded anyway: the sea reached
+   * it, and a dry below-sea column beside standing water is the exposed face
+   * `LOAM-T110` refuses, so physics wins over the declaration. The count was
+   * always taken (`computeOceanMask`'s `overriddenNoFlood`) and, until the
+   * Stocktake Run's census (class 1.18, 2026-08-25), read by nobody.
+   */
+  CARVE_FLOODED_ANYWAY: "LOAM-I500",
+  /**
+   * A building's footprint claim lost ground columns to a higher-ranked claim
+   * (`fluid.channel`, `precinct.ground`, …): the pad was declared at its
+   * `foundationY` and the frozen ground beneath some of it is another
+   * intent's decision. The slop census's class-3 D3 — the two authorities
+   * were never asserted to agree; now the resolver's own report says when
+   * they do not. Measured zero on every anchor and fixture (Stocktake unit
+   * 24), so this is a note that should never fire.
+   */
+  FOOTPRINT_GROUND_LOST: "LOAM-I501",
+  /**
+   * A carve that asked to flood (`flooded: "auto"`) is mostly dry: a few of its
+   * columns reach the sea — the mouth — and the rest of its course stands above
+   * it. `CARVE_DRY` (T113) is the case with no wet column at all; this is its
+   * sibling for the fjord whose mouth touches the water and whose bed does not
+   * (Stocktake Run probe pass 2, 2026-08-25).
+   */
+  CARVE_MOSTLY_DRY: "LOAM-I502",
+  /**
+ * coverage invariant is violated: a
+   * boundary pair between two winners at different levels that matches none of
+   * the four accounting clauses — no derived transition, no `transition: "none"`
+   * request, no face, no one-block kerb — or that matches two of them.
+   *
+   * **A compiler bug**, in `GROUND_INVARIANT`'s class: no legal document can
+   * produce it, and the caller aborts loudly. It means the derivation failed to
+   * enumerate a seam, which is the one failure "a missed seam is impossible by
+   * construction" exists to make impossible. The fix is always to complete the
+   * derivation and never to widen §3.2's two exclusions — natural-against-natural
+   * and water, and nothing else.
+   *
+   * Number allocated by v1 §7.5, not picked: two concurrent waves of the rewrite
+   * must not choose the same free integer out of this registry.
+   */
+  GROUND_SEAM_UNCOVERED: "LOAM-E495",
+  /**
+   * Once per settlement compile: the ground stage's own numbers — intents by
+   * class, resolves, columns moved, transitions by treatment, and how many
+   * `finishSeams` had to build (v1 §7.5).
+   *
+   * The golden the staged flip is diffed against, and the reason WP-G4 can ship
+   * with its flag off: the counts move before a block does. Not in
+   * `FEEDBACK_CODES` (v0 §13.6) — a code that fires on every settlement world
+   * costs money in the authoring loop and buys an invented change.
+   */
+  GROUND_STAGE: "LOAM-I497",
+} as const;
+
+/** Symbolic diagnostic name. */
+export type TerrainDiagnosticName = keyof typeof TERRAIN_DIAGNOSTICS;
+/** Canonical per-code metadata — the one spec source for diagnostic policy. */
+export interface DiagnosticMetadata {
+  readonly code: string;
+  readonly name: TerrainDiagnosticName;
+  readonly severity: DiagnosticSeverity;
+  readonly authorCorrectable: boolean;
+  readonly feedback: boolean;
+  readonly physicsLint: boolean;
+  readonly internal: boolean;
+}
+
+/**
+ * Queryable metadata for every diagnostic code.
+ *
+ * `packages/spec` is the single owner for author-visible language vocabulary and
+ * diagnostic policy. `stdlib` attaches implementations, `compiler` owns semantic
+ * resolution, and `agents`/`CLI` consume these canonical views.
+ */
+export const DIAGNOSTIC_METADATA: Readonly<Record<TerrainDiagnosticName, DiagnosticMetadata>> = {
+  BAD_DOCUMENT: { code: "LOAM-T000", name: "BAD_DOCUMENT", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  GENERATOR_NOT_IN_PROFILE: { code: "LOAM-T001", name: "GENERATOR_NOT_IN_PROFILE", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  CONSTRAINTS_NOT_ALLOWED: { code: "LOAM-T002", name: "CONSTRAINTS_NOT_ALLOWED", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  GENERATOR_CARDINALITY: { code: "LOAM-T003", name: "GENERATOR_CARDINALITY", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  EDIT_NOT_UNDER_HEIGHTFIELD: { code: "LOAM-T004", name: "EDIT_NOT_UNDER_HEIGHTFIELD", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  DEPTH_EXCEEDED: { code: "LOAM-T005", name: "DEPTH_EXCEEDED", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  BAD_ID: { code: "LOAM-T006", name: "BAD_ID", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  DUPLICATE_ID: { code: "LOAM-T007", name: "DUPLICATE_ID", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  UNKNOWN_KEY: { code: "LOAM-T008", name: "UNKNOWN_KEY", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  MISSING_KEY: { code: "LOAM-T009", name: "MISSING_KEY", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  BAD_TYPE: { code: "LOAM-T010", name: "BAD_TYPE", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  FRACTIONAL_OUT_OF_RANGE: { code: "LOAM-T100", name: "FRACTIONAL_OUT_OF_RANGE", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  BAD_ENUM: { code: "LOAM-T101", name: "BAD_ENUM", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  BAD_PLACEMENT: { code: "LOAM-T102", name: "BAD_PLACEMENT", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  BAD_COURSE: { code: "LOAM-T103", name: "BAD_COURSE", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  PARAM_OUT_OF_RANGE: { code: "LOAM-T104", name: "PARAM_OUT_OF_RANGE", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  BASIN_RIM_NOT_CLOSED: { code: "LOAM-T105", name: "BASIN_RIM_NOT_CLOSED", severity: "warning", authorCorrectable: true, feedback: true, physicsLint: false, internal: false },
+  BAD_PALETTE: { code: "LOAM-T106", name: "BAD_PALETTE", severity: "warning", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  SPAWN_UNRESOLVED: { code: "LOAM-T107", name: "SPAWN_UNRESOLVED", severity: "warning", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  UNSTABLE_FLUID: { code: "LOAM-T110", name: "UNSTABLE_FLUID", severity: "error", authorCorrectable: false, feedback: false, physicsLint: true, internal: false },
+  FLOATING_VEGETATION: { code: "LOAM-T111", name: "FLOATING_VEGETATION", severity: "error", authorCorrectable: false, feedback: false, physicsLint: true, internal: false },
+  RIVER_PONDED: { code: "LOAM-T112", name: "RIVER_PONDED", severity: "warning", authorCorrectable: true, feedback: true, physicsLint: false, internal: false },
+  CARVE_DRY: { code: "LOAM-T113", name: "CARVE_DRY", severity: "note", authorCorrectable: true, feedback: true, physicsLint: false, internal: false },
+  PARAM_NOT_IMPLEMENTED: { code: "LOAM-T114", name: "PARAM_NOT_IMPLEMENTED", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  CAVE_FLUID_BREACH: { code: "LOAM-T115", name: "CAVE_FLUID_BREACH", severity: "error", authorCorrectable: false, feedback: false, physicsLint: false, internal: true },
+  CAVE_SURFACE_BREACH: { code: "LOAM-T116", name: "CAVE_SURFACE_BREACH", severity: "error", authorCorrectable: false, feedback: false, physicsLint: false, internal: true },
+  SCALE_REFERENCE_INERT: { code: "LOAM-T117", name: "SCALE_REFERENCE_INERT", severity: "warning", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  SCATTER_RADIUS_UNITS: { code: "LOAM-T118", name: "SCATTER_RADIUS_UNITS", severity: "warning", authorCorrectable: true, feedback: true, physicsLint: false, internal: false },
+  SCATTER_EMPTY: { code: "LOAM-T119", name: "SCATTER_EMPTY", severity: "warning", authorCorrectable: true, feedback: true, physicsLint: false, internal: false },
+  FOREST_SETTLEMENT_SUPPRESSED: { code: "LOAM-T120", name: "FOREST_SETTLEMENT_SUPPRESSED", severity: "warning", authorCorrectable: true, feedback: true, physicsLint: false, internal: false },
+  STRUCTURE_GENERATOR_NOT_IN_PROFILE: { code: "LOAM-T200", name: "STRUCTURE_GENERATOR_NOT_IN_PROFILE", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  STRUCTURE_NODE_SHAPE: { code: "LOAM-T201", name: "STRUCTURE_NODE_SHAPE", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  PLAZA_CARDINALITY: { code: "LOAM-T202", name: "PLAZA_CARDINALITY", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  BAD_ENVELOPE: { code: "LOAM-T203", name: "BAD_ENVELOPE", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  BAD_CONSTRAINT: { code: "LOAM-T204", name: "BAD_CONSTRAINT", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  BAD_PORT: { code: "LOAM-T205", name: "BAD_PORT", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  STRUCTURE_PARAM: { code: "LOAM-T207", name: "STRUCTURE_PARAM", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  GENERATOR_NOT_IMPLEMENTED: { code: "LOAM-T208", name: "GENERATOR_NOT_IMPLEMENTED", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  ROAD_UNROUTABLE: { code: "LOAM-T209", name: "ROAD_UNROUTABLE", severity: "warning", authorCorrectable: true, feedback: true, physicsLint: false, internal: false },
+  DISTRICT_PARAM: { code: "LOAM-T210", name: "DISTRICT_PARAM", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  DISTRICT_TOO_SMALL: { code: "LOAM-T211", name: "DISTRICT_TOO_SMALL", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  LIFE_PASS_EMPTY: { code: "LOAM-T212", name: "LIFE_PASS_EMPTY", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  CITY_PARAM: { code: "LOAM-T213", name: "CITY_PARAM", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  CITY_TOO_SMALL: { code: "LOAM-T214", name: "CITY_TOO_SMALL", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  CITY_SET_PIECES: { code: "LOAM-T215", name: "CITY_SET_PIECES", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  VISTA_PIN: { code: "LOAM-T216", name: "VISTA_PIN", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  VISTA_UNCLAIMED: { code: "LOAM-T217", name: "VISTA_UNCLAIMED", severity: "warning", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  SET_PIECES_EMPTY: { code: "LOAM-T218", name: "SET_PIECES_EMPTY", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  WALL_PARAM: { code: "LOAM-T219", name: "WALL_PARAM", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  WALL_COURSE_EMPTY: { code: "LOAM-T220", name: "WALL_COURSE_EMPTY", severity: "warning", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  STAIR_UNCONNECTED: { code: "LOAM-T221", name: "STAIR_UNCONNECTED", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  DISTRICT_FORM: { code: "LOAM-T222", name: "DISTRICT_FORM", severity: "warning", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  DISTRICT_GROUND: { code: "LOAM-T223", name: "DISTRICT_GROUND", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  COURTYARD_NONE: { code: "LOAM-T224", name: "COURTYARD_NONE", severity: "warning", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  FARM_TOO_SMALL: { code: "LOAM-T225", name: "FARM_TOO_SMALL", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  FARM_PARAM: { code: "LOAM-T226", name: "FARM_PARAM", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  FARM_CROP_UNKNOWN: { code: "LOAM-W502", name: "FARM_CROP_UNKNOWN", severity: "warning", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  DECAY_PARAM: { code: "LOAM-T227", name: "DECAY_PARAM", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  PROP_RESEATED: { code: "LOAM-T228", name: "PROP_RESEATED", severity: "warning", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  WALL_MARGIN_REDUCED: { code: "LOAM-T229", name: "WALL_MARGIN_REDUCED", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  WALL_COURSE_CLAMPED: { code: "LOAM-T230", name: "WALL_COURSE_CLAMPED", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  INFRA_ENTRY_PARAM: { code: "LOAM-T231", name: "INFRA_ENTRY_PARAM", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  INFRA_ROUTE_EMPTY: { code: "LOAM-T232", name: "INFRA_ROUTE_EMPTY", severity: "warning", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  INFRA_ROUTE_UNANCHORED: { code: "LOAM-T233", name: "INFRA_ROUTE_UNANCHORED", severity: "warning", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  INFRA_RUN_REFUSED: { code: "LOAM-T234", name: "INFRA_RUN_REFUSED", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  LINEWORK_BED_REFUSED: { code: "LOAM-T235", name: "LINEWORK_BED_REFUSED", severity: "warning", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  LINEWORK_BED_INTERRUPTED: { code: "LOAM-T236", name: "LINEWORK_BED_INTERRUPTED", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  FRONTAGE_TIE_DRIFT: { code: "LOAM-T237", name: "FRONTAGE_TIE_DRIFT", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  FRONTAGE_UNTIED: { code: "LOAM-T238", name: "FRONTAGE_UNTIED", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  ROAD_BERM_CLAMPED: { code: "LOAM-T239", name: "ROAD_BERM_CLAMPED", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  DISTRICT_BLOCK_ALLEY: { code: "LOAM-T240", name: "DISTRICT_BLOCK_ALLEY", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  GROUND_PLANE_UNTIED: { code: "LOAM-T241", name: "GROUND_PLANE_UNTIED", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  GROUND_PLANE_DRIFT: { code: "LOAM-T242", name: "GROUND_PLANE_DRIFT", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  RUIN_LOT_REFUSED: { code: "LOAM-W510", name: "RUIN_LOT_REFUSED", severity: "warning", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  DECAY_MODE_FALLBACK: { code: "LOAM-W511", name: "DECAY_MODE_FALLBACK", severity: "warning", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  FITOUT_ROOF_SKIPPED: { code: "LOAM-W524", name: "FITOUT_ROOF_SKIPPED", severity: "warning", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  DISTRICT_RUINS: { code: "LOAM-I512", name: "DISTRICT_RUINS", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  GREEN_SKIN: { code: "LOAM-I514", name: "GREEN_SKIN", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  GREEN_SKIN_WITHDRAWN: { code: "LOAM-W513", name: "GREEN_SKIN_WITHDRAWN", severity: "warning", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  GREEN_SKIN_NO_SPECIES: { code: "LOAM-W514", name: "GREEN_SKIN_NO_SPECIES", severity: "warning", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  FARM_NO_GROUND: { code: "LOAM-W500", name: "FARM_NO_GROUND", severity: "warning", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  FARM_PARCELS_SHORT: { code: "LOAM-W501", name: "FARM_PARCELS_SHORT", severity: "warning", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  FARM_REFUSED: { code: "LOAM-W503", name: "FARM_REFUSED", severity: "warning", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  FARM_TRACK: { code: "LOAM-I504", name: "FARM_TRACK", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  PROGRAM_ENVELOPE_OVERRIDDEN: { code: "LOAM-W330", name: "PROGRAM_ENVELOPE_OVERRIDDEN", severity: "warning", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  PROGRAM_WRITES_CLIPPED: { code: "LOAM-W331", name: "PROGRAM_WRITES_CLIPPED", severity: "warning", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  PROGRAM_BUDGET_EXCEEDED: { code: "LOAM-E332", name: "PROGRAM_BUDGET_EXCEEDED", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  PROGRAM_SOURCE_HASH_MISMATCH: { code: "LOAM-E333", name: "PROGRAM_SOURCE_HASH_MISMATCH", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  PROGRAM_OUTPUT_HASH_MISMATCH: { code: "LOAM-E334", name: "PROGRAM_OUTPUT_HASH_MISMATCH", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  PROGRAM_DISCONNECTED: { code: "LOAM-E335", name: "PROGRAM_DISCONNECTED", severity: "warning", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  PROGRAM_GATE_FAILED: { code: "LOAM-E336", name: "PROGRAM_GATE_FAILED", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  PROGRAM_DROPPED: { code: "LOAM-W337", name: "PROGRAM_DROPPED", severity: "warning", authorCorrectable: true, feedback: true, physicsLint: false, internal: false },
+  PROGRAM_SCHEMA: { code: "LOAM-E338", name: "PROGRAM_SCHEMA", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  PROGRAM_WATER_CLAMPED: { code: "LOAM-W339", name: "PROGRAM_WATER_CLAMPED", severity: "warning", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  PROGRAM_DID_NOT_CONFORM: { code: "LOAM-W340", name: "PROGRAM_DID_NOT_CONFORM", severity: "warning", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  PROGRAM_SEATED_PAD: { code: "LOAM-T341", name: "PROGRAM_SEATED_PAD", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  PROGRAM_CONFORM_RESIDUAL: { code: "LOAM-T342", name: "PROGRAM_CONFORM_RESIDUAL", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  ENVELOPE_SIZE_COERCED: { code: "LOAM-W152", name: "ENVELOPE_SIZE_COERCED", severity: "warning", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  ENVELOPE_SIZE_ARITY: { code: "LOAM-E153", name: "ENVELOPE_SIZE_ARITY", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  UNKNOWN_CONSTRAINT_TYPE: { code: "LOAM-E104", name: "UNKNOWN_CONSTRAINT_TYPE", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  UNKNOWN_PORT_TYPE: { code: "LOAM-E105", name: "UNKNOWN_PORT_TYPE", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  AMBIGUOUS_SHORTHAND: { code: "LOAM-E169", name: "AMBIGUOUS_SHORTHAND", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  SHADOWED_TYPE_KEY: { code: "LOAM-W173", name: "SHADOWED_TYPE_KEY", severity: "warning", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  UNKNOWN_ZONE: { code: "LOAM-E162", name: "UNKNOWN_ZONE", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  COARSE_COORD_RANGE: { code: "LOAM-E166", name: "COARSE_COORD_RANGE", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  CANNOT_FIT: { code: "LOAM-E170", name: "CANNOT_FIT", severity: "error", authorCorrectable: true, feedback: true, physicsLint: false, internal: false },
+  CONSTRAINT_DEMOTED: { code: "LOAM-E404", name: "CONSTRAINT_DEMOTED", severity: "warning", authorCorrectable: true, feedback: true, physicsLint: false, internal: false },
+  NODE_DROPPED: { code: "LOAM-E405", name: "NODE_DROPPED", severity: "warning", authorCorrectable: true, feedback: true, physicsLint: false, internal: false },
+  UNSATISFIABLE: { code: "LOAM-E406", name: "UNSATISFIABLE", severity: "warning", authorCorrectable: true, feedback: true, physicsLint: false, internal: false },
+  TUNNEL_UNROUTABLE: { code: "LOAM-E180", name: "TUNNEL_UNROUTABLE", severity: "warning", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  TUNNEL_INTEGRITY: { code: "LOAM-W408", name: "TUNNEL_INTEGRITY", severity: "error", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  PRECINCT_RESEATED: { code: "LOAM-W409", name: "PRECINCT_RESEATED", severity: "warning", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  LEVEL_DISSOLVED: { code: "LOAM-W410", name: "LEVEL_DISSOLVED", severity: "warning", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  PLATFORM_SUBMERGED: { code: "LOAM-I526", name: "PLATFORM_SUBMERGED", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  FROZEN_WATER: { code: "LOAM-I527", name: "FROZEN_WATER", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  RETAINING_REFUSED: { code: "LOAM-W411", name: "RETAINING_REFUSED", severity: "warning", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  SEAM_SERVED: { code: "LOAM-I412", name: "SEAM_SERVED", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  SEAM_UNSERVED: { code: "LOAM-W413", name: "SEAM_UNSERVED", severity: "warning", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  SEAM_STAIR_CUT: { code: "LOAM-I414", name: "SEAM_STAIR_CUT", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  WALL_COURSE_CROSSES_SEAM: { code: "LOAM-I415", name: "WALL_COURSE_CROSSES_SEAM", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  SWEEP_RUN_REFUSED: { code: "LOAM-W460", name: "SWEEP_RUN_REFUSED", severity: "warning", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  SWEEP_COLUMNS_SKIPPED: { code: "LOAM-W461", name: "SWEEP_COLUMNS_SKIPPED", severity: "warning", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  SWEEP_CROSSING_UNSPANNED: { code: "LOAM-W462", name: "SWEEP_CROSSING_UNSPANNED", severity: "warning", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  SWEEP_FEATURES_PLACED: { code: "LOAM-I463", name: "SWEEP_FEATURES_PLACED", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  BIOME_CLAMPED: { code: "LOAM-W470", name: "BIOME_CLAMPED", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  SNOW_SUPPRESSED: { code: "LOAM-W471", name: "SNOW_SUPPRESSED", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  BIOME_INTENT_UNKNOWN: { code: "LOAM-W472", name: "BIOME_INTENT_UNKNOWN", severity: "warning", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  INTENT_ERA_UNKNOWN: { code: "LOAM-W480", name: "INTENT_ERA_UNKNOWN", severity: "warning", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  INTENT_NOT_ALLOWED: { code: "LOAM-W481", name: "INTENT_NOT_ALLOWED", severity: "warning", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  INTENT_TOO_DEEP: { code: "LOAM-I482", name: "INTENT_TOO_DEEP", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  INTENT_THEME_UNKNOWN: { code: "LOAM-W484", name: "INTENT_THEME_UNKNOWN", severity: "warning", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  INTENT_PROP_UNKNOWN: { code: "LOAM-W485", name: "INTENT_PROP_UNKNOWN", severity: "warning", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  INTENT_FLORA_UNKNOWN: { code: "LOAM-W486", name: "INTENT_FLORA_UNKNOWN", severity: "warning", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  INTENT_ARCHETYPE_MIX_EMPTY: { code: "LOAM-W515", name: "INTENT_ARCHETYPE_MIX_EMPTY", severity: "warning", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  INTENT_FORM_PACK_UNKNOWN: { code: "LOAM-W516", name: "INTENT_FORM_PACK_UNKNOWN", severity: "warning", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  INTENT_FORM_PACK_ERA: { code: "LOAM-W517", name: "INTENT_FORM_PACK_ERA", severity: "warning", authorCorrectable: true, feedback: false, physicsLint: false, internal: false },
+  PROGRAM_FACE_UNRESOLVED: { code: "LOAM-W518", name: "PROGRAM_FACE_UNRESOLVED", severity: "warning", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  LANDMARK_CONSTRAINT_IGNORED: { code: "LOAM-W519", name: "LANDMARK_CONSTRAINT_IGNORED", severity: "warning", authorCorrectable: true, feedback: true, physicsLint: false, internal: false },
+  LANDMARK_COARSE_SEATED: { code: "LOAM-W520", name: "LANDMARK_COARSE_SEATED", severity: "warning", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  LANDMARK_COARSE_ABANDONED: { code: "LOAM-W521", name: "LANDMARK_COARSE_ABANDONED", severity: "warning", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  PROGRAM_FACE_REMEASURED: { code: "LOAM-W522", name: "PROGRAM_FACE_REMEASURED", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  CONSTRAINT_TARGET_UNRESOLVED: { code: "LOAM-W523", name: "CONSTRAINT_TARGET_UNRESOLVED", severity: "warning", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  SETTLEMENT_LAND_SHORT: { code: "LOAM-W526", name: "SETTLEMENT_LAND_SHORT", severity: "warning", authorCorrectable: true, feedback: true, physicsLint: false, internal: false },
+  WALLED_QUARTER_SPARSE: { code: "LOAM-W527", name: "WALLED_QUARTER_SPARSE", severity: "warning", authorCorrectable: true, feedback: true, physicsLint: false, internal: false },
+  WALL_FOOTING_DEEP: { code: "LOAM-I524", name: "WALL_FOOTING_DEEP", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  CLIFF_PALETTE_REGIONAL: { code: "LOAM-I525", name: "CLIFF_PALETTE_REGIONAL", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  GROUND_CONFLICT: { code: "LOAM-W490", name: "GROUND_CONFLICT", severity: "warning", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  GROUND_CLAIM_ADJUSTED: { code: "LOAM-I491", name: "GROUND_CLAIM_ADJUSTED", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  GROUND_CLAIM_REFUSED: { code: "LOAM-W492", name: "GROUND_CLAIM_REFUSED", severity: "warning", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  GROUND_CLEARANCE_VIOLATED: { code: "LOAM-W493", name: "GROUND_CLEARANCE_VIOLATED", severity: "warning", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  GROUND_INVARIANT: { code: "LOAM-E494", name: "GROUND_INVARIANT", severity: "error", authorCorrectable: false, feedback: false, physicsLint: false, internal: true },
+  GROUND_TRANSITION: { code: "LOAM-I495", name: "GROUND_TRANSITION", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  SITE_COMPOSITION: { code: "LOAM-I496", name: "SITE_COMPOSITION", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  SITE_PLAN_FAILED: { code: "LOAM-E497", name: "SITE_PLAN_FAILED", severity: "error", authorCorrectable: false, feedback: false, physicsLint: false, internal: true },
+  SITE_STRIP_DISSOLVED: { code: "LOAM-I499", name: "SITE_STRIP_DISSOLVED", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  CARVE_FLOODED_ANYWAY: { code: "LOAM-I500", name: "CARVE_FLOODED_ANYWAY", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  FOOTPRINT_GROUND_LOST: { code: "LOAM-I501", name: "FOOTPRINT_GROUND_LOST", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  CARVE_MOSTLY_DRY: { code: "LOAM-I502", name: "CARVE_MOSTLY_DRY", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+  GROUND_SEAM_UNCOVERED: { code: "LOAM-E495", name: "GROUND_SEAM_UNCOVERED", severity: "error", authorCorrectable: false, feedback: false, physicsLint: false, internal: true },
+  GROUND_STAGE: { code: "LOAM-I497", name: "GROUND_STAGE", severity: "note", authorCorrectable: false, feedback: false, physicsLint: false, internal: false },
+} as const;
+
+const METADATA_BY_CODE: Record<string, DiagnosticMetadata> = Object.fromEntries(
+  Object.values(DIAGNOSTIC_METADATA).map((m) => [m.code, m as DiagnosticMetadata]),
+);
+
+export function getDiagnosticMetadata(codeOrName: string): DiagnosticMetadata | undefined {
+  const byName = (DIAGNOSTIC_METADATA as Record<string, DiagnosticMetadata>)[codeOrName];
+  if (byName !== undefined) return byName;
+  return METADATA_BY_CODE[codeOrName];
+}
+
+export function getDiagnosticSeverity(codeOrName: string): DiagnosticSeverity | undefined {
+  return getDiagnosticMetadata(codeOrName)?.severity;
+}
+
+export function isPhysicsLint(codeOrDiagnostic: string | Pick<LoamDiagnostic, "code">): boolean {
+  const code = typeof codeOrDiagnostic === "string" ? codeOrDiagnostic : codeOrDiagnostic.code;
+  return getDiagnosticMetadata(code)?.physicsLint ?? false;
+}
+
+export function isInternalDiagnostic(codeOrDiagnostic: string | Pick<LoamDiagnostic, "code">): boolean {
+  const code = typeof codeOrDiagnostic === "string" ? codeOrDiagnostic : codeOrDiagnostic.code;
+  return getDiagnosticMetadata(code)?.internal ?? false;
+}
+
+export function isAuthorCorrectable(codeOrDiagnostic: string | Pick<LoamDiagnostic, "code">): boolean {
+  const code = typeof codeOrDiagnostic === "string" ? codeOrDiagnostic : codeOrDiagnostic.code;
+  return getDiagnosticMetadata(code)?.authorCorrectable ?? false;
+}
+
+export function isFeedbackCode(code: string): boolean {
+  return getDiagnosticMetadata(code)?.feedback ?? false;
+}
+
+export function isFeedbackDiagnostic(diagnostic: Pick<LoamDiagnostic, "code" | "severity">): boolean {
+  if (isPhysicsLint(diagnostic.code)) return false;
+  if (diagnostic.severity === "error") return true;
+  return isFeedbackCode(diagnostic.code);
+}
+
+/** Codes that mean the compiler misbehaved, not the document — the single physics-lint source. */
+export const PHYSICS_LINT_CODES: readonly string[] = Object.freeze(["LOAM-T110", "LOAM-T111"] as const);
+
+/** Codes that describe something the *document* should change — the single feedback source. */
+export const FEEDBACK_CODES: readonly string[] = Object.freeze([
+  "LOAM-T105",
+  "LOAM-T112",
+  "LOAM-T113",
+  "LOAM-T118",
+  "LOAM-T119",
+  "LOAM-T120",
+  "LOAM-T209",
+  "LOAM-E170",
+  "LOAM-E404",
+  "LOAM-E405",
+  "LOAM-E406",
+  "LOAM-W337",
+  "LOAM-W519",
+  "LOAM-W526",
+  "LOAM-W527",
+] as const);
+
+
+/** Build a diagnostic from the catalog. */
+export function diagnostic(
+  name: TerrainDiagnosticName,
+  severity: DiagnosticSeverity,
+  nodePath: string,
+  message: string,
+  fix: string,
+): LoamDiagnostic {
+  return { code: TERRAIN_DIAGNOSTICS[name], name, severity, nodePath, message, fix };
+}
+
+/** Convenience: an error-severity diagnostic. */
+export function error(
+  name: TerrainDiagnosticName,
+  nodePath: string,
+  message: string,
+  fix: string,
+): LoamDiagnostic {
+  return diagnostic(name, "error", nodePath, message, fix);
+}
+
+/** Convenience: a warning-severity diagnostic. */
+export function warning(
+  name: TerrainDiagnosticName,
+  nodePath: string,
+  message: string,
+  fix: string,
+): LoamDiagnostic {
+  return diagnostic(name, "warning", nodePath, message, fix);
+}
+
+/** Convenience: an informational diagnostic about a recovery the compiler made. */
+export function note(
+  name: TerrainDiagnosticName,
+  nodePath: string,
+  message: string,
+  fix: string,
+): LoamDiagnostic {
+  return diagnostic(name, "note", nodePath, message, fix);
+}
+
+/** Render a diagnostic as one human/LLM readable line. */
+export function formatDiagnostic(d: LoamDiagnostic): string {
+  const where = d.nodePath === "" ? "<document>" : d.nodePath;
+  return `${d.severity} ${d.code} ${d.name} at ${where}: ${d.message}\n  fix: ${d.fix}`;
+}
+
+/** True when any diagnostic is fatal. */
+export function hasErrors(diagnostics: readonly LoamDiagnostic[]): boolean {
+  return diagnostics.some((d) => d.severity === "error");
+}

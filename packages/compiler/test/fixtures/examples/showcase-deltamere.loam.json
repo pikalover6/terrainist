@@ -1,0 +1,2534 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "deltamere",
+    "worldSeed": "770442915613377",
+    "prompt": "Build me Deltamere, a dense harbour-and-trade city sprawling over a river delta. I want a working waterfront: long piers with a whole fleet at anchor — a galleon, a caravel, a cog, a junk, a longship, barges, a paddle steamer, a ferry, tugs and trawlers and little rowboats — and a container ship out in the channel past the buoys. Behind the quays put a docklands of bonded warehouses, a customs house, a shipyard with its dry dock and a boathouse on the slip. Inland from that I want a packed market quarter with every trade under one roof: taverns, a brewery and a distillery, a spice souk, an arcade, a bank and a counting house, an auction house and a caravanserai. Up on the higher ground give the city a civic acropolis around a plaza — town hall, courthouse, university, hospital, museum, guildhall, mint and all the rest — with cobbled roads tying the three districts together and a lighthouse out on the headland.",
+    "spawn": {
+      "zone": "south"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:cobblestone",
+      "plaza.cobble": "minecraft:cobblestone",
+      "plaza.path": "minecraft:stone_bricks"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Deltamere, a harbour and trade city on a river delta",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "low delta country falling to a southern sea",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 76,
+          "amplitude": 22,
+          "frequency": 0.003,
+          "continentalness": {
+            "frequency": 0.0008,
+            "seaFraction": 0.32
+          },
+          "beachWidth": 5,
+          "snowLineFraction": 0.95
+        },
+        "children": [
+          {
+            "id": "the_mere",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the river running down to the delta",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.62,
+                  0.06
+                ],
+                [
+                  0.58,
+                  0.3
+                ],
+                [
+                  0.56,
+                  0.56
+                ],
+                "coast"
+              ],
+              "width": 34,
+              "depth": 10
+            }
+          },
+          {
+            "id": "harbour_bay",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the deep harbour bay at the river mouth",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.3,
+                  0.76
+                ],
+                [
+                  0.46,
+                  0.84
+                ],
+                [
+                  0.62,
+                  0.9
+                ],
+                "coast"
+              ],
+              "width": 150,
+              "depth": 24,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "acropolis",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the civic acropolis on the northern shelf",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.2
+              ],
+              "radius": 120,
+              "height": 16,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "market_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the flat ground the market quarter stands on",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.24,
+                0.46
+              ],
+              "radius": 115,
+              "height": 8,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "dock_flats",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the reclaimed flats behind the docks",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.78,
+                0.66
+              ],
+              "radius": 105,
+              "height": 6,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "the_headland",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the headland the lighthouse stands on",
+            "params": {
+              "verb": "peak",
+              "at": [
+                0.14,
+                0.84
+              ],
+              "radius": 46,
+              "height": 20,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate",
+          "latitudeGradient": -0.2
+        }
+      },
+      {
+        "id": "delta_woods",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "the wet woods along the river above the city",
+        "params": {
+          "area": {
+            "zone": "northeast"
+          },
+          "density": 0.14,
+          "elevation": [
+            2,
+            70
+          ],
+          "undergrowth": {
+            "grass": 0.4,
+            "flowers": 0.05,
+            "deadwood": 0.03
+          },
+          "species": [
+            {
+              "id": "delta_oak",
+              "weight": 3,
+              "shape": "oak_round"
+            },
+            {
+              "id": "delta_birch",
+              "weight": 2,
+              "shape": "birch_slim"
+            }
+          ]
+        }
+      },
+      {
+        "id": "wilderness",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse cover over the rest of the delta",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.03,
+          "elevation": [
+            2,
+            90
+          ],
+          "species": [
+            {
+              "id": "scrub_oak",
+              "weight": 1,
+              "shape": "oak_round"
+            }
+          ]
+        }
+      },
+      {
+        "id": "civic_plaza",
+        "kind": "primitive",
+        "label": "the civic plaza on the acropolis",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            32,
+            32
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median"
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "market_cross",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the market cross at the heart of the market quarter",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            12,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "zone": "west"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south"
+          }
+        },
+        "tags": [
+          "lookout",
+          "house"
+        ]
+      },
+      {
+        "id": "market_stall_row",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "a canvas market stall on the market cross",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            8,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "market_cross",
+            "min": 6,
+            "max": 40,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south"
+          }
+        },
+        "tags": [
+          "market_stall",
+          "house"
+        ]
+      },
+      {
+        "id": "harbour_bakery",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the harbour bakery",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            9,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "market_cross",
+            "min": 6,
+            "max": 50,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east"
+          }
+        },
+        "tags": [
+          "bakery",
+          "house"
+        ]
+      },
+      {
+        "id": "shop_parade",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the shop parade on the high street",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            13,
+            19
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "west"
+          },
+          {
+            "distance": "market_cross",
+            "min": 8,
+            "max": 70,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east"
+          }
+        },
+        "tags": [
+          "shop_row",
+          "house"
+        ]
+      },
+      {
+        "id": "the_general_store",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the general store",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            10,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "market_cross",
+            "min": 8,
+            "max": 60,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west"
+          }
+        },
+        "tags": [
+          "general_store",
+          "house"
+        ]
+      },
+      {
+        "id": "dockers_tavern",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the dockers' tavern",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "market_cross",
+            "min": 8,
+            "max": 60,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north"
+          }
+        },
+        "tags": [
+          "tavern",
+          "house"
+        ]
+      },
+      {
+        "id": "delta_brewery",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the delta brewery",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            15
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "west"
+          },
+          {
+            "distance": "market_cross",
+            "min": 10,
+            "max": 80,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south"
+          }
+        },
+        "tags": [
+          "brewery",
+          "house"
+        ]
+      },
+      {
+        "id": "cane_distillery",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the cane distillery behind the brewery",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            15
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "west"
+          },
+          {
+            "distance": "delta_brewery",
+            "min": 6,
+            "max": 30,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east"
+          }
+        },
+        "tags": [
+          "distillery",
+          "house"
+        ]
+      },
+      {
+        "id": "the_butchery",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the butchery on the shambles",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "west"
+          },
+          {
+            "distance": "market_cross",
+            "min": 8,
+            "max": 70,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north"
+          }
+        },
+        "tags": [
+          "butchery",
+          "house"
+        ]
+      },
+      {
+        "id": "the_apothecary",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the apothecary",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            10,
+            9
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "market_cross",
+            "min": 6,
+            "max": 55,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west"
+          }
+        },
+        "tags": [
+          "apothecary",
+          "house"
+        ]
+      },
+      {
+        "id": "the_pawnshop",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the pawnshop off the market",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "market_cross",
+            "min": 6,
+            "max": 55,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south"
+          }
+        },
+        "tags": [
+          "pawnshop",
+          "house"
+        ]
+      },
+      {
+        "id": "delta_bank",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the Deltamere bank",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            13,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "hip"
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "market_cross",
+            "min": 8,
+            "max": 60,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north"
+          }
+        },
+        "tags": [
+          "bank",
+          "house"
+        ]
+      },
+      {
+        "id": "the_counting_house",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the merchants' counting house",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            15
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "distance": "delta_bank",
+            "min": 6,
+            "max": 34,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west"
+          }
+        },
+        "tags": [
+          "counting_house",
+          "house"
+        ]
+      },
+      {
+        "id": "the_auction_house",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the auction house",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            14,
+            19
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "west"
+          },
+          {
+            "distance": "market_cross",
+            "min": 10,
+            "max": 80,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east"
+          }
+        },
+        "tags": [
+          "auction_house",
+          "house"
+        ]
+      },
+      {
+        "id": "the_caravanserai",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the caravanserai at the landward gate",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            12,
+            17
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "northwest"
+          },
+          {
+            "distance": "market_cross",
+            "min": 20,
+            "max": 140,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south"
+          }
+        },
+        "tags": [
+          "caravanserai",
+          "house"
+        ]
+      },
+      {
+        "id": "the_tea_house",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the tea house",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "hip"
+        },
+        "constraints": [
+          {
+            "zone": "west"
+          },
+          {
+            "distance": "market_cross",
+            "min": 8,
+            "max": 70,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south"
+          }
+        },
+        "tags": [
+          "tea_house",
+          "house"
+        ]
+      },
+      {
+        "id": "the_spice_market",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the spice market souk",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            17
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "west"
+          },
+          {
+            "distance": "market_cross",
+            "min": 8,
+            "max": 80,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north"
+          }
+        },
+        "tags": [
+          "spice_market",
+          "house"
+        ]
+      },
+      {
+        "id": "the_arcade",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the glazed shopping arcade",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            13,
+            19
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "northwest"
+          },
+          {
+            "distance": "market_cross",
+            "min": 14,
+            "max": 120,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east"
+          }
+        },
+        "tags": [
+          "shopping_mall",
+          "house"
+        ]
+      },
+      {
+        "id": "the_emporium",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the department store",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            13,
+            17
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "northwest"
+          },
+          {
+            "distance": "the_arcade",
+            "min": 8,
+            "max": 44,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south"
+          }
+        },
+        "tags": [
+          "department_store",
+          "house"
+        ]
+      },
+      {
+        "id": "the_food_court",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the food court under the arcade",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            12,
+            19
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "northwest"
+          },
+          {
+            "distance": "the_arcade",
+            "min": 8,
+            "max": 50,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west"
+          }
+        },
+        "tags": [
+          "food_court",
+          "house"
+        ]
+      },
+      {
+        "id": "the_trading_post",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the river trading post",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "west"
+          },
+          {
+            "distance": "market_cross",
+            "min": 12,
+            "max": 110,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east"
+          }
+        },
+        "tags": [
+          "trading_post",
+          "house"
+        ]
+      },
+      {
+        "id": "the_library",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the harbour library",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            15
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "distance": "civic_plaza",
+            "min": 6,
+            "max": 55,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south"
+          }
+        },
+        "tags": [
+          "library",
+          "house"
+        ]
+      },
+      {
+        "id": "the_town_hall",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the town hall over the civic plaza",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            16,
+            13
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "adjacent_to": "civic_plaza",
+            "gap": [
+              2,
+              14
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "civic_plaza"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south"
+          }
+        },
+        "tags": [
+          "town_hall",
+          "house"
+        ]
+      },
+      {
+        "id": "the_courthouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the courthouse",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            13,
+            17
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "distance": "civic_plaza",
+            "min": 6,
+            "max": 60,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west"
+          }
+        },
+        "tags": [
+          "courthouse",
+          "house"
+        ]
+      },
+      {
+        "id": "the_school",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the harbour school",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            15
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "northeast"
+          },
+          {
+            "distance": "civic_plaza",
+            "min": 10,
+            "max": 90,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south"
+          }
+        },
+        "tags": [
+          "school",
+          "house"
+        ]
+      },
+      {
+        "id": "the_university_hall",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the university hall",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            15,
+            15,
+            19
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "northeast"
+          },
+          {
+            "distance": "civic_plaza",
+            "min": 12,
+            "max": 120,
+            "strength": "soft"
+          },
+          {
+            "clearance": 4
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west"
+          }
+        },
+        "tags": [
+          "university_hall",
+          "house"
+        ]
+      },
+      {
+        "id": "the_hospital",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the hospital",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            17
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "northeast"
+          },
+          {
+            "distance": "civic_plaza",
+            "min": 10,
+            "max": 100,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south"
+          }
+        },
+        "tags": [
+          "hospital",
+          "house"
+        ]
+      },
+      {
+        "id": "the_infirmary",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the seamen's infirmary",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            15
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "northeast"
+          },
+          {
+            "distance": "the_hospital",
+            "min": 6,
+            "max": 40,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east"
+          }
+        },
+        "tags": [
+          "infirmary",
+          "house"
+        ]
+      },
+      {
+        "id": "the_prison",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the prison behind the courthouse",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            17
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "distance": "the_courthouse",
+            "min": 6,
+            "max": 40,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north"
+          }
+        },
+        "tags": [
+          "prison",
+          "house"
+        ]
+      },
+      {
+        "id": "the_police_station",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the constabulary",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "distance": "civic_plaza",
+            "min": 8,
+            "max": 70,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east"
+          }
+        },
+        "tags": [
+          "police_station",
+          "house"
+        ]
+      },
+      {
+        "id": "the_fire_station",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the fire station",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            15
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "distance": "civic_plaza",
+            "min": 8,
+            "max": 80,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south"
+          }
+        },
+        "tags": [
+          "fire_station",
+          "house"
+        ]
+      },
+      {
+        "id": "the_post_office",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the post office",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "distance": "civic_plaza",
+            "min": 6,
+            "max": 60,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west"
+          }
+        },
+        "tags": [
+          "post_office",
+          "house"
+        ]
+      },
+      {
+        "id": "the_orphanage",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the orphanage",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            15
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "northeast"
+          },
+          {
+            "distance": "civic_plaza",
+            "min": 12,
+            "max": 110,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north"
+          }
+        },
+        "tags": [
+          "orphanage",
+          "house"
+        ]
+      },
+      {
+        "id": "the_bathhouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the public bathhouse",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "northeast"
+          },
+          {
+            "distance": "civic_plaza",
+            "min": 10,
+            "max": 100,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west"
+          }
+        },
+        "tags": [
+          "bathhouse",
+          "house"
+        ]
+      },
+      {
+        "id": "the_museum",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the maritime museum",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            13,
+            15
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "distance": "civic_plaza",
+            "min": 6,
+            "max": 65,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east"
+          }
+        },
+        "tags": [
+          "museum",
+          "house"
+        ]
+      },
+      {
+        "id": "the_embassy",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the foreign embassy",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            14,
+            17
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "northeast"
+          },
+          {
+            "distance": "civic_plaza",
+            "min": 10,
+            "max": 100,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south"
+          }
+        },
+        "tags": [
+          "embassy",
+          "house"
+        ]
+      },
+      {
+        "id": "the_guildhall",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the merchants' guildhall",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            14,
+            17
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "distance": "civic_plaza",
+            "min": 6,
+            "max": 70,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west"
+          }
+        },
+        "tags": [
+          "guildhall",
+          "house"
+        ]
+      },
+      {
+        "id": "the_mint",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the mint",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "northeast"
+          },
+          {
+            "distance": "civic_plaza",
+            "min": 12,
+            "max": 110,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north"
+          }
+        },
+        "tags": [
+          "mint",
+          "house"
+        ]
+      },
+      {
+        "id": "the_workhouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the workhouse",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            17
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "northeast"
+          },
+          {
+            "distance": "civic_plaza",
+            "min": 14,
+            "max": 120,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east"
+          }
+        },
+        "tags": [
+          "workhouse",
+          "house"
+        ]
+      },
+      {
+        "id": "the_council_chamber",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the council chamber",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            13,
+            15
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "distance": "civic_plaza",
+            "min": 6,
+            "max": 55,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east"
+          }
+        },
+        "tags": [
+          "council_chamber",
+          "house"
+        ]
+      },
+      {
+        "id": "the_customs_house",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the customs house on the quay",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "southeast"
+          },
+          {
+            "distance": "the_warehouse",
+            "min": 6,
+            "max": 70,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west"
+          }
+        },
+        "tags": [
+          "customs_house",
+          "house"
+        ]
+      },
+      {
+        "id": "the_warehouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the bonded warehouse",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            11,
+            15
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "zone": "southeast"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north"
+          }
+        },
+        "tags": [
+          "warehouse",
+          "house"
+        ]
+      },
+      {
+        "id": "the_shipyard",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the shipyard",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            15,
+            19
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "zone": "southeast"
+          },
+          {
+            "distance": "the_warehouse",
+            "min": 8,
+            "max": 90,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south"
+          }
+        },
+        "tags": [
+          "shipyard",
+          "house"
+        ]
+      },
+      {
+        "id": "the_boathouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the boathouse on the slip",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            14,
+            17
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "southeast"
+          },
+          {
+            "distance": "the_shipyard",
+            "min": 6,
+            "max": 60,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west"
+          }
+        },
+        "tags": [
+          "boathouse",
+          "house"
+        ]
+      },
+      {
+        "id": "the_windpump",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the windpump draining the dock marsh",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            7,
+            14,
+            7
+          ]
+        },
+        "params": {
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "distance": "the_warehouse",
+            "min": 12,
+            "max": 140,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south"
+          }
+        },
+        "tags": [
+          "windpump",
+          "house"
+        ]
+      },
+      {
+        "id": "the_lighthouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "the lighthouse on the headland",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            20,
+            11
+          ]
+        },
+        "params": {
+          "floors": 2
+        },
+        "constraints": [
+          {
+            "on": "@terrain:coastline",
+            "band": 26
+          },
+          {
+            "zone": "south"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median",
+            "strength": "soft"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north"
+          }
+        },
+        "tags": [
+          "lighthouse",
+          "house"
+        ]
+      },
+      {
+        "id": "main_quay",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the long main quay",
+        "params": {
+          "prop": "pier",
+          "zone": "south",
+          "length": 20,
+          "width": 3
+        }
+      },
+      {
+        "id": "the_galleon",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the galleon at the main quay",
+        "params": {
+          "prop": "galleon",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "the_caravel",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a caravel alongside",
+        "params": {
+          "prop": "caravel",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "the_cog",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a cog alongside",
+        "params": {
+          "prop": "cog",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "west_pier",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the western pier",
+        "params": {
+          "prop": "pier",
+          "zone": "southwest",
+          "length": 14,
+          "width": 3
+        }
+      },
+      {
+        "id": "the_junk",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a trading junk at the western pier",
+        "params": {
+          "prop": "junk",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "the_longship",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a longship at the western pier",
+        "params": {
+          "prop": "longship",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "the_barge",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a river barge",
+        "params": {
+          "prop": "barge",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "the_gondola",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a gondola",
+        "params": {
+          "prop": "gondola",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "east_pier",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the eastern fishing pier",
+        "params": {
+          "prop": "pier",
+          "zone": "southeast",
+          "length": 12,
+          "width": 2
+        }
+      },
+      {
+        "id": "the_trawler",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a fishing trawler",
+        "params": {
+          "prop": "fishing_trawler",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "the_sloop",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a fishing sloop",
+        "params": {
+          "prop": "fishing_sloop",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "the_rowboat",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a rowboat at the steps",
+        "params": {
+          "prop": "rowboat",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "the_tugboat",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the harbour tug",
+        "params": {
+          "prop": "tugboat",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "the_ferry",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the delta ferry",
+        "params": {
+          "prop": "ferry",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "the_paddle_steamer",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the paddle steamer",
+        "params": {
+          "prop": "paddle_steamer",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "the_yacht",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a yacht",
+        "params": {
+          "prop": "yacht",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "the_speedboat",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a speedboat",
+        "params": {
+          "prop": "speedboat",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "the_container_ship",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a container ship in the deep water channel",
+        "params": {
+          "prop": "container_ship",
+          "zone": "south"
+        }
+      },
+      {
+        "id": "the_buoy",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a channel buoy",
+        "params": {
+          "prop": "buoy",
+          "zone": "south"
+        }
+      },
+      {
+        "id": "the_drydock",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the dry dock beside the shipyard",
+        "params": {
+          "prop": "drydock",
+          "zone": "east",
+          "length": 20
+        }
+      },
+      {
+        "id": "quay_bollards",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "bollards along the quay",
+        "params": {
+          "prop": "bollard_row",
+          "zone": "south",
+          "length": 15
+        }
+      },
+      {
+        "id": "market_barrow",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a barrow on the market cross",
+        "params": {
+          "prop": "market_barrow",
+          "zone": "west"
+        }
+      },
+      {
+        "id": "dock_cart",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a cart on the dock road",
+        "params": {
+          "prop": "cart",
+          "zone": "southeast"
+        }
+      },
+      {
+        "id": "plaza_fountain",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the fountain on the civic plaza",
+        "params": {
+          "prop": "fountain",
+          "zone": "north"
+        }
+      },
+      {
+        "id": "plaza_flagpole",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "the flagpole on the civic plaza",
+        "params": {
+          "prop": "flagpole",
+          "zone": "north"
+        }
+      },
+      {
+        "id": "market_milestone",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "a milestone where the market roads meet",
+        "params": {
+          "prop": "milestone",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "the cobbled roads tying the three districts together",
+        "params": {
+          "anchors": [
+            "civic_plaza",
+            "#tag:house",
+            "the_lighthouse"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true
+        }
+      }
+    ]
+  }
+}

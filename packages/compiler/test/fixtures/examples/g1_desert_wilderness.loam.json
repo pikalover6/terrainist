@@ -1,0 +1,233 @@
+{
+  "loam": "0.1",
+  "profile": "terrain",
+  "meta": {
+    "name": "vast_salt_desert",
+    "worldSeed": "313",
+    "prompt": "A vast salt desert under a hard sun, cracked flat to the horizon, with nothing living on it.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "intent": {
+    "climate": {
+      "biome": "minecraft:desert",
+      "temperature": 1,
+      "humidity": -1,
+      "snow": "never"
+    },
+    "character": {
+      "label": "barren salt desert",
+      "materialTheme": "sun_clay"
+    }
+  },
+  "style": {
+    "palettes": {
+      "ground.surface": {
+        "mix": [
+          [
+            "minecraft:calcite",
+            5
+          ],
+          [
+            "minecraft:diorite",
+            3
+          ],
+          [
+            "minecraft:white_terracotta",
+            2
+          ],
+          [
+            "minecraft:smooth_basalt",
+            1
+          ]
+        ]
+      },
+      "ground.subsurface": {
+        "mix": [
+          [
+            "minecraft:white_terracotta",
+            4
+          ],
+          [
+            "minecraft:packed_mud",
+            2
+          ],
+          [
+            "minecraft:smooth_sandstone",
+            2
+          ]
+        ]
+      },
+      "ground.stone": "minecraft:smooth_sandstone",
+      "ground.cliff": {
+        "mix": [
+          [
+            "minecraft:diorite",
+            3
+          ],
+          [
+            "minecraft:calcite",
+            2
+          ],
+          [
+            "minecraft:terracotta",
+            1
+          ]
+        ]
+      },
+      "ground.beach": "minecraft:calcite",
+      "ground.underwater": "minecraft:sand"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Salt Desert Expanse",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 68,
+          "amplitude": 6,
+          "frequency": 0.002,
+          "snowLineFraction": 1
+        },
+        "children": [
+          {
+            "id": "central_salt_pan",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "broad shallow dry salt pan depression",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 180,
+              "depth": 4,
+              "water": false,
+              "flooded": "never"
+            }
+          },
+          {
+            "id": "northern_salt_sink",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "secondary dry salt basin in the north",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.35,
+                0.25
+              ],
+              "radius": 110,
+              "depth": 3,
+              "water": false,
+              "flooded": "never"
+            }
+          },
+          {
+            "id": "cracked_dry_wash",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "shallow dry cracked wash furrowing the expanse",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.1,
+                  0.75
+                ],
+                [
+                  0.45,
+                  0.6
+                ],
+                [
+                  0.9,
+                  0.7
+                ]
+              ],
+              "width": 28,
+              "depth": 3,
+              "flooded": "never"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "arid",
+          "latitudeGradient": 0
+        }
+      },
+      {
+        "id": "leviathan_skeleton",
+        "kind": "generator",
+        "generator": "authored:ancient_leviathan_skeleton",
+        "label": "ancient leviathan skeleton half-buried in salt",
+        "constraints": [
+          {
+            "zone": "center"
+          }
+        ]
+      },
+      {
+        "id": "salt_spires",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "crystallized salt spires emerging from the flats",
+        "params": {
+          "program": "salt_crystal_spire",
+          "count": 16,
+          "area": {
+            "all": true
+          },
+          "spacing": 28
+        }
+      }
+    ]
+  },
+  "programs": {
+    "ancient_leviathan_skeleton": {
+      "mode": "landmark",
+      "envelope": [
+        38,
+        18,
+        56
+      ],
+      "sourceHash": "b3:5bf02e0ba886217f3acc9b9d7d957798cb8f57756d6d3af4fb203f36f23e54f9",
+      "outputHash": "b3:ffff936c93e58a022f0fdca646aebffafa3391cdd89a711f72db6ea8c05a72d8",
+      "conforms": false,
+      "conformHash": "b3:0db66db6c2261f60dc55d7bb07166edf3500a4e155980aa80fc1be7f23d05cad",
+      "source": "export const envelope = [38, 18, 56];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const SEAT_Y = 4;\n\n  // Theme-aware ground and masonry with safe defaults\n  const groundPavement = api.theme?.ground?.pavement || \"minecraft:sandstone\";\n  const stonePrimary = api.theme?.stone?.primary || \"minecraft:smooth_sandstone\";\n  const stoneSlab = api.theme?.stone?.slab || \"minecraft:smooth_sandstone_slab[type=bottom]\";\n\n  // Fossil & Mineral materials\n  const BONE_Y = \"minecraft:bone_block[axis=y]\";\n  const BONE_X = \"minecraft:bone_block[axis=x]\";\n  const BONE_Z = \"minecraft:bone_block[axis=z]\";\n  const CALCITE = \"minecraft:calcite\";\n  const DEAD_BRAIN = \"minecraft:dead_brain_coral_block\";\n  const DEAD_TUBE = \"minecraft:dead_tube_coral_block\";\n  const DEAD_HORN = \"minecraft:dead_horn_coral_block\";\n  const DRIPSTONE = \"minecraft:dripstone_block\";\n  const FANG_DOWN = \"minecraft:pointed_dripstone[thickness=base,vertical_direction=down]\";\n  const FANG_UP = \"minecraft:pointed_dripstone[thickness=base,vertical_direction=up]\";\n\n  // 3D voxel grid buffer\n  const grid = new Array(W * H * D).fill(null);\n\n  function getIdx(x, y, z) {\n    if (x < 0 || x >= W || y < 0 || y >= H || z < 0 || z >= D) return -1;\n    return (y * D + z) * W + x;\n  }\n\n  function getBlock(x, y, z) {\n    const idx = getIdx(x, y, z);\n    return idx === -1 ? null : grid[idx];\n  }\n\n  function setBlock(x, y, z, block) {\n    const idx = getIdx(x, y, z);\n    if (idx !== -1) grid[idx] = block;\n  }\n\n  // Deterministic noise for weathering & texture variation\n  const seed = api.random() * 1000;\n  function noise(x, y, z) {\n    const n = Math.sin(x * 12.9898 + y * 78.233 + z * 37.719 + seed) * 43758.5453;\n    return n - Math.floor(n);\n  }\n\n  // Leviathan spine curves\n  function spineX(z) {\n    return 19 + Math.sin((z - 8) * 0.13) * 4.2 + Math.cos((z - 20) * 0.08) * 1.5;\n  }\n\n  function spineY(z) {\n    if (z < 12) return 7.5 + (12 - z) * 0.2;\n    if (z < 28) return 10.5 + Math.sin(((z - 12) / 16) * Math.PI) * 3.8;\n    if (z < 40) return 8.0 + Math.sin(((z - 28) / 12) * Math.PI) * 2.2;\n    return 7.0 - (z - 40) * 0.25;\n  }\n\n  // 3D Bone capsule generator\n  function drawBoneSegment(x1, y1, z1, x2, y2, z2, radius, defaultAxis = \"y\") {\n    const dx = x2 - x1;\n    const dy = y2 - y1;\n    const dz = z2 - z1;\n    const len = Math.hypot(dx, dy, dz);\n    if (len === 0) return;\n\n    let axis = defaultAxis;\n    const adx = Math.abs(dx), ady = Math.abs(dy), adz = Math.abs(dz);\n    if (adx >= ady && adx >= adz) axis = \"x\";\n    else if (ady >= adx && ady >= adz) axis = \"y\";\n    else axis = \"z\";\n\n    const r2 = radius * radius;\n    const minX = Math.max(0, Math.floor(Math.min(x1, x2) - radius - 1));\n    const maxX = Math.min(W - 1, Math.ceil(Math.max(x1, x2) + radius + 1));\n    const minY = Math.max(0, Math.floor(Math.min(y1, y2) - radius - 1));\n    const maxY = Math.min(H - 1, Math.ceil(Math.max(y1, y2) + radius + 1));\n    const minZ = Math.max(0, Math.floor(Math.min(z1, z2) - radius - 1));\n    const maxZ = Math.min(D - 1, Math.ceil(Math.max(z1, z2) + radius + 1));\n\n    for (let x = minX; x <= maxX; x++) {\n      for (let y = minY; y <= maxY; y++) {\n        for (let z = minZ; z <= maxZ; z++) {\n          const px = x - x1, py = y - y1, pz = z - z1;\n          const t = Math.max(0, Math.min(1, (px * dx + py * dy + pz * dz) / (len * len)));\n          const cx = x1 + t * dx, cy = y1 + t * dy, cz = z1 + t * dz;\n          const distSq = (x - cx) * (x - cx) + (y - cy) * (y - cy) + (z - cz) * (z - cz);\n\n          if (distSq <= r2) {\n            const nVal = noise(x, y, z);\n            let blk;\n            if (nVal < 0.12) blk = DEAD_BRAIN;\n            else if (nVal < 0.22) blk = DEAD_TUBE;\n            else if (nVal < 0.42) blk = CALCITE;\n            else blk = `minecraft:bone_block[axis=${axis}]`;\n            setBlock(x, y, z, blk);\n          }\n        }\n      }\n    }\n  }\n\n  // 1. SALT CRUST & SEDIMENTARY DUNES\n  // Mounds formed where the ancient carcass trapped windblown salt & sand\n  for (let x = 2; x <= 35; x++) {\n    for (let z = 2; z <= 53; z++) {\n      const sx = spineX(z);\n      const distFromSpine = Math.abs(x - sx);\n\n      let duneH = 0;\n      // Skull mound\n      const dSkull = Math.hypot(x - spineX(8), z - 8);\n      if (dSkull < 8.5) duneH = Math.max(duneH, 5.2 - dSkull * 0.35);\n\n      // Mid-body dune (partially engulfing low spine)\n      const dMid = Math.hypot(x - spineX(32), z - 32);\n      if (dMid < 9.0) duneH = Math.max(duneH, 6.4 - dMid * 0.38);\n\n      // Caudal dune at the tail\n      const dTail = Math.hypot(x - spineX(50), z - 50);\n      if (dTail < 7.5) duneH = Math.max(duneH, 5.2 - dTail * 0.35);\n\n      // Rib baseline connection bed\n      if (distFromSpine < 14 && z >= 14 && z <= 44) {\n        duneH = Math.max(duneH, 4.0);\n      }\n\n      const topY = Math.floor(duneH);\n      if (topY >= SEAT_Y) {\n        for (let y = SEAT_Y; y <= topY; y++) {\n          const nVal = noise(x, y, z);\n          let blk;\n          if (y === topY) {\n            blk = nVal < 0.65 ? CALCITE : stonePrimary;\n          } else if (y === topY - 1) {\n            blk = nVal < 0.5 ? CALCITE : groundPavement;\n          } else {\n            blk = groundPavement;\n          }\n          setBlock(x, y, z, blk);\n        }\n      }\n    }\n  }\n\n  // 2. VERTEBRAL COLUMN & NEURAL PROCESSES\n  // Continuous spinal core\n  for (let z = 12; z <= 52; z++) {\n    const x1 = spineX(z);\n    const y1 = spineY(z);\n    const x2 = spineX(z + 1);\n    const y2 = spineY(z + 1);\n    const rad = 1.6 - (z - 12) * 0.015;\n    drawBoneSegment(x1, y1, z, x2, y2, z + 1, rad, \"z\");\n  }\n\n  // Distinct Vertebrae with Neural Spines & Transverse Wings\n  const vertZ = [12, 15, 18, 21, 24, 27, 30, 33, 36, 39, 42, 45, 48, 51];\n  for (let i = 0; i < vertZ.length; i++) {\n    const vz = vertZ[i];\n    const vx = spineX(vz);\n    const vy = spineY(vz);\n    const rad = 1.8 - (vz - 12) * 0.018;\n\n    // Centrum bulb\n    drawBoneSegment(vx, vy, vz - 0.6, vx, vy, vz + 0.6, rad + 0.3, \"z\");\n\n    // Neural Spine (tall dorsal crest)\n    const spineHeight = 3.8 * Math.sin(((vz - 10) / 42) * Math.PI) + 0.8;\n    drawBoneSegment(vx, vy + rad, vz, vx, vy + rad + spineHeight, vz, 0.9, \"y\");\n\n    // Transverse processes (lateral wing struts)\n    const wingSpan = 3.6 - (vz - 12) * 0.045;\n    drawBoneSegment(vx - wingSpan, vy, vz, vx + wingSpan, vy, vz, 0.8, \"x\");\n  }\n\n  // 3. MASSIVE RIBCAGE (10 Pairs)\n  const ribZ = [15, 18, 21, 24, 27, 30, 33, 36, 39, 42];\n  const ribRadiiX = [9.0, 11.5, 13.0, 12.5, 11.0, 9.5, 8.0, 6.8, 5.5, 4.5];\n  const ribRadiiY = [3.0, 3.8, 4.2, 4.0, 3.5, 3.0, 2.5, 2.2, 1.8, 1.5];\n\n  for (let k = 0; k < ribZ.length; k++) {\n    const rz = ribZ[k];\n    const rx = spineX(rz);\n    const ry = spineY(rz);\n    const spanX = ribRadiiX[k];\n    const spanY = ribRadiiY[k];\n\n    for (const side of [-1, 1]) {\n      // Intentional weathering & fractures on select ribs\n      let maxSteps = 18;\n      if (k === 2 && side === 1) maxSteps = 11; // Shattered right rib 3\n      if (k === 4 && side === -1) maxSteps = 13; // Broken left rib 5\n      if (k === 7 && side === 1) maxSteps = 9;  // Snapped right rib 8\n\n      let prevPx = rx;\n      let prevPy = ry;\n      let prevPz = rz;\n\n      for (let s = 1; s <= maxSteps; s++) {\n        const theta = (s / 18) * Math.PI;\n        const curPx = rx + side * (spanX * Math.pow(Math.sin(theta), 0.85));\n        const curPy = ry + spanY * Math.sin(theta) - (1 - Math.cos(theta)) * ((ry - 3.8) / 2.0);\n        const curPz = rz + side * Math.sin(theta) * 1.2 + (1 - Math.cos(theta)) * 0.5;\n        const ribThickness = 1.3 - 0.3 * (s / 18);\n\n        drawBoneSegment(prevPx, prevPy, prevPz, curPx, curPy, curPz, ribThickness);\n\n        prevPx = curPx;\n        prevPy = curPy;\n        prevPz = curPz;\n      }\n\n      // If fractured, add a jagged bone splinter\n      if (maxSteps < 18) {\n        const nVal = noise(prevPx, prevPy, prevPz);\n        const splinterBlock = nVal < 0.5 ? CALCITE : DEAD_TUBE;\n        setBlock(Math.round(prevPx), Math.round(prevPy), Math.round(prevPz), splinterBlock);\n      }\n    }\n  }\n\n  // 4. PECTORAL & PELVIC VESTIGIAL FIN RAYS\n  // Pectoral Paddles (Z = 16..20)\n  for (const side of [-1, 1]) {\n    const sx = spineX(18);\n    // Ray 1\n    drawBoneSegment(sx + side * 5, SEAT_Y, 16, sx + side * 11, SEAT_Y, 14, 0.9, \"x\");\n    // Ray 2\n    drawBoneSegment(sx + side * 5, SEAT_Y, 18, sx + side * 13, SEAT_Y, 18, 1.0, \"x\");\n    // Ray 3\n    drawBoneSegment(sx + side * 5, SEAT_Y, 20, sx + side * 10, SEAT_Y, 22, 0.8, \"x\");\n  }\n\n  // Pelvic Paddles (Z = 41..44)\n  for (const side of [-1, 1]) {\n    const sx = spineX(42);\n    drawBoneSegment(sx + side * 3, SEAT_Y, 41, sx + side * 8, SEAT_Y, 43, 0.7, \"x\");\n    drawBoneSegment(sx + side * 3, SEAT_Y, 43, sx + side * 7, SEAT_Y, 46, 0.7, \"x\");\n  }\n\n  // 5. ANCIENT LEVIATHAN SKULL (Z = 3 to 13)\n  // Facing North (-Z direction)\n  const skullBaseZ = 13;\n  const snoutTipZ = 3;\n\n  for (let z = snoutTipZ; z <= skullBaseZ; z++) {\n    const sx = spineX(z);\n    const progress = (z - snoutTipZ) / (skullBaseZ - snoutTipZ); // 0 (snout) to 1 (cranium)\n    const jawWidth = 1.6 + progress * 3.6;\n    const topY = 7.5 + Math.sin(progress * Math.PI) * 4.2;\n    const botY = 5.2 + progress * 0.8;\n\n    // Upper Cranium & Rostrum\n    for (let x = Math.floor(sx - jawWidth); x <= Math.ceil(sx + jawWidth); x++) {\n      for (let y = Math.floor(botY); y <= Math.ceil(topY); y++) {\n        const dx = (x - sx) / jawWidth;\n        const dy = (y - (botY + topY) / 2) / ((topY - botY) / 2 || 1);\n        const distSq = dx * dx + dy * dy;\n\n        if (distSq <= 1.05) {\n          // Eye sockets (orbits) at Z = 9..11\n          const isOrbit = z >= 9 && z <= 11 && Math.abs(dx) > 0.65 && y >= 7 && y <= 9;\n          // Nasal cavity / blowhole at Z = 6..7 on top\n          const isBlowhole = z >= 6 && z <= 7 && Math.abs(x - sx) <= 0.8 && y >= topY - 1;\n\n          if (!isOrbit && !isBlowhole) {\n            const nVal = noise(x, y, z);\n            let blk;\n            if (nVal < 0.15) blk = DEAD_BRAIN;\n            else if (nVal < 0.35) blk = CALCITE;\n            else blk = BONE_Y;\n            setBlock(x, y, z, blk);\n          }\n        }\n      }\n    }\n\n    // Sagittal dorsal crest on skull top\n    if (z >= 8 && z <= 13) {\n      setBlock(Math.round(sx), Math.ceil(topY) + 1, z, BONE_Y);\n      if (z >= 10 && z <= 12) {\n        setBlock(Math.round(sx), Math.ceil(topY) + 2, z, CALCITE);\n      }\n    }\n  }\n\n  // Mandible (Lower Jaw) - sweeping forward and slightly open\n  for (let z = snoutTipZ; z <= skullBaseZ; z++) {\n    const sx = spineX(z);\n    const progress = (z - snoutTipZ) / (skullBaseZ - snoutTipZ);\n    const mandWidth = 1.2 + progress * 3.8;\n    const mandY = 4.0 + Math.pow(progress, 1.8) * 2.2;\n\n    for (const side of [-1, 1]) {\n      const mx = sx + side * mandWidth;\n      drawBoneSegment(mx, mandY, z, mx, mandY, z + 1, 1.0, \"z\");\n    }\n\n    // Chin connection at the front tip\n    if (z === snoutTipZ) {\n      drawBoneSegment(sx - mandWidth, mandY, z, sx + mandWidth, mandY, z, 1.1, \"x\");\n    }\n  }\n\n  // Fangs & Pointed Teeth along upper & lower jaws\n  for (let z = 4; z <= 10; z += 2) {\n    const sx = spineX(z);\n    const progress = (z - snoutTipZ) / (skullBaseZ - snoutTipZ);\n    const jawW = 1.4 + progress * 3.5;\n    for (const side of [-1, 1]) {\n      const tx = Math.round(sx + side * jawW);\n      // Upper fangs pointing down\n      const upperY = Math.floor(5.5 + progress * 0.8);\n      if (getBlock(tx, upperY, z) && !getBlock(tx, upperY - 1, z)) {\n        setBlock(tx, upperY - 1, z, FANG_DOWN);\n      }\n      // Lower fangs pointing up\n      const mandY = Math.round(4.0 + Math.pow(progress, 1.8) * 2.2);\n      if (getBlock(tx, mandY, z) && !getBlock(tx, mandY + 1, z)) {\n        setBlock(tx, mandY + 1, z, FANG_UP);\n      }\n    }\n  }\n\n  // Clear hollow Cranial Vault / Interior Room\n  const vaultCenterX = Math.round(spineX(10));\n  for (let x = vaultCenterX - 2; x <= vaultCenterX + 2; x++) {\n    for (let y = 5; y <= 7; y++) {\n      for (let z = 8; z <= 11; z++) {\n        setBlock(x, y, z, null);\n      }\n    }\n  }\n  // Ensure solid floor under vault interior\n  for (let x = vaultCenterX - 2; x <= vaultCenterX + 2; x++) {\n    for (let z = 8; z <= 11; z++) {\n      setBlock(x, 4, z, CALCITE);\n    }\n  }\n\n  // 6. ENCRUSTATION & SCATTERED BONE SPLINTERS\n  // Add ancient mineral crusting on ribs and salt flats\n  for (let z = 14; z <= 48; z += 4) {\n    const sx = spineX(z);\n    const n1 = noise(sx + 8, SEAT_Y, z);\n    if (n1 > 0.4) {\n      setBlock(Math.round(sx + 10), SEAT_Y, z, DEAD_HORN);\n      setBlock(Math.round(sx + 10), SEAT_Y + 1, z, stoneSlab);\n    }\n    const n2 = noise(sx - 8, SEAT_Y, z);\n    if (n2 > 0.4) {\n      setBlock(Math.round(sx - 10), SEAT_Y, z, DRIPSTONE);\n      setBlock(Math.round(sx - 10), SEAT_Y + 1, z, stoneSlab);\n    }\n  }\n\n  // 7. ONE CONNECTED SOLID CHECK (BFS Flood Fill)\n  // Ensure all placed blocks form one 6-connected component\n  const startX = Math.round(spineX(21));\n  const startY = Math.round(spineY(21));\n  const startZ = 21;\n\n  const visited = new Uint8Array(W * H * D);\n  const queue = [getIdx(startX, startY, startZ)];\n  visited[queue[0]] = 1;\n\n  let head = 0;\n  while (head < queue.length) {\n    const idx = queue[head++];\n    const vx = idx % W;\n    const vy = Math.floor(idx / (W * D));\n    const vz = Math.floor(idx / W) % D;\n\n    const neighbors = [\n      [vx + 1, vy, vz],\n      [vx - 1, vy, vz],\n      [vx, vy + 1, vz],\n      [vx, vy - 1, vz],\n      [vx, vy, vz + 1],\n      [vx, vy, vz - 1],\n    ];\n\n    for (let n = 0; n < 6; n++) {\n      const [nx, ny, nz] = neighbors[n];\n      const nIdx = getIdx(nx, ny, nz);\n      if (nIdx !== -1 && !visited[nIdx] && grid[nIdx] !== null) {\n        visited[nIdx] = 1;\n        queue.push(nIdx);\n      }\n    }\n  }\n\n  // Remove disconnected floating fragments\n  for (let i = 0; i < grid.length; i++) {\n    if (grid[i] !== null && !visited[i]) {\n      grid[i] = null;\n    }\n  }\n\n  // 8. TERRAIN CONFORMANCE (Rule 6)\n  // Extend down to meet local ground heightAt(x, z) on slopes/shores/ridges\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      let minY = -1;\n      for (let y = 0; y < H; y++) {\n        if (getBlock(x, y, z) !== null) {\n          minY = y;\n          break;\n        }\n      }\n\n      if (minY !== -1) {\n        const gh = api.heightAt(x, z);\n        const realGroundY = Math.max(0, SEAT_Y + gh);\n\n        // If ground drops below our structure, build downward skirt to anchor it\n        if (realGroundY < minY) {\n          for (let y = minY - 1; y >= realGroundY; y--) {\n            const nVal = noise(x, y, z);\n            const fillBlock = nVal < 0.4 ? CALCITE : groundPavement;\n            setBlock(x, y, z, fillBlock);\n          }\n        }\n        // If ground rises above seat plane, ensure solid footing up to hill level\n        else if (realGroundY > SEAT_Y) {\n          for (let y = SEAT_Y; y <= Math.min(H - 1, realGroundY); y++) {\n            if (getBlock(x, y, z) === null) {\n              setBlock(x, y, z, groundPavement);\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // 9. EMIT FINAL VOXELS IN DETERMINISTIC ORDER\n  for (let y = 0; y < H; y++) {\n    for (let z = 0; z < D; z++) {\n      for (let x = 0; x < W; x++) {\n        const blk = getBlock(x, y, z);\n        if (blk !== null) {\n          api.set(x, y, z, blk);\n        }\n      }\n    }\n  }\n\n  const skullX = Math.round(spineX(8));\n  const frontX = Math.round(spineX(2));\n  const tailX = Math.round(spineX(52));\n\n  return {\n    name: \"ancient_leviathan_skeleton\",\n    seatY: SEAT_Y,\n    anchors: {\n      front: [frontX, SEAT_Y + 1, 0],\n      skull: [skullX, 9, 8],\n      tail: [tailX, SEAT_Y, 52],\n    },\n    interiors: [\n      {\n        min: [vaultCenterX - 2, 5, 8],\n        max: [vaultCenterX + 2, 7, 11],\n        kind: \"vault\",\n      },\n    ],\n  };\n}"
+    },
+    "salt_crystal_spire": {
+      "mode": "plugin",
+      "envelope": [
+        12,
+        22,
+        12
+      ],
+      "sourceHash": "b3:88f02fb5580598ef298b6acc847871ab5e79d5146376583105dfbde112d4262a",
+      "outputHash": "b3:8f3d2ba27419a10966ca4e6f75d48b871f0ee59c890854d485afc51e9fa666bb",
+      "conforms": true,
+      "conformHash": "b3:f218be4408049c2e95516b261d90948fb74773df80c7dd84edf57e33d44fb563",
+      "source": "export const envelope = [12, 22, 12];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const seatY = 5;\n\n  // 3D grid buffer\n  const grid = Array.from({ length: W }, () =>\n    Array.from({ length: H }, () => new Array(D).fill(null))\n  );\n\n  function setBlock(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      grid[x][y][z] = block;\n    }\n  }\n\n  function getBlock(x, y, z) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      return grid[x][y][z];\n    }\n    return null;\n  }\n\n  // Theme resolution with robust fallbacks\n  const theme = api.theme || {};\n  const stonePrimary = (theme.stone && theme.stone.primary) || \"minecraft:diorite\";\n  const stoneAccent = (theme.stone && theme.stone.accent) || \"minecraft:calcite\";\n  const stoneWall = (theme.stone && theme.stone.wall) || \"minecraft:diorite_wall\";\n  const groundPave = (theme.ground && theme.ground.pavement) || \"minecraft:smooth_sandstone\";\n\n  // Seeded PRNG helpers\n  const rand = () => api.random();\n  const randRange = (min, max) => min + rand() * (max - min);\n  const randChoice = (arr) => arr[Math.floor(rand() * arr.length)];\n\n  // Instance variation across plugin builds\n  const instIdx = api.instance ? api.instance.index : 0;\n  const archetype = instIdx % 4;\n\n  const centerX = 5.5 + (rand() - 0.5) * 0.4;\n  const centerZ = 5.5 + (rand() - 0.5) * 0.4;\n  const baseRadius = randRange(4.2, 4.8);\n  const crackPhase = rand() * Math.PI * 2;\n\n  // Spire cluster configurations per archetype\n  const spires = [];\n\n  if (archetype === 0) {\n    // Archetype 0: Crown Monolith (Central apex with radiating facet fins)\n    spires.push({\n      cx: centerX + (rand() - 0.5) * 0.3,\n      cz: centerZ + (rand() - 0.5) * 0.3,\n      h: Math.floor(randRange(13, 16)),\n      rBase: randRange(2.5, 2.9),\n      dx: (rand() - 0.5) * 0.08,\n      dz: (rand() - 0.5) * 0.08,\n      theta: Math.PI / 4 + (rand() - 0.5) * 0.3,\n      aspect: randRange(1.0, 1.2)\n    });\n    const count = 4;\n    for (let i = 0; i < count; i++) {\n      const angle = (i * Math.PI * 2) / count + randRange(-0.2, 0.2);\n      const dist = randRange(2.4, 3.1);\n      spires.push({\n        cx: centerX + Math.cos(angle) * dist,\n        cz: centerZ + Math.sin(angle) * dist,\n        h: Math.floor(randRange(6, 9)),\n        rBase: randRange(1.4, 1.8),\n        dx: Math.cos(angle) * 0.22,\n        dz: Math.sin(angle) * 0.22,\n        theta: angle,\n        aspect: randRange(1.1, 1.4)\n      });\n    }\n  } else if (archetype === 1) {\n    // Archetype 1: Bifurcated Horns (Twin massive leaning spires)\n    const angle = randRange(0.2, 0.8);\n    const dist = randRange(1.3, 1.7);\n    spires.push({\n      cx: centerX - Math.cos(angle) * dist,\n      cz: centerZ - Math.sin(angle) * dist,\n      h: Math.floor(randRange(12, 15)),\n      rBase: randRange(2.1, 2.5),\n      dx: -Math.cos(angle) * 0.16,\n      dz: -Math.sin(angle) * 0.16,\n      theta: angle + Math.PI / 4,\n      aspect: 1.1\n    });\n    spires.push({\n      cx: centerX + Math.cos(angle) * dist,\n      cz: centerZ + Math.sin(angle) * dist,\n      h: Math.floor(randRange(10, 13)),\n      rBase: randRange(1.9, 2.3),\n      dx: Math.cos(angle) * 0.15,\n      dz: Math.sin(angle) * 0.15,\n      theta: angle + Math.PI / 4,\n      aspect: 1.1\n    });\n    const extraCount = 3;\n    for (let i = 0; i < extraCount; i++) {\n      const sideAngle = angle + Math.PI / 2 + (i - 1) * 0.9;\n      const sDist = randRange(2.2, 3.0);\n      spires.push({\n        cx: centerX + Math.cos(sideAngle) * sDist,\n        cz: centerZ + Math.sin(sideAngle) * sDist,\n        h: Math.floor(randRange(5, 8)),\n        rBase: randRange(1.2, 1.6),\n        dx: Math.cos(sideAngle) * 0.18,\n        dz: Math.sin(sideAngle) * 0.18,\n        theta: sideAngle,\n        aspect: 1.2\n      });\n    }\n  } else if (archetype === 2) {\n    // Archetype 2: Crystalline Bouquet (Radial burst of prismatic spears)\n    spires.push({\n      cx: centerX,\n      cz: centerZ,\n      h: Math.floor(randRange(13, 16)),\n      rBase: randRange(2.0, 2.4),\n      dx: (rand() - 0.5) * 0.06,\n      dz: (rand() - 0.5) * 0.06,\n      theta: randRange(0, Math.PI),\n      aspect: 1.0\n    });\n    const count = 5;\n    for (let i = 0; i < count; i++) {\n      const a = (i * Math.PI * 2) / count + randRange(-0.25, 0.25);\n      const d = randRange(2.0, 2.7);\n      spires.push({\n        cx: centerX + Math.cos(a) * d,\n        cz: centerZ + Math.sin(a) * d,\n        h: Math.floor(randRange(7, 11)),\n        rBase: randRange(1.3, 1.7),\n        dx: Math.cos(a) * 0.18,\n        dz: Math.sin(a) * 0.18,\n        theta: a + Math.PI / 4,\n        aspect: randRange(1.0, 1.3)\n      });\n    }\n  } else {\n    // Archetype 3: Oblique Thrust Shard (Thrust crystal with buttress array)\n    const thrustAngle = randRange(0.3, 1.2);\n    spires.push({\n      cx: centerX - Math.cos(thrustAngle) * 1.5,\n      cz: centerZ - Math.sin(thrustAngle) * 1.5,\n      h: Math.floor(randRange(13, 16)),\n      rBase: randRange(2.4, 2.8),\n      dx: Math.cos(thrustAngle) * 0.24,\n      dz: Math.sin(thrustAngle) * 0.24,\n      theta: thrustAngle,\n      aspect: randRange(1.2, 1.5)\n    });\n    for (let i = -1; i <= 1; i += 2) {\n      const bAngle = thrustAngle + Math.PI + i * 0.6;\n      spires.push({\n        cx: centerX + Math.cos(bAngle) * 2.0,\n        cz: centerZ + Math.sin(bAngle) * 2.0,\n        h: Math.floor(randRange(7, 10)),\n        rBase: randRange(1.5, 1.9),\n        dx: Math.cos(bAngle) * 0.12,\n        dz: Math.sin(bAngle) * 0.12,\n        theta: bAngle,\n        aspect: 1.2\n      });\n    }\n    const fAngle = thrustAngle + randRange(-0.4, 0.4);\n    spires.push({\n      cx: centerX + Math.cos(fAngle) * 2.8,\n      cz: centerZ + Math.sin(fAngle) * 2.8,\n      h: Math.floor(randRange(4, 7)),\n      rBase: randRange(1.2, 1.5),\n      dx: Math.cos(fAngle) * 0.2,\n      dz: Math.sin(fAngle) * 0.2,\n      theta: fAngle,\n      aspect: 1.0\n    });\n  }\n\n  // Distance function for faceted crystal geometry\n  function getSpireDist(spire, x, z, hRel) {\n    const t = Math.max(0, Math.min(1, hRel / spire.h));\n    const cx = spire.cx + hRel * spire.dx;\n    const cz = spire.cz + hRel * spire.dz;\n    const r = spire.rBase * (1.0 - Math.pow(t, 1.15)) + 0.35;\n\n    const dx = x - cx;\n    const dz = z - cz;\n    const cosT = Math.cos(spire.theta);\n    const sinT = Math.sin(spire.theta);\n    const u = dx * cosT - dz * sinT;\n    const v = dx * sinT + dz * cosT;\n\n    const dBox = Math.max(Math.abs(u) / spire.aspect, Math.abs(v));\n    const dDiamond = (Math.abs(u) / spire.aspect + Math.abs(v)) / 1.35;\n    const dist = Math.max(dBox * 0.88, dDiamond);\n\n    return { inside: dist <= r, r, dist, t };\n  }\n\n  // 1. Build Base Crust & Fractured Terraces\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const groundH = Math.round(api.heightAt(x, z));\n      const groundY = Math.max(0, Math.min(H - 1, seatY + groundH));\n      const distFromCenter = Math.hypot(x - centerX, z - centerZ);\n\n      if (distFromCenter <= baseRadius) {\n        const angle = Math.atan2(z - centerZ, x - centerX);\n        const crackVal = Math.sin(3 * angle + crackPhase) * Math.cos(2 * angle - crackPhase);\n        const isCrack = Math.abs(crackVal) < 0.18 && distFromCenter > 1.2;\n\n        let crustH = 0;\n        if (distFromCenter < 2.0) crustH = 2;\n        else if (distFromCenter < 3.5) crustH = 1;\n        else crustH = 0;\n\n        if (isCrack) crustH = Math.max(0, crustH - 1);\n\n        const topY = Math.min(H - 1, groundY + crustH);\n        for (let y = groundY; y <= topY; y++) {\n          if (isCrack) {\n            const seamBlock = (y === groundY && rand() < 0.35)\n              ? \"minecraft:amethyst_block\"\n              : randChoice([\"minecraft:calcite\", stoneAccent, \"minecraft:diorite\"]);\n            setBlock(x, y, z, seamBlock);\n          } else {\n            const crustBlock = (y === topY)\n              ? randChoice([\"minecraft:calcite\", \"minecraft:calcite\", \"minecraft:smooth_quartz\", groundPave])\n              : randChoice([\"minecraft:calcite\", stonePrimary, \"minecraft:diorite\"]);\n            setBlock(x, y, z, crustBlock);\n          }\n        }\n      }\n    }\n  }\n\n  // 2. Build Spires & Crystal Shafts\n  for (const spire of spires) {\n    const maxWorldY = Math.min(H - 1, seatY + spire.h);\n    for (let x = 0; x < W; x++) {\n      for (let z = 0; z < D; z++) {\n        const groundH = Math.round(api.heightAt(x, z));\n        const groundY = Math.max(0, Math.min(H - 1, seatY + groundH));\n\n        let lowestSpireY = 999;\n\n        for (let y = groundY; y <= maxWorldY; y++) {\n          const hRel = y - seatY;\n          if (hRel < 0 || hRel > spire.h) continue;\n\n          const res = getSpireDist(spire, x, z, hRel);\n          if (res.inside) {\n            lowestSpireY = Math.min(lowestSpireY, y);\n\n            let block = \"minecraft:calcite\";\n            const isApex = (y === maxWorldY || res.t > 0.9);\n            const isCore = (res.dist < res.r * 0.55);\n\n            if (isApex) {\n              block = randChoice([\"minecraft:smooth_quartz\", \"minecraft:calcite\"]);\n            } else if (isCore) {\n              if (y >= seatY + 1 && y <= seatY + 4 && rand() < 0.08) {\n                block = \"minecraft:sea_lantern\";\n              } else if (rand() < 0.25) {\n                block = \"minecraft:amethyst_block\";\n              } else if (rand() < 0.5) {\n                block = \"minecraft:quartz_block\";\n              } else {\n                block = \"minecraft:smooth_quartz\";\n              }\n            } else {\n              const mineralBand = (y + Math.floor(x * 0.5 + z * 0.5)) % 4 === 0;\n              if (mineralBand && rand() < 0.6) {\n                block = randChoice([\"minecraft:diorite\", \"minecraft:polished_diorite\", stoneAccent]);\n              } else if (rand() < 0.4) {\n                block = \"minecraft:smooth_quartz\";\n              } else if (rand() < 0.2) {\n                block = \"minecraft:quartz_pillar[axis=y]\";\n              } else {\n                block = \"minecraft:calcite\";\n              }\n            }\n\n            setBlock(x, y, z, block);\n          }\n        }\n\n        // Solid foundation reaching down to actual ground level\n        if (lowestSpireY < 999 && lowestSpireY > groundY) {\n          for (let y = groundY; y < lowestSpireY; y++) {\n            if (getBlock(x, y, z) === null) {\n              setBlock(x, y, z, randChoice([\"minecraft:calcite\", stonePrimary, \"minecraft:diorite\"]));\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // 3. Add Mineral Edge Details, Bevels & Crystal Outgrowths\n  for (let x = 1; x < W - 1; x++) {\n    for (let z = 1; z < D - 1; z++) {\n      for (let y = 1; y < H - 1; y++) {\n        if (getBlock(x, y, z) !== null) {\n          const airNorth = getBlock(x, y, z - 1) === null;\n          const airSouth = getBlock(x, y, z + 1) === null;\n          const airWest = getBlock(x - 1, y, z) === null;\n          const airEast = getBlock(x + 1, y, z) === null;\n          const airUp = getBlock(x, y + 1, z) === null;\n\n          // Side-attached crystal buds\n          if (airNorth && rand() < 0.06 && y >= seatY + 1) {\n            setBlock(x, y, z - 1, randChoice([\n              \"minecraft:amethyst_cluster[facing=north]\",\n              \"minecraft:large_amethyst_bud[facing=north]\",\n              \"minecraft:medium_amethyst_bud[facing=north]\"\n            ]));\n          } else if (airSouth && rand() < 0.06 && y >= seatY + 1) {\n            setBlock(x, y, z + 1, randChoice([\n              \"minecraft:amethyst_cluster[facing=south]\",\n              \"minecraft:large_amethyst_bud[facing=south]\",\n              \"minecraft:medium_amethyst_bud[facing=south]\"\n            ]));\n          } else if (airWest && rand() < 0.06 && y >= seatY + 1) {\n            setBlock(x - 1, y, z, randChoice([\n              \"minecraft:amethyst_cluster[facing=west]\",\n              \"minecraft:large_amethyst_bud[facing=west]\",\n              \"minecraft:medium_amethyst_bud[facing=west]\"\n            ]));\n          } else if (airEast && rand() < 0.06 && y >= seatY + 1) {\n            setBlock(x + 1, y, z, randChoice([\n              \"minecraft:amethyst_cluster[facing=east]\",\n              \"minecraft:large_amethyst_bud[facing=east]\",\n              \"minecraft:medium_amethyst_bud[facing=east]\"\n            ]));\n          }\n\n          // Stepped quartz bevels on outer shoulders\n          if (airUp && y >= seatY && y < seatY + 10) {\n            if (airNorth && !airSouth && rand() < 0.35) {\n              setBlock(x, y, z, \"minecraft:quartz_stairs[facing=north,half=bottom]\");\n            } else if (airSouth && !airNorth && rand() < 0.35) {\n              setBlock(x, y, z, \"minecraft:quartz_stairs[facing=south,half=bottom]\");\n            } else if (airWest && !airEast && rand() < 0.35) {\n              setBlock(x, y, z, \"minecraft:quartz_stairs[facing=west,half=bottom]\");\n            } else if (airEast && !airWest && rand() < 0.35) {\n              setBlock(x, y, z, \"minecraft:quartz_stairs[facing=east,half=bottom]\");\n            }\n          }\n\n          // Spire tip needles\n          if (airUp && y >= seatY + 8 && rand() < 0.15) {\n            setBlock(x, y + 1, z, randChoice([\n              \"minecraft:amethyst_cluster[facing=up]\",\n              \"minecraft:diorite_wall\",\n              stoneWall\n            ]));\n          }\n        }\n      }\n    }\n  }\n\n  // 4. Ground Conformation: guarantee 100% footing across all occupied columns\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      const groundH = Math.round(api.heightAt(x, z));\n      const groundY = Math.max(0, Math.min(H - 1, seatY + groundH));\n\n      let hasSolidAbove = false;\n      let minSolidY = H;\n      for (let y = groundY; y < H; y++) {\n        if (grid[x][y][z] !== null) {\n          hasSolidAbove = true;\n          minSolidY = Math.min(minSolidY, y);\n        }\n      }\n\n      if (hasSolidAbove && minSolidY > groundY) {\n        for (let y = groundY; y < minSolidY; y++) {\n          setBlock(x, y, z, randChoice([\"minecraft:calcite\", stonePrimary, \"minecraft:diorite\"]));\n        }\n      }\n\n      for (let y = 0; y < groundY; y++) {\n        if (grid[x][y][z] !== null) {\n          grid[x][y][z] = randChoice([stonePrimary, \"minecraft:diorite\", \"minecraft:calcite\"]);\n        }\n      }\n    }\n  }\n\n  // 5. Connectivity Verification (BFS)\n  let seed = null;\n  const midX = Math.floor(centerX);\n  const midZ = Math.floor(centerZ);\n  for (let y = 0; y < H; y++) {\n    if (grid[midX][y][midZ] !== null) {\n      seed = [midX, y, midZ];\n      break;\n    }\n  }\n  if (!seed) {\n    for (let x = 0; x < W && !seed; x++) {\n      for (let z = 0; z < D && !seed; z++) {\n        for (let y = 0; y < H; y++) {\n          if (grid[x][y][z] !== null) {\n            seed = [x, y, z];\n            break;\n          }\n        }\n      }\n    }\n  }\n\n  if (seed) {\n    const visited = Array.from({ length: W }, () =>\n      Array.from({ length: H }, () => new Uint8Array(D))\n    );\n    const queue = [seed];\n    visited[seed[0]][seed[1]][seed[2]] = 1;\n    let head = 0;\n    const dirs = [\n      [1,0,0], [-1,0,0],\n      [0,1,0], [0,-1,0],\n      [0,0,1], [0,0,-1]\n    ];\n\n    while (head < queue.length) {\n      const [qx, qy, qz] = queue[head++];\n      for (const [dx, dy, dz] of dirs) {\n        const nx = qx + dx;\n        const ny = qy + dy;\n        const nz = qz + dz;\n        if (nx >= 0 && nx < W && ny >= 0 && ny < H && nz >= 0 && nz < D) {\n          if (!visited[nx][ny][nz] && grid[nx][ny][nz] !== null) {\n            visited[nx][ny][nz] = 1;\n            queue.push([nx, ny, nz]);\n          }\n        }\n      }\n    }\n\n    for (let x = 0; x < W; x++) {\n      for (let y = 0; y < H; y++) {\n        for (let z = 0; z < D; z++) {\n          if (grid[x][y][z] !== null && !visited[x][y][z]) {\n            grid[x][y][z] = null;\n          }\n        }\n      }\n    }\n  }\n\n  // Ensure minimum solid volume threshold\n  let solidCount = 0;\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        if (grid[x][y][z] !== null) solidCount++;\n      }\n    }\n  }\n\n  if (solidCount < 550) {\n    for (let x = 1; x < W - 1 && solidCount < 550; x++) {\n      for (let z = 1; z < D - 1 && solidCount < 550; z++) {\n        const d = Math.hypot(x - centerX, z - centerZ);\n        if (d <= 4.2) {\n          const groundH = Math.round(api.heightAt(x, z));\n          const groundY = Math.max(0, Math.min(H - 1, seatY + groundH));\n          for (let y = groundY; y <= groundY + 2 && y < H; y++) {\n            if (grid[x][y][z] === null) {\n              setBlock(x, y, z, \"minecraft:calcite\");\n              solidCount++;\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // 6. Output Blocks\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const blk = grid[x][y][z];\n        if (blk !== null) {\n          api.set(x, y, z, blk);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"salt_crystal_spire\",\n    seatY: seatY\n  };\n}"
+    }
+  }
+}

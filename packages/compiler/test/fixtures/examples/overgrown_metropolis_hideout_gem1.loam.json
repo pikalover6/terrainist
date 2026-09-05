@@ -1,0 +1,556 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "overgrown_metropolis_hideout",
+    "worldSeed": "304",
+    "prompt": "A high-tech apocalyptic hideout in the massively overgrown ruins of a metropolis.",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:mossy_cobblestone",
+      "road.shoulder": "minecraft:coarse_dirt",
+      "ground.cliff": "minecraft:deepslate"
+    }
+  },
+  "intent": {
+    "era": "modern",
+    "wealth": 0.3,
+    "decline": 0.9,
+    "formality": 0.4,
+    "climate": {
+      "humidity": 0.6,
+      "temperature": 0.2
+    },
+    "character": {
+      "label": "overgrown ruined metropolis with high-tech hideout",
+      "materialTheme": "modern_city",
+      "flora": {
+        "prefer": [
+          "oak_spreading",
+          "spruce_tall"
+        ]
+      },
+      "motifs": {
+        "massing": "towered",
+        "roofType": "flat",
+        "windowRhythm": "sparse"
+      }
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "fractured urban floodplain and overgrown shelves",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 68,
+          "amplitude": 24,
+          "frequency": 0.003,
+          "beachWidth": 4
+        },
+        "children": [
+          {
+            "id": "metropolis_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "level urban foundation platform",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.5
+              ],
+              "radius": 170,
+              "height": 6,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "collapsed_canal_river",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "flooded sunken canal running to the sea",
+            "params": {
+              "verb": "river",
+              "course": [
+                [
+                  0.1,
+                  0.48
+                ],
+                [
+                  0.42,
+                  0.46
+                ],
+                [
+                  0.72,
+                  0.54
+                ],
+                "coast"
+              ],
+              "width": 16,
+              "depth": 8,
+              "profile": "sharp"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "temperate"
+        }
+      },
+      {
+        "id": "massive_overgrowth",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "massive dense vegetation reclaiming the ruined concrete city",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.22,
+          "elevation": [
+            1,
+            90
+          ],
+          "undergrowth": {
+            "grass": 0.6,
+            "flowers": 0.12,
+            "deadwood": 0.22
+          },
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "giant_beech",
+                  "shape": "beech_giant"
+                }
+              ]
+            },
+            "understory": {
+              "species": [
+                {
+                  "id": "hazel_brush",
+                  "shape": "hazel_shrub"
+                }
+              ]
+            },
+            "floor": "default"
+          },
+          "species": [
+            {
+              "id": "sprawling_oak",
+              "shape": "oak_spreading",
+              "weight": 3
+            },
+            {
+              "id": "weeping_willow",
+              "shape": "willow_weeping",
+              "weight": 2
+            },
+            {
+              "id": "tall_spruce",
+              "shape": "spruce_tall",
+              "weight": 1
+            }
+          ]
+        }
+      },
+      {
+        "id": "ruined_metro",
+        "kind": "district",
+        "label": "the decayed ruins of the metropolis, overtaken by overgrowth",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            260,
+            240
+          ]
+        },
+        "intent": {
+          "decline": 0.92,
+          "wealth": 0.25,
+          "character": {
+            "materialTheme": "modern_city"
+          }
+        },
+        "params": {
+          "fabric": "grid",
+          "density": "high",
+          "plaza": true,
+          "mix": [
+            "skyscraper",
+            "office",
+            "apartment_block",
+            "parking_garage",
+            "brutalist_block",
+            "department_store",
+            "data_center"
+          ]
+        },
+        "constraints": [
+          {
+            "zone": "center"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median"
+          }
+        ],
+        "tags": [
+          "ruins",
+          "metropolis",
+          "urban"
+        ],
+        "children": [
+          {
+            "id": "shattered_tower_spire",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "a crumbling skyscraper skeleton towering over the canopy",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                21,
+                68,
+                19
+              ]
+            },
+            "params": {
+              "floors": 16,
+              "roof": "flat",
+              "decay": 0.88
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "south"
+              }
+            },
+            "tags": [
+              "skyscraper",
+              "landmark"
+            ]
+          },
+          {
+            "id": "hollow_corporate_hub",
+            "kind": "generator",
+            "generator": "building.grammar@0",
+            "label": "gutted brutalist office shell wrapped in vines",
+            "envelope": {
+              "shape": "box",
+              "size": [
+                19,
+                44,
+                17
+              ]
+            },
+            "params": {
+              "floors": 10,
+              "roof": "flat",
+              "decay": 0.8
+            },
+            "ports": {
+              "door": {
+                "type": "door",
+                "face": "east"
+              }
+            },
+            "tags": [
+              "office",
+              "landmark"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "hideout_bunker",
+        "kind": "generator",
+        "generator": "authored:high_tech_sanctuary_bunker",
+        "label": "reinforced high-tech fallout sanctuary entrance",
+        "constraints": [
+          {
+            "distance": "ruined_metro",
+            "min": 8,
+            "max": 48
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median"
+          }
+        ],
+        "tags": [
+          "bunker_complex",
+          "house",
+          "landmark"
+        ]
+      },
+      {
+        "id": "hideout_lab",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "sealed high-tech research facility and airlock",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            17
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "flat",
+          "entrance": {
+            "treatment": "airlock_vestibule"
+          }
+        },
+        "constraints": [
+          {
+            "distance": "hideout_bunker",
+            "min": 12,
+            "max": 80
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north"
+          }
+        },
+        "tags": [
+          "laboratory",
+          "house"
+        ]
+      },
+      {
+        "id": "hideout_power_hub",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "high-capacity battery bank and energy management shed",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            15
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "distance": "hideout_bunker",
+            "min": 12,
+            "max": 80
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east"
+          }
+        },
+        "tags": [
+          "battery_shed"
+        ]
+      },
+      {
+        "id": "hideout_sentry_tower",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "reinforced observation and sensor post",
+        "optional": true,
+        "envelope": {
+          "shape": "box",
+          "size": [
+            7,
+            19,
+            7
+          ]
+        },
+        "params": {
+          "floors": 2,
+          "roof": "flat"
+        },
+        "constraints": [
+          {
+            "distance": "hideout_bunker",
+            "min": 12,
+            "max": 90
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south"
+          }
+        },
+        "tags": [
+          "watchtower"
+        ]
+      },
+      {
+        "id": "hideout_solar_field",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "salvaged solar panels powering the hideout systems",
+        "params": {
+          "prop": "solar_array",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "perimeter_barricade",
+        "kind": "generator",
+        "generator": "infra.entry@0",
+        "label": "fortified barricade line blocking the avenue into the sanctuary",
+        "params": {
+          "entry": "barricade_line",
+          "route": {
+            "across": "ruined_metro"
+          }
+        }
+      },
+      {
+        "id": "salvage_cache",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "supply crates and defensive perimeter markers",
+        "params": {
+          "prop": "cairn",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "emergency_fuel_store",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "salvaged timber and materials stacked near the bunker",
+        "params": {
+          "prop": "log_pile",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "skyscraper_skeletons",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "overgrown skyscraper skeletons scattered across the ruins",
+        "params": {
+          "program": "overgrown_skyscraper_skeleton",
+          "count": 8,
+          "area": {
+            "all": true
+          },
+          "spacing": 45,
+          "avoidTags": [
+            "road"
+          ]
+        }
+      },
+      {
+        "id": "sensor_relays",
+        "kind": "generator",
+        "generator": "scatter.program@0",
+        "label": "scavenged sensor relays monitoring the metropolis ruins",
+        "params": {
+          "program": "scavenged_sensor_relay",
+          "count": 6,
+          "area": {
+            "all": true
+          },
+          "spacing": 35,
+          "avoidTags": [
+            "road"
+          ]
+        }
+      },
+      {
+        "id": "connecting_corridors",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "overgrown paths and cleared runs between hideout modules",
+        "params": {
+          "anchors": [
+            "ruined_metro",
+            "hideout_bunker",
+            "hideout_lab",
+            "hideout_sentry_tower"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": false
+        }
+      }
+    ]
+  },
+  "programs": {
+    "high_tech_sanctuary_bunker": {
+      "mode": "landmark",
+      "envelope": [
+        32,
+        22,
+        32
+      ],
+      "sourceHash": "b3:00f01b86f39ff9d45c635b0d22dc68be260e295f23cfd80449bacc52d0063c86",
+      "outputHash": "b3:9255b4be6bdbd626b60e54cf568d6263b3a13f76ffff5ed2fb0a7e62c599b60f",
+      "source": "export const envelope = [32, 22, 32];\n\nexport default function build(api) {\n  const [sizeX, sizeY, sizeZ] = api.size;\n\n  // Resolve world theme palettes with modern industrial fallbacks\n  const concrete = api.theme.stone?.primary || \"minecraft:stone\";\n  const concreteAccent = api.theme.stone?.accent || \"minecraft:polished_andesite\";\n  const concreteWall = api.theme.stone?.wall || \"minecraft:stone_brick_wall\";\n  const concreteSlab = api.theme.stone?.slab || \"minecraft:smooth_stone_slab[type=bottom]\";\n  const plinth = api.theme.ground?.plinth || \"minecraft:deepslate\";\n  const pavement = api.theme.ground?.pavement || \"minecraft:smooth_stone\";\n\n  // Specialized high-tech and apocalyptic ruin materials\n  const metalCore = \"minecraft:iron_block\";\n  const blastArmor = \"minecraft:polished_deepslate\";\n  const blastBricks = \"minecraft:deepslate_bricks\";\n  const blastTile = \"minecraft:deepslate_tiles\";\n  const conduitGlow = \"minecraft:sea_lantern\";\n  const conduitPipe = \"minecraft:cyan_terracotta\";\n  const yellowHaz = \"minecraft:yellow_concrete\";\n  const blackHaz = \"minecraft:black_concrete\";\n  const ironBars = \"minecraft:iron_bars\";\n  const chainY = \"minecraft:chain[axis=y]\";\n  const chainX = \"minecraft:chain[axis=x]\";\n  const chainZ = \"minecraft:chain[axis=z]\";\n  const moss = \"minecraft:moss_block\";\n  const leaves1 = \"minecraft:flowering_azalea_leaves[persistent=true]\";\n  const leaves2 = \"minecraft:oak_leaves[persistent=true]\";\n  const solarPanel = \"minecraft:daylight_detector\";\n  const lightningRod = \"minecraft:lightning_rod[facing=up]\";\n  const lodestone = \"minecraft:lodestone\";\n  const ironTrapdoor = \"minecraft:iron_trapdoor[half=top]\";\n\n  // 3D voxel working grid\n  const grid = Array.from({ length: sizeX }, () =>\n    Array.from({ length: sizeY }, () => new Array(sizeZ).fill(null))\n  );\n\n  function set(x, y, z, block) {\n    if (x >= 0 && x < sizeX && y >= 0 && y < sizeY && z >= 0 && z < sizeZ) {\n      grid[x][y][z] = block;\n    }\n  }\n\n  function get(x, y, z) {\n    if (x >= 0 && x < sizeX && y >= 0 && y < sizeY && z >= 0 && z < sizeZ) {\n      return grid[x][y][z];\n    }\n    return null;\n  }\n\n  function isSolid(x, y, z) {\n    const b = get(x, y, z);\n    return b !== null && !b.includes(\"vine\") && !b.includes(\"carpet\");\n  }\n\n  // Seeded PRNG helpers\n  function rand() {\n    return api.random();\n  }\n\n  // --- 1. BASE LEVEL (Y = 0) FOUNDATION & APPROACH TRENCH ---\n  for (let x = 0; x < sizeX; x++) {\n    for (let z = 0; z < sizeZ; z++) {\n      // Approach trench floor (Z: 0..13, X: 13..18)\n      if (z <= 13 && x >= 13 && x <= 18) {\n        if (x === 15 || x === 16) {\n          set(x, 0, z, conduitGlow); // Glowing center conduit strip\n        } else if ((x + z) % 3 === 0) {\n          set(x, 0, z, blastArmor);\n        } else {\n          set(x, 0, z, pavement);\n        }\n      }\n      // Bunker interior floor (X: 10..21, Z: 14..26)\n      else if (x >= 10 && x <= 21 && z >= 14 && z <= 26) {\n        if (x === 15 || x === 16) {\n          set(x, 0, z, conduitGlow);\n        } else if (z === 20 || z === 21) {\n          set(x, 0, z, conduitPipe);\n        } else {\n          set(x, 0, z, (x + z) % 2 === 0 ? blastTile : blastArmor);\n        }\n      }\n      // Massive foundation base\n      else {\n        set(x, 0, z, (x * z) % 5 === 0 ? plinth : concrete);\n      }\n    }\n  }\n\n  // --- 2. RUINED SKYSCRAPER CORNER PILLARS ---\n  // Pillar 1: North-West Pillar (X: 2..6, Z: 2..6)\n  for (let x = 2; x <= 6; x++) {\n    for (let z = 2; z <= 6; z++) {\n      const topH = 13 + Math.floor(rand() * 4);\n      for (let y = 1; y <= topH; y++) {\n        set(x, y, z, rand() < 0.7 ? concrete : concreteAccent);\n      }\n      // Rebar steel exposed\n      if (rand() < 0.4) {\n        set(x, topH + 1, z, ironBars);\n        if (rand() < 0.5) set(x, topH + 2, z, lightningRod);\n      }\n    }\n  }\n\n  // Pillar 2: North-East Pillar (X: 25..29, Z: 2..6)\n  for (let x = 25; x <= 29; x++) {\n    for (let z = 2; z <= 6; z++) {\n      const topH = 11 + Math.floor(rand() * 4);\n      for (let y = 1; y <= topH; y++) {\n        set(x, y, z, rand() < 0.75 ? concrete : blastArmor);\n      }\n      if (rand() < 0.45) {\n        set(x, topH + 1, z, ironBars);\n      }\n    }\n  }\n\n  // Pillar 3: South-West Pillar (Main Tower Column & Comm Mast, X: 2..7, Z: 24..29)\n  for (let x = 2; x <= 7; x++) {\n    for (let z = 24; z <= 29; z++) {\n      for (let y = 1; y <= 18; y++) {\n        set(x, y, z, (x === 2 || z === 29) ? blastArmor : concrete);\n      }\n    }\n  }\n  // Vertical high-tech power trunk on SW pillar\n  for (let y = 1; y <= 18; y++) {\n    if (y % 4 === 0) {\n      set(6, y, 24, conduitGlow);\n    } else {\n      set(6, y, 24, conduitPipe);\n    }\n  }\n\n  // Solar & Comm Array Platform on top of SW Pillar (Y = 19..21)\n  for (let x = 2; x <= 7; x++) {\n    for (let z = 24; z <= 29; z++) {\n      set(x, 19, z, metalCore);\n    }\n  }\n  // Perimeter guard railing\n  for (let x = 2; x <= 7; x++) {\n    set(x, 20, 24, ironBars);\n    set(x, 20, 29, ironBars);\n  }\n  for (let z = 24; z <= 29; z++) {\n    set(2, 20, z, ironBars);\n    set(7, 20, z, ironBars);\n  }\n  // Solar panels and sensor dish\n  set(4, 20, 26, solarPanel);\n  set(5, 20, 26, solarPanel);\n  set(4, 20, 27, solarPanel);\n  set(5, 20, 27, solarPanel);\n  set(3, 20, 25, lodestone);\n  set(3, 21, 25, ironBars);\n  set(3, 21, 25, lightningRod);\n  set(6, 20, 28, conduitGlow);\n  set(6, 21, 28, lightningRod);\n\n  // Pillar 4: South-East Pillar (X: 25..29, Z: 24..29)\n  for (let x = 25; x <= 29; x++) {\n    for (let z = 24; z <= 29; z++) {\n      const topH = 14 + Math.floor(rand() * 3);\n      for (let y = 1; y <= topH; y++) {\n        set(x, y, z, rand() < 0.7 ? concrete : concreteAccent);\n      }\n      if (rand() < 0.4) {\n        set(x, topH + 1, z, ironBars);\n      }\n    }\n  }\n\n  // --- 3. REINFORCED BUNKER CASING & BLAST WALLS ---\n  // Outer bunker shell bounding box: X: 8..23, Z: 7..28, Y: 1..8\n  for (let x = 8; x <= 23; x++) {\n    for (let z = 7; z <= 28; z++) {\n      for (let y = 1; y <= 8; y++) {\n        const isWallX = (x <= 9 || x >= 22);\n        const isWallZ = (z === 7 || z === 8 || z >= 27);\n        const isRoof = (y >= 7);\n        const isDivider = (z === 13);\n\n        if (isWallX || isWallZ || isRoof || isDivider) {\n          if (y === 7 && (x === 15 || x === 16) && z >= 8 && z <= 26) {\n            set(x, y, z, conduitGlow); // Ceiling conduit run\n          } else if (isRoof) {\n            set(x, y, z, (x + z) % 3 === 0 ? blastArmor : blastTile);\n          } else {\n            set(x, y, z, (y === 1 || y === 6) ? blastArmor : blastBricks);\n          }\n        }\n      }\n    }\n  }\n\n  // Generator & ventilation module on bunker roof (X: 9..12, Z: 9..12, Y: 8..9)\n  for (let x = 9; x <= 12; x++) {\n    for (let z = 9; z <= 12; z++) {\n      set(x, 8, z, metalCore);\n      if (x === 10 && z === 10) {\n        set(x, 9, z, \"minecraft:blast_furnace[facing=north]\");\n      } else if (x === 11 && z === 10) {\n        set(x, 9, z, conduitGlow);\n      } else {\n        set(x, 9, z, ironTrapdoor);\n      }\n    }\n  }\n\n  // --- 4. THE BLAST DOOR & AIRLOCK PORTAL (Z: 6..8, X: 11..20) ---\n  // Heavy portal framing\n  for (let x = 11; x <= 20; x++) {\n    for (let y = 1; y <= 6; y++) {\n      // Outer jambs and lintel at Z=7\n      if (x <= 13 || x >= 18 || y >= 5) {\n        set(x, y, 7, metalCore);\n        set(x, y, 6, blastArmor);\n      }\n    }\n  }\n\n  // Warning hazard striping along the entrance base\n  set(12, 1, 6, yellowHaz);\n  set(13, 1, 6, blackHaz);\n  set(18, 1, 6, blackHaz);\n  set(19, 1, 6, yellowHaz);\n  set(12, 2, 6, blackHaz);\n  set(13, 2, 6, yellowHaz);\n  set(18, 2, 6, yellowHaz);\n  set(19, 2, 6, blackHaz);\n\n  // Status lamps above blast door\n  set(15, 5, 6, conduitGlow);\n  set(16, 5, 6, conduitGlow);\n\n  // Blast Door leaves at Z = 8 (Heavy hydraulic mechanism, partially opened)\n  for (let y = 1; y <= 4; y++) {\n    set(13, y, 8, metalCore);\n    set(14, y, 8, blastArmor);\n    set(17, y, 8, blastArmor);\n    set(18, y, 8, metalCore);\n  }\n  // Overhead hydraulic gate track\n  for (let x = 14; x <= 17; x++) {\n    set(x, 4, 7, ironBars);\n  }\n\n  // Security scanner / biometric terminal\n  set(12, 2, 5, lodestone);\n  set(12, 3, 5, lightningRod);\n\n  // Trench side retaining walls (Z: 1..6)\n  for (let z = 1; z <= 6; z++) {\n    for (let y = 1; y <= 5; y++) {\n      set(12, y, z, blastArmor);\n      set(19, y, z, blastArmor);\n    }\n  }\n\n  // Trench perimeter sensor pylons at Z = 1\n  set(12, 1, 1, metalCore);\n  set(12, 2, 1, ironBars);\n  set(12, 3, 1, lightningRod);\n  set(19, 1, 1, metalCore);\n  set(19, 2, 1, ironBars);\n  set(19, 3, 1, lightningRod);\n\n  // --- 5. COLLAPSED SKYSCRAPER PANCAKED SLABS & RUBBLE ---\n  // Massive sloping floor slab leaning from Pillar 3 over the bunker\n  for (let x = 4; x <= 26; x++) {\n    for (let z = 12; z <= 26; z++) {\n      const ySlope = Math.round(16 - (x - 4) * 0.35 - (26 - z) * 0.28);\n      if (ySlope >= 8 && ySlope <= 17) {\n        set(x, ySlope, z, rand() < 0.7 ? concrete : concreteAccent);\n        set(x, ySlope - 1, z, concrete);\n        // Vegetation growing in cracks\n        if (rand() < 0.25) {\n          set(x, ySlope + 1, z, rand() < 0.5 ? moss : leaves2);\n        }\n      }\n    }\n  }\n\n  // Broken overhang slab above the blast entrance (X: 8..23, Z: 3..8, Y: 8..9)\n  for (let x = 8; x <= 23; x++) {\n    for (let z = 3; z <= 8; z++) {\n      if (z >= 6 || (x >= 10 && x <= 21 && rand() < 0.8)) {\n        set(x, 8, z, concrete);\n        set(x, 9, z, rand() < 0.5 ? concreteAccent : moss);\n      }\n    }\n  }\n  // Rebar hanging from the shattered front edge\n  for (let x = 9; x <= 22; x += 2) {\n    if (get(x, 8, 4) !== null) {\n      set(x, 8, 3, ironBars);\n    }\n  }\n\n  // Retaining rubble banks on the West and East flanks\n  for (let z = 6; z <= 26; z++) {\n    // West rubble mound\n    for (let x = 0; x <= 7; x++) {\n      const maxH = Math.min(7, Math.floor(x * 0.9 + (z > 16 ? 2 : 1)));\n      for (let y = 1; y <= maxH; y++) {\n        set(x, y, z, rand() < 0.6 ? concrete : plinth);\n      }\n      if (maxH >= 1 && rand() < 0.3) {\n        set(x, maxH + 1, z, moss);\n      }\n    }\n    // East rubble mound\n    for (let x = 24; x <= 31; x++) {\n      const maxH = Math.min(7, Math.floor((31 - x) * 0.9 + (z > 16 ? 2 : 1)));\n      for (let y = 1; y <= maxH; y++) {\n        set(x, y, z, rand() < 0.6 ? concrete : plinth);\n      }\n      if (maxH >= 1 && rand() < 0.3) {\n        set(x, maxH + 1, z, moss);\n      }\n    }\n  }\n\n  // --- 6. MAKESHIFT CAMOUFLAGE NETTING OVER ENTRANCE TRENCH ---\n  // Overhead cable suspension grid at Y = 6..7 spanning X: 11..20, Z: 1..7\n  for (let x = 12; x <= 19; x++) {\n    for (let z = 1; z <= 6; z++) {\n      const isCable = (x === 13 || x === 15 || x === 17 || x === 19 || z === 2 || z === 4 || z === 6);\n      if (isCable) {\n        set(x, 6, z, chainZ);\n      }\n      // Draped camouflage canopy\n      if (rand() < 0.68) {\n        const leafType = rand() < 0.4 ? leaves1 : (rand() < 0.7 ? leaves2 : moss);\n        set(x, 7, z, leafType);\n      }\n      // Hanging foliage strands\n      if (rand() < 0.2) {\n        set(x, 5, z, leaves2);\n        if (rand() < 0.3) set(x, 4, z, leaves2);\n      }\n    }\n  }\n\n  // --- 7. SANCTUARY INTERIOR AIR CLEARANCE ---\n  // Ensure the airlock tunnel is completely walk-through\n  for (let x = 14; x <= 17; x++) {\n    for (let z = 0; z <= 13; z++) {\n      for (let y = 1; y <= 4; y++) {\n        // Keep clear walk path (blast door panels are on x=13..14, 17..18 at z=8)\n        if (z !== 8 || (x === 15 || x === 16)) {\n          set(x, y, z, null);\n        }\n      }\n    }\n  }\n\n  // Internal blast door dividing vestibule from main hall (Z = 13)\n  for (let x = 14; x <= 17; x++) {\n    for (let y = 1; y <= 4; y++) {\n      set(x, y, 13, null); // Open archway into the main hall\n    }\n  }\n\n  // Completely carve out the high-tech bunker interior hall\n  for (let x = 10; x <= 21; x++) {\n    for (let z = 14; z <= 26; z++) {\n      for (let y = 1; y <= 6; y++) {\n        set(x, y, z, null);\n      }\n    }\n  }\n\n  // Interior corner conduit columns\n  const corners = [\n    [10, 14], [21, 14], [10, 26], [21, 26]\n  ];\n  for (const [cx, cz] of corners) {\n    for (let y = 1; y <= 6; y++) {\n      set(cx, y, cz, (y === 2 || y === 5) ? conduitGlow : conduitPipe);\n    }\n  }\n\n  // --- 8. VINES & HANGING VEGETATION ON EXTERIOR WALLS ---\n  function tryAddVine(x, y, z) {\n    if (get(x, y, z) !== null) return;\n    if (z > 0 && isSolid(x, y, z - 1)) {\n      set(x, y, z, \"minecraft:vine[north=true]\");\n    } else if (z < sizeZ - 1 && isSolid(x, y, z + 1)) {\n      set(x, y, z, \"minecraft:vine[south=true]\");\n    } else if (x > 0 && isSolid(x - 1, y, z)) {\n      set(x, y, z, \"minecraft:vine[west=true]\");\n    } else if (x < sizeX - 1 && isSolid(x + 1, y, z)) {\n      set(x, y, z, \"minecraft:vine[east=true]\");\n    }\n  }\n\n  for (let x = 0; x < sizeX; x++) {\n    for (let z = 0; z < sizeZ; z++) {\n      // Hang vines down exterior faces\n      for (let y = 2; y <= 12; y++) {\n        if (rand() < 0.12) {\n          tryAddVine(x, y, z);\n        }\n      }\n    }\n  }\n\n  // --- 9. EMIT TO WORLD API ---\n  for (let x = 0; x < sizeX; x++) {\n    for (let y = 0; y < sizeY; y++) {\n      for (let z = 0; z < sizeZ; z++) {\n        const block = grid[x][y][z];\n        if (block !== null) {\n          api.set(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"high_tech_sanctuary_bunker\",\n    seatY: 0,\n    anchors: {\n      front: [15, 1, 0],\n      door: [15, 1, 7],\n      comm_array: [3, 21, 25]\n    },\n    interiors: [\n      {\n        min: [10, 1, 14],\n        max: [21, 6, 26],\n        kind: \"bunker\"\n      }\n    ]\n  };\n}"
+    },
+    "overgrown_skyscraper_skeleton": {
+      "mode": "plugin",
+      "envelope": [
+        18,
+        42,
+        18
+      ],
+      "sourceHash": "b3:f76968b13703863dfd65221993b7186105fc30d5927bcad28e72c3eb4c7359f7",
+      "outputHash": "b3:b351735d5a006fbff5c4eba65249154ca0d0db4b459124084f0edc03e5484f44",
+      "source": "export const envelope = [18, 42, 18];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n  const rnd = () => api.random();\n  const instIdx = api.instance?.index ?? 0;\n\n  // 3D Buffer\n  const grid = new Array(W * H * D).fill(null);\n  const idx = (x, y, z) => (x * H + y) * D + z;\n  const setG = (x, y, z, b) => {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      grid[idx(x, y, z)] = b;\n    }\n  };\n  const getG = (x, y, z) => {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      return grid[idx(x, y, z)];\n    }\n    return null;\n  };\n\n  // Palette resolution\n  const stonePri = api.theme?.stone?.primary || \"minecraft:gray_concrete\";\n  const stoneAcc = api.theme?.stone?.accent || \"minecraft:stone_bricks\";\n\n  function concreteMat() {\n    const r = rnd();\n    if (r < 0.35) return stonePri;\n    if (r < 0.58) return stoneAcc;\n    if (r < 0.76) return \"minecraft:cracked_stone_bricks\";\n    if (r < 0.88) return \"minecraft:mossy_stone_bricks\";\n    return \"minecraft:polished_andesite\";\n  }\n\n  function leafMat() {\n    const r = rnd();\n    if (r < 0.5) return \"minecraft:azalea_leaves[persistent=true]\";\n    if (r < 0.75) return \"minecraft:flowering_azalea_leaves[persistent=true]\";\n    return \"minecraft:oak_leaves[persistent=true]\";\n  }\n\n  // Instance specific procedural parameters\n  const slantAngle = (instIdx * 1.047 + rnd() * 0.45) % (Math.PI * 2);\n  const peakH = 33 + Math.floor(rnd() * 8); // 33..40\n  const dropH = 12 + Math.floor(rnd() * 8); // 12..19\n  const foliageDensity = 0.3 + (instIdx % 3) * 0.15 + rnd() * 0.1;\n  const sanctFloorIdx = instIdx % 2 === 0 ? 2 : 3; // Floor 2 (Y=15) or Floor 3 (Y=22)\n  const floorLevels = [1, 8, 15, 22, 29, 36];\n  const sanctFloorY = floorLevels[sanctFloorIdx];\n\n  // Ruin shear plane profile\n  function getMaxY(x, z) {\n    const nx = (x - 8.5) / 8.5;\n    const nz = (z - 8.5) / 8.5;\n    const proj = Math.cos(slantAngle) * nx + Math.sin(slantAngle) * nz;\n    const raw = peakH - (proj + 1) * 0.5 * dropH;\n    const roughness = Math.sin(x * 2.1 + z * 1.7) * 1.8;\n    return Math.max(8, Math.min(H - 2, Math.floor(raw + roughness)));\n  }\n\n  // 1. Structural Columns\n  const colPositions = [\n    { minX: 2, maxX: 4, minZ: 2, maxZ: 4, cutX: 4, cutZ: 4 },     // NW\n    { minX: 13, maxX: 15, minZ: 2, maxZ: 4, cutX: 13, cutZ: 4 },  // NE\n    { minX: 2, maxX: 4, minZ: 13, maxZ: 15, cutX: 4, cutZ: 13 },  // SW\n    { minX: 13, maxX: 15, minZ: 13, maxZ: 15, cutX: 13, cutZ: 13 }// SE\n  ];\n\n  // Column individual break heights\n  const colHeights = colPositions.map((c, i) => {\n    const midX = (c.minX + c.maxX) / 2;\n    const midZ = (c.minZ + c.maxZ) / 2;\n    const maxPoss = getMaxY(midX, midZ);\n    // Introduce random severe breaks on certain columns\n    if ((instIdx + i) % 4 === 1 && maxPoss > 20) {\n      return 16 + Math.floor(rnd() * 8);\n    }\n    return Math.max(12, maxPoss - Math.floor(rnd() * 3));\n  });\n\n  colPositions.forEach((col, i) => {\n    const colH = colHeights[i];\n    for (let x = col.minX; x <= col.maxX; x++) {\n      for (let z = col.minZ; z <= col.maxZ; z++) {\n        // Cut inner corner to form an L-shaped mega column\n        if (x === col.cutX && z === col.cutZ) continue;\n\n        const isCore = (x === col.minX + 1 || x === col.maxX - 1) &&\n                       (z === col.minZ + 1 || z === col.maxZ - 1);\n\n        for (let y = 0; y <= colH; y++) {\n          if (isCore && rnd() < 0.25) {\n            setG(x, y, z, \"minecraft:iron_bars\");\n          } else {\n            setG(x, y, z, concreteMat());\n          }\n        }\n\n        // Exposed rebar tendrils rising out of sheared concrete\n        const rebarH = 1 + Math.floor(rnd() * 4);\n        for (let y = colH + 1; y <= Math.min(H - 1, colH + rebarH); y++) {\n          if (rnd() < 0.7) {\n            setG(x, y, z, y === colH + rebarH && rnd() < 0.4 ? \"minecraft:lightning_rod[facing=up]\" : \"minecraft:iron_bars\");\n          }\n        }\n      }\n    }\n  });\n\n  // 2. Central Elevator & Service Core\n  const coreH = Math.min(getMaxY(8.5, 8.5), 38);\n  for (let y = 0; y <= coreH; y++) {\n    for (let x = 7; x <= 10; x++) {\n      for (let z = 7; z <= 10; z++) {\n        const isWall = (x === 7 || x === 10 || z === 7 || z === 10);\n        const isDoor = (z === 7 && (x === 8 || x === 9) && floorLevels.some(fl => y >= fl + 1 && y <= fl + 3));\n\n        if (isWall && !isDoor) {\n          // Weathered shaft walls with occasional collapse holes\n          if (y > 24 && rnd() < 0.15) continue;\n          setG(x, y, z, concreteMat());\n        }\n      }\n    }\n\n    // Inside Elevator Shaft: Maintenance Ladder & Hanging Cable\n    if (y > 0) {\n      setG(8, y, 9, \"minecraft:ladder[facing=north]\");\n      setG(9, y, 8, \"minecraft:chain[axis=y]\");\n    }\n  }\n\n  // Dangling crushed elevator car in the shaft\n  const carY = 3 + Math.floor(rnd() * 8);\n  for (let cx = 8; cx <= 9; cx++) {\n    for (let cz = 8; cz <= 9; cz++) {\n      setG(cx, carY, cz, \"minecraft:polished_andesite\");\n      setG(cx, carY + 2, cz, \"minecraft:smooth_stone_slab\");\n      setG(cx, carY + 1, cz, \"minecraft:iron_bars\");\n    }\n  }\n\n  // 3. Floors & Collapsed Slabs\n  floorLevels.forEach((flY, flIdx) => {\n    if (flY >= peakH - 4) return;\n    const isSanctuary = (flY === sanctFloorY);\n\n    // Perimeter Main Beams connecting columns\n    for (let x = 2; x <= 15; x++) {\n      if (flY <= getMaxY(x, 2)) setG(x, flY, 2, concreteMat());\n      if (flY <= getMaxY(x, 15)) setG(x, flY, 15, concreteMat());\n    }\n    for (let z = 2; z <= 15; z++) {\n      if (flY <= getMaxY(2, z)) setG(2, flY, z, concreteMat());\n      if (flY <= getMaxY(15, z)) setG(15, flY, z, concreteMat());\n    }\n\n    // Cross-struts to elevator core\n    for (let x = 4; x <= 7; x++) {\n      if (flY <= getMaxY(x, 8)) setG(x, flY, 8, concreteMat());\n    }\n    for (let x = 10; x <= 13; x++) {\n      if (flY <= getMaxY(x, 9)) setG(x, flY, 9, concreteMat());\n    }\n    for (let z = 4; z <= 7; z++) {\n      if (flY <= getMaxY(8, z)) setG(8, flY, z, concreteMat());\n    }\n    for (let z = 10; z <= 13; z++) {\n      if (flY <= getMaxY(9, z)) setG(9, flY, z, concreteMat());\n    }\n\n    // Floor Slab Collapse Geometry\n    const holeX = 4 + rnd() * 10;\n    const holeZ = 4 + rnd() * 10;\n    const holeR = 3.5 + rnd() * 4.0;\n\n    for (let x = 3; x <= 14; x++) {\n      for (let z = 3; z <= 14; z++) {\n        // Skip inside elevator shaft\n        if (x >= 8 && x <= 9 && z >= 8 && z <= 9) continue;\n        if (flY > getMaxY(x, z)) continue;\n\n        // Protected Sanctuary Zone (NE quadrant on designated floor)\n        const inSanctuary = isSanctuary && (x >= 9 && x <= 15 && z >= 2 && z <= 8);\n\n        if (inSanctuary) {\n          setG(x, flY, z, \"minecraft:smooth_stone\");\n          continue;\n        }\n\n        const dist = Math.hypot(x - holeX, z - holeZ);\n        if (dist < holeR && flIdx > 0) {\n          // Collapsed area: exposed bent rebar fringe\n          if (dist > holeR - 1.4 && rnd() < 0.45) {\n            setG(x, flY, z, \"minecraft:iron_bars\");\n          }\n          // Dropped rubble onto the floor slab below\n          if (flIdx > 0 && rnd() < 0.3) {\n            const lowerY = floorLevels[flIdx - 1] + 1;\n            if (getG(x, lowerY - 1, z) !== null && getG(x, lowerY, z) === null) {\n              setG(x, lowerY, z, rnd() < 0.5 ? \"minecraft:cracked_stone_bricks\" : \"minecraft:cobblestone\");\n            }\n          }\n        } else {\n          setG(x, flY, z, concreteMat());\n        }\n      }\n    }\n  });\n\n  // 4. High-Tech Survivor Sanctuary Outpost\n  // Enclose the fortified sector on sanctFloorY (NE corner: x:9..15, z:2..8)\n  const sFloor = sanctFloorY;\n  const sCeil = sFloor + 5;\n\n  // Ceiling for the sanctuary\n  for (let x = 9; x <= 15; x++) {\n    for (let z = 2; z <= 8; z++) {\n      setG(x, sCeil, z, \"minecraft:gray_concrete\");\n    }\n  }\n\n  // Fortified exterior walls & observation slits\n  for (let y = sFloor + 1; y < sCeil; y++) {\n    for (let x = 9; x <= 15; x++) {\n      // North exterior wall\n      if (y === sFloor + 2 || y === sFloor + 3) {\n        setG(x, y, 2, \"minecraft:tinted_glass\");\n      } else {\n        setG(x, y, 2, \"minecraft:gray_concrete\");\n      }\n    }\n    for (let z = 2; z <= 8; z++) {\n      // East exterior wall\n      if (y === sFloor + 2 || y === sFloor + 3) {\n        setG(15, y, z, \"minecraft:tinted_glass\");\n      } else {\n        setG(15, y, z, \"minecraft:gray_concrete\");\n      }\n    }\n  }\n\n  // Interior Bulkhead Partition & Airlock Doorway (West and South walls of room)\n  for (let y = sFloor + 1; y < sCeil; y++) {\n    for (let z = 2; z <= 8; z++) {\n      const isDoor = (z === 5 && (y === sFloor + 1 || y === sFloor + 2));\n      if (!isDoor) {\n        setG(9, y, z, \"minecraft:gray_concrete\");\n      } else {\n        // Bulkhead frame\n        setG(9, sFloor + 3, z, \"minecraft:iron_block\");\n      }\n    }\n    for (let x = 9; x <= 15; x++) {\n      setG(x, y, 8, \"minecraft:gray_concrete\");\n    }\n  }\n\n  // Sanctuary high-tech fittings & exterior comms spar\n  setG(10, sCeil - 1, 3, \"minecraft:sea_lantern\");\n  setG(14, sCeil - 1, 7, \"minecraft:sea_lantern\");\n  setG(14, sFloor + 1, 6, \"minecraft:observer\");\n  setG(14, sFloor + 1, 5, \"minecraft:crying_obsidian\");\n\n  // Cantilevered Communications Antenna Spar (Protruding East)\n  setG(16, sFloor + 1, 5, \"minecraft:iron_block\");\n  setG(17, sFloor + 1, 5, \"minecraft:iron_bars\");\n  setG(17, sFloor + 2, 5, \"minecraft:daylight_detector\");\n  setG(17, sFloor + 3, 5, \"minecraft:lightning_rod[facing=up]\");\n  setG(16, sFloor + 2, 5, \"minecraft:chain[axis=y]\");\n  setG(16, sFloor + 3, 5, \"minecraft:chain[axis=y]\");\n\n  // Clear Sanctuary interior room box for compiler fit-out\n  for (let x = 10; x <= 14; x++) {\n    for (let y = sFloor + 1; y < sCeil; y++) {\n      for (let z = 3; z <= 7; z++) {\n        if (x === 14 && z >= 5 && z <= 6 && y === sFloor + 1) continue; // Keep console\n        setG(x, y, z, null);\n      }\n    }\n  }\n\n  // 5. Overgrowth, Ivy Tendrils & Hanging Foliage\n  for (let x = 1; x < W - 1; x++) {\n    for (let z = 1; z < D - 1; z++) {\n      for (let y = 1; y < H - 1; y++) {\n        const b = getG(x, y, z);\n        if (!b) continue;\n\n        // Skip modifying sanctuary interior\n        if (x >= 9 && x <= 15 && z >= 2 && z <= 8 && y >= sFloor && y <= sCeil) continue;\n\n        // A. Moss & Leaves on exposed upper surfaces\n        if (getG(x, y + 1, z) === null) {\n          const r = rnd();\n          if (r < foliageDensity * 0.45) {\n            setG(x, y, z, \"minecraft:moss_block\");\n            if (rnd() < 0.35 && y + 1 < H) {\n              setG(x, y + 1, z, \"minecraft:moss_carpet\");\n            }\n          } else if (r < foliageDensity * 0.85 && y + 1 < H) {\n            setG(x, y + 1, z, leafMat());\n          }\n        }\n\n        // B. Leaves draped around structural perimeter edges\n        if ((x <= 4 || x >= 13 || z <= 4 || z >= 13) && rnd() < foliageDensity * 0.3) {\n          if (getG(x, y + 1, z) === null && y + 1 < H) {\n            setG(x, y + 1, z, leafMat());\n          }\n        }\n      }\n    }\n  }\n\n  // C. Hanging Vines on vertical walls\n  for (let x = 1; x < W - 1; x++) {\n    for (let z = 1; z < D - 1; z++) {\n      for (let y = 2; y < H - 2; y++) {\n        if (getG(x, y, z) !== null) continue; // Must be air\n\n        // Check adjacent solid blocks\n        const nSolid = getG(x, y, z - 1) !== null;\n        const sSolid = getG(x, y, z + 1) !== null;\n        const wSolid = getG(x - 1, y, z) !== null;\n        const eSolid = getG(x + 1, y, z) !== null;\n\n        if ((nSolid || sSolid || wSolid || eSolid) && rnd() < foliageDensity * 0.35) {\n          const faces = [];\n          if (nSolid) faces.push(\"north=true\");\n          if (sSolid) faces.push(\"south=true\");\n          if (wSolid) faces.push(\"west=true\");\n          if (eSolid) faces.push(\"east=true\");\n\n          if (faces.length > 0) {\n            const vineState = `minecraft:vine[${faces.join(\",\")}]`;\n            setG(x, y, z, vineState);\n\n            // Dangle vine downward\n            let vy = y - 1;\n            const maxDangle = 1 + Math.floor(rnd() * 4);\n            while (vy > 0 && y - vy <= maxDangle && getG(x, vy, z) === null) {\n              setG(x, vy, z, vineState);\n              vy--;\n            }\n          }\n        }\n      }\n    }\n  }\n\n  // 6. Connectivity Enforcement (Single 6-Connected Solid Component)\n  const visited = new Uint8Array(W * H * D);\n  const queue = [];\n\n  // Seed BFS from all solid base voxels at Y=0\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      if (getG(x, 0, z) !== null) {\n        const i = idx(x, 0, z);\n        visited[i] = 1;\n        queue.push(x, 0, z);\n      }\n    }\n  }\n\n  let head = 0;\n  const dirs = [\n    [1, 0, 0], [-1, 0, 0],\n    [0, 1, 0], [0, -1, 0],\n    [0, 0, 1], [0, 0, -1]\n  ];\n\n  while (head < queue.length) {\n    const cx = queue[head++];\n    const cy = queue[head++];\n    const cz = queue[head++];\n\n    for (let d = 0; d < 6; d++) {\n      const nx = cx + dirs[d][0];\n      const ny = cy + dirs[d][1];\n      const nz = cz + dirs[d][2];\n\n      if (nx >= 0 && nx < W && ny >= 0 && ny < H && nz >= 0 && nz < D) {\n        const ni = idx(nx, ny, nz);\n        if (!visited[ni] && getG(nx, ny, nz) !== null) {\n          visited[ni] = 1;\n          queue.push(nx, ny, nz);\n        }\n      }\n    }\n  }\n\n  // Remove any detached floating fragments\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const i = idx(x, y, z);\n        if (!visited[i] && grid[i] !== null) {\n          grid[i] = null;\n        }\n      }\n    }\n  }\n\n  // 7. Ground Foundation & Terrain Following\n  for (let x = 0; x < W; x++) {\n    for (let z = 0; z < D; z++) {\n      if (getG(x, 0, z) !== null) {\n        const groundH = Math.floor(api.heightAt(x, z));\n        // Fill downwards if ground drops away\n        for (let y = Math.min(0, groundH); y <= 0; y++) {\n          if (y >= 0 && y < H) {\n            setG(x, y, z, concreteMat());\n          }\n        }\n      }\n    }\n  }\n\n  // 8. Commit to World\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const block = getG(x, y, z);\n        if (block !== null) {\n          api.set(x, y, z, block);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"overgrown_skyscraper_skeleton\",\n    seatY: 0,\n    anchors: {\n      front: [8, 1, 0],\n      door: [8, 1, 7],\n      sanctuary: [12, sFloor + 1, 5]\n    },\n    interiors: [\n      {\n        min: [10, sFloor + 1, 3],\n        max: [14, sCeil - 1, 7],\n        kind: \"laboratory\"\n      }\n    ]\n  };\n}"
+    },
+    "scavenged_sensor_relay": {
+      "mode": "plugin",
+      "envelope": [
+        9,
+        20,
+        9
+      ],
+      "sourceHash": "b3:fcb678dfc9bb535d5d861fe7c6fb3bd17114041aea366b0683402f4df53996bf",
+      "outputHash": "b3:7d00e234e11dbd9a6845cd0bffb3d5484812970bee527bf0276154ce6dfaa377",
+      "source": "export const envelope = [9, 20, 9];\n\nexport default function build(api) {\n  const { instance, theme } = api;\n  const idx = instance.index;\n  const rng = () => api.random();\n\n  const W = 9, H = 20, D = 9;\n  const grid = Array.from({ length: W }, () =>\n    Array.from({ length: H }, () =>\n      Array(D).fill(null)\n    )\n  );\n\n  function put(x, y, z, block) {\n    x = Math.round(x);\n    y = Math.round(y);\n    z = Math.round(z);\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      grid[x][y][z] = block;\n    }\n  }\n\n  function get(x, y, z) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      return grid[x][y][z];\n    }\n    return null;\n  }\n\n  // Theme palettes and fallbacks\n  const stonePrimary = theme.stone?.primary || \"minecraft:polished_andesite\";\n  const stoneAccent = theme.stone?.accent || \"minecraft:chiseled_stone_bricks\";\n  const stoneWall = theme.stone?.wall || \"minecraft:andesite_wall\";\n  const stoneSlab = theme.stone?.slab || \"minecraft:smooth_stone_slab\";\n  const plinth = theme.ground?.plinth || \"minecraft:smooth_stone\";\n  const pavement = theme.ground?.pavement || \"minecraft:stone_bricks\";\n\n  // -------------------------------------------------------------\n  // 1. BASE PLINTH & GROUND FOOTING (y = 0)\n  // -------------------------------------------------------------\n  for (let x = 1; x <= 7; x++) {\n    for (let z = 1; z <= 7; z++) {\n      const dx = Math.abs(x - 4);\n      const dz = Math.abs(z - 4);\n      if (dx <= 3 && dz <= 3) {\n        put(x, 0, z, (dx === 3 || dz === 3) ? plinth : pavement);\n      }\n    }\n  }\n\n  // Corner ground footings\n  const footings = [[1, 1], [7, 1], [1, 7], [7, 7]];\n  for (const [fx, fz] of footings) {\n    put(fx, 0, fz, stoneAccent);\n    put(fx, 1, fz, stoneWall);\n  }\n\n  // -------------------------------------------------------------\n  // 2. LOWER CHASSIS / GENERATOR BUNKER (y = 1 to 4)\n  // -------------------------------------------------------------\n  for (let y = 1; y <= 3; y++) {\n    for (let x = 2; x <= 6; x++) {\n      for (let z = 2; z <= 6; z++) {\n        const isCorner = (x === 2 || x === 6) && (z === 2 || z === 6);\n        const isEdge = x === 2 || x === 6 || z === 2 || z === 6;\n\n        if (isCorner) {\n          put(x, y, z, stoneAccent);\n        } else if (isEdge) {\n          put(x, y, z, stonePrimary);\n        } else {\n          // Internal machinery / server cluster\n          if (y === 1) {\n            put(x, y, z, (x === 4 && z === 4) ? \"minecraft:lodestone\" : \"minecraft:iron_block\");\n          } else if (y === 2) {\n            put(x, y, z, (x === 4 && z === 4) ? \"minecraft:crying_obsidian\" : \"minecraft:target\");\n          } else {\n            put(x, y, z, \"minecraft:iron_block\");\n          }\n        }\n      }\n    }\n  }\n\n  // North front terminal console (facing z = 0)\n  put(4, 1, 2, \"minecraft:observer[facing=north]\");\n  put(4, 2, 2, \"minecraft:observer[facing=north]\");\n  put(4, 1, 1, \"minecraft:heavy_weighted_pressure_plate\");\n\n  // Vents and side machinery\n  put(2, 2, 4, \"minecraft:iron_bars\");\n  put(6, 2, 4, \"minecraft:iron_bars\");\n  put(4, 2, 6, \"minecraft:iron_bars\");\n\n  // Side battery banks (West & East outriggers)\n  for (let z = 3; z <= 5; z++) {\n    put(1, 1, z, \"minecraft:weathered_copper\");\n    put(1, 2, z, \"minecraft:weathered_copper\");\n    put(1, 3, z, \"minecraft:iron_bars\");\n\n    put(7, 1, z, \"minecraft:oxidized_copper\");\n    put(7, 2, z, \"minecraft:oxidized_copper\");\n    put(7, 3, z, \"minecraft:iron_bars\");\n  }\n\n  // Chassis roof deck & collar (y = 4)\n  for (let x = 2; x <= 6; x++) {\n    for (let z = 2; z <= 6; z++) {\n      const isCorner = (x === 2 || x === 6) && (z === 2 || z === 6);\n      put(x, 4, z, isCorner ? stoneAccent : plinth);\n    }\n  }\n  put(4, 4, 4, \"minecraft:iron_block\");\n\n  // -------------------------------------------------------------\n  // 3. CENTRAL LATTICE MAST & CONDUIT (y = 5 to 10)\n  // -------------------------------------------------------------\n  const mastCorners = [[3, 3], [5, 3], [3, 5], [5, 5]];\n  for (let y = 5; y <= 10; y++) {\n    // 4 Corner structural pillars\n    for (const [cx, cz] of mastCorners) {\n      put(cx, y, cz, stoneWall);\n    }\n\n    // Central core conduit\n    if (y % 2 === 1) {\n      put(4, y, 4, \"minecraft:iron_block\");\n    } else {\n      put(4, y, 4, \"minecraft:lodestone\");\n    }\n\n    // Horizontal truss bracing at y=6, y=8, y=10\n    if (y === 6 || y === 8 || y === 10) {\n      put(4, y, 3, \"minecraft:iron_bars\");\n      put(4, y, 5, \"minecraft:iron_bars\");\n      put(3, y, 4, \"minecraft:iron_bars\");\n      put(5, y, 4, \"minecraft:iron_bars\");\n    }\n\n    // Trailing scavenged wire conduits\n    put(4, y, 2, \"minecraft:chain[axis=y]\");\n    put(2, y, 4, \"minecraft:iron_bars\");\n  }\n\n  // -------------------------------------------------------------\n  // 4. MID SENSOR CATWALK & EQUIPMENT RING (y = 10 to 12)\n  // -------------------------------------------------------------\n  // Structural subfloor brackets at y=10\n  put(2, 10, 4, stoneWall);\n  put(6, 10, 4, stoneWall);\n  put(4, 10, 2, stoneWall);\n  put(4, 10, 6, stoneWall);\n\n  // Catwalk deck at y=11\n  for (let x = 1; x <= 7; x++) {\n    for (let z = 1; z <= 7; z++) {\n      const dx = Math.abs(x - 4);\n      const dz = Math.abs(z - 4);\n      if (dx <= 2 && dz <= 2) {\n        put(x, 11, z, (dx === 2 || dz === 2) ? stoneSlab : \"minecraft:iron_block\");\n      }\n    }\n  }\n\n  // Parapet railings and telemetry gear at y=12\n  for (let x = 2; x <= 6; x++) {\n    put(x, 12, 2, \"minecraft:iron_bars\");\n    put(x, 12, 6, \"minecraft:iron_bars\");\n  }\n  for (let z = 2; z <= 6; z++) {\n    put(2, 12, z, \"minecraft:iron_bars\");\n    put(6, 12, z, \"minecraft:iron_bars\");\n  }\n\n  // Platform corner instruments\n  put(2, 12, 2, \"minecraft:cauldron\");\n  put(6, 12, 2, \"minecraft:observer[facing=north]\");\n  put(2, 12, 6, \"minecraft:cauldron\");\n  put(6, 12, 6, \"minecraft:observer[facing=south]\");\n\n  // -------------------------------------------------------------\n  // 5. UPPER ARRAYS & SATELLITE DISHES (y = 12 to 19)\n  // -------------------------------------------------------------\n  const variant = idx % 4;\n\n  // Central upper gimbal pedestal\n  put(4, 12, 4, \"minecraft:iron_block\");\n  put(4, 13, 4, \"minecraft:iron_block\");\n  put(4, 14, 4, \"minecraft:lodestone\");\n\n  if (variant === 0) {\n    // --- VARIANT 0: High-Gain Parabolic Comm Dish & Solar Wing ---\n    // Curved parabolic reflector tilted North (-Z)\n    for (let x = 3; x <= 5; x++) put(x, 13, 2, \"minecraft:smooth_quartz\");\n    for (let x = 2; x <= 6; x++) put(x, 14, 2, \"minecraft:smooth_quartz\");\n    for (let x = 2; x <= 6; x++) put(x, 15, 1, \"minecraft:smooth_quartz\");\n    for (let x = 2; x <= 6; x++) put(x, 16, 1, \"minecraft:smooth_quartz\");\n    for (let x = 3; x <= 5; x++) put(x, 17, 0, \"minecraft:smooth_quartz\");\n\n    // Backing support truss\n    for (let x = 3; x <= 5; x++) {\n      put(x, 14, 3, \"minecraft:iron_block\");\n      put(x, 15, 2, \"minecraft:iron_block\");\n      put(x, 16, 2, \"minecraft:iron_block\");\n    }\n\n    // Focal feedhorn arm\n    put(4, 14, 1, \"minecraft:iron_bars\");\n    put(4, 14, 0, \"minecraft:observer[facing=south]\");\n    put(4, 15, 0, \"minecraft:lightning_rod[facing=up]\");\n\n    // East solar collector wing\n    put(5, 13, 4, \"minecraft:iron_bars\");\n    put(6, 13, 4, \"minecraft:iron_bars\");\n    put(7, 13, 4, \"minecraft:iron_bars\");\n    for (let x = 6; x <= 8; x++) {\n      for (let z = 3; z <= 5; z++) {\n        put(x, 14, z, \"minecraft:daylight_detector\");\n      }\n    }\n\n    // High telemetry spire\n    put(4, 15, 4, stoneWall);\n    put(4, 16, 4, stoneWall);\n    put(4, 17, 4, \"minecraft:iron_bars\");\n    put(4, 18, 4, \"minecraft:lightning_rod[facing=up]\");\n    put(4, 19, 4, \"minecraft:lightning_rod[facing=up]\");\n\n  } else if (variant === 1) {\n    // --- VARIANT 1: Dual Offset Microwave Dishes & Phased Mast ---\n    // Dish 1 (Facing North, West side)\n    put(3, 13, 3, \"minecraft:iron_block\");\n    put(3, 14, 3, \"minecraft:iron_block\");\n    for (let x = 2; x <= 4; x++) {\n      for (let y = 14; y <= 16; y++) {\n        put(x, y, 2, \"minecraft:smooth_quartz\");\n      }\n    }\n    put(3, 15, 1, \"minecraft:lightning_rod[facing=north]\");\n    put(3, 15, 0, \"minecraft:observer[facing=south]\");\n\n    // Dish 2 (Facing South, East side)\n    put(5, 14, 5, \"minecraft:iron_block\");\n    put(5, 15, 5, \"minecraft:iron_block\");\n    for (let x = 4; x <= 6; x++) {\n      for (let y = 15; y <= 17; y++) {\n        put(x, y, 6, \"minecraft:smooth_quartz\");\n      }\n    }\n    put(5, 16, 7, \"minecraft:lightning_rod[facing=south]\");\n    put(5, 16, 8, \"minecraft:observer[facing=north]\");\n\n    // West solar pad\n    for (let x = 0; x <= 2; x++) {\n      for (let z = 4; z <= 6; z++) {\n        put(x, 13, z, \"minecraft:daylight_detector\");\n      }\n    }\n\n    // Central mast & dipole cross\n    for (let y = 15; y <= 17; y++) put(4, y, 4, stoneWall);\n    put(4, 18, 4, \"minecraft:observer[facing=up]\");\n    put(4, 19, 4, \"minecraft:lightning_rod[facing=up]\");\n    put(3, 18, 4, \"minecraft:lightning_rod[facing=west]\");\n    put(5, 18, 4, \"minecraft:lightning_rod[facing=east]\");\n\n  } else if (variant === 2) {\n    // --- VARIANT 2: High Solar Array & Rotary Radar Scanner ---\n    // Tilted solar collector canopy\n    for (let x = 2; x <= 6; x++) {\n      put(x, 13, 2, \"minecraft:iron_block\");\n      put(x, 14, 2, \"minecraft:daylight_detector\");\n      put(x, 14, 3, \"minecraft:daylight_detector\");\n      put(x, 14, 4, \"minecraft:iron_block\");\n      put(x, 15, 4, \"minecraft:daylight_detector\");\n      put(x, 15, 5, \"minecraft:daylight_detector\");\n      put(x, 15, 6, \"minecraft:iron_block\");\n    }\n\n    // Rotating radar horn cross\n    put(4, 15, 4, \"minecraft:lodestone\");\n    put(4, 16, 4, \"minecraft:observer[facing=north]\");\n    put(4, 17, 4, \"minecraft:iron_block\");\n    for (let x = 2; x <= 6; x++) put(x, 17, 4, \"minecraft:iron_bars\");\n    for (let z = 2; z <= 6; z++) put(4, 17, z, \"minecraft:iron_bars\");\n\n    // Scanner probes\n    put(2, 18, 4, \"minecraft:lightning_rod[facing=up]\");\n    put(6, 18, 4, \"minecraft:lightning_rod[facing=up]\");\n    put(4, 18, 2, \"minecraft:lightning_rod[facing=up]\");\n    put(4, 18, 6, \"minecraft:lightning_rod[facing=up]\");\n    put(4, 18, 4, \"minecraft:observer[facing=up]\");\n    put(4, 19, 4, \"minecraft:lightning_rod[facing=up]\");\n\n  } else {\n    // --- VARIANT 3: Weathered Radome & Electronic Warfare Array ---\n    // 3x3 Radome pod at y=13..16\n    for (let x = 3; x <= 5; x++) {\n      for (let z = 3; z <= 5; z++) {\n        for (let y = 13; y <= 16; y++) {\n          put(x, y, z, \"minecraft:weathered_copper\");\n        }\n      }\n    }\n    put(4, 14, 2, \"minecraft:oxidized_copper\");\n    put(4, 15, 2, \"minecraft:tinted_glass\");\n    put(4, 14, 6, \"minecraft:oxidized_copper\");\n    put(4, 15, 6, \"minecraft:tinted_glass\");\n    put(2, 14, 4, \"minecraft:oxidized_copper\");\n    put(2, 15, 4, \"minecraft:tinted_glass\");\n    put(6, 14, 4, \"minecraft:oxidized_copper\");\n    put(6, 15, 4, \"minecraft:tinted_glass\");\n    put(4, 17, 4, \"minecraft:oxidized_copper\");\n\n    // Outrigger antenna booms with trailing chains\n    const corners = [[2, 2], [6, 2], [2, 6], [6, 6]];\n    for (const [cx, cz] of corners) {\n      put(cx, 13, cz, stoneWall);\n      put(cx, 14, cz, \"minecraft:iron_bars\");\n      put(cx, 15, cz, \"minecraft:lightning_rod[facing=up]\");\n      put(cx, 12, cz, \"minecraft:chain[axis=y]\");\n      put(cx, 11, cz, \"minecraft:chain[axis=y]\");\n    }\n\n    put(4, 18, 4, \"minecraft:iron_bars\");\n    put(4, 19, 4, \"minecraft:lightning_rod[facing=up]\");\n  }\n\n  // -------------------------------------------------------------\n  // 6. OVERGROWTH & APOCALYPTIC WEATHERING\n  // -------------------------------------------------------------\n  const foliageCornerX = (idx % 2 === 0) ? 2 : 6;\n  const foliageCornerZ = (idx % 4 < 2) ? 2 : 6;\n\n  // Base moss creeping across pavement\n  for (let dx = -1; dx <= 1; dx++) {\n    for (let dz = -1; dz <= 1; dz++) {\n      const px = foliageCornerX + dx;\n      const pz = foliageCornerZ + dz;\n      if (px >= 1 && px <= 7 && pz >= 1 && pz <= 7 && rng() > 0.3) {\n        if (get(px, 0, pz)) put(px, 0, pz, \"minecraft:moss_block\");\n        if (get(px, 1, pz) && get(px, 1, pz) !== \"minecraft:observer[facing=north]\") {\n          if (rng() > 0.4) put(px, 1, pz, \"minecraft:moss_block\");\n        }\n      }\n    }\n  }\n\n  // Climbing tangled leaves on structure corner\n  for (let y = 1; y <= 9; y++) {\n    if (rng() > 0.3) {\n      const ox = foliageCornerX + (rng() > 0.5 ? (foliageCornerX === 2 ? -1 : 1) : 0);\n      const oz = foliageCornerZ + (rng() > 0.5 ? (foliageCornerZ === 2 ? -1 : 1) : 0);\n      if (!get(ox, y, oz) && (get(foliageCornerX, y, foliageCornerZ) || get(ox, y - 1, oz))) {\n        put(ox, y, oz, \"minecraft:azalea_leaves\");\n      }\n    }\n  }\n\n  // Draped vines on lower walls\n  for (let y = 1; y <= 3; y++) {\n    if (rng() > 0.4 && !get(3, y, 1)) put(3, y, 1, \"minecraft:vine[south=true]\");\n    if (rng() > 0.4 && !get(5, y, 1)) put(5, y, 1, \"minecraft:vine[south=true]\");\n    if (rng() > 0.4 && !get(3, y, 7)) put(3, y, 7, \"minecraft:vine[north=true]\");\n    if (rng() > 0.4 && !get(5, y, 7)) put(5, y, 7, \"minecraft:vine[north=true]\");\n    if (rng() > 0.4 && !get(7, y, 3)) put(7, y, 3, \"minecraft:vine[west=true]\");\n    if (rng() > 0.4 && !get(1, y, 3)) put(1, y, 3, \"minecraft:vine[east=true]\");\n  }\n\n  // Weathering brick swaps\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        const b = grid[x][y][z];\n        if (b === stonePrimary) {\n          const r = rng();\n          if (r < 0.25) grid[x][y][z] = \"minecraft:cracked_stone_bricks\";\n          else if (r < 0.45) grid[x][y][z] = \"minecraft:mossy_stone_bricks\";\n        } else if (b === \"minecraft:iron_block\" && rng() < 0.25) {\n          grid[x][y][z] = \"minecraft:weathered_copper\";\n        }\n      }\n    }\n  }\n\n  // -------------------------------------------------------------\n  // 7. 6-CONNECTIVITY GUARANTEE & EMISSION\n  // -------------------------------------------------------------\n  const visited = Array.from({ length: W }, () =>\n    Array.from({ length: H }, () =>\n      Array(D).fill(false)\n    )\n  );\n\n  const queue = [[4, 0, 4]];\n  visited[4][0][4] = true;\n\n  const dirs = [\n    [1, 0, 0], [-1, 0, 0],\n    [0, 1, 0], [0, -1, 0],\n    [0, 0, 1], [0, 0, -1]\n  ];\n\n  let head = 0;\n  while (head < queue.length) {\n    const [cx, cy, cz] = queue[head++];\n    for (const [dx, dy, dz] of dirs) {\n      const nx = cx + dx;\n      const ny = cy + dy;\n      const nz = cz + dz;\n      if (nx >= 0 && nx < W && ny >= 0 && ny < H && nz >= 0 && nz < D) {\n        if (!visited[nx][ny][nz] && grid[nx][ny][nz] !== null) {\n          visited[nx][ny][nz] = true;\n          queue.push([nx, ny, nz]);\n        }\n      }\n    }\n  }\n\n  // Emit all connected blocks deterministically\n  for (let x = 0; x < W; x++) {\n    for (let y = 0; y < H; y++) {\n      for (let z = 0; z < D; z++) {\n        if (visited[x][y][z]) {\n          api.set(x, y, z, grid[x][y][z]);\n        }\n      }\n    }\n  }\n\n  return {\n    name: \"scavenged_sensor_relay\",\n    seatY: 0,\n    anchors: {\n      front: [4, 1, 0],\n      control_terminal: [4, 1, 1],\n      mast_top: [4, 19, 4]\n    }\n  };\n}"
+    }
+  }
+}

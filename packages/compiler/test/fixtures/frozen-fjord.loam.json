@@ -1,0 +1,858 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "frost_fjord_town",
+    "worldSeed": "933",
+    "prompt": "A Viking-age trading town on a frozen fjord in midwinter: longhouses under deep snow, longships hauled up onto the ice, and a great mead hall with a carved gable standing above the rest.",
+    "spawn": {
+      "zone": "south"
+    }
+  },
+  "intent": {
+    "era": "viking",
+    "wealth": 0.5,
+    "decline": 0,
+    "formality": 0.2,
+    "climate": {
+      "biome": "minecraft:snowy_taiga",
+      "temperature": -0.8,
+      "humidity": 0.2,
+      "snow": "always"
+    },
+    "character": {
+      "label": "viking fjord trading town in winter",
+      "materialTheme": "boreal_pine",
+      "formPacks": [
+        "nordic_viking"
+      ],
+      "props": {
+        "prefer": [
+          "rune_stone",
+          "boat_burial",
+          "fish_drying_rack",
+          "fire_pit"
+        ]
+      },
+      "motifs": {
+        "roofType": "gable"
+      }
+    }
+  },
+  "style": {
+    "palettes": {
+      "road.surface": "minecraft:packed_mud",
+      "road.shoulder": "minecraft:coarse_dirt",
+      "plaza.path": "minecraft:spruce_planks",
+      "plaza.border": "minecraft:stripped_spruce_log"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        512,
+        512
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "rugged fjord mountains flanking a frozen sea inlet",
+        "params": {
+          "seaLevel": 63,
+          "baseHeight": 74,
+          "amplitude": 58,
+          "frequency": 0.0036,
+          "ridged": true,
+          "beachWidth": 3,
+          "snowLineFraction": 0.1,
+          "continentalness": {
+            "frequency": 0.0011,
+            "seaFraction": 0.42
+          }
+        },
+        "children": [
+          {
+            "id": "fjord_inlet",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "the deep frozen fjord cutting inland from the sea",
+            "params": {
+              "verb": "valley",
+              "course": [
+                [
+                  0.52,
+                  0.85
+                ],
+                [
+                  0.5,
+                  0.55
+                ],
+                [
+                  0.46,
+                  0.35
+                ],
+                "coast"
+              ],
+              "width": 55,
+              "depth": 50,
+              "profile": "sharp"
+            }
+          },
+          {
+            "id": "fjord_ridge_west",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "steep western mountain wall",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.12,
+                  0.1
+                ],
+                [
+                  0.22,
+                  0.5
+                ],
+                [
+                  0.26,
+                  0.9
+                ]
+              ],
+              "width": 64,
+              "height": 72,
+              "profile": "sharp"
+            }
+          },
+          {
+            "id": "fjord_ridge_east",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "steep eastern mountain wall",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0.78,
+                  0.1
+                ],
+                [
+                  0.8,
+                  0.52
+                ],
+                [
+                  0.86,
+                  0.9
+                ]
+              ],
+              "width": 64,
+              "height": 78,
+              "profile": "sharp"
+            }
+          },
+          {
+            "id": "town_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "sheltered terrace for the trading settlement",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.62
+              ],
+              "radius": 95,
+              "height": 8,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "high_promontory",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "elevated bluff overlooking the town for the great mead hall",
+            "params": {
+              "verb": "peak",
+              "at": [
+                0.5,
+                0.7
+              ],
+              "radius": 48,
+              "height": 14,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "params": {
+          "forceTheme": "boreal",
+          "latitudeGradient": -0.4
+        }
+      },
+      {
+        "id": "market_wharf",
+        "kind": "primitive",
+        "label": "the trading wharf and central snow-swept yard",
+        "envelope": {
+          "shape": "region",
+          "size": [
+            26,
+            26
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.5,
+              0.58
+            ]
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median"
+          }
+        ],
+        "tags": [
+          "plaza",
+          "public"
+        ]
+      },
+      {
+        "id": "great_hall",
+        "kind": "generator",
+        "generator": "authored:great_mead_hall",
+        "label": "the great mead hall with carved gables towering over the town",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            19,
+            25,
+            29
+          ]
+        },
+        "constraints": [
+          {
+            "at": [
+              0.5,
+              0.7
+            ]
+          },
+          {
+            "distance": "market_wharf",
+            "min": 20,
+            "max": 75,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "max"
+          }
+        ],
+        "params": {
+          "seat": "pad",
+          "face": {
+            "toward": "market_wharf"
+          }
+        },
+        "tags": [
+          "landmark",
+          "hall"
+        ]
+      },
+      {
+        "id": "longhouse_chieftain",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "large timber longhouse of the clan elders",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            13,
+            21
+          ]
+        },
+        "params": {
+          "archetype": "longhouse",
+          "floors": 2,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "market_wharf",
+            "gap": [
+              1,
+              12
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "market_wharf"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north"
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "longhouse_traders",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "traders longhouse by the lane",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            19
+          ]
+        },
+        "params": {
+          "archetype": "longhouse",
+          "floors": 2,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "market_wharf",
+            "min": 6,
+            "max": 32,
+            "strength": "soft"
+          },
+          {
+            "facing": "market_wharf"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west"
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "longhouse_shipwright",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "shipwrights longhouse near the shore",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            17
+          ]
+        },
+        "params": {
+          "archetype": "longhouse",
+          "floors": 2,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "market_wharf",
+            "min": 8,
+            "max": 38,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south"
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "turf_house_north",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "low turf and sod dwelling under deep snow",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            13,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "sod_house",
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "distance": "market_wharf",
+            "min": 16,
+            "max": 56,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south"
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "turf_house_east",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "sheltered turf dwelling on the hillside",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            13,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "sod_house",
+          "floors": 1
+        },
+        "constraints": [
+          {
+            "distance": "market_wharf",
+            "min": 20,
+            "max": 60,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west"
+          }
+        },
+        "tags": [
+          "house"
+        ]
+      },
+      {
+        "id": "smithy",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "swordsmith and weapon forge",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            9,
+            9,
+            9
+          ]
+        },
+        "params": {
+          "archetype": "smithy",
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse"
+        },
+        "constraints": [
+          {
+            "distance": "market_wharf",
+            "min": 8,
+            "max": 36,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 7,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "north"
+          }
+        },
+        "tags": [
+          "craft"
+        ]
+      },
+      {
+        "id": "smokehouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "curing smokehouse for salmon and game",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            11,
+            13
+          ]
+        },
+        "params": {
+          "archetype": "butchery",
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "distance": "market_wharf",
+            "min": 10,
+            "max": 42,
+            "strength": "soft"
+          },
+          {
+            "distance": "#tag:house",
+            "min": 6,
+            "strength": "soft"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "east"
+          }
+        },
+        "tags": [
+          "craft"
+        ]
+      },
+      {
+        "id": "warehouse",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "timber pelt and trade goods storehouse",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            10,
+            11
+          ]
+        },
+        "params": {
+          "archetype": "warehouse",
+          "floors": 1,
+          "roof": "gable"
+        },
+        "constraints": [
+          {
+            "adjacent_to": "market_wharf",
+            "gap": [
+              1,
+              10
+            ],
+            "strength": "soft"
+          },
+          {
+            "facing": "market_wharf"
+          },
+          {
+            "terrain_conform": "cut_fill",
+            "reference": "median"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "south"
+          }
+        },
+        "tags": [
+          "trade"
+        ]
+      },
+      {
+        "id": "pier_dock",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "wooden jetty reaching into the frozen fjord waters",
+        "params": {
+          "prop": "pier",
+          "zone": "north",
+          "length": 14,
+          "width": 3
+        }
+      },
+      {
+        "id": "beached_rowboat",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "small skiff moored against the pier",
+        "params": {
+          "prop": "rowboat",
+          "at": "pier"
+        }
+      },
+      {
+        "id": "ship_on_ice_one",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "longship hauled onto the winter ice shelf",
+        "params": {
+          "prop": "longship",
+          "zone": "north",
+          "yaw": 180
+        }
+      },
+      {
+        "id": "ship_on_ice_two",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "second longship beached on the frozen shoreline",
+        "params": {
+          "prop": "longship",
+          "zone": "northwest",
+          "yaw": 180
+        }
+      },
+      {
+        "id": "hauling_ship",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "raiding longship propped up for winter repair",
+        "params": {
+          "prop": "longship",
+          "zone": "center",
+          "yaw": 90
+        }
+      },
+      {
+        "id": "village_well",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "communal well in the wharf yard",
+        "params": {
+          "prop": "well_head",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "market_barrow_prop",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "fur traders market barrow",
+        "params": {
+          "prop": "market_barrow",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "log_store",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "firewood logs stacked against winter cold",
+        "params": {
+          "prop": "log_pile",
+          "zone": "center"
+        }
+      },
+      {
+        "id": "stone_cairn",
+        "kind": "generator",
+        "generator": "prop.place@0",
+        "label": "wayside stone cairn marking the fjord path",
+        "params": {
+          "prop": "cairn",
+          "zone": "northeast"
+        }
+      },
+      {
+        "id": "lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "packed snow paths linking the great hall, wharf, and dwellings",
+        "params": {
+          "anchors": [
+            "market_wharf",
+            "great_hall",
+            "longhouse_chieftain",
+            "longhouse_traders",
+            "longhouse_shipwright",
+            "turf_house_north",
+            "turf_house_east",
+            "smithy",
+            "smokehouse",
+            "warehouse"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true
+        }
+      },
+      {
+        "id": "spruce_forest",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "dense snow-laden taiga pine forest along the lower valley",
+        "params": {
+          "area": {
+            "at": [
+              0.35,
+              0.45
+            ],
+            "radius": 160
+          },
+          "density": 0.18,
+          "elevation": [
+            2,
+            90
+          ],
+          "undergrowth": {
+            "grass": 0.35,
+            "flowers": 0.02,
+            "deadwood": 0.08
+          },
+          "strata": {
+            "emergent": {
+              "species": [
+                {
+                  "id": "ancient_spruce",
+                  "shape": "spruce_ancient"
+                }
+              ]
+            },
+            "understory": {
+              "species": [
+                {
+                  "id": "scrub_juniper",
+                  "shape": "juniper_scrub"
+                }
+              ]
+            },
+            "floor": "default"
+          },
+          "species": [
+            {
+              "id": "tall_spruce",
+              "weight": 3,
+              "shape": "spruce_tall"
+            },
+            {
+              "id": "squat_spruce",
+              "weight": 2,
+              "shape": "spruce_squat"
+            },
+            {
+              "id": "columnar_larch",
+              "weight": 1,
+              "shape": "larch_columnar"
+            }
+          ]
+        }
+      },
+      {
+        "id": "sparse_taiga",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "sparse highland conifer scatter",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.012,
+          "elevation": [
+            2,
+            110
+          ],
+          "species": [
+            {
+              "id": "highland_spruce",
+              "weight": 2,
+              "shape": "spruce_squat"
+            },
+            {
+              "id": "highland_pine",
+              "weight": 1,
+              "shape": "spruce_tall"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "programs": {
+    "great_mead_hall": {
+      "mode": "landmark",
+      "envelope": [
+        19,
+        25,
+        29
+      ],
+      "sourceHash": "b3:c856ac68422e77dc9a5e9274c5d9022f9a3a886c241f59945f19d57205acdf3c",
+      "outputHash": "b3:654a1f12e82340df9e0b8229260c6248d702962a85133798155d56d95037404b",
+      "conforms": false,
+      "conformHash": "b3:bfa67f3511ba9ed4ecc55312e55284a3704406d7d732655d805c7ee6768c977c",
+      "source": "export const envelope = [19, 25, 29];\n\nexport default function build(api) {\n  const [W, H, D] = api.size;\n\n  // Helper to place blocks safely within the envelope bounds\n  function set(x, y, z, block) {\n    if (x >= 0 && x < W && y >= 0 && y < H && z >= 0 && z < D) {\n      api.set(x, y, z, block);\n    }\n  }\n\n  // Helpers to format stateful blocks reliably\n  function getStair(stairBlock, facing, half = \"bottom\", shape = \"straight\") {\n    const id = (stairBlock || \"minecraft:spruce_stairs\").split(\"[\")[0];\n    return `${id}[facing=${facing},half=${half},shape=${shape}]`;\n  }\n\n  function getLog(logBlock, axis = \"y\") {\n    const id = (logBlock || \"minecraft:spruce_log\").split(\"[\")[0];\n    return `${id}[axis=${axis}]`;\n  }\n\n  function getSlab(slabBlock, type = \"bottom\") {\n    const id = (slabBlock || \"minecraft:spruce_slab\").split(\"[\")[0];\n    return `${id}[type=${type}]`;\n  }\n\n  function getTrapdoor(trapdoorBlock, facing = \"north\", half = \"bottom\", open = false) {\n    const id = (trapdoorBlock || \"minecraft:spruce_trapdoor\").split(\"[\")[0];\n    return `${id}[facing=${facing},half=${half},open=${open}]`;\n  }\n\n  // World theme palette extraction\n  const woodPlanks = api.theme.wood.planks || \"minecraft:spruce_planks\";\n  const woodLog = api.theme.wood.log || \"minecraft:spruce_log\";\n  const woodStripped = api.theme.wood.stripped || api.theme.wood.log || \"minecraft:stripped_spruce_log\";\n  const woodStairs = api.theme.wood.stairs || \"minecraft:spruce_stairs\";\n  const woodSlab = api.theme.wood.slab || \"minecraft:spruce_slab\";\n  const woodFence = api.theme.wood.fence || \"minecraft:spruce_fence\";\n  const woodTrapdoor = api.theme.wood.trapdoor || \"minecraft:spruce_trapdoor\";\n\n  const stonePrimary = api.theme.stone.primary || \"minecraft:cobblestone\";\n  const stoneAccent = api.theme.stone.accent || \"minecraft:mossy_cobblestone\";\n  const stoneStairs = api.theme.stone.stairs || \"minecraft:cobblestone_stairs\";\n  const stoneSlab = api.theme.stone.slab || \"minecraft:cobblestone_slab\";\n  const stoneWall = api.theme.stone.wall || \"minecraft:cobblestone_wall\";\n  const groundPlinth = api.theme.ground.plinth || stonePrimary;\n\n  const roofStairs = api.theme.roof.stairs || woodStairs;\n  const roofSlab = api.theme.roof.slab || woodSlab;\n  const roofSolid = api.theme.roof.solid || woodPlanks;\n\n  const seatY = 4; // Node-local Y of the main floor / ground meeting plane\n\n  // =========================================================================\n  // 1. FOUNDATION & TERRAIN CONFORMANCE (Rule 6)\n  // =========================================================================\n  // Every column under the footprint builds down to meet the local terrain.\n  for (let x = 1; x <= 17; x++) {\n    for (let z = 0; z <= 28; z++) {\n      const isFootprint = (x >= 2 && x <= 16 && z >= 1 && z <= 27) ||\n                          (x >= 6 && x <= 12 && (z === 0 || z === 28));\n\n      if (isFootprint) {\n        const terrainH = Math.round(api.heightAt(x, z));\n        const colBaseY = Math.max(0, Math.min(seatY, seatY + terrainH));\n\n        for (let y = colBaseY; y <= seatY; y++) {\n          const isPerimeter = (x === 2 || x === 16 || z === 1 || z === 27);\n          const stoneMat = ((x + y + z) % 5 === 0) ? stoneAccent : groundPlinth;\n          set(x, y, z, isPerimeter ? stoneMat : stonePrimary);\n        }\n      }\n    }\n  }\n\n  // Front entrance stairs stepping down to terrain at z=0 (x=8..10)\n  for (let x = 8; x <= 10; x++) {\n    const frontH = Math.max(0, Math.min(seatY, seatY + Math.round(api.heightAt(x, 0))));\n    for (let y = frontH; y < seatY; y++) {\n      set(x, y, 0, getStair(stoneStairs, \"south\", \"bottom\"));\n    }\n  }\n\n  // =========================================================================\n  // 2. MAIN FLOOR & CENTRAL HEARTH (y = 4)\n  // =========================================================================\n  for (let x = 3; x <= 15; x++) {\n    for (let z = 2; z <= 26; z++) {\n      if (x === 3 || x === 15 || z === 2 || z === 26) {\n        set(x, seatY, z, getLog(woodLog, \"y\"));\n      } else if (x === 9 && z >= 6 && z <= 22) {\n        // Central long hearth channel\n        if (z >= 13 && z <= 15) {\n          set(x, seatY, z, \"minecraft:campfire[facing=north,lit=true]\");\n        } else {\n          set(x, seatY, z, stonePrimary);\n        }\n      } else if ((x === 8 || x === 10) && z >= 6 && z <= 22) {\n        const facing = (x === 8) ? \"east\" : \"west\";\n        set(x, seatY, z, getStair(stoneStairs, facing, \"bottom\"));\n      } else {\n        set(x, seatY, z, woodPlanks);\n      }\n    }\n  }\n\n  // =========================================================================\n  // 3. WALLS & EXTERIOR BUTTRESSES (y = 5 to 9)\n  // =========================================================================\n  const pillarZ = [2, 6, 10, 14, 18, 22, 26];\n\n  // Side walls (x = 3 and x = 15)\n  for (let z = 2; z <= 26; z++) {\n    for (const wx of [3, 15]) {\n      const isPillar = pillarZ.includes(z);\n      if (isPillar) {\n        for (let y = 5; y <= 9; y++) {\n          set(wx, y, z, getLog(woodLog, \"y\"));\n        }\n      } else {\n        set(wx, 5, z, getLog(woodLog, \"z\"));\n        set(wx, 6, z, woodStripped);\n        // Slit embrasure windows at panel centers\n        if ((z % 4 === 0) || (z % 4 === 1)) {\n          set(wx, 7, z, \"minecraft:iron_bars\");\n        } else {\n          set(wx, 7, z, woodPlanks);\n        }\n        set(wx, 8, z, woodStripped);\n        set(wx, 9, z, getLog(woodLog, \"z\")); // Wall plate beam\n      }\n    }\n  }\n\n  // Exterior raking buttress stanchions (x = 2 and x = 16)\n  for (const bz of [4, 8, 12, 16, 20, 24]) {\n    for (const [bx, facing, lean] of [[2, \"east\", \"west\"], [16, \"west\", \"east\"]]) {\n      set(bx, 5, bz, getLog(woodLog, \"y\"));\n      set(bx, 6, bz, getStair(woodStairs, facing, \"bottom\"));\n      set(bx, 7, bz, woodFence);\n      set(bx, 8, bz, getStair(woodStairs, lean, \"top\"));\n    }\n  }\n\n  // Front Portal Wall (North, z = 2)\n  for (let x = 4; x <= 14; x++) {\n    for (let y = 5; y <= 9; y++) {\n      if (x >= 8 && x <= 10 && y <= 7) {\n        // Grand open entrance portal\n        continue;\n      }\n      if (x === 7 || x === 11) {\n        set(x, y, 2, getLog(woodLog, \"y\"));\n      } else {\n        set(x, y, 2, woodStripped);\n      }\n    }\n  }\n  // Portal carved timber arch lintel at z = 2\n  set(8, 7, 2, getStair(woodStairs, \"east\", \"top\"));\n  set(9, 7, 2, getLog(woodStripped, \"x\"));\n  set(10, 7, 2, getStair(woodStairs, \"west\", \"top\"));\n  set(9, 8, 2, woodPlanks);\n\n  // Rear Wall (South, z = 26)\n  for (let x = 4; x <= 14; x++) {\n    for (let y = 5; y <= 9; y++) {\n      if (x === 9 && y === 7) {\n        set(x, y, 26, \"minecraft:iron_bars\"); // High carved slit\n      } else if (x === 7 || x === 11) {\n        set(x, y, 26, getLog(woodLog, \"y\"));\n      } else {\n        set(x, y, 26, woodStripped);\n      }\n    }\n  }\n\n  // Front entrance porch & iron braziers (z = 0..1)\n  set(7, 5, 1, getLog(woodLog, \"y\"));\n  set(7, 6, 1, getLog(woodLog, \"y\"));\n  set(11, 5, 1, getLog(woodLog, \"y\"));\n  set(11, 6, 1, getLog(woodLog, \"y\"));\n  for (let x = 7; x <= 11; x++) {\n    set(x, 7, 1, getLog(woodLog, \"x\"));\n  }\n  set(8, 8, 1, getStair(roofStairs, \"east\", \"bottom\"));\n  set(9, 8, 1, roofSolid);\n  set(10, 8, 1, getStair(roofStairs, \"west\", \"bottom\"));\n  set(9, 9, 1, roofSolid);\n  set(9, 6, 1, \"minecraft:lantern[hanging=true]\");\n\n  // Flanking Iron Braziers (z = 0, x = 6 and x = 12)\n  for (const bx of [6, 12]) {\n    set(bx, 5, 0, stoneWall);\n    set(bx, 6, 0, \"minecraft:iron_bars\");\n    set(bx, 7, 0, \"minecraft:campfire[facing=north,lit=true]\");\n  }\n\n  // =========================================================================\n  // 4. INTERIOR AISLE POSTS & RAFTER TIES (y = 5 to 11)\n  // =========================================================================\n  for (const iz of [6, 10, 14, 18, 22]) {\n    for (const ix of [6, 12]) {\n      for (let y = 5; y <= 10; y++) {\n        set(ix, y, iz, getLog(woodLog, \"y\"));\n      }\n      // Longitudinal arcade plate\n      set(ix, 11, iz, getLog(woodLog, \"z\"));\n    }\n    // Transverse tie beam across the central nave\n    for (let x = 7; x <= 11; x++) {\n      set(x, 10, iz, getLog(woodLog, \"x\"));\n    }\n    set(7, 9, iz, getStair(woodStairs, \"east\", \"top\"));\n    set(11, 9, iz, getStair(woodStairs, \"west\", \"top\"));\n    // King post up to roof ridge\n    for (let y = 11; y <= 18; y++) {\n      set(9, y, iz, getLog(woodLog, \"y\"));\n    }\n  }\n\n  // =========================================================================\n  // 5. STEEP HIGH-PEAKED ROOF (y = 8 to 20, z = 1 to 27)\n  // =========================================================================\n  // Profile coordinates: dx from center line (x=9) mapped to Y elevation\n  // dx = 8: y = 8 (eaves)\n  // dx = 7: y = 9\n  // dx = 6: y = 11\n  // dx = 5: y = 12\n  // dx = 4: y = 14\n  // dx = 3: y = 15\n  // dx = 2: y = 17\n  // dx = 1: y = 18\n  // dx = 0: y = 19 (ridge)\n\n  for (let z = 1; z <= 27; z++) {\n    const isOverhang = (z === 1 || z === 27);\n    const isSmokeVent = (z >= 13 && z <= 15);\n\n    for (let dx = 0; dx <= 8; dx++) {\n      if (dx === 0) {\n        // Ridge line\n        if (isSmokeVent) {\n          // Open smoke vent with raised clerestory cap\n          set(9, 18, z, woodPlanks);\n          set(9, 20, z, getSlab(roofSlab, \"bottom\"));\n          if (z === 13 || z === 15) {\n            set(9, 19, z, woodFence);\n          }\n        } else {\n          set(9, 18, z, roofSolid);\n          set(9, 19, z, getLog(woodLog, \"z\"));\n          // Snow capping along the ridge\n          if (api.random() < 0.65) {\n            set(9, 20, z, \"minecraft:snow[layers=1]\");\n          }\n        }\n      } else {\n        const xL = 9 - dx;\n        const xR = 9 + dx;\n\n        let stairY = 8;\n        let solidY = 7;\n        let supportY = 0;\n\n        if (dx === 8) {\n          stairY = 8;\n          solidY = 0;\n          supportY = 7;\n        } else if (dx === 7) {\n          stairY = 9;\n          solidY = 8;\n          supportY = 8;\n        } else if (dx === 6) {\n          stairY = 11;\n          solidY = 10;\n          supportY = 10;\n        } else if (dx === 5) {\n          stairY = 12;\n          solidY = 11;\n          supportY = 11;\n        } else if (dx === 4) {\n          stairY = 14;\n          solidY = 13;\n          supportY = 13;\n        } else if (dx === 3) {\n          stairY = 15;\n          solidY = 14;\n          supportY = 14;\n        } else if (dx === 2) {\n          stairY = 17;\n          solidY = 16;\n          supportY = 16;\n        } else if (dx === 1) {\n          stairY = 18;\n          solidY = 17;\n          supportY = 17;\n        }\n\n        // Left flank (facing west)\n        if (solidY > 0) set(xL, solidY, z, roofSolid);\n        set(xL, stairY, z, getStair(roofStairs, \"west\", \"bottom\"));\n        if (supportY > 0) set(xL, supportY, z, getStair(woodStairs, \"east\", \"top\"));\n\n        // Right flank (facing east)\n        if (solidY > 0) set(xR, solidY, z, roofSolid);\n        set(xR, stairY, z, getStair(roofStairs, \"east\", \"bottom\"));\n        if (supportY > 0) set(xR, supportY, z, getStair(woodStairs, \"west\", \"top\"));\n\n        // Winter snow accumulation on upper roof slope\n        if (dx <= 4 && !isOverhang && api.random() < 0.7) {\n          set(xL, stairY + 1, z, \"minecraft:snow[layers=1]\");\n          set(xR, stairY + 1, z, \"minecraft:snow[layers=1]\");\n        }\n      }\n    }\n  }\n\n  // =========================================================================\n  // 6. GABLE TRIANGULAR WALL INFILLS (z = 2 and z = 26)\n  // =========================================================================\n  for (const gz of [2, 26]) {\n    for (let x = 4; x <= 14; x++) {\n      const dx = Math.abs(x - 9);\n      let maxY = 18;\n      if (dx === 5) maxY = 11;\n      else if (dx === 4) maxY = 13;\n      else if (dx === 3) maxY = 14;\n      else if (dx === 2) maxY = 16;\n      else if (dx === 1) maxY = 17;\n      else if (dx === 0) maxY = 18;\n\n      for (let y = 10; y <= maxY; y++) {\n        if (dx === 0 && (y === 13 || y === 14)) {\n          set(x, y, gz, woodFence); // Carved gable runic opening\n        } else {\n          set(x, y, gz, (y % 2 === 0) ? woodStripped : woodPlanks);\n        }\n      }\n    }\n  }\n\n  // =========================================================================\n  // 7. CARVED DRAGONHEAD GABLE PROWS (North at z=0..1, South at z=27..28)\n  // =========================================================================\n  // North Dragonhead (Front Gable Prow facing North, -Z)\n  set(9, 19, 1, getLog(woodLog, \"z\"));\n  set(9, 20, 1, getLog(woodLog, \"y\"));\n  set(9, 21, 1, getLog(woodLog, \"y\"));\n  set(9, 22, 1, getStair(woodStairs, \"south\", \"bottom\")); // Crest curve\n  set(9, 20, 0, getStair(woodStairs, \"north\", \"top\"));    // Throat\n  set(9, 21, 0, getLog(woodLog, \"y\"));                   // Jaw\n  set(9, 22, 0, getStair(woodStairs, \"north\", \"bottom\")); // Snout\n  set(9, 23, 0, woodFence);                              // Horn\n\n  // South Dragonhead (Rear Gable Prow facing South, +Z)\n  set(9, 19, 27, getLog(woodLog, \"z\"));\n  set(9, 20, 27, getLog(woodLog, \"y\"));\n  set(9, 21, 27, getLog(woodLog, \"y\"));\n  set(9, 22, 27, getStair(woodStairs, \"north\", \"bottom\")); // Crest curve\n  set(9, 20, 28, getStair(woodStairs, \"south\", \"top\"));    // Throat\n  set(9, 21, 28, getLog(woodLog, \"y\"));                   // Jaw\n  set(9, 22, 28, getStair(woodStairs, \"south\", \"bottom\")); // Snout\n  set(9, 23, 28, woodFence);                              // Horn\n\n  return {\n    name: \"Great Mead Hall\",\n    seatY: seatY,\n    anchors: {\n      front: [9, seatY, 0],\n      door: [9, seatY + 1, 2]\n    },\n    interiors: [\n      {\n        min: [4, seatY + 1, 3],\n        max: [14, seatY + 7, 25],\n        kind: \"hall\"\n      }\n    ]\n  };\n}"
+    }
+  }
+}

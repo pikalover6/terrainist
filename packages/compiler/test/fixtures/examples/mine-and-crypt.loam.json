@@ -1,0 +1,326 @@
+{
+  "loam": "0.1",
+  "profile": "settlement",
+  "meta": {
+    "name": "mine_and_crypt",
+    "worldSeed": 5512407,
+    "prompt": "a chapel over a burial crypt, joined by a catacomb passage to the town hall, and a mine head on the eastern shelf whose flooded working runs back under the ridge to the same cellars",
+    "spawn": {
+      "zone": "center"
+    }
+  },
+  "root": {
+    "id": "world",
+    "kind": "composite",
+    "label": "Mine and crypt — the two themed galleries",
+    "note": "The tunnel-style fixture. `crypt` between the chapel and the town hall, `mine` with an ore chamber between the mine head and the town hall; the two galleries share a cellar, so the junction machinery is exercised at the same time as the dressing.",
+    "envelope": {
+      "shape": "region",
+      "size": [
+        256,
+        256
+      ]
+    },
+    "children": [
+      {
+        "id": "terrain",
+        "kind": "generator",
+        "generator": "terrain.heightfield@0",
+        "label": "Rolling inland country, well above any waterline",
+        "params": {
+          "baseHeight": 86,
+          "amplitude": 14,
+          "seaLevel": 63,
+          "frequency": 0.0055,
+          "snowLineFraction": 0.98
+        },
+        "children": [
+          {
+            "id": "the_ridge",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The ridge the tunnel runs under — the whole point of the fixture",
+            "params": {
+              "verb": "ridge",
+              "course": [
+                [
+                  0,
+                  0.5
+                ],
+                [
+                  0.35,
+                  0.46
+                ],
+                [
+                  0.65,
+                  0.54
+                ],
+                [
+                  1,
+                  0.5
+                ]
+              ],
+              "width": 70,
+              "height": 30,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "north_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The shelf the chapel stands on",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.2
+              ],
+              "radius": 46,
+              "height": 5,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "south_shelf",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "The shelf the town hall stands on",
+            "params": {
+              "verb": "plateau",
+              "at": [
+                0.5,
+                0.8
+              ],
+              "radius": 46,
+              "height": 5,
+              "profile": "rounded"
+            }
+          },
+          {
+            "id": "west_tarn",
+            "kind": "generator",
+            "generator": "terrain.edit@0",
+            "label": "A tarn well off the line, so the router's four-block water shell has something to dodge",
+            "params": {
+              "verb": "basin",
+              "at": [
+                0.12,
+                0.5
+              ],
+              "radius": 24,
+              "depth": 12,
+              "water": true,
+              "profile": "rounded"
+            }
+          }
+        ]
+      },
+      {
+        "id": "climate",
+        "kind": "generator",
+        "generator": "terrain.climate@0",
+        "label": "Mild and green",
+        "params": {
+          "forceTheme": "temperate"
+        }
+      },
+      {
+        "id": "chapel",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The chapel on the north shelf, over its burial crypt",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            12,
+            13
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse",
+          "basement": {
+            "depth": 5,
+            "style": "crypt"
+          }
+        },
+        "constraints": [
+          {
+            "zone": "north"
+          },
+          {
+            "connected": "town_hall",
+            "via": "tunnel",
+            "style": "crypt"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median"
+          }
+        ],
+        "ports": {
+          "main_door": {
+            "type": "door",
+            "face": "south"
+          },
+          "crypt_stair": {
+            "type": "tunnel_stub",
+            "face": "south"
+          }
+        },
+        "tags": [
+          "civic",
+          "hall"
+        ]
+      },
+      {
+        "id": "town_hall",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The town hall on the south shelf — both galleries end in its cellar",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            13,
+            12,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "hip",
+          "windowRhythm": "regular",
+          "basement": {
+            "depth": 5,
+            "style": "vault"
+          }
+        },
+        "constraints": [
+          {
+            "zone": "south"
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median"
+          }
+        ],
+        "ports": {
+          "main_door": {
+            "type": "door",
+            "face": "north"
+          }
+        },
+        "tags": [
+          "civic",
+          "hall"
+        ]
+      },
+      {
+        "id": "mine_head",
+        "kind": "generator",
+        "generator": "building.grammar@0",
+        "label": "The mine head on the eastern shelf: a headframe hut over the shaft",
+        "envelope": {
+          "shape": "box",
+          "size": [
+            11,
+            9,
+            11
+          ]
+        },
+        "params": {
+          "floors": 1,
+          "roof": "gable",
+          "windowRhythm": "sparse",
+          "basement": {
+            "depth": 5
+          }
+        },
+        "constraints": [
+          {
+            "zone": "east"
+          },
+          {
+            "connected": "town_hall",
+            "via": "tunnel",
+            "style": "mine",
+            "oreChamber": true
+          },
+          {
+            "clearance": 2
+          },
+          {
+            "terrain_conform": "flatten",
+            "reference": "median"
+          }
+        ],
+        "ports": {
+          "door": {
+            "type": "door",
+            "face": "west"
+          },
+          "adit": {
+            "type": "tunnel_stub",
+            "face": "west"
+          }
+        },
+        "tags": [
+          "mineshaft",
+          "industry"
+        ]
+      },
+      {
+        "id": "lanes",
+        "kind": "generator",
+        "generator": "road.network@0",
+        "label": "Lanes between the two civic buildings; the mine is reached underground",
+        "params": {
+          "anchors": [
+            "chapel",
+            "town_hall"
+          ],
+          "pattern": "organic",
+          "width": 3,
+          "lanterns": true
+        }
+      },
+      {
+        "id": "cover",
+        "kind": "generator",
+        "generator": "scatter.forest@0",
+        "label": "Sparse woodland, so the ridge reads as ground rather than as a model",
+        "params": {
+          "area": {
+            "all": true
+          },
+          "density": 0.2,
+          "elevation": [
+            2,
+            130
+          ],
+          "species": [
+            {
+              "id": "ridge_oak",
+              "weight": 3,
+              "shape": "oak_round"
+            },
+            {
+              "id": "ridge_birch",
+              "weight": 1,
+              "shape": "birch_slim"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

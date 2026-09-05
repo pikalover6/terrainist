@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Terrainist</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #0b0e12; --panel: #141920; --line: #232b36; --ink: #dfe7ef; --dim: #8b98a8;
+    --ok: #7bd88f; --bad: #ff8a80; --run: #ffd479; --accent: #7fb2ff;
+    --pad: 16px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 14px;
+  }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); }
+  main { max-width: 980px; margin: 0 auto; padding: 24px 20px 60px; }
+  h1 { font-size: 18px; font-weight: 600; margin: 0 0 24px; display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+  h1 small { color: var(--dim); font-weight: 400; font-size: 13px; }
+  h2 { font-size: 13px; color: var(--dim); text-transform: uppercase; letter-spacing: .08em; margin: 0 0 10px; }
+  section { margin-bottom: 28px; }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: var(--pad); }
+  textarea, input { background: var(--bg); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; font: inherit; box-sizing: border-box; margin: 0; }
+  textarea { display: block; width: 100%; min-height: 84px; resize: vertical; }
+  input { height: 36px; }
+  .row { display: flex; gap: 10px; align-items: center; margin-top: 12px; }
+  .row label { color: var(--dim); white-space: nowrap; }
+  .row label + input { margin-right: 6px; }
+  #seed { width: 220px; } #effort { width: 110px; } #model { flex: 1; min-width: 200px; }
+  #saves { flex: 1; min-width: 200px; }
+  button { height: 36px; background: var(--accent); color: #06101c; border: 0; border-radius: 6px; padding: 0 16px; font: inherit; font-weight: 600; cursor: pointer; white-space: nowrap; }
+  button.quiet { background: transparent; color: var(--ink); border: 1px solid var(--line); font-weight: 400; }
+  button:disabled { opacity: .5; cursor: default; }
+  #go { margin-left: auto; }
+  pre#log { background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 12px; max-height: 360px; overflow: auto; white-space: pre-wrap; margin: 12px 0 0; color: var(--dim); font-size: 12.5px; line-height: 1.5; }
+  pre#log:empty { display: none; }
+  .status { font-weight: 600; white-space: nowrap; }
+  .status.running { color: var(--run); } .status.done { color: var(--ok); } .status.failed { color: var(--bad); }
+  table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+  th { text-align: left; color: var(--dim); font-weight: 400; padding: 0 12px 8px 0; border-bottom: 1px solid var(--line); }
+  td { padding: 12px 12px 12px 0; border-top: 1px solid var(--line); vertical-align: top; }
+  th:last-child, td:last-child { padding-right: 0; text-align: right; white-space: nowrap; }
+  tr:first-child td { border-top: 0; }
+  td.prompt { color: var(--dim); }
+  .empty { color: var(--dim); }
+  .note { color: var(--dim); font-size: 12.5px; margin-top: 12px; }
+  .note:empty { display: none; }
+  .error { color: var(--bad); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Terrainist <small id="outdir"></small></h1>
+
+  <section>
+    <h2>Generate</h2>
+    <div class="panel">
+      <textarea id="prompt" placeholder="a drowned Atlantean city on a drowned coast, its towers standing out of the sea"></textarea>
+      <div class="row">
+        <label for="seed">seed</label><input id="seed" type="text" placeholder="derived from the prompt" />
+        <label for="effort">effort</label><input id="effort" type="text" value="high" />
+        <label for="model">model</label><input id="model" type="text" placeholder="model id" />
+        <button id="go">Generate</button>
+      </div>
+      <div class="row" id="jobrow" hidden><span id="jobstatus" class="status"></span></div>
+      <pre id="log"></pre>
+    </div>
+  </section>
+
+  <section>
+    <h2>Worlds</h2>
+    <div class="panel">
+      <div class="row" style="margin-top:0">
+        <label for="saves">install to</label>
+        <input id="saves" type="text" placeholder="a Minecraft saves folder" />
+        <button id="saves-reset" class="quiet" title="back to the folder the server offers">default</button>
+      </div>
+      <table>
+        <thead><tr><th>world</th><th>date</th><th>prompt</th><th></th></tr></thead>
+        <tbody id="worlds"><tr><td class="empty" colspan="4">loading…</td></tr></tbody>
+      </table>
+      <div class="note" id="worldsnote"></div>
+    </div>
+  </section>
+</main>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const api = async (url, body) => {
+    const r = await fetch(url, body === undefined ? undefined : { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || `${r.status} ${r.statusText}`);
+    return j;
+  };
+  const fmtDate = (ms) => new Date(ms).toLocaleString();
+  const busy = new Set();
+  let defaultSaves = "";
+  $("saves-reset").onclick = () => { $("saves").value = defaultSaves; };
+  const setStatus = (cls, text) => { $("jobrow").hidden = false; $("jobstatus").className = `status ${cls}`; $("jobstatus").textContent = text; };
+
+  async function refresh() {
+    let data;
+    try { data = await api("/api/worlds"); } catch (e) { $("worldsnote").textContent = e.message; return; }
+    $("outdir").textContent = data.outDir;
+    defaultSaves = data.savesDir;
+    if ($("saves").value === "") $("saves").value = defaultSaves;
+    if ($("model").value === "") $("model").value = data.model;
+    const tb = $("worlds");
+    tb.textContent = "";
+    if (data.worlds.length === 0) {
+      tb.innerHTML = '<tr><td class="empty" colspan="4">no worlds yet</td></tr>';
+      return;
+    }
+    for (const w of data.worlds) {
+      const tr = document.createElement("tr");
+      const name = document.createElement("td"); name.textContent = w.name; tr.appendChild(name);
+      const date = document.createElement("td"); date.textContent = fmtDate(w.date); tr.appendChild(date);
+      const prompt = document.createElement("td"); prompt.className = "prompt"; prompt.textContent = w.prompt || "(no document beside this world)"; tr.appendChild(prompt);
+      const actions = document.createElement("td");
+      const install = document.createElement("button");
+      install.textContent = w.installed ? "Installed" : "Install";
+      install.disabled = busy.has(w.name) || Boolean(w.installed);
+      install.title = w.installed ? w.installed : "copy into the folder above; never replaces a save";
+      install.onclick = async () => {
+        install.disabled = true; install.textContent = "Installing…"; busy.add(w.name);
+        try {
+          const r = await api("/api/install", { world: w.name, savesDir: $("saves").value });
+          $("worldsnote").className = "note";
+          $("worldsnote").textContent = `installed ${r.folderName} → ${r.installedPath}${r.renamed ? " (a save of that name existed; installed alongside it)" : ""}`;
+        } catch (e) { $("worldsnote").className = "note error"; $("worldsnote").textContent = `install failed: ${e.message}`; }
+        busy.delete(w.name); refresh();
+      };
+      actions.appendChild(install);
+      tr.appendChild(actions);
+      tb.appendChild(tr);
+    }
+  }
+
+  function follow(job) {
+    const log = $("log");
+    log.textContent = "";
+    setStatus("running", "running");
+    $("go").disabled = true;
+    const es = new EventSource(`/api/jobs/${job.id}/events`);
+    es.onmessage = (ev) => { log.textContent += JSON.parse(ev.data) + "\n"; log.scrollTop = log.scrollHeight; };
+    es.addEventListener("done", (ev) => {
+      const d = JSON.parse(ev.data);
+      setStatus(d.status, d.status === "done" ? "done" : `failed (exit ${d.code})`);
+      es.close(); $("go").disabled = false; refresh();
+    });
+    es.onerror = () => { setStatus("failed", "log stream lost"); es.close(); $("go").disabled = false; };
+  }
+
+  $("go").onclick = async () => {
+    const prompt = $("prompt").value.trim();
+    if (prompt === "") { $("prompt").focus(); return; }
+    try {
+      const job = await api("/api/generate", { prompt, seed: $("seed").value, effort: $("effort").value.trim(), model: $("model").value });
+      follow(job);
+    } catch (e) { setStatus("failed", e.message); }
+  };
+
+  // Reattach to a run already in flight (the page was reloaded).
+  api("/api/jobs").then((d) => {
+    const running = d.jobs.find((j) => j.status === "running");
+    if (running) { $("prompt").value = running.prompt; if (running.model) $("model").value = running.model; if (running.effort) $("effort").value = running.effort; follow(running); }
+  }).catch(() => {});
+  refresh();
+})();
+</script>
+</body>
+</html>

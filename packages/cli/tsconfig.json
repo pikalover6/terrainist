@@ -1,0 +1,25 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "include": [
+    "src"
+  ],
+  "references": [
+    {
+      "path": "../agents"
+    },
+    {
+      "path": "../compiler"
+    },
+    {
+      "path": "../spec"
+    },
+    {
+      "path": "../stdlib"
+    }
+  ]
+}
