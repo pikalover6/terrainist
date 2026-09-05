@@ -1,124 +1,112 @@
 # Terrainist
 
-Text prompt → Minecraft world.
+Describe a world in a sentence, get a Minecraft world you can walk through.
 
 <a href="https://x.com/pikalover6_"><img alt="by @pikalover6_ on X" src="https://img.shields.io/badge/by-%40pikalover6__-000000?style=flat&logo=x&logoColor=white"></a>
 
 <p align="center">
-  <img src="docs/gallery/slideshow.gif" alt="Five generated worlds, each captioned with the prompt that made it" width="1000">
-</p>
-<p align="center">
-  <a href="docs/gallery/1-clown-park.png"><img src="docs/gallery/1-clown-park.png" width="19%" alt="Creepy world that is one massive amusement park with huge clown statues"></a>
-  <a href="docs/gallery/2-troy.png"><img src="docs/gallery/2-troy.png" width="19%" alt="Troy, with the Trojan Horse inside"></a>
-  <a href="docs/gallery/3-island-sea-monsters.png"><img src="docs/gallery/3-island-sea-monsters.png" width="19%" alt="Tropical private island being invaded by massive sea monsters"></a>
-  <a href="docs/gallery/4-overgrown-city.png"><img src="docs/gallery/4-overgrown-city.png" width="19%" alt="A post apocalyptic, abandoned, overgrown formerly high-tech city with secret hideouts"></a>
-  <a href="docs/gallery/5-statue-on-the-moon.png"><img src="docs/gallery/5-statue-on-the-moon.png" width="19%" alt="The Statue of Liberty on the moon, on display in an extremely advanced moon alien civilization after they stole it"></a>
+  <img src="gallery/showcase.png" alt="A walled town seen from its castle keep, banners flying" width="1000">
 </p>
 
-A language model writes a short **Loam 1** document from your prompt — the land,
-the climate, the woods, the roads, and every *thing* in the world by name and
-place. A deterministic compiler turns that document into a Minecraft Java world
-(1.21.11, Anvil region files) you can drop into your saves folder and walk.
-Same document, same seed: byte-identical world, no model in the loop.
+Terrainist takes a text prompt, has a language model plan a world from it —
+the terrain, the climate, the forests, the roads, and every building, ruin,
+ship or statue by name and place — and then builds that plan into a Minecraft
+Java world (1.21.11) with a deterministic compiler. The model decides *what*
+the world is; the compiler decides *how* to build it, the same way every time.
 
-## Requirements
+More prompts and what came out of them are in [`gallery/`](gallery/).
 
-- Node ≥ 22
-- An API key for any OpenAI-compatible chat-completions API (OpenRouter by
-  default), used only by `generate` and `ui`. Everything else runs offline.
+## Quick start
 
-## Install and build
+You need Node 22 or newer and an API key for an OpenAI-compatible chat API.
+OpenRouter is the default; OpenAI or a local server such as Ollama or vLLM
+work the same way.
 
 ```sh
 git clone https://github.com/pikalover6/terrainist.git
 cd terrainist
 npm install
 npm run build
+
+echo 'TERRAINIST_API_KEY=your-key' > .env
+
+npx terrainist generate "a fishing village of stilt houses on a cold northern fjord" --install
 ```
 
-`npx terrainist --help` prints the commands; `npx terrainist <command> --help`
-prints that command's options.
+That writes the world under `out/`, copies it into your Minecraft saves folder,
+and it shows up in the world list the next time you open the game.
 
-## Configure
+Prefer a page over a terminal? `npx terrainist ui` serves one at
+http://localhost:4747: type a prompt, watch the log, install with a button.
 
-Three settings, read from the environment or a `.env` file at the repo root:
+## Configuration
 
-```
-TERRAINIST_API_KEY=...                          # or OPENROUTER_API_KEY
-TERRAINIST_API_BASE=https://openrouter.ai/api/v1  # any OpenAI-compatible root
-TERRAINIST_MODEL=google/gemini-3.8-flash          # the model id
-```
+Three settings, read from the environment or from `.env` in the repo root:
 
-Only the key is required. The request is the plain OpenAI chat-completions
-shape (`model`, `messages`, `temperature`, `reasoning_effort`, `max_tokens`),
-so OpenRouter, OpenAI, or a local server such as Ollama or vLLM are drop-in
-through `TERRAINIST_API_BASE`.
+| setting | meaning | default |
+| --- | --- | --- |
+| `TERRAINIST_API_KEY` | your API key (`OPENROUTER_API_KEY` also works) | — |
+| `TERRAINIST_API_BASE` | the chat API's root URL | `https://openrouter.ai/api/v1` |
+| `TERRAINIST_MODEL` | the model to ask | `google/gemini-3.8-flash` |
 
-## Run
+Requests use the standard OpenAI chat-completions shape, including
+`reasoning_effort`, so any server that speaks it is a drop-in.
+
+## Commands
 
 ```sh
-# prompt → document → world, in out/
-npx terrainist generate "a fishing village of stilt houses on a cold northern fjord"
-
-# …and copy it straight into Minecraft's saves folder
-npx terrainist generate "a walled hill town above a river bend" --install
-
-# compile a document you already have (no model call)
-npx terrainist compile out/fjord_village.loam.json
-
-# copy a world folder into a saves folder (never replaces a save)
-npx terrainist install out/fjord_village_0904 --saves "<path to saves>"
-
-# the local web UI: generate with a live log, list worlds, install
-npx terrainist ui
+terrainist generate "<prompt>"   # prompt → world (see --help for --seed, --model, --effort, --install …)
+terrainist compile <file>        # build a world from a saved plan, no model call
+terrainist install <worldDir>    # copy a world into a saves folder; never overwrites a save
+terrainist ui                    # the local web page
+terrainist kit                   # the language reference the model writes against
+terrainist catalog               # every building and prop the compiler can build
 ```
 
-`generate` keeps the document beside the world as `<name>.loam.json`; if the
-model's first reply was rejected by the validator, every rejected reply is kept
-as `<name>.authoring.json`. Options worth knowing: `--seed` (default: derived
-from the prompt, so the same words give the same world), `--effort`,
-`--temperature`, `--model`, `--size`, `--out`, `--keep-doc` (also keep the
-lowered document and the compile report), `--compile-rounds N` (show the model
-the compiler's findings and ask for a revision; default 0).
+Every command answers `--help`. Run them as `npx terrainist …` from the repo,
+or add `node_modules/.bin` to your `PATH`.
 
-The default saves folder is the platform's `.minecraft/saves`; pass `--saves`
-or type a path on the UI page for a launcher with its own instance folders.
+Useful things to know about `generate`:
 
-## The language
-
-`npx terrainist kit` prints the authoring kit: the reference the model writes
-against, and the whole of Loam 1 in one document. In short, a document is
-
-```
-{ "loam": "1", "name", "seed", "prompt", "size",
-  "palette", "intent",
-  "terrain": { sea, base, relief, scale, ridged, curve, ocean, beach, snowline },
-  "land":    [ ridge | peak | volcano | plateau | island | valley | river | basin … ],
-  "climate", "woods", "roads",
-  "things":  [ { "id", "is", "size", "where", … } ] }
-```
-
-Every thing says what it **is** — a catalog id (`npx terrainist catalog` lists
-them), a fabric (`plaza`, `district`, `city`), a compound (`farm`, `airport`,
-`harbour`), or any new name with a `brief`, for which a bespoke program is
-written — and **where** it goes, in relations (`zone`, `at`, `near`, `distance`,
-`facing`, `on`, `along`, `beside`, `tunnel`) rather than coordinates.
+- The seed is derived from the prompt, so the same words give the same world.
+  Pass `--seed N` for a different one.
+- The plan the model wrote is kept beside the world as `<name>.loam.json`.
+  `terrainist compile` rebuilds it without another model call, and you can
+  edit it by hand: the format is small and `terrainist kit` documents all of it.
+- If the model's first answer was rejected by the validator, every rejected
+  reply is kept as `<name>.authoring.json` so you can see what went wrong.
+- Minecraft's default saves folder is used for `--install`; pass `--saves` for
+  a launcher that keeps its own instance folders.
 
 ## How it works
 
-| package | role |
-| --- | --- |
-| `packages/spec` | Loam 1: vocabulary, validator, and the lowering onto the compiler's internal representation (`@terrainist/spec/ir`) |
-| `packages/stdlib` | the structure catalog (buildings, props, form packs), noise, terrain edit verbs, classification |
-| `packages/compiler` | the deterministic pipeline: terrain fields → settlement layout → ground contract → structures and bespoke programs → vegetation → validation → Anvil emit |
-| `packages/agents` | the model calls: intent classifier, document author (validator diagnostics drive retries), program author |
-| `packages/cli` | the `terrainist` command and the web UI |
-| `kits/` | the authoring kit, generated from `kits/src` and the code's registries (`npm run kit`) |
+1. A cheap model call classifies the prompt: era, wealth, climate, character.
+2. The model writes the plan in **Loam**, a small JSON language: the land
+   (ridges, peaks, valleys, rivers, basins…), the climate and woods, the
+   roads, and a list of *things*. A thing is a building from the catalog, a
+   plaza, district or city, a farm, airport or harbour, or anything new with a
+   short brief, placed by relations like *near*, *facing*, *on the ridge*,
+   *along the shore* rather than coordinates. Anything the catalog cannot
+   build gets its own small program written by the model and verified before
+   it is used.
+3. The compiler builds it: terrain, settlement layout, ground works, buildings
+   and props, vegetation, then validation and Minecraft region files.
 
-Tests: `npm test` (the compiler suites build whole worlds; give Node memory:
-`NODE_OPTIONS=--max-old-space-size=8192 npx vitest run --maxWorkers=4`).
-`packages/compiler/test/loam1-smoke.test.ts` compiles three reference worlds
-twice and checks the region files are byte-identical.
+| package | |
+| --- | --- |
+| `packages/spec` | the Loam language: vocabulary, validation, lowering |
+| `packages/stdlib` | the catalog of buildings, props and styles; noise; terrain edits |
+| `packages/compiler` | the world compiler |
+| `packages/agents` | the model calls |
+| `packages/cli` | the command and the web page |
+
+## Development
+
+```sh
+npm test                       # the whole suite; compiles many worlds, so:
+NODE_OPTIONS=--max-old-space-size=8192 npx vitest run --maxWorkers=4
+npm run kit                    # regenerate the language reference after changing the catalog
+```
 
 ## License
 
